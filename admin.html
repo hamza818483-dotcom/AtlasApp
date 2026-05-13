@@ -342,6 +342,43 @@ function switchSection(sec) {
         });
     }
 }
+async function loadExams() {
+    try {
+        const url = SUPABASE_URL + '/rest/v1/exams?select=*&order=created_at.desc&limit=20';
+        const res = await fetch(url, {
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+        });
+        
+        if (!res.ok) {
+            var errText = await res.text();
+            alert('এক্সাম লোড এরর: ' + errText);
+            document.getElementById('examList').innerHTML = '<p style="color:#EF4444;">লোড ব্যর্থ</p>';
+            return;
+        }
+        
+        var data = await res.json();
+        
+        if (!data || data.length === 0) {
+            document.getElementById('examList').innerHTML = '<p>কোনো এক্সাম নেই</p>';
+            return;
+        }
+        
+        var html = '<table class="data-table"><tr><th>সাবজেক্ট</th><th>টাইপ</th><th>মার্ক</th><th>অ্যাকশন</th></tr>';
+        data.forEach(function(e) {
+            var link = window.location.origin + '/exam.html?id=' + e.id;
+            html += '<tr><td>' + e.subject + ' - ' + (e.chapter||'') + '</td><td>' + e.exam_type + '</td><td>' + e.total_marks + '</td>';
+            html += '<td><button class="btn-copy" onclick="copyLink(\'' + link + '\')">📋 কপি</button>';
+            if (isAdmin) html += '<button class="btn-danger" onclick="deleteItem(\'exams\',\'' + e.id + '\')">🗑️</button>';
+            html += '</td></tr>';
+        });
+        html += '</table>';
+        document.getElementById('examList').innerHTML = html;
+        
+    } catch(e) {
+        alert('লোড এরর: ' + e.message);
+        document.getElementById('examList').innerHTML = '<p style="color:#EF4444;">লোড ব্যর্থ</p>';
+    }
+}
 
 function handleCSV(input, labelId) {
     const file = input.files[0];
