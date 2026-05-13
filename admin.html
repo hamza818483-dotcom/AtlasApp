@@ -343,31 +343,60 @@ function switchSection(sec) {
     }
 }
 
-// ========== CSV হ্যান্ডলার ==========
 function handleCSV(input, labelId) {
     const file = input.files[0];
     if (!file) return;
     document.getElementById(labelId).textContent = '📄 ' + file.name;
     const reader = new FileReader();
     reader.onload = function(e) {
-        const text = e.target.result;
-        const lines = text.split('\n').filter(l => l.trim());
-        if (lines.length < 2) { showToast('⚠️ CSV-তে ডাটা নেই'); return; }
-        const headers = lines[0].split(',').map(h => h.trim());
-        const data = [];
-        for (let i = 1; i < lines.length; i++) {
-            const cols = lines[i].split(',').map(c => c.trim());
-            if (cols.length >= 9) {
-                data.push({
-                    questions: cols[0], option1: cols[1], option2: cols[2], option3: cols[3], option4: cols[4],
-                    option5: cols[5] || null, answer: parseInt(cols[6]), explanation: cols[7], type: parseInt(cols[8])||1, section: parseInt(cols[9])||1
-                });
+        try {
+            const text = e.target.result;
+            console.log('📄 CSV Raw Text (first 200):', text.substring(0, 200));
+            
+            const lines = text.split('\n').filter(l => l.trim());
+            console.log('📄 Total lines:', lines.length);
+            
+            if (lines.length < 2) { 
+                showToast('⚠️ CSV-তে ডাটা নেই'); 
+                return; 
             }
+            
+            const headers = lines[0].split(',').map(h => h.trim());
+            console.log('📄 Headers:', headers);
+            
+            const data = [];
+            for (let i = 1; i < lines.length; i++) {
+                const cols = lines[i].split(',').map(c => c.trim());
+                if (cols.length >= 9) {
+                    data.push({
+                        questions: cols[0],
+                        option1: cols[1],
+                        option2: cols[2],
+                        option3: cols[3],
+                        option4: cols[4],
+                        option5: cols[5] || null,
+                        answer: parseInt(cols[6]) || 1,
+                        explanation: cols[7] || '',
+                        type: parseInt(cols[8]) || 1,
+                        section: parseInt(cols[9]) || 1
+                    });
+                }
+            }
+            
+            console.log('✅ CSV Parsed:', data.length, 'questions');
+            
+            if (input.id === 'examCSV') {
+                examCSVData = data;
+            } else {
+                mockCSVData = data;
+            }
+            
+            showToast('✅ CSV লোড: ' + data.length + ' টি প্রশ্ন');
+            
+        } catch(err) {
+            console.error('❌ CSV Parse Error:', err);
+            alert('CSV পার্স করতে সমস্যা: ' + err.message);
         }
-        if (input.id === 'examCSV') examCSVData = data;
-        else mockCSVData = data;
-        showToast('✅ CSV লোড: ' + data.length + ' প্রশ্ন');
-        console.log('CSV Data:', data);
     };
     reader.readAsText(file);
 }
