@@ -10,7 +10,7 @@
 <body class="dark-mode">
 
     <!-- ========== সাইডবার ওভারলে ========== -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
     <!-- ========== সাইডবার ========== -->
     <aside class="sidebar" id="sidebar">
@@ -19,31 +19,31 @@
         </div>
         
         <nav class="sidebar-menu">
-            <button class="sidebar-item" onclick="navigateTo('profile')">
+            <button class="sidebar-item" onclick="navigateTo('profile'); closeSidebar();">
                 <span class="icon">👤</span> প্রোফাইল
             </button>
-            <button class="sidebar-item" onclick="navigateTo('home')">
+            <button class="sidebar-item" onclick="navigateTo('home'); closeSidebar();">
                 <span class="icon">🏠</span> হোম
             </button>
-            <button class="sidebar-item" onclick="navigateTo('class')">
+            <button class="sidebar-item" onclick="goTo('class.html'); closeSidebar();">
                 <span class="icon">📚</span> ফ্রি ক্লাস সেকশন
             </button>
-            <button class="sidebar-item" onclick="navigateTo('exam')">
+            <button class="sidebar-item" onclick="goTo('exam.html'); closeSidebar();">
                 <span class="icon">📝</span> ফ্রি এক্সাম সেকশন
             </button>
-            <button class="sidebar-item" onclick="goToMockTest()">
+            <button class="sidebar-item" onclick="goToMockTest(); closeSidebar();">
                 <span class="icon">🎯</span> আনলিমিটেড মক টেস্ট
             </button>
-            <button class="sidebar-item" onclick="goToMistakes()">
+            <button class="sidebar-item" onclick="goToMistakes(); closeSidebar();">
                 <span class="icon">❌</span> মাই মিসটেকস
             </button>
-            <button class="sidebar-item" onclick="navigateTo('ai')">
+            <button class="sidebar-item" onclick="goTo('ai.html'); closeSidebar();">
                 <span class="icon">🤖</span> ATLAS AI
             </button>
             
             <div class="sidebar-divider"></div>
             
-            <button class="sidebar-item theme-toggle-btn" onclick="toggleTheme()">
+            <button class="sidebar-item" onclick="toggleTheme()">
                 <span class="icon" id="sidebarThemeIcon">🌙</span> 
                 <span id="sidebarThemeText">ডার্ক মোড</span>
             </button>
@@ -68,7 +68,7 @@
     <!-- ========== হেডার ========== -->
     <header class="header">
         <div class="header-left">
-            <button class="hamburger" id="hamburgerBtn" aria-label="মেনু">☰</button>
+            <button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="মেনু">☰</button>
             <div class="logo">ATLAS EXAM</div>
         </div>
         <div class="header-right">
@@ -135,9 +135,7 @@
         <div class="owner-section">
             <div class="owner-photo-wrapper" onclick="flipOwnerCard()">
                 <div class="owner-glow-ring"></div>
-                <img src="assets/owner-photo.jpg" alt="Owner" class="owner-photo" 
-                     onerror="this.style.display='none'; this.parentElement.querySelector('.owner-photo-fallback').style.display='flex';">
-                <div class="owner-photo-fallback" style="display:none; width:100%; height:100%; border-radius:50%; background-color:var(--atlas-bg); border:3px solid var(--atlas-border); align-items:center; justify-content:center; font-size:40px; position:absolute; top:0; left:0; z-index:2;">
+                <div style="width:100%; height:100%; border-radius:50%; background-color:#03152F; border:3px solid #2F6BFF; display:flex; align-items:center; justify-content:center; font-size:40px; position:absolute; top:0; left:0; z-index:2;">
                     👤
                 </div>
             </div>
@@ -147,23 +145,23 @@
 
     <!-- ========== নিচের নেভিগেশন বার ========== -->
     <nav class="bottom-nav">
-        <button class="nav-item active" data-page="home">
+        <button class="nav-item active" data-page="home" onclick="navigateTo('home')">
             <span class="nav-icon">🏠</span>
             <span>হোম</span>
         </button>
-        <button class="nav-item" data-page="class">
+        <button class="nav-item" data-page="class" onclick="goTo('class.html')">
             <span class="nav-icon">📚</span>
             <span>ক্লাস</span>
         </button>
-        <button class="nav-item" data-page="exam">
+        <button class="nav-item" data-page="exam" onclick="goTo('exam.html')">
             <span class="nav-icon">📝</span>
             <span>এক্সাম</span>
         </button>
-        <button class="nav-item" data-page="mock">
+        <button class="nav-item" data-page="mock" onclick="goToMockTest()">
             <span class="nav-icon">🎯</span>
             <span>মক</span>
         </button>
-        <button class="nav-item" data-page="profile">
+        <button class="nav-item" data-page="profile" onclick="navigateTo('profile')">
             <span class="nav-icon">👤</span>
             <span>প্রোফাইল</span>
         </button>
@@ -178,12 +176,207 @@
     <!-- ========== টোস্ট ========== -->
     <div class="toast" id="toast"></div>
 
-    <!-- ========== JavaScript ========== -->
-    <script src="app.js"></script>
+    <!-- ========== সব JavaScript এখানেই ========== -->
     <script>
-        // থিম আইকন সিঙ্ক
-        document.addEventListener('DOMContentLoaded', function() {
+        // ========== গ্লোবাল ভেরিয়েবল ==========
+        let isDarkMode = true;
+        let isSidebarOpen = false;
+        let isLoggedIn = false;
+        let currentUser = null;
+
+        // ========== থিম ম্যানেজমেন্ট ==========
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('atlas-theme');
+            if (savedTheme === 'light') {
+                isDarkMode = false;
+                document.body.classList.remove('dark-mode');
+            } else {
+                isDarkMode = true;
+                document.body.classList.add('dark-mode');
+            }
             updateThemeIcon();
+        }
+
+        function toggleTheme() {
+            console.log('টগল ক্লিক হয়েছে!');
+            isDarkMode = !isDarkMode;
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+                localStorage.setItem('atlas-theme', 'dark');
+            } else {
+                document.body.classList.remove('dark-mode');
+                localStorage.setItem('atlas-theme', 'light');
+            }
+            updateThemeIcon();
+            showToast(isDarkMode ? '🌙 ডার্ক মোড চালু' : '☀️ লাইট মোড চালু');
+        }
+
+        function updateThemeIcon() {
+            const themeBtn = document.getElementById('themeToggle');
+            const sidebarIcon = document.getElementById('sidebarThemeIcon');
+            const sidebarText = document.getElementById('sidebarThemeText');
+            
+            if (isDarkMode) {
+                if (themeBtn) themeBtn.textContent = '🌙';
+                if (sidebarIcon) sidebarIcon.textContent = '🌙';
+                if (sidebarText) sidebarText.textContent = 'ডার্ক মোড';
+            } else {
+                if (themeBtn) themeBtn.textContent = '☀️';
+                if (sidebarIcon) sidebarIcon.textContent = '☀️';
+                if (sidebarText) sidebarText.textContent = 'লাইট মোড';
+            }
+        }
+
+        // ========== সাইডবার ==========
+        function toggleSidebar() {
+            console.log('সাইডবার টগল!');
+            isSidebarOpen = !isSidebarOpen;
+            const overlay = document.getElementById('sidebarOverlay');
+            const sidebar = document.getElementById('sidebar');
+            
+            if (isSidebarOpen) {
+                overlay.classList.add('active');
+                sidebar.classList.add('active');
+            } else {
+                overlay.classList.remove('active');
+                sidebar.classList.remove('active');
+            }
+        }
+
+        function closeSidebar() {
+            isSidebarOpen = false;
+            document.getElementById('sidebarOverlay').classList.remove('active');
+            document.getElementById('sidebar').classList.remove('active');
+        }
+
+        // ========== নেভিগেশন ==========
+        function goTo(url) {
+            console.log('Navigating to:', url);
+            window.location.href = url;
+        }
+
+        function navigateTo(page) {
+            const routes = {
+                'home': 'index.html',
+                'class': 'class.html',
+                'exam': 'exam.html',
+                'mock': 'exam.html?mock=true',
+                'profile': 'dashboard.html',
+                'ai': 'ai.html'
+            };
+            const url = routes[page] || 'index.html';
+            window.location.href = url;
+        }
+
+        function goToMockTest() {
+            console.log('Mock Test clicked');
+            window.location.href = 'exam.html?mock=true';
+        }
+
+        function goToMistakes() {
+            console.log('Mistakes clicked');
+            if (!isLoggedIn) {
+                showToast('⚠️ আগে লগইন করুন');
+                setTimeout(function() { window.location.href = 'auth.html'; }, 1000);
+                return;
+            }
+            window.location.href = 'dashboard.html#mistakes';
+        }
+
+        // ========== সোশ্যাল ==========
+        function openWhatsApp() {
+            window.open('https://wa.me/8801999681290', '_blank');
+        }
+
+        function openTelegram() {
+            window.open('https://t.me/rafi_somc', '_blank');
+        }
+
+        // ========== টোস্ট ==========
+        function showToast(message, duration) {
+            duration = duration || 2000;
+            var toast = document.getElementById('toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'toast';
+                toast.className = 'toast';
+                document.body.appendChild(toast);
+            }
+            toast.textContent = message;
+            toast.classList.add('show');
+            clearTimeout(toast._hideTimeout);
+            toast._hideTimeout = setTimeout(function() {
+                toast.classList.remove('show');
+            }, duration);
+        }
+
+        // ========== কাউন্টডাউন ==========
+        function setupCountdown() {
+            var countdownElement = document.getElementById('countdownTimer');
+            if (!countdownElement) return;
+            
+            var targetDate = new Date();
+            targetDate.setDate(targetDate.getDate() + 12);
+            targetDate.setHours(8, 45, 32, 0);
+            
+            function updateCountdown() {
+                var now = new Date();
+                var diff = targetDate - now;
+                
+                if (diff <= 0) {
+                    countdownElement.textContent = '০০ : ০০ : ০০ : ০০';
+                    return;
+                }
+                
+                var days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                var hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                var minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                var seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                
+                countdownElement.textContent = 
+                    String(days).padStart(2, '0') + ' : ' + 
+                    String(hours).padStart(2, '0') + ' : ' + 
+                    String(minutes).padStart(2, '0') + ' : ' + 
+                    String(seconds).padStart(2, '0');
+            }
+            
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+        }
+
+        // ========== অনার কার্ড ==========
+        function flipOwnerCard() {
+            showToast('👤 মালিকের তথ্য শীঘ্রই আসছে...');
+        }
+
+        // ========== লগআউট ==========
+        function logout() {
+            localStorage.removeItem('atlas-session');
+            isLoggedIn = false;
+            currentUser = null;
+            closeSidebar();
+            showToast('সফলভাবে লগআউট হয়েছে');
+            setTimeout(function() { window.location.href = 'index.html'; }, 800);
+        }
+
+        // ========== পেজ লোড ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('ATLAS EXAM লোড হয়েছে!');
+            loadTheme();
+            setupCountdown();
+            
+            // সেশন চেক
+            var session = localStorage.getItem('atlas-session');
+            if (session) {
+                try {
+                    currentUser = JSON.parse(session);
+                    isLoggedIn = true;
+                    document.getElementById('sidebarLogout').style.display = 'flex';
+                    document.getElementById('sidebarLogin').style.display = 'none';
+                } catch(e) {
+                    localStorage.removeItem('atlas-session');
+                }
+            }
         });
     </script>
 
