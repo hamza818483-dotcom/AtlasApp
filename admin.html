@@ -455,55 +455,7 @@ async function loadClasses() {
 function clearClassForm() { ['classSubject','classPaper','classChapter','classStart','classEnd','classLink'].forEach(id => document.getElementById(id).value=''); }
 
 // ========== EXAM ==========
-async function saveExam() {
-    if (!examCSVData) { showToast('⚠️ CSV ফাইল আপলোড করুন'); return; }
-    const data = {
-        subject: document.getElementById('examSubject').value.trim(),
-        chapter: document.getElementById('examChapter').value.trim(),
-        exam_type: document.getElementById('examType').value,
-        board: document.getElementById('examBoard').value.trim() || null,
-        year: document.getElementById('examYear').value.trim() || null,
-        writer: document.getElementById('examWriter').value.trim() || null,
-        start_time: document.getElementById('examStart').value,
-        end_time: document.getElementById('examEnd').value,
-        total_marks: examCSVData.length,
-        created_by: currentUser?.phone
-    };
-    if (!data.subject || !data.chapter || !data.exam_type) { showToast('⚠️ আবশ্যক ফিল্ড পূরণ করুন'); return; }
-    
-    try {
-        // এক্সাম ইনসার্ট
-        const examRes = await supabaseFetch('exams', 'POST', data);
-        const examId = examRes?.[0]?.id || examRes?.id;
-        
-        // প্রশ্ন ইনসার্ট
-        if (examId) {
-            const questions = examCSVData.map(q => ({ ...q, exam_id: examId }));
-            await supabaseFetch('questions', 'POST', questions);
-            
-            // লিংক কপি
-            const link = `${window.location.origin}/exam.html?id=${examId}`;
-            navigator.clipboard?.writeText(link);
-            showToast('✅ এক্সাম সেইভ! লিংক কপি হয়েছে: ' + link);
-            alert('📋 এক্সাম লিংক:\n' + link);
-        }
-        clearExamForm();
-        loadExams();
-    } catch(e) { showToast('❌ সেইভ ব্যর্থ'); }
-}
-async function loadExams() {
-    try {
-        const data = await supabaseFetch('exams', 'GET', null, 'select=*&order=created_at.desc&limit=20');
-        let html = '<table class="data-table"><tr><th>সাবজেক্ট</th><th>টাইপ</th><th>মার্ক</th><th>অ্যাকশন</th></tr>';
-        if (data) data.forEach(e => {
-            const link = `${window.location.origin}/exam.html?id=${e.id}`;
-            html += `<tr><td>${e.subject} - ${e.chapter||''}</td><td>${e.exam_type}</td><td>${e.total_marks}</td>
-            <td><button class="btn-copy" onclick="copyLink('${link}')">📋 কপি</button><button class="btn-edit" onclick="editExam('${e.id}')">✏️</button>${isAdmin?`<button class="btn-danger" onclick="deleteItem('exams','${e.id}')">🗑️</button>`:''}</td></tr>`;
-        });
-        html += '</table>';
-        document.getElementById('examList').innerHTML = html || '<p>কোনো এক্সাম নেই</p>';
-    } catch(e) { document.getElementById('examList').innerHTML = '<p style="color:#EF4444;">লোড ব্যর্থ</p>'; }
-}
+
 function clearExamForm() { ['examSubject','examChapter','examBoard','examYear','examWriter','examStart','examEnd'].forEach(id => document.getElementById(id).value=''); examCSVData = null; document.getElementById('examCSVName').textContent=''; document.getElementById('examType').value=''; }
 function copyLink(link) { navigator.clipboard?.writeText(link); showToast('📋 লিংক কপি হয়েছে!'); }
 
