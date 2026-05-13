@@ -4,20 +4,118 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ATLAS - Exam Preparation Platform</title>
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Rajdhani:wght@600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
-    <!-- Link CSS -->
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* ============================================
+           ADDED: BLUISH VIBE & CLOCKWISE LIGHT
+           ============================================ */
+        
+        /* Home Navigation Buttons - Bluish */
+        .home-nav-btn.accent-btn {
+            background: linear-gradient(135deg, #0a1a2a, #10203d) !important;
+            border-color: #1a3a6b !important;
+        }
+        .home-nav-btn.accent-btn:hover {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 12px rgba(59,130,246,0.3) !important;
+        }
+        
+        /* Clockwise Light Animation */
+        .owner-glow-ring {
+            background: conic-gradient(#3b82f6, #60a5fa, #93c5fd, #60a5fa, #3b82f6) !important;
+            animation: spinClockwise 3s linear infinite !important;
+        }
+        
+        @keyframes spinClockwise {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Countdown Card - Bluish */
+        .countdown-card {
+            background: linear-gradient(135deg, #0a0f1a 0%, #101a2e 50%, #080c1a 100%) !important;
+            border: 1px solid #1a3a6b !important;
+        }
+        .countdown-card::before {
+            background: radial-gradient(circle, rgba(59,130,246,0.18), transparent 70%) !important;
+        }
+        .cd-title, .cd-label { color: #60a5fa !important; }
+        .cd-subtitle { color: #93c5fd !important; }
+        .cd-num { color: #3b82f6 !important; }
+        
+        /* Navbar */
+        .nav-logo { color: #3b82f6 !important; }
+        
+        /* Admin Button */
+        #admin-control-btn button {
+            background: linear-gradient(135deg, #0a1a2a, #10203d) !important;
+            border: 1px solid #3b82f6 !important;
+            color: #60a5fa !important;
+        }
+        #admin-control-btn button:hover {
+            border-color: #93c5fd !important;
+            box-shadow: 0 0 20px rgba(59,130,246,0.25) !important;
+        }
+        
+        /* Bottom Navigation */
+        .bnav-item.active {
+            color: #3b82f6 !important;
+            border-top-color: #3b82f6 !important;
+        }
+        
+        /* Primary Buttons */
+        .btn-primary {
+            background: #3b82f6 !important;
+        }
+        .btn-primary:hover {
+            background: #2563eb !important;
+        }
+        
+        /* Exam Category Buttons */
+        .exam-cat-btn {
+            background: linear-gradient(135deg, #0a1a2a, #10203d) !important;
+            border: 1px solid #1a3a6b !important;
+        }
+        .exam-cat-btn:hover {
+            border-color: #3b82f6 !important;
+        }
+        .ecb-icon { color: #60a5fa !important; }
+        .ecb-title { color: #93c5fd !important; }
+        
+        /* Radio Options */
+        .radio-opt.selected {
+            border-color: #3b82f6 !important;
+            background: rgba(59,130,246,0.1) !important;
+            color: #3b82f6 !important;
+        }
+        
+        /* Auth Card */
+        .auth-card {
+            border-top: 2px solid #3b82f6 !important;
+        }
+        
+        /* Theme Toggle */
+        .theme-toggle::after {
+            background: #3b82f6 !important;
+        }
+        
+        /* Social Buttons Hover */
+        .social-btn:hover {
+            border-color: #3b82f6 !important;
+        }
+        
+        .hnb-icon { color: #60a5fa !important; }
+        .hnb-title { color: #93c5fd !important; }
+    </style>
 </head>
 <body>
 
-    <!-- Loading Screen -->
     <div id="loading-screen">
         <div class="loader-logo">ATLAS</div>
         <div class="loader-bar"><div class="loader-bar-fill"></div></div>
     </div>
 
-    <!-- Top Navbar -->
     <nav id="navbar">
         <div class="nav-logo">ATLAS<span>Exam Preparation Platform</span></div>
         <div class="nav-right">
@@ -26,10 +124,8 @@
         </div>
     </nav>
 
-    <!-- Toast Notifications Container -->
     <div id="toast-container"></div>
 
-    <!-- Main Content Wrapper -->
     <div id="app">
         
         <!-- PAGE 1: HOME -->
@@ -284,7 +380,7 @@
             </div>
         </div>
         
-        <!-- PAGE: ADMIN - PERMANENT FIX (No Loading) -->
+        <!-- PAGE: ADMIN - All 9 Sections -->
         <div id="page-admin" class="page">
             <div class="section-header">
                 <button class="back-btn" onclick="window.goBack()">←</button>
@@ -293,7 +389,7 @@
             
             <div class="auth-wrap" style="padding-bottom: 80px;">
                 
-                <!-- 📝 ADD EXAM FORM -->
+                <!-- SECTION 1: ADD EXAM -->
                 <div class="auth-card">
                     <h3 style="margin-bottom: 15px; color: var(--accent);">📝 Add New Exam</h3>
                     <div class="form-group"><label class="form-label">Subject *</label><input type="text" id="admin-exam-subject" class="form-input" placeholder="e.g. Biology"></div>
@@ -315,7 +411,7 @@
                 </div>
                 <div class="spacer-md"></div>
                 
-                <!-- 🎥 ADD CLASS FORM -->
+                <!-- SECTION 2: ADD CLASS -->
                 <div class="auth-card">
                     <h3 style="margin-bottom: 15px; color: var(--accent);">🎥 Add New Class</h3>
                     <div class="form-group"><label class="form-label">Subject *</label><input type="text" id="admin-class-subject" class="form-input" placeholder="e.g. Physics"></div>
@@ -330,7 +426,7 @@
                 </div>
                 <div class="spacer-md"></div>
                 
-                <!-- 📄 ADD CQ FORM -->
+                <!-- SECTION 3: ADD CQ -->
                 <div class="auth-card">
                     <h3 style="margin-bottom: 15px; color: var(--accent);">📄 Add CQ (ক, খ, CQ)</h3>
                     <div class="form-group"><label class="form-label">Subject *</label><input type="text" id="admin-cq-subject" class="form-input"></div>
@@ -343,7 +439,7 @@
                 </div>
                 <div class="spacer-md"></div>
 
-                <!-- 👤 GRANT SUB-ADMIN -->
+                <!-- SECTION 4: GRANT SUB-ADMIN -->
                 <div class="auth-card" id="super-admin-section" style="display: none;">
                     <h3 style="margin-bottom: 15px; color: var(--accent);">👤 Grant Sub-Admin</h3>
                     <div class="form-group"><label class="form-label">Phone Number</label><input type="text" id="sub-admin-phone" class="form-input" placeholder="01XXXXXXXXX"></div>
@@ -352,7 +448,7 @@
                 </div>
                 <div class="spacer-md"></div>
 
-                <!-- ⏳ UPDATE COUNTDOWN -->
+                <!-- SECTION 5: UPDATE COUNTDOWN -->
                 <div class="auth-card">
                     <h3 style="margin-bottom: 15px; color: var(--accent);">⏳ Update Countdown Timer</h3>
                     <div class="form-group"><label class="form-label">Main Topic</label><input type="text" id="cd-set-main" class="form-input" placeholder="যেমন: HSC পরীক্ষা ২০২৫"></div>
@@ -426,8 +522,56 @@
     <!-- Main Application Script -->
     <script>
     // ============================================================
-    // ATLAS MAIN APPLICATION SCRIPT - PERMANENT FIX
+    // ATLAS MAIN APPLICATION SCRIPT
     // ============================================================
+    
+    // Countdown Timer - ADDED
+    let countdownInterval = null;
+    
+    function startCountdown(endTime) {
+        if (countdownInterval) clearInterval(countdownInterval);
+        
+        function updateTimer() {
+            const now = new Date().getTime();
+            const distance = endTime - now;
+            
+            const daysEl = document.getElementById('cd-days');
+            const hoursEl = document.getElementById('cd-hours');
+            const minsEl = document.getElementById('cd-mins');
+            const secsEl = document.getElementById('cd-secs');
+            
+            if (!daysEl) return;
+            
+            if (distance < 0) {
+                clearInterval(countdownInterval);
+                daysEl.innerText = '00';
+                hoursEl.innerText = '00';
+                minsEl.innerText = '00';
+                secsEl.innerText = '00';
+                return;
+            }
+            
+            daysEl.innerText = String(Math.floor(distance / (1000 * 60 * 60 * 24))).padStart(2, '0');
+            hoursEl.innerText = String(Math.floor((distance % (86400000)) / (1000 * 60 * 60))).padStart(2, '0');
+            minsEl.innerText = String(Math.floor((distance % (3600000)) / (1000 * 60))).padStart(2, '0');
+            secsEl.innerText = String(Math.floor((distance % (60000)) / 1000)).padStart(2, '0');
+        }
+        
+        updateTimer();
+        countdownInterval = setInterval(updateTimer, 1000);
+    }
+    
+    function loadAndStartCountdown() {
+        const saved = localStorage.getItem('atlas_countdown');
+        let endTime = new Date('2025-12-01T00:00:00').getTime();
+        if (saved) {
+            try {
+                const cd = JSON.parse(saved);
+                if (cd.end_time) endTime = new Date(cd.end_time).getTime();
+            } catch(e) {}
+        }
+        startCountdown(endTime);
+    }
     
     // Navigation Functions
     window.navigateTo = function(pageId) {
@@ -457,14 +601,12 @@
             return;
         }
         
-        // Save to localStorage
         const exams = JSON.parse(localStorage.getItem('atlas_exams') || '[]');
         exams.push({ subject, chapter, csvName: csvFile?.name, date: new Date().toISOString() });
         localStorage.setItem('atlas_exams', JSON.stringify(exams));
         
         alert(`✅ Exam "${subject} - ${chapter}" saved successfully!`);
         
-        // Clear form
         document.getElementById('admin-exam-subject').value = '';
         document.getElementById('admin-exam-chapter').value = '';
         document.getElementById('admin-exam-csv').value = '';
@@ -536,6 +678,9 @@
         const homeSub = document.getElementById('cd-sub-topic');
         if (homeMain) homeMain.innerText = mainTopic;
         if (homeSub && subTopic) homeSub.innerText = subTopic;
+        
+        // Restart countdown with new time
+        loadAndStartCountdown();
         
         alert(`✅ Countdown Updated!\nTopic: ${mainTopic}\nDate: ${targetDate}`);
     };
@@ -652,8 +797,9 @@
         }, 500);
     };
     
-    // Show admin button if already logged in
+    // Initialize everything
     (function() {
+        // Show admin button if already logged in
         const user = localStorage.getItem('atlas_user');
         if (user) {
             try {
@@ -665,17 +811,8 @@
             } catch(e) {}
         }
         
-        // Load countdown from localStorage
-        const savedCountdown = localStorage.getItem('atlas_countdown');
-        if (savedCountdown) {
-            try {
-                const cd = JSON.parse(savedCountdown);
-                const mainEl = document.getElementById('cd-main-topic');
-                const subEl = document.getElementById('cd-sub-topic');
-                if (mainEl && cd.main_topic) mainEl.innerText = cd.main_topic;
-                if (subEl && cd.sub_topic) subEl.innerText = cd.sub_topic;
-            } catch(e) {}
-        }
+        // Load countdown
+        loadAndStartCountdown();
         
         console.log('ATLAS App initialized successfully!');
     })();
