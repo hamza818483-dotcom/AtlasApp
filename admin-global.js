@@ -169,3 +169,24 @@ window.handleUpdateCountdown = async function() {
 // Initialize
 initSupabase();
 loadAdminForms();
+// Initialize
+initSupabase();
+loadAdminForms();
+
+// ============================================================
+// 🟢 FORCE RELOAD FORMS (ADDED - NOT DELETED)
+// ============================================================
+setTimeout(function() {
+    console.log('Force reloading admin forms...');
+    const examForm = document.getElementById('admin-exam-form');
+    const classForm = document.getElementById('admin-class-form');
+    const cqForm = document.getElementById('admin-cq-form');
+    
+    console.log('Exam form exists:', !!examForm);
+    console.log('Class form exists:', !!classForm);
+    console.log('CQ form exists:', !!cqForm);
+    
+    if (examForm && examForm.innerHTML.includes('Loading Exam Form')) {
+        loadAdminForms();
+    }
+}, 500);
