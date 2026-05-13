@@ -591,178 +591,126 @@
     </div>
     <div class="toast" id="toast"></div>
 
- 0.25;
-    let finalScore = correct - negMark;
-    if (finalScore < 0) finalScore = 0;
-    
-    // সঠিক/ভুল রিভিল
-    examQuestions.forEach(q => {
-        const ua = userAnswers[q.id];
-        if (ua === q.answer_index) {
-            document.getElementById(`opt${q.id}_${ua}`)?.classList.add('correct-reveal');
-        } else {
-            if (ua) document.getElementById(`opt${q.id}_${ua}`)?.classList.add('wrong-reveal');
-            document.getElementById(`opt${q.id}_${q.answer_index}`)?.classList.add('correct-reveal');
-        }
-        // সব লক
-        document.querySelectorAll(`[data-qid="${q.id}"]`).forEach(o => o.classList.add('locked'));
-    });
-    
-    // রেজাল্ট দেখাও
-    showResult(correct, wrong, skipped, negMark, finalScore, totalQ);
-    switchMode('Result');
+ <script>
+// ========== SUPABASE CONFIG ==========
+const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
+const GEMINI_KEY = 'AIzaSyBHfdZwqQkrBWF2pp1hLCGZKaXKrinP9ew';
+
+// ========== গ্লোবাল ==========
+let isDarkMode = true, isSidebarOpen = false;
+let currentExam = null, examQuestions = [], userAnswers = {};
+let examTimer = null, examSeconds = 0, totalSeconds = 0;
+let currentCategory = null, currentSubCategory = null;
+let isExamSubmitted = false;
+let isMockTest = false, mockQuestionCount = 20;
+
+// ========== মোড সুইচ ==========
+function switchMode(mode) {
+    document.querySelectorAll('.mode-container').forEach(m => m.classList.remove('active'));
+    const el = document.getElementById('mode' + mode.charAt(0).toUpperCase() + mode.slice(1));
+    if (el) el.classList.add('active');
+    if (mode !== 'Hall') { stopTimer(); document.getElementById('timerBar').classList.remove('show'); document.getElementById('submitBtn').classList.remove('show'); }
+    if (mode === 'Hall') { document.getElementById('timerBar').classList.add('show'); document.getElementById('submitBtn').classList.add('show'); }
+    window.scrollTo(0, 0);
 }
 
-// ========== রেজাল্ট ==========
-function showResult(correct, wrong, skipped, negMark, finalScore, totalQ) {
-    const percent = Math.round((correct / totalQ) * 100);
-    let html = `<div class="result-card">`;
-    html += `<div style="font-size:16px;color:var(--text-secondary);">ফাইনাল স্কোর</div>`;
-    html += `<div class="result-big">${finalScore.toFixed(2)}</div>`;
-    html += `<div style="color:var(--text-secondary);">${totalQ} এর মধ্যে</div>`;
-    html += `</div>`;
-    
-    html += `<div class="result-grid">`;
-    html += `<div class="result-stat"><div class="result-stat-val correct-val">✅ ${correct}</div><div class="result-stat-label">সঠিক</div></div>`;
-    html += `<div class="result-stat"><div class="result-stat-val wrong-val">❌ ${wrong}</div><div class="result-stat-label">ভুল</div></div>`;
-    html += `<div class="result-stat"><div class="result-stat-val skipped-val">⏭️ ${skipped}</div><div class="result-stat-label">স্কিপ</div></div>`;
-    html += `</div>`;
-    
-    html += `<div class="result-card"><div class="info-row"><span class="info-label">নেগেটিভ মার্ক</span><span class="info-value" style="color:#EF4444;">-${negMark.toFixed(2)}</span></div></div>`;
-    
-    // ফিল্টার
-    html += `<div class="filter-bar">`;
-    html += `<button class="filter-btn active" onclick="filterResult('all')">সব</button>`;
-    html += `<button class="filter-btn" onclick="filterResult('correct')">✅ সঠিক</button>`;
-    html += `<button class="filter-btn" onclick="filterResult('wrong')">❌ ভুল</button>`;
-    html += `<button class="filter-btn" onclick="filterResult('skipped')">⏭️ স্কিপ</button>`;
-    html += `</div>`;
-    
-    // সমাধানপত্র
-    html += `<div id="solveSheet">`;
-    examQuestions.forEach((q, i) => {
-        const ua = userAnswers[q.id];
-        let status = 'skipped';
-        if (ua === q.answer_index) status = 'correct';
-        else if (ua) status = 'wrong';
-        
-        html += `<div class="mcq-card solve-item" data-status="${status}">`;
-        html += `<div class="q-text">${i+1}. ${q.question_text}</div>`;
-        [q.option1, q.option2, q.option3, q.option4, q.option5].forEach((opt, oi) => {
-            if (opt && opt !== '—') {
-                const labels = ['ক','খ','গ','ঘ','ঙ'];
-                let cls = '';
-                if (oi+1 === q.answer_index) cls = ' correct-reveal';
-                else if (oi+1 === ua && ua !== q.answer_index) cls = ' wrong-reveal';
-                html += `<div class="option-item${cls}"><span class="option-radio">${labels[oi]}</span> ${opt}</div>`;
-            }
+// ========== থিম ==========
+function loadTheme() {
+    const s = localStorage.getItem('atlas-theme');
+    isDarkMode = s !== 'light'; document.body.classList.toggle('dark-mode', isDarkMode); updateThemeIcon();
+}
+function toggleTheme() {
+    isDarkMode = !isDarkMode; document.body.classList.toggle('dark-mode', isDarkMode);
+    localStorage.setItem('atlas-theme', isDarkMode ? 'dark' : 'light'); updateThemeIcon();
+    showToast(isDarkMode ? '🌙 ডার্ক মোড' : '☀️ লাইট মোড');
+}
+function updateThemeIcon() {
+    const b = document.getElementById('themeToggle'), si = document.getElementById('sidebarThemeIcon'), st = document.getElementById('sidebarThemeText');
+    if (b) b.textContent = isDarkMode ? '🌙' : '☀️';
+    if (si) si.textContent = isDarkMode ? '🌙' : '☀️';
+    if (st) st.textContent = isDarkMode ? 'ডার্ক মোড' : 'লাইট মোড';
+}
+
+function toggleSidebar() { isSidebarOpen = !isSidebarOpen; document.getElementById('sidebarOverlay').classList.toggle('active', isSidebarOpen); document.getElementById('sidebar').classList.toggle('active', isSidebarOpen); }
+function closeSidebar() { isSidebarOpen = false; document.getElementById('sidebarOverlay').classList.remove('active'); document.getElementById('sidebar').classList.remove('active'); }
+function goTo(u) { window.location.href = u; }
+function navigateTo(p) { const r = { 'home':'index.html', 'profile':'dashboard.html', 'class':'class.html', 'exam':'exam.html' }; window.location.href = r[p] || 'index.html'; }
+function openWhatsApp() { window.open('https://wa.me/8801999681290', '_blank'); }
+function openTelegram() { window.open('https://t.me/rafi_somc', '_blank'); }
+function showToast(m, d) { d = d || 2500; const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), d); }
+
+// ========== ক্যাটাগরি ==========
+function showCategory(cat) {
+    currentCategory = cat;
+    let html = '<div class="section-header"><div class="section-title">' + 
+        (cat==='board'?'🔵 বোর্ড প্রস্তুতি':cat==='medical'?'🟢 মেডিকেল প্রস্তুতি':cat==='varsity'?'🟣 ভার্সিটি প্রস্তুতি':'🟠 অনুশীলনী এক্সাম') + 
+        '</div></div>';
+    if (cat === 'board') {
+        html += '<div class="cat-grid">';
+        ['বোর্ড প্রশ্ন এক্সাম','কলেজ প্রশ্ন এক্সাম','ক ভান্ডার','খ ভান্ডার','টাইপভিত্তিক CQ'].forEach((s,i) => {
+            html += `<div class="cat-card" onclick="showSubCategory('board', '${s}')"><span class="cat-name">${s}</span></div>`;
         });
-        if (q.explanation) html += `<p style="color:var(--text-secondary);font-size:12px;margin-top:6px;">💡 ${q.explanation}</p>`;
-        html += `<button class="ai-explain-btn" onclick="explainWithAI(${q.id})">🤖 ATLAS AI ব্যাখ্যা</button>`;
-        html += `<div class="ai-explanation" id="aiExp${q.id}"></div>`;
-        html += `</div>`;
-    });
-    html += `</div>`;
-    
-    document.getElementById('resultContent').innerHTML = html;
-}
-
-function filterResult(type) {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    event.target.classList.add('active');
-    document.querySelectorAll('.solve-item').forEach(item => {
-        if (type === 'all') item.style.display = 'block';
-        else item.style.display = item.dataset.status === type ? 'block' : 'none';
-    });
-}
-
-function retakeExam() {
-    userAnswers = {};
-    isExamSubmitted = false;
-    startExamHall();
-}
-
-// ========== ATLAS AI ব্যাখ্যা ==========
-async function explainWithAI(qid) {
-    const expDiv = document.getElementById('aiExp' + qid);
-    if (expDiv.classList.contains('show')) { expDiv.classList.remove('show'); return; }
-    
-    const q = examQuestions.find(q => q.id === qid);
-    if (!q) return;
-    
-    expDiv.classList.add('show');
-    expDiv.innerHTML = '⏳ AI ব্যাখ্যা আনা হচ্ছে...';
-    
-    const options = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(o => o && o !== '—');
-    const labels = ['ক','খ','গ','ঘ','ঙ'];
-    const correctLabel = labels[q.answer_index - 1];
-    const correctOption = options[q.answer_index - 1];
-    
-    let prompt = `তুমি একজন অভিজ্ঞ শিক্ষক। নিচের MCQ-টি বিশ্লেষণ করো:\n\nপ্রশ্ন: ${q.question_text}\n\n`;
-    options.forEach((opt, i) => { prompt += `${labels[i]}) ${opt}\n`; });
-    prompt += `\nসঠিক উত্তর: ${correctLabel}) ${correctOption}\n\n`;
-    prompt += `নির্দেশনা:\n১) প্রতিটি অপশন আলাদাভাবে ব্যাখ্যা করো\n২) সঠিক অপশন ✅ এবং কেন সঠিক তা বলো\n৩) ভুল অপশনগুলো ❌ এবং কেন ভুল তা বলো\n৪) বাংলায় উত্তর দাও\n৫) সংক্ষেপে বলো (২-৩ লাইন প্রতি অপশন)`;
-    
-    try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        html += '</div>';
+    } else if (cat === 'medical') {
+        html += '<div class="cat-grid">';
+        ['মেডিকেল স্ট্যান্ডার্ড Demo','বিগত প্রশ্ন (চাপ্টার)','বিগত প্রশ্ন (সাল)'].forEach((s,i) => {
+            html += `<div class="cat-card" onclick="showSubCategory('medical', '${s}')"><span class="cat-name">${s}</span></div>`;
         });
-        const data = await res.json();
-        if (data.candidates) {
-            expDiv.innerHTML = data.candidates[0].content.parts[0].text.replace(/\n/g, '<br>');
-        } else {
-            expDiv.innerHTML = '❌ ব্যাখ্যা পাওয়া যায়নি।';
-        }
-    } catch(e) {
-        expDiv.innerHTML = '❌ AI সার্ভার সমস্যা।';
+        html += '</div>';
+    } else if (cat === 'varsity') {
+        html += '<div class="cat-grid">';
+        ['Varsitywise Exam','বিগত প্রশ্ন (সাল)','বিগত প্রশ্ন (চাপ্টার)'].forEach((s,i) => {
+            html += `<div class="cat-card" onclick="showSubCategory('varsity', '${s}')"><span class="cat-name">${s}</span></div>`;
+        });
+        html += '</div>';
+    } else if (cat === 'onushiloni') {
+        html += '<p style="color:var(--text-secondary);text-align:center;">সাবজেক্ট → চ্যাপ্টার → রাইটার → এক্সাম</p>';
+        html += '<div class="list-item" onclick="showPreExam({title:\'ডেমো অনুশীলনী এক্সাম\', subject:\'জীববিজ্ঞান\', chapter:\'কোষ\', writer:\'হাসান স্যার\'})"><div><div class="list-item-title">ডেমো এক্সাম</div><div class="list-item-sub">জীববিজ্ঞান → কোষ → হাসান স্যার</div></div><span class="list-item-arrow">→</span></div>';
     }
+    document.getElementById('categoryContent').innerHTML = html;
+    switchMode('Category');
+}
+function showSubCategory(cat, sub) {
+    currentSubCategory = sub;
+    const demoExam = { title: sub + ' - ডেমো', subject: 'পদার্থবিজ্ঞান', chapter: 'গতি', exam_type: cat, total_marks: 50, duration_minutes: 30, id: 'demo_' + Date.now() };
+    showPreExam(demoExam);
+}
+function backToList() { switchMode('List'); currentCategory = null; currentSubCategory = null; }
+function backToCategory() { if (currentCategory) showCategory(currentCategory); else backToList(); }
+
+function showPreExam(exam) {
+    currentExam = exam;
+    let html = `<div class="section-header"><div class="section-title">📋 ${exam.title}</div></div>`;
+    html += `<div class="pre-exam-card">`;
+    html += `<div class="info-row"><span class="info-label">সাবজেক্ট</span><span class="info-value">${exam.subject||'—'}</span></div>`;
+    html += `<div class="info-row"><span class="info-label">চ্যাপ্টার</span><span class="info-value">${exam.chapter||'—'}</span></div>`;
+    if (exam.writer) html += `<div class="info-row"><span class="info-label">রাইটার</span><span class="info-value">${exam.writer}</span></div>`;
+    html += `<div class="info-row"><span class="info-label">মোট মার্ক</span><span class="info-value">${exam.total_marks||100}</span></div>`;
+    html += `<div class="info-row"><span class="info-label">সময়</span><span class="info-value">${exam.duration_minutes||60} মিনিট</span></div>`;
+    html += `</div>`;
+    document.getElementById('preExamInfo').innerHTML = html;
+    switchMode('PreExam');
 }
 
-// ========== পেজ লোড ==========
-document.addEventListener('DOMContentLoaded', function() {
-   // URL থেকে exam ID পড়া
-const params = new URLSearchParams(window.location.search);
-const examId = params.get('id');
-
-if (examId) {
-    loadExamById(examId);
-}
-
+// ========== এক্সাম লোড (Supabase থেকে) ==========
 async function loadExamById(examId) {
     console.log('📡 এক্সাম লোড:', examId);
-    
     try {
-        // এক্সাম ডাটা
-        const examRes = await fetch(
-            SUPABASE_URL + '/rest/v1/exams?id=eq.' + examId + '&select=*',
-            { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
-        );
+        const examRes = await fetch(SUPABASE_URL + '/rest/v1/exams?id=eq.' + examId + '&select=*', {
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+        });
         const examData = await examRes.json();
-        
-        if (!examData || examData.length === 0) {
-            showToast('❌ এক্সাম পাওয়া যায়নি');
-            return;
-        }
-        
+        if (!examData || examData.length === 0) { showToast('❌ এক্সাম পাওয়া যায়নি'); return; }
         currentExam = examData[0];
         
-        // প্রশ্ন ডাটা
-        const qRes = await fetch(
-            SUPABASE_URL + '/rest/v1/questions?exam_id=eq.' + examId + '&select=*',
-            { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
-        );
+        const qRes = await fetch(SUPABASE_URL + '/rest/v1/questions?exam_id=eq.' + examId + '&select=*', {
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+        });
         examQuestions = await qRes.json();
-        
         console.log('✅ এক্সাম:', currentExam.title, '| প্রশ্ন:', examQuestions.length);
-        
-        // প্রি-এক্সাম দেখাও
         showPreExamFromData(currentExam, examQuestions);
-        
-    } catch(e) {
-        console.error('❌', e);
-        alert('এক্সাম লোড এরর: ' + e.message);
-    }
+    } catch(e) { console.error('❌', e); alert('এক্সাম লোড এরর: ' + e.message); }
 }
 
 function showPreExamFromData(exam, questions) {
@@ -777,16 +725,160 @@ function showPreExamFromData(exam, questions) {
     document.getElementById('preExamInfo').innerHTML = html;
     switchMode('PreExam');
 }
+
+// ========== মক টেস্ট ==========
+function startMockTest() {
+    isMockTest = true;
+    let html = `<div class="section-header"><div class="section-title">🎯 আনলিমিটেড মক টেস্ট</div></div>`;
+    html += `<p style="text-align:center;color:var(--text-secondary);margin-bottom:16px;">প্রশ্ন সংখ্যা নির্বাচন করুন:</p>`;
+    html += `<div class="mock-options">`;
+    [20, 25, 35, 50].forEach(n => { html += `<button class="mock-option-btn" onclick="selectMockCount(${n})">${n} টি প্রশ্ন</button>`; });
+    html += `</div>`;
+    document.getElementById('categoryContent').innerHTML = html;
+    switchMode('Category');
+}
+function selectMockCount(count) {
+    mockQuestionCount = count;
+    examQuestions = generateDemoQuestions(count);
+    currentExam = { title: 'মক টেস্ট', total_marks: count, duration_minutes: Math.ceil(count/2), id: 'mock_' + Date.now() };
+    startExamHall();
+}
+
+// ========== ডেমো প্রশ্ন ==========
+function generateDemoQuestions(count) {
+    const qBank = [
+        { q: 'পানির রাসায়নিক সংকেত কী?', o: ['H₂O','CO₂','NaCl','O₂','—'], a: 1, exp: 'পানি H₂O নামে পরিচিত।' },
+        { q: 'বাংলাদেশের রাজধানী কোনটি?', o: ['চট্টগ্রাম','ঢাকা','খুলনা','রাজশাহী','—'], a: 2, exp: 'ঢাকা বাংলাদেশের রাজধানী।' },
+        { q: 'সালোকসংশ্লেষণ কোথায় ঘটে?', o: ['মাইটোকন্ড্রিয়া','ক্লোরোপ্লাস্ট','নিউক্লিয়াস','রাইবোজোম','—'], a: 2, exp: 'ক্লোরোপ্লাস্টে ক্লোরোফিল থাকে।' },
+        { q: 'DNA-এর পূর্ণরূপ কী?', o: ['Deoxyribonucleic Acid','Ribonucleic Acid','Amino Acid','Fatty Acid','—'], a: 1, exp: 'DNA = Deoxyribonucleic Acid।' },
+        { q: 'পৃথিবীর নিকটতম গ্রহ কোনটি?', o: ['মঙ্গল','শুক্র','বুধ','বৃহস্পতি','শনি'], a: 2, exp: 'শুক্র পৃথিবীর নিকটতম গ্রহ।' },
+        { q: 'কম্পিউটারের মস্তিষ্ক বলা হয় কাকে?', o: ['RAM','CPU','Hard Disk','Monitor','Mouse'], a: 2, exp: 'CPU-কে কম্পিউটারের মস্তিষ্ক বলা হয়।' },
+        { q: 'আলোর বেগ কত?', o: ['৩×১০⁸ m/s','৩×১০⁶ m/s','৩×১০⁴ m/s','৩×১০² m/s','—'], a: 1, exp: 'আলোর বেগ ৩×১০⁸ m/s।' },
+        { q: 'মানবদেহে কতটি হাড় আছে?', o: ['১০৬','২০৬','৩০৬','৪০৬','—'], a: 2, exp: 'মানবদেহে ২০৬টি হাড় আছে।' },
+        { q: 'বাংলাদেশের মুদ্রার নাম কী?', o: ['টাকা','রুপি','ডলার','ইউরো','—'], a: 1, exp: 'বাংলাদেশের মুদ্রা টাকা।' },
+        { q: 'রক্তের লাল রং কোনটির জন্য?', o: ['হিমোগ্লোবিন','ক্লোরোফিল','মেলানিন','কেরাটিন','—'], a: 1, exp: 'হিমোগ্লোবিনের জন্য রক্ত লাল।' },
+    ];
+    let qs = [];
+    for (let i = 0; i < count; i++) {
+        const q = qBank[i % qBank.length];
+        qs.push({ id: i+1, question_text: q.q, option1: q.o[0], option2: q.o[1], option3: q.o[2], option4: q.o[3], option5: q.o[4], answer_index: q.a, explanation: q.exp });
+    }
+    return qs;
+}
+
+function startExam() { examQuestions = generateDemoQuestions(25); startExamHall(); }
+
+function startExamHall() {
+    userAnswers = {}; isExamSubmitted = false;
+    totalSeconds = (currentExam.duration_minutes || 30) * 60; examSeconds = totalSeconds;
+    let qHTML = '';
+    examQuestions.forEach((q, i) => {
+        qHTML += `<div class="mcq-card" id="qCard${q.id}"><div class="q-number">প্রশ্ন ${i+1}/${examQuestions.length}</div><div class="q-text">${q.question_text}</div>`;
+        [q.option1, q.option2, q.option3, q.option4, q.option5].forEach((opt, oi) => {
+            if (opt && opt !== '—') {
+                const labels = ['ক','খ','গ','ঘ','ঙ'];
+                qHTML += `<div class="option-item" id="opt${q.id}_${oi+1}" onclick="selectOption(${q.id}, ${oi+1}, this)" data-qid="${q.id}" data-oid="${oi+1}"><span class="option-radio">${labels[oi]}</span><span class="option-label">${labels[oi]})</span> ${opt}<span class="lock-icon" id="lock${q.id}_${oi+1}" style="display:none;">🔒</span></div>`;
+            }
+        });
+        qHTML += `<button class="ai-explain-btn" onclick="explainWithAI(${q.id})">🤖 ATLAS AI ব্যাখ্যা</button><div class="ai-explanation" id="aiExp${q.id}"></div></div>`;
+    });
+    document.getElementById('questionsArea').innerHTML = qHTML;
+    let navHTML = ''; examQuestions.forEach((q, i) => { navHTML += `<button class="nav-box" id="navBox${q.id}" onclick="scrollToQ(${q.id})">${i+1}</button>`; });
+    document.getElementById('navPanel').innerHTML = navHTML;
+    switchMode('Hall'); startTimer();
+    document.getElementById('submitBtn').classList.add('show'); document.getElementById('timerBar').classList.add('show');
+}
+
+function selectOption(qid, oid, el) {
+    if (isExamSubmitted || userAnswers[qid]) return;
+    userAnswers[qid] = oid;
+    document.querySelectorAll(`[data-qid="${qid}"]`).forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    document.querySelectorAll(`[data-qid="${qid}"] .lock-icon`).forEach(l => l.style.display = 'none');
+    const lockIcon = document.getElementById(`lock${qid}_${oid}`);
+    if (lockIcon) lockIcon.style.display = 'inline';
+    const navBox = document.getElementById(`navBox${qid}`); if (navBox) navBox.classList.add('answered');
+}
+function scrollToQ(qid) {
+    const card = document.getElementById('qCard' + qid); if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.querySelectorAll('.nav-box').forEach(n => n.classList.remove('current'));
+    const navBox = document.getElementById('navBox' + qid); if (navBox) navBox.classList.add('current');
+}
+function startTimer() { stopTimer(); updateTimerDisplay(); examTimer = setInterval(() => { examSeconds--; updateTimerDisplay(); if (examSeconds <= 0) submitExam(); }, 1000); }
+function stopTimer() { if (examTimer) { clearInterval(examTimer); examTimer = null; } }
+function updateTimerDisplay() {
+    const m = Math.floor(examSeconds / 60), s = examSeconds % 60;
+    const txt = document.getElementById('timerText'); txt.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    if (examSeconds <= 60) txt.classList.add('timer-warning'); else txt.classList.remove('timer-warning');
+}
+function submitExam() {
+    if (isExamSubmitted) return; isExamSubmitted = true; stopTimer();
+    document.getElementById('timerBar').classList.remove('show'); document.getElementById('submitBtn').classList.remove('show');
+    let correct = 0, wrong = 0, skipped = 0;
+    examQuestions.forEach(q => { const ua = userAnswers[q.id]; if (!ua) skipped++; else if (ua === q.answer_index) correct++; else wrong++; });
+    const totalQ = examQuestions.length, negMark = wrong * 0.25; let finalScore = correct - negMark; if (finalScore < 0) finalScore = 0;
+    examQuestions.forEach(q => {
+        const ua = userAnswers[q.id];
+        if (ua === q.answer_index) document.getElementById(`opt${q.id}_${ua}`)?.classList.add('correct-reveal');
+        else { if (ua) document.getElementById(`opt${q.id}_${ua}`)?.classList.add('wrong-reveal'); document.getElementById(`opt${q.id}_${q.answer_index}`)?.classList.add('correct-reveal'); }
+        document.querySelectorAll(`[data-qid="${q.id}"]`).forEach(o => o.classList.add('locked'));
+    });
+    showResult(correct, wrong, skipped, negMark, finalScore, totalQ); switchMode('Result');
+}
+function showResult(correct, wrong, skipped, negMark, finalScore, totalQ) {
+    let html = `<div class="result-card"><div style="font-size:16px;color:var(--text-secondary);">ফাইনাল স্কোর</div><div class="result-big">${finalScore.toFixed(2)}</div><div style="color:var(--text-secondary);">${totalQ} এর মধ্যে</div></div>`;
+    html += `<div class="result-grid"><div class="result-stat"><div class="result-stat-val correct-val">✅ ${correct}</div><div class="result-stat-label">সঠিক</div></div><div class="result-stat"><div class="result-stat-val wrong-val">❌ ${wrong}</div><div class="result-stat-label">ভুল</div></div><div class="result-stat"><div class="result-stat-val skipped-val">⏭️ ${skipped}</div><div class="result-stat-label">স্কিপ</div></div></div>`;
+    html += `<div class="result-card"><div class="info-row"><span class="info-label">নেগেটিভ মার্ক</span><span class="info-value" style="color:#EF4444;">-${negMark.toFixed(2)}</span></div></div>`;
+    html += `<div class="filter-bar"><button class="filter-btn active" onclick="filterResult('all')">সব</button><button class="filter-btn" onclick="filterResult('correct')">✅ সঠিক</button><button class="filter-btn" onclick="filterResult('wrong')">❌ ভুল</button><button class="filter-btn" onclick="filterResult('skipped')">⏭️ স্কিপ</button></div><div id="solveSheet">`;
+    examQuestions.forEach((q, i) => {
+        const ua = userAnswers[q.id]; let status = ua === q.answer_index ? 'correct' : (ua ? 'wrong' : 'skipped');
+        html += `<div class="mcq-card solve-item" data-status="${status}"><div class="q-text">${i+1}. ${q.question_text}</div>`;
+        [q.option1, q.option2, q.option3, q.option4, q.option5].forEach((opt, oi) => {
+            if (opt && opt !== '—') {
+                const labels = ['ক','খ','গ','ঘ','ঙ']; let cls = '';
+                if (oi+1 === q.answer_index) cls = ' correct-reveal'; else if (oi+1 === ua && ua !== q.answer_index) cls = ' wrong-reveal';
+                html += `<div class="option-item${cls}"><span class="option-radio">${labels[oi]}</span> ${opt}</div>`;
+            }
+        });
+        if (q.explanation) html += `<p style="color:var(--text-secondary);font-size:12px;margin-top:6px;">💡 ${q.explanation}</p>`;
+        html += `<button class="ai-explain-btn" onclick="explainWithAI(${q.id})">🤖 ATLAS AI ব্যাখ্যা</button><div class="ai-explanation" id="aiExp${q.id}"></div></div>`;
+    });
+    html += `</div>`; document.getElementById('resultContent').innerHTML = html;
+}
+function filterResult(type) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active')); event.target.classList.add('active');
+    document.querySelectorAll('.solve-item').forEach(item => { item.style.display = (type === 'all' || item.dataset.status === type) ? 'block' : 'none'; });
+}
+function retakeExam() { userAnswers = {}; isExamSubmitted = false; startExamHall(); }
+
+async function explainWithAI(qid) {
+    const expDiv = document.getElementById('aiExp' + qid);
+    if (expDiv.classList.contains('show')) { expDiv.classList.remove('show'); return; }
+    const q = examQuestions.find(q => q.id === qid); if (!q) return;
+    expDiv.classList.add('show'); expDiv.innerHTML = '⏳ AI ব্যাখ্যা আনা হচ্ছে...';
+    const options = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(o => o && o !== '—');
+    const labels = ['ক','খ','গ','ঘ','ঙ'];
+    let prompt = `তুমি একজন অভিজ্ঞ শিক্ষক। নিচের MCQ-টি বিশ্লেষণ করো:\n\nপ্রশ্ন: ${q.question_text}\n\n`;
+    options.forEach((opt, i) => { prompt += `${labels[i]}) ${opt}\n`; });
+    prompt += `\nসঠিক উত্তর: ${labels[q.answer_index - 1]}) ${options[q.answer_index - 1]}\n\nনির্দেশনা:\n১) প্রতিটি অপশন আলাদাভাবে ব্যাখ্যা করো\n২) সঠিক অপশন ✅ এবং কেন সঠিক তা বলো\n৩) ভুল অপশনগুলো ❌ এবং কেন ভুল তা বলো\n৪) বাংলায় উত্তর দাও\n৫) সংক্ষেপে বলো (২-৩ লাইন প্রতি অপশন)`;
+    try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+        const data = await res.json();
+        expDiv.innerHTML = data.candidates ? data.candidates[0].content.parts[0].text.replace(/\n/g, '<br>') : '❌ ব্যাখ্যা পাওয়া যায়নি।';
+    } catch(e) { expDiv.innerHTML = '❌ AI সার্ভার সমস্যা।'; }
+}
+
+// ========== পেজ লোড ==========
+document.addEventListener('DOMContentLoaded', function() {
     console.log('📝 Exam Page Loaded');
     loadTheme();
-    
-    // URL প্যারামিটার চেক
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('mock') === 'true') startMockTest();
-    if (params.get('id')) {
-        // TODO: Supabase থেকে এক্সাম লোড
-        showPreExam({ title: 'এক্সাম #' + params.get('id'), subject: '—', chapter: '—', total_marks: 50, duration_minutes: 30 });
-    }
+    var params = new URLSearchParams(window.location.search);
+    var examId = params.get('id');
+    var isMock = params.get('mock');
+    if (examId) { loadExamById(examId); }
+    else if (isMock === 'true') { startMockTest(); }
 });
 </script>
 </body>
