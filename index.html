@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATLAS Exam App - Home</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Navbar -->
+        <nav class="navbar">
+            <h2>ATLAS</h2>
+            <button class="theme-btn" onclick="toggleTheme()">Day/Night 🌓</button>
+        </nav>
+
+        <!-- 1. Countdown Card -->
+        <div class="countdown-card">
+            <h2 id="cd-topic">লোডিং...</h2>
+            <p id="cd-subtopic"></p>
+            <div class="timer" id="countdown-timer">
+                <span id="days">00d</span> : <span id="hours">00h</span> : 
+                <span id="mins">00m</span> : <span id="secs">00s</span>
+            </div>
+        </div>
+
+        <!-- 2. Main Navigation Buttons -->
+        <div class="nav-grid">
+            <a href="classes.html" class="main-btn">🟥 Free Class Section</a>
+            <a href="exam-categories.html" class="main-btn">🟥 Free Exam Section</a>
+            <a href="mistakes.html" class="main-btn">📍 My Mistakes</a>
+            <a href="ai-chat.html" class="main-btn">📍 ATLAS AI</a>
+            <a href="profile.html" class="main-btn" id="profile-btn" style="display:none;">👤 My Profile</a>
+            <a href="admin.html" class="main-btn" id="admin-btn" style="display:none; background: #EF4444; color: white;">⚙️ Admin Control</a>
+        </div>
+
+        <!-- 3. Social Media Row -->
+        <div class="social-row">
+            <a href="https://facebook.com" target="_blank">Facebook</a>
+            <a href="https://youtube.com/@atlasprep" target="_blank">YouTube</a>
+            <a href="https://t.me/rafi_somc" target="_blank">Telegram</a>
+            <a href="https://wa.me/8801999681290" target="_blank">WhatsApp</a>
+        </div>
+
+        <!-- 4. Owner Profile Section -->
+        <div class="owner-section">
+            <div class="owner-card-inner" onclick="this.classList.toggle('is-flipped')">
+                <div class="owner-front">
+                    <!-- ATLAS Logo or Owner Photo goes here -->
+                    <img src="assets/owner.jpg" alt="Rafi Vaiya" onerror="this.src='https://via.placeholder.com/100'">
+                </div>
+                <div class="owner-back">
+                    <strong>Rafi Vaiya</strong>
+                    <p>Founder, ATLAS</p>
+                </div>
+            </div>
+            <p style="margin-top: 15px; font-size: 0.9rem;">Click photo to view info</p>
+        </div>
+
+        <!-- 5. Fixed Bottom-Right Buttons -->
+        <div class="fixed-bottom">
+            <a href="https://wa.me/8801999681290" target="_blank" class="fixed-btn">WA</a>
+            <a href="https://t.me/rafi_somc" target="_blank" class="fixed-btn telegram">TG</a>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="supabase.js"></script>
+    <script src="app.js"></script>
+    <script src="home.js"></script>
+</body>
+</html>
