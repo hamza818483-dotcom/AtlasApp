@@ -502,104 +502,99 @@
                 btn.textContent = 'লগইন করুন';
             }
         }
+async function handleRegister() {
+    clearAllErrors();
+    const name = document.getElementById('regName').value.trim();
+    const batch = document.getElementById('regBatch').value.trim();
+    const college = document.getElementById('regCollege').value.trim();
+    const father = document.getElementById('regFather').value.trim();
+    const mother = document.getElementById('regMother').value.trim();
+    const ssc = document.getElementById('regSSC').value.trim();
+    const hsc = document.getElementById('regHSC').value.trim();
+    const timer = document.getElementById('regTimer').value;
+    const phone = document.getElementById('regPhone').value.trim();
+    const pass = document.getElementById('regPassword').value;
 
-        async function handleRegister() {
-            clearAllErrors();
-            const name = document.getElementById('regName').value.trim();
-            const batch = document.getElementById('regBatch').value.trim();
-            const college = document.getElementById('regCollege').value.trim();
-            const father = document.getElementById('regFather').value.trim();
-            const mother = document.getElementById('regMother').value.trim();
-            const ssc = document.getElementById('regSSC').value.trim();
-            const hsc = document.getElementById('regHSC').value.trim();
-            const timer = document.getElementById('regTimer').value;
-            const phone = document.getElementById('regPhone').value.trim();
-            const pass = document.getElementById('regPassword').value;
+    let err = false;
+    if (!name) { showError('regName', 'regNameError'); err = true; }
+    if (!batch) { showError('regBatch', 'regBatchError'); err = true; }
+    if (!college) { showError('regCollege', 'regCollegeError'); err = true; }
+    if (!validateGPA(ssc)) { showError('regSSC', 'regSSCError'); err = true; }
+    if (!validateGPA(hsc)) { showError('regHSC', 'regHSCError'); err = true; }
+    if (!timer) { showError('regTimer', 'regTimerError'); err = true; }
+    if (!validatePhone(phone)) { showError('regPhone', 'regPhoneError'); err = true; }
+    if (pass.length < 6) { showError('regPassword', 'regPassError'); err = true; }
+    if (err) return;
 
-            let err = false;
-            if (!name) { showError('regName', 'regNameError'); err = true; }
-            if (!batch) { showError('regBatch', 'regBatchError'); err = true; }
-            if (!college) { showError('regCollege', 'regCollegeError'); err = true; }
-            if (!validateGPA(ssc)) { showError('regSSC', 'regSSCError'); err = true; }
-            if (!validateGPA(hsc)) { showError('regHSC', 'regHSCError'); err = true; }
-            if (!timer) { showError('regTimer', 'regTimerError'); err = true; }
-            if (!validatePhone(phone)) { showError('regPhone', 'regPhoneError'); err = true; }
-            if (pass.length < 6) { showError('regPassword', 'regPassError'); err = true; }
-            if (err) return;
+    const btn = document.getElementById('registerBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> রেজিস্টার হচ্ছে...';
 
-            const btn = document.getElementById('registerBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner"></span> রেজিস্টার হচ্ছে...';
-
-            try {
-                // চেক ডুপ্লিকেট
-                const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}&select=phone`, {
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-                });
-                const existing = await checkRes.json();
-                
-                if (existing && existing.length > 0) {
-                    showToast('❌ এই ফোন আগেই রেজিস্টার্ড');
-                    btn.disabled = false;
-                    btn.textContent = 'রেজিস্টার করুন';
-                    return;
-                }
-
-                // ইনসার্ট
-                const body = JSON.stringify({
-                    phone: phone,
-                    name: name,
-                    batch: batch,
-                    college: college,
-                    father_name: father || null,
-                    mother_name: mother || null,
-                    ssc_gpa: parseFloat(ssc),
-                    hsc_gpa: parseFloat(hsc),
-                    timer_type: timer,
-                    password_hash: pass,
-                    created_at: new Date().toISOString()
-                });
-
-                console.log('Inserting:', body);
-
-                const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
-                    method: 'POST',
-                    headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': `Bearer ${SUPABASE_KEY}`,
-                        'Content-Type': 'application/json',
-                        'Prefer': 'return=representation'
-                    },
-                    body: body
-                });
-
-                const result = await insertRes.json();
-                console.log('Result:', result);
-
-                if (insertRes.ok) {
-                    const sess = { phone: phone, name: name, batch: batch, college: college, ssc_gpa: parseFloat(ssc), hsc_gpa: parseFloat(hsc), timer_type: timer, loggedInAt: new Date().toISOString() };
-                    localStorage.setItem('atlas-session', JSON.stringify(sess));
-                    showToast('✅ রেজিস্ট্রেশন সফল!');
-                    setTimeout(() => { window.location.href = 'index.html'; }, 1200);
-                } else {
-                    console.error('Insert failed:', result);
-                    showToast('❌ সার্ভার এরর: ' + (result.message || 'আবার চেষ্টা করুন'));
-                    btn.disabled = false;
-                    btn.textContent = 'রেজিস্টার করুন';
-                }
-
-               } catch(e) {
-                console.error('Register Error:', e);
-             // মোবাইলের জন্য এরর অ্যালার্ট
-             alert('এরর: ' + e.message + '\n\nবিস্তারিত কনসোলে (F12) দেখুন');
-                showToast('❌ রেজিস্ট্রেশন ব্যর্থ');
-                   btn.disabled = false;
-          btn.textContent = 'রেজিস্টার করুন';
+    try {
+        // চেক ডুপ্লিকেট
+        const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}&select=phone`, {
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+        });
+        const existing = await checkRes.json();
+        
+        if (existing && existing.length > 0) {
+            showToast('❌ এই ফোন আগেই রেজিস্টার্ড');
+            btn.disabled = false;
+            btn.textContent = 'রেজিস্টার করুন';
+            return;
         }
-                btn.disabled = false;
-                btn.textContent = 'রেজিস্টার করুন';
-            }
+
+        // ইনসার্ট
+        const body = JSON.stringify({
+            phone: phone,
+            name: name,
+            batch: batch,
+            college: college,
+            father_name: father || null,
+            mother_name: mother || null,
+            ssc_gpa: parseFloat(ssc),
+            hsc_gpa: parseFloat(hsc),
+            timer_type: timer,
+            password_hash: pass,
+            created_at: new Date().toISOString()
+        });
+
+        console.log('Inserting:', body);
+
+        const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=representation'
+            },
+            body: body
+        });
+
+        const result = await insertRes.json();
+        console.log('Result:', result);
+
+        if (insertRes.ok) {
+            const sess = { phone: phone, name: name, batch: batch, college: college, ssc_gpa: parseFloat(ssc), hsc_gpa: parseFloat(hsc), timer_type: timer, loggedInAt: new Date().toISOString() };
+            localStorage.setItem('atlas-session', JSON.stringify(sess));
+            showToast('✅ রেজিস্ট্রেশন সফল!');
+            setTimeout(() => { window.location.href = 'index.html'; }, 1200);
+        } else {
+            console.error('Insert failed:', result);
+            showToast('❌ সার্ভার এরর: ' + (result.message || 'আবার চেষ্টা করুন'));
+            btn.disabled = false;
+            btn.textContent = 'রেজিস্টার করুন';
         }
+
+    } catch(e) {
+        console.error('Register Error:', e);
+        alert('এরর: ' + e.message + '\n\nকনসোলে দেখুন (F12)');
+        showToast('❌ রেজিস্ট্রেশন ব্যর্থ');
+        btn.disabled = false;
+        btn.textContent = 'রেজিস্টার করুন';
+    }
+}
 
         async function handleForget() {
             clearAllErrors();
