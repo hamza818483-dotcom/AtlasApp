@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATLAS AI</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .ai-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 56px - 60px - 32px);
+            min-height: 400px;
+        }
+        .ai-header-card {
+            background-color: var(--atlas-bg);
+            border: 2px solid var(--atlas-border);
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            text-align: center;
+            box-shadow: 0 0 14px var(--atlas-glow);
+        }
+        .ai-header-title {
+            color: var(--atlas-text);
+            font-family: 'Inter', 'Noto Sans Bengali', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+        }
+        .ai-header-sub {
+            color: var(--atlas-text);
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 2px;
+        }
+        .key-status {
+            color: var(--atlas-text);
+            font-size: 10px;
+            opacity: 0.6;
+            margin-top: 4px;
+        }
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            background-color: var(--card-bg);
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 10px;
+            border: 1px solid var(--option-border);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .chat-empty {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+            padding: 40px 20px;
+            font-family: 'Noto Sans Bengali', 'Inter', sans-serif;
+        }
+        .chat-empty .icon {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 12px;
+        }
+        .message {
+            max-width: 85%;
+            padding: 12px 14px;
+            border-radius: 14px;
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease;
+            font-family: 'Noto Sans Bengali', 'Inter', sans-serif;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .message.user {
+            align-self: flex-end;
+            background-color: var(--atlas-bg);
+            color: var(--atlas-text);
+            border: 1px solid var(--atlas-border);
+            border-bottom-right-radius: 4px;
+        }
+        .message.ai {
+            align-self: flex-start;
+            background-color: var(--option-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--option-border);
+            border-bottom-left-radius: 4px;
+        }
+        .message .msg-time {
+            font-size: 10px;
+            opacity: 0.6;
+            margin-top: 4px;
+            text-align: right;
+        }
+        .typing-indicator {
+            align-self: flex-start;
+            padding: 10px 16px;
+            background-color: var(--option-bg);
+            border-radius: 14px;
+            border: 1px solid var(--option-border);
+            display: none;
+        }
+        .typing-indicator.show {
+            display: block;
+        }
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--text-secondary);
+            animation: bounce 1.2s infinite;
+        }
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-8px); }
+        }
+        .input-area {
+            display: flex;
+            gap: 8px;
+            background-color: var(--card-bg);
+            border-radius: 14px;
+            padding: 8px;
+            border: 1px solid var(--option-border);
+        }
+        .input-area input {
+            flex: 1;
+            padding: 12px 14px;
+            border: 2px solid var(--option-border);
+            border-radius: 10px;
+            font-family: 'Noto Sans Bengali', 'Inter', sans-serif;
+            font-size: 14px;
+            background-color: var(--body-bg);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+        .input-area input:focus {
+            outline: none;
+            border-color: var(--atlas-border);
+            box-shadow: 0 0 8px var(--atlas-glow);
+        }
+        .send-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            border: 2px solid var(--atlas-border);
+            background-color: var(--atlas-bg);
+            color: var(--atlas-text);
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+        .send-btn:hover {
+            background-color: var(--atlas-hover-bg);
+            box-shadow: 0 0 14px var(--atlas-glow);
+        }
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .clear-btn {
+            display: block;
+            margin: 8px auto 0;
+            padding: 8px 20px;
+            background: transparent;
+            border: 1px solid var(--option-border);
+            color: var(--text-secondary);
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            font-family: 'Noto Sans Bengali', 'Inter', sans-serif;
+            transition: all 0.3s ease;
+        }
+        .clear-btn:hover {
+            border-color: #EF4444;
+            color: #EF4444;
+        }
+    </style>
+</head>
+<body class="dark-mode">
+
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><div class="sidebar-logo">ATLAS EXAM</div></div>
+        <nav class="sidebar-menu">
+            <button class="sidebar-item" onclick="navigateTo('profile'); closeSidebar();"><span class="icon">👤</span> প্রোফাইল</button>
+            <button class="sidebar-item" onclick="goTo('index.html'); closeSidebar();"><span class="icon">🏠</span> হোম</button>
+            <button class="sidebar-item" onclick="goTo('class.html'); closeSidebar();"><span class="icon">📚</span> ফ্রি ক্লাস</button>
+            <button class="sidebar-item" onclick="goTo('exam.html'); closeSidebar();"><span class="icon">📝</span> ফ্রি এক্সাম</button>
+            <button class="sidebar-item" onclick="goTo('exam.html?mock=true'); closeSidebar();"><span class="icon">🎯</span> মক টেস্ট</button>
+            <button class="sidebar-item" onclick="goTo('dashboard.html'); closeSidebar();"><span class="icon">❌</span> মাই মিসটেকস</button>
+            <button class="sidebar-item" onclick="goTo('ai.html'); closeSidebar();"><span class="icon">🤖</span> ATLAS AI</button>
+            <div class="sidebar-divider"></div>
+            <button class="sidebar-item" onclick="toggleTheme()"><span class="icon" id="sidebarThemeIcon">🌙</span> <span id="sidebarThemeText">ডার্ক মোড</span></button>
+            <button class="sidebar-item" onclick="openWhatsApp()"><span class="icon">💬</span> WhatsApp</button>
+            <button class="sidebar-item" onclick="openTelegram()"><span class="icon">✈️</span> Telegram</button>
+        </nav>
+    </aside>
+
+    <header class="header">
+        <div class="header-left">
+            <button class="hamburger" onclick="toggleSidebar()">☰</button>
+            <div class="logo">ATLAS EXAM</div>
+        </div>
+        <div class="header-right">
+            <button class="header-icon" id="themeToggle" onclick="toggleTheme()">🌙</button>
+            <button class="header-icon" onclick="goTo('auth.html')">👤</button>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="ai-container">
+            <div class="ai-header-card">
+                <div class="ai-header-title">🤖 ATLAS AI</div>
+                <div class="ai-header-sub">Gemini AI — একাধিক API Key (অটো-রোটেশন)</div>
+                <div class="key-status" id="keyStatus">🔑 মোট Key: 0 | আজ ব্যবহৃত: 0</div>
+            </div>
+
+            <div class="chat-area" id="chatArea">
+                <div class="chat-empty" id="chatEmpty">
+                    <span class="icon">🤖</span>
+                    ATLAS AI-তে স্বাগতম!<br>আপনার পড়াশোনার প্রশ্ন করুন।
+                </div>
+            </div>
+
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="typing-dots"><span></span><span></span><span></span></div>
+            </div>
+
+            <button class="clear-btn" onclick="clearChat()">🗑️ চ্যাট ক্লিয়ার</button>
+
+            <div class="input-area">
+                <input type="text" id="chatInput" placeholder="এখানে প্রশ্ন লিখুন..." maxlength="500">
+                <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
+            </div>
+        </div>
+    </main>
+
+    <nav class="bottom-nav">
+        <button class="nav-item" onclick="goTo('index.html')"><span class="nav-icon">🏠</span><span>হোম</span></button>
+        <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon">📚</span><span>ক্লাস</span></button>
+        <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon">📝</span><span>এক্সাম</span></button>
+        <button class="nav-item" onclick="goTo('exam.html?mock=true')"><span class="nav-icon">🎯</span><span>মক</span></button>
+        <button class="nav-item" onclick="goTo('auth.html')"><span class="nav-icon">👤</span><span>প্রোফাইল</span></button>
+    </nav>
+
+    <div class="floating-buttons">
+        <button class="fab fab-whatsapp" onclick="openWhatsApp()">💬</button>
+        <button class="fab fab-telegram" onclick="openTelegram()">✈️</button>
+    </div>
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ========== GEMINI API KEYS ==========
+        const GEMINI_API_KEYS = [
+            'AIzaSyBSMSx9qUhYrtt-eGbCSrkGG7hT8ThE92Q',
+            'AIzaSyApV8kBie6_ORJSOMduuA9L1zONm-KYXNI', 
+            'AIzaSyDOaou5Q6zQfMVV8vS5WR5c8X0kOW4lx70',
+            'AIzaSyD7f8UGA7QebXLKNJwiw0rAdOxvcc2s17s',
+            'AIzaSyAvDRLRVWnC5592LTRwYlsFe-9VCwEwDkM',
+        ].filter(k => k && k !== 'YOUR_GEMINI_KEY_1' && k !== 'YOUR_GEMINI_KEY_2' && k !== 'YOUR_GEMINI_KEY_3' && k !== 'YOUR_GEMINI_KEY_4' && k !== 'YOUR_GEMINI_KEY_5');
+
+        let keyUsageCount = {};
+        const DAILY_LIMIT = 1450; // ১৫০০-র আগেই থামুন
+
+        function getNextKey() {
+            const now = new Date();
+            const today = now.toDateString();
+            
+            if (keyUsageCount._date !== today) {
+                keyUsageCount = { _date: today };
+                console.log('🔄 আজকের API কাউন্ট রিসেট');
+            }
+            
+            let bestKey = null;
+            let bestCount = Infinity;
+            
+            for (let key of GEMINI_API_KEYS) {
+                const count = keyUsageCount[key] || 0;
+                if (count < DAILY_LIMIT && count < bestCount) {
+                    bestKey = key;
+                    bestCount = count;
+                }
+            }
+            
+            if (bestKey) {
+                keyUsageCount[bestKey] = (keyUsageCount[bestKey] || 0) + 1;
+                updateKeyStatus();
+                console.log('🔑 Key:', bestKey.substring(0, 8) + '...', 'Count:', keyUsageCount[bestKey]);
+                return bestKey;
+            }
+            
+            console.error('❌ সব Key লিমিট শেষ!');
+            return null;
+        }
+
+        function updateKeyStatus() {
+            const el = document.getElementById('keyStatus');
+            if (el) {
+                const total = GEMINI_API_KEYS.length;
+                let used = 0;
+                GEMINI_API_KEYS.forEach(k => used += (keyUsageCount[k] || 0));
+                el.textContent = `🔑 Key: ${total}টি | আজ ব্যবহৃত: ${used} / ${total * DAILY_LIMIT}`;
+            }
+        }
+
+        async function callGemini(text, retryCount = 0) {
+            if (retryCount > GEMINI_API_KEYS.length + 2) {
+                return '❌ সব API Key ব্যর্থ। পরে চেষ্টা করুন।';
+            }
+            
+            const apiKey = getNextKey();
+            if (!apiKey) {
+                return '❌ আজকের API লিমিট শেষ (সব Key)। কাল আবার আসুন।';
+            }
+            
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+            
+            try {
+                console.log('📡 API কল রিকোয়েস্ট #' + (retryCount + 1));
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: 'তুমি একজন সহায়ক AI টিচার। শিক্ষার্থীদের পড়াশোনায় সাহায্য করো। বাংলা ও ইংরেজি দুই ভাষাতেই উত্তর দিতে পারো। প্রশ্ন: ' + text
+                            }]
+                        }]
+                    })
+                });
+
+                if (response.status === 429) {
+                    console.warn('⚠️ Rate Limit! Retrying...');
+                    return await callGemini(text, retryCount + 1);
+                }
+                
+                if (response.status === 403 || response.status === 400) {
+                    console.error('❌ Invalid Key, retrying...');
+                    return await callGemini(text, retryCount + 1);
+                }
+
+                const data = await response.json();
+                console.log('✅ রেসপন্স পেয়েছে');
+
+                if (data.candidates && data.candidates.length > 0) {
+                    return data.candidates[0].content.parts[0].text;
+                } else if (data.error) {
+                    console.error('❌ API এরর:', data.error);
+                    return '❌ এরর: ' + data.error.message;
+                } else {
+                    return '❌ উত্তর পাওয়া যায়নি।';
+                }
+
+            } catch(e) {
+                console.error('❌ নেটওয়ার্ক এরর:', e);
+                return await callGemini(text, retryCount + 1);
+            }
+        }
+
+        // ========== বাকি কোড (আগের মতোই) ==========
+        let isDarkMode = true;
+        let isSidebarOpen = false;
+        let chatHistory = [];
+
+        function loadTheme() {
+            const saved = localStorage.getItem('atlas-theme');
+            if (saved === 'light') { isDarkMode = false; document.body.classList.remove('dark-mode'); }
+            else { isDarkMode = true; document.body.classList.add('dark-mode'); }
+            updateThemeIcon();
+        }
+
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            document.body.classList.toggle('dark-mode', isDarkMode);
+            localStorage.setItem('atlas-theme', isDarkMode ? 'dark' : 'light');
+            updateThemeIcon();
+            showToast(isDarkMode ? '🌙 ডার্ক মোড' : '☀️ লাইট মোড');
+        }
+
+        function updateThemeIcon() {
+            const btn = document.getElementById('themeToggle');
+            const sIcon = document.getElementById('sidebarThemeIcon');
+            const sText = document.getElementById('sidebarThemeText');
+            if (btn) btn.textContent = isDarkMode ? '🌙' : '☀️';
+            if (sIcon) sIcon.textContent = isDarkMode ? '🌙' : '☀️';
+            if (sText) sText.textContent = isDarkMode ? 'ডার্ক মোড' : 'লাইট মোড';
+        }
+
+        function toggleSidebar() {
+            isSidebarOpen = !isSidebarOpen;
+            document.getElementById('sidebarOverlay').classList.toggle('active', isSidebarOpen);
+            document.getElementById('sidebar').classList.toggle('active', isSidebarOpen);
+        }
+
+        function closeSidebar() {
+            isSidebarOpen = false;
+            document.getElementById('sidebarOverlay').classList.remove('active');
+            document.getElementById('sidebar').classList.remove('active');
+        }
+
+        function goTo(url) { window.location.href = url; }
+        function navigateTo(page) {
+            const r = { 'home': 'index.html', 'profile': 'dashboard.html', 'class': 'class.html', 'exam': 'exam.html' };
+            window.location.href = r[page] || 'index.html';
+        }
+        function openWhatsApp() { window.open('https://wa.me/8801999681290', '_blank'); }
+        function openTelegram() { window.open('https://t.me/rafi_somc', '_blank'); }
+
+        function showToast(msg, dur = 2500) {
+            let toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toast._t);
+            toast._t = setTimeout(() => toast.classList.remove('show'), dur);
+        }
+
+        function getTime() {
+            const d = new Date();
+            return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+        }
+
+        function addMessage(text, type) {
+            const chatArea = document.getElementById('chatArea');
+            const empty = document.getElementById('chatEmpty');
+            if (empty) empty.style.display = 'none';
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message ' + type;
+            msgDiv.innerHTML = text.replace(/\n/g, '<br>') + '<div class="msg-time">' + getTime() + '</div>';
+            chatArea.appendChild(msgDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+            chatHistory.push({ text, type, time: getTime() });
+            saveChatHistory();
+        }
+
+        function saveChatHistory() {
+            try {
+                if (chatHistory.length > 50) chatHistory = chatHistory.slice(-50);
+                localStorage.setItem('atlas-chat', JSON.stringify(chatHistory));
+            } catch(e) {}
+        }
+
+        function loadChatHistory() {
+            try {
+                const saved = localStorage.getItem('atlas-chat');
+                if (saved) {
+                    chatHistory = JSON.parse(saved);
+                    chatHistory.forEach(msg => {
+                        const chatArea = document.getElementById('chatArea');
+                        const empty = document.getElementById('chatEmpty');
+                        if (empty) empty.style.display = 'none';
+                        const msgDiv = document.createElement('div');
+                        msgDiv.className = 'message ' + msg.type;
+                        msgDiv.innerHTML = msg.text.replace(/\n/g, '<br>') + '<div class="msg-time">' + msg.time + '</div>';
+                        chatArea.appendChild(msgDiv);
+                    });
+                    chatArea.scrollTop = chatArea.scrollHeight;
+                }
+            } catch(e) { chatHistory = []; }
+        }
+
+        function clearChat() {
+            chatHistory = [];
+            localStorage.removeItem('atlas-chat');
+            document.getElementById('chatArea').innerHTML = '<div class="chat-empty" id="chatEmpty"><span class="icon">🤖</span>চ্যাট ক্লিয়ার!<br>নতুন প্রশ্ন করুন।</div>';
+            showToast('🗑️ চ্যাট ক্লিয়ার');
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+            
+            if (GEMINI_API_KEYS.length === 0) {
+                showToast('⚠️ আগে API Key সেট করুন');
+                addMessage('❌ API Key সেট করা হয়নি। কোডে GEMINI_API_KEYS আপডেট করুন।', 'ai');
+                return;
+            }
+
+            console.log('🚀 sendMessage:', text.substring(0, 50));
+            input.value = '';
+            addMessage(text, 'user');
+            
+            const typing = document.getElementById('typingIndicator');
+            typing.classList.add('show');
+            document.getElementById('sendBtn').disabled = true;
+
+            const reply = await callGemini(text);
+            
+            typing.classList.remove('show');
+            addMessage(reply, 'ai');
+            document.getElementById('sendBtn').disabled = false;
+            updateKeyStatus();
+            console.log('🏁 sendMessage শেষ');
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && document.activeElement === document.getElementById('chatInput')) {
+                sendMessage();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🤖 ATLAS AI (Multi-Key) লোড');
+            console.log('🔑 মোট Key:', GEMINI_API_KEYS.length);
+            loadTheme();
+            loadChatHistory();
+            updateKeyStatus();
+        });
+    </script>
+</body>
+</html>
