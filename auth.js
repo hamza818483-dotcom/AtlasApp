@@ -254,56 +254,49 @@ window.handleRegistration = async function () {
 // ============================================================
 
 window.handleLogin = async function () {
-  const get = id => document.getElementById(id)?.value?.trim() || '';
-  const phone    = get('login-phone');
-  const password = get('login-pass');
-  const toast    = window.showToast || ((m, t) => alert(m));
+  const phone = document.getElementById('login-phone')?.value?.trim() || '';
+  const password = document.getElementById('login-pass')?.value?.trim() || '';
 
   if (!phone || !password) {
-    return toast('Phone ও Password দিন।', 'error');
-  }
-
-  // ── Admin hardcoded check ──
-  if (phone === ADMIN_PHONE && password === ADMIN_PASSWORD) {
-    const adminUser = {
-      id: 'admin',
-      name: 'Admin',
-      phone: ADMIN_PHONE,
-      role: 'admin'
-    };
-    await setSession(adminUser);
-    updateAuthUI();
-    toast('✅ Admin Login সফল!', 'success');
-    document.getElementById('login-phone').value = '';
-    document.getElementById('login-pass').value  = '';
-    setTimeout(() => {
-      if (typeof bottomNav === 'function') bottomNav('home');
-    }, 800);
+    alert('Phone ও Password দিন।');
     return;
   }
 
-  // ── DB User Check ──
-  const { data: user, error } = await _supabase
-    .from('users')
-    .select('*')
-    .eq('phone', phone)
-    .eq('password', password)
-    .maybeSingle();
-
-  if (error || !user) {
-    return toast('Phone বা Password ভুল।', 'error');
+  // ── Admin hardcoded check ──
+  if (phone === '01754365403' && password === 'AtlasApp2026') {
+    // Save admin to localStorage
+    const adminUser = {
+      id: 'admin',
+      name: 'Admin',
+      phone: '01754365403',
+      role: 'admin'
+    };
+    localStorage.setItem('atlas_user', JSON.stringify(adminUser));
+    
+    // Show admin button
+    const adminBtn = document.getElementById('admin-control-btn');
+    if (adminBtn) {
+      adminBtn.style.display = 'block';
+    }
+    
+    alert('✅ Admin Login সফল!');
+    
+    // Clear inputs
+    document.getElementById('login-phone').value = '';
+    document.getElementById('login-pass').value = '';
+    
+    // Go to home page
+    if (typeof bottomNav === 'function') {
+      bottomNav('home');
+    } else if (typeof navigateTo === 'function') {
+      navigateTo('page-home');
+    } else {
+      window.location.href = '#page-home';
+    }
+    return;
   }
 
-  await setSession(user);
-  updateAuthUI();
-  toast('✅ Login সফল! স্বাগতম ' + user.name, 'success');
-
-  document.getElementById('login-phone').value = '';
-  document.getElementById('login-pass').value  = '';
-
-  setTimeout(() => {
-    if (typeof bottomNav === 'function') bottomNav('home');
-  }, 800);
+  alert('ভুল ফোন নম্বর বা পাসওয়ার্ড!\n\nAdmin login: 01754365403 / AtlasApp2026');
 };
 
 // ============================================================
