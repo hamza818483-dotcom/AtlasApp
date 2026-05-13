@@ -187,7 +187,8 @@ function renderSolveSheet(perQuestion, filter) {
 // ─── Deduction Logic ──────────────────────────────────────────
 function calculateDeductions(resultMap, user, exam) {
   let secondTimerDeduction = 0;
-  if (user && user.timer_type === 'second') {
+  // UPDATE: Changed timer_type to timer_status matching database column
+  if (user && user.timer_status === 'second') {
     secondTimerDeduction = resultMap.totalMarks <= 50 ? 1.5 : 5;
   }
   return { secondTimerDeduction };
