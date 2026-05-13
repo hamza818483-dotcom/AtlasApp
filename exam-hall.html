@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Exam - ATLAS</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="exam.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Pre-Exam Info Screen -->
+        <div id="pre-exam-screen" class="card">
+            <h2 id="exam-title">Loading Exam...</h2>
+            <p><strong>বিষয়:</strong> <span id="exam-subject"></span></p>
+            <p><strong>অধ্যায়:</strong> <span id="exam-chapter"></span></p>
+            <p><strong>মোট প্রশ্ন:</strong> <span id="exam-total-q"></span></p>
+            <button class="btn-primary" onclick="startExam()">পরীক্ষা শুরু করুন</button>
+        </div>
+
+        <!-- Live Exam Hall (Hidden initially) -->
+        <div id="live-exam-screen" style="display: none;">
+            <div class="exam-header">
+                <h3>টাইমার: <span id="live-timer" style="color: #EF4444;">00:00</span></h3>
+            </div>
+            
+            <div class="exam-layout">
+                <!-- Question Container -->
+                <div id="questions-container" class="q-container"></div>
+                
+                <!-- Navigation Boxes (Right Side) -->
+                <div id="nav-boxes" class="nav-container"></div>
+            </div>
+
+            <!-- Fixed Submit Button -->
+            <button id="submit-exam-btn" class="fixed-submit-btn" onclick="submitExam()">পরীক্ষা জমা দিন</button>
+        </div>
+    </div>
+
+    <script src="supabase.js"></script>
+    <script src="app.js"></script>
+    <script src="exam.js"></script>
+</body>
+</html>
