@@ -54,16 +54,21 @@ async function processCSV(file) {
                 });
                 resolve(data);
             } catch (err) {
+                console.error("CSV Processing Error:", err); // ডিবাগ লগ যুক্ত করা হলো
                 reject("CSV ফাইলটি সঠিক ফরম্যাটে নেই!");
             }
         };
-        reader.onerror = () => reject("ফাইল পড়তে সমস্যা হয়েছে!");
+        reader.onerror = () => {
+            console.error("File Reader Error!"); // ডিবাগ লগ যুক্ত করা হলো
+            reject("ফাইল পড়তে সমস্যা হয়েছে!");
+        }
         reader.readAsText(file);
     });
 }
 
 // ─── 1. ADD NEW EXAM (With Bulk CSV) ────────────────────────
 window.handleAddExam = async function() {
+    console.log("handleAddExam function triggered!"); // ডিবাগ লগ যুক্ত করা হলো
     const user = checkAdminAccess();
     if (!user) return;
 
@@ -81,9 +86,13 @@ window.handleAddExam = async function() {
     examBtn.disabled = true;
 
     try {
+        console.log("Processing CSV..."); // ডিবাগ লগ যুক্ত করা হলো
         const questions = await processCSV(csvFile);
+        console.log("CSV Processed Successfully. Total Questions:", questions.length); // ডিবাগ লগ যুক্ত করা হলো
+        
         const title = `${subject} - ${chapter} Exam`;
         
+        console.log("Sending data to Supabase..."); // ডিবাগ লগ যুক্ত করা হলো
         // Supabase Insert
         const { data, error } = await supabase.from('exams').insert([{
             title: title,
@@ -95,8 +104,12 @@ window.handleAddExam = async function() {
             created_by: user.phone
         }]).select();
 
-        if (error) throw error;
+        if (error) {
+            console.error("Supabase Database Error:", error); // ডাটাবেস এরর ডিবাগ
+            throw error;
+        }
         
+        console.log("Data saved successfully to Supabase:", data); // ডিবাগ লগ যুক্ত করা হলো
         showToast("✅ এক্সাম সফলভাবে তৈরি হয়েছে!", "success");
         
         // জেনারেট হওয়া এক্সাম লিংক কপি করার অপশন
@@ -121,6 +134,7 @@ window.handleAddExam = async function() {
 
 // ─── 2. ADD NEW CLASS (YouTube Links) ────────────────────────
 window.handleAddClass = async function() {
+    console.log("handleAddClass function triggered!"); // ডিবাগ লগ যুক্ত করা হলো
     const user = checkAdminAccess();
     if (!user) return;
 
@@ -137,7 +151,8 @@ window.handleAddClass = async function() {
     classBtn.innerText = "Saving...";
     classBtn.disabled = true;
 
-    const { error } = await supabase.from('classes').insert([{
+    console.log("Sending class data to Supabase..."); // ডিবাগ লগ যুক্ত করা হলো
+    const { data, error } = await supabase.from('classes').insert([{
         subject: subject,
         chapter: chapter,
         title: title,
@@ -146,8 +161,10 @@ window.handleAddClass = async function() {
     }]);
 
     if (error) {
+        console.error("Supabase Class Add Error:", error); // ডিবাগ লগ যুক্ত করা হলো
         showToast("ক্লাস সেভ করা যায়নি", "error");
     } else {
+        console.log("Class saved successfully:", data); // ডিবাগ লগ যুক্ত করা হলো
         showToast("✅ ক্লাস সফলভাবে যুক্ত হয়েছে!", "success");
         document.getElementById('class-title').value = '';
         document.getElementById('class-link').value = '';
@@ -181,7 +198,10 @@ window.handleAddCQ = async function() {
         added_by: user.phone
     }]);
 
-    if (error) showToast("CQ সেভ করা যায়নি", "error");
+    if (error) {
+        console.error("Supabase CQ Add Error:", error); // ডিবাগ লগ যুক্ত করা হলো
+        showToast("CQ সেভ করা যায়নি", "error");
+    }
     else {
         showToast("✅ CQ সফলভাবে যুক্ত হয়েছে!", "success");
         document.getElementById('cq-link').value = '';
@@ -202,6 +222,8 @@ window.grantSubAdmin = async function() {
     // আগে চেক করবে ইউজার আছে কি না
     const { data: existUser, error: findErr } = await supabase.from('users').select('name').eq('phone', phone).maybeSingle();
     
+    if (findErr) console.error("Error finding user:", findErr); // ডিবাগ লগ যুক্ত করা হলো
+
     if (!existUser) {
         return showToast("এই নম্বরে কোনো স্টুডেন্ট নেই!", "error");
     }
@@ -213,6 +235,7 @@ window.grantSubAdmin = async function() {
         .eq('phone', phone);
 
     if (updateErr) {
+        console.error("Supabase Update Role Error:", updateErr); // ডিবাগ লগ যুক্ত করা হলো
         showToast("সাব-অ্যাডমিন বানানো যায়নি", "error");
     } else {
         showToast(`✅ ${existUser.name} কে সাব-অ্যাডমিন অ্যাক্সেস দেওয়া হয়েছে!`, "success");
@@ -240,7 +263,10 @@ window.handleUpdateCountdown = async function() {
         countdown_date: targetDate
     }).eq('id', 1); // Assuming row id 1 for settings
 
-    if (error) showToast("কাউন্টডাউন আপডেট হয়নি", "error");
+    if (error) {
+        console.error("Supabase Countdown Update Error:", error); // ডিবাগ লগ যুক্ত করা হলো
+        showToast("কাউন্টডাউন আপডেট হয়নি", "error");
+    }
     else showToast("✅ কাউন্টডাউন সফলভাবে সেট করা হয়েছে!", "success");
 };
 
@@ -256,7 +282,10 @@ window.safeDelete = async function(tableName, id) {
 
     if (confirm("আপনি কি নিশ্চিতভাবে এটি ডিলিট করতে চান? (এটি আর রিকভার করা যাবে না)")) {
         const { error } = await supabase.from(tableName).delete().eq('id', id);
-        if (error) showToast("ডিলিট করা যায়নি", "error");
+        if (error) {
+            console.error(`Supabase Delete Error on ${tableName}:`, error); // ডিবাগ লগ যুক্ত করা হলো
+            showToast("ডিলিট করা যায়নি", "error");
+        }
         else {
             showToast("✅ সফলভাবে ডিলিট হয়েছে", "success");
             // Optional: Refresh list function here
