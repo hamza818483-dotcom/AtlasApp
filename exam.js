@@ -1,156 +1,377 @@
-// exam.js - Live Exam Logic
-let currentQuestions = [];
-let userAnswers = {};
-let examDuration = 0; // in seconds
-let timerInterval;
+// ============================================================
+// exam.js — ATLAS Exam Engine
+// Handles: load exam, render questions, timer, lock answers,
+//          auto-submit, submit button, save attempt to DB
+// ============================================================
 
-async function loadExamInfo() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const examId = urlParams.get('id');
-    if(!examId) return alert("কোনো এক্সাম সিলেক্ট করা হয়নি!");
+import { supabase } from './supabase.js';
+import { getCurrentUser } from './auth.js';
+import { showResult } from './result.js';
 
-    // Fetch Exam Details
-    const { data: exam } = await _supabase.from('exams').select('*').eq('id', examId).single();
-    // Fetch Questions
-    const { data: questions } = await _supabase.from('questions').select('*').eq('exam_id', examId);
-    
-    currentQuestions = questions;
-    examDuration = questions.length * 60; // Default 1 min per question (Admin can set this later)
+let examData = null;         // { exam meta + questions[] }
+let userAnswers = {};        // { questionIndex: optionNumber }
+let timerInterval = null;
+let examStartTime = null;
+let totalSeconds = 0;
 
-    document.getElementById('exam-title').innerText = exam.title || "ATLAS Exam";
-    document.getElementById('exam-subject').innerText = exam.subject;
-    document.getElementById('exam-chapter').innerText = exam.chapter;
-    document.getElementById('exam-total-q').innerText = questions.length;
+// ─── Entry Point ─────────────────────────────────────────────
+export async function initExam(examId) {
+  const container = document.getElementById('app');
+  container.innerHTML = `<div class="loader-wrap"><div class="loader"></div><p>এক্সাম লোড হচ্ছে...</p></div>`;
+
+  const { data: exam, error } = await supabase
+    .from('exams')
+    .select('*, questions(*)')
+    .eq('id', examId)
+    .single();
+
+  if (error || !exam) {
+    container.innerHTML = `<p class="error-msg">এক্সাম লোড করা যায়নি। পুনরায় চেষ্টা করুন।</p>`;
+    return;
+  }
+
+  examData = exam;
+  examData.questions.sort((a, b) => a.order_index - b.order_index);
+
+  showPreExamScreen(exam);
 }
 
-function startExam() {
-    document.getElementById('pre-exam-screen').style.display = 'none';
-    document.getElementById('live-exam-screen').style.display = 'block';
-    renderQuestions();
-    startTimer();
-}
+// ─── Pre-Exam Info Screen ─────────────────────────────────────
+function showPreExamScreen(exam) {
+  const user = getCurrentUser();
+  const container = document.getElementById('app');
 
-function renderQuestions() {
-    const qContainer = document.getElementById('questions-container');
-    const navContainer = document.getElementById('nav-boxes');
-    qContainer.innerHTML = ''; navContainer.innerHTML = '';
+  const now = new Date();
+  const start = new Date(exam.start_time);
+  const end = new Date(exam.end_time);
+  const duration = exam.duration_minutes;
 
-    currentQuestions.forEach((q, index) => {
-        const qNum = index + 1;
-        // Navigation Box
-        navContainer.innerHTML += `<div class="nav-box" id="nav-${q.id}" onclick="scrollToQ('${q.id}')">${qNum}</div>`;
-        
-        // Question Box
-        let optionsHtml = '';
-        for(let i=1; i<=5; i++) {
-            if(q[`option${i}`]) {
-                optionsHtml += `
-                    <label class="option-label" id="lbl-${q.id}-${i}" onclick="selectOption('${q.id}', ${i})">
-                        <input type="radio" name="q-${q.id}" value="${i}"> 
-                        ${q[`option${i}`]}
-                    </label>`;
-            }
+  container.innerHTML = `
+    <div class="pre-exam-wrap">
+      <div class="pre-exam-card">
+        <div class="pre-exam-badge">${exam.exam_type_label || 'MCQ Exam'}</div>
+        <h1 class="pre-exam-title">${exam.title}</h1>
+        <div class="pre-exam-meta">
+          <div class="meta-item"><span class="meta-icon">📚</span><span>${exam.subject}</span></div>
+          <div class="meta-item"><span class="meta-icon">📖</span><span>${exam.chapter}</span></div>
+          <div class="meta-item"><span class="meta-icon">❓</span><span>${examData.questions.length} টি প্রশ্ন</span></div>
+          <div class="meta-item"><span class="meta-icon">⏱</span><span>${duration} মিনিট</span></div>
+          <div class="meta-item"><span class="meta-icon">📅</span><span>${formatDate(start)} – ${formatDate(end)}</span></div>
+          ${exam.negative_marks ? `<div class="meta-item"><span class="meta-icon">➖</span><span>নেগেটিভ মার্কিং: ${exam.negative_marks} প্রতি ভুলে</span></div>` : ''}
+        </div>
+        <div class="pre-exam-rules">
+          <h3>📋 নিয়মাবলী</h3>
+          <ul>
+            <li>একবার অপশন সিলেক্ট করলে পরিবর্তন করা যাবে না।</li>
+            <li>সময় শেষ হলে স্বয়ংক্রিয়ভাবে সাবমিট হয়ে যাবে।</li>
+            <li>সাবমিট করার পর রেজাল্ট তাৎক্ষণিক দেখা যাবে।</li>
+            ${exam.negative_marks ? '<li>প্রতিটি ভুল উত্তরে নেগেটিভ মার্কিং প্রযোজ্য।</li>' : ''}
+          </ul>
+        </div>
+        ${user
+          ? `<p class="pre-exam-user">পরীক্ষার্থী: <strong>${user.name}</strong></p>`
+          : `<p class="pre-exam-guest">⚠️ গেস্ট মোডে পরীক্ষা দিচ্ছেন — ফলাফল প্রোফাইলে সেভ হবে না।</p>`
         }
+        <button class="btn-start-exam" id="btnStartExam">
+          পরীক্ষা শুরু করুন <span>→</span>
+        </button>
+      </div>
+    </div>
+  `;
 
-        qContainer.innerHTML += `
-            <div class="q-box" id="qbox-${q.id}">
-                <h4>${qNum}. ${q.question_text}</h4>
-                ${optionsHtml}
-            </div>
-        `;
+  document.getElementById('btnStartExam').addEventListener('click', () => {
+    startExam(duration);
+  });
+}
+
+// ─── Start Exam ───────────────────────────────────────────────
+function startExam(durationMinutes) {
+  examStartTime = new Date();
+  totalSeconds = durationMinutes * 60;
+  userAnswers = {};
+  renderExamHall();
+  startTimer();
+}
+
+// ─── Render Exam Hall ─────────────────────────────────────────
+function renderExamHall() {
+  const container = document.getElementById('app');
+  const questions = examData.questions;
+
+  container.innerHTML = `
+    <div class="exam-hall">
+      <!-- Sticky Header -->
+      <div class="exam-header sticky-header">
+        <div class="exam-header-title">${examData.title}</div>
+        <div class="exam-timer" id="examTimer">00:00</div>
+      </div>
+
+      <div class="exam-body">
+        <!-- Questions Column -->
+        <div class="exam-questions-col" id="questionsCol">
+          ${questions.map((q, i) => renderQuestion(q, i)).join('')}
+        </div>
+
+        <!-- Nav Sidebar -->
+        <div class="exam-nav-sidebar">
+          <div class="nav-title">প্রশ্ন নং</div>
+          <div class="nav-grid" id="navGrid">
+            ${questions.map((_, i) => `
+              <button class="nav-box" id="nav-${i}" onclick="scrollToQuestion(${i})">${i + 1}</button>
+            `).join('')}
+          </div>
+          <div class="nav-legend">
+            <span class="legend-dot answered"></span> উত্তর দেওয়া
+            <span class="legend-dot unanswered"></span> বাকি
+          </div>
+        </div>
+      </div>
+
+      <!-- Fixed Submit Button -->
+      <div class="exam-submit-bar">
+        <button class="btn-submit-exam" id="btnSubmitExam">
+          ✅ সাবমিট করুন
+        </button>
+      </div>
+    </div>
+  `;
+
+  // Expose scroll helper globally
+  window.scrollToQuestion = (index) => {
+    const el = document.getElementById(`question-${index}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  document.getElementById('btnSubmitExam').addEventListener('click', () => {
+    confirmAndSubmit();
+  });
+
+  attachOptionListeners();
+}
+
+// ─── Render Single Question Card ──────────────────────────────
+function renderQuestion(q, index) {
+  const options = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(Boolean);
+  return `
+    <div class="question-card" id="question-${index}">
+      <div class="q-number-row">
+        <span class="q-number">${index + 1}</span>
+        <button class="btn-bookmark" data-qid="${q.id}" title="বুকমার্ক করুন">🔖</button>
+      </div>
+      <div class="q-text">${q.question}</div>
+      <div class="q-options" id="options-${index}">
+        ${options.map((opt, oi) => `
+          <button
+            class="option-btn"
+            data-qindex="${index}"
+            data-optindex="${oi + 1}"
+            id="opt-${index}-${oi + 1}"
+          >
+            <span class="opt-label">${String.fromCharCode(64 + oi + 1)}</span>
+            <span class="opt-text">${opt}</span>
+            <span class="lock-icon hidden" id="lock-${index}-${oi + 1}">🔒</span>
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ─── Attach Option Click Listeners ───────────────────────────
+function attachOptionListeners() {
+  document.querySelectorAll('.option-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const qi = parseInt(btn.dataset.qindex);
+      const oi = parseInt(btn.dataset.optindex);
+
+      // Already answered → locked, ignore
+      if (userAnswers[qi] !== undefined) return;
+
+      // Save answer
+      userAnswers[qi] = oi;
+
+      // Style: select this option
+      const optionsWrap = document.getElementById(`options-${qi}`);
+      optionsWrap.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected', 'locked');
+
+      // Show lock icon
+      document.getElementById(`lock-${qi}-${oi}`).classList.remove('hidden');
+
+      // Update nav box
+      const navBox = document.getElementById(`nav-${qi}`);
+      if (navBox) navBox.classList.add('answered');
+
+      // Bookmark listener (must be attached per card after render)
     });
+  });
+
+  // Bookmark buttons
+  document.querySelectorAll('.btn-bookmark').forEach(btn => {
+    btn.addEventListener('click', () => toggleBookmark(btn.dataset.qid, btn));
+  });
 }
 
-function selectOption(qId, selectedOption) {
-    if(userAnswers[qId]) return; // One-Time Selection (Lock)
-
-    userAnswers[qId] = selectedOption;
-    
-    // UI Update
-    document.getElementById(`lbl-${qId}-${selectedOption}`).classList.add('selected');
-    document.getElementById(`nav-${qId}`).classList.add('answered');
-
-    // Lock all options for this question
-    for(let i=1; i<=5; i++) {
-        let lbl = document.getElementById(`lbl-${qId}-${i}`);
-        if(lbl) {
-            lbl.classList.add('locked');
-            if(i === selectedOption) lbl.innerHTML += '<span class="lock-icon">🔒</span>';
-        }
-    }
-}
-
-function scrollToQ(qId) {
-    document.getElementById(`qbox-${qId}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
+// ─── Timer ────────────────────────────────────────────────────
 function startTimer() {
-    let timeLeft = examDuration;
-    timerInterval = setInterval(() => {
-        if(timeLeft <= 0) { clearInterval(timerInterval); submitExam(); }
-        
-        let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-        let s = (timeLeft % 60).toString().padStart(2, '0');
-        document.getElementById('live-timer').innerText = `${m}:${s}`;
-        timeLeft--;
-    }, 1000);
+  let remaining = totalSeconds;
+  updateTimerDisplay(remaining);
+
+  timerInterval = setInterval(() => {
+    remaining--;
+    updateTimerDisplay(remaining);
+    if (remaining <= 0) {
+      clearInterval(timerInterval);
+      autoSubmit();
+    }
+    // Warning at 60s
+    if (remaining === 60) {
+      document.getElementById('examTimer')?.classList.add('timer-warning');
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay(seconds) {
+  const el = document.getElementById('examTimer');
+  if (!el) return;
+  const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+  const s = (seconds % 60).toString().padStart(2, '0');
+  el.textContent = `${m}:${s}`;
+}
+
+// ─── Submit Logic ─────────────────────────────────────────────
+function confirmAndSubmit() {
+  const total = examData.questions.length;
+  const answered = Object.keys(userAnswers).length;
+  const skipped = total - answered;
+
+  if (skipped > 0) {
+    const ok = confirm(`⚠️ আপনি ${skipped}টি প্রশ্ন এড়িয়ে গেছেন। তারপরও সাবমিট করবেন?`);
+    if (!ok) return;
+  }
+  submitExam();
+}
+
+function autoSubmit() {
+  const container = document.getElementById('app');
+  const banner = document.createElement('div');
+  banner.className = 'auto-submit-banner';
+  banner.textContent = '⏰ সময় শেষ! স্বয়ংক্রিয়ভাবে সাবমিট হচ্ছে...';
+  container.prepend(banner);
+  setTimeout(submitExam, 1500);
 }
 
 async function submitExam() {
-    clearInterval(timerInterval);
-    document.getElementById('submit-exam-btn').innerText = "সাবমিট হচ্ছে...";
-    document.getElementById('submit-exam-btn').disabled = true;
+  clearInterval(timerInterval);
+  const user = getCurrentUser();
+  const questions = examData.questions;
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const examId = urlParams.get('id');
-    const user = JSON.parse(localStorage.getItem('atlas_user'));
-    
-    // Evaluation Logic
-    let correct = 0, wrong = 0, skipped = 0;
-    currentQuestions.forEach(q => {
-        let ans = userAnswers[q.id];
-        if(!ans) skipped++;
-        else if(ans === q.answer) correct++;
-        else wrong++;
-    });
+  // Build results
+  const resultMap = buildResultMap(questions);
 
-    const negativeMarks = wrong * 0.25; // Standard MCQ negative marking
-    let mainScore = correct - negativeMarks;
+  // Save to DB if logged in
+  if (user) {
+    await saveAttemptToDb(user.id, resultMap);
+  }
 
-    // 2nd Timer Deduction Logic
-    if(user && user.timer_status === 'Second Timer') {
-        if(currentQuestions.length <= 50) mainScore -= 1.5;
-        else mainScore -= 5;
-    }
-
-    // GPA Logic
-    let gpaScore = 0;
-    if(user) {
-        gpaScore = (parseFloat(user.ssc_gpa) * 8) + (parseFloat(user.hsc_gpa) * 12);
-    }
-    const scoreWithGpa = mainScore + gpaScore;
-
-    // Save to DB
-    const resultData = {
-        user_id: user ? user.id : null,
-        exam_id: examId,
-        total_questions: currentQuestions.length,
-        correct_count: correct,
-        wrong_count: wrong,
-        skipped_count: skipped,
-        negative_marks: negativeMarks,
-        score_without_gpa: mainScore,
-        score_with_gpa: scoreWithGpa,
-        user_answers: userAnswers
-    };
-
-    const { data, error } = await _supabase.from('exam_results').insert([resultData]).select();
-    
-    if(!error && data) {
-        window.location.href = `result.html?result_id=${data[0].id}`;
-    } else {
-        alert("রেজাল্ট সেভ করতে সমস্যা হয়েছে!");
-    }
+  showResult({
+    exam: examData,
+    questions,
+    userAnswers,
+    resultMap,
+    user
+  });
 }
 
-loadExamInfo();
+// ─── Build Result Map ─────────────────────────────────────────
+function buildResultMap(questions) {
+  let correct = 0, wrong = 0, skipped = 0;
+  const perQuestion = [];
+
+  questions.forEach((q, i) => {
+    const selected = userAnswers[i];
+    const correctAns = parseInt(q.answer);
+    let status = 'skipped';
+
+    if (selected === undefined || selected === null) {
+      status = 'skipped';
+      skipped++;
+    } else if (selected === correctAns) {
+      status = 'correct';
+      correct++;
+    } else {
+      status = 'wrong';
+      wrong++;
+    }
+
+    perQuestion.push({
+      question: q,
+      selected: selected || null,
+      correctAnswer: correctAns,
+      status
+    });
+  });
+
+  const negativeMark = parseFloat(examData.negative_marks || 0);
+  const marksPerCorrect = parseFloat(examData.marks_per_question || 1);
+  const totalMarks = examData.total_marks || questions.length;
+
+  const rawScore = (correct * marksPerCorrect) - (wrong * negativeMark);
+  const finalScore = Math.max(0, rawScore);
+
+  return {
+    correct, wrong, skipped,
+    rawScore, finalScore,
+    totalMarks, marksPerCorrect, negativeMark,
+    perQuestion
+  };
+}
+
+// ─── Save Attempt to Supabase ─────────────────────────────────
+async function saveAttemptToDb(userId, resultMap) {
+  const attemptData = {
+    user_id: userId,
+    exam_id: examData.id,
+    correct: resultMap.correct,
+    wrong: resultMap.wrong,
+    skipped: resultMap.skipped,
+    score: resultMap.finalScore,
+    total_marks: resultMap.totalMarks,
+    answers: userAnswers,
+    taken_at: new Date().toISOString()
+  };
+
+  const { error } = await supabase.from('exam_attempts').insert(attemptData);
+  if (error) console.error('Attempt save error:', error.message);
+}
+
+// ─── Bookmark ─────────────────────────────────────────────────
+async function toggleBookmark(questionId, btn) {
+  const user = getCurrentUser();
+  if (!user) { alert('বুকমার্ক করতে লগইন করুন।'); return; }
+
+  const { data: existing } = await supabase
+    .from('bookmarks')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('question_id', questionId)
+    .single();
+
+  if (existing) {
+    await supabase.from('bookmarks').delete().eq('id', existing.id);
+    btn.classList.remove('bookmarked');
+    btn.title = 'বুকমার্ক করুন';
+  } else {
+    await supabase.from('bookmarks').insert({ user_id: user.id, question_id: questionId });
+    btn.classList.add('bookmarked');
+    btn.title = 'বুকমার্ক সরান';
+  }
+}
+
+// ─── Helpers ──────────────────────────────────────────────────
+function formatDate(d) {
+  return d.toLocaleString('bn-BD', { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+export function getExamData() { return examData; }
+export function getUserAnswers() { return userAnswers; }
