@@ -375,3 +375,30 @@ function formatDate(d) {
 
 export function getExamData() { return examData; }
 export function getUserAnswers() { return userAnswers; }
+
+// ============================================================
+// 🟥 NEW: GLOBAL EXPOSURE FOR APP.JS INTEGRATION 🟥
+// ============================================================
+window.ExamModule = {
+    loadCategory: async function(category, subtype) {
+        // This function will fetch exams based on category from DB and display a list
+        console.log(`Loading category: ${category}, Subtype: ${subtype}`);
+        const container = document.getElementById(`page-exam-${category}`);
+        if(container) {
+            container.innerHTML += `<div style="padding: 20px; text-align: center;">Exams loading for ${category}...</div>`;
+            // Add your specific Supabase fetch logic here later based on requirement
+        }
+    },
+    
+    startMock: async function(standard, count) {
+        // Implementation for Unlimited Mock Test random generation
+        console.log(`Starting mock test for standard: ${standard}, count: ${count}`);
+        if(typeof showToast === 'function') showToast(`Mock Test প্রস্তুত করা হচ্ছে... (${standard} - ${count}টি প্রশ্ন)`, 'success');
+        
+        // Dummy loading logic - replace with actual Supabase RPC or random fetch
+        setTimeout(() => {
+           // initExam('dummy-mock-id'); 
+           alert("Mock Test will start here. Random fetch logic needed.");
+        }, 1000);
+    }
+};
