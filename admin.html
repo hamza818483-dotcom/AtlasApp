@@ -455,7 +455,122 @@ async function loadClasses() {
 function clearClassForm() { ['classSubject','classPaper','classChapter','classStart','classEnd','classLink'].forEach(id => document.getElementById(id).value=''); }
 
 // ========== EXAM ==========
-
+async function saveExam() {
+    if (!examCSVData || examCSVData.length === 0) { 
+        showToast('⚠️ CSV ফাইল আপলোড করুন'); 
+        return; 
+    }
+    
+    const data = {
+        title: document.getElementById('examSubject').value.trim() + ' - ' + document.getElementById('examChapter').value.trim(),
+        subject: document.getElementById('examSubject').value.trim(),
+        chapter: document.getElementById('examChapter').value.trim(),
+        exam_type: document.getElementById('examType').value,
+        board: document.getElementById('examBoard').value.trim() || null,
+        year: document.getElementById('examYear').value.trim() || null,
+        writer: document.getElementById('examWriter').value.trim() || null,
+        start_time: document.getElementById('examStart').value || null,
+        end_time: document.getElementById('examEnd').value || null,
+        total_marks: examCSVData.length,
+        duration_minutes: Math.ceil(examCSVData.length / 2),
+        created_by: currentUser?.phone || 'admin'
+    };
+    
+    if (!data.subject || !data.chapter || !data.exam_type) { 
+        showToast('⚠️ সাবজেক্ট, চ্যাপ্টার ও এক্সাম টাইপ আবশ্যক'); 
+        return; 
+    }
+    
+    console.log('📡 এক্সাম সেইভ:', data);
+    
+    try {
+        // স্টেপ ১: এক্সাম ইনসার্ট
+        const examInsert = await fetch(`${SUPABASE_URL}/rest/v1/exams`, {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=representation'
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (!examInsert.ok) {
+            const errText = await examInsert.text();
+            console.error('❌ এক্সাম ইনসার্ট এরর:', errText);
+            showToast('❌ এক্সাম সেইভ ব্যর্থ: ' + errText);
+            return;
+        }
+        
+        const examResult = await examInsert.json();
+        console.log('✅ এক্সাম রেসপন্স:', examResult);
+        
+        // examResult অ্যারে বা অবজেক্ট হতে পারে
+        let examId = null;
+        if (Array.isArray(examResult) && examResult.length > 0) {
+            examId = examResult[0].id;
+        } else if (examResult.id) {
+            examId = examResult.id;
+        }
+        
+        if (!examId) {
+            console.error('❌ examId পাওয়া যায়নি:', examResult);
+            showToast('❌ এক্সাম আইডি পাওয়া যায়নি');
+            return;
+        }
+        
+        console.log('✅ Exam ID:', examId);
+        
+        // স্টেপ ২: প্রশ্ন ইনসার্ট
+        const questionsData = examCSVData.map(q => ({
+            exam_id: examId,
+            question_text: q.questions || q.question_text,
+            option1: q.option1,
+            option2: q.option2,
+            option3: q.option3,
+            option4: q.option4,
+            option5: q.option5 || null,
+            answer_index: q.answer || q.answer_index,
+            explanation: q.explanation || '',
+            type: q.type || 1,
+            section: q.section || 1
+        }));
+        
+        console.log('📡 প্রশ্ন ইনসার্ট:', questionsData.length + ' টি');
+        
+        const qInsert = await fetch(`${SUPABASE_URL}/rest/v1/questions`, {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify(questionsData)
+        });
+        
+        if (!qInsert.ok) {
+            const errText = await qInsert.text();
+            console.error('❌ প্রশ্ন ইনসার্ট এরর:', errText);
+            showToast('⚠️ এক্সাম সেইভ কিন্তু প্রশ্ন ইনসার্ট ব্যর্থ');
+        } else {
+            console.log('✅ প্রশ্ন ইনসার্ট সফল');
+        }
+        
+        // লিংক কপি
+        const link = window.location.origin + '/exam.html?id=' + examId;
+        showToast('✅ এক্সাম সেইভ!');
+        alert('📋 এক্সাম লিংক:\n' + link);
+        
+        clearExamForm();
+        loadExams();
+        
+    } catch(e) {
+        console.error('❌ সেভ এরর:', e);
+        showToast('❌ সেইভ ব্যর্থ: ' + e.message);
+    }
+}
 function clearExamForm() { ['examSubject','examChapter','examBoard','examYear','examWriter','examStart','examEnd'].forEach(id => document.getElementById(id).value=''); examCSVData = null; document.getElementById('examCSVName').textContent=''; document.getElementById('examType').value=''; }
 function copyLink(link) { navigator.clipboard?.writeText(link); showToast('📋 লিংক কপি হয়েছে!'); }
 
