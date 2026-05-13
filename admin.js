@@ -275,7 +275,7 @@ window.safeDelete = async function(tableName, id) {
     const user = checkAdminAccess();
     if (!user) return;
 
-    // RULE: সাব-অ্যাডমিন ডিলিট করতে পারবে না
+    // RULE: সাব-অ্যাডমিন ডিলিট করতে পারবেবিধা নেই
     if (user.role === 'sub-admin') {
         return showToast("সাব-অ্যাডমিনদের ডিলিট করার অনুমতি নেই!", "error");
     }
@@ -293,9 +293,11 @@ window.safeDelete = async function(tableName, id) {
     }
 };
 
-// ─── RENDER FORMS ON PAGE LOAD ──────────────────────────────
-window.addEventListener('DOMContentLoaded', () => {
-    // Add Exam Form
+// ─── RENDER FORMS ON PAGE LOAD (ADJUSTED) ──────────────────
+window.loadAdminPanel = function() {
+    console.log("Admin Panel Loading...");
+
+    // Add Exam Form Render
     const examFormBox = document.getElementById('admin-exam-form');
     if(examFormBox) {
         examFormBox.innerHTML = `
@@ -313,9 +315,11 @@ window.addEventListener('DOMContentLoaded', () => {
             <div class="form-group"><label>Upload Questions (CSV Format)</label><input type="file" id="exam-csv" accept=".csv" class="form-input"></div><div class="spacer-md"></div>
             <button class="btn-primary" id="add-exam-btn" onclick="handleAddExam()">Create Exam & Bulk Upload</button>
         `;
+    } else {
+        console.error("Error: 'admin-exam-form' ID টি index.html এ পাওয়া যায়নি!");
     }
 
-    // Add Class Form
+    // Add Class Form Render
     const classFormBox = document.getElementById('admin-class-form');
     if(classFormBox) {
         classFormBox.innerHTML = `
@@ -327,7 +331,7 @@ window.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
-    // Add CQ Form
+    // Add CQ Form Render
     const cqFormBox = document.getElementById('admin-cq-form');
     if(cqFormBox) {
         cqFormBox.innerHTML = `
@@ -336,5 +340,13 @@ window.addEventListener('DOMContentLoaded', () => {
             <div class="form-group"><label>Drive/PDF Link</label><input type="url" id="cq-link" class="form-input" placeholder="Google Drive Link"></div><div class="spacer-md"></div>
             <button class="btn-primary" id="add-cq-btn" onclick="handleAddCQ()">Add CQ / PDF Link</button>
         `;
+    }
+};
+
+// পেজ ডিরেক্ট রিফ্রেশ দিলেও যেন কাজ করে
+window.addEventListener('DOMContentLoaded', () => {
+    const adminPage = document.getElementById('page-admin');
+    if (adminPage && adminPage.classList.contains('active')) {
+        window.loadAdminPanel();
     }
 });
