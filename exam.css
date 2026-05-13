@@ -1,0 +1,35 @@
+/* exam.css */
+.card { background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 20px; }
+.exam-header { display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--bg-color); z-index: 10; padding: 10px 0; border-bottom: 2px solid var(--option-border); margin-bottom: 20px;}
+
+.exam-layout { display: flex; gap: 20px; }
+.q-container { flex: 3; }
+.nav-container { flex: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 8px; align-content: start; position: sticky; top: 70px; height: max-content; }
+
+.q-box { background: var(--card-bg); padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: var(--shadow); }
+.q-box h4 { margin-bottom: 15px; color: var(--primary-text); }
+
+/* Options Styling */
+.option-label { display: block; padding: 12px; margin-bottom: 10px; background: var(--option-bg); border: 2px solid var(--option-border); border-radius: 8px; cursor: pointer; transition: 0.2s; color: var(--primary-text); }
+.option-label:hover { border-color: var(--selected-border); }
+.option-label input { display: none; } /* Hide default radio */
+
+/* Locked & Selected State */
+.option-label.locked { cursor: not-allowed; opacity: 0.8; }
+.option-label.selected { background: var(--selected-bg); border-color: var(--selected-border); }
+.lock-icon { margin-left: 10px; font-size: 0.9em; }
+
+/* Nav Boxes */
+.nav-box { width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; background: var(--btn-bg); color: var(--btn-text); border-radius: 6px; cursor: pointer; font-weight: bold; }
+.nav-box.answered { background: #3B82F6; color: white; }
+
+/* Fixed Submit Button */
+.fixed-submit-btn { position: fixed; bottom: 0; left: 0; width: 100%; background: #22C55E; color: white; border: none; padding: 15px; font-size: 1.2rem; font-weight: bold; cursor: pointer; z-index: 100; box-shadow: 0 -4px 10px rgba(0,0,0,0.2); }
+.fixed-submit-btn:hover { background: #16a34a; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .exam-layout { flex-direction: column; }
+    .nav-container { position: static; margin-bottom: 20px; }
+    body { padding-bottom: 70px; } /* Space for fixed button */
+}
