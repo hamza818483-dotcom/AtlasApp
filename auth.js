@@ -264,7 +264,8 @@ window.handleLogin = async function () {
 
   // ── Admin hardcoded check ──
   if (phone === '01754365403' && password === 'AtlasApp2026') {
-    // Save admin to localStorage
+    alert('Step 1: Admin detected');  // 🔴 ADD THIS
+    
     const adminUser = {
       id: 'admin',
       name: 'Admin',
@@ -273,19 +274,21 @@ window.handleLogin = async function () {
     };
     localStorage.setItem('atlas_user', JSON.stringify(adminUser));
     
-    // Show admin button
+    alert('Step 2: Saved to localStorage');  // 🔴 ADD THIS
+    
     const adminBtn = document.getElementById('admin-control-btn');
+    alert('Step 3: Button element = ' + (adminBtn ? 'Found' : 'Not Found'));  // 🔴 ADD THIS
+    
     if (adminBtn) {
       adminBtn.style.display = 'block';
+      alert('Step 4: Button style set to block');  // 🔴 ADD THIS
     }
     
-    alert('✅ Admin Login সফল!');
+    alert('✅ Admin Login Complete!');  // 🔴 ADD THIS
     
-    // Clear inputs
     document.getElementById('login-phone').value = '';
     document.getElementById('login-pass').value = '';
     
-    // Go to home page
     if (typeof bottomNav === 'function') {
       bottomNav('home');
     } else if (typeof navigateTo === 'function') {
