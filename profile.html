@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - ATLAS</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .profile-header { text-align: center; margin-bottom: 20px; }
+        .profile-img { width: 120px; height: 120px; border-radius: 50%; border: 4px solid #3B82F6; object-fit: cover; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .info-box { background: var(--option-bg); padding: 10px; border-radius: 8px; border: 1px solid var(--option-border); }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; }
+        .tab-btn { flex: 1; padding: 10px; background: var(--btn-bg); color: var(--btn-text); border: none; border-radius: 8px; cursor: pointer; white-space: nowrap; font-weight: bold;}
+        .tab-btn.active { background: #3B82F6; color: white; }
+        .tab-content { display: none; background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: var(--shadow); }
+        .tab-content.active { display: block; }
+        .history-card { border-bottom: 1px solid var(--option-border); padding: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Profile Header -->
+        <div class="card profile-header">
+            <img src="https://via.placeholder.com/150" alt="Profile Photo" class="profile-img" id="p-photo">
+            <h2 id="p-name">লোডিং...</h2>
+            <p id="p-batch-college"></p>
+        </div>
+
+        <!-- Info Grid -->
+        <div class="card info-grid">
+            <div class="info-box"><strong>Phone:</strong> <span id="p-phone"></span></div>
+            <div class="info-box">
+                <strong>Password:</strong> 
+                <span id="p-pass" style="filter: blur(4px); transition: 0.3s;">***</span>
+                <span style="cursor:pointer; color: #3B82F6; font-size: 0.8rem; float: right;" onclick="togglePassBlur()">👁️ Show</span>
+            </div>
+            <div class="info-box"><strong>SSC GPA:</strong> <span id="p-ssc"></span></div>
+            <div class="info-box"><strong>HSC GPA:</strong> <span id="p-hsc"></span></div>
+            <div class="info-box"><strong>Status:</strong> <span id="p-timer"></span></div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('history')">📚 Exam History</button>
+            <button class="tab-btn" onclick="switchTab('bookmarks')">🔖 Bookmarks</button>
+        </div>
+
+        <!-- Tab Contents -->
+        <div id="history" class="tab-content active">
+            <h3>আপনার দেওয়া পরীক্ষাসমূহ</h3>
+            <div id="history-list">লোডিং...</div>
+        </div>
+        <div id="bookmarks" class="tab-content">
+            <h3>সেইভ করা প্রশ্ন</h3>
+            <div id="bookmark-list">লোডিং...</div>
+        </div>
+    </div>
+
+    <script src="supabase.js"></script>
+    <script src="app.js"></script>
+    <script src="profile.js"></script>
+</body>
+</html>
