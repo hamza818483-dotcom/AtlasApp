@@ -9,6 +9,11 @@
 
 import { supabase } from './supabase.js';
 
+// ============================================================
+// 🟢 FIX: _supabase alias for compatibility (ADDED)
+// ============================================================
+const _supabase = supabase;
+
 // ─── ADMIN CREDENTIALS (hardcoded, never stored in DB) ───────
 const ADMIN_PHONE    = '01754365403';
 const ADMIN_PASSWORD = 'AtlasApp2026';
@@ -461,6 +466,54 @@ window.handleAvatarUpload = async function (event) {
 
   toast('✅ Photo আপডেট হয়েছে।', 'success');
 };
+
+// ============================================================
+// 🟢 FIX: Add loadProfileData to window (ADDED)
+// ============================================================
+window.loadProfileData = function() {
+  const user = getCurrentUser();
+  if (!user) return;
+  
+  const set = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val || '—';
+  };
+
+  set('p-display-name', user.name);
+  set('p-phone', user.phone);
+  set('p-pass', user.password || '********');
+  set('p-batch', user.hsc_batch);
+  set('p-college', user.college);
+  set('p-ssc', user.ssc_gpa);
+  set('p-hsc', user.hsc_gpa);
+  set('p-timer', user.timer_status);
+
+  const img = document.getElementById('profile-avatar-img');
+  const ph = document.getElementById('profile-avatar-placeholder');
+  if (user.avatar_url && img && ph) {
+    img.src = user.avatar_url;
+    img.style.display = 'block';
+    ph.style.display = 'none';
+  }
+};
+
+// ============================================================
+// 🟢 FIX: Add showToast as fallback (ADDED)
+// ============================================================
+if (typeof window.showToast !== 'function') {
+  window.showToast = function(msg, type) {
+    const container = document.getElementById('toast-container');
+    if (!container) {
+      alert(msg);
+      return;
+    }
+    const toast = document.createElement('div');
+    toast.className = `toast ${type || 'success'}`;
+    toast.textContent = msg;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3200);
+  };
+}
 
 // ============================================================
 // EXPOSE to other scripts via window (non-module compat)
