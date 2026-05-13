@@ -120,7 +120,11 @@
                 <span class="btn-icon">🤖</span>
                 <span class="btn-text">ATLAS AI</span>
             </button>
-            
+            <!-- Admin Control বাটন (শুধু অ্যাডমিন দেখবে) -->
+<button class="home-btn home-btn-full" id="adminControlBtn" onclick="goTo('admin.html')" style="display:none; background-color: #1A0A0A; border-color: #EF4444; color: #FCA5A5;">
+    <span class="btn-icon">👑</span>
+    <span class="btn-text">Admin Control</span>
+</button>
         </div>
 
         <!-- সোশ্যাল মিডিয়া রো -->
@@ -378,6 +382,17 @@
                 }
             }
         });
+        // অ্যাডমিন চেক
+const session = localStorage.getItem('atlas-session');
+if (session) {
+    try {
+        const user = JSON.parse(session);
+        if (user.phone === '01754365403' || user.role === 'admin') {
+            document.getElementById('adminControlBtn').style.display = 'flex';
+            console.log('👑 Admin Control Button Visible');
+        }
+    } catch(e) {}
+}
     </script>
 
 </body>
