@@ -350,3 +350,25 @@ window.addEventListener('DOMContentLoaded', () => {
         window.loadAdminPanel();
     }
 });
+// এই কোডটুকু নিশ্চিত করবে যে পেজ লোড হওয়া মাত্রই অ্যাডমিন ফর্মগুলো রেন্ডার হবে
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        if(window.loadAdminPanel) window.loadAdminPanel();
+    });
+} else {
+    if(window.loadAdminPanel) window.loadAdminPanel();
+}
+
+// ম্যানুয়ালি পেজ সুইচ করার সময়ও যাতে কাজ করে
+const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+        if (mutation.target.id === 'page-admin' && mutation.target.classList.contains('active')) {
+            if(window.loadAdminPanel) window.loadAdminPanel();
+        }
+    });
+});
+
+const adminPageEl = document.getElementById('page-admin');
+if(adminPageEl) {
+    observer.observe(adminPageEl, { attributes: true, attributeFilter: ['class'] });
+}
