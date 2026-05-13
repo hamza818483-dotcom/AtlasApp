@@ -8,43 +8,48 @@ import { getCurrentUser } from './auth.js';
 import { supabase } from './supabase.js';
 import { generateResultPDF } from './result-pdf.js';
 
+// 🟢 FIX: Add _supabase alias
+const _supabase = supabase;
+
 // ─── Entry Point ──────────────────────────────────────────────
 export function showResult({ exam, questions, userAnswers, resultMap, user }) {
   const container = document.getElementById('app');
+  if (!container) return;
 
   // GPA & 2nd Timer Deductions
   const deductions = calculateDeductions(resultMap, user, exam);
-  const finalWithoutGPA = Math.max(0, resultMap.finalScore - deductions.secondTimerDeduction);
+  const finalWithoutGPA = Math.max(0, (resultMap.finalScore || 0) - (deductions.secondTimerDeduction || 0));
   const gpaScore = user ? calculateGpaScore(user) : 0;
   const finalWithGPA = finalWithoutGPA + gpaScore;
 
-  const percent = Math.round((finalWithoutGPA / resultMap.totalMarks) * 100);
+  const totalMarks = resultMap.totalMarks || questions.length || 1;
+  const percent = totalMarks > 0 ? Math.round((finalWithoutGPA / totalMarks) * 100) : 0;
 
   container.innerHTML = `
     <div class="result-page">
       <!-- Header -->
       <div class="result-header">
-        <button class="btn-back-home" onclick="window.location.href='index.html'">← হোম</button>
+        <button class="btn-back-home" onclick="window.location.href='#page-home'">← হোম</button>
         <h2 class="result-title">📊 পরীক্ষার ফলাফল</h2>
-        <div class="result-exam-name">${exam.title}</div>
+        <div class="result-exam-name">${exam?.title || 'Exam Result'}</div>
       </div>
 
       <!-- Score Summary Row -->
       <div class="score-summary-row">
         <div class="score-card correct-card">
-          <div class="score-num">${resultMap.correct}</div>
+          <div class="score-num">${resultMap.correct || 0}</div>
           <div class="score-label">✅ সঠিক</div>
         </div>
         <div class="score-card wrong-card">
-          <div class="score-num">${resultMap.wrong}</div>
+          <div class="score-num">${resultMap.wrong || 0}</div>
           <div class="score-label">❌ ভুল</div>
         </div>
         <div class="score-card skipped-card">
-          <div class="score-num">${resultMap.skipped}</div>
+          <div class="score-num">${resultMap.skipped || 0}</div>
           <div class="score-label">⏭ এড়ানো</div>
         </div>
         <div class="score-card negative-card">
-          <div class="score-num">-${(resultMap.wrong * resultMap.negativeMark).toFixed(2)}</div>
+          <div class="score-num">-${((resultMap.wrong || 0) * (resultMap.negativeMark || 0)).toFixed(2)}</div>
           <div class="score-label">➖ নেগেটিভ</div>
         </div>
       </div>
@@ -55,7 +60,7 @@ export function showResult({ exam, questions, userAnswers, resultMap, user }) {
           <div class="final-box-label">GPA ছাড়া</div>
           <div class="final-score-anim" id="scoreWithout">
             <span class="big-score">${finalWithoutGPA.toFixed(2)}</span>
-            <span class="out-of">/ ${resultMap.totalMarks}</span>
+            <span class="out-of">/ ${totalMarks}</span>
           </div>
           <div class="score-bar-wrap">
             <div class="score-bar" style="width: ${Math.min(percent, 100)}%"></div>
@@ -71,11 +76,11 @@ export function showResult({ exam, questions, userAnswers, resultMap, user }) {
           <div class="final-box-label">GPA সহ</div>
           <div class="final-score-anim" id="scoreWith">
             <span class="big-score">${finalWithGPA.toFixed(2)}</span>
-            <span class="out-of">/ ${resultMap.totalMarks + 100}</span>
+            <span class="out-of">/ ${totalMarks + 100}</span>
           </div>
           <div class="gpa-breakdown">
-            <div>SSC GPA: ${user.ssc_gpa} × 8 = <strong>${(parseFloat(user.ssc_gpa) * 8).toFixed(2)}</strong></div>
-            <div>HSC GPA: ${user.hsc_gpa} × 12 = <strong>${(parseFloat(user.hsc_gpa) * 12).toFixed(2)}</strong></div>
+            <div>SSC GPA: ${user.ssc_gpa} × 8 = <strong>${(parseFloat(user.ssc_gpa || 0) * 8).toFixed(2)}</strong></div>
+            <div>HSC GPA: ${user.hsc_gpa} × 12 = <strong>${(parseFloat(user.hsc_gpa || 0) * 12).toFixed(2)}</strong></div>
             <div>GPA মোট: <strong>${gpaScore.toFixed(2)}</strong> / 100</div>
           </div>
         </div>` : ''}
@@ -85,9 +90,9 @@ export function showResult({ exam, questions, userAnswers, resultMap, user }) {
       <div class="chart-section">
         <canvas id="resultPieChart" width="260" height="260"></canvas>
         <div class="chart-legend">
-          <div><span class="legend-dot correct-dot"></span> সঠিক (${resultMap.correct})</div>
-          <div><span class="legend-dot wrong-dot"></span> ভুল (${resultMap.wrong})</div>
-          <div><span class="legend-dot skip-dot"></span> এড়ানো (${resultMap.skipped})</div>
+          <div><span class="legend-dot correct-dot"></span> সঠিক (${resultMap.correct || 0})</div>
+          <div><span class="legend-dot wrong-dot"></span> ভুল (${resultMap.wrong || 0})</div>
+          <div><span class="legend-dot skip-dot"></span> এড়ানো (${resultMap.skipped || 0})</div>
         </div>
       </div>
 
@@ -99,41 +104,53 @@ export function showResult({ exam, questions, userAnswers, resultMap, user }) {
 
       <!-- Filter Buttons -->
       <div class="solve-filter-row">
-        <button class="filter-btn active" data-filter="all">সব (${questions.length})</button>
-        <button class="filter-btn" data-filter="correct">সঠিক (${resultMap.correct})</button>
-        <button class="filter-btn" data-filter="wrong">ভুল (${resultMap.wrong})</button>
-        <button class="filter-btn" data-filter="skipped">এড়ানো (${resultMap.skipped})</button>
+        <button class="filter-btn active" data-filter="all">সব (${questions?.length || 0})</button>
+        <button class="filter-btn" data-filter="correct">সঠিক (${resultMap.correct || 0})</button>
+        <button class="filter-btn" data-filter="wrong">ভুল (${resultMap.wrong || 0})</button>
+        <button class="filter-btn" data-filter="skipped">এড়ানো (${resultMap.skipped || 0})</button>
       </div>
 
       <!-- Solve Sheet -->
       <div class="solve-sheet" id="solveSheet">
-        ${renderSolveSheet(resultMap.perQuestion, 'all')}
+        ${renderSolveSheet(resultMap.perQuestion || [], 'all')}
       </div>
     </div>
   `;
 
   // Draw pie chart
-  drawPieChart(resultMap);
+  setTimeout(() => drawPieChart(resultMap), 100);
 
   // Filter buttons
   document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      document.getElementById('solveSheet').innerHTML =
-        renderSolveSheet(resultMap.perQuestion, btn.dataset.filter);
+      const solveSheet = document.getElementById('solveSheet');
+      if (solveSheet) {
+        solveSheet.innerHTML = renderSolveSheet(resultMap.perQuestion || [], btn.dataset.filter);
+      }
     });
   });
 
   // PDF
-  document.getElementById('btnDownloadPdf').addEventListener('click', () => {
-    generateResultPDF({ exam, resultMap, finalWithoutGPA, finalWithGPA, gpaScore, user });
-  });
+  const pdfBtn = document.getElementById('btnDownloadPdf');
+  if (pdfBtn) {
+    pdfBtn.addEventListener('click', () => {
+      if (typeof generateResultPDF === 'function') {
+        generateResultPDF({ exam, resultMap, finalWithoutGPA, finalWithGPA, gpaScore, user });
+      } else {
+        alert('PDF জেনারেট করা সম্ভব নয়। লাইব্রেরি লোড হয়নি।');
+      }
+    });
+  }
 
   // Retake
-  document.getElementById('btnRetake').addEventListener('click', () => {
-    window.location.reload();
-  });
+  const retakeBtn = document.getElementById('btnRetake');
+  if (retakeBtn) {
+    retakeBtn.addEventListener('click', () => {
+      window.location.reload();
+    });
+  }
 
   // Animate score counters
   animateScore('scoreWithout', 0, finalWithoutGPA);
@@ -142,6 +159,10 @@ export function showResult({ exam, questions, userAnswers, resultMap, user }) {
 
 // ─── Solve Sheet Renderer ─────────────────────────────────────
 function renderSolveSheet(perQuestion, filter) {
+  if (!perQuestion || perQuestion.length === 0) {
+    return `<p class="no-q-msg">কোনো প্রশ্নের ডেটা নেই।</p>`;
+  }
+
   const filtered = filter === 'all'
     ? perQuestion
     : perQuestion.filter(q => q.status === filter);
@@ -149,15 +170,23 @@ function renderSolveSheet(perQuestion, filter) {
   if (!filtered.length) return `<p class="no-q-msg">এই ক্যাটাগরিতে কোনো প্রশ্ন নেই।</p>`;
 
   return filtered.map((item, idx) => {
+    // 🟢 FIX: Support multiple question text formats
+    const questionText = item.question?.question_text || item.question?.question || item.question || 'প্রশ্ন';
+    
     const opts = [
-      item.question.option1, item.question.option2,
-      item.question.option3, item.question.option4, item.question.option5
+      item.question?.option1 || item.question?.options?.[0],
+      item.question?.option2 || item.question?.options?.[1],
+      item.question?.option3 || item.question?.options?.[2],
+      item.question?.option4 || item.question?.options?.[3],
+      item.question?.option5 || item.question?.options?.[4]
     ].filter(Boolean);
+
+    const explanation = item.question?.explanation || '';
 
     return `
       <div class="solve-card ${item.status}">
         <div class="solve-q-num">${idx + 1}. <span class="solve-status-badge ${item.status}">${statusLabel(item.status)}</span></div>
-        <div class="solve-q-text">${item.question.question}</div>
+        <div class="solve-q-text">${escapeHtml(questionText)}</div>
         <div class="solve-options">
           ${opts.map((opt, oi) => {
             const optNum = oi + 1;
@@ -167,16 +196,16 @@ function renderSolveSheet(perQuestion, filter) {
             return `
               <div class="${cls}">
                 <span class="solve-opt-label">${String.fromCharCode(64 + optNum)}</span>
-                ${opt}
+                ${escapeHtml(opt || '')}
                 ${optNum === item.correctAnswer ? '<span class="correct-tick">✓</span>' : ''}
                 ${optNum === item.selected && item.selected !== item.correctAnswer ? '<span class="wrong-cross">✗</span>' : ''}
               </div>
             `;
           }).join('')}
         </div>
-        ${item.question.explanation ? `
+        ${explanation ? `
           <div class="solve-explanation">
-            <strong>💡 ব্যাখ্যা:</strong> ${item.question.explanation}
+            <strong>💡 ব্যাখ্যা:</strong> ${escapeHtml(explanation)}
           </div>
         ` : ''}
       </div>
@@ -184,12 +213,20 @@ function renderSolveSheet(perQuestion, filter) {
   }).join('');
 }
 
+// 🟢 FIX: Add escapeHtml function to prevent XSS
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 // ─── Deduction Logic ──────────────────────────────────────────
 function calculateDeductions(resultMap, user, exam) {
   let secondTimerDeduction = 0;
-  // UPDATE: Changed timer_type to timer_status matching database column
-  if (user && user.timer_status === 'second') {
-    secondTimerDeduction = resultMap.totalMarks <= 50 ? 1.5 : 5;
+  if (user && user.timer_status === 'Second Timer') {
+    const totalMarks = resultMap.totalMarks || exam?.total_marks || 0;
+    secondTimerDeduction = totalMarks <= 50 ? 1.5 : 5;
   }
   return { secondTimerDeduction };
 }
@@ -205,20 +242,24 @@ function calculateGpaScore(user) {
 function drawPieChart(resultMap) {
   const canvas = document.getElementById('resultPieChart');
   if (!canvas) return;
+  
   const ctx = canvas.getContext('2d');
-  const total = resultMap.correct + resultMap.wrong + resultMap.skipped;
+  const total = (resultMap.correct || 0) + (resultMap.wrong || 0) + (resultMap.skipped || 0);
   if (total === 0) return;
 
   const slices = [
-    { value: resultMap.correct, color: '#22C55E' },
-    { value: resultMap.wrong, color: '#EF4444' },
-    { value: resultMap.skipped, color: '#94A3B8' }
+    { value: resultMap.correct || 0, color: '#22C55E' },
+    { value: resultMap.wrong || 0, color: '#EF4444' },
+    { value: resultMap.skipped || 0, color: '#94A3B8' }
   ];
 
   let startAngle = -Math.PI / 2;
   const cx = 130, cy = 130, r = 110;
 
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
   slices.forEach(slice => {
+    if (slice.value === 0) return;
     const angle = (slice.value / total) * 2 * Math.PI;
     ctx.beginPath();
     ctx.moveTo(cx, cy);
@@ -232,15 +273,17 @@ function drawPieChart(resultMap) {
   // Inner circle (donut)
   ctx.beginPath();
   ctx.arc(cx, cy, 60, 0, 2 * Math.PI);
-  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--card-bg') || '#1C1C1E';
+  const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--card-bg') || '#1C1C1E';
+  ctx.fillStyle = bgColor;
   ctx.fill();
 
   // Center text
-  ctx.fillStyle = '#F0F0F0';
+  const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text') || '#F0F0F0';
+  ctx.fillStyle = textColor;
   ctx.font = 'bold 22px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  const pct = Math.round((resultMap.correct / total) * 100);
+  const pct = Math.round(((resultMap.correct || 0) / total) * 100);
   ctx.fillText(`${pct}%`, cx, cy);
 }
 
