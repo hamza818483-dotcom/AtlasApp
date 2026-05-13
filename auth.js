@@ -100,7 +100,7 @@ if (signupForm) {
       mother_name: motherName,
       ssc_gpa: parseFloat(sscGpa),
       hsc_gpa: parseFloat(hscGpa),
-      timer_type: timerType,
+      timer_status: timerType,
       role: 'student',
       created_at: new Date().toISOString()
     }]);
