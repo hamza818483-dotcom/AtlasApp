@@ -527,3 +527,20 @@ window.AtlasAuth = {
   canManageContent,
   updateUI: updateAuthUI
 };
+// ============================================================
+// 🟢 FORCE SHOW ADMIN BUTTON (DEBUG)
+// ============================================================
+setTimeout(function() {
+    const user = getCurrentUser();
+    console.log('Force check - User:', user);
+    
+    if (user && user.phone === '01754365403') {
+        const adminBtn = document.getElementById('admin-control-btn');
+        if (adminBtn) {
+            adminBtn.style.display = 'block';
+            console.log('✅ Admin button force shown!');
+        } else {
+            console.log('❌ Admin button element not found!');
+        }
+    }
+}, 1000);
