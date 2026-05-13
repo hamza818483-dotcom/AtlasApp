@@ -12,11 +12,16 @@ if (typeof supabase === 'undefined') {
 }
 
 // Client তৈরি করা
-const _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ১. গ্লোবাল উইন্ডোতে সেট করা (যাতে admin.js এবং app.js সরাসরি পায়)
-// আমরা 'supabase' নামেই সেভ করছি যাতে সব ফাইল একই নামে কল করতে পারে
-window.supabase = _supabaseClient;
+// ============================================================
+// 🟢 গ্লোবাল উইন্ডোতে সেট করা (সব ফাইলের জন্য)
+// ============================================================
+window.supabase = supabaseClient;
+window._supabase = supabaseClient;  // ← auth.js, admin.js, home.js এর জন্য
 
-// ২. ES Module হিসেবে এক্সপোর্ট করা (auth.js এর জন্য)
-export { _supabaseClient as supabase };
+// ============================================================
+// 🟢 ES Module হিসেবে এক্সপোর্ট করা
+// ============================================================
+export const supabase = supabaseClient;
+export default supabaseClient;
