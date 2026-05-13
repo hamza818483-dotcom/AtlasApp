@@ -8,8 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Rajdhani:wght@600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
     <!-- Link CSS -->
     <link rel="stylesheet" href="style.css">
-    <!-- Supabase Library (নতুন এড করা হয়েছে ডাটাবেজের জন্য) -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -24,7 +22,7 @@
         <div class="nav-logo">ATLAS<span>Exam Preparation Platform</span></div>
         <div class="nav-right">
             <button class="theme-toggle" id="themeToggle"></button>
-            <button class="nav-auth-btn" id="navAuthBtn" onclick="handleNavAuth()">লগইন</button>
+            <button class="nav-auth-btn" onclick="handleNavAuth()">লগইন</button>
         </div>
     </nav>
 
@@ -49,8 +47,8 @@
                 </div> 
             </div> 
 
-            <!-- Admin Control (visible to admin only - style display none এড করা হয়েছে) --> 
-            <div id="admin-control-btn" style="display: none;"> 
+            <!-- Admin Control (visible to admin only) --> 
+            <div id="admin-control-btn"> 
                 <button onclick="navigateTo('page-admin')">⚙ Admin Control Panel</button> 
             </div> 
 
@@ -126,18 +124,15 @@
                 <div class="auth-card">
                     <div class="form-group">
                         <label class="form-label">ফোন নম্বর</label>
-                        <!-- id="login-phone" এড করা হয়েছে -->
-                        <input type="tel" id="login-phone" class="form-input" placeholder="01XXX..." maxlength="11">
+                        <input type="text" class="form-input" placeholder="01XXX...">
                     </div>
                     <div class="spacer-sm"></div>
                     <div class="form-group">
                         <label class="form-label">পাসওয়ার্ড</label>
-                        <!-- id="login-pass" এড করা হয়েছে -->
-                        <input type="password" id="login-pass" class="form-input" placeholder="*****">
+                        <input type="password" class="form-input" placeholder="*****">
                     </div>
                     <div class="spacer-md"></div>
-                    <!-- onclick পরিবর্তন করে handleLogin() এড করা হয়েছে -->
-                    <button class="btn-primary" id="login-btn" onclick="handleLogin()">লগইন</button>
+                    <button class="btn-primary" onclick="navigateTo('page-home')">লগইন</button>
                 </div>
                 <div class="auth-link">
                     <a href="#" onclick="navigateTo('page-forgot')">পাসওয়ার্ড ভুলে গেছেন?</a><br><br>
@@ -155,14 +150,13 @@
             <div class="auth-wrap">
                 <div class="auth-card">
                     <div class="auth-card-title">ব্যক্তিগত তথ্য</div>
-                    <!-- সবগুলোতে id এড করা হয়েছে -->
-                    <div class="form-group"><label class="form-label">নাম *</label><input type="text" id="reg-name" class="form-input"></div><div class="spacer-sm"></div>
-                    <div class="form-group"><label class="form-label">HSC ব্যাচ *</label><input type="text" id="reg-batch" class="form-input"></div><div class="spacer-sm"></div>
-                    <div class="form-group"><label class="form-label">কলেজের নাম *</label><input type="text" id="reg-college" class="form-input"></div><div class="spacer-sm"></div>
-                    <div class="form-group"><label class="form-label">বাবার নাম</label><input type="text" id="reg-father" class="form-input"></div><div class="spacer-sm"></div>
-                    <div class="form-group"><label class="form-label">মায়ের নাম</label><input type="text" id="reg-mother" class="form-input"></div><div class="spacer-sm"></div>
-                    <div class="form-group"><label class="form-label">SSC GPA * (দশমিক, যেমন: 5.00)</label><input type="number" step="0.01" id="reg-ssc" class="form-input"></div><div class="spacer-sm"></div>
-                    <div class="form-group"><label class="form-label">HSC GPA * (দশমিক, যেমন: 5.00)</label><input type="number" step="0.01" id="reg-hsc" class="form-input"></div><div class="spacer-sm"></div>
+                    <div class="form-group"><label class="form-label">নাম *</label><input type="text" class="form-input"></div><div class="spacer-sm"></div>
+                    <div class="form-group"><label class="form-label">HSC ব্যাচ *</label><input type="text" class="form-input"></div><div class="spacer-sm"></div>
+                    <div class="form-group"><label class="form-label">কলেজের নাম *</label><input type="text" class="form-input"></div><div class="spacer-sm"></div>
+                    <div class="form-group"><label class="form-label">বাবার নাম</label><input type="text" class="form-input"></div><div class="spacer-sm"></div>
+                    <div class="form-group"><label class="form-label">মায়ের নাম</label><input type="text" class="form-input"></div><div class="spacer-sm"></div>
+                    <div class="form-group"><label class="form-label">SSC GPA * (দশমিক, যেমন: 5.00)</label><input type="text" class="form-input"></div><div class="spacer-sm"></div>
+                    <div class="form-group"><label class="form-label">HSC GPA * (দশমিক, যেমন: 5.00)</label><input type="text" class="form-input"></div><div class="spacer-sm"></div>
                     
                     <div class="form-group">
                         <label class="form-label">আপনি কি ফার্স্ট টাইমার না সেকেন্ড টাইমার? *</label>
@@ -172,11 +166,10 @@
                         </div>
                     </div><div class="spacer-sm"></div>
 
-                    <div class="form-group"><label class="form-label">ফোন নম্বর * (১১ ডিজিট)</label><input type="tel" id="reg-phone" class="form-input" maxlength="11"></div><div class="spacer-sm"></div>
-                    <div class="form-group"><label class="form-label">পাসওয়ার্ড *</label><input type="password" id="reg-pass" class="form-input"></div><div class="spacer-md"></div>
+                    <div class="form-group"><label class="form-label">ফোন নম্বর * (১১ ডিজিট)</label><input type="text" class="form-input"></div><div class="spacer-sm"></div>
+                    <div class="form-group"><label class="form-label">পাসওয়ার্ড *</label><input type="password" class="form-input"></div><div class="spacer-md"></div>
                     
-                    <!-- handleRegistration এড করা হয়েছে -->
-                    <button class="btn-primary" onclick="handleRegistration()">রেজিস্ট্রেশন করুন</button>
+                    <button class="btn-primary">রেজিস্ট্রেশন করুন</button>
                 </div>
                 <div class="auth-link">
                     আগে থেকে অ্যাকাউন্ট আছে? <a href="#" onclick="navigateTo('page-login')">লগইন করুন</a>
@@ -192,10 +185,9 @@
             </div>
             <div class="auth-wrap">
                 <div class="auth-card">
-                    <!-- IDs এড করা হয়েছে -->
-                    <div class="form-group"><label class="form-label">ফোন নম্বর</label><input type="tel" id="forgot-phone" class="form-input" maxlength="11"></div><div class="spacer-sm"></div>
-                    <div class="form-group"><label class="form-label">নতুন পাসওয়ার্ড</label><input type="password" id="forgot-new-pass" class="form-input"></div><div class="spacer-md"></div>
-                    <button class="btn-primary" onclick="handleForgotPassword()">পাসওয়ার্ড আপডেট করুন</button>
+                    <div class="form-group"><label class="form-label">ফোন নম্বর</label><input type="text" class="form-input"></div><div class="spacer-sm"></div>
+                    <div class="form-group"><label class="form-label">নতুন পাসওয়ার্ড</label><input type="password" class="form-input"></div><div class="spacer-md"></div>
+                    <button class="btn-primary">পাসওয়ার্ড আপডেট করুন</button>
                 </div>
             </div>
         </div>
@@ -209,8 +201,7 @@
                     <div class="avatar-edit-badge">✏</div>
                 </div>
                 <input type="file" id="avatar-file-input" class="hidden" accept="image/*" onchange="handleAvatarUpload(event)">
-                <!-- id p-display-name এড করা হয়েছে -->
-                <div class="profile-name" id="p-display-name">Student Name</div>
+                <div class="profile-name">Student Name</div>
             </div>
             
             <div class="profile-info-card"> 
@@ -232,9 +223,9 @@
 
             <div style="padding:16px 16px 100px;"> 
                 <div id="tab-performance"> <div class="text-muted text-center" style="padding:30px 0;">পারফরম্যান্স রিপোর্ট লোড হচ্ছে...</div> </div> 
-                <div id="tab-exam-history" style="display:none;"> <div class="text-muted text-center" id="exam-history-list" style="padding:30px 0;">এখনো কোনো এক্সাম দেওয়া হয়নি।</div> </div> 
-                <div id="tab-class-history" style="display:none;"> <div class="text-muted text-center" id="class-history-list" style="padding:30px 0;">এখনো কোনো ক্লাস দেখা হয়নি।</div> </div> 
-                <div id="tab-bookmarks" style="display:none;"> <div class="text-muted text-center" id="bookmark-list" style="padding:30px 0;">কোনো বুকমার্ক নেই।</div> </div> 
+                <div id="tab-exam-history" style="display:none;"> <div class="text-muted text-center" style="padding:30px 0;">এখনো কোনো এক্সাম দেওয়া হয়নি।</div> </div> 
+                <div id="tab-class-history" style="display:none;"> <div class="text-muted text-center" style="padding:30px 0;">এখনো কোনো ক্লাস দেখা হয়নি।</div> </div> 
+                <div id="tab-bookmarks" style="display:none;"> <div class="text-muted text-center" style="padding:30px 0;">কোনো বুকমার্ক নেই।</div> </div> 
             </div> 
             
             <div style="padding: 0 16px 16px;"> 
@@ -242,7 +233,7 @@
             </div>
         </div>
 
-        <!-- OTHER PAGES PLACEHOLDERS -->
+        <!-- OTHER PAGES PLACEHOLDERS (Add real content similarly based on selectors) -->
         <div id="page-class" class="page"><div class="section-header"><button class="back-btn" onclick="goBack()">←</button><div class="section-title">🎓 Free Class Section</div></div><p class="text-center text-muted" style="padding: 20px;">লোড হচ্ছে...</p></div>
         
         <div id="page-exam" class="page">
@@ -288,7 +279,7 @@
             </div>
         </div>
 
-        <div id="page-mistakes" class="page"><div class="section-header"><button class="back-btn" onclick="goBack()">←</button><div class="section-title">📍 My Mistakes</div></div><p class="text-center text-muted" style="padding: 20px;">এক্সাম দেওয়া শুরু করলে এখানে ভুল প্রশ্নগুলো দেখা যাবে।</p></div>
+        <div id="page-mistakes" class="page"><div class="section-header"><button class="back-btn" onclick="goBack()">←</button><div class="section-title">📍 My Mistakes</div></div><p class="text-center text-muted" style="padding: 20px;">এক্সাম দেওয়া শুরু করলে এখানে ভুল প্রশ্নগুলো দেখা যাবে。</p></div>
         
         <div id="page-ai" class="page">
             <div class="section-header"><button class="back-btn" onclick="goBack()">←</button><div class="section-title">🤖 ATLAS AI</div></div>
@@ -304,40 +295,46 @@
             </div>
         </div>
         
-        <!-- PAGE: ADMIN (পুরাতন অংশটিকে ঠিক রেখে নতুন ফিচার এড করা হয়েছে) -->
+        <!-- PAGE: ADMIN (Updated to include all target IDs for admin.js) -->
         <div id="page-admin" class="page">
-            <div class="section-header"><button class="back-btn" onclick="goBack()">←</button><div class="section-title">⚙ Admin Control Panel</div></div>
-            <p class="text-center text-muted" style="padding: 20px; display: none;">admin.js লোড হচ্ছে...</p>
+            <div class="section-header">
+                <button class="back-btn" onclick="goBack()">←</button>
+                <div class="section-title">⚙ Admin Control Panel</div>
+            </div>
             
-            <div class="auth-wrap" id="admin-content" style="padding-top: 0;">
-                <div class="exam-category-grid" style="padding: 0; margin-bottom: 20px;">
-                    <button class="exam-cat-btn" onclick="navigateTo('page-admin-add-exam')">📝 Add Exam</button>
-                    <button class="exam-cat-btn" onclick="navigateTo('page-admin-add-class')">🎥 Add Class</button>
-                    <button class="exam-cat-btn" onclick="navigateTo('page-admin-add-cq')">📋 Add CQ</button>
-                </div>
-                <div class="auth-card" id="super-admin-section" style="display: none; border-color: #3B82F6;">
-                    <h3 style="color: #3B82F6; margin-bottom: 10px;">🔑 Grant Sub-Admin Access</h3>
-                    <input type="tel" id="sub-admin-phone" class="form-input" placeholder="ফোন নম্বর (১১ ডিজিট)" maxlength="11">
+            <div class="auth-wrap" style="padding-bottom: 80px;">
+                <!-- Target Divs for admin.js to render the forms -->
+                <div class="auth-card" id="admin-exam-form">Loading Exam Form...</div>
+                <div class="spacer-md"></div>
+                
+                <div class="auth-card" id="admin-class-form">Loading Class Form...</div>
+                <div class="spacer-md"></div>
+                
+                <div class="auth-card" id="admin-cq-form">Loading CQ Form...</div>
+                <div class="spacer-md"></div>
+
+                <!-- Sub-Admin Section (Toggled by JS) -->
+                <div class="auth-card" id="super-admin-section" style="display: none;">
+                    <h3 style="margin-bottom: 15px; color: var(--primary);">👤 Grant Sub-Admin</h3>
+                    <div class="form-group"><label>Sub-Admin Phone Number</label><input type="text" id="sub-admin-phone" class="form-input" placeholder="01XXX..."></div>
                     <div class="spacer-sm"></div>
-                    <button class="btn-primary" style="background: #3B82F6;" onclick="grantSubAdmin()">Grant Access</button>
+                    <button class="btn-primary" onclick="grantSubAdmin()">Make Sub-Admin</button>
+                </div>
+                <div class="spacer-md"></div>
+
+                <!-- Countdown Section -->
+                <div class="auth-card" id="admin-countdown-form">
+                    <h3 style="margin-bottom: 15px; color: var(--primary);">⏳ Update Countdown Timer</h3>
+                    <div class="form-group"><label>Main Topic</label><input type="text" id="cd-set-main" class="form-input" placeholder="যেমন: HSC পরীক্ষা ২০২৫"></div>
+                    <div class="spacer-sm"></div>
+                    <div class="form-group"><label>Sub Topic</label><input type="text" id="cd-set-sub" class="form-input" placeholder="যেমন: পদার্থবিজ্ঞান • রসায়ন"></div>
+                    <div class="spacer-sm"></div>
+                    <div class="form-group"><label>Target Date & Time</label><input type="datetime-local" id="cd-set-date" class="form-input"></div>
+                    <div class="spacer-md"></div>
+                    <button class="btn-primary" onclick="handleUpdateCountdown()">Update Timer</button>
                 </div>
             </div>
         </div>
-
-        <!-- NEW ADMIN SUB-PAGES -->
-        <div id="page-admin-add-exam" class="page">
-            <div class="section-header"><button class="back-btn" onclick="goBack()">←</button><div class="section-title">📝 Add New Exam</div></div>
-            <div class="auth-wrap"><div class="auth-card" id="admin-exam-form">Loading Form...</div></div>
-        </div>
-        <div id="page-admin-add-class" class="page">
-            <div class="section-header"><button class="back-btn" onclick="goBack()">←</button><div class="section-title">🎥 Add New Class</div></div>
-            <div class="auth-wrap"><div class="auth-card" id="admin-class-form">Loading Form...</div></div>
-        </div>
-        <div id="page-admin-add-cq" class="page">
-            <div class="section-header"><button class="back-btn" onclick="goBack()">←</button><div class="section-title">📋 Add New CQ</div></div>
-            <div class="auth-wrap"><div class="auth-card" id="admin-cq-form">Loading Form...</div></div>
-        </div>
-
     </div>
 
     <!-- Flip Card Overlay (Owner Info) -->
@@ -356,7 +353,7 @@
     <!-- Fixed Bottom Floating Buttons -->
     <div class="fixed-float-btns">
         <a href="https://wa.me/8801999681290" target="_blank" class="float-btn float-wa">
-            <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg> WhatsApp 
+            <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
         </a>
         <a href="https://t.me/rafi_somc" target="_blank" class="float-btn float-tg">
             <svg viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
@@ -383,11 +380,12 @@
         </button>
     </nav>
 
-    <!-- Link JS Files (type module এড করা হয়েছে auth.js এর জন্য) -->
-    <script src="supabase.js"></script>
+    <!-- Supabase CDN Added -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Link JS (Modules added perfectly) -->
+    <script type="module" src="supabase.js"></script>
+    <script type="module" src="admin.js"></script>
     <script src="app.js"></script>
-    <script type="module" src="auth.js"></script>
-    <script src="admin.js"></script>
-    <script src="profile.js"></script>
 </body>
 </html>
