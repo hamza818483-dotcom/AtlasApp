@@ -1,1517 +1,347 @@
 <!DOCTYPE html>
 <html lang="bn" data-theme="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ATLAS — Exam Preparation Platform</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Rajdhani:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
-
-  <style>
-    /* ─────────────────────────────────────────────
-       CSS VARIABLES — DARK & LIGHT THEME
-    ───────────────────────────────────────────── */
-    :root {
-      --bg:           #0F0F0F;
-      --bg2:          #141414;
-      --card:         #1C1C1E;
-      --card2:        #262626;
-      --border:       #3A3A3A;
-      --text:         #F0F0F0;
-      --text2:        #B0B0B0;
-      --accent:       #E53935;
-      --accent2:      #FF5252;
-      --blue:         #3B82F6;
-      --green:        #22C55E;
-      --red:          #EF4444;
-      --btn:          #2D2D2D;
-      --btn-hover:    #3D3D3D;
-      --shadow:       0 4px 24px rgba(0,0,0,0.5);
-      --radius:       14px;
-      --radius-sm:    8px;
-      --transition:   0.25s cubic-bezier(.4,0,.2,1);
-    }
-
-    [data-theme="light"] {
-      --bg:           #F5F7FA;
-      --bg2:          #EDF0F5;
-      --card:         #FFFFFF;
-      --card2:        #F1F5F9;
-      --border:       #CBD5E1;
-      --text:         #1E293B;
-      --text2:        #475569;
-      --btn:          #E2E8F0;
-      --btn-hover:    #CBD5E1;
-      --shadow:       0 4px 24px rgba(100,116,139,0.12);
-    }
-
-    /* ─────────────────────────────────────────────
-       RESET & BASE
-    ───────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    html { scroll-behavior: smooth; }
-
-    body {
-      font-family: 'Hind Siliguri', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      transition: background var(--transition), color var(--transition);
-      overflow-x: hidden;
-    }
-
-    a { color: inherit; text-decoration: none; }
-    button { cursor: pointer; font-family: inherit; }
-    img { display: block; max-width: 100%; }
-
-    /* ─────────────────────────────────────────────
-       LOADING SCREEN
-    ───────────────────────────────────────────── */
-    #loading-screen {
-      position: fixed; inset: 0;
-      background: #0F0F0F;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      z-index: 9999;
-      transition: opacity 0.5s, visibility 0.5s;
-    }
-    #loading-screen.hidden { opacity: 0; visibility: hidden; }
-
-    .loader-logo {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 3rem; font-weight: 700;
-      color: var(--accent);
-      letter-spacing: 6px;
-      animation: pulse-logo 1.2s ease-in-out infinite;
-    }
-    .loader-bar {
-      margin-top: 24px;
-      width: 180px; height: 3px;
-      background: #2a2a2a;
-      border-radius: 99px;
-      overflow: hidden;
-    }
-    .loader-bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--accent), var(--accent2));
-      border-radius: 99px;
-      animation: bar-fill 1.8s ease forwards;
-    }
-    @keyframes pulse-logo {
-      0%,100% { opacity: 1; } 50% { opacity: 0.5; }
-    }
-    @keyframes bar-fill {
-      from { width: 0; } to { width: 100%; }
-    }
-
-    /* ─────────────────────────────────────────────
-       TOP NAV BAR
-    ───────────────────────────────────────────── */
-    #navbar {
-      position: sticky; top: 0; z-index: 100;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 20px;
-      height: 58px;
-      background: var(--bg2);
-      border-bottom: 1px solid var(--border);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-    }
-
-    .nav-logo {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1.6rem; font-weight: 700;
-      color: var(--accent);
-      letter-spacing: 3px;
-    }
-    .nav-logo span { color: var(--text2); font-size: 0.7rem; font-weight: 400; letter-spacing: 1px; display: block; margin-top: -4px; font-family: 'Hind Siliguri', sans-serif; }
-
-    .nav-right { display: flex; align-items: center; gap: 10px; }
-
-    /* Theme Toggle */
-    .theme-toggle {
-      width: 46px; height: 26px;
-      background: var(--btn);
-      border: 1px solid var(--border);
-      border-radius: 99px;
-      position: relative;
-      transition: background var(--transition);
-      flex-shrink: 0;
-    }
-    .theme-toggle::after {
-      content: '';
-      position: absolute;
-      top: 3px; left: 3px;
-      width: 18px; height: 18px;
-      background: var(--accent);
-      border-radius: 50%;
-      transition: transform var(--transition);
-    }
-    [data-theme="light"] .theme-toggle::after { transform: translateX(20px); }
-
-    /* Profile / Auth button */
-    .nav-auth-btn {
-      padding: 6px 16px;
-      border-radius: 99px;
-      border: 1px solid var(--border);
-      background: var(--btn);
-      color: var(--text);
-      font-size: 0.82rem;
-      font-weight: 600;
-      transition: background var(--transition), border-color var(--transition);
-    }
-    .nav-auth-btn:hover { background: var(--btn-hover); }
-
-    /* ─────────────────────────────────────────────
-       MAIN CONTENT WRAPPER
-    ───────────────────────────────────────────── */
-    #app {
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 0 0 100px;
-    }
-
-    /* ─────────────────────────────────────────────
-       PAGE ROUTING — show/hide
-    ───────────────────────────────────────────── */
-    .page { display: none; }
-    .page.active { display: block; }
-
-    /* ─────────────────────────────────────────────
-       ① HOME PAGE
-    ───────────────────────────────────────────── */
-    #page-home { padding: 0; }
-
-    /* Countdown Card */
-    .countdown-card {
-      margin: 16px 16px 0;
-      background: linear-gradient(135deg, #1C0A0A 0%, #2E1010 50%, #1A0808 100%);
-      border: 1px solid #5a1a1a;
-      border-radius: var(--radius);
-      padding: 20px 18px 18px;
-      position: relative;
-      overflow: hidden;
-    }
-    .countdown-card::before {
-      content: '';
-      position: absolute; top: -40px; right: -40px;
-      width: 120px; height: 120px;
-      background: radial-gradient(circle, rgba(229,57,53,0.18), transparent 70%);
-      border-radius: 50%;
-    }
-    .cd-label {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 0.72rem; letter-spacing: 3px; text-transform: uppercase;
-      color: var(--accent2); margin-bottom: 4px;
-    }
-    .cd-title {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1.35rem; font-weight: 700;
-      color: #fff; line-height: 1.2;
-    }
-    .cd-subtitle { font-size: 0.82rem; color: #b07070; margin-top: 4px; }
-
-    .cd-timer {
-      display: flex; gap: 8px; margin-top: 16px;
-      justify-content: center;
-    }
-    .cd-unit {
-      flex: 1;
-      background: rgba(0,0,0,0.35);
-      border: 1px solid #5a2020;
-      border-radius: var(--radius-sm);
-      text-align: center;
-      padding: 10px 6px 8px;
-    }
-    .cd-num {
-      font-family: 'Space Mono', monospace;
-      font-size: 1.6rem; font-weight: 700;
-      color: var(--accent2); line-height: 1;
-    }
-    .cd-lbl { font-size: 0.62rem; color: #b07070; margin-top: 3px; letter-spacing: 1px; text-transform: uppercase; }
-
-    /* Main Nav Buttons */
-    .home-nav {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 12px; padding: 16px 16px 0;
-    }
-    .home-nav-btn {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 18px 14px;
-      display: flex; flex-direction: column; align-items: flex-start;
-      gap: 8px;
-      transition: background var(--transition), border-color var(--transition), transform 0.15s;
-      position: relative; overflow: hidden;
-    }
-    .home-nav-btn:hover { background: var(--card2); transform: translateY(-2px); }
-    .home-nav-btn:active { transform: translateY(0); }
-
-    .home-nav-btn.accent-btn {
-      background: linear-gradient(135deg, #2a0a0a, #3d1010);
-      border-color: #6b2020;
-    }
-    .home-nav-btn.accent-btn:hover { border-color: var(--accent); }
-
-    .hnb-icon { font-size: 1.6rem; }
-    .hnb-title { font-weight: 700; font-size: 0.88rem; color: var(--text); line-height: 1.2; }
-    .hnb-sub { font-size: 0.72rem; color: var(--text2); }
-
-    /* Arrow decoration */
-    .hnb-arrow {
-      position: absolute; right: 12px; bottom: 12px;
-      font-size: 0.9rem; color: var(--border);
-      transition: color var(--transition), transform var(--transition);
-    }
-    .home-nav-btn:hover .hnb-arrow { color: var(--accent); transform: translate(2px, -2px); }
-
-    /* Admin Control Button (hidden by default) */
-    #admin-control-btn {
-      display: none;
-      margin: 12px 16px 0;
-    }
-    #admin-control-btn button {
-      width: 100%;
-      padding: 13px;
-      background: linear-gradient(135deg, #1a0a2e, #2d1060);
-      border: 1px solid #6b3abf;
-      border-radius: var(--radius);
-      color: #c084fc;
-      font-weight: 700; font-size: 0.9rem;
-      font-family: 'Rajdhani', sans-serif;
-      letter-spacing: 2px; text-transform: uppercase;
-      transition: border-color var(--transition), box-shadow var(--transition);
-    }
-    #admin-control-btn button:hover { border-color: #a855f7; box-shadow: 0 0 20px rgba(168,85,247,0.25); }
-
-    /* Social Row */
-    .social-row {
-      display: flex; gap: 10px;
-      padding: 16px 16px 0;
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
-    .social-row::-webkit-scrollbar { display: none; }
-    .social-btn {
-      flex-shrink: 0;
-      display: flex; align-items: center; gap: 7px;
-      padding: 9px 14px;
-      border-radius: 99px;
-      border: 1px solid var(--border);
-      background: var(--card);
-      font-size: 0.8rem; font-weight: 600; color: var(--text2);
-      transition: background var(--transition), border-color var(--transition), color var(--transition);
-    }
-    .social-btn:hover { background: var(--card2); color: var(--text); }
-    .social-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
-
-    /* Owner Profile Section */
-    .owner-section {
-      margin: 20px 16px 0;
-      display: flex; flex-direction: column; align-items: center;
-    }
-    .owner-photo-wrap {
-      position: relative; width: 90px; height: 90px;
-      cursor: pointer;
-    }
-    .owner-glow-ring {
-      position: absolute; inset: -5px;
-      border-radius: 50%;
-      background: conic-gradient(var(--accent), #ff9800, #ffeb3b, var(--green), var(--blue), var(--accent));
-      animation: spin 3s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .owner-glow-inner {
-      position: absolute; inset: 3px;
-      border-radius: 50%;
-      background: var(--bg);
-    }
-    .owner-photo {
-      position: absolute; inset: 6px;
-      border-radius: 50%;
-      background: var(--card2);
-      overflow: hidden;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .owner-photo img { width: 100%; height: 100%; object-fit: cover; }
-    .owner-photo-placeholder {
-      font-size: 2rem; color: var(--text2);
-    }
-    .owner-info { margin-top: 12px; text-align: center; }
-    .owner-name { font-weight: 700; font-size: 1rem; }
-    .owner-role { font-size: 0.78rem; color: var(--text2); margin-top: 2px; }
-
-    /* Flip Card */
-    .flip-card-overlay {
-      display: none;
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.7);
-      z-index: 500;
-      align-items: center; justify-content: center;
-      padding: 20px;
-    }
-    .flip-card-overlay.open { display: flex; }
-    .flip-card-box {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 24px 20px;
-      max-width: 320px; width: 100%;
-      animation: slideUp 0.3s ease;
-    }
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .flip-card-title {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1.1rem; font-weight: 700;
-      color: var(--accent); margin-bottom: 14px; letter-spacing: 1px;
-    }
-    .flip-card-row { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
-    .flip-card-row:last-of-type { border-bottom: none; }
-    .fcr-label { font-size: 0.78rem; color: var(--text2); width: 90px; flex-shrink: 0; }
-    .fcr-val { font-size: 0.85rem; font-weight: 600; }
-    .flip-close {
-      margin-top: 16px; width: 100%;
-      padding: 10px;
-      border-radius: var(--radius-sm);
-      background: var(--btn);
-      border: 1px solid var(--border);
-      color: var(--text); font-weight: 600;
-      transition: background var(--transition);
-    }
-    .flip-close:hover { background: var(--btn-hover); }
-
-    /* ─────────────────────────────────────────────
-       SECTION HEADER (reusable)
-    ───────────────────────────────────────────── */
-    .section-header {
-      display: flex; align-items: center; gap: 10px;
-      padding: 18px 16px 10px;
-    }
-    .back-btn {
-      width: 34px; height: 34px;
-      border-radius: var(--radius-sm);
-      background: var(--btn);
-      border: 1px solid var(--border);
-      color: var(--text);
-      font-size: 1rem;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      transition: background var(--transition);
-    }
-    .back-btn:hover { background: var(--btn-hover); }
-    .section-title { font-family: 'Rajdhani', sans-serif; font-size: 1.2rem; font-weight: 700; letter-spacing: 1px; }
-
-    /* ─────────────────────────────────────────────
-       GENERIC LIST ITEMS
-    ───────────────────────────────────────────── */
-    .list-grid {
-      display: flex; flex-direction: column; gap: 10px;
-      padding: 0 16px;
-    }
-    .list-item {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 16px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      cursor: pointer;
-      transition: background var(--transition), border-color var(--transition), transform 0.15s;
-    }
-    .list-item:hover { background: var(--card2); transform: translateX(3px); }
-    .list-item-left { display: flex; flex-direction: column; gap: 2px; }
-    .li-title { font-weight: 600; font-size: 0.92rem; }
-    .li-sub { font-size: 0.75rem; color: var(--text2); }
-    .li-arrow { color: var(--text2); font-size: 1rem; }
-
-    /* Tag chips */
-    .chip {
-      display: inline-block;
-      padding: 2px 10px;
-      border-radius: 99px;
-      font-size: 0.68rem; font-weight: 600;
-      letter-spacing: 0.5px;
-    }
-    .chip-red { background: rgba(229,57,53,0.15); color: var(--accent2); border: 1px solid rgba(229,57,53,0.3); }
-    .chip-blue { background: rgba(59,130,246,0.15); color: var(--blue); border: 1px solid rgba(59,130,246,0.3); }
-    .chip-green { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
-
-    /* ─────────────────────────────────────────────
-       ② AUTH PAGES
-    ───────────────────────────────────────────── */
-    .auth-wrap {
-      padding: 24px 20px;
-      display: flex; flex-direction: column; gap: 14px;
-    }
-    .auth-logo {
-      text-align: center; padding: 20px 0 10px;
-    }
-    .auth-logo-text {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 2.4rem; font-weight: 700; letter-spacing: 6px;
-      color: var(--accent);
-    }
-    .auth-logo-sub { font-size: 0.78rem; color: var(--text2); margin-top: 2px; letter-spacing: 1px; }
-    .auth-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 22px 18px;
-    }
-    .auth-card-title {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1.1rem; font-weight: 700;
-      margin-bottom: 16px; letter-spacing: 1px;
-    }
-
-    /* Form inputs */
-    .form-group { display: flex; flex-direction: column; gap: 5px; }
-    .form-label { font-size: 0.78rem; color: var(--text2); font-weight: 600; }
-    .form-input {
-      padding: 11px 14px;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border);
-      background: var(--bg);
-      color: var(--text);
-      font-size: 0.9rem;
-      font-family: 'Hind Siliguri', sans-serif;
-      outline: none;
-      transition: border-color var(--transition);
-    }
-    .form-input:focus { border-color: var(--blue); }
-    .form-input::placeholder { color: var(--text2); opacity: 0.6; }
-
-    /* Radio group */
-    .radio-group { display: flex; gap: 10px; }
-    .radio-opt {
-      flex: 1; padding: 10px;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border);
-      background: var(--bg);
-      text-align: center; cursor: pointer;
-      font-size: 0.82rem; font-weight: 600;
-      color: var(--text2);
-      transition: border-color var(--transition), background var(--transition), color var(--transition);
-    }
-    .radio-opt.selected { border-color: var(--blue); background: rgba(59,130,246,0.1); color: var(--blue); }
-
-    /* Buttons */
-    .btn-primary {
-      width: 100%; padding: 13px;
-      border-radius: var(--radius-sm);
-      background: var(--accent);
-      color: #fff; font-weight: 700; font-size: 0.95rem;
-      border: none;
-      font-family: 'Rajdhani', sans-serif; letter-spacing: 1px;
-      transition: background var(--transition), transform 0.15s;
-    }
-    .btn-primary:hover { background: var(--accent2); }
-    .btn-primary:active { transform: scale(0.98); }
-    .btn-primary:disabled { background: var(--btn); color: var(--text2); cursor: not-allowed; }
-
-    .btn-ghost {
-      width: 100%; padding: 11px;
-      border-radius: var(--radius-sm);
-      background: transparent;
-      color: var(--text2); font-weight: 600; font-size: 0.85rem;
-      border: 1px solid var(--border);
-      transition: background var(--transition), color var(--transition);
-    }
-    .btn-ghost:hover { background: var(--card2); color: var(--text); }
-
-    .auth-link { text-align: center; font-size: 0.82rem; color: var(--text2); }
-    .auth-link a { color: var(--blue); font-weight: 600; text-decoration: underline; }
-    .auth-link a:hover { color: var(--accent); }
-
-    .error-msg { font-size: 0.78rem; color: var(--red); min-height: 18px; }
-    .success-msg { font-size: 0.78rem; color: var(--green); min-height: 18px; }
-
-    /* ─────────────────────────────────────────────
-       ③ PROFILE PAGE
-    ───────────────────────────────────────────── */
-    .profile-header {
-      display: flex; flex-direction: column; align-items: center;
-      padding: 24px 16px 16px;
-      position: relative;
-    }
-    .profile-avatar-wrap {
-      width: 80px; height: 80px;
-      border-radius: 50%;
-      background: var(--card2);
-      border: 2px solid var(--border);
-      overflow: hidden;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 2rem; color: var(--text2);
-      margin-bottom: 12px;
-      cursor: pointer; position: relative;
-    }
-    .profile-avatar-wrap img { width: 100%; height: 100%; object-fit: cover; }
-    .avatar-edit-badge {
-      position: absolute; bottom: 0; right: 0;
-      width: 24px; height: 24px;
-      background: var(--accent);
-      border-radius: 50%; border: 2px solid var(--bg);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.65rem; color: #fff;
-    }
-    .profile-name { font-weight: 700; font-size: 1.1rem; }
-    .profile-meta { font-size: 0.78rem; color: var(--text2); margin-top: 2px; }
-
-    .profile-info-card {
-      margin: 0 16px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-    }
-    .pinfo-row {
-      display: flex; align-items: center;
-      padding: 13px 16px;
-      border-bottom: 1px solid var(--border);
-    }
-    .pinfo-row:last-child { border-bottom: none; }
-    .pinfo-label { font-size: 0.75rem; color: var(--text2); width: 110px; flex-shrink: 0; }
-    .pinfo-val { font-size: 0.88rem; font-weight: 600; flex: 1; }
-    .pinfo-edit { font-size: 0.75rem; color: var(--blue); padding: 2px 8px; border-radius: 4px; }
-
-    .profile-tabs {
-      display: flex; gap: 0;
-      margin: 16px 16px 0;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-    }
-    .ptab {
-      flex: 1; padding: 11px 6px;
-      font-size: 0.72rem; font-weight: 600;
-      text-align: center; color: var(--text2);
-      border-right: 1px solid var(--border);
-      background: transparent;
-      border-top: none; border-bottom: none; border-left: none;
-      cursor: pointer;
-      transition: background var(--transition), color var(--transition);
-    }
-    .ptab:last-child { border-right: none; }
-    .ptab.active { background: var(--card2); color: var(--text); }
-
-    /* ─────────────────────────────────────────────
-       FIXED BOTTOM — FLOATING BUTTONS
-    ───────────────────────────────────────────── */
-    .fixed-float-btns {
-      position: fixed;
-      right: 16px; bottom: 80px;
-      display: flex; flex-direction: column; gap: 10px;
-      z-index: 200;
-    }
-    .float-btn {
-      width: 48px; height: 48px;
-      border-radius: 50%;
-      border: none;
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .float-btn:hover { transform: scale(1.1); box-shadow: 0 6px 24px rgba(0,0,0,0.5); }
-    .float-wa { background: #25D366; }
-    .float-tg { background: #229ED9; }
-    .float-btn svg { width: 24px; height: 24px; fill: #fff; }
-
-    /* ─────────────────────────────────────────────
-       BOTTOM NAV
-    ───────────────────────────────────────────── */
-    #bottom-nav {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      height: 60px;
-      background: var(--bg2);
-      border-top: 1px solid var(--border);
-      display: flex;
-      z-index: 150;
-      max-width: 480px;
-      margin: 0 auto;
-    }
-    .bnav-item {
-      flex: 1;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 3px;
-      cursor: pointer;
-      color: var(--text2);
-      font-size: 0.6rem; font-weight: 600; letter-spacing: 0.5px;
-      border-top: 2px solid transparent;
-      transition: color var(--transition), border-color var(--transition);
-      background: none; border-bottom: none; border-left: none; border-right: none;
-    }
-    .bnav-item svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; }
-    .bnav-item.active { color: var(--accent); border-top-color: var(--accent); }
-
-    /* ─────────────────────────────────────────────
-       FREE EXAM SECTION PAGE
-    ───────────────────────────────────────────── */
-    .exam-category-grid {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 10px; padding: 0 16px;
-    }
-    .exam-cat-btn {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px 12px;
-      text-align: left;
-      cursor: pointer;
-      transition: background var(--transition), border-color var(--transition), transform 0.15s;
-    }
-    .exam-cat-btn:hover { background: var(--card2); transform: translateY(-2px); }
-    .ecb-icon { font-size: 1.5rem; margin-bottom: 8px; }
-    .ecb-title { font-weight: 700; font-size: 0.85rem; color: var(--text); line-height: 1.2; }
-    .ecb-sub { font-size: 0.7rem; color: var(--text2); margin-top: 3px; }
-
-    /* ─────────────────────────────────────────────
-       TOAST NOTIFICATIONS
-    ───────────────────────────────────────────── */
-    #toast-container {
-      position: fixed; top: 70px; right: 16px;
-      display: flex; flex-direction: column; gap: 8px;
-      z-index: 9000; pointer-events: none;
-    }
-    .toast {
-      padding: 12px 16px;
-      border-radius: var(--radius-sm);
-      background: var(--card);
-      border-left: 3px solid var(--green);
-      box-shadow: var(--shadow);
-      font-size: 0.82rem; font-weight: 600;
-      color: var(--text);
-      animation: toast-in 0.3s ease, toast-out 0.3s ease 2.7s forwards;
-      max-width: 280px;
-    }
-    .toast.error { border-left-color: var(--red); }
-    .toast.info  { border-left-color: var(--blue); }
-    @keyframes toast-in  { from { opacity:0; transform: translateX(20px); } to { opacity:1; transform: none; } }
-    @keyframes toast-out { from { opacity:1; } to { opacity:0; transform: translateX(20px); } }
-
-    /* ─────────────────────────────────────────────
-       UTILITY
-    ───────────────────────────────────────────── */
-    .divider { height: 1px; background: var(--border); margin: 8px 16px; }
-    .spacer-sm { height: 8px; }
-    .spacer-md { height: 16px; }
-    .text-center { text-align: center; }
-    .text-muted { color: var(--text2); font-size: 0.82rem; }
-    .hidden { display: none !important; }
-
-    /* Scrollbar styling */
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: var(--bg); }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
-
-    /* ─────────────────────────────────────────────
-       RESPONSIVE
-    ───────────────────────────────────────────── */
-    @media (min-width: 481px) {
-      #app { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
-      #bottom-nav { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATLAS - Exam Preparation Platform</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Rajdhani:wght@600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+    <!-- Link CSS -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- ─── LOADING SCREEN ─── -->
-<div id="loading-screen">
-  <div class="loader-logo">ATLAS</div>
-  <div class="loader-bar"><div class="loader-bar-fill"></div></div>
-</div>
-
-<!-- ─── TOAST CONTAINER ─── -->
-<div id="toast-container"></div>
-
-<!-- ─── NAVBAR ─── -->
-<nav id="navbar">
-  <div class="nav-logo">
-    ATLAS
-    <span>Exam Preparation Platform</span>
-  </div>
-  <div class="nav-right">
-    <button class="theme-toggle" id="themeToggle" title="Toggle Theme"></button>
-    <button class="nav-auth-btn" id="navAuthBtn" onclick="handleNavAuth()">লগইন</button>
-  </div>
-</nav>
-
-<!-- ─── MAIN APP ─── -->
-<div id="app">
-
-  <!-- ══════════════════════════════════
-       PAGE: HOME
-  ══════════════════════════════════ -->
-  <div id="page-home" class="page active">
-
-    <!-- Countdown Card -->
-    <div class="countdown-card" id="countdownCard">
-      <div class="cd-label">⏳ Countdown</div>
-      <div class="cd-title" id="cd-main-topic">HSC পরীক্ষা ২০২৫</div>
-      <div class="cd-subtitle" id="cd-sub-topic">পদার্থবিজ্ঞান • রসায়ন • জীববিজ্ঞান</div>
-      <div class="cd-timer">
-        <div class="cd-unit"><div class="cd-num" id="cd-days">00</div><div class="cd-lbl">দিন</div></div>
-        <div class="cd-unit"><div class="cd-num" id="cd-hours">00</div><div class="cd-lbl">ঘণ্টা</div></div>
-        <div class="cd-unit"><div class="cd-num" id="cd-mins">00</div><div class="cd-lbl">মিনিট</div></div>
-        <div class="cd-unit"><div class="cd-num" id="cd-secs">00</div><div class="cd-lbl">সেকেন্ড</div></div>
-      </div>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loader-logo">ATLAS</div>
+        <div class="loader-bar"><div class="loader-bar-fill"></div></div>
     </div>
 
-    <!-- Admin Control (visible to admin only) -->
-    <div id="admin-control-btn">
-      <button onclick="navigateTo('page-admin')">⚙ Admin Control Panel</button>
-    </div>
-
-    <!-- Main Navigation Buttons -->
-    <div class="home-nav">
-      <button class="home-nav-btn accent-btn" onclick="navigateTo('page-class')">
-        <div class="hnb-icon">🎓</div>
-        <div class="hnb-title">Free Class Section</div>
-        <div class="hnb-sub">ভিডিও ক্লাস</div>
-        <span class="hnb-arrow">↗</span>
-      </button>
-      <button class="home-nav-btn accent-btn" onclick="navigateTo('page-exam')">
-        <div class="hnb-icon">📝</div>
-        <div class="hnb-title">Free Exam Section</div>
-        <div class="hnb-sub">সকল এক্সাম</div>
-        <span class="hnb-arrow">↗</span>
-      </button>
-      <button class="home-nav-btn" onclick="navigateTo('page-mistakes')">
-        <div class="hnb-icon">📍</div>
-        <div class="hnb-title">My Mistakes</div>
-        <div class="hnb-sub">ভুল প্রশ্ন রিভিউ</div>
-        <span class="hnb-arrow">↗</span>
-      </button>
-      <button class="home-nav-btn" onclick="navigateTo('page-ai')">
-        <div class="hnb-icon">🤖</div>
-        <div class="hnb-title">ATLAS AI</div>
-        <div class="hnb-sub">AI Chatbot</div>
-        <span class="hnb-arrow">↗</span>
-      </button>
-    </div>
-
-    <!-- Social Row -->
-    <div class="social-row">
-      <a href="https://facebook.com" target="_blank" class="social-btn">
-        <svg viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-        Facebook
-      </a>
-      <a href="https://youtube.com/@atlasprep" target="_blank" class="social-btn">
-        <svg viewBox="0 0 24 24" fill="#FF0000"><path d="M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg>
-        YouTube
-      </a>
-      <a href="https://t.me/rafi_somc" target="_blank" class="social-btn">
-        <svg viewBox="0 0 24 24" fill="#229ED9"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
-        Telegram
-      </a>
-      <a href="https://wa.me/8801999681290" target="_blank" class="social-btn">
-        <svg viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
-        WhatsApp
-      </a>
-    </div>
-
-    <div class="spacer-md"></div>
-
-    <!-- Owner Profile Section -->
-    <div class="owner-section">
-      <div class="owner-photo-wrap" onclick="document.getElementById('flipCardOverlay').classList.add('open')">
-        <div class="owner-glow-ring"></div>
-        <div class="owner-glow-inner"></div>
-        <div class="owner-photo">
-          <span class="owner-photo-placeholder">👨‍🏫</span>
+    <!-- Top Navbar -->
+    <nav id="navbar">
+        <div class="nav-logo">ATLAS<span>Exam Preparation Platform</span></div>
+        <div class="nav-right">
+            <button class="theme-toggle" id="themeToggle"></button>
+            <button class="nav-auth-btn" onclick="handleNavAuth()">লগইন</button>
         </div>
-      </div>
-      <div class="owner-info">
-        <div class="owner-name">ATLAS Prep</div>
-        <div class="owner-role">তোমার পরীক্ষার প্রস্তুতি সঙ্গী</div>
-      </div>
-    </div>
-    <div class="spacer-md"></div>
-  </div><!-- end page-home -->
+    </nav>
 
+    <!-- Toast Notifications Container -->
+    <div id="toast-container"></div>
 
-  <!-- ══════════════════════════════════
-       PAGE: LOGIN
-  ══════════════════════════════════ -->
-  <div id="page-login" class="page">
-    <div class="auth-wrap">
-      <div class="auth-logo">
-        <div class="auth-logo-text">ATLAS</div>
-        <div class="auth-logo-sub">Exam Preparation Platform</div>
-      </div>
-      <div class="auth-card">
-        <div class="auth-card-title">লগইন করুন</div>
-        <div class="form-group">
-          <div class="form-label">ফোন নম্বর</div>
-          <input type="tel" class="form-input" id="login-phone" placeholder="01XXXXXXXXX" maxlength="11" />
+    <!-- Main Content Wrapper -->
+    <div id="app">
+        
+        <!-- PAGE 1: HOME -->
+        <div id="page-home" class="page active">
+            <!-- Countdown Card --> 
+            <div class="countdown-card" id="countdownCard"> 
+                <div class="cd-label">⏳ Countdown</div> 
+                <div class="cd-title" id="cd-main-topic">HSC পরীক্ষা ২০২৫</div> 
+                <div class="cd-subtitle" id="cd-sub-topic">পদার্থবিজ্ঞান • রসায়ন • জীববিজ্ঞান</div> 
+                <div class="cd-timer"> 
+                    <div class="cd-unit"><div class="cd-num" id="cd-days">00</div><div class="cd-lbl">দিন</div></div> 
+                    <div class="cd-unit"><div class="cd-num" id="cd-hours">00</div><div class="cd-lbl">ঘণ্টা</div></div> 
+                    <div class="cd-unit"><div class="cd-num" id="cd-mins">00</div><div class="cd-lbl">মিনিট</div></div> 
+                    <div class="cd-unit"><div class="cd-num" id="cd-secs">00</div><div class="cd-lbl">সেকেন্ড</div></div> 
+                </div> 
+            </div> 
+
+            <!-- Admin Control (visible to admin only) --> 
+            <div id="admin-control-btn"> 
+                <button onclick="navigateTo('page-admin')">⚙ Admin Control Panel</button> 
+            </div> 
+
+            <!-- Main Navigation Buttons --> 
+            <div class="home-nav"> 
+                <button class="home-nav-btn accent-btn" onclick="navigateTo('page-class')"> 
+                    <div class="hnb-icon">🎓</div> 
+                    <div class="hnb-title">Free Class Section</div> 
+                    <div class="hnb-sub">ভিডিও ক্লাস</div> 
+                    <span class="hnb-arrow">↗</span> 
+                </button> 
+                <button class="home-nav-btn accent-btn" onclick="navigateTo('page-exam')"> 
+                    <div class="hnb-icon">📝</div> 
+                    <div class="hnb-title">Free Exam Section</div> 
+                    <div class="hnb-sub">সকল এক্সাম</div> 
+                    <span class="hnb-arrow">↗</span> 
+                </button> 
+                <button class="home-nav-btn" onclick="navigateTo('page-mistakes')"> 
+                    <div class="hnb-icon">📍</div> 
+                    <div class="hnb-title">My Mistakes</div> 
+                    <div class="hnb-sub">ভুল প্রশ্ন রিভিউ</div> 
+                    <span class="hnb-arrow">↗</span> 
+                </button> 
+                <button class="home-nav-btn" onclick="navigateTo('page-ai')"> 
+                    <div class="hnb-icon">🤖</div> 
+                    <div class="hnb-title">ATLAS AI</div> 
+                    <div class="hnb-sub">AI Chatbot</div> 
+                    <span class="hnb-arrow">↗</span> 
+                </button> 
+            </div> 
+
+            <!-- Social Row --> 
+            <div class="social-row"> 
+                <a href="https://facebook.com" target="_blank" class="social-btn"> 
+                    <svg viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg> Facebook 
+                </a> 
+                <a href="https://youtube.com/@atlasprep" target="_blank" class="social-btn"> 
+                    <svg viewBox="0 0 24 24" fill="#FF0000"><path d="M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg> YouTube 
+                </a> 
+                <a href="https://t.me/rafi_somc" target="_blank" class="social-btn"> 
+                    <svg viewBox="0 0 24 24" fill="#229ED9"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg> Telegram 
+                </a> 
+                <a href="https://wa.me/8801999681290" target="_blank" class="social-btn"> 
+                    <svg viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg> WhatsApp 
+                </a> 
+            </div> 
+            <div class="spacer-md"></div> 
+
+            <!-- Owner Profile Section --> 
+            <div class="owner-section"> 
+                <div class="owner-photo-wrap" onclick="document.getElementById('flipCardOverlay').classList.add('open')"> 
+                    <div class="owner-glow-ring"></div> 
+                    <div class="owner-glow-inner"></div> 
+                    <div class="owner-photo"> 
+                        <span class="owner-photo-placeholder">👨‍🏫</span> 
+                    </div> 
+                </div> 
+                <div class="owner-info"> 
+                    <div class="owner-name">ATLAS Prep</div> 
+                    <div class="owner-role">তোমার পরীক্ষার প্রস্তুতি সঙ্গী</div> 
+                </div> 
+            </div> 
+            <div class="spacer-md"></div>
         </div>
-        <div class="spacer-sm"></div>
-        <div class="form-group">
-          <div class="form-label">পাসওয়ার্ড</div>
-          <input type="password" class="form-input" id="login-password" placeholder="পাসওয়ার্ড দিন" />
-        </div>
-        <div class="spacer-sm"></div>
-        <div id="login-error" class="error-msg"></div>
-        <div class="spacer-sm"></div>
-        <button class="btn-primary" id="loginBtn" onclick="handleLogin()">লগইন</button>
-        <div class="spacer-sm"></div>
-        <button class="btn-ghost" onclick="navigateTo('page-forgot')">পাসওয়ার্ড ভুলে গেছেন?</button>
-      </div>
-      <div class="auth-link">
-        নতুন ব্যবহারকারী? <a href="#" onclick="navigateTo('page-register')">রেজিস্ট্রেশন করুন</a>
-      </div>
-    </div>
-  </div>
 
-  <!-- ══════════════════════════════════
-       PAGE: REGISTER
-  ══════════════════════════════════ -->
-  <div id="page-register" class="page">
-    <div class="section-header">
-      <button class="back-btn" onclick="navigateTo('page-login')">←</button>
-      <div class="section-title">নতুন রেজিস্ট্রেশন</div>
-    </div>
-    <div style="padding: 0 16px 100px; display:flex; flex-direction:column; gap:12px;">
-      <div class="auth-card" style="margin:0;">
-        <div class="auth-card-title">ব্যক্তিগত তথ্য</div>
-        <div style="display:flex;flex-direction:column;gap:10px;">
-          <div class="form-group">
-            <div class="form-label">নাম *</div>
-            <input type="text" class="form-input" id="reg-name" placeholder="আপনার পুরো নাম" />
-          </div>
-          <div class="form-group">
-            <div class="form-label">HSC ব্যাচ *</div>
-            <input type="text" class="form-input" id="reg-batch" placeholder="যেমন: ২০২৫" />
-          </div>
-          <div class="form-group">
-            <div class="form-label">কলেজের নাম *</div>
-            <input type="text" class="form-input" id="reg-college" placeholder="কলেজের নাম" />
-          </div>
-          <div class="form-group">
-            <div class="form-label">বাবার নাম</div>
-            <input type="text" class="form-input" id="reg-father" placeholder="বাবার নাম (ঐচ্ছিক)" />
-          </div>
-          <div class="form-group">
-            <div class="form-label">মায়ের নাম</div>
-            <input type="text" class="form-input" id="reg-mother" placeholder="মায়ের নাম (ঐচ্ছিক)" />
-          </div>
-          <div class="form-group">
-            <div class="form-label">SSC GPA * (দশমিক, যেমন: 5.00)</div>
-            <input type="text" class="form-input" id="reg-ssc-gpa" placeholder="5.00" maxlength="4" />
-          </div>
-          <div class="form-group">
-            <div class="form-label">HSC GPA * (দশমিক, যেমন: 5.00)</div>
-            <input type="text" class="form-input" id="reg-hsc-gpa" placeholder="5.00" maxlength="4" />
-          </div>
-          <div class="form-group">
-            <div class="form-label">আপনি কি ফার্স্ট টাইমার না সেকেন্ড টাইমার? *</div>
-            <div class="radio-group">
-              <div class="radio-opt" id="timer-first" onclick="selectTimer('first')">ফার্স্ট টাইমার</div>
-              <div class="radio-opt" id="timer-second" onclick="selectTimer('second')">সেকেন্ড টাইমার</div>
+        <!-- PAGE: LOGIN -->
+        <div id="page-login" class="page">
+            <div class="section-header">
+                <button class="back-btn" onclick="goBack()">←</button>
+                <div class="section-title">লগইন করুন</div>
             </div>
-          </div>
-          <div class="form-group">
-            <div class="form-label">ফোন নম্বর * (১১ ডিজিট)</div>
-            <input type="tel" class="form-input" id="reg-phone" placeholder="01XXXXXXXXX" maxlength="11" />
-          </div>
-          <div class="form-group">
-            <div class="form-label">পাসওয়ার্ড *</div>
-            <input type="password" class="form-input" id="reg-password" placeholder="পাসওয়ার্ড তৈরি করুন" />
-          </div>
-          <div id="reg-error" class="error-msg"></div>
-          <button class="btn-primary" onclick="handleRegister()">রেজিস্ট্রেশন করুন</button>
-        </div>
-      </div>
-      <div class="auth-link">
-        আগে থেকে অ্যাকাউন্ট আছে? <a href="#" onclick="navigateTo('page-login')">লগইন করুন</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════════════════════════════
-       PAGE: FORGOT PASSWORD
-  ══════════════════════════════════ -->
-  <div id="page-forgot" class="page">
-    <div class="section-header">
-      <button class="back-btn" onclick="navigateTo('page-login')">←</button>
-      <div class="section-title">পাসওয়ার্ড পরিবর্তন</div>
-    </div>
-    <div style="padding: 0 16px;">
-      <div class="auth-card">
-        <div class="form-group">
-          <div class="form-label">ফোন নম্বর</div>
-          <input type="tel" class="form-input" id="forgot-phone" placeholder="রেজিস্টার্ড ফোন নম্বর" maxlength="11" />
-        </div>
-        <div class="spacer-sm"></div>
-        <div class="form-group">
-          <div class="form-label">নতুন পাসওয়ার্ড</div>
-          <input type="password" class="form-input" id="forgot-newpass" placeholder="নতুন পাসওয়ার্ড" />
-        </div>
-        <div class="spacer-sm"></div>
-        <div id="forgot-msg" class="error-msg"></div>
-        <div class="spacer-sm"></div>
-        <button class="btn-primary" onclick="handleForgotPassword()">পাসওয়ার্ড আপডেট করুন</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════════════════════════════
-       PAGE: FREE CLASS SECTION
-  ══════════════════════════════════ -->
-  <div id="page-class" class="page">
-    <div class="section-header">
-      <button class="back-btn" onclick="goBack()">←</button>
-      <div class="section-title">🎓 Free Class Section</div>
-    </div>
-    <div class="list-grid" id="class-subject-list">
-      <div class="text-muted text-center" style="padding:30px;">লোড হচ্ছে...</div>
-    </div>
-  </div>
-
-  <!-- ══════════════════════════════════
-       PAGE: FREE EXAM SECTION (hub)
-  ══════════════════════════════════ -->
-  <div id="page-exam" class="page">
-    <div class="section-header">
-      <button class="back-btn" onclick="goBack()">←</button>
-      <div class="section-title">📝 Free Exam Section</div>
-    </div>
-    <div class="exam-category-grid">
-      <button class="exam-cat-btn" onclick="navigateTo('page-exam-board')">
-        <div class="ecb-icon">📋</div>
-        <div class="ecb-title">বোর্ড প্রস্তুতি</div>
-        <div class="ecb-sub">Board Preparation</div>
-      </button>
-      <button class="exam-cat-btn" onclick="navigateTo('page-exam-medical')">
-        <div class="ecb-icon">🏥</div>
-        <div class="ecb-title">মেডিকেল প্রস্তুতি</div>
-        <div class="ecb-sub">Medical Preparation</div>
-      </button>
-      <button class="exam-cat-btn" onclick="navigateTo('page-exam-varsity')">
-        <div class="ecb-icon">🎓</div>
-        <div class="ecb-title">ভার্সিটি প্রস্তুতি</div>
-        <div class="ecb-sub">University Preparation</div>
-      </button>
-      <button class="exam-cat-btn" onclick="navigateTo('page-exam-practice')">
-        <div class="ecb-icon">✏️</div>
-        <div class="ecb-title">অনুশীলনী এক্সাম</div>
-        <div class="ecb-sub">Practice Exam</div>
-      </button>
-      <button class="exam-cat-btn" onclick="navigateTo('page-exam-mock')">
-        <div class="ecb-icon">⚡</div>
-        <div class="ecb-title">Unlimited Mock Test</div>
-        <div class="ecb-sub">Random MCQ</div>
-      </button>
-    </div>
-  </div>
-
-  <!-- ══════════════════════════════════
-       PAGE: BOARD PREP SUB-MENU
-  ══════════════════════════════════ -->
-  <div id="page-exam-board" class="page">
-    <div class="section-header">
-      <button class="back-btn" onclick="goBack()">←</button>
-      <div class="section-title">📋 বোর্ড প্রস্তুতি</div>
-    </div>
-    <div class="list-grid">
-      <div class="list-item" onclick="loadExamList('board','board-question')">
-        <div class="list-item-left"><div class="li-title">বোর্ড প্রশ্ন এক্সাম</div><div class="li-sub">চাপ্টার / সালভিত্তিক</div></div>
-        <span class="li-arrow">›</span>
-      </div>
-      <div class="list-item" onclick="loadExamList('board','college-question')">
-        <div class="list-item-left"><div class="li-title">কলেজ প্রশ্ন এক্সাম</div><div class="li-sub">চাপ্টার / সালভিত্তিক</div></div>
-        <span class="li-arrow">›</span>
-      </div>
-      <div class="list-item" onclick="loadExamList('board','ka-bhandar')">
-        <div class="list-item-left"><div class="li-title">ক ভান্ডার</div></div>
-        <span class="li-arrow">›</span>
-      </div>
-      <div class="list-item" onclick="loadExamList('board','kha-bhandar')">
-        <div class="list-item-left"><div class="li-title">খ ভান্ডার</div></div>
-        <span class="li-arrow">›</span>
-      </div>
-      <div class="list-item" onclick="loadExamList('board','type-cq')">
-        <div class="list-item-left"><div class="li-title">টাইপভিত্তিক CQ</div></div>
-        <span class="li-arrow">›</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════════════════════════════
-       PAGE: MEDICAL PREP SUB-MENU
-  ══════════════════════════════════ -->
-  <div id="page-exam-medical" class="page">
-    <div class="section-header">
-      <button class="back-btn" onclick="goBack()">←</button>
-      <div class="section-title">🏥 মেডিকেল প্রস্তুতি</div>
-    </div>
-    <div class="list-grid">
-      <div class="list-item" onclick="loadExamList('medical','demo')">
-        <div class="list-item-left"><div class="li-title">মেডিকেল Standard Demo এক্সাম</div><div class="li-sub">Subject → Chapter → Exams</div></div>
-        <span class="li-arrow">›</span>
-      </div>
-      <div class="list-item" onclick="loadExamList('medical','previous-chapter')">
-        <div class="list-item-left"><div class="li-title">বিগত প্রশ্ন (চাপ্টারভিত্তিক)</div><div class="li-sub">Subject → Chapter → Exams</div></div>
-        <span class="li-arrow">›</span>
-      </div>
-      <div class="list-item" onclick="loadExamList('medical','previous-year')">
-        <div class="list-item-left"><div class="li-title">বিগত প্রশ্ন (সালওয়াইজ)</div><div class="li-sub">Subject → Chapter → Year</div></div>
-        <span class="li-arrow">›</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════════════════════════════
-       PAGE: VARSITY PREP SUB-MENU
-  ══════════════════════════════════ -->
-  <div id="page-exam-varsity" class="page">
-    <div class="section-header">
-      <button class="back-btn" onclick="goBack()">←</button>
-      <div class="section-title">🎓 ভার্সিটি প্রস্তুতি</div>
-    </div>
-    <div class="list-grid">
-      <div class="list-item" onclick="loadExamList('varsity','varsitywise')">
-        <div class="list-item-left"><div class="li-title">Varsitywise Exam</div><div class="li-sub">Varsity → Year → Exams</div></div>
-        <span class="li-arrow">›</span>
-      </div>
-      <div class="list-item" onclick="loadExamList('varsity','previous-year')">
-        <div class="list-item-left"><div class="li-title">বিগত প্রশ্ন (সালওয়াইজ)</div><div class="li-sub">Subject → Chapter → Year</div></div>
-        <span class="li-arrow">›</span>
-      </div>
-      <div class="list-item" onclick="loadExamList('varsity','previous-chapter')">
-        <div class="list-item-left"><div class="li-title">বিগত প্রশ্ন (চাপ্টারভিত্তিক)</div><div class="li-sub">Subject → Chapter → Exams</div></div>
-        <span class="li-arrow">›</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════════════════════════════
-       PAGE: PRACTICE EXAM
-  ══════════════════════════════════ -->
-  <div id="page-exam-practice" class="page">
-    <div class="section-header">
-      <button class="back-btn" onclick="goBack()">←</button>
-      <div class="section-title">✏️ অনুশীলনী এক্সাম</div>
-    </div>
-    <div class="list-grid" id="practice-subject-list">
-      <div class="text-muted text-center" style="padding:30px;">লোড হচ্ছে...</div>
-    </div>
-  </div>
-
-  <!-- ══════════════════════════════════
-       PAGE: MOCK TEST
-  ══════════════════════════════════ -->
-  <div id="page-exam-mock" class="page">
-    <div class="section-header">
-      <button class="back-btn" onclick="goBack()">←</button>
-      <div class="section-title">⚡ Unlimited Mock Test</div>
-    </div>
-    <div style="padding:0 16px;">
-      <div class="auth-card">
-        <div class="auth-card-title">Mock Test সেটআপ</div>
-        <div style="display:flex;flex-direction:column;gap:12px;">
-          <div class="form-group">
-            <div class="form-label">বিষয় (Subject)</div>
-            <select class="form-input" id="mock-subject"><option value="">Subject বেছে নিন</option></select>
-          </div>
-          <div class="form-group">
-            <div class="form-label">অধ্যায় (Chapter)</div>
-            <select class="form-input" id="mock-chapter"><option value="">Chapter বেছে নিন</option></select>
-          </div>
-          <div class="form-group">
-            <div class="form-label">Standard</div>
-            <div class="radio-group" style="flex-wrap:wrap;gap:6px;">
-              <div class="radio-opt" onclick="selectMockStandard(this,'medical')" style="flex:none;padding:8px 12px;">Medical</div>
-              <div class="radio-opt" onclick="selectMockStandard(this,'varsity')" style="flex:none;padding:8px 12px;">Varsity</div>
-              <div class="radio-opt" onclick="selectMockStandard(this,'onushiloni')" style="flex:none;padding:8px 12px;">অনুশীলনী</div>
+            <div class="auth-wrap">
+                <div class="auth-card">
+                    <div class="form-group">
+                        <label class="form-label">ফোন নম্বর</label>
+                        <input type="text" class="form-input" placeholder="01XXX...">
+                    </div>
+                    <div class="spacer-sm"></div>
+                    <div class="form-group">
+                        <label class="form-label">পাসওয়ার্ড</label>
+                        <input type="password" class="form-input" placeholder="*****">
+                    </div>
+                    <div class="spacer-md"></div>
+                    <button class="btn-primary" onclick="navigateTo('page-home')">লগইন</button>
+                </div>
+                <div class="auth-link">
+                    <a href="#" onclick="navigateTo('page-forgot')">পাসওয়ার্ড ভুলে গেছেন?</a><br><br>
+                    নতুন ব্যবহারকারী? <a href="#" onclick="navigateTo('page-register')">রেজিস্ট্রেশন করুন</a>
+                </div>
             </div>
-          </div>
-          <div class="form-group">
-            <div class="form-label">প্রশ্নসংখ্যা</div>
-            <div class="radio-group">
-              <div class="radio-opt" onclick="selectMockCount(this,20)">20</div>
-              <div class="radio-opt" onclick="selectMockCount(this,25)">25</div>
-              <div class="radio-opt" onclick="selectMockCount(this,35)">35</div>
-              <div class="radio-opt" onclick="selectMockCount(this,50)">50</div>
+        </div>
+
+        <!-- PAGE: REGISTER -->
+        <div id="page-register" class="page">
+            <div class="section-header">
+                <button class="back-btn" onclick="goBack()">←</button>
+                <div class="section-title">নতুন রেজিস্ট্রেশন</div>
             </div>
-          </div>
-          <button class="btn-primary" onclick="startMockTest()">Mock Test শুরু করুন</button>
+            <div class="auth-wrap">
+                <div class="auth-card">
+                    <div class="auth-card-title">ব্যক্তিগত তথ্য</div>
+                    <div class="form-group"><label class="form-label">নাম *</label><input type="text" class="form-input"></div><div class="spacer-sm"></div>
+                    <div class="form-group"><label class="form-label">HSC ব্যাচ *</label><input type="text" class="form-input"></div><div class="spacer-sm"></div>
+                    <div class="form-group"><label class="form-label">কলেজের নাম *</label><input type="text" class="form-input"></div><div class="spacer-sm"></div>
+                    <div class="form-group"><label class="form-label">বাবার নাম</label><input type="text" class="form-input"></div><div class="spacer-sm"></div>
+                    <div class="form-group"><label class="form-label">মায়ের নাম</label><input type="text" class="form-input"></div><div class="spacer-sm"></div>
+                    <div class="form-group"><label class="form-label">SSC GPA * (দশমিক, যেমন: 5.00)</label><input type="text" class="form-input"></div><div class="spacer-sm"></div>
+                    <div class="form-group"><label class="form-label">HSC GPA * (দশমিক, যেমন: 5.00)</label><input type="text" class="form-input"></div><div class="spacer-sm"></div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">আপনি কি ফার্স্ট টাইমার না সেকেন্ড টাইমার? *</label>
+                        <div class="radio-group">
+                            <div class="radio-opt" id="timer-first" onclick="selectTimer('first')">ফার্স্ট টাইমার</div>
+                            <div class="radio-opt" id="timer-second" onclick="selectTimer('second')">সেকেন্ড টাইমার</div>
+                        </div>
+                    </div><div class="spacer-sm"></div>
+
+                    <div class="form-group"><label class="form-label">ফোন নম্বর * (১১ ডিজিট)</label><input type="text" class="form-input"></div><div class="spacer-sm"></div>
+                    <div class="form-group"><label class="form-label">পাসওয়ার্ড *</label><input type="password" class="form-input"></div><div class="spacer-md"></div>
+                    
+                    <button class="btn-primary">রেজিস্ট্রেশন করুন</button>
+                </div>
+                <div class="auth-link">
+                    আগে থেকে অ্যাকাউন্ট আছে? <a href="#" onclick="navigateTo('page-login')">লগইন করুন</a>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- ══════════════════════════════════
-       PAGE: MY MISTAKES
-  ══════════════════════════════════ -->
-  <div id="page-mistakes" class="page">
-    <div class="section-header">
-      <button class="back-btn" onclick="goBack()">←</button>
-      <div class="section-title">📍 My Mistakes</div>
-    </div>
-    <div class="list-grid" id="mistakes-list">
-      <div class="auth-card" style="margin:0;">
-        <div class="text-muted text-center" style="padding:20px 0;">
-          এক্সাম দেওয়া শুরু করলে এখানে ভুল প্রশ্নগুলো দেখা যাবে।
+        <!-- PAGE: FORGOT PASSWORD -->
+        <div id="page-forgot" class="page">
+            <div class="section-header">
+                <button class="back-btn" onclick="goBack()">←</button>
+                <div class="section-title">পাসওয়ার্ড পরিবর্তন</div>
+            </div>
+            <div class="auth-wrap">
+                <div class="auth-card">
+                    <div class="form-group"><label class="form-label">ফোন নম্বর</label><input type="text" class="form-input"></div><div class="spacer-sm"></div>
+                    <div class="form-group"><label class="form-label">নতুন পাসওয়ার্ড</label><input type="password" class="form-input"></div><div class="spacer-md"></div>
+                    <button class="btn-primary">পাসওয়ার্ড আপডেট করুন</button>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- ══════════════════════════════════
-       PAGE: ATLAS AI
-  ══════════════════════════════════ -->
-  <div id="page-ai" class="page">
-    <div class="section-header">
-      <button class="back-btn" onclick="goBack()">←</button>
-      <div class="section-title">🤖 ATLAS AI</div>
-    </div>
-    <div style="padding: 0 16px;">
-      <div id="ai-chat-box" style="min-height:300px; max-height:500px; overflow-y:auto; background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:12px; display:flex; flex-direction:column; gap:10px;">
-        <div style="background:var(--card2); border-radius:var(--radius-sm); padding:12px; border-left:3px solid var(--accent);">
-          <div style="font-size:0.78rem; color:var(--text2); margin-bottom:4px;">🤖 ATLAS AI</div>
-          <div style="font-size:0.88rem;">আমি ATLAS AI। পদার্থবিজ্ঞান, রসায়ন, জীববিজ্ঞান বা যেকোনো পরীক্ষা সম্পর্কিত প্রশ্ন করুন!</div>
+        <!-- PAGE: PROFILE -->
+        <div id="page-profile" class="page">
+            <div class="profile-header">
+                <div class="profile-avatar-wrap" onclick="triggerAvatarUpload()">
+                    <img id="profile-avatar-img" style="display:none;" src="" alt="Avatar">
+                    <span id="profile-avatar-placeholder">👤</span>
+                    <div class="avatar-edit-badge">✏</div>
+                </div>
+                <input type="file" id="avatar-file-input" class="hidden" accept="image/*" onchange="handleAvatarUpload(event)">
+                <div class="profile-name">Student Name</div>
+            </div>
+            
+            <div class="profile-info-card"> 
+                <div class="pinfo-row"><div class="pinfo-label">ফোন</div><div class="pinfo-val" id="p-phone">—</div></div> 
+                <div class="pinfo-row"><div class="pinfo-label">পাসওয়ার্ড</div><div class="pinfo-val" id="p-pass">—</div></div> 
+                <div class="pinfo-row"><div class="pinfo-label">HSC ব্যাচ</div><div class="pinfo-val" id="p-batch">—</div></div> 
+                <div class="pinfo-row"><div class="pinfo-label">কলেজ</div><div class="pinfo-val" id="p-college">—</div></div> 
+                <div class="pinfo-row"><div class="pinfo-label">SSC GPA</div><div class="pinfo-val" id="p-ssc">—</div></div> 
+                <div class="pinfo-row"><div class="pinfo-label">HSC GPA</div><div class="pinfo-val" id="p-hsc">—</div></div> 
+                <div class="pinfo-row"><div class="pinfo-label">টাইমার</div><div class="pinfo-val" id="p-timer">—</div></div> 
+            </div> 
+
+            <div class="profile-tabs" style="margin-top:16px;"> 
+                <button class="ptab active" onclick="switchProfileTab(this,'tab-performance')">📊 রিপোর্ট</button> 
+                <button class="ptab" onclick="switchProfileTab(this,'tab-exam-history')">📚 এক্সাম</button> 
+                <button class="ptab" onclick="switchProfileTab(this,'tab-class-history')">🎥 ক্লাস</button> 
+                <button class="ptab" onclick="switchProfileTab(this,'tab-bookmarks')">🔖 বুকমার্ক</button> 
+            </div> 
+
+            <div style="padding:16px 16px 100px;"> 
+                <div id="tab-performance"> <div class="text-muted text-center" style="padding:30px 0;">পারফরম্যান্স রিপোর্ট লোড হচ্ছে...</div> </div> 
+                <div id="tab-exam-history" style="display:none;"> <div class="text-muted text-center" style="padding:30px 0;">এখনো কোনো এক্সাম দেওয়া হয়নি।</div> </div> 
+                <div id="tab-class-history" style="display:none;"> <div class="text-muted text-center" style="padding:30px 0;">এখনো কোনো ক্লাস দেখা হয়নি।</div> </div> 
+                <div id="tab-bookmarks" style="display:none;"> <div class="text-muted text-center" style="padding:30px 0;">কোনো বুকমার্ক নেই।</div> </div> 
+            </div> 
+            
+            <div style="padding: 0 16px 16px;"> 
+                <button class="btn-ghost" onclick="handleLogout()" style="color:var(--red); border-color:var(--red);">লগআউট</button> 
+            </div>
         </div>
-      </div>
-      <div style="display:flex; gap:8px;">
-        <input type="text" class="form-input" id="ai-input" placeholder="প্রশ্ন লিখুন..." style="flex:1;" onkeydown="if(event.key==='Enter') sendAIMessage()" />
-        <button class="btn-primary" style="width:auto;padding:11px 18px;" onclick="sendAIMessage()">পাঠান</button>
-      </div>
+
+        <!-- OTHER PAGES PLACEHOLDERS (Add real content similarly based on selectors) -->
+        <div id="page-class" class="page"><div class="section-header"><button class="back-btn" onclick="goBack()">←</button><div class="section-title">🎓 Free Class Section</div></div><p class="text-center text-muted" style="padding: 20px;">লোড হচ্ছে...</p></div>
+        
+        <div id="page-exam" class="page">
+            <div class="section-header"><button class="back-btn" onclick="goBack()">←</button><div class="section-title">📝 Free Exam Section</div></div>
+            <div class="exam-category-grid">
+                <div class="exam-cat-btn" onclick="navigateTo('page-exam-board')"><div class="ecb-icon">📋</div><div class="ecb-title">বোর্ড প্রস্তুতি</div></div>
+                <div class="exam-cat-btn" onclick="navigateTo('page-exam-medical')"><div class="ecb-icon">🏥</div><div class="ecb-title">মেডিকেল প্রস্তুতি</div></div>
+                <div class="exam-cat-btn" onclick="navigateTo('page-exam-varsity')"><div class="ecb-icon">🎓</div><div class="ecb-title">ভার্সিটি প্রস্তুতি</div></div>
+                <div class="exam-cat-btn" onclick="navigateTo('page-exam-practice')"><div class="ecb-icon">✏️</div><div class="ecb-title">অনুশীলনী এক্সাম</div></div>
+                <div class="exam-cat-btn" onclick="navigateTo('page-exam-mock')" style="grid-column: span 2;"><div class="ecb-icon">⚡</div><div class="ecb-title">Unlimited Mock Test</div></div>
+            </div>
+        </div>
+
+        <!-- Sub Exam Categories -->
+        <div id="page-exam-board" class="page"><div class="section-header"><button class="back-btn" onclick="goBack()">←</button><div class="section-title">📋 বোর্ড প্রস্তুতি</div></div></div>
+        <div id="page-exam-medical" class="page"><div class="section-header"><button class="back-btn" onclick="goBack()">←</button><div class="section-title">🏥 মেডিকেল প্রস্তুতি</div></div></div>
+        <div id="page-exam-varsity" class="page"><div class="section-header"><button class="back-btn" onclick="goBack()">←</button><div class="section-title">🎓 ভার্সিটি প্রস্তুতি</div></div></div>
+        <div id="page-exam-practice" class="page"><div class="section-header"><button class="back-btn" onclick="goBack()">←</button><div class="section-title">✏️ অনুশীলনী এক্সাম</div></div></div>
+        
+        <div id="page-exam-mock" class="page">
+            <div class="section-header"><button class="back-btn" onclick="goBack()">←</button><div class="section-title">⚡ Mock Test সেটআপ</div></div>
+            <div class="auth-wrap">
+                <div class="auth-card">
+                    <div class="form-group">
+                        <label class="form-label">Standard</label>
+                        <div class="radio-group">
+                            <div class="radio-opt" onclick="selectMockStandard(this, 'medical')">Medical</div>
+                            <div class="radio-opt" onclick="selectMockStandard(this, 'varsity')">Varsity</div>
+                            <div class="radio-opt" onclick="selectMockStandard(this, 'onushiloni')">অনুশীলনী</div>
+                        </div>
+                    </div><div class="spacer-sm"></div>
+                    <div class="form-group">
+                        <label class="form-label">প্রশ্নসংখ্যা</label>
+                        <div class="radio-group">
+                            <div class="radio-opt" onclick="selectMockCount(this, 20)">20</div>
+                            <div class="radio-opt" onclick="selectMockCount(this, 25)">25</div>
+                            <div class="radio-opt" onclick="selectMockCount(this, 35)">35</div>
+                            <div class="radio-opt" onclick="selectMockCount(this, 50)">50</div>
+                        </div>
+                    </div><div class="spacer-md"></div>
+                    <button class="btn-primary" onclick="startMockTest()">Mock Test শুরু করুন</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-mistakes" class="page"><div class="section-header"><button class="back-btn" onclick="goBack()">←</button><div class="section-title">📍 My Mistakes</div></div><p class="text-center text-muted" style="padding: 20px;">এক্সাম দেওয়া শুরু করলে এখানে ভুল প্রশ্নগুলো দেখা যাবে।</p></div>
+        
+        <div id="page-ai" class="page">
+            <div class="section-header"><button class="back-btn" onclick="goBack()">←</button><div class="section-title">🤖 ATLAS AI</div></div>
+            <div class="auth-wrap" style="height: 60vh; display: flex; flex-direction: column;">
+                <div id="ai-chat-box" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); padding: 15px;">
+                    <div style="align-self:flex-start;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-size:0.88rem;max-width:85%;">আমি ATLAS AI। পদার্থবিজ্ঞান, রসায়ন, জীববিজ্ঞান বা যেকোনো পরীক্ষা সম্পর্কিত প্রশ্ন করুন!</div>
+                </div>
+                <div class="spacer-sm"></div>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="ai-input" class="form-input" style="flex: 1;" placeholder="আপনার প্রশ্ন লিখুন...">
+                    <button class="btn-primary" style="width: auto; padding: 0 20px;" onclick="sendAIMessage()">পাঠান</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="page-admin" class="page"><div class="section-header"><button class="back-btn" onclick="goBack()">←</button><div class="section-title">⚙ Admin Control Panel</div></div><p class="text-center text-muted" style="padding: 20px;">admin.js লোড হচ্ছে...</p></div>
     </div>
-  </div>
 
-  <!-- ══════════════════════════════════
-       PAGE: PROFILE
-  ══════════════════════════════════ -->
-  <div id="page-profile" class="page">
-    <div class="profile-header">
-      <div class="profile-avatar-wrap" onclick="triggerAvatarUpload()">
-        <span id="profile-avatar-placeholder">👤</span>
-        <img id="profile-avatar-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:50%;" />
-        <div class="avatar-edit-badge">✏</div>
-      </div>
-      <input type="file" id="avatar-file-input" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)" />
-      <div class="profile-name" id="profile-name-display">—</div>
-      <div class="profile-meta" id="profile-meta-display">—</div>
+    <!-- Flip Card Overlay (Owner Info) -->
+    <div id="flipCardOverlay" class="flip-card-overlay">
+        <div class="flip-card-box">
+            <div class="flip-card-title">ATLAS — আমাদের সম্পর্কে</div>
+            <div class="flip-card-row"><div class="fcr-label">প্ল্যাটফর্ম</div><div class="fcr-val">ATLAS Exam Prep</div></div>
+            <div class="flip-card-row"><div class="fcr-label">WhatsApp</div><div class="fcr-val">01999681290</div></div>
+            <div class="flip-card-row"><div class="fcr-label">Telegram</div><div class="fcr-val">@rafi_somc</div></div>
+            <div class="flip-card-row"><div class="fcr-label">YouTube</div><div class="fcr-val">@atlasprep</div></div>
+            <div class="flip-card-row"><div class="fcr-label">Email</div><div class="fcr-val">hamza818483@gmail.com</div></div>
+            <button class="flip-close" onclick="document.getElementById('flipCardOverlay').classList.remove('open')">বন্ধ করুন</button>
+        </div>
     </div>
 
-    <div class="profile-info-card">
-      <div class="pinfo-row"><div class="pinfo-label">ফোন</div><div class="pinfo-val" id="p-phone">—</div></div>
-      <div class="pinfo-row"><div class="pinfo-label">পাসওয়ার্ড</div><div class="pinfo-val" id="p-pass">—</div></div>
-      <div class="pinfo-row"><div class="pinfo-label">HSC ব্যাচ</div><div class="pinfo-val" id="p-batch">—</div></div>
-      <div class="pinfo-row"><div class="pinfo-label">কলেজ</div><div class="pinfo-val" id="p-college">—</div></div>
-      <div class="pinfo-row"><div class="pinfo-label">SSC GPA</div><div class="pinfo-val" id="p-ssc">—</div></div>
-      <div class="pinfo-row"><div class="pinfo-label">HSC GPA</div><div class="pinfo-val" id="p-hsc">—</div></div>
-      <div class="pinfo-row"><div class="pinfo-label">টাইমার</div><div class="pinfo-val" id="p-timer">—</div></div>
+    <!-- Fixed Bottom Floating Buttons -->
+    <div class="fixed-float-btns">
+        <a href="https://wa.me/8801999681290" target="_blank" class="float-btn float-wa">
+            <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+        </a>
+        <a href="https://t.me/rafi_somc" target="_blank" class="float-btn float-tg">
+            <svg viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+        </a>
     </div>
 
-    <div class="profile-tabs" style="margin-top:16px;">
-      <button class="ptab active" onclick="switchProfileTab(this,'tab-performance')">📊 রিপোর্ট</button>
-      <button class="ptab" onclick="switchProfileTab(this,'tab-exam-history')">📚 এক্সাম</button>
-      <button class="ptab" onclick="switchProfileTab(this,'tab-class-history')">🎥 ক্লাস</button>
-      <button class="ptab" onclick="switchProfileTab(this,'tab-bookmarks')">🔖 বুকমার্ক</button>
-    </div>
-    <div style="padding:16px 16px 100px;">
-      <div id="tab-performance">
-        <div class="text-muted text-center" style="padding:30px 0;">পারফরম্যান্স রিপোর্ট লোড হচ্ছে...</div>
-      </div>
-      <div id="tab-exam-history" style="display:none;">
-        <div class="text-muted text-center" style="padding:30px 0;">এখনো কোনো এক্সাম দেওয়া হয়নি।</div>
-      </div>
-      <div id="tab-class-history" style="display:none;">
-        <div class="text-muted text-center" style="padding:30px 0;">এখনো কোনো ক্লাস দেখা হয়নি।</div>
-      </div>
-      <div id="tab-bookmarks" style="display:none;">
-        <div class="text-muted text-center" style="padding:30px 0;">কোনো বুকমার্ক নেই।</div>
-      </div>
-    </div>
+    <!-- Bottom Nav -->
+    <nav id="bottom-nav">
+        <button class="bnav-item active" id="bnav-home" onclick="bottomNav('home')">
+            <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            হোম
+        </button>
+        <button class="bnav-item" id="bnav-exam" onclick="bottomNav('exam')">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            এক্সাম
+        </button>
+        <button class="bnav-item" id="bnav-ai" onclick="bottomNav('ai')">
+            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8" y2="16"></line><line x1="16" y1="16" x2="16" y2="16"></line></svg>
+            AI
+        </button>
+        <button class="bnav-item" id="bnav-profile" onclick="bottomNav('profile')">
+            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            প্রোফাইল
+        </button>
+    </nav>
 
-    <div style="padding: 0 16px 16px;">
-      <button class="btn-ghost" onclick="handleLogout()" style="color:var(--red); border-color:var(--red);">লগআউট</button>
-    </div>
-  </div>
-
-  <!-- ══════════════════════════════════
-       PAGE: ADMIN (placeholder)
-  ══════════════════════════════════ -->
-  <div id="page-admin" class="page">
-    <div class="section-header">
-      <button class="back-btn" onclick="goBack()">←</button>
-      <div class="section-title">⚙ Admin Control Panel</div>
-    </div>
-    <div class="list-grid">
-      <!-- admin.js will populate this -->
-      <div class="text-muted text-center" style="padding:30px;">admin.js লোড হচ্ছে...</div>
-    </div>
-  </div>
-
-</div><!-- end #app -->
-
-<!-- ─── OWNER FLIP CARD OVERLAY ─── -->
-<div class="flip-card-overlay" id="flipCardOverlay" onclick="if(event.target===this) this.classList.remove('open')">
-  <div class="flip-card-box">
-    <div class="flip-card-title">ATLAS — আমাদের সম্পর্কে</div>
-    <div class="flip-card-row"><div class="fcr-label">প্ল্যাটফর্ম</div><div class="fcr-val">ATLAS Exam Prep</div></div>
-    <div class="flip-card-row"><div class="fcr-label">WhatsApp</div><div class="fcr-val"><a href="https://wa.me/8801999681290" target="_blank" style="color:var(--blue);">01999681290</a></div></div>
-    <div class="flip-card-row"><div class="fcr-label">Telegram</div><div class="fcr-val"><a href="https://t.me/rafi_somc" target="_blank" style="color:var(--blue);">@rafi_somc</a></div></div>
-    <div class="flip-card-row"><div class="fcr-label">YouTube</div><div class="fcr-val"><a href="https://youtube.com/@atlasprep" target="_blank" style="color:var(--blue);">@atlasprep</a></div></div>
-    <div class="flip-card-row"><div class="fcr-label">Email</div><div class="fcr-val"><a href="mailto:hamza818483@gmail.com" style="color:var(--blue);">hamza818483@gmail.com</a></div></div>
-    <button class="flip-close" onclick="document.getElementById('flipCardOverlay').classList.remove('open')">বন্ধ করুন</button>
-  </div>
-</div>
-
-<!-- ─── FIXED FLOAT BUTTONS ─── -->
-<div class="fixed-float-btns">
-  <a href="https://wa.me/8801999681290" target="_blank" class="float-btn float-wa" title="WhatsApp">
-    <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
-  </a>
-  <a href="https://t.me/rafi_somc" target="_blank" class="float-btn float-tg" title="Telegram">
-    <svg viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
-  </a>
-</div>
-
-<!-- ─── BOTTOM NAV ─── -->
-<nav id="bottom-nav">
-  <button class="bnav-item active" id="bnav-home" onclick="bottomNav('home')">
-    <svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
-    হোম
-  </button>
-  <button class="bnav-item" id="bnav-exam" onclick="bottomNav('exam')">
-    <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg>
-    এক্সাম
-  </button>
-  <button class="bnav-item" id="bnav-ai" onclick="bottomNav('ai')">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8" stroke-dasharray="4 2"/><circle cx="12" cy="12" r="11"/></svg>
-    AI
-  </button>
-  <button class="bnav-item" id="bnav-profile" onclick="bottomNav('profile')">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-    প্রোফাইল
-  </button>
-</nav>
-
-<!-- ─────────────────────────────────────────────
-     SCRIPTS — core routing + countdown
-───────────────────────────────────────────── -->
-<script src="supabase.js"></script>
-<script src="auth.js"></script>
-<script src="admin.js"></script>
-<script src="exam.js"></script>
-<script src="profile.js"></script>
-<script src="ai.js"></script>
-
-<script>
-/* ══════════════════════════════════════════════
-   CORE APP — Navigation, Theme, Countdown, Toast
-══════════════════════════════════════════════ */
-
-// ── Page History Stack ──
-let pageHistory = [];
-let currentPage = 'page-home';
-
-function navigateTo(pageId) {
-  if (pageId === currentPage) return;
-  pageHistory.push(currentPage);
-  showPage(pageId);
-}
-
-function goBack() {
-  if (pageHistory.length > 0) {
-    showPage(pageHistory.pop());
-  } else {
-    showPage('page-home');
-  }
-}
-
-function showPage(pageId) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  const el = document.getElementById(pageId);
-  if (el) {
-    el.classList.add('active');
-    currentPage = pageId;
-    window.scrollTo(0, 0);
-    updateBottomNav(pageId);
-    // Trigger page-specific loads
-    if (pageId === 'page-class')    loadClassSubjects && loadClassSubjects();
-    if (pageId === 'page-profile')  loadProfileData && loadProfileData();
-    if (pageId === 'page-admin')    loadAdminPanel && loadAdminPanel();
-    if (pageId === 'page-mistakes') loadMistakes && loadMistakes();
-    if (pageId === 'page-exam-mock') loadMockSubjects && loadMockSubjects();
-  }
-}
-
-function updateBottomNav(pageId) {
-  document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
-  if (['page-home','page-class'].includes(pageId))              document.getElementById('bnav-home')?.classList.add('active');
-  else if (pageId.startsWith('page-exam'))                       document.getElementById('bnav-exam')?.classList.add('active');
-  else if (pageId === 'page-ai')                                 document.getElementById('bnav-ai')?.classList.add('active');
-  else if (pageId === 'page-profile')                            document.getElementById('bnav-profile')?.classList.add('active');
-}
-
-function bottomNav(tab) {
-  const map = { home: 'page-home', exam: 'page-exam', ai: 'page-ai', profile: 'page-profile' };
-  if (tab === 'profile') {
-    const user = window.AtlasAuth?.currentUser;
-    if (!user) { navigateTo('page-login'); return; }
-  }
-  pageHistory = [];
-  navigateTo(map[tab]);
-}
-
-// ── Nav Auth Button ──
-function handleNavAuth() {
-  const user = window.AtlasAuth?.currentUser;
-  if (user) navigateTo('page-profile');
-  else      navigateTo('page-login');
-}
-
-// ── Theme Toggle ──
-const themeToggle = document.getElementById('themeToggle');
-themeToggle.addEventListener('click', () => {
-  const html = document.documentElement;
-  const newTheme = html.dataset.theme === 'dark' ? 'light' : 'dark';
-  html.dataset.theme = newTheme;
-  localStorage.setItem('atlas-theme', newTheme);
-});
-
-(function applyStoredTheme() {
-  const t = localStorage.getItem('atlas-theme');
-  if (t) document.documentElement.dataset.theme = t;
-})();
-
-// ── Toast Notifications ──
-function showToast(msg, type = 'success') {
-  const container = document.getElementById('toast-container');
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  toast.textContent = msg;
-  container.appendChild(toast);
-  setTimeout(() => toast.remove(), 3200);
-}
-window.showToast = showToast;
-
-// ── Countdown Timer ──
-let countdownTarget = null;
-
-function initCountdown() {
-  // Default target: can be overridden by admin via Supabase
-  countdownTarget = new Date('2025-04-01T09:00:00');
-  tickCountdown();
-  setInterval(tickCountdown, 1000);
-}
-
-function tickCountdown() {
-  if (!countdownTarget) return;
-  const now  = new Date();
-  const diff = countdownTarget - now;
-  if (diff <= 0) {
-    document.getElementById('cd-days').textContent  = '00';
-    document.getElementById('cd-hours').textContent = '00';
-    document.getElementById('cd-mins').textContent  = '00';
-    document.getElementById('cd-secs').textContent  = '00';
-    return;
-  }
-  const days  = Math.floor(diff / 86400000);
-  const hours = Math.floor((diff % 86400000) / 3600000);
-  const mins  = Math.floor((diff % 3600000)  / 60000);
-  const secs  = Math.floor((diff % 60000)    / 1000);
-  document.getElementById('cd-days').textContent  = String(days).padStart(2,'0');
-  document.getElementById('cd-hours').textContent = String(hours).padStart(2,'0');
-  document.getElementById('cd-mins').textContent  = String(mins).padStart(2,'0');
-  document.getElementById('cd-secs').textContent  = String(secs).padStart(2,'0');
-}
-
-// ── Mock Test Helpers ──
-let mockStandard = null;
-let mockCount    = null;
-
-function selectMockStandard(el, val) {
-  document.querySelectorAll('#page-exam-mock .radio-opt').forEach(e => {
-    if (['medical','varsity','onushiloni'].some(s => e.getAttribute('onclick')?.includes(s))) e.classList.remove('selected');
-  });
-  el.classList.add('selected');
-  mockStandard = val;
-}
-function selectMockCount(el, val) {
-  el.closest('.radio-group').querySelectorAll('.radio-opt').forEach(e => e.classList.remove('selected'));
-  el.classList.add('selected');
-  mockCount = val;
-}
-function startMockTest() {
-  if (!mockStandard || !mockCount) { showToast('Standard ও প্রশ্নসংখ্যা বেছে নিন', 'error'); return; }
-  window.ExamModule?.startMock && window.ExamModule.startMock(mockStandard, mockCount);
-}
-
-// ── Profile Tabs ──
-function switchProfileTab(btn, tabId) {
-  document.querySelectorAll('.ptab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  ['tab-performance','tab-exam-history','tab-class-history','tab-bookmarks'].forEach(id => {
-    document.getElementById(id).style.display = id === tabId ? 'block' : 'none';
-  });
-}
-
-// ── Timer Selection (Register) ──
-let selectedTimer = null;
-function selectTimer(val) {
-  selectedTimer = val;
-  document.getElementById('timer-first').classList.toggle('selected',  val === 'first');
-  document.getElementById('timer-second').classList.toggle('selected', val === 'second');
-}
-
-// ── Avatar Upload ──
-function triggerAvatarUpload() { document.getElementById('avatar-file-input').click(); }
-function handleAvatarUpload(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    const img = document.getElementById('profile-avatar-img');
-    img.src = ev.target.result;
-    img.style.display = 'block';
-    document.getElementById('profile-avatar-placeholder').style.display = 'none';
-  };
-  reader.readAsDataURL(file);
-}
-
-// ── Exam category router ──
-function loadExamList(category, subtype) {
-  window.ExamModule?.loadCategory && window.ExamModule.loadCategory(category, subtype);
-}
-function loadMockSubjects() {
-  window.ExamModule?.loadMockSubjects && window.ExamModule.loadMockSubjects();
-}
-
-// ── AI send (fallback if ai.js not ready) ──
-function sendAIMessage() {
-  if (window.AtlasAI?.send) { window.AtlasAI.send(); return; }
-  const input = document.getElementById('ai-input');
-  const msg = input.value.trim();
-  if (!msg) return;
-  const box = document.getElementById('ai-chat-box');
-  const userDiv = document.createElement('div');
-  userDiv.style.cssText = 'align-self:flex-end;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);border-radius:var(--radius-sm);padding:10px 14px;font-size:0.88rem;max-width:85%;';
-  userDiv.textContent = msg;
-  box.appendChild(userDiv);
-  input.value = '';
-  box.scrollTop = box scrollHeight;
-}
-
-// ── Bootstrap ──
-window.addEventListener('load', () => {
-  // Hide loading screen after 1.8s
-  setTimeout(() => {
-    document.getElementById('loading-screen').classList.add('hidden');
-  }, 1900);
-  initCountdown();
-  // Auth will update nav button text
-  window.AtlasAuth?.init && window.AtlasAuth.init();
-});
-</script>
-
+    <!-- Link JS -->
+    <script src="app.js"></script>
 </body>
-</html>
+  </html>
