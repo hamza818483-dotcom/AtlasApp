@@ -211,7 +211,7 @@ async function setSession(user) {
   if (user.id !== 'admin') {
     await supabase
       .from('users')
-      .update({ session_id: sessionId })
+      .update({ active_session_id: sessionId }) // FIX: Changed to active_session_id to match Database
       .eq('id', user.id);
 
     // Subscribe to session invalidation
@@ -230,7 +230,7 @@ function subscribeToSession(userId, sessionId) {
       table: 'users',
       filter: `id=eq.${userId}`
     }, (payload) => {
-      const newSessionId = payload.new.session_id;
+      const newSessionId = payload.new.active_session_id; // FIX: Changed to active_session_id
       if (newSessionId !== sessionId) {
         // Another device logged in — force logout here
         logout(true);
@@ -264,7 +264,7 @@ export function isAdmin() {
 
 export function isSubAdmin() {
   const user = getCurrentUser();
-  return user?.role === 'sub_admin';
+  return user?.role === 'sub-admin'; // FIX: Changed from sub_admin to sub-admin
 }
 
 export function isLoggedIn() {
@@ -303,3 +303,158 @@ function clearMsg(id) {
   const el = document.getElementById(id);
   if (el) { el.textContent = ''; el.className = 'auth-msg'; }
 }
+
+
+// ============================================================
+// 🟥 NEW FEATURES ADDED FOR INDEX.HTML INTEGRATION 🟥
+// ============================================================
+
+// Global Object to keep track of Authentication state for the UI
+window.AtlasAuth = {
+    currentUser: getCurrentUser(),
+    init: function() {
+        this.updateUI();
+    },
+    updateUI: function() {
+        const adminBtn = document.getElementById('admin-control-btn');
+        const navAuthBtn = document.getElementById('navAuthBtn');
+        
+        if (this.currentUser) {
+            if (navAuthBtn) navAuthBtn.innerText = "প্রোফাইল";
+            if (this.currentUser.role === 'admin' || this.currentUser.role === 'sub-admin') {
+                if (adminBtn) adminBtn.style.display = 'block';
+            } else {
+                if (adminBtn) adminBtn.style.display = 'none';
+            }
+        } else {
+            if (navAuthBtn) navAuthBtn.innerText = "লগইন";
+            if (adminBtn) adminBtn.style.display = 'none';
+        }
+    }
+};
+
+// Handle Navbar Auth Button (Login/Profile toggle)
+window.handleNavAuth = function() {
+    if (isLoggedIn()) {
+        if(typeof bottomNav === 'function') bottomNav('profile');
+    } else {
+        if(typeof navigateTo === 'function') navigateTo('page-login');
+    }
+};
+
+// Global Logout for Profile Page
+window.handleLogout = function() {
+    logout(false);
+};
+
+// Global variable to store timer selection from UI
+window.selectedTimerStatus = null;
+window.selectTimer = function(val) {
+    window.selectedTimerStatus = val === 'first' ? 'First Timer' : 'Second Timer';
+    document.getElementById('timer-first')?.classList.toggle('selected', val === 'first');
+    document.getElementById('timer-second')?.classList.toggle('selected', val === 'second');
+};
+
+// Global Registration Function (Triggered from index.html button)
+window.handleRegistration = async function() {
+    const name        = val('reg-name');
+    const phone       = val('reg-phone');
+    const password    = val('reg-pass');
+    const hscBatch    = val('reg-batch');
+    const college     = val('reg-college');
+    const fatherName  = val('reg-father');
+    const motherName  = val('reg-mother');
+    const sscGpa      = val('reg-ssc');
+    const hscGpa      = val('reg-hsc');
+    const timerType   = window.selectedTimerStatus; 
+
+    if (!name || !phone || !password || !hscBatch || !college || !sscGpa || !hscGpa || !timerType) {
+        return typeof showToast === 'function' ? showToast('সব mandatory field পূরণ করুন।', 'error') : alert('সব mandatory field পূরণ করুন।');
+    }
+    if (!/^\d{11}$/.test(phone)) {
+        return typeof showToast === 'function' ? showToast('Phone number অবশ্যই ১১ সংখ্যার হতে হবে।', 'error') : alert('Phone number অবশ্যই ১১ সংখ্যার হতে হবে।');
+    }
+
+    const { data: existing } = await supabase.from('users').select('id').eq('phone', phone).maybeSingle();
+    if (existing) {
+        return typeof showToast === 'function' ? showToast('এই phone number দিয়ে আগেই account আছে।', 'error') : alert('এই phone number দিয়ে আগেই account আছে।');
+    }
+
+    const { error } = await supabase.from('users').insert([{
+        name, phone, password, hsc_batch: hscBatch, college, father_name: fatherName, mother_name: motherName,
+        ssc_gpa: parseFloat(sscGpa), hsc_gpa: parseFloat(hscGpa), timer_status: timerType, role: 'user'
+    }]);
+
+    if (error) {
+        return typeof showToast === 'function' ? showToast('Registration failed: ' + error.message, 'error') : alert('Registration failed');
+    }
+
+    if(typeof showToast === 'function') showToast('✅ Registration সফল হয়েছে! এখন Login করুন।', 'success');
+    setTimeout(() => {
+        if(typeof navigateTo === 'function') navigateTo('page-login');
+    }, 1500);
+};
+
+// Global Login Function (Triggered from index.html button)
+window.handleLogin = async function() {
+    const phone    = val('login-phone');
+    const password = val('login-pass'); 
+
+    if (!phone || !password) {
+        return typeof showToast === 'function' ? showToast('Phone ও Password দিন।', 'error') : alert('Phone ও Password দিন।');
+    }
+
+    // Admin hardcoded check
+    if (phone === '01754365403' && password === 'AtlasApp2026') {
+        const adminUser = { id: 'admin', name: 'Admin', phone: '01754365403', role: 'admin' };
+        await setSession(adminUser);
+        window.AtlasAuth.currentUser = adminUser;
+        window.AtlasAuth.updateUI();
+        if(typeof showToast === 'function') showToast('✅ Admin Login Successful', 'success');
+        setTimeout(() => { if(typeof bottomNav === 'function') bottomNav('home'); }, 1000);
+        return;
+    }
+
+    // DB User Check
+    const { data: user, error } = await supabase.from('users').select('*').eq('phone', phone).eq('password', password).maybeSingle();
+
+    if (error || !user) {
+        return typeof showToast === 'function' ? showToast('Phone বা Password ভুল।', 'error') : alert('Phone বা Password ভুল।');
+    }
+
+    await setSession(user);
+    window.AtlasAuth.currentUser = user;
+    window.AtlasAuth.updateUI();
+    if(typeof showToast === 'function') showToast('✅ Login সফল!', 'success');
+    
+    // Clear inputs & redirect
+    document.getElementById('login-phone').value = '';
+    document.getElementById('login-pass').value = '';
+    setTimeout(() => { if(typeof bottomNav === 'function') bottomNav('home'); }, 1000);
+};
+
+// Global Forgot Password Function (Triggered from index.html button)
+window.handleForgotPassword = async function() {
+    const phone       = val('forgot-phone');
+    const newPassword = val('forgot-new-pass');
+
+    if (!phone || !newPassword) {
+        return typeof showToast === 'function' ? showToast('Phone ও নতুন Password দিন।', 'error') : alert('Phone ও নতুন Password দিন।');
+    }
+
+    const { data: user } = await supabase.from('users').select('id').eq('phone', phone).maybeSingle();
+    if (!user) {
+        return typeof showToast === 'function' ? showToast('এই phone দিয়ে কোনো account নেই।', 'error') : alert('এই phone দিয়ে কোনো account নেই।');
+    }
+
+    const { error } = await supabase.from('users').update({ password: newPassword }).eq('phone', phone);
+    if (error) {
+        return typeof showToast === 'function' ? showToast('Password update failed।', 'error') : alert('Password update failed।');
+    }
+
+    if(typeof showToast === 'function') showToast('✅ Password পরিবর্তন হয়েছে। Login করুন।', 'success');
+    
+    document.getElementById('forgot-phone').value = '';
+    document.getElementById('forgot-new-pass').value = '';
+    setTimeout(() => { if(typeof navigateTo === 'function') navigateTo('page-login'); }, 1500);
+};
