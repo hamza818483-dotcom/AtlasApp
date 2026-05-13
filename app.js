@@ -32,7 +32,11 @@ function showPage(pageId) {
         // Trigger page-specific loads 
         if (pageId === 'page-class') typeof loadClassSubjects === 'function' && loadClassSubjects(); 
         if (pageId === 'page-profile') typeof loadProfileData === 'function' && loadProfileData(); 
-        if (pageId === 'page-admin') typeof loadAdminPanel === 'function' && loadAdminPanel(); 
+        if (pageId === 'page-admin') {
+            typeof loadAdminPanel === 'function' && loadAdminPanel(); 
+            // 🔴 নতুন যুক্ত করা লাইন: অ্যাডমিন প্যানেলের ফর্মগুলো লোড করার জন্য 
+            typeof window.initAdminPanel === 'function' && window.initAdminPanel(); 
+        }
         if (pageId === 'page-mistakes') typeof loadMistakes === 'function' && loadMistakes(); 
         if (pageId === 'page-exam-mock') typeof loadMockSubjects === 'function' && loadMockSubjects(); 
     } 
