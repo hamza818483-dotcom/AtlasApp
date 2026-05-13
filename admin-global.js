@@ -14,6 +14,9 @@ function initSupabase() {
         _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         window._supabase = _supabase;
         console.log('Supabase initialized in admin-global');
+    } else {
+        console.log('Waiting for Supabase CDN...');
+        setTimeout(initSupabase, 500);
     }
 }
 
@@ -36,7 +39,7 @@ function loadAdminForms() {
     const examFormBox = document.getElementById('admin-exam-form');
     if(examFormBox) {
         examFormBox.innerHTML = `
-            <h3 style="margin-bottom: 15px;">📝 Add New Exam</h3>
+            <h3 style="margin-bottom: 15px; color: var(--accent);">📝 Add New Exam</h3>
             <div class="form-group"><label>Subject *</label><input type="text" id="exam-subject" class="form-input" placeholder="e.g. Biology"></div>
             <div class="spacer-sm"></div>
             <div class="form-group"><label>Chapter *</label><input type="text" id="exam-chapter" class="form-input" placeholder="e.g. Chapter 1"></div>
@@ -53,15 +56,26 @@ function loadAdminForms() {
             <div class="spacer-sm"></div>
             <div class="form-group"><label>CSV File *</label><input type="file" id="exam-csv" accept=".csv" class="form-input"></div>
             <div class="spacer-md"></div>
-            <button class="btn-primary" onclick="window.handleAddExam()">Create Exam & Upload</button>
+            <button class="btn-primary" id="create-exam-btn" style="background: var(--accent);">Create Exam & Upload</button>
         `;
+        
+        // Attach event listener
+        const createBtn = document.getElementById('create-exam-btn');
+        if (createBtn) {
+            createBtn.onclick = function(e) {
+                e.preventDefault();
+                window.handleAddExam();
+            };
+        }
+    } else {
+        console.log('admin-exam-form not found');
     }
     
     // Load Class Form
     const classFormBox = document.getElementById('admin-class-form');
     if(classFormBox) {
         classFormBox.innerHTML = `
-            <h3 style="margin-bottom: 15px;">🎥 Add New Class</h3>
+            <h3 style="margin-bottom: 15px; color: var(--accent);">🎥 Add New Class</h3>
             <div class="form-group"><label>Subject *</label><input type="text" id="class-subject" class="form-input" placeholder="e.g. Physics"></div>
             <div class="spacer-sm"></div>
             <div class="form-group"><label>Chapter *</label><input type="text" id="class-chapter" class="form-input" placeholder="e.g. Chapter 2"></div>
@@ -70,23 +84,48 @@ function loadAdminForms() {
             <div class="spacer-sm"></div>
             <div class="form-group"><label>YouTube Link *</label><input type="url" id="class-link" class="form-input" placeholder="https://youtube.com/..."></div>
             <div class="spacer-md"></div>
-            <button class="btn-primary" onclick="window.handleAddClass()">Add Video Class</button>
+            <button class="btn-primary" id="add-class-btn" style="background: var(--accent);">Add Video Class</button>
         `;
+        
+        const classBtn = document.getElementById('add-class-btn');
+        if (classBtn) {
+            classBtn.onclick = function(e) {
+                e.preventDefault();
+                window.handleAddClass();
+            };
+        }
     }
     
     // Load CQ Form
     const cqFormBox = document.getElementById('admin-cq-form');
     if(cqFormBox) {
         cqFormBox.innerHTML = `
-            <h3 style="margin-bottom: 15px;">📄 Add CQ (ক, খ, CQ)</h3>
+            <h3 style="margin-bottom: 15px; color: var(--accent);">📄 Add CQ (ক, খ, CQ)</h3>
             <div class="form-group"><label>Subject *</label><input type="text" id="cq-subject" class="form-input"></div>
             <div class="spacer-sm"></div>
             <div class="form-group"><label>Chapter / Type *</label><input type="text" id="cq-chapter" class="form-input" placeholder="e.g. ক ভান্ডার"></div>
             <div class="spacer-sm"></div>
             <div class="form-group"><label>PDF/Drive Link *</label><input type="url" id="cq-link" class="form-input" placeholder="Google Drive Link"></div>
             <div class="spacer-md"></div>
-            <button class="btn-primary" onclick="window.handleAddCQ()">Add CQ / PDF Link</button>
+            <button class="btn-primary" id="add-cq-btn" style="background: var(--accent);">Add CQ / PDF Link</button>
         `;
+        
+        const cqBtn = document.getElementById('add-cq-btn');
+        if (cqBtn) {
+            cqBtn.onclick = function(e) {
+                e.preventDefault();
+                window.handleAddCQ();
+            };
+        }
+    }
+    
+    // Fix Countdown Update Button
+    const updateTimerBtn = document.querySelector('#admin-countdown-form .btn-primary');
+    if (updateTimerBtn) {
+        updateTimerBtn.onclick = function(e) {
+            e.preventDefault();
+            window.handleUpdateCountdown();
+        };
     }
 }
 
@@ -102,13 +141,23 @@ window.handleAddExam = async function() {
     const type = document.getElementById('exam-type')?.value;
     const csvFile = document.getElementById('exam-csv')?.files[0];
     
-    if (!subject || !chapter || !csvFile) {
-        alert('সবগুলো তথ্য এবং CSV ফাইল দিতে হবে!');
+    if (!subject || !chapter) {
+        alert('Subject এবং Chapter দিতে হবে!');
         return;
     }
     
-    alert(`✅ Exam "${subject} - ${chapter}" added successfully! (Demo mode)`);
-    console.log('Exam data:', {subject, chapter, type});
+    if (!csvFile) {
+        alert('CSV ফাইল আপলোড করতে হবে!');
+        return;
+    }
+    
+    alert(`✅ Exam "${subject} - ${chapter}" added successfully!\n\n(Data will be saved to database in full version)`);
+    console.log('Exam data:', {subject, chapter, type, csvFile: csvFile.name});
+    
+    // Clear form
+    document.getElementById('exam-subject').value = '';
+    document.getElementById('exam-chapter').value = '';
+    document.getElementById('exam-csv').value = '';
 };
 
 // Add Class Handler
@@ -122,12 +171,18 @@ window.handleAddClass = async function() {
     const link = document.getElementById('class-link')?.value.trim();
     
     if (!subject || !chapter || !title || !link) {
-        alert('সব তথ্য দিন!');
+        alert('সব তথ্য দিন! (Subject, Chapter, Title, YouTube Link)');
         return;
     }
     
-    alert(`✅ Class "${title}" added successfully! (Demo mode)`);
+    alert(`✅ Class "${title}" added successfully!\n\n(Data will be saved to database in full version)`);
     console.log('Class data:', {subject, chapter, title, link});
+    
+    // Clear form
+    document.getElementById('class-subject').value = '';
+    document.getElementById('class-chapter').value = '';
+    document.getElementById('class-title').value = '';
+    document.getElementById('class-link').value = '';
 };
 
 // Add CQ Handler
@@ -140,12 +195,17 @@ window.handleAddCQ = async function() {
     const link = document.getElementById('cq-link')?.value.trim();
     
     if (!subject || !chapter || !link) {
-        alert('সব তথ্য দিন!');
+        alert('সব তথ্য দিন! (Subject, Chapter, PDF Link)');
         return;
     }
     
-    alert(`✅ CQ for "${subject} - ${chapter}" added successfully! (Demo mode)`);
+    alert(`✅ CQ for "${subject} - ${chapter}" added successfully!\n\n(Data will be saved to database in full version)`);
     console.log('CQ data:', {subject, chapter, link});
+    
+    // Clear form
+    document.getElementById('cq-subject').value = '';
+    document.getElementById('cq-chapter').value = '';
+    document.getElementById('cq-link').value = '';
 };
 
 // Update Countdown Handler
@@ -162,31 +222,63 @@ window.handleUpdateCountdown = async function() {
         return;
     }
     
-    alert(`✅ Countdown Updated!\n\nTopic: ${mainTopic}\nSub: ${subTopic}\nDate: ${targetDate}`);
-    console.log('Countdown data:', {mainTopic, subTopic, targetDate});
+    // Save to localStorage for now
+    const countdownData = {
+        main_topic: mainTopic,
+        sub_topic: subTopic,
+        end_time: targetDate,
+        updated_at: new Date().toISOString()
+    };
+    localStorage.setItem('atlas_countdown', JSON.stringify(countdownData));
+    
+    // Also update home page if visible
+    if (document.getElementById('page-home')?.classList.contains('active')) {
+        const mainEl = document.getElementById('cd-main-topic');
+        const subEl = document.getElementById('cd-sub-topic');
+        if (mainEl) mainEl.innerText = mainTopic;
+        if (subEl) subEl.innerText = subTopic || '';
+        
+        if (typeof window.startCountdown === 'function') {
+            window.startCountdown(new Date(targetDate).getTime());
+        }
+    }
+    
+    alert(`✅ Countdown Updated!\n\nTopic: ${mainTopic}\nSub: ${subTopic || '(none)'}\nDate: ${targetDate}`);
+    console.log('Countdown data:', countdownData);
 };
 
-// Initialize
-initSupabase();
-loadAdminForms();
-// Initialize
-initSupabase();
-loadAdminForms();
+// ============================================================
+// Initialize - FIXED to wait for DOM
+// ============================================================
+function initializeAdmin() {
+    console.log('Initializing admin panel...');
+    initSupabase();
+    loadAdminForms();
+    console.log('Admin panel initialized');
+}
 
-// ============================================================
-// 🟢 FORCE RELOAD FORMS (ADDED - NOT DELETED)
-// ============================================================
+// Wait for DOM to be fully loaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeAdmin);
+} else {
+    // DOM already loaded
+    initializeAdmin();
+}
+
+// Force reload when admin page becomes visible
 setTimeout(function() {
-    console.log('Force reloading admin forms...');
-    const examForm = document.getElementById('admin-exam-form');
-    const classForm = document.getElementById('admin-class-form');
-    const cqForm = document.getElementById('admin-cq-form');
-    
-    console.log('Exam form exists:', !!examForm);
-    console.log('Class form exists:', !!classForm);
-    console.log('CQ form exists:', !!cqForm);
-    
-    if (examForm && examForm.innerHTML.includes('Loading Exam Form')) {
+    if (document.getElementById('page-admin')?.classList.contains('active')) {
+        console.log('Force reloading admin forms...');
         loadAdminForms();
     }
-}, 500);
+}, 1000);
+
+// Also reload when page becomes visible
+document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && document.getElementById('page-admin')?.classList.contains('active')) {
+        console.log('Page visible, reloading forms...');
+        loadAdminForms();
+    }
+});
+
+console.log('admin-global.js loaded successfully');
