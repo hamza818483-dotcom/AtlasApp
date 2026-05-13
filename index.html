@@ -34,7 +34,6 @@
         
         <!-- PAGE 1: HOME -->
         <div id="page-home" class="page active">
-            <!-- Countdown Card --> 
             <div class="countdown-card" id="countdownCard"> 
                 <div class="cd-label">⏳ Countdown</div> 
                 <div class="cd-title" id="cd-main-topic">HSC পরীক্ষা ২০২৫</div> 
@@ -47,12 +46,10 @@
                 </div> 
             </div> 
 
-            <!-- Admin Control (visible to admin only) --> 
             <div id="admin-control-btn" style="display: none;"> 
                 <button onclick="window.navigateTo('page-admin')">⚙ Admin Control Panel</button> 
             </div> 
 
-            <!-- Main Navigation Buttons --> 
             <div class="home-nav"> 
                 <button class="home-nav-btn accent-btn" onclick="window.navigateTo('page-class')"> 
                     <div class="hnb-icon">🎓</div> 
@@ -80,7 +77,6 @@
                 </button> 
             </div> 
 
-            <!-- Social Row --> 
             <div class="social-row"> 
                 <a href="https://facebook.com" target="_blank" class="social-btn"> 
                     <svg viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg> Facebook 
@@ -97,7 +93,6 @@
             </div> 
             <div class="spacer-md"></div> 
 
-            <!-- Owner Profile Section --> 
             <div class="owner-section"> 
                 <div class="owner-photo-wrap" onclick="document.getElementById('flipCardOverlay').classList.add('open')"> 
                     <div class="owner-glow-ring"></div> 
@@ -114,7 +109,7 @@
             <div class="spacer-md"></div>
         </div>
 
-        <!-- PAGE: LOGIN - FIXED with IDs and proper onclick -->
+        <!-- PAGE: LOGIN -->
         <div id="page-login" class="page">
             <div class="section-header">
                 <button class="back-btn" onclick="window.goBack()">←</button>
@@ -141,7 +136,7 @@
             </div>
         </div>
 
-        <!-- PAGE: REGISTER - FIXED with all IDs -->
+        <!-- PAGE: REGISTER -->
         <div id="page-register" class="page">
             <div class="section-header">
                 <button class="back-btn" onclick="window.goBack()">←</button>
@@ -150,13 +145,13 @@
             <div class="auth-wrap">
                 <div class="auth-card">
                     <div class="auth-card-title">ব্যক্তিগত তথ্য</div>
-                    <div class="form-group"><label class="form-label">নাম *</label><input type="text" id="reg-name" class="form-input"></div><div class="spacer-sm"></div>
-                    <div class="form-group"><label class="form-label">HSC ব্যাচ *</label><input type="text" id="reg-batch" class="form-input"></div><div class="spacer-sm"></div>
-                    <div class="form-group"><label class="form-label">কলেজের নাম *</label><input type="text" id="reg-college" class="form-input"></div><div class="spacer-sm"></div>
-                    <div class="form-group"><label class="form-label">বাবার নাম</label><input type="text" id="reg-father" class="form-input"></div><div class="spacer-sm"></div>
-                    <div class="form-group"><label class="form-label">মায়ের নাম</label><input type="text" id="reg-mother" class="form-input"></div><div class="spacer-sm"></div>
-                    <div class="form-group"><label class="form-label">SSC GPA * (দশমিক, যেমন: 5.00)</label><input type="text" id="reg-ssc" class="form-input"></div><div class="spacer-sm"></div>
-                    <div class="form-group"><label class="form-label">HSC GPA * (দশমিক, যেমন: 5.00)</label><input type="text" id="reg-hsc" class="form-input"></div><div class="spacer-sm"></div>
+                    <div class="form-group"><label class="form-label">নাম *</label><input type="text" id="reg-name" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">HSC ব্যাচ *</label><input type="text" id="reg-batch" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">কলেজের নাম *</label><input type="text" id="reg-college" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">বাবার নাম</label><input type="text" id="reg-father" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">মায়ের নাম</label><input type="text" id="reg-mother" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">SSC GPA * (দশমিক, যেমন: 5.00)</label><input type="text" id="reg-ssc" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">HSC GPA * (দশমিক, যেমন: 5.00)</label><input type="text" id="reg-hsc" class="form-input"></div>
                     
                     <div class="form-group">
                         <label class="form-label">আপনি কি ফার্স্ট টাইমার না সেকেন্ড টাইমার? *</label>
@@ -164,10 +159,10 @@
                             <div class="radio-opt" id="timer-first" onclick="window.selectTimer('first')">ফার্স্ট টাইমার</div>
                             <div class="radio-opt" id="timer-second" onclick="window.selectTimer('second')">সেকেন্ড টাইমার</div>
                         </div>
-                    </div><div class="spacer-sm"></div>
+                    </div>
 
-                    <div class="form-group"><label class="form-label">ফোন নম্বর * (১১ ডিজিট)</label><input type="text" id="reg-phone" class="form-input"></div><div class="spacer-sm"></div>
-                    <div class="form-group"><label class="form-label">পাসওয়ার্ড *</label><input type="password" id="reg-pass" class="form-input"></div><div class="spacer-md"></div>
+                    <div class="form-group"><label class="form-label">ফোন নম্বর * (১১ ডিজিট)</label><input type="text" id="reg-phone" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">পাসওয়ার্ড *</label><input type="password" id="reg-pass" class="form-input"></div>
                     
                     <button class="btn-primary" onclick="window.handleRegistration()">রেজিস্ট্রেশন করুন</button>
                 </div>
@@ -177,7 +172,7 @@
             </div>
         </div>
 
-        <!-- PAGE: FORGOT PASSWORD - FIXED with IDs -->
+        <!-- PAGE: FORGOT PASSWORD -->
         <div id="page-forgot" class="page">
             <div class="section-header">
                 <button class="back-btn" onclick="window.goBack()">←</button>
@@ -185,14 +180,14 @@
             </div>
             <div class="auth-wrap">
                 <div class="auth-card">
-                    <div class="form-group"><label class="form-label">ফোন নম্বর</label><input type="text" id="forgot-phone" class="form-input"></div><div class="spacer-sm"></div>
-                    <div class="form-group"><label class="form-label">নতুন পাসওয়ার্ড</label><input type="password" id="forgot-new-pass" class="form-input"></div><div class="spacer-md"></div>
+                    <div class="form-group"><label class="form-label">ফোন নম্বর</label><input type="text" id="forgot-phone" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">নতুন পাসওয়ার্ড</label><input type="password" id="forgot-new-pass" class="form-input"></div>
                     <button class="btn-primary" onclick="window.handleForgotPassword()">পাসওয়ার্ড আপডেট করুন</button>
                 </div>
             </div>
         </div>
 
-        <!-- PAGE: PROFILE - FIXED with display name -->
+        <!-- PAGE: PROFILE -->
         <div id="page-profile" class="page">
             <div class="profile-header">
                 <div class="profile-avatar-wrap" onclick="window.triggerAvatarUpload()">
@@ -214,7 +209,7 @@
                 <div class="pinfo-row"><div class="pinfo-label">টাইমার</div><div class="pinfo-val" id="p-timer">—</div></div> 
             </div> 
 
-            <div class="profile-tabs" style="margin-top:16px;"> 
+            <div class="profile-tabs"> 
                 <button class="ptab active" onclick="window.switchProfileTab(this,'tab-performance')">📊 রিপোর্ট</button> 
                 <button class="ptab" onclick="window.switchProfileTab(this,'tab-exam-history')">📚 এক্সাম</button> 
                 <button class="ptab" onclick="window.switchProfileTab(this,'tab-class-history')">🎥 ক্লাস</button> 
@@ -222,16 +217,10 @@
             </div> 
 
             <div style="padding:16px 16px 100px;"> 
-                <div id="tab-performance"> <div class="text-muted text-center" style="padding:30px 0;">পারফরম্যান্স রিপোর্ট লোড হচ্ছে...</div> </div> 
-                <div id="tab-exam-history"> 
-                    <div id="exam-history-list" class="text-muted text-center" style="padding:30px 0;">এখনো কোনো এক্সাম দেওয়া হয়নি।</div>
-                </div> 
-                <div id="tab-class-history"> 
-                    <div id="class-history-list" class="text-muted text-center" style="padding:30px 0;">এখনো কোনো ক্লাস দেখা হয়নি।</div>
-                </div> 
-                <div id="tab-bookmarks"> 
-                    <div id="bookmark-list" class="text-muted text-center" style="padding:30px 0;">কোনো বুকমার্ক নেই।</div>
-                </div> 
+                <div id="tab-performance"><div class="text-muted text-center">পারফরম্যান্স রিপোর্ট লোড হচ্ছে...</div></div> 
+                <div id="tab-exam-history"><div id="exam-history-list" class="text-muted text-center">এখনো কোনো এক্সাম দেওয়া হয়নি।</div></div> 
+                <div id="tab-class-history"><div id="class-history-list" class="text-muted text-center">এখনো কোনো ক্লাস দেখা হয়নি।</div></div> 
+                <div id="tab-bookmarks"><div id="bookmark-list" class="text-muted text-center">কোনো বুকমার্ক নেই।</div></div> 
             </div> 
             
             <div style="padding: 0 16px 16px;"> 
@@ -239,56 +228,50 @@
             </div>
         </div>
 
-        <!-- OTHER PAGES PLACEHOLDERS -->
-        <div id="page-class" class="page"><div class="section-header"><button class="back-btn" onclick="window.goBack()">←</button><div class="section-title">🎓 Free Class Section</div></div><p class="text-center text-muted" style="padding: 20px;">লোড হচ্ছে...</p></div>
+        <!-- PAGE: CLASS SECTION -->
+        <div id="page-class" class="page">
+            <div class="section-header">
+                <button class="back-btn" onclick="window.goBack()">←</button>
+                <div class="section-title">🎓 Free Class Section</div>
+            </div>
+            <div id="class-container" class="class-list">
+                <div class="text-muted text-center" style="padding: 20px;">ক্লাস লোড হচ্ছে...</div>
+            </div>
+        </div>
         
+        <!-- PAGE: EXAM SECTION -->
         <div id="page-exam" class="page">
-            <div class="section-header"><button class="back-btn" onclick="window.goBack()">←</button><div class="section-title">📝 Free Exam Section</div></div>
+            <div class="section-header">
+                <button class="back-btn" onclick="window.goBack()">←</button>
+                <div class="section-title">📝 Free Exam Section</div>
+            </div>
             <div class="exam-category-grid">
-                <div class="exam-cat-btn" onclick="window.navigateTo('page-exam-board')"><div class="ecb-icon">📋</div><div class="ecb-title">বোর্ড প্রস্তুতি</div></div>
-                <div class="exam-cat-btn" onclick="window.navigateTo('page-exam-medical')"><div class="ecb-icon">🏥</div><div class="ecb-title">মেডিকেল প্রস্তুতি</div></div>
-                <div class="exam-cat-btn" onclick="window.navigateTo('page-exam-varsity')"><div class="ecb-icon">🎓</div><div class="ecb-title">ভার্সিটি প্রস্তুতি</div></div>
-                <div class="exam-cat-btn" onclick="window.navigateTo('page-exam-practice')"><div class="ecb-icon">✏️</div><div class="ecb-title">অনুশীলনী এক্সাম</div></div>
-                <div class="exam-cat-btn" onclick="window.navigateTo('page-exam-mock')" style="grid-column: span 2;"><div class="ecb-icon">⚡</div><div class="ecb-title">Unlimited Mock Test</div></div>
+                <div class="exam-cat-btn" onclick="window.loadExamCategory('board')"><div class="ecb-icon">📋</div><div class="ecb-title">বোর্ড প্রস্তুতি</div></div>
+                <div class="exam-cat-btn" onclick="window.loadExamCategory('medical')"><div class="ecb-icon">🏥</div><div class="ecb-title">মেডিকেল প্রস্তুতি</div></div>
+                <div class="exam-cat-btn" onclick="window.loadExamCategory('varsity')"><div class="ecb-icon">🎓</div><div class="ecb-title">ভার্সিটি প্রস্তুতি</div></div>
+                <div class="exam-cat-btn" onclick="window.loadExamCategory('practice')"><div class="ecb-icon">✏️</div><div class="ecb-title">অনুশীলনী এক্সাম</div></div>
+                <div class="exam-cat-btn" onclick="window.loadMockTestSetup()" style="grid-column: span 2;"><div class="ecb-icon">⚡</div><div class="ecb-title">Unlimited Mock Test</div></div>
             </div>
+            <div id="exam-container"></div>
         </div>
 
-        <!-- Sub Exam Categories -->
-        <div id="page-exam-board" class="page"><div class="section-header"><button class="back-btn" onclick="window.goBack()">←</button><div class="section-title">📋 বোর্ড প্রস্তুতি</div></div></div>
-        <div id="page-exam-medical" class="page"><div class="section-header"><button class="back-btn" onclick="window.goBack()">←</button><div class="section-title">🏥 মেডিকেল প্রস্তুতি</div></div></div>
-        <div id="page-exam-varsity" class="page"><div class="section-header"><button class="back-btn" onclick="window.goBack()">←</button><div class="section-title">🎓 ভার্সিটি প্রস্তুতি</div></div></div>
-        <div id="page-exam-practice" class="page"><div class="section-header"><button class="back-btn" onclick="window.goBack()">←</button><div class="section-title">✏️ অনুশীলনী এক্সাম</div></div></div>
-        
-        <div id="page-exam-mock" class="page">
-            <div class="section-header"><button class="back-btn" onclick="window.goBack()">←</button><div class="section-title">⚡ Mock Test সেটআপ</div></div>
-            <div class="auth-wrap">
-                <div class="auth-card">
-                    <div class="form-group">
-                        <label class="form-label">Standard</label>
-                        <div class="radio-group">
-                            <div class="radio-opt" onclick="window.selectMockStandard(this, 'medical')">Medical</div>
-                            <div class="radio-opt" onclick="window.selectMockStandard(this, 'varsity')">Varsity</div>
-                            <div class="radio-opt" onclick="window.selectMockStandard(this, 'onushiloni')">অনুশীলনী</div>
-                        </div>
-                    </div><div class="spacer-sm"></div>
-                    <div class="form-group">
-                        <label class="form-label">প্রশ্নসংখ্যা</label>
-                        <div class="radio-group">
-                            <div class="radio-opt" onclick="window.selectMockCount(this, 20)">20</div>
-                            <div class="radio-opt" onclick="window.selectMockCount(this, 25)">25</div>
-                            <div class="radio-opt" onclick="window.selectMockCount(this, 35)">35</div>
-                            <div class="radio-opt" onclick="window.selectMockCount(this, 50)">50</div>
-                        </div>
-                    </div><div class="spacer-md"></div>
-                    <button class="btn-primary" onclick="window.startMockTest()">Mock Test শুরু করুন</button>
-                </div>
+        <!-- PAGE: MISTAKES -->
+        <div id="page-mistakes" class="page">
+            <div class="section-header">
+                <button class="back-btn" onclick="window.goBack()">←</button>
+                <div class="section-title">📍 My Mistakes</div>
+            </div>
+            <div id="mistakes-container" class="mistakes-list">
+                <div class="text-muted text-center" style="padding: 20px;">এক্সাম দেওয়া শুরু করলে এখানে ভুল প্রশ্নগুলো দেখা যাবে।</div>
             </div>
         </div>
-
-        <div id="page-mistakes" class="page"><div class="section-header"><button class="back-btn" onclick="window.goBack()">←</button><div class="section-title">📍 My Mistakes</div></div><div id="mistakes-container"><p class="text-center text-muted" style="padding: 20px;">এক্সাম দেওয়া শুরু করলে এখানে ভুল প্রশ্নগুলো দেখা যাবে।</p></div></div>
         
+        <!-- PAGE: AI -->
         <div id="page-ai" class="page">
-            <div class="section-header"><button class="back-btn" onclick="window.goBack()">←</button><div class="section-title">🤖 ATLAS AI</div></div>
+            <div class="section-header">
+                <button class="back-btn" onclick="window.goBack()">←</button>
+                <div class="section-title">🤖 ATLAS AI</div>
+            </div>
             <div class="auth-wrap" style="height: 60vh; display: flex; flex-direction: column;">
                 <div id="ai-chat-box" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); padding: 15px;">
                     <div style="align-self:flex-start;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-size:0.88rem;max-width:85%;">আমি ATLAS AI। পদার্থবিজ্ঞান, রসায়ন, জীববিজ্ঞান বা যেকোনো পরীক্ষা সম্পর্কিত প্রশ্ন করুন!</div>
@@ -301,7 +284,7 @@
             </div>
         </div>
         
-        <!-- PAGE: ADMIN -->
+        <!-- PAGE: ADMIN - PERMANENT FIX (No Loading) -->
         <div id="page-admin" class="page">
             <div class="section-header">
                 <button class="back-btn" onclick="window.goBack()">←</button>
@@ -309,32 +292,76 @@
             </div>
             
             <div class="auth-wrap" style="padding-bottom: 80px;">
-                <div class="auth-card" id="admin-exam-form">Loading Exam Form...</div>
+                
+                <!-- 📝 ADD EXAM FORM -->
+                <div class="auth-card">
+                    <h3 style="margin-bottom: 15px; color: var(--accent);">📝 Add New Exam</h3>
+                    <div class="form-group"><label class="form-label">Subject *</label><input type="text" id="admin-exam-subject" class="form-input" placeholder="e.g. Biology"></div>
+                    <div class="spacer-sm"></div>
+                    <div class="form-group"><label class="form-label">Chapter *</label><input type="text" id="admin-exam-chapter" class="form-input" placeholder="e.g. Chapter 1"></div>
+                    <div class="spacer-sm"></div>
+                    <div class="form-group"><label class="form-label">Exam Category</label>
+                        <select id="admin-exam-type" class="form-input">
+                            <option value="board">📋 বোর্ড প্রস্তুতি</option>
+                            <option value="medical">🏥 মেডিকেল প্রস্তুতি</option>
+                            <option value="varsity">🎓 ভার্সিটি প্রস্তুতি</option>
+                            <option value="practice">✏️ অনুশীলনী</option>
+                        </select>
+                    </div>
+                    <div class="spacer-sm"></div>
+                    <div class="form-group"><label class="form-label">CSV File *</label><input type="file" id="admin-exam-csv" accept=".csv" class="form-input"></div>
+                    <div class="spacer-md"></div>
+                    <button class="btn-primary" onclick="window.saveExam()">💾 Save Exam</button>
+                </div>
                 <div class="spacer-md"></div>
                 
-                <div class="auth-card" id="admin-class-form">Loading Class Form...</div>
+                <!-- 🎥 ADD CLASS FORM -->
+                <div class="auth-card">
+                    <h3 style="margin-bottom: 15px; color: var(--accent);">🎥 Add New Class</h3>
+                    <div class="form-group"><label class="form-label">Subject *</label><input type="text" id="admin-class-subject" class="form-input" placeholder="e.g. Physics"></div>
+                    <div class="spacer-sm"></div>
+                    <div class="form-group"><label class="form-label">Chapter *</label><input type="text" id="admin-class-chapter" class="form-input" placeholder="e.g. Chapter 2"></div>
+                    <div class="spacer-sm"></div>
+                    <div class="form-group"><label class="form-label">Class Title *</label><input type="text" id="admin-class-title" class="form-input" placeholder="e.g. Part 1: Vectors"></div>
+                    <div class="spacer-sm"></div>
+                    <div class="form-group"><label class="form-label">YouTube Link *</label><input type="url" id="admin-class-link" class="form-input" placeholder="https://youtube.com/..."></div>
+                    <div class="spacer-md"></div>
+                    <button class="btn-primary" onclick="window.saveClass()">💾 Save Class</button>
+                </div>
                 <div class="spacer-md"></div>
                 
-                <div class="auth-card" id="admin-cq-form">Loading CQ Form...</div>
+                <!-- 📄 ADD CQ FORM -->
+                <div class="auth-card">
+                    <h3 style="margin-bottom: 15px; color: var(--accent);">📄 Add CQ (ক, খ, CQ)</h3>
+                    <div class="form-group"><label class="form-label">Subject *</label><input type="text" id="admin-cq-subject" class="form-input"></div>
+                    <div class="spacer-sm"></div>
+                    <div class="form-group"><label class="form-label">Chapter / Type *</label><input type="text" id="admin-cq-chapter" class="form-input" placeholder="e.g. ক ভান্ডার"></div>
+                    <div class="spacer-sm"></div>
+                    <div class="form-group"><label class="form-label">PDF/Drive Link *</label><input type="url" id="admin-cq-link" class="form-input" placeholder="Google Drive Link"></div>
+                    <div class="spacer-md"></div>
+                    <button class="btn-primary" onclick="window.saveCQ()">💾 Save CQ</button>
+                </div>
                 <div class="spacer-md"></div>
 
+                <!-- 👤 GRANT SUB-ADMIN -->
                 <div class="auth-card" id="super-admin-section" style="display: none;">
-                    <h3 style="margin-bottom: 15px; color: var(--primary);">👤 Grant Sub-Admin</h3>
-                    <div class="form-group"><label>Sub-Admin Phone Number</label><input type="text" id="sub-admin-phone" class="form-input" placeholder="01XXXXXXXXX"></div>
+                    <h3 style="margin-bottom: 15px; color: var(--accent);">👤 Grant Sub-Admin</h3>
+                    <div class="form-group"><label class="form-label">Phone Number</label><input type="text" id="sub-admin-phone" class="form-input" placeholder="01XXXXXXXXX"></div>
                     <div class="spacer-sm"></div>
                     <button class="btn-primary" onclick="window.grantSubAdmin()">Make Sub-Admin</button>
                 </div>
                 <div class="spacer-md"></div>
 
-                <div class="auth-card" id="admin-countdown-form">
-                    <h3 style="margin-bottom: 15px; color: var(--primary);">⏳ Update Countdown Timer</h3>
-                    <div class="form-group"><label>Main Topic</label><input type="text" id="cd-set-main" class="form-input" placeholder="যেমন: HSC পরীক্ষা ২০২৫"></div>
+                <!-- ⏳ UPDATE COUNTDOWN -->
+                <div class="auth-card">
+                    <h3 style="margin-bottom: 15px; color: var(--accent);">⏳ Update Countdown Timer</h3>
+                    <div class="form-group"><label class="form-label">Main Topic</label><input type="text" id="cd-set-main" class="form-input" placeholder="যেমন: HSC পরীক্ষা ২০২৫"></div>
                     <div class="spacer-sm"></div>
-                    <div class="form-group"><label>Sub Topic</label><input type="text" id="cd-set-sub" class="form-input" placeholder="যেমন: পদার্থবিজ্ঞান • রসায়ন"></div>
+                    <div class="form-group"><label class="form-label">Sub Topic</label><input type="text" id="cd-set-sub" class="form-input" placeholder="যেমন: পদার্থবিজ্ঞান • রসায়ন"></div>
                     <div class="spacer-sm"></div>
-                    <div class="form-group"><label>Target Date & Time</label><input type="datetime-local" id="cd-set-date" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">Target Date & Time</label><input type="datetime-local" id="cd-set-date" class="form-input"></div>
                     <div class="spacer-md"></div>
-                    <button class="btn-primary" onclick="window.handleUpdateCountdown()">Update Timer</button>
+                    <button class="btn-primary" onclick="window.updateCountdown()">Update Timer</button>
                 </div>
             </div>
         </div>
@@ -386,7 +413,7 @@
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <!-- JS Files - ORDER MATTERS -->
+    <!-- JS Files -->
     <script type="module" src="supabase.js"></script>
     <script type="module" src="auth.js"></script>
     <script type="module" src="profile.js"></script>
@@ -396,56 +423,262 @@
     <script src="app.js"></script>
     <script src="home.js"></script>
     
-    <!-- 🟢 EMERGENCY FIX: Direct admin login handler (ADDED - NOT DELETED) -->
+    <!-- Main Application Script -->
     <script>
-        (function() {
-            console.log('Emergency script loaded');
+    // ============================================================
+    // ATLAS MAIN APPLICATION SCRIPT - PERMANENT FIX
+    // ============================================================
+    
+    // Navigation Functions
+    window.navigateTo = function(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        const el = document.getElementById(pageId);
+        if (el) el.classList.add('active');
+        window.scrollTo(0, 0);
+    };
+    
+    window.goBack = function() {
+        window.navigateTo('page-home');
+    };
+    
+    window.bottomNav = function(tab) {
+        const map = { home: 'page-home', exam: 'page-exam', ai: 'page-ai', profile: 'page-profile' };
+        window.navigateTo(map[tab]);
+    };
+    
+    // Admin Functions
+    window.saveExam = function() {
+        const subject = document.getElementById('admin-exam-subject')?.value;
+        const chapter = document.getElementById('admin-exam-chapter')?.value;
+        const csvFile = document.getElementById('admin-exam-csv')?.files[0];
+        
+        if (!subject || !chapter) {
+            alert('Subject এবং Chapter দিতে হবে!');
+            return;
+        }
+        
+        // Save to localStorage
+        const exams = JSON.parse(localStorage.getItem('atlas_exams') || '[]');
+        exams.push({ subject, chapter, csvName: csvFile?.name, date: new Date().toISOString() });
+        localStorage.setItem('atlas_exams', JSON.stringify(exams));
+        
+        alert(`✅ Exam "${subject} - ${chapter}" saved successfully!`);
+        
+        // Clear form
+        document.getElementById('admin-exam-subject').value = '';
+        document.getElementById('admin-exam-chapter').value = '';
+        document.getElementById('admin-exam-csv').value = '';
+    };
+    
+    window.saveClass = function() {
+        const subject = document.getElementById('admin-class-subject')?.value;
+        const chapter = document.getElementById('admin-class-chapter')?.value;
+        const title = document.getElementById('admin-class-title')?.value;
+        const link = document.getElementById('admin-class-link')?.value;
+        
+        if (!subject || !chapter || !title || !link) {
+            alert('সব তথ্য দিন!');
+            return;
+        }
+        
+        const classes = JSON.parse(localStorage.getItem('atlas_classes') || '[]');
+        classes.push({ subject, chapter, title, link, date: new Date().toISOString() });
+        localStorage.setItem('atlas_classes', JSON.stringify(classes));
+        
+        alert(`✅ Class "${title}" saved successfully!`);
+        
+        document.getElementById('admin-class-subject').value = '';
+        document.getElementById('admin-class-chapter').value = '';
+        document.getElementById('admin-class-title').value = '';
+        document.getElementById('admin-class-link').value = '';
+    };
+    
+    window.saveCQ = function() {
+        const subject = document.getElementById('admin-cq-subject')?.value;
+        const chapter = document.getElementById('admin-cq-chapter')?.value;
+        const link = document.getElementById('admin-cq-link')?.value;
+        
+        if (!subject || !chapter || !link) {
+            alert('সব তথ্য দিন!');
+            return;
+        }
+        
+        const cqList = JSON.parse(localStorage.getItem('atlas_cq') || '[]');
+        cqList.push({ subject, chapter, link, date: new Date().toISOString() });
+        localStorage.setItem('atlas_cq', JSON.stringify(cqList));
+        
+        alert(`✅ CQ for "${subject} - ${chapter}" saved successfully!`);
+        
+        document.getElementById('admin-cq-subject').value = '';
+        document.getElementById('admin-cq-chapter').value = '';
+        document.getElementById('admin-cq-link').value = '';
+    };
+    
+    window.updateCountdown = function() {
+        const mainTopic = document.getElementById('cd-set-main')?.value;
+        const subTopic = document.getElementById('cd-set-sub')?.value;
+        const targetDate = document.getElementById('cd-set-date')?.value;
+        
+        if (!mainTopic || !targetDate) {
+            alert('Main Topic এবং Date সিলেক্ট করুন!');
+            return;
+        }
+        
+        localStorage.setItem('atlas_countdown', JSON.stringify({
+            main_topic: mainTopic,
+            sub_topic: subTopic,
+            end_time: targetDate,
+            updated_at: new Date().toISOString()
+        }));
+        
+        // Update home page
+        const homeMain = document.getElementById('cd-main-topic');
+        const homeSub = document.getElementById('cd-sub-topic');
+        if (homeMain) homeMain.innerText = mainTopic;
+        if (homeSub && subTopic) homeSub.innerText = subTopic;
+        
+        alert(`✅ Countdown Updated!\nTopic: ${mainTopic}\nDate: ${targetDate}`);
+    };
+    
+    // Auth Functions
+    window.handleLogin = function() {
+        const phone = document.getElementById('login-phone')?.value || '';
+        const password = document.getElementById('login-pass')?.value || '';
+        
+        if (phone === '01754365403' && password === 'AtlasApp2026') {
+            const adminUser = { id: 'admin', name: 'Admin', phone: '01754365403', role: 'admin' };
+            localStorage.setItem('atlas_user', JSON.stringify(adminUser));
             
-            // Make sure handleLogin is globally available
-            if (typeof window.handleLogin !== 'function') {
-                window.handleLogin = function() {
-                    console.log('Emergency handleLogin called');
-                    const phone = document.getElementById('login-phone')?.value || '';
-                    const password = document.getElementById('login-pass')?.value || '';
-                    
-                    if (phone === '01754365403' && password === 'AtlasApp2026') {
-                        const adminUser = {
-                            id: 'admin',
-                            name: 'Admin',
-                            phone: '01754365403',
-                            role: 'admin'
-                        };
-                        localStorage.setItem('atlas_user', JSON.stringify(adminUser));
-                        
-                        const adminBtn = document.getElementById('admin-control-btn');
-                        if (adminBtn) adminBtn.style.display = 'block';
-                        
-                        alert('✅ Admin Login Successful!');
-                        
-                        if (typeof window.navigateTo === 'function') {
-                            window.navigateTo('page-home');
-                        } else {
-                            window.location.href = '#page-home';
-                        }
-                    } else {
-                        alert('Wrong credentials! Use: 01754365403 / AtlasApp2026');
-                    }
-                };
-            }
+            const adminBtn = document.getElementById('admin-control-btn');
+            if (adminBtn) adminBtn.style.display = 'block';
             
-            // Make sure navigateTo is available
-            if (typeof window.navigateTo !== 'function' && typeof navigateTo === 'function') {
-                window.navigateTo = navigateTo;
-            }
-            
-            // Make sure bottomNav is available
-            if (typeof window.bottomNav !== 'function' && typeof bottomNav === 'function') {
-                window.bottomNav = bottomNav;
-            }
-        })();
+            alert('✅ Admin Login Successful!');
+            window.navigateTo('page-home');
+        } else {
+            alert('Wrong credentials! Use: 01754365403 / AtlasApp2026');
+        }
+    };
+    
+    window.handleLogout = function() {
+        localStorage.removeItem('atlas_user');
+        document.getElementById('admin-control-btn').style.display = 'none';
+        alert('Logout successful!');
+        window.navigateTo('page-home');
+    };
+    
+    window.handleNavAuth = function() {
+        const user = localStorage.getItem('atlas_user');
+        if (user) window.navigateTo('page-profile');
+        else window.navigateTo('page-login');
+    };
+    
+    window.selectTimer = function(val) {
+        document.getElementById('timer-first')?.classList.toggle('selected', val === 'first');
+        document.getElementById('timer-second')?.classList.toggle('selected', val === 'second');
+    };
+    
+    window.handleRegistration = function() {
+        alert('Registration feature - Data will be saved to database');
+    };
+    
+    window.handleForgotPassword = function() {
+        alert('Password reset feature - Will be implemented');
+    };
+    
+    window.grantSubAdmin = function() {
+        alert('Sub-Admin grant feature - Will be implemented');
+    };
+    
+    window.switchProfileTab = function(btn, tabId) {
+        document.querySelectorAll('.ptab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const tabs = ['tab-performance', 'tab-exam-history', 'tab-class-history', 'tab-bookmarks'];
+        tabs.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = id === tabId ? 'block' : 'none';
+        });
+    };
+    
+    window.triggerAvatarUpload = function() {
+        document.getElementById('avatar-file-input')?.click();
+    };
+    
+    window.handleAvatarUpload = function(event) {
+        const file = event.target.files[0];
+        if (file) alert('Avatar upload feature - Will be implemented');
+    };
+    
+    // Exam Functions
+    window.loadExamCategory = function(category) {
+        alert(`Loading ${category} exams...`);
+    };
+    
+    window.loadMockTestSetup = function() {
+        alert('Mock Test Setup - Will be implemented');
+    };
+    
+    window.selectMockStandard = function(el, val) {
+        alert(`Standard selected: ${val}`);
+    };
+    
+    window.selectMockCount = function(el, val) {
+        alert(`${val} questions selected`);
+    };
+    
+    window.startMockTest = function() {
+        alert('Mock Test - Will be implemented');
+    };
+    
+    window.sendAIMessage = function() {
+        const input = document.getElementById('ai-input');
+        const msg = input?.value;
+        if (!msg) return;
+        
+        const box = document.getElementById('ai-chat-box');
+        const userDiv = document.createElement('div');
+        userDiv.style.cssText = 'align-self:flex-end;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);border-radius:var(--radius-sm);padding:10px 14px;font-size:0.88rem;max-width:85%;';
+        userDiv.textContent = msg;
+        box.appendChild(userDiv);
+        
+        input.value = '';
+        box.scrollTop = box.scrollHeight;
+        
+        setTimeout(() => {
+            const aiDiv = document.createElement('div');
+            aiDiv.style.cssText = 'align-self:flex-start;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-size:0.88rem;max-width:85%;';
+            aiDiv.textContent = `🤖 ATLAS AI: "${msg}" - Gemini API integration coming soon!`;
+            box.appendChild(aiDiv);
+            box.scrollTop = box.scrollHeight;
+        }, 500);
+    };
+    
+    // Show admin button if already logged in
+    (function() {
+        const user = localStorage.getItem('atlas_user');
+        if (user) {
+            try {
+                const userData = JSON.parse(user);
+                if (userData.phone === '01754365403') {
+                    const adminBtn = document.getElementById('admin-control-btn');
+                    if (adminBtn) adminBtn.style.display = 'block';
+                }
+            } catch(e) {}
+        }
+        
+        // Load countdown from localStorage
+        const savedCountdown = localStorage.getItem('atlas_countdown');
+        if (savedCountdown) {
+            try {
+                const cd = JSON.parse(savedCountdown);
+                const mainEl = document.getElementById('cd-main-topic');
+                const subEl = document.getElementById('cd-sub-topic');
+                if (mainEl && cd.main_topic) mainEl.innerText = cd.main_topic;
+                if (subEl && cd.sub_topic) subEl.innerText = cd.sub_topic;
+            } catch(e) {}
+        }
+        
+        console.log('ATLAS App initialized successfully!');
+    })();
     </script>
-        <!-- EMERGENCY GLOBAL FIX -->
-        <script src="global.js"></script>
-    <script src="admin-global.js"></script>  <!-- ← এই লাইন যোগ করুন -->
 </body>
 </html>
