@@ -565,11 +565,11 @@ async function saveExam() {
         
         clearExamForm();
         loadExams();
-        
     } catch(e) {
-        console.error('❌ সেভ এরর:', e);
-        showToast('❌ সেইভ ব্যর্থ: ' + e.message);
-    }
+    console.error('❌ সেভ এরর:', e);
+    alert('সেভ এরর:\n' + e.message + '\n\nConsole: F12 চাপুন');
+    showToast('❌ সেইভ ব্যর্থ: ' + e.message);
+}
 }
 function clearExamForm() { ['examSubject','examChapter','examBoard','examYear','examWriter','examStart','examEnd'].forEach(id => document.getElementById(id).value=''); examCSVData = null; document.getElementById('examCSVName').textContent=''; document.getElementById('examType').value=''; }
 function copyLink(link) { navigator.clipboard?.writeText(link); showToast('📋 লিংক কপি হয়েছে!'); }
