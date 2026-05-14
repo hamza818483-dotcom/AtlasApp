@@ -7,54 +7,55 @@
     <link rel="stylesheet" href="style.css">
     <style>
         .dash-container { max-width: 700px; margin: 0 auto; padding: 16px 16px 80px; }
-        .dash-header { background: var(--atlas-bg); border: 2px solid var(--atlas-border); border-radius: 14px; padding: 20px; margin-bottom: 16px; text-align: center; box-shadow: 0 0 14px var(--atlas-glow); }
-        .dash-avatar { width: 70px; height: 70px; border-radius: 50%; background: var(--option-bg); border: 3px solid var(--atlas-border); display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 10px; color: var(--atlas-text); }
-        .dash-name { font-size: 20px; font-weight: 800; color: var(--atlas-text); }
-        .dash-info { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
-        .dash-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
-        .dash-stat { background: var(--option-bg); padding: 10px; border-radius: 10px; text-align: center; }
-        .dash-stat-val { font-size: 20px; font-weight: 700; color: var(--atlas-text); }
-        .dash-stat-label { font-size: 10px; color: var(--text-secondary); }
         
-        .tab-bar { display: flex; gap: 4px; margin-bottom: 16px; background: var(--card-bg); border-radius: 12px; padding: 4px; border: 1px solid var(--option-border); overflow-x: auto; }
-        .tab-btn { flex: 1; min-width: 70px; padding: 10px 6px; border: none; background: transparent; color: var(--text-secondary); font-size: 11px; font-weight: 600; cursor: pointer; border-radius: 10px; white-space: nowrap; font-family: 'Noto Sans Bengali','Inter',sans-serif; transition: all 0.3s; }
-        .tab-btn.active { background: var(--atlas-bg); color: var(--atlas-text); border: 1px solid var(--atlas-border); box-shadow: 0 0 10px var(--atlas-glow); }
-        .tab-btn:hover:not(.active) { color: var(--text-primary); background: var(--option-bg); }
+        .profile-header { background: var(--atlas-bg); border: 2px solid var(--atlas-border); border-radius: 14px; padding: 20px; margin-bottom: 16px; text-align: center; box-shadow: 0 0 14px var(--atlas-glow); position: relative; }
+        .profile-avatar-wrap { position: relative; width: 80px; height: 80px; margin: 0 auto 10px; cursor: pointer; }
+        .profile-avatar { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--atlas-border); object-fit: cover; background: var(--option-bg); display: flex; align-items: center; justify-content: center; font-size: 36px; color: var(--atlas-text); }
+        .profile-avatar-upload { position: absolute; bottom: 0; right: 0; width: 28px; height: 28px; border-radius: 50%; background: var(--atlas-border); color: #FFF; font-size: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid var(--card-bg); }
+        .profile-avatar input { display: none; }
+        .profile-name { font-size: 20px; font-weight: 800; color: var(--atlas-text); }
+        .profile-meta { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+        
+        .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+        .dash-box { background: var(--card-bg); border: 1px solid var(--option-border); border-radius: 14px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s; }
+        .dash-box:hover { border-color: var(--atlas-border); box-shadow: 0 0 14px var(--atlas-glow); transform: translateY(-2px); }
+        .dash-box-icon { font-size: 36px; display: block; margin-bottom: 8px; }
+        .dash-box-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+        .dash-box-count { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+        
         .tab-content { display: none; animation: fadeIn 0.3s; }
         .tab-content.active { display: block; }
         @keyframes fadeIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
         
+        .back-btn { background: none; border: 1px solid var(--option-border); color: var(--text-secondary); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; margin-bottom: 12px; }
+        .section-header { background: var(--atlas-bg); border: 2px solid var(--atlas-border); border-radius: 14px; padding: 14px; margin-bottom: 14px; text-align: center; box-shadow: 0 0 10px var(--atlas-glow); }
+        .section-title { color: var(--atlas-text); font-size: 16px; font-weight: 700; }
+        
         .card { background: var(--card-bg); border: 1px solid var(--option-border); border-radius: 14px; padding: 16px; margin-bottom: 10px; }
         .card-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
-        .card-sub { font-size: 12px; color: var(--text-secondary); }
-        .card-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--divider); font-size: 13px; }
+        .card-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--divider); font-size: 13px; }
         .card-row:last-child { border-bottom: none; }
         
-        .btn-sm { padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: all 0.3s; }
+        .btn-sm { padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; }
         .btn-outline { background: transparent; border: 1px solid var(--atlas-border); color: var(--atlas-text); }
         .btn-outline:hover { background: var(--atlas-hover-bg); }
         .btn-danger-sm { background: #EF4444; color: #FFF; }
         .btn-success-sm { background: #22C55E; color: #FFF; }
         
-        .filter-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-        .filter-chip { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--option-border); background: var(--card-bg); color: var(--text-secondary); font-size: 11px; cursor: pointer; transition: all 0.3s; }
-        .filter-chip.active { background: var(--atlas-border); color: #FFF; border-color: var(--atlas-border); }
+        .input-group { margin-bottom: 10px; }
+        .input-group label { display: block; font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-bottom: 3px; }
+        .input-group input { width: 100%; padding: 10px 12px; border: 2px solid var(--option-border); border-radius: 8px; font-size: 14px; background: var(--body-bg); color: var(--text-primary); font-family: 'Noto Sans Bengali','Inter',sans-serif; }
         
         .empty-state { text-align: center; padding: 40px 20px; color: var(--text-secondary); }
         .empty-state .icon { font-size: 48px; display: block; margin-bottom: 12px; }
         
-        .input-group { margin-bottom: 10px; }
-        .input-group label { display: block; font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-bottom: 3px; }
-        .input-group input { width: 100%; padding: 10px 12px; border: 2px solid var(--option-border); border-radius: 8px; font-size: 14px; background: var(--body-bg); color: var(--text-primary); font-family: 'Noto Sans Bengali','Inter',sans-serif; }
-        .input-group input:focus { outline: none; border-color: var(--atlas-border); box-shadow: 0 0 8px var(--atlas-glow); }
+        .notification-dot { width: 8px; height: 8px; border-radius: 50%; background: #EF4444; display: inline-block; margin-right: 6px; }
+        .notification-read { opacity: 0.6; }
         
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 3000; display: none; align-items: center; justify-content: center; }
         .modal-overlay.active { display: flex; }
         .modal { background: var(--card-bg); border-radius: 14px; padding: 20px; max-width: 500px; width: 90%; max-height: 85vh; overflow-y: auto; border: 1px solid var(--option-border); }
         .modal-title { font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 16px; text-align: center; }
-        
-        .notification-dot { width: 8px; height: 8px; border-radius: 50%; background: #EF4444; display: inline-block; margin-right: 6px; }
-        .notification-read { opacity: 0.5; }
     </style>
 </head>
 <body class="dark-mode">
@@ -80,77 +81,60 @@
 
 <header class="header">
     <div class="header-left"><button class="hamburger" onclick="toggleSidebar()">☰</button><div class="logo">ATLAS EXAM</div></div>
-    <div class="header-right">
-        <button class="header-icon" id="notifBtn" onclick="switchTab('notifications')" style="position:relative;">🔔<span id="notifBadge" style="position:absolute;top:-2px;right:-2px;width:16px;height:16px;border-radius:50%;background:#EF4444;color:#FFF;font-size:10px;display:none;align-items:center;justify-content:center;">0</span></button>
-        <button class="header-icon" id="themeToggle" onclick="toggleTheme()">🌙</button>
-    </div>
+    <div class="header-right"><button class="header-icon" id="themeToggle" onclick="toggleTheme()">🌙</button></div>
 </header>
 
-<main class="main-content">
-<div class="dash-container">
+<main class="main-content"><div class="dash-container">
 
-<!-- প্রোফাইল হেডার -->
-<div class="dash-header" id="profileHeader">
-    <div class="dash-avatar" id="dashAvatar">👤</div>
-    <div class="dash-name" id="dashName">লোড হচ্ছে...</div>
-    <div class="dash-info" id="dashInfo"></div>
-    <div class="dash-stats">
-        <div class="dash-stat"><div class="dash-stat-val" id="statExams">০</div><div class="dash-stat-label">📝 এক্সাম</div></div>
-        <div class="dash-stat"><div class="dash-stat-val" id="statAvg">০</div><div class="dash-stat-label">📊 গড়</div></div>
-        <div class="dash-stat"><div class="dash-stat-val" id="statBookmarks">০</div><div class="dash-stat-label">🔖 বুকমার্ক</div></div>
+<!-- প্রোফাইল -->
+<div class="profile-header">
+    <div class="profile-avatar-wrap" onclick="document.getElementById('avatarInput').click()">
+        <img class="profile-avatar" id="profileAvatar" src="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" alt="Photo">
+        <div class="profile-avatar" id="profileAvatarFallback" style="display:flex;">👤</div>
+        <div class="profile-avatar-upload">📷</div>
+        <input type="file" id="avatarInput" accept="image/*" onchange="uploadAvatar(this)">
+    </div>
+    <div class="profile-name" id="profileName">লোড হচ্ছে...</div>
+    <div class="profile-meta" id="profileMeta"></div>
+</div>
+
+<!-- ৪টা বক্স -->
+<div class="dash-grid" id="mainGrid">
+    <div class="dash-box" onclick="showTab('history')">
+        <span class="dash-box-icon">📚</span>
+        <div class="dash-box-title">Exam History</div>
+        <div class="dash-box-count" id="countExams">০ এক্সাম</div>
+    </div>
+    <div class="dash-box" onclick="showTab('classhistory')">
+        <span class="dash-box-icon">🎥</span>
+        <div class="dash-box-title">Class History</div>
+        <div class="dash-box-count" id="countClasses">০ ক্লাস</div>
+    </div>
+    <div class="dash-box" onclick="showTab('bookmarks')">
+        <span class="dash-box-icon">🔖</span>
+        <div class="dash-box-title">Bookmarks</div>
+        <div class="dash-box-count" id="countBookmarks">০ বুকমার্ক</div>
+    </div>
+    <div class="dash-box" onclick="showTab('notifications')">
+        <span class="dash-box-icon">🔔</span>
+        <div class="dash-box-title">Notifications</div>
+        <div class="dash-box-count" id="countNotifs">০ নতুন</div>
     </div>
 </div>
 
-<!-- ট্যাব -->
-<div class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('history')">📚 এক্সাম হিস্টোরি</button>
-    <button class="tab-btn" onclick="switchTab('mistakes')">❌ মাই মিসটেকস</button>
-    <button class="tab-btn" onclick="switchTab('bookmarks')">🔖 বুকমার্ক</button>
-    <button class="tab-btn" onclick="switchTab('notifications')">🔔 নোটিফিকেশন</button>
-    <button class="tab-btn" onclick="switchTab('profile')">👤 প্রোফাইল</button>
+<!-- ট্যাব কন্টেন্ট -->
+<div id="tabContent">
+    <div class="tab-content active" id="tabMain"></div>
+    <div class="tab-content" id="tabHistoryContent"><button class="back-btn" onclick="showTab('main')">← ফিরে যান</button><div class="section-header"><div class="section-title">📚 Exam History</div></div><div id="historyList"></div></div>
+    <div class="tab-content" id="tabClassHistoryContent"><button class="back-btn" onclick="showTab('main')">← ফিরে যান</button><div class="section-header"><div class="section-title">🎥 Class History</div></div><div id="classHistoryList"></div></div>
+    <div class="tab-content" id="tabBookmarksContent"><button class="back-btn" onclick="showTab('main')">← ফিরে যান</button><div class="section-header"><div class="section-title">🔖 Bookmarks</div></div><div id="bookmarksList"></div></div>
+    <div class="tab-content" id="tabNotificationsContent"><button class="back-btn" onclick="showTab('main')">← ফিরে যান</button><div class="section-header"><div class="section-title">🔔 Notifications</div></div><div id="notifList"></div></div>
+    <div class="tab-content" id="tabProfileContent"><button class="back-btn" onclick="showTab('main')">← ফিরে যান</button><div class="section-header"><div class="section-title">👤 প্রোফাইল এডিট</div></div><div class="card"><div class="input-group"><label>নাম</label><input type="text" id="editName"></div><div class="input-group"><label>HSC Batch</label><input type="text" id="editBatch"></div><div class="input-group"><label>কলেজ</label><input type="text" id="editCollege"></div><div class="input-group"><label>পিতার নাম</label><input type="text" id="editFather"></div><div class="input-group"><label>মাতার নাম</label><input type="text" id="editMother"></div><div class="input-group"><label>পাসওয়ার্ড</label><input type="password" id="editPass" placeholder="নতুন পাসওয়ার্ড"></div><button class="btn-sm btn-outline" onclick="updateProfile()" style="width:100%;padding:12px;">💾 আপডেট</button></div></div>
 </div>
 
-<!-- ট্যাব ১: এক্সাম হিস্টোরি -->
-<div class="tab-content active" id="tabHistory">
-    <div id="historyList"><div class="empty-state"><span class="icon">📝</span>কোনো এক্সাম হিস্টোরি নেই</div></div>
-</div>
+</div></main>
 
-<!-- ট্যাব ২: মাই মিসটেকস -->
-<div class="tab-content" id="tabMistakes">
-    <div id="mistakesList"><div class="empty-state"><span class="icon">❌</span>কোনো ভুল উত্তর নেই</div></div>
-</div>
-
-<!-- ট্যাব ৩: বুকমার্ক -->
-<div class="tab-content" id="tabBookmarks">
-    <div id="bookmarksList"><div class="empty-state"><span class="icon">🔖</span>কোনো বুকমার্ক নেই</div></div>
-</div>
-
-<!-- ট্যাব ৪: নোটিফিকেশন -->
-<div class="tab-content" id="tabNotifications">
-    <div id="notifList"><div class="empty-state"><span class="icon">🔔</span>কোনো নোটিফিকেশন নেই</div></div>
-</div>
-
-<!-- ট্যাব ৫: প্রোফাইল এডিট -->
-<div class="tab-content" id="tabProfile">
-    <div class="card">
-        <div class="card-title">👤 প্রোফাইল এডিট</div>
-        <div class="input-group"><label>নাম</label><input type="text" id="editName"></div>
-        <div class="input-group"><label>HSC Batch</label><input type="text" id="editBatch"></div>
-        <div class="input-group"><label>কলেজ</label><input type="text" id="editCollege"></div>
-        <div class="input-group"><label>পিতার নাম</label><input type="text" id="editFather"></div>
-        <div class="input-group"><label>মাতার নাম</label><input type="text" id="editMother"></div>
-        <div class="input-group"><label>পাসওয়ার্ড</label><input type="password" id="editPass" placeholder="নতুন পাসওয়ার্ড"></div>
-        <button class="btn-sm btn-outline" onclick="updateProfile()" style="width:100%;padding:12px;">💾 আপডেট করুন</button>
-    </div>
-</div>
-
-</div>
-</main>
-
-<!-- বিস্তারিত মোডাল -->
-<div class="modal-overlay" id="detailModal">
-    <div class="modal" id="detailModalContent"></div>
-</div>
+<div class="modal-overlay" id="detailModal"><div class="modal" id="detailModalContent"></div></div>
 
 <nav class="bottom-nav">
     <button class="nav-item" onclick="goTo('index.html')"><span class="nav-icon">🏠</span><span>হোম</span></button>
@@ -169,34 +153,19 @@
 <script>
 var SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
 var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
-var GEMINI_KEY = 'AIzaSyBHfdZwqQkrBWF2pp1hLCGZKaXKrinP9ew';
-
 var isDarkMode = true, isSidebarOpen = false, currentUser = null;
 
 async function safeFetch(url, opts) {
-    opts = opts || {}; opts.headers = opts.headers || {};
-    opts.headers['apikey'] = SUPABASE_KEY;
-    opts.headers['Authorization'] = 'Bearer ' + SUPABASE_KEY;
+    opts = opts || {}; opts.headers = opts.headers || {}; opts.headers['apikey'] = SUPABASE_KEY; opts.headers['Authorization'] = 'Bearer ' + SUPABASE_KEY;
     if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') opts.headers['Content-Type'] = 'application/json';
-    try {
-        var res = await fetch(url, opts);
-        var text = await res.text();
-        if (!text || text.trim() === '') return (opts.method==='DELETE'||opts.method==='PATCH') ? null : [];
-        var data = JSON.parse(text);
-        if (!res.ok) throw new Error(data.message || 'API Error');
-        return data;
-    } catch(e) { console.error('❌', e.message); throw e; }
+    try { var res = await fetch(url, opts); var text = await res.text(); if (!text || text.trim() === '') return []; var data = JSON.parse(text); if (!res.ok) throw new Error(data.message); return data; }
+    catch(e) { console.error(e); return []; }
 }
 
-function checkAuth() {
-    var sess = localStorage.getItem('atlas-session');
-    if (!sess) { showToast('⚠️ আগে লগইন করুন'); setTimeout(function(){ goTo('auth.html'); }, 1000); return false; }
-    try { currentUser = JSON.parse(sess); return true; }
-    catch(e) { goTo('auth.html'); return false; }
-}
+function checkAuth() { var sess = localStorage.getItem('atlas-session'); if (!sess) { goTo('auth.html'); return false; } try { currentUser = JSON.parse(sess); return true; } catch(e) { goTo('auth.html'); return false; } }
 
 function loadTheme() { var s = localStorage.getItem('atlas-theme'); isDarkMode = s !== 'light'; document.body.classList.toggle('dark-mode', isDarkMode); updateThemeIcon(); }
-function toggleTheme() { isDarkMode = !isDarkMode; document.body.classList.toggle('dark-mode', isDarkMode); localStorage.setItem('atlas-theme', isDarkMode ? 'dark' : 'light'); updateThemeIcon(); showToast(isDarkMode ? '🌙 ডার্ক মোড' : '☀️ লাইট মোড'); }
+function toggleTheme() { isDarkMode = !isDarkMode; document.body.classList.toggle('dark-mode', isDarkMode); localStorage.setItem('atlas-theme', isDarkMode ? 'dark' : 'light'); updateThemeIcon(); showToast(isDarkMode ? '🌙 ডার্ক' : '☀️ লাইট'); }
 function updateThemeIcon() { var b = document.getElementById('themeToggle'), si = document.getElementById('sidebarThemeIcon'), st = document.getElementById('sidebarThemeText'); if (b) b.textContent = isDarkMode ? '🌙' : '☀️'; if (si) si.textContent = isDarkMode ? '🌙' : '☀️'; if (st) st.textContent = isDarkMode ? 'ডার্ক মোড' : 'লাইট মোড'; }
 function toggleSidebar() { isSidebarOpen = !isSidebarOpen; document.getElementById('sidebarOverlay').classList.toggle('active', isSidebarOpen); document.getElementById('sidebar').classList.toggle('active', isSidebarOpen); }
 function closeSidebar() { isSidebarOpen = false; document.getElementById('sidebarOverlay').classList.remove('active'); document.getElementById('sidebar').classList.remove('active'); }
@@ -207,13 +176,26 @@ function openTelegram() { window.open('https://t.me/rafi_somc', '_blank'); }
 function logout() { localStorage.removeItem('atlas-session'); goTo('index.html'); }
 function showToast(m, d) { d = d || 2500; var t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(function(){ t.classList.remove('show'); }, d); }
 
-// ========== প্রোফাইল লোড ==========
+// ========== ছবি আপলোড ==========
+function uploadAvatar(input) {
+    var file = input.files[0]; if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var img = document.getElementById('profileAvatar'); img.src = e.target.result; img.style.display = 'block';
+        document.getElementById('profileAvatarFallback').style.display = 'none';
+        localStorage.setItem('avatar_' + currentUser.phone, e.target.result);
+        showToast('✅ ছবি আপলোড হয়েছে');
+    };
+    reader.readAsDataURL(file);
+}
+
+// ========== প্রোফাইল ==========
 function loadProfile() {
     if (!currentUser) return;
-    document.getElementById('dashName').textContent = currentUser.name || 'স্টুডেন্ট';
-    document.getElementById('dashAvatar').textContent = (currentUser.name || 'S').charAt(0).toUpperCase();
-    document.getElementById('dashInfo').textContent = 'ব্যাচ: ' + (currentUser.batch||'—') + ' | কলেজ: ' + (currentUser.college||'—') + ' | SSC: ' + (currentUser.ssc_gpa||'—') + ' | HSC: ' + (currentUser.hsc_gpa||'—');
-    
+    document.getElementById('profileName').textContent = currentUser.name || 'স্টুডেন্ট';
+    document.getElementById('profileMeta').textContent = 'ব্যাচ: ' + (currentUser.batch||'—') + ' | SSC: ' + (currentUser.ssc_gpa||'—') + ' | HSC: ' + (currentUser.hsc_gpa||'—') + ' | ' + (currentUser.timer_type==='first'?'ফার্স্ট টাইমার':'সেকেন্ড টাইমার');
+    var savedAvatar = localStorage.getItem('avatar_' + currentUser.phone);
+    if (savedAvatar) { document.getElementById('profileAvatar').src = savedAvatar; document.getElementById('profileAvatar').style.display = 'block'; document.getElementById('profileAvatarFallback').style.display = 'none'; }
     document.getElementById('editName').value = currentUser.name || '';
     document.getElementById('editBatch').value = currentUser.batch || '';
     document.getElementById('editCollege').value = currentUser.college || '';
@@ -221,199 +203,63 @@ function loadProfile() {
     document.getElementById('editMother').value = currentUser.mother_name || '';
 }
 
-// ========== প্রোফাইল আপডেট ==========
 async function updateProfile() {
-    var data = {
-        name: document.getElementById('editName').value.trim(),
-        batch: document.getElementById('editBatch').value.trim(),
-        college: document.getElementById('editCollege').value.trim(),
-        father_name: document.getElementById('editFather').value.trim(),
-        mother_name: document.getElementById('editMother').value.trim()
-    };
-    var pass = document.getElementById('editPass').value.trim();
-    if (pass.length >= 6) data.password_hash = pass;
-    
-    try {
-        await safeFetch(SUPABASE_URL + '/rest/v1/users?phone=eq.' + currentUser.phone, 'PATCH', data);
-        Object.assign(currentUser, data);
-        localStorage.setItem('atlas-session', JSON.stringify(currentUser));
-        loadProfile();
-        showToast('✅ প্রোফাইল আপডেট হয়েছে');
-    } catch(e) { alert('আপডেট এরর: ' + e.message); }
+    var data = { name: document.getElementById('editName').value.trim(), batch: document.getElementById('editBatch').value.trim(), college: document.getElementById('editCollege').value.trim(), father_name: document.getElementById('editFather').value.trim(), mother_name: document.getElementById('editMother').value.trim() };
+    var pass = document.getElementById('editPass').value.trim(); if (pass.length >= 6) data.password_hash = pass;
+    try { await safeFetch(SUPABASE_URL + '/rest/v1/users?phone=eq.' + currentUser.phone, 'PATCH', data); Object.assign(currentUser, data); localStorage.setItem('atlas-session', JSON.stringify(currentUser)); loadProfile(); showToast('✅ প্রোফাইল আপডেট হয়েছে'); showTab('main'); }
+    catch(e) { alert('আপডেট এরর: ' + e.message); }
 }
 
-// ========== ট্যাব সুইচ ==========
-function switchTab(tab) {
-    document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+// ========== ট্যাব ==========
+function showTab(tab) {
     document.querySelectorAll('.tab-content').forEach(function(c){ c.classList.remove('active'); });
-    event.target.classList.add('active');
-    document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
-    
+    if (tab === 'main') { document.getElementById('tabMain').classList.add('active'); return; }
+    document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1) + 'Content').classList.add('active');
     if (tab === 'history') loadHistory();
-    else if (tab === 'mistakes') loadMistakes();
+    else if (tab === 'classhistory') loadClassHistory();
     else if (tab === 'bookmarks') loadBookmarks();
     else if (tab === 'notifications') loadNotifications();
+    else if (tab === 'profile') {}
 }
 
-// ========== এক্সাম হিস্টোরি ==========
+// ========== হিস্টোরি ==========
 async function loadHistory() {
-    if (!currentUser) return;
-    try {
-        var results = await safeFetch(SUPABASE_URL + '/rest/v1/exam_results?phone=eq.' + currentUser.phone + '&select=*&order=submitted_at.desc&limit=20');
-        if (!results || results.length === 0) {
-            document.getElementById('historyList').innerHTML = '<div class="empty-state"><span class="icon">📝</span>কোনো এক্সাম হিস্টোরি নেই</div>';
-            return;
-        }
-        
-        var totalExams = results.length;
-        var totalScore = 0;
-        results.forEach(function(r){ totalScore += parseFloat(r.final_score) || 0; });
-        var avgScore = Math.round(totalScore / totalExams);
-        document.getElementById('statExams').textContent = totalExams;
-        document.getElementById('statAvg').textContent = avgScore + '%';
-        
-        var html = '';
-        results.forEach(function(r){
-            html += '<div class="card"><div class="card-title">📝 এক্সাম #' + r.exam_id + '</div>';
-            html += '<div class="card-row"><span>স্কোর</span><span style="font-weight:700;color:var(--atlas-text);">' + (r.final_score||0) + '</span></div>';
-            html += '<div class="card-row"><span>সঠিক/ভুল/স্কিপ</span><span>✅' + (r.correct||0) + ' ❌' + (r.wrong||0) + ' ⏭️' + (r.skipped||0) + '</span></div>';
-            html += '<div class="card-row"><span>তারিখ</span><span>' + new Date(r.submitted_at).toLocaleDateString('bn-BD') + '</span></div>';
-            html += '<button class="btn-sm btn-outline" onclick="viewDetails(' + r.exam_id + ')" style="margin-top:8px;">📋 বিস্তারিত দেখো</button></div>';
-        });
-        document.getElementById('historyList').innerHTML = html;
-    } catch(e) { document.getElementById('historyList').innerHTML = '<div class="empty-state"><span class="icon">⚠️</span>লোড ব্যর্থ</div>'; }
+    try { var results = await safeFetch(SUPABASE_URL + '/rest/v1/exam_results?phone=eq.' + currentUser.phone + '&select=*&order=submitted_at.desc&limit=30'); if (!results || results.length === 0) { document.getElementById('historyList').innerHTML = '<div class="empty-state"><span class="icon">📝</span>কোনো এক্সাম নেই</div>'; return; } document.getElementById('countExams').textContent = results.length + ' এক্সাম'; var html = ''; results.forEach(function(r){ html += '<div class="card"><div class="card-title">📝 এক্সাম #' + r.exam_id + '</div><div class="card-row"><span>স্কোর</span><span style="font-weight:700;color:var(--atlas-text);">'+(r.final_score||0)+'</span></div><div class="card-row"><span>তারিখ</span><span>'+new Date(r.submitted_at).toLocaleDateString('bn-BD')+'</span></div><button class="btn-sm btn-outline" onclick="viewDetails('+r.exam_id+')">📋 বিস্তারিত</button></div>'; }); document.getElementById('historyList').innerHTML = html; }
+    catch(e) { document.getElementById('historyList').innerHTML = '<div class="empty-state">লোড ব্যর্থ</div>'; }
 }
 
-// ========== মাই মিসটেকস ==========
-async function loadMistakes() {
-    if (!currentUser) return;
-    try {
-        var results = await safeFetch(SUPABASE_URL + '/rest/v1/exam_results?phone=eq.' + currentUser.phone + '&select=*&order=submitted_at.desc&limit=20');
-        if (!results || results.length === 0) {
-            document.getElementById('mistakesList').innerHTML = '<div class="empty-state"><span class="icon">❌</span>কোনো ভুল উত্তর নেই</div>';
-            return;
-        }
-        
-        var html = '';
-        results.forEach(function(r){
-            if ((r.wrong || 0) > 0 || (r.skipped || 0) > 0) {
-                html += '<div class="card"><div class="card-title">📝 এক্সাম #' + r.exam_id + '</div>';
-                html += '<div class="card-row"><span>ভুল</span><span style="color:#EF4444;">❌ ' + (r.wrong||0) + '</span></div>';
-                html += '<div class="card-row"><span>স্কিপ</span><span style="color:#F59E0B;">⏭️ ' + (r.skipped||0) + '</span></div>';
-                html += '<button class="btn-sm btn-outline" onclick="viewDetails(' + r.exam_id + ')" style="margin-top:8px;">📋 বিস্তারিত দেখো</button>';
-                html += '<button class="btn-sm btn-success-sm" onclick="practiceMode(' + r.exam_id + ',\'wrong\')" style="margin-left:4px;">🔁 Practice-01</button>';
-                html += '<button class="btn-sm btn-outline" onclick="practiceMode(' + r.exam_id + ',\'all\')" style="margin-left:4px;">🔁 Practice-02</button></div>';
-            }
-        });
-        document.getElementById('mistakesList').innerHTML = html || '<div class="empty-state"><span class="icon">✅</span>সব সঠিক!</div>';
-    } catch(e) { document.getElementById('mistakesList').innerHTML = '<div class="empty-state"><span class="icon">⚠️</span>লোড ব্যর্থ</div>'; }
+// ========== ক্লাস হিস্টোরি ==========
+function loadClassHistory() {
+    var saved = localStorage.getItem('class_history_' + currentUser.phone); var history = saved ? JSON.parse(saved) : [];
+    document.getElementById('countClasses').textContent = history.length + ' ক্লাস';
+    if (history.length === 0) { document.getElementById('classHistoryList').innerHTML = '<div class="empty-state"><span class="icon">🎥</span>কোনো ক্লাস হিস্টোরি নেই</div>'; return; }
+    var html = ''; history.reverse().forEach(function(h){ html += '<div class="card"><div class="card-title">📘 '+h.subject+'</div><div class="card-row"><span>চ্যাপ্টার</span><span>'+h.chapter+'</span></div><div class="card-row"><span>পার্ট</span><span>'+h.part+'</span></div><div class="card-row"><span>সময়</span><span>'+new Date(h.time).toLocaleString('bn-BD')+'</span></div></div>'; }); document.getElementById('classHistoryList').innerHTML = html;
 }
 
 // ========== বুকমার্ক ==========
 function loadBookmarks() {
-    if (!currentUser) return;
-    var saved = localStorage.getItem('bookmarks_' + currentUser.phone);
-    var bookmarks = saved ? JSON.parse(saved) : {};
-    var count = Object.keys(bookmarks).length;
-    document.getElementById('statBookmarks').textContent = count;
-    
-    if (count === 0) {
-        document.getElementById('bookmarksList').innerHTML = '<div class="empty-state"><span class="icon">🔖</span>কোনো বুকমার্ক নেই</div>';
-        return;
-    }
-    
-    var html = '<p style="color:var(--text-secondary);font-size:13px;margin-bottom:8px;">মোট ' + count + ' টি বুকমার্ক</p>';
-    Object.keys(bookmarks).forEach(function(qid){
-        html += '<div class="card"><div class="card-title">📝 প্রশ্ন #' + qid + '</div>';
-        html += '<button class="btn-sm btn-outline" onclick="viewQuestionDetail(' + qid + ')">📋 দেখুন</button>';
-        html += '<button class="btn-sm btn-danger-sm" onclick="removeBookmark(' + qid + ')" style="margin-left:4px;">🗑️ রিমুভ</button></div>';
-    });
-    document.getElementById('bookmarksList').innerHTML = html;
+    var saved = localStorage.getItem('bookmarks_' + currentUser.phone); var bookmarks = saved ? JSON.parse(saved) : {}; var count = Object.keys(bookmarks).length;
+    document.getElementById('countBookmarks').textContent = count + ' বুকমার্ক';
+    if (count === 0) { document.getElementById('bookmarksList').innerHTML = '<div class="empty-state"><span class="icon">🔖</span>কোনো বুকমার্ক নেই</div>'; return; }
+    var html = ''; Object.keys(bookmarks).forEach(function(qid){ html += '<div class="card"><div class="card-title">📝 প্রশ্ন #'+qid+'</div><button class="btn-sm btn-danger-sm" onclick="removeBookmark('+qid+')">🗑️ রিমুভ</button></div>'; }); document.getElementById('bookmarksList').innerHTML = html;
 }
-
-function removeBookmark(qid) {
-    var saved = localStorage.getItem('bookmarks_' + currentUser.phone);
-    var bookmarks = saved ? JSON.parse(saved) : {};
-    delete bookmarks[qid];
-    localStorage.setItem('bookmarks_' + currentUser.phone, JSON.stringify(bookmarks));
-    loadBookmarks();
-    showToast('🔖 বুকমার্ক রিমুভ হয়েছে');
-}
+function removeBookmark(qid) { var saved = localStorage.getItem('bookmarks_' + currentUser.phone); var bookmarks = saved ? JSON.parse(saved) : {}; delete bookmarks[qid]; localStorage.setItem('bookmarks_' + currentUser.phone, JSON.stringify(bookmarks)); loadBookmarks(); showToast('🔖 রিমুভ হয়েছে'); }
 
 // ========== নোটিফিকেশন ==========
 async function loadNotifications() {
-    if (!currentUser) return;
-    try {
-        var notifs = await safeFetch(SUPABASE_URL + '/rest/v1/notifications?user_phone=eq.' + currentUser.phone + '&select=*&order=created_at.desc&limit=20');
-        if (!notifs || notifs.length === 0) {
-            document.getElementById('notifList').innerHTML = '<div class="empty-state"><span class="icon">🔔</span>কোনো নোটিফিকেশন নেই</div>';
-            return;
-        }
-        
-        var unread = notifs.filter(function(n){ return !n.is_read; }).length;
-        var badge = document.getElementById('notifBadge');
-        if (unread > 0) { badge.textContent = unread; badge.style.display = 'flex'; }
-        else { badge.style.display = 'none'; }
-        
-        var html = '';
-        notifs.forEach(function(n){
-            html += '<div class="card' + (n.is_read ? ' notification-read' : '') + '" onclick="markNotifRead(\'' + n.id + '\')">';
-            if (!n.is_read) html += '<span class="notification-dot"></span>';
-            html += '<div class="card-title">' + (n.title || 'নোটিফিকেশন') + '</div>';
-            html += '<div class="card-sub">' + (n.message || '') + '</div>';
-            html += '<div style="font-size:10px;color:var(--text-secondary);margin-top:4px;">' + new Date(n.created_at).toLocaleDateString('bn-BD') + '</div></div>';
-        });
-        document.getElementById('notifList').innerHTML = html;
-    } catch(e) {}
+    try { var notifs = await safeFetch(SUPABASE_URL + '/rest/v1/notifications?user_phone=eq.' + currentUser.phone + '&select=*&order=created_at.desc&limit=20'); var unread = notifs ? notifs.filter(function(n){ return !n.is_read; }).length : 0; document.getElementById('countNotifs').textContent = unread + ' নতুন'; if (!notifs || notifs.length === 0) { document.getElementById('notifList').innerHTML = '<div class="empty-state"><span class="icon">🔔</span>কোনো নোটিফিকেশন নেই</div>'; return; } var html = ''; notifs.forEach(function(n){ html += '<div class="card'+(n.is_read?' notification-read':'')+'" onclick="markNotifRead(\''+n.id+'\')">'+(n.is_read?'':'<span class="notification-dot"></span>')+'<div class="card-title">'+(n.title||'নোটিফিকেশন')+'</div><div style="font-size:12px;color:var(--text-secondary);">'+(n.message||'')+'</div><div style="font-size:10px;margin-top:4px;">'+new Date(n.created_at).toLocaleDateString('bn-BD')+'</div></div>'; }); document.getElementById('notifList').innerHTML = html; }
+    catch(e) {}
+}
+async function markNotifRead(id) { try { await safeFetch(SUPABASE_URL + '/rest/v1/notifications?id=eq.' + id, 'PATCH', { is_read: true }); loadNotifications(); } catch(e) {} }
+
+function viewDetails(examId) {
+    var html = '<div class="modal-title">📋 এক্সাম #'+examId+'</div><p style="text-align:center;color:var(--text-secondary);">বিস্তারিত শীঘ্রই আসছে</p><button class="btn-sm btn-outline" onclick="document.getElementById(\'detailModal\').classList.remove(\'active\')" style="width:100%;margin-top:12px;">✕ বন্ধ</button>';
+    document.getElementById('detailModalContent').innerHTML = html; document.getElementById('detailModal').classList.add('active');
 }
 
-async function markNotifRead(id) {
-    try {
-        await safeFetch(SUPABASE_URL + '/rest/v1/notifications?id=eq.' + id, 'PATCH', { is_read: true });
-        loadNotifications();
-    } catch(e) {}
-}
-
-// ========== বিস্তারিত দেখো ==========
-async function viewDetails(examId) {
-    try {
-        var results = await safeFetch(SUPABASE_URL + '/rest/v1/exam_results?exam_id=eq.' + examId + '&phone=eq.' + currentUser.phone + '&select=*');
-        if (!results || results.length === 0) { showToast('❌ ডাটা পাওয়া যায়নি'); return; }
-        var r = results[0];
-        var html = '<div class="modal-title">📋 এক্সাম #' + examId + '</div>';
-        html += '<div class="card-row"><span>স্কোর</span><span style="font-weight:700;">' + (r.final_score||0) + '</span></div>';
-        html += '<div class="card-row"><span>সঠিক</span><span style="color:#22C55E;">✅ ' + (r.correct||0) + '</span></div>';
-        html += '<div class="card-row"><span>ভুল</span><span style="color:#EF4444;">❌ ' + (r.wrong||0) + '</span></div>';
-        html += '<div class="card-row"><span>স্কিপ</span><span style="color:#F59E0B;">⏭️ ' + (r.skipped||0) + '</span></div>';
-        html += '<div class="card-row"><span>GPA স্কোর</span><span>' + (r.with_gpa_total||'—') + '</span></div>';
-        html += '<button class="btn-sm btn-outline" onclick="closeModal()" style="margin-top:12px;width:100%;">✕ বন্ধ করুন</button>';
-        
-        document.getElementById('detailModalContent').innerHTML = html;
-        document.getElementById('detailModal').classList.add('active');
-    } catch(e) { alert('এরর: ' + e.message); }
-}
-
-function viewQuestionDetail(qid) {
-    showToast('🔜 এই ফিচার শীঘ্রই আসছে');
-}
-
-function practiceMode(examId, mode) {
-    showToast('🔜 প্র্যাকটিস মোড শীঘ্রই আসছে');
-}
-
-function closeModal() { document.getElementById('detailModal').classList.remove('active'); }
-
-// ========== পেজ লোড ==========
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('📊 Dashboard Loaded');
-    loadTheme();
-    if (!checkAuth()) return;
-    loadProfile();
-    loadHistory();
-    loadBookmarks();
-    loadNotifications();
-    
-    document.getElementById('detailModal').addEventListener('click', function(e){ if (e.target === this) closeModal(); });
+    loadTheme(); if (!checkAuth()) return; loadProfile(); loadHistory(); loadClassHistory(); loadBookmarks(); loadNotifications();
+    document.getElementById('detailModal').addEventListener('click', function(e){ if (e.target === this) this.classList.remove('active'); });
 });
 </script>
 </body>
