@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATLAS EXAM - ফ্রি ক্লাস</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .class-container { max-width: 700px; margin: 0 auto; padding: 16px 16px 80px; }
+        .section-header { background: var(--atlas-bg); border: 2px solid var(--atlas-border); border-radius: 14px; padding: 16px; margin-bottom: 16px; text-align: center; box-shadow: 0 0 14px var(--atlas-glow); }
+        .section-title { color: var(--atlas-text); font-size: 18px; font-weight: 700; }
+        
+        .search-box { width: 100%; padding: 12px 16px; border: 2px solid var(--option-border); border-radius: 12px; font-size: 14px; background: var(--card-bg); color: var(--text-primary); margin-bottom: 16px; font-family: 'Noto Sans Bengali','Inter',sans-serif; }
+        .search-box:focus { outline: none; border-color: var(--atlas-border); box-shadow: 0 0 8px var(--atlas-glow); }
+        
+        .subject-card { background: var(--card-bg); border: 1px solid var(--option-border); border-radius: 14px; padding: 16px; margin-bottom: 12px; cursor: pointer; transition: all 0.3s; }
+        .subject-card:hover { border-color: var(--atlas-border); box-shadow: 0 0 12px var(--atlas-glow); }
+        .subject-name { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+        .subject-count { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+        
+        .paper-tab { display: inline-block; padding: 6px 14px; border-radius: 20px; border: 1px solid var(--option-border); font-size: 12px; cursor: pointer; margin: 4px; transition: all 0.3s; color: var(--text-secondary); }
+        .paper-tab.active { background: var(--atlas-border); color: #FFF; border-color: var(--atlas-border); }
+        
+        .chapter-item { background: var(--option-bg); border-radius: 10px; padding: 12px; margin-bottom: 6px; cursor: pointer; transition: all 0.3s; }
+        .chapter-item:hover { background: var(--atlas-hover-bg); }
+        .chapter-name { font-weight: 600; font-size: 14px; color: var(--text-primary); }
+        .chapter-parts { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+        
+        .part-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--card-bg); border: 1px solid var(--option-border); border-radius: 10px; margin-bottom: 6px; cursor: pointer; transition: all 0.3s; }
+        .part-item:hover { border-color: var(--atlas-border); }
+        .part-icon { font-size: 28px; }
+        .part-info { flex: 1; }
+        .part-name { font-weight: 600; font-size: 14px; color: var(--text-primary); }
+        .part-meta { font-size: 11px; color: var(--text-secondary); }
+        
+        .video-container { position: relative; width: 100%; padding-bottom: 56.25%; margin-bottom: 16px; border-radius: 14px; overflow: hidden; background: #000; }
+        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+        
+        .back-btn { background: none; border: 1px solid var(--option-border); color: var(--text-secondary); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; margin-bottom: 12px; }
+        .back-btn:hover { border-color: var(--atlas-border); color: var(--atlas-text); }
+        
+        .breadcrumb { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }
+        .breadcrumb span { color: var(--atlas-text); }
+        
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-secondary); }
+        .empty-state .icon { font-size: 48px; display: block; margin-bottom: 12px; }
+        
+        @keyframes fadeIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
+        .fade-in { animation: fadeIn 0.3s; }
+    </style>
+</head>
+<body class="dark-mode">
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-header"><div class="sidebar-logo">ATLAS EXAM</div></div>
+    <nav class="sidebar-menu">
+        <button class="sidebar-item" onclick="navigateTo('profile');closeSidebar();"><span class="icon">👤</span> প্রোফাইল</button>
+        <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();"><span class="icon">🏠</span> হোম</button>
+        <button class="sidebar-item" onclick="goTo('class.html');closeSidebar();"><span class="icon">📚</span> ফ্রি ক্লাস</button>
+        <button class="sidebar-item" onclick="goTo('exam.html');closeSidebar();"><span class="icon">📝</span> ফ্রি এক্সাম</button>
+        <button class="sidebar-item" onclick="goTo('exam.html?mock=true');closeSidebar();"><span class="icon">🎯</span> মক টেস্ট</button>
+        <button class="sidebar-item" onclick="goTo('dashboard.html');closeSidebar();"><span class="icon">❌</span> মাই মিসটেকস</button>
+        <button class="sidebar-item" onclick="goTo('ai.html');closeSidebar();"><span class="icon">🤖</span> ATLAS AI</button>
+        <div class="sidebar-divider"></div>
+        <button class="sidebar-item" onclick="toggleTheme()"><span class="icon" id="sidebarThemeIcon">🌙</span> <span id="sidebarThemeText">ডার্ক মোড</span></button>
+        <button class="sidebar-item" onclick="openWhatsApp()"><span class="icon">💬</span> WhatsApp</button>
+        <button class="sidebar-item" onclick="openTelegram()"><span class="icon">✈️</span> Telegram</button>
+    </nav>
+</aside>
+
+<header class="header">
+    <div class="header-left"><button class="hamburger" onclick="toggleSidebar()">☰</button><div class="logo">ATLAS EXAM</div></div>
+    <div class="header-right"><button class="header-icon" id="themeToggle" onclick="toggleTheme()">🌙</button><button class="header-icon" onclick="goTo('auth.html')">👤</button></div>
+</header>
+
+<main class="main-content">
+<div class="class-container">
+
+<!-- ভিউ ১: সাবজেক্ট লিস্ট -->
+<div id="viewSubjects">
+    <div class="section-header"><div class="section-title">📚 ফ্রি ক্লাস সেকশন</div></div>
+    <input type="text" class="search-box" id="searchInput" placeholder="🔍 সাবজেক্ট বা চ্যাপ্টার খুঁজুন..." oninput="filterSubjects()">
+    <div id="subjectList"><div class="empty-state"><span class="icon">📚</span>লোড হচ্ছে...</div></div>
+</div>
+
+<!-- ভিউ ২: চ্যাপ্টার + পার্ট -->
+<div id="viewChapters" style="display:none;">
+    <button class="back-btn" onclick="goToSubjects()">← ফিরে যান</button>
+    <div class="section-header"><div class="section-title" id="chapterTitle">চ্যাপ্টার</div></div>
+    <div id="paperTabs"></div>
+    <div id="chapterList"></div>
+</div>
+
+<!-- ভিউ ৩: ভিডিও প্লেয়ার -->
+<div id="viewVideo" style="display:none;">
+    <button class="back-btn" onclick="goToChapters()">← ফিরে যান</button>
+    <div class="breadcrumb" id="videoBreadcrumb"></div>
+    <div class="video-container" id="videoPlayer"></div>
+    <div class="section-header"><div class="section-title" id="videoTitle">ভিডিও</div></div>
+    <div class="card" style="background:var(--card-bg);border:1px solid var(--option-border);border-radius:14px;padding:16px;">
+        <div id="videoInfo"></div>
+    </div>
+    <div style="margin-top:16px;"><div class="section-title" style="font-size:14px;margin-bottom:8px;">📋 অন্যান্য পার্ট</div><div id="otherParts"></div></div>
+</div>
+
+</div>
+</main>
+
+<nav class="bottom-nav">
+    <button class="nav-item" onclick="goTo('index.html')"><span class="nav-icon">🏠</span><span>হোম</span></button>
+    <button class="nav-item active" onclick="goTo('class.html')"><span class="nav-icon">📚</span><span>ক্লাস</span></button>
+    <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon">📝</span><span>এক্সাম</span></button>
+    <button class="nav-item" onclick="goTo('exam.html?mock=true')"><span class="nav-icon">🎯</span><span>মক</span></button>
+    <button class="nav-item" onclick="goTo('auth.html')"><span class="nav-icon">👤</span><span>প্রোফাইল</span></button>
+</nav>
+
+<div class="floating-buttons">
+    <button class="fab fab-whatsapp" onclick="openWhatsApp()">💬</button>
+    <button class="fab fab-telegram" onclick="openTelegram()">✈️</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+var SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
+
+var isDarkMode = true, isSidebarOpen = false;
+var allClasses = [], currentSubject = null, currentPaper = null, currentChapter = null;
+
+async function safeFetch(url, opts) {
+    opts = opts || {}; opts.headers = opts.headers || {};
+    opts.headers['apikey'] = SUPABASE_KEY;
+    opts.headers['Authorization'] = 'Bearer ' + SUPABASE_KEY;
+    if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') opts.headers['Content-Type'] = 'application/json';
+    try {
+        var res = await fetch(url, opts);
+        var text = await res.text();
+        if (!text || text.trim() === '') return [];
+        var data = JSON.parse(text);
+        if (!res.ok) throw new Error(data.message || 'API Error');
+        return data;
+    } catch(e) { console.error('❌', e.message); return []; }
+}
+
+function loadTheme() { var s = localStorage.getItem('atlas-theme'); isDarkMode = s !== 'light'; document.body.classList.toggle('dark-mode', isDarkMode); updateThemeIcon(); }
+function toggleTheme() { isDarkMode = !isDarkMode; document.body.classList.toggle('dark-mode', isDarkMode); localStorage.setItem('atlas-theme', isDarkMode ? 'dark' : 'light'); updateThemeIcon(); showToast(isDarkMode ? '🌙 ডার্ক' : '☀️ লাইট'); }
+function updateThemeIcon() { var b = document.getElementById('themeToggle'), si = document.getElementById('sidebarThemeIcon'), st = document.getElementById('sidebarThemeText'); if (b) b.textContent = isDarkMode ? '🌙' : '☀️'; if (si) si.textContent = isDarkMode ? '🌙' : '☀️'; if (st) st.textContent = isDarkMode ? 'ডার্ক মোড' : 'লাইট মোড'; }
+function toggleSidebar() { isSidebarOpen = !isSidebarOpen; document.getElementById('sidebarOverlay').classList.toggle('active', isSidebarOpen); document.getElementById('sidebar').classList.toggle('active', isSidebarOpen); }
+function closeSidebar() { isSidebarOpen = false; document.getElementById('sidebarOverlay').classList.remove('active'); document.getElementById('sidebar').classList.remove('active'); }
+function goTo(u) { window.location.href = u; }
+function navigateTo(p) { var r = { 'home':'index.html', 'profile':'dashboard.html', 'class':'class.html', 'exam':'exam.html' }; goTo(r[p] || 'index.html'); }
+function openWhatsApp() { window.open('https://wa.me/8801999681290', '_blank'); }
+function openTelegram() { window.open('https://t.me/rafi_somc', '_blank'); }
+function showToast(m, d) { d = d || 2500; var t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(function(){ t.classList.remove('show'); }, d); }
+
+// ========== ক্লাস লোড ==========
+async function loadClasses() {
+    try {
+        allClasses = await safeFetch(SUPABASE_URL + '/rest/v1/classes?select=*&order=created_at.desc&limit=100');
+        renderSubjects();
+    } catch(e) { document.getElementById('subjectList').innerHTML = '<div class="empty-state"><span class="icon">⚠️</span>লোড ব্যর্থ</div>'; }
+}
+
+function renderSubjects(filter) {
+    var subjects = {};
+    allClasses.forEach(function(c) {
+        var subj = c.subject || 'সাধারণ';
+        if (!subjects[subj]) subjects[subj] = { papers: {}, count: 0 };
+        var paper = c.paper || 'সাধারণ';
+        if (!subjects[subj].papers[paper]) subjects[subj].papers[paper] = { chapters: {}, count: 0 };
+        var ch = c.chapter || 'সাধারণ';
+        if (!subjects[subj].papers[paper].chapters[ch]) subjects[subj].papers[paper].chapters[ch] = [];
+        subjects[subj].papers[paper].chapters[ch].push(c);
+        subjects[subj].papers[paper].count++;
+        subjects[subj].count++;
+    });
+    
+    if (filter) {
+        var f = filter.toLowerCase();
+        var filtered = {};
+        Object.keys(subjects).forEach(function(s) {
+            if (s.toLowerCase().includes(f)) { filtered[s] = subjects[s]; }
+            else {
+                Object.keys(subjects[s].papers).forEach(function(p) {
+                    Object.keys(subjects[s].papers[p].chapters).forEach(function(ch) {
+                        if (ch.toLowerCase().includes(f)) {
+                            if (!filtered[s]) filtered[s] = { papers: {}, count: 0 };
+                            if (!filtered[s].papers[p]) filtered[s].papers[p] = { chapters: {}, count: 0 };
+                            filtered[s].papers[p].chapters[ch] = subjects[s].papers[p].chapters[ch];
+                            filtered[s].count++;
+                        }
+                    });
+                });
+            }
+        });
+        subjects = filtered;
+    }
+    
+    var html = '';
+    var keys = Object.keys(subjects);
+    if (keys.length === 0) {
+        html = '<div class="empty-state"><span class="icon">📚</span>কোনো ক্লাস পাওয়া যায়নি</div>';
+    } else {
+        keys.forEach(function(s) {
+            html += '<div class="subject-card fade-in" onclick="openSubject(\'' + s + '\')"><div class="subject-name">📘 ' + s + '</div><div class="subject-count">' + subjects[s].count + ' টি ক্লাস</div></div>';
+        });
+    }
+    document.getElementById('subjectList').innerHTML = html;
+}
+
+function filterSubjects() {
+    var val = document.getElementById('searchInput').value.trim();
+    renderSubjects(val || null);
+}
+
+// ========== সাবজেক্ট ওপেন ==========
+function openSubject(subj) {
+    currentSubject = subj;
+    var subjData = {};
+    allClasses.forEach(function(c) {
+        if ((c.subject || 'সাধারণ') === subj) {
+            var paper = c.paper || 'সাধারণ';
+            var ch = c.chapter || 'সাধারণ';
+            if (!subjData[paper]) subjData[paper] = {};
+            if (!subjData[paper][ch]) subjData[paper][ch] = [];
+            subjData[paper][ch].push(c);
+        }
+    });
+    
+    document.getElementById('chapterTitle').textContent = '📘 ' + subj;
+    
+    var papers = Object.keys(subjData);
+    var tabsHTML = '';
+    papers.forEach(function(p, i) {
+        tabsHTML += '<span class="paper-tab' + (i === 0 ? ' active' : '') + '" onclick="selectPaper(\'' + p + '\')">📄 ' + p + '</span>';
+    });
+    document.getElementById('paperTabs').innerHTML = tabsHTML;
+    
+    if (papers.length > 0) selectPaper(papers[0], subjData);
+    
+    document.getElementById('viewSubjects').style.display = 'none';
+    document.getElementById('viewChapters').style.display = 'block';
+    document.getElementById('viewVideo').style.display = 'none';
+}
+
+function selectPaper(paper, subjData) {
+    currentPaper = paper;
+    document.querySelectorAll('.paper-tab').forEach(function(t) { t.classList.remove('active'); });
+    event.target.classList.add('active');
+    
+    if (!subjData) {
+        subjData = {};
+        allClasses.forEach(function(c) {
+            if ((c.subject || 'সাধারণ') === currentSubject && (c.paper || 'সাধারণ') === paper) {
+                var ch = c.chapter || 'সাধারণ';
+                if (!subjData[ch]) subjData[ch] = [];
+                subjData[ch].push(c);
+            }
+        });
+    } else {
+        subjData = subjData[paper] || {};
+    }
+    
+    var html = '';
+    Object.keys(subjData).forEach(function(ch) {
+        html += '<div class="chapter-item fade-in" onclick="showParts(\'' + ch + '\', ' + JSON.stringify(subjData[ch].map(function(c){ return { id: c.id, part: c.chapter || 'Part 1', link: c.youtube_link, time: c.start_time }; })) + ')"><div class="chapter-name">📖 ' + ch + '</div><div class="chapter-parts">' + subjData[ch].length + ' টি ক্লাস</div></div>';
+    });
+    document.getElementById('chapterList').innerHTML = html || '<div class="empty-state"><span class="icon">📖</span>কোনো চ্যাপ্টার নেই</div>';
+}
+
+// ========== পার্ট দেখানো ==========
+function showParts(ch, parts) {
+    currentChapter = ch;
+    document.getElementById('chapterTitle').textContent = '📖 ' + ch;
+    
+    var html = '';
+    parts.forEach(function(p, i) {
+        html += '<div class="part-item fade-in" onclick="playVideo(\'' + p.link + '\', \'' + (p.part || ('Part ' + (i+1))) + '\', \'' + (p.time || '') + '\')"><div class="part-icon">🎥</div><div class="part-info"><div class="part-name">' + (p.part || ('Part ' + (i+1))) + '</div><div class="part-meta">⏱️ ' + (p.time ? new Date(p.time).toLocaleDateString('bn-BD') : 'সময়') + '</div></div><span style="color:var(--atlas-text);">▶️</span></div>';
+    });
+    document.getElementById('chapterList').innerHTML = html;
+}
+
+// ========== ভিডিও প্লে ==========
+function playVideo(link, title, time) {
+    var videoId = extractYouTubeID(link);
+    document.getElementById('videoBreadcrumb').innerHTML = '📘 <span>' + currentSubject + '</span> > 📄 <span>' + currentPaper + '</span> > 📖 <span>' + currentChapter + '</span>';
+    document.getElementById('videoTitle').textContent = '🎥 ' + title;
+    
+    if (videoId) {
+        document.getElementById('videoPlayer').innerHTML = '<iframe src="https://www.youtube.com/embed/' + videoId + '" allowfullscreen></iframe>';
+    } else {
+        document.getElementById('videoPlayer').innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-secondary);">⚠️ ভিডিও লিংক সঠিক নয়</div>';
+    }
+    
+    document.getElementById('videoInfo').innerHTML = '<div class="card-row"><span>সাবজেক্ট</span><span>' + currentSubject + '</span></div><div class="card-row"><span>পেপার</span><span>' + currentPaper + '</span></div><div class="card-row"><span>চ্যাপ্টার</span><span>' + currentChapter + '</span></div><div class="card-row"><span>পার্ট</span><span>' + title + '</span></div>';
+    
+    // হিস্টোরি সেইভ
+    saveClassHistory(currentSubject, currentChapter, title);
+    
+    document.getElementById('viewSubjects').style.display = 'none';
+    document.getElementById('viewChapters').style.display = 'none';
+    document.getElementById('viewVideo').style.display = 'block';
+    
+    // অন্যান্য পার্ট
+    var otherHTML = '';
+    allClasses.forEach(function(c) {
+        if ((c.subject || 'সাধারণ') === currentSubject && (c.chapter || 'সাধারণ') === currentChapter && c.youtube_link !== link) {
+            otherHTML += '<div class="part-item" onclick="playVideo(\'' + c.youtube_link + '\', \'' + (c.chapter || 'Part') + '\', \'' + (c.start_time || '') + '\')"><div class="part-icon">🎥</div><div class="part-info"><div class="part-name">' + (c.chapter || 'Part') + '</div></div><span style="color:var(--atlas-text);">▶️</span></div>';
+        }
+    });
+    document.getElementById('otherParts').innerHTML = otherHTML || '<p style="color:var(--text-secondary);">কোনো পার্ট নেই</p>';
+}
+
+function extractYouTubeID(url) {
+    if (!url) return null;
+    var match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/);
+    return match ? match[1] : null;
+}
+
+function saveClassHistory(subject, chapter, part) {
+    var sess = localStorage.getItem('atlas-session');
+    if (!sess) return;
+    try {
+        var user = JSON.parse(sess);
+        var history = JSON.parse(localStorage.getItem('class_history_' + user.phone) || '[]');
+        history.push({ subject: subject, chapter: chapter, part: part, time: new Date().toISOString() });
+        if (history.length > 50) history = history.slice(-50);
+        localStorage.setItem('class_history_' + user.phone, JSON.stringify(history));
+    } catch(e) {}
+}
+
+function goToSubjects() {
+    document.getElementById('viewSubjects').style.display = 'block';
+    document.getElementById('viewChapters').style.display = 'none';
+    document.getElementById('viewVideo').style.display = 'none';
+}
+function goToChapters() {
+    document.getElementById('viewSubjects').style.display = 'none';
+    document.getElementById('viewChapters').style.display = 'block';
+    document.getElementById('viewVideo').style.display = 'none';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📚 Class Page Loaded');
+    loadTheme();
+    loadClasses();
+});
+</script>
+</body>
+</html>
