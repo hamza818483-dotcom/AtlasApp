@@ -6,470 +6,78 @@
     <title>ATLAS EXAM - এক্সাম</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* ========== এক্সাম পেজ স্পেসিফিক স্টাইল ========== */
-        .exam-container {
-            max-width: 700px;
-            margin: 0 auto;
-            padding: 16px;
-        }
-
-        /* সেকশন হেডার */
-        .section-header {
-            background-color: var(--atlas-bg);
-            border: 2px solid var(--atlas-border);
-            border-radius: 14px;
-            padding: 16px;
-            margin-bottom: 16px;
-            text-align: center;
-            box-shadow: 0 0 14px var(--atlas-glow);
-        }
-        .section-title {
-            color: var(--atlas-text);
-            font-size: 18px;
-            font-weight: 700;
-        }
-        .section-subtitle {
-            color: var(--atlas-text);
-            font-size: 12px;
-            opacity: 0.7;
-        }
-
-        /* মোড কন্টেইনার */
-        .mode-container {
-            display: none;
-        }
-        .mode-container.active {
-            display: block;
-        }
-
-        /* ক্যাটাগরি গ্রিড */
-        .cat-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-        .cat-card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--option-border);
-            border-radius: 12px;
-            padding: 16px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .cat-card:hover {
-            border-color: var(--atlas-border);
-            box-shadow: 0 0 12px var(--atlas-glow);
-        }
-        .cat-icon {
-            font-size: 32px;
-            display: block;
-            margin-bottom: 8px;
-        }
-        .cat-name {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        /* লিস্ট আইটেম */
-        .list-item {
-            background-color: var(--card-bg);
-            border: 1px solid var(--option-border);
-            border-radius: 10px;
-            padding: 14px;
-            margin-bottom: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .list-item:hover {
-            border-color: var(--atlas-border);
-            background-color: var(--option-bg);
-        }
-        .list-item-title {
-            font-weight: 600;
-            color: var(--text-primary);
-            font-size: 14px;
-        }
-        .list-item-sub {
-            font-size: 11px;
-            color: var(--text-secondary);
-        }
-        .list-item-arrow {
-            color: var(--atlas-text);
-            font-size: 18px;
-        }
-
-        /* ব্যাক বাটন */
-        .back-btn {
-            background: none;
-            border: 1px solid var(--option-border);
-            color: var(--text-secondary);
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            margin-bottom: 12px;
-            transition: all 0.3s ease;
-        }
-        .back-btn:hover {
-            border-color: var(--atlas-border);
-            color: var(--atlas-text);
-        }
-
-        /* প্রি-এক্সাম কার্ড */
-        .pre-exam-card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--option-border);
-            border-radius: 14px;
-            padding: 20px;
-            margin-bottom: 16px;
-        }
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid var(--divider);
-            font-size: 14px;
-        }
-        .info-label {
-            color: var(--text-secondary);
-        }
-        .info-value {
-            color: var(--text-primary);
-            font-weight: 600;
-        }
-        .start-btn {
-            width: 100%;
-            padding: 16px;
-            background-color: #22C55E;
-            color: #FFF;
-            border: none;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            margin-top: 16px;
-            transition: all 0.3s ease;
-        }
-        .start-btn:hover {
-            background-color: #16A34A;
-        }
-
-        /* এক্সাম হল */
-        .exam-hall-layout {
-            display: flex;
-            gap: 12px;
-            position: relative;
-        }
-        .questions-area {
-            flex: 1;
-            min-width: 0;
-        }
-        .nav-panel {
-            width: 50px;
-            flex-shrink: 0;
-            position: sticky;
-            top: 70px;
-            align-self: flex-start;
-            max-height: 60vh;
-            overflow-y: auto;
-        }
-        .nav-box {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            background-color: var(--atlas-bg);
-            border: 2px solid var(--atlas-border);
-            color: var(--atlas-text);
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 6px;
-            transition: all 0.2s ease;
-        }
-        .nav-box.answered {
-            background-color: var(--selected-border);
-            border-color: var(--selected-border);
-            color: #FFF;
-        }
-        .nav-box.current {
-            border-color: #FFF;
-            box-shadow: 0 0 12px var(--atlas-glow-strong);
-        }
-
-        /* MCQ প্রশ্ন কার্ড */
-        .mcq-card {
-            background-color: var(--card-bg);
-            border-radius: 14px;
-            padding: 18px;
-            margin-bottom: 14px;
-            box-shadow: var(--card-shadow);
-            border: 1px solid var(--option-border);
-            position: relative;
-        }
-        .mcq-card.timed-out {
-            opacity: 0.8;
-            pointer-events: none;
-        }
-        .q-number {
-            font-size: 12px;
-            color: var(--atlas-text);
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-        .q-text {
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 14px;
-            line-height: 1.6;
-        }
-        .option-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 14px;
-            margin-bottom: 8px;
-            background-color: var(--option-bg);
-            border: 2px solid var(--option-border);
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 14px;
-            color: var(--text-primary);
-        }
-        .option-item:hover:not(.locked) {
-            border-color: var(--atlas-border);
-        }
-        .option-item.selected {
-            background-color: var(--selected-bg);
-            border-color: var(--selected-border);
-        }
-        .option-item.correct-reveal {
-            background-color: var(--correct-bg);
-            border-color: var(--correct-border);
-        }
-        .option-item.wrong-reveal {
-            background-color: var(--wrong-bg);
-            border-color: var(--wrong-border);
-        }
-        .option-item.locked {
-            cursor: default;
-            opacity: 0.9;
-        }
-        .option-radio {
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            border: 2px solid var(--text-secondary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            font-size: 12px;
-            font-weight: 700;
-        }
-        .option-item.selected .option-radio {
-            border-color: var(--selected-border);
-            background-color: var(--selected-border);
-            color: #FFF;
-        }
-        .lock-icon {
-            margin-left: auto;
-            font-size: 14px;
-            color: var(--atlas-text);
-        }
-        .option-label {
-            font-weight: 600;
-            margin-right: 4px;
-        }
-
-        /* ATLAS AI ব্যাখ্যা বাটন */
-        .ai-explain-btn {
-            display: inline-block;
-            margin-top: 8px;
-            padding: 8px 14px;
-            background-color: var(--atlas-bg);
-            color: var(--atlas-text);
-            border: 1px solid var(--atlas-border);
-            border-radius: 8px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .ai-explain-btn:hover {
-            background-color: var(--atlas-hover-bg);
-            box-shadow: 0 0 10px var(--atlas-glow);
-        }
-        .ai-explanation {
-            margin-top: 8px;
-            padding: 12px;
-            background-color: var(--option-bg);
-            border-radius: 10px;
-            font-size: 13px;
-            line-height: 1.6;
-            display: none;
-            border-left: 3px solid var(--atlas-border);
-        }
-        .ai-explanation.show {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        /* টাইমার */
-        .timer-bar {
-            position: fixed;
-            top: 56px;
-            left: 0;
-            right: 0;
-            background-color: var(--atlas-bg);
-            border-bottom: 2px solid var(--atlas-border);
-            padding: 8px 16px;
-            text-align: center;
-            z-index: 99;
-            display: none;
-        }
-        .timer-bar.show {
-            display: block;
-        }
-        .timer-text {
-            color: var(--atlas-text);
-            font-size: 20px;
-            font-weight: 800;
-            font-family: 'Inter', monospace;
-        }
-        .timer-warning {
-            color: #EF4444 !important;
-            animation: pulse 0.5s infinite;
-        }
-        @keyframes pulse {
-            0%,100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        /* সাবমিট বাটন */
-        .submit-fixed {
-            position: fixed;
-            bottom: 70px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #22C55E;
-            color: #FFF;
-            border: none;
-            padding: 12px 40px;
-            border-radius: 25px;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            z-index: 100;
-            box-shadow: 0 4px 16px rgba(34,197,94,0.4);
-            display: none;
-        }
-        .submit-fixed.show {
-            display: block;
-        }
-
-        /* রেজাল্ট */
-        .result-card {
-            background-color: var(--card-bg);
-            border-radius: 14px;
-            padding: 20px;
-            margin-bottom: 14px;
-            border: 1px solid var(--option-border);
-            text-align: center;
-        }
-        .result-big {
-            font-size: 48px;
-            font-weight: 800;
-            color: var(--atlas-text);
-        }
-        .result-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-            margin: 16px 0;
-        }
-        .result-stat {
-            background-color: var(--option-bg);
-            padding: 12px;
-            border-radius: 10px;
-            text-align: center;
-        }
-        .result-stat-val {
-            font-size: 24px;
-            font-weight: 700;
-        }
-        .result-stat-label {
-            font-size: 11px;
-            color: var(--text-secondary);
-        }
-        .correct-val { color: #22C55E; }
-        .wrong-val { color: #EF4444; }
-        .skipped-val { color: #F59E0B; }
-
-        /* ফিল্টার */
-        .filter-bar {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 14px;
-            flex-wrap: wrap;
-        }
-        .filter-btn {
-            padding: 8px 16px;
-            border-radius: 20px;
-            border: 1px solid var(--option-border);
-            background: var(--card-bg);
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.3s ease;
-        }
-        .filter-btn.active {
-            background-color: var(--atlas-border);
-            color: #FFF;
-            border-color: var(--atlas-border);
-        }
-
-        /* মক টেস্ট অপশন */
-        .mock-options {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-        .mock-option-btn {
-            padding: 16px;
-            background-color: var(--atlas-bg);
-            color: var(--atlas-text);
-            border: 2px solid var(--atlas-border);
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-        }
-        .mock-option-btn:hover {
-            background-color: var(--atlas-hover-bg);
-            box-shadow: 0 0 14px var(--atlas-glow);
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .exam-container { max-width: 700px; margin: 0 auto; padding: 16px; }
+        .section-header { background-color: var(--atlas-bg); border: 2px solid var(--atlas-border); border-radius: 14px; padding: 16px; margin-bottom: 16px; text-align: center; box-shadow: 0 0 14px var(--atlas-glow); }
+        .section-title { color: var(--atlas-text); font-size: 18px; font-weight: 700; }
+        .section-subtitle { color: var(--atlas-text); font-size: 12px; opacity: 0.7; }
+        .mode-container { display: none; }
+        .mode-container.active { display: block; }
+        .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+        .cat-card { background-color: var(--card-bg); border: 1px solid var(--option-border); border-radius: 12px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.3s ease; }
+        .cat-card:hover { border-color: var(--atlas-border); box-shadow: 0 0 12px var(--atlas-glow); }
+        .cat-icon { font-size: 32px; display: block; margin-bottom: 8px; }
+        .cat-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+        .list-item { background-color: var(--card-bg); border: 1px solid var(--option-border); border-radius: 10px; padding: 14px; margin-bottom: 8px; cursor: pointer; transition: all 0.3s ease; display: flex; justify-content: space-between; align-items: center; }
+        .list-item:hover { border-color: var(--atlas-border); background-color: var(--option-bg); }
+        .list-item-title { font-weight: 600; color: var(--text-primary); font-size: 14px; }
+        .list-item-sub { font-size: 11px; color: var(--text-secondary); }
+        .list-item-arrow { color: var(--atlas-text); font-size: 18px; }
+        .back-btn { background: none; border: 1px solid var(--option-border); color: var(--text-secondary); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; margin-bottom: 12px; transition: all 0.3s ease; }
+        .back-btn:hover { border-color: var(--atlas-border); color: var(--atlas-text); }
+        .pre-exam-card { background-color: var(--card-bg); border: 1px solid var(--option-border); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+        .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--divider); font-size: 14px; }
+        .info-label { color: var(--text-secondary); }
+        .info-value { color: var(--text-primary); font-weight: 600; }
+        .start-btn { width: 100%; padding: 16px; background-color: #22C55E; color: #FFF; border: none; border-radius: 12px; font-size: 18px; font-weight: 700; cursor: pointer; margin-top: 16px; transition: all 0.3s ease; }
+        .start-btn:hover { background-color: #16A34A; }
+        .exam-hall-layout { display: flex; gap: 12px; position: relative; }
+        .questions-area { flex: 1; min-width: 0; }
+        .nav-panel { width: 50px; flex-shrink: 0; position: sticky; top: 70px; align-self: flex-start; max-height: 60vh; overflow-y: auto; }
+        .nav-box { width: 40px; height: 40px; border-radius: 8px; background-color: var(--atlas-bg); border: 2px solid var(--atlas-border); color: var(--atlas-text); font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-bottom: 6px; transition: all 0.2s ease; }
+        .nav-box.answered { background-color: var(--selected-border); border-color: var(--selected-border); color: #FFF; }
+        .nav-box.current { border-color: #FFF; box-shadow: 0 0 12px var(--atlas-glow-strong); }
+        .mcq-card { background-color: var(--card-bg); border-radius: 14px; padding: 18px; margin-bottom: 14px; box-shadow: var(--card-shadow); border: 1px solid var(--option-border); position: relative; }
+        .q-number { font-size: 12px; color: var(--atlas-text); font-weight: 700; margin-bottom: 8px; }
+        .q-text { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 14px; line-height: 1.6; }
+        .option-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; margin-bottom: 8px; background-color: var(--option-bg); border: 2px solid var(--option-border); border-radius: 10px; cursor: pointer; transition: all 0.2s ease; font-size: 14px; color: var(--text-primary); }
+        .option-item:hover:not(.locked) { border-color: var(--atlas-border); }
+        .option-item.selected { background-color: var(--selected-bg); border-color: var(--selected-border); }
+        .option-item.correct-reveal { background-color: var(--correct-bg); border-color: var(--correct-border); }
+        .option-item.wrong-reveal { background-color: var(--wrong-bg); border-color: var(--wrong-border); }
+        .option-item.locked { cursor: default; opacity: 0.9; }
+        .option-radio { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--text-secondary); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 12px; font-weight: 700; }
+        .option-item.selected .option-radio { border-color: var(--selected-border); background-color: var(--selected-border); color: #FFF; }
+        .lock-icon { margin-left: auto; font-size: 14px; color: var(--atlas-text); }
+        .option-label { font-weight: 600; margin-right: 4px; }
+        .ai-explain-btn { display: inline-block; margin-top: 8px; padding: 8px 14px; background-color: var(--atlas-bg); color: var(--atlas-text); border: 1px solid var(--atlas-border); border-radius: 8px; font-size: 12px; cursor: pointer; transition: all 0.3s ease; }
+        .ai-explain-btn:hover { background-color: var(--atlas-hover-bg); box-shadow: 0 0 10px var(--atlas-glow); }
+        .ai-explanation { margin-top: 8px; padding: 12px; background-color: var(--option-bg); border-radius: 10px; font-size: 13px; line-height: 1.6; display: none; border-left: 3px solid var(--atlas-border); }
+        .ai-explanation.show { display: block; animation: fadeIn 0.3s ease; }
+        .timer-bar { position: fixed; top: 56px; left: 0; right: 0; background-color: var(--atlas-bg); border-bottom: 2px solid var(--atlas-border); padding: 8px 16px; text-align: center; z-index: 99; display: none; }
+        .timer-bar.show { display: block; }
+        .timer-text { color: var(--atlas-text); font-size: 20px; font-weight: 800; font-family: 'Inter', monospace; }
+        .timer-warning { color: #EF4444 !important; animation: pulse 0.5s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .submit-fixed { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); background-color: #22C55E; color: #FFF; border: none; padding: 12px 40px; border-radius: 25px; font-size: 16px; font-weight: 700; cursor: pointer; z-index: 100; box-shadow: 0 4px 16px rgba(34,197,94,0.4); display: none; }
+        .submit-fixed.show { display: block; }
+        .result-card { background-color: var(--card-bg); border-radius: 14px; padding: 20px; margin-bottom: 14px; border: 1px solid var(--option-border); text-align: center; }
+        .result-big { font-size: 48px; font-weight: 800; color: var(--atlas-text); }
+        .result-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 16px 0; }
+        .result-stat { background-color: var(--option-bg); padding: 12px; border-radius: 10px; text-align: center; }
+        .result-stat-val { font-size: 24px; font-weight: 700; }
+        .result-stat-label { font-size: 11px; color: var(--text-secondary); }
+        .correct-val { color: #22C55E; } .wrong-val { color: #EF4444; } .skipped-val { color: #F59E0B; }
+        .filter-bar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+        .filter-btn { padding: 8px 16px; border-radius: 20px; border: 1px solid var(--option-border); background: var(--card-bg); color: var(--text-secondary); cursor: pointer; font-size: 12px; transition: all 0.3s ease; }
+        .filter-btn.active { background-color: var(--atlas-border); color: #FFF; border-color: var(--atlas-border); }
+        .mock-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .mock-option-btn { padding: 16px; background-color: var(--atlas-bg); color: var(--atlas-text); border: 2px solid var(--atlas-border); border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; text-align: center; }
+        .mock-option-btn:hover { background-color: var(--atlas-hover-bg); box-shadow: 0 0 14px var(--atlas-glow); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="dark-mode">
 
-    <!-- সাইডবার + হেডার + নিচের বার (আগের মতোই) -->
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header"><div class="sidebar-logo">ATLAS EXAM</div></div>
@@ -489,89 +97,40 @@
     </aside>
 
     <header class="header">
-        <div class="header-left">
-            <button class="hamburger" onclick="toggleSidebar()">☰</button>
-            <div class="logo">ATLAS EXAM</div>
-        </div>
-        <div class="header-right">
-            <button class="header-icon" id="themeToggle" onclick="toggleTheme()">🌙</button>
-            <button class="header-icon" onclick="goTo('auth.html')">👤</button>
-        </div>
+        <div class="header-left"><button class="hamburger" onclick="toggleSidebar()">☰</button><div class="logo">ATLAS EXAM</div></div>
+        <div class="header-right"><button class="header-icon" id="themeToggle" onclick="toggleTheme()">🌙</button><button class="header-icon" onclick="goTo('auth.html')">👤</button></div>
     </header>
 
-    <!-- টাইমার বার -->
-    <div class="timer-bar" id="timerBar">
-        <span class="timer-text" id="timerText">৬০:০০</span>
-    </div>
+    <div class="timer-bar" id="timerBar"><span class="timer-text" id="timerText">৬০:০০</span></div>
 
     <main class="main-content">
         <div class="exam-container">
 
-            <!-- ====== মোড ১: এক্সাম লিস্ট ====== -->
             <div class="mode-container active" id="modeList">
-                <div class="section-header">
-                    <div class="section-title">📝 ফ্রি এক্সাম সেকশন</div>
-                    <div class="section-subtitle">আপনার প্রস্তুতির জন্য সেরা এক্সাম</div>
-                </div>
-
+                <div class="section-header"><div class="section-title">📝 ফ্রি এক্সাম সেকশন</div><div class="section-subtitle">আপনার প্রস্তুতির জন্য সেরা এক্সাম</div></div>
                 <div class="cat-grid">
-                    <div class="cat-card" onclick="showCategory('board')">
-                        <span class="cat-icon">🔵</span>
-                        <span class="cat-name">বোর্ড প্রস্তুতি</span>
-                    </div>
-                    <div class="cat-card" onclick="showCategory('medical')">
-                        <span class="cat-icon">🟢</span>
-                        <span class="cat-name">মেডিকেল প্রস্তুতি</span>
-                    </div>
-                    <div class="cat-card" onclick="showCategory('varsity')">
-                        <span class="cat-icon">🟣</span>
-                        <span class="cat-name">ভার্সিটি প্রস্তুতি</span>
-                    </div>
-                    <div class="cat-card" onclick="showCategory('onushiloni')">
-                        <span class="cat-icon">🟠</span>
-                        <span class="cat-name">অনুশীলনী এক্সাম</span>
-                    </div>
+                    <div class="cat-card" onclick="showCategory('board')"><span class="cat-icon">🔵</span><span class="cat-name">বোর্ড প্রস্তুতি</span></div>
+                    <div class="cat-card" onclick="showCategory('medical')"><span class="cat-icon">🟢</span><span class="cat-name">মেডিকেল প্রস্তুতি</span></div>
+                    <div class="cat-card" onclick="showCategory('varsity')"><span class="cat-icon">🟣</span><span class="cat-name">ভার্সিটি প্রস্তুতি</span></div>
+                    <div class="cat-card" onclick="showCategory('onushiloni')"><span class="cat-icon">🟠</span><span class="cat-name">অনুশীলনী এক্সাম</span></div>
                 </div>
-
-                <div class="section-header" style="margin-top:8px;">
-                    <div class="section-title">🎯 আনলিমিটেড মক টেস্ট</div>
-                </div>
-                <button class="start-btn" onclick="startMockTest()" style="background-color:var(--atlas-bg); color:var(--atlas-text); border:2px solid var(--atlas-border);">
-                    🎯 মক টেস্ট শুরু করুন
-                </button>
+                <div class="section-header" style="margin-top:8px;"><div class="section-title">🎯 আনলিমিটেড মক টেস্ট</div></div>
+                <button class="start-btn" onclick="startMockTest()" style="background-color:var(--atlas-bg); color:var(--atlas-text); border:2px solid var(--atlas-border);">🎯 মক টেস্ট শুরু করুন</button>
             </div>
 
-            <!-- ====== মোড ২: ক্যাটাগরি ভিউ ====== -->
-            <div class="mode-container" id="modeCategory">
-                <button class="back-btn" onclick="backToList()">← ফিরে যান</button>
-                <div id="categoryContent"></div>
-            </div>
+            <div class="mode-container" id="modeCategory"><button class="back-btn" onclick="backToList()">← ফিরে যান</button><div id="categoryContent"></div></div>
 
-            <!-- ====== মোড ৩: প্রি-এক্সাম ইনফো ====== -->
-            <div class="mode-container" id="modePreExam">
-                <button class="back-btn" onclick="backToCategory()">← ফিরে যান</button>
-                <div class="pre-exam-card" id="preExamInfo"></div>
-                <button class="start-btn" onclick="startExam()">▶️ এক্সাম শুরু করুন</button>
-            </div>
+            <div class="mode-container" id="modePreExam"><button class="back-btn" onclick="backToCategory()">← ফিরে যান</button><div class="pre-exam-card" id="preExamInfo"></div><button class="start-btn" onclick="startExam()">▶️ এক্সাম শুরু করুন</button></div>
 
-            <!-- ====== মোড ৪: এক্সাম হল ====== -->
             <div class="mode-container" id="modeHall">
-                <div class="exam-hall-layout">
-                    <div class="questions-area" id="questionsArea"></div>
-                    <div class="nav-panel" id="navPanel"></div>
-                </div>
+                <div class="exam-hall-layout"><div class="questions-area" id="questionsArea"></div><div class="nav-panel" id="navPanel"></div></div>
                 <button class="submit-fixed show" id="submitBtn" onclick="submitExam()">📝 সাবমিট করুন</button>
             </div>
 
-            <!-- ====== মোড ৫: রেজাল্ট ====== -->
             <div class="mode-container" id="modeResult">
                 <div id="resultContent"></div>
-                <button class="start-btn" onclick="retakeExam()" style="background-color:var(--atlas-bg); color:var(--atlas-text); border:2px solid var(--atlas-border); margin-top:8px;">
-                    🔄 আবার দিন
-                </button>
-                <button class="start-btn" onclick="backToList()" style="background-color:var(--btn-bg); color:var(--btn-text); margin-top:4px;">
-                    🏠 এক্সাম লিস্টে যান
-                </button>
+                <button class="start-btn" onclick="retakeExam()" style="background-color:var(--atlas-bg); color:var(--atlas-text); border:2px solid var(--atlas-border); margin-top:8px;">🔄 আবার দিন</button>
+                <button class="start-btn" onclick="backToList()" style="background-color:var(--btn-bg); color:var(--btn-text); margin-top:4px;">🏠 এক্সাম লিস্টে যান</button>
             </div>
 
         </div>
@@ -591,202 +150,232 @@
     </div>
     <div class="toast" id="toast"></div>
 
- 0.25;
-    let finalScore = correct - negMark;
-    if (finalScore < 0) finalScore = 0;
-    
-    // সঠিক/ভুল রিভিল
-    examQuestions.forEach(q => {
-        const ua = userAnswers[q.id];
-        if (ua === q.answer_index) {
-            document.getElementById(`opt${q.id}_${ua}`)?.classList.add('correct-reveal');
-        } else {
-            if (ua) document.getElementById(`opt${q.id}_${ua}`)?.classList.add('wrong-reveal');
-            document.getElementById(`opt${q.id}_${q.answer_index}`)?.classList.add('correct-reveal');
-        }
-        // সব লক
-        document.querySelectorAll(`[data-qid="${q.id}"]`).forEach(o => o.classList.add('locked'));
-    });
-    
-    // রেজাল্ট দেখাও
-    showResult(correct, wrong, skipped, negMark, finalScore, totalQ);
-    switchMode('Result');
+<script>
+// ========== CONFIG ==========
+const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
+const GEMINI_KEY = 'AIzaSyBHfdZwqQkrBWF2pp1hLCGZKaXKrinP9ew';
+
+let isDarkMode = true, isSidebarOpen = false;
+let currentExam = null, examQuestions = [], userAnswers = {};
+let examTimer = null, examSeconds = 0, totalSeconds = 0;
+let currentCategory = null, isExamSubmitted = false, isMockTest = false, mockQuestionCount = 20;
+
+// ========== মোড ==========
+function switchMode(mode) {
+    document.querySelectorAll('.mode-container').forEach(function(m){ m.classList.remove('active'); });
+    var el = document.getElementById('mode' + mode.charAt(0).toUpperCase() + mode.slice(1));
+    if (el) el.classList.add('active');
+    if (mode !== 'Hall') { stopTimer(); document.getElementById('timerBar').classList.remove('show'); document.getElementById('submitBtn').classList.remove('show'); }
+    if (mode === 'Hall') { document.getElementById('timerBar').classList.add('show'); document.getElementById('submitBtn').classList.add('show'); }
+    window.scrollTo(0, 0);
 }
 
-// ========== রেজাল্ট ==========
-function showResult(correct, wrong, skipped, negMark, finalScore, totalQ) {
-    const percent = Math.round((correct / totalQ) * 100);
-    let html = `<div class="result-card">`;
-    html += `<div style="font-size:16px;color:var(--text-secondary);">ফাইনাল স্কোর</div>`;
-    html += `<div class="result-big">${finalScore.toFixed(2)}</div>`;
-    html += `<div style="color:var(--text-secondary);">${totalQ} এর মধ্যে</div>`;
-    html += `</div>`;
-    
-    html += `<div class="result-grid">`;
-    html += `<div class="result-stat"><div class="result-stat-val correct-val">✅ ${correct}</div><div class="result-stat-label">সঠিক</div></div>`;
-    html += `<div class="result-stat"><div class="result-stat-val wrong-val">❌ ${wrong}</div><div class="result-stat-label">ভুল</div></div>`;
-    html += `<div class="result-stat"><div class="result-stat-val skipped-val">⏭️ ${skipped}</div><div class="result-stat-label">স্কিপ</div></div>`;
-    html += `</div>`;
-    
-    html += `<div class="result-card"><div class="info-row"><span class="info-label">নেগেটিভ মার্ক</span><span class="info-value" style="color:#EF4444;">-${negMark.toFixed(2)}</span></div></div>`;
-    
-    // ফিল্টার
-    html += `<div class="filter-bar">`;
-    html += `<button class="filter-btn active" onclick="filterResult('all')">সব</button>`;
-    html += `<button class="filter-btn" onclick="filterResult('correct')">✅ সঠিক</button>`;
-    html += `<button class="filter-btn" onclick="filterResult('wrong')">❌ ভুল</button>`;
-    html += `<button class="filter-btn" onclick="filterResult('skipped')">⏭️ স্কিপ</button>`;
-    html += `</div>`;
-    
-    // সমাধানপত্র
-    html += `<div id="solveSheet">`;
-    examQuestions.forEach((q, i) => {
-        const ua = userAnswers[q.id];
-        let status = 'skipped';
-        if (ua === q.answer_index) status = 'correct';
-        else if (ua) status = 'wrong';
-        
-        html += `<div class="mcq-card solve-item" data-status="${status}">`;
-        html += `<div class="q-text">${i+1}. ${q.question_text}</div>`;
-        [q.option1, q.option2, q.option3, q.option4, q.option5].forEach((opt, oi) => {
-            if (opt && opt !== '—') {
-                const labels = ['ক','খ','গ','ঘ','ঙ'];
-                let cls = '';
-                if (oi+1 === q.answer_index) cls = ' correct-reveal';
-                else if (oi+1 === ua && ua !== q.answer_index) cls = ' wrong-reveal';
-                html += `<div class="option-item${cls}"><span class="option-radio">${labels[oi]}</span> ${opt}</div>`;
-            }
-        });
-        if (q.explanation) html += `<p style="color:var(--text-secondary);font-size:12px;margin-top:6px;">💡 ${q.explanation}</p>`;
-        html += `<button class="ai-explain-btn" onclick="explainWithAI(${q.id})">🤖 ATLAS AI ব্যাখ্যা</button>`;
-        html += `<div class="ai-explanation" id="aiExp${q.id}"></div>`;
-        html += `</div>`;
-    });
-    html += `</div>`;
-    
-    document.getElementById('resultContent').innerHTML = html;
+// ========== থিম ==========
+function loadTheme() { var s = localStorage.getItem('atlas-theme'); isDarkMode = s !== 'light'; document.body.classList.toggle('dark-mode', isDarkMode); updateThemeIcon(); }
+function toggleTheme() { isDarkMode = !isDarkMode; document.body.classList.toggle('dark-mode', isDarkMode); localStorage.setItem('atlas-theme', isDarkMode ? 'dark' : 'light'); updateThemeIcon(); showToast(isDarkMode ? '🌙 ডার্ক মোড' : '☀️ লাইট মোড'); }
+function updateThemeIcon() { var b = document.getElementById('themeToggle'), si = document.getElementById('sidebarThemeIcon'), st = document.getElementById('sidebarThemeText'); if (b) b.textContent = isDarkMode ? '🌙' : '☀️'; if (si) si.textContent = isDarkMode ? '🌙' : '☀️'; if (st) st.textContent = isDarkMode ? 'ডার্ক মোড' : 'লাইট মোড'; }
+function toggleSidebar() { isSidebarOpen = !isSidebarOpen; document.getElementById('sidebarOverlay').classList.toggle('active', isSidebarOpen); document.getElementById('sidebar').classList.toggle('active', isSidebarOpen); }
+function closeSidebar() { isSidebarOpen = false; document.getElementById('sidebarOverlay').classList.remove('active'); document.getElementById('sidebar').classList.remove('active'); }
+function goTo(u) { window.location.href = u; }
+function navigateTo(p) { var r = { 'home':'index.html', 'profile':'dashboard.html', 'class':'class.html', 'exam':'exam.html' }; window.location.href = r[p] || 'index.html'; }
+function openWhatsApp() { window.open('https://wa.me/8801999681290', '_blank'); }
+function openTelegram() { window.open('https://t.me/rafi_somc', '_blank'); }
+function showToast(m, d) { d = d || 2500; var t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(function(){ t.classList.remove('show'); }, d); }
+
+// ========== ক্যাটাগরি ==========
+function showCategory(cat) {
+    currentCategory = cat;
+    var html = '<div class="section-header"><div class="section-title">' + (cat==='board'?'🔵 বোর্ড প্রস্তুতি':cat==='medical'?'🟢 মেডিকেল প্রস্তুতি':cat==='varsity'?'🟣 ভার্সিটি প্রস্তুতি':'🟠 অনুশীলনী এক্সাম') + '</div></div>';
+    if (cat === 'board') { html += '<div class="cat-grid">'; ['বোর্ড প্রশ্ন','কলেজ প্রশ্ন','ক ভান্ডার','খ ভান্ডার','টাইপ CQ'].forEach(function(s){ html += '<div class="cat-card" onclick="showToast(\'🔜 শীঘ্রই আসছে\')"><span class="cat-name">'+s+'</span></div>'; }); html += '</div>'; }
+    else if (cat === 'medical') { html += '<div class="cat-grid">'; ['মেডিকেল Demo','বিগত (চাপ্টার)','বিগত (সাল)'].forEach(function(s){ html += '<div class="cat-card" onclick="showToast(\'🔜 শীঘ্রই আসছে\')"><span class="cat-name">'+s+'</span></div>'; }); html += '</div>'; }
+    else if (cat === 'varsity') { html += '<div class="cat-grid">'; ['Varsitywise','বিগত (সাল)','বিগত (চাপ্টার)'].forEach(function(s){ html += '<div class="cat-card" onclick="showToast(\'🔜 শীঘ্রই আসছে\')"><span class="cat-name">'+s+'</span></div>'; }); html += '</div>'; }
+    else { html += '<p style="text-align:center;color:var(--text-secondary);padding:20px;">শীঘ্রই আসছে...</p>'; }
+    document.getElementById('categoryContent').innerHTML = html;
+    switchMode('Category');
 }
+function backToList() { switchMode('List'); currentCategory = null; }
+function backToCategory() { if (currentCategory) showCategory(currentCategory); else backToList(); }
 
-function filterResult(type) {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    event.target.classList.add('active');
-    document.querySelectorAll('.solve-item').forEach(item => {
-        if (type === 'all') item.style.display = 'block';
-        else item.style.display = item.dataset.status === type ? 'block' : 'none';
-    });
-}
-
-function retakeExam() {
-    userAnswers = {};
-    isExamSubmitted = false;
-    startExamHall();
-}
-
-// ========== ATLAS AI ব্যাখ্যা ==========
-async function explainWithAI(qid) {
-    const expDiv = document.getElementById('aiExp' + qid);
-    if (expDiv.classList.contains('show')) { expDiv.classList.remove('show'); return; }
-    
-    const q = examQuestions.find(q => q.id === qid);
-    if (!q) return;
-    
-    expDiv.classList.add('show');
-    expDiv.innerHTML = '⏳ AI ব্যাখ্যা আনা হচ্ছে...';
-    
-    const options = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(o => o && o !== '—');
-    const labels = ['ক','খ','গ','ঘ','ঙ'];
-    const correctLabel = labels[q.answer_index - 1];
-    const correctOption = options[q.answer_index - 1];
-    
-    let prompt = `তুমি একজন অভিজ্ঞ শিক্ষক। নিচের MCQ-টি বিশ্লেষণ করো:\n\nপ্রশ্ন: ${q.question_text}\n\n`;
-    options.forEach((opt, i) => { prompt += `${labels[i]}) ${opt}\n`; });
-    prompt += `\nসঠিক উত্তর: ${correctLabel}) ${correctOption}\n\n`;
-    prompt += `নির্দেশনা:\n১) প্রতিটি অপশন আলাদাভাবে ব্যাখ্যা করো\n২) সঠিক অপশন ✅ এবং কেন সঠিক তা বলো\n৩) ভুল অপশনগুলো ❌ এবং কেন ভুল তা বলো\n৪) বাংলায় উত্তর দাও\n৫) সংক্ষেপে বলো (২-৩ লাইন প্রতি অপশন)`;
-    
-    try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-        });
-        const data = await res.json();
-        if (data.candidates) {
-            expDiv.innerHTML = data.candidates[0].content.parts[0].text.replace(/\n/g, '<br>');
-        } else {
-            expDiv.innerHTML = '❌ ব্যাখ্যা পাওয়া যায়নি।';
-        }
-    } catch(e) {
-        expDiv.innerHTML = '❌ AI সার্ভার সমস্যা।';
-    }
-}
-
-// ========== পেজ লোড ==========
-document.addEventListener('DOMContentLoaded', function() {
-   // URL থেকে exam ID পড়া
-const params = new URLSearchParams(window.location.search);
-const examId = params.get('id');
-
-if (examId) {
-    loadExamById(examId);
-}
-
+// ========== Supabase এক্সাম লোড ==========
 async function loadExamById(examId) {
-    console.log('📡 এক্সাম লোড:', examId);
-    
     try {
-        // এক্সাম ডাটা
-        const examRes = await fetch(
-            SUPABASE_URL + '/rest/v1/exams?id=eq.' + examId + '&select=*',
-            { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
-        );
-        const examData = await examRes.json();
-        
-        if (!examData || examData.length === 0) {
-            showToast('❌ এক্সাম পাওয়া যায়নি');
-            return;
-        }
-        
+        var examRes = await fetch(SUPABASE_URL + '/rest/v1/exams?id=eq.' + examId + '&select=*', { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
+        var examData = await examRes.json();
+        if (!examData || examData.length === 0) { showToast('❌ এক্সাম পাওয়া যায়নি'); return; }
         currentExam = examData[0];
-        
-        // প্রশ্ন ডাটা
-        const qRes = await fetch(
-            SUPABASE_URL + '/rest/v1/questions?exam_id=eq.' + examId + '&select=*',
-            { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
-        );
+        var qRes = await fetch(SUPABASE_URL + '/rest/v1/questions?exam_id=eq.' + examId + '&select=*', { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
         examQuestions = await qRes.json();
-        
-        console.log('✅ এক্সাম:', currentExam.title, '| প্রশ্ন:', examQuestions.length);
-        
-        // প্রি-এক্সাম দেখাও
         showPreExamFromData(currentExam, examQuestions);
-        
-    } catch(e) {
-        console.error('❌', e);
-        alert('এক্সাম লোড এরর: ' + e.message);
-    }
+    } catch(e) { alert('এক্সাম লোড এরর: ' + e.message); }
 }
 
 function showPreExamFromData(exam, questions) {
     examQuestions = questions;
-    let html = `<div class="section-header"><div class="section-title">📋 ${exam.title || (exam.subject + ' - ' + exam.chapter)}</div></div>`;
-    html += `<div class="pre-exam-card">`;
-    html += `<div class="info-row"><span class="info-label">সাবজেক্ট</span><span class="info-value">${exam.subject||'—'}</span></div>`;
-    html += `<div class="info-row"><span class="info-label">চ্যাপ্টার</span><span class="info-value">${exam.chapter||'—'}</span></div>`;
-    html += `<div class="info-row"><span class="info-label">মোট প্রশ্ন</span><span class="info-value">${questions.length} টি</span></div>`;
-    html += `<div class="info-row"><span class="info-label">সময়</span><span class="info-value">${exam.duration_minutes||60} মিনিট</span></div>`;
-    html += `</div>`;
+    var html = '<div class="section-header"><div class="section-title">📋 ' + (exam.title || (exam.subject + ' - ' + exam.chapter)) + '</div></div>';
+    html += '<div class="pre-exam-card">';
+    html += '<div class="info-row"><span class="info-label">সাবজেক্ট</span><span class="info-value">' + (exam.subject||'—') + '</span></div>';
+    html += '<div class="info-row"><span class="info-label">চ্যাপ্টার</span><span class="info-value">' + (exam.chapter||'—') + '</span></div>';
+    html += '<div class="info-row"><span class="info-label">মোট প্রশ্ন</span><span class="info-value">' + questions.length + ' টি</span></div>';
+    html += '<div class="info-row"><span class="info-label">সময়</span><span class="info-value">' + (exam.duration_minutes||60) + ' মিনিট</span></div>';
+    html += '</div>';
     document.getElementById('preExamInfo').innerHTML = html;
     switchMode('PreExam');
 }
+
+async function loadAllExams() {
+    try {
+        var res = await fetch(SUPABASE_URL + '/rest/v1/exams?select=*&order=created_at.desc&limit=50', { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
+        var exams = await res.json();
+        if (!exams || exams.length === 0) return;
+        var html = '<div class="section-header" style="margin-top:16px;"><div class="section-title">📋 সেভ করা এক্সাম</div></div>';
+        exams.forEach(function(exam){
+            html += '<div class="list-item" onclick="loadExamById('+exam.id+')"><div><div class="list-item-title">'+(exam.title||(exam.subject+' - '+exam.chapter))+'</div><div class="list-item-sub">'+exam.exam_type+' | '+exam.total_marks+' প্রশ্ন</div></div><span class="list-item-arrow">→</span></div>';
+        });
+        document.getElementById('modeList').insertAdjacentHTML('beforeend', html);
+    } catch(e) {}
+}
+
+// ========== মক টেস্ট ==========
+function startMockTest() {
+    isMockTest = true;
+    var html = '<div class="section-header"><div class="section-title">🎯 আনলিমিটেড মক টেস্ট</div></div><p style="text-align:center;color:var(--text-secondary);margin-bottom:16px;">প্রশ্ন সংখ্যা:</p><div class="mock-options">';
+    [20,25,35,50].forEach(function(n){ html += '<button class="mock-option-btn" onclick="selectMockCount('+n+')">'+n+' টি</button>'; });
+    html += '</div>';
+    document.getElementById('categoryContent').innerHTML = html;
+    switchMode('Category');
+}
+function selectMockCount(count) {
+    mockQuestionCount = count; examQuestions = generateDemoQuestions(count);
+    currentExam = { title: 'মক টেস্ট', total_marks: count, duration_minutes: Math.ceil(count/2), id: 'mock_'+Date.now() };
+    startExamHall();
+}
+
+// ========== ডেমো প্রশ্ন ==========
+function generateDemoQuestions(count) {
+    var qBank = [
+        { q: 'পানির রাসায়নিক সংকেত কী?', o: ['H₂O','CO₂','NaCl','O₂','—'], a: 1, exp: 'পানি H₂O নামে পরিচিত।' },
+        { q: 'বাংলাদেশের রাজধানী?', o: ['চট্টগ্রাম','ঢাকা','খুলনা','রাজশাহী','—'], a: 2, exp: 'ঢাকা বাংলাদেশের রাজধানী।' },
+        { q: 'সালোকসংশ্লেষণ কোথায়?', o: ['মাইটোকন্ড্রিয়া','ক্লোরোপ্লাস্ট','নিউক্লিয়াস','রাইবোজোম','—'], a: 2, exp: 'ক্লোরোপ্লাস্টে ঘটে।' },
+        { q: 'DNA পূর্ণরূপ?', o: ['Deoxyribonucleic Acid','Ribonucleic Acid','Amino Acid','Fatty Acid','—'], a: 1, exp: 'DNA = Deoxyribonucleic Acid।' },
+        { q: 'নিকটতম গ্রহ?', o: ['মঙ্গল','শুক্র','বুধ','বৃহস্পতি','শনি'], a: 2, exp: 'শুক্র নিকটতম।' },
+        { q: 'কম্পিউটারের মস্তিষ্ক?', o: ['RAM','CPU','Hard Disk','Monitor','Mouse'], a: 2, exp: 'CPU মস্তিষ্ক।' },
+        { q: 'আলোর বেগ?', o: ['৩×১০⁸','৩×১০⁶','৩×১০⁴','৩×১০²','—'], a: 1, exp: '৩×১০⁸ m/s।' },
+        { q: 'মানবদেহে হাড়?', o: ['১০৬','২০৬','৩০৬','৪০৬','—'], a: 2, exp: '২০৬টি হাড়।' },
+        { q: 'বাংলাদেশের মুদ্রা?', o: ['টাকা','রুপি','ডলার','ইউরো','—'], a: 1, exp: 'টাকা।' },
+        { q: 'রক্ত লাল কেন?', o: ['হিমোগ্লোবিন','ক্লোরোফিল','মেলানিন','কেরাটিন','—'], a: 1, exp: 'হিমোগ্লোবিনের জন্য।' }
+    ];
+    var qs = [];
+    for (var i = 0; i < count; i++) { var q = qBank[i % qBank.length]; qs.push({ id: i+1, question_text: q.q, option1: q.o[0], option2: q.o[1], option3: q.o[2], option4: q.o[3], option5: q.o[4], answer_index: q.a, explanation: q.exp }); }
+    return qs;
+}
+
+function startExam() { examQuestions = generateDemoQuestions(25); startExamHall(); }
+
+function startExamHall() {
+    userAnswers = {}; isExamSubmitted = false;
+    totalSeconds = (currentExam.duration_minutes || 30) * 60; examSeconds = totalSeconds;
+    var qHTML = '';
+    examQuestions.forEach(function(q, i){
+        qHTML += '<div class="mcq-card" id="qCard'+q.id+'"><div class="q-number">প্রশ্ন '+(i+1)+'/'+examQuestions.length+'</div><div class="q-text">'+q.question_text+'</div>';
+        [q.option1, q.option2, q.option3, q.option4, q.option5].forEach(function(opt, oi){
+            if (opt && opt !== '—') {
+                var labels = ['ক','খ','গ','ঘ','ঙ'];
+                qHTML += '<div class="option-item" id="opt'+q.id+'_'+(oi+1)+'" onclick="selectOption('+q.id+','+(oi+1)+',this)" data-qid="'+q.id+'" data-oid="'+(oi+1)+'"><span class="option-radio">'+labels[oi]+'</span><span class="option-label">'+labels[oi]+')</span> '+opt+'<span class="lock-icon" id="lock'+q.id+'_'+(oi+1)+'" style="display:none;">🔒</span></div>';
+            }
+        });
+        qHTML += '<button class="ai-explain-btn" onclick="explainWithAI('+q.id+')">🤖 ATLAS AI ব্যাখ্যা</button><div class="ai-explanation" id="aiExp'+q.id+'"></div></div>';
+    });
+    document.getElementById('questionsArea').innerHTML = qHTML;
+    var navHTML = ''; examQuestions.forEach(function(q,i){ navHTML += '<button class="nav-box" id="navBox'+q.id+'" onclick="scrollToQ('+q.id+')">'+(i+1)+'</button>'; });
+    document.getElementById('navPanel').innerHTML = navHTML;
+    switchMode('Hall'); startTimer();
+}
+
+function selectOption(qid, oid, el) {
+    if (isExamSubmitted || userAnswers[qid]) return;
+    userAnswers[qid] = oid;
+    document.querySelectorAll('[data-qid="'+qid+'"]').forEach(function(o){ o.classList.remove('selected'); });
+    el.classList.add('selected');
+    document.querySelectorAll('[data-qid="'+qid+'"] .lock-icon').forEach(function(l){ l.style.display = 'none'; });
+    var lockIcon = document.getElementById('lock'+qid+'_'+oid); if (lockIcon) lockIcon.style.display = 'inline';
+    var navBox = document.getElementById('navBox'+qid); if (navBox) navBox.classList.add('answered');
+}
+function scrollToQ(qid) {
+    var card = document.getElementById('qCard'+qid); if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.querySelectorAll('.nav-box').forEach(function(n){ n.classList.remove('current'); });
+    var navBox = document.getElementById('navBox'+qid); if (navBox) navBox.classList.add('current');
+}
+function startTimer() { stopTimer(); updateTimerDisplay(); examTimer = setInterval(function(){ examSeconds--; updateTimerDisplay(); if (examSeconds <= 0) submitExam(); }, 1000); }
+function stopTimer() { if (examTimer) { clearInterval(examTimer); examTimer = null; } }
+function updateTimerDisplay() {
+    var m = Math.floor(examSeconds / 60), s = examSeconds % 60;
+    var txt = document.getElementById('timerText'); txt.textContent = String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+    if (examSeconds <= 60) txt.classList.add('timer-warning'); else txt.classList.remove('timer-warning');
+}
+function submitExam() {
+    if (isExamSubmitted) return; isExamSubmitted = true; stopTimer();
+    document.getElementById('timerBar').classList.remove('show'); document.getElementById('submitBtn').classList.remove('show');
+    var correct = 0, wrong = 0, skipped = 0;
+    examQuestions.forEach(function(q){ var ua = userAnswers[q.id]; if (!ua) skipped++; else if (ua === q.answer_index) correct++; else wrong++; });
+    var totalQ = examQuestions.length, negMark = wrong * 0.25, finalScore = correct - negMark; if (finalScore < 0) finalScore = 0;
+    examQuestions.forEach(function(q){
+        var ua = userAnswers[q.id];
+        if (ua === q.answer_index) { var el = document.getElementById('opt'+q.id+'_'+ua); if (el) el.classList.add('correct-reveal'); }
+        else { if (ua) { var el = document.getElementById('opt'+q.id+'_'+ua); if (el) el.classList.add('wrong-reveal'); } var el2 = document.getElementById('opt'+q.id+'_'+q.answer_index); if (el2) el2.classList.add('correct-reveal'); }
+        document.querySelectorAll('[data-qid="'+q.id+'"]').forEach(function(o){ o.classList.add('locked'); });
+    });
+    showResult(correct, wrong, skipped, negMark, finalScore, totalQ); switchMode('Result');
+}
+function showResult(correct, wrong, skipped, negMark, finalScore, totalQ) {
+    var html = '<div class="result-card"><div style="font-size:16px;color:var(--text-secondary);">ফাইনাল স্কোর</div><div class="result-big">'+finalScore.toFixed(2)+'</div><div style="color:var(--text-secondary);">'+totalQ+' এর মধ্যে</div></div>';
+    html += '<div class="result-grid"><div class="result-stat"><div class="result-stat-val correct-val">✅ '+correct+'</div><div class="result-stat-label">সঠিক</div></div><div class="result-stat"><div class="result-stat-val wrong-val">❌ '+wrong+'</div><div class="result-stat-label">ভুল</div></div><div class="result-stat"><div class="result-stat-val skipped-val">⏭️ '+skipped+'</div><div class="result-stat-label">স্কিপ</div></div></div>';
+    html += '<div class="result-card"><div class="info-row"><span class="info-label">নেগেটিভ মার্ক</span><span class="info-value" style="color:#EF4444;">-'+negMark.toFixed(2)+'</span></div></div>';
+    html += '<div class="filter-bar"><button class="filter-btn active" onclick="filterResult(\'all\')">সব</button><button class="filter-btn" onclick="filterResult(\'correct\')">✅ সঠিক</button><button class="filter-btn" onclick="filterResult(\'wrong\')">❌ ভুল</button><button class="filter-btn" onclick="filterResult(\'skipped\')">⏭️ স্কিপ</button></div><div id="solveSheet">';
+    examQuestions.forEach(function(q, i){
+        var ua = userAnswers[q.id]; var status = ua === q.answer_index ? 'correct' : (ua ? 'wrong' : 'skipped');
+        html += '<div class="mcq-card solve-item" data-status="'+status+'"><div class="q-text">'+(i+1)+'. '+q.question_text+'</div>';
+        [q.option1, q.option2, q.option3, q.option4, q.option5].forEach(function(opt, oi){
+            if (opt && opt !== '—') { var labels = ['ক','খ','গ','ঘ','ঙ']; var cls = ''; if (oi+1 === q.answer_index) cls = ' correct-reveal'; else if (oi+1 === ua && ua !== q.answer_index) cls = ' wrong-reveal'; html += '<div class="option-item'+cls+'"><span class="option-radio">'+labels[oi]+'</span> '+opt+'</div>'; }
+        });
+        if (q.explanation) html += '<p style="color:var(--text-secondary);font-size:12px;margin-top:6px;">💡 '+q.explanation+'</p>';
+        html += '<button class="ai-explain-btn" onclick="explainWithAI('+q.id+')">🤖 ATLAS AI ব্যাখ্যা</button><div class="ai-explanation" id="aiExp'+q.id+'"></div></div>';
+    });
+    html += '</div>'; document.getElementById('resultContent').innerHTML = html;
+}
+function filterResult(type) {
+    document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); }); event.target.classList.add('active');
+    document.querySelectorAll('.solve-item').forEach(function(item){ item.style.display = (type === 'all' || item.dataset.status === type) ? 'block' : 'none'; });
+}
+function retakeExam() { userAnswers = {}; isExamSubmitted = false; startExamHall(); }
+
+// ========== ATLAS AI ==========
+async function explainWithAI(qid) {
+    var expDiv = document.getElementById('aiExp'+qid); if (expDiv.classList.contains('show')) { expDiv.classList.remove('show'); return; }
+    var q = examQuestions.find(function(q){ return q.id === qid; }); if (!q) return;
+    expDiv.classList.add('show'); expDiv.innerHTML = '⏳ AI ব্যাখ্যা আনা হচ্ছে...';
+    var options = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(function(o){ return o && o !== '—'; });
+    var labels = ['ক','খ','গ','ঘ','ঙ'];
+    var prompt = 'তুমি একজন শিক্ষক। MCQ বিশ্লেষণ করো:\n\nপ্রশ্ন: '+q.question_text+'\n\n';
+    options.forEach(function(opt, i){ prompt += labels[i]+') '+opt+'\n'; });
+    prompt += '\nসঠিক উত্তর: '+labels[q.answer_index-1]+') '+options[q.answer_index-1]+'\n\nপ্রতিটি অপশন ব্যাখ্যা করো। সঠিক ✅ কেন সঠিক, ভুল ❌ কেন ভুল। বাংলায়। সংক্ষেপে।';
+    try {
+        var res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+GEMINI_KEY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
+        var data = await res.json();
+        expDiv.innerHTML = data.candidates ? data.candidates[0].content.parts[0].text.replace(/\n/g, '<br>') : '❌ ব্যাখ্যা পাওয়া যায়নি।';
+    } catch(e) { expDiv.innerHTML = '❌ AI সার্ভার সমস্যা।'; }
+}
+
+// ========== পেজ লোড ==========
+document.addEventListener('DOMContentLoaded', function() {
     console.log('📝 Exam Page Loaded');
     loadTheme();
-    
-    // URL প্যারামিটার চেক
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('mock') === 'true') startMockTest();
-    if (params.get('id')) {
-        // TODO: Supabase থেকে এক্সাম লোড
-        showPreExam({ title: 'এক্সাম #' + params.get('id'), subject: '—', chapter: '—', total_marks: 50, duration_minutes: 30 });
-    }
+    var params = new URLSearchParams(window.location.search);
+    var examId = params.get('id');
+    var isMock = params.get('mock');
+    if (examId) { loadExamById(examId); }
+    else if (isMock === 'true') { startMockTest(); }
+    else { loadAllExams(); }
 });
 </script>
 </body>
