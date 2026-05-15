@@ -214,7 +214,12 @@ alert('renderSubjects done! Check page.');
         
     } catch(e) { 
         alert('❌ এরর: ' + e.message);
-        document.getElementById('subjectList').innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">লোড ব্যর্থ: ' + e.message + '</p>'; 
+       var html = '';
+keys.forEach(function(s) {
+    html += '<div class="subject-card" onclick="openSubject(\'' + s + '\')"><div><div class="subject-name">📘 ' + s + '</div><div class="subject-count">' + subjects[s].count + ' টি ক্লাস</div></div><span style="color:var(--accent);">→</span></div>';
+});
+document.getElementById('subjectList').innerHTML = html;
+alert('HTML set! Length: ' + html.length);
     }
 }
 
