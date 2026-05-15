@@ -340,6 +340,18 @@ function checkAdmin() {
     try { const sess = JSON.parse(localStorage.getItem('atlas-session')); if (sess?.phone === '01754365403' || sess?.role === 'admin') document.getElementById('adminBtn').style.display = 'flex'; } catch(e) {}
 }
 
+async function loadMentors() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/mentors?select=*&order=sort_order,created_at&limit=6`);
+        if (!data?.length) return;
+        let html = '<div style="text-align:center;margin:16px 0;"><div style="font-size:12px;color:var(--accent);font-weight:700;margin-bottom:8px;">👨‍🏫 Mentors</div><div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;">';
+        data.forEach(m => {
+            html += `<div style="text-align:center;width:80px;"><img src="${m.photo_url||''}" style="width:60px;height:60px;border-radius:10px;object-fit:cover;border:2px solid var(--border);" onerror="this.style.display='none'"><div style="font-size:10px;font-weight:600;margin-top:3px;">${m.name}</div><div style="font-size:9px;color:var(--text2);">${m.role||''}</div></div>`;
+        });
+        html += '</div></div>';
+        document.querySelector('.owner-section').insertAdjacentHTML('afterend', html);
+    } catch(e) {}
+}
 // ========== MODAL ==========
 function openModal(type) {
     const mc = document.getElementById('modalContent');
