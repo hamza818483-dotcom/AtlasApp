@@ -3,666 +3,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATLAS EXAM - লগইন</title>
-    <link rel="stylesheet" href="style.css">
+    <title>ATLAS EXAM · লগইন</title>
     <style>
-        .auth-container {
-            max-width: 420px;
-            margin: 0 auto;
-            padding: 20px 16px 32px 16px;
+        :root {
+            --bg: #0A0E17; --card: #131822; --hover: #1A2130;
+            --text: #ECEEF2; --text2: #8E94A0;
+            --accent: #6C72FF; --accent-hover: #858AFF;
+            --border: #252B38; --shadow: 0 2px 10px rgba(0,0,0,0.4);
+            --radius: 14px; --radius-sm: 10px;
+            --red: #FF5A5A; --green: #3ECF8E;
         }
-        .auth-logo {
-            text-align: center;
-            margin-bottom: 20px;
+        .light-mode {
+            --bg: #F8F9FC; --card: #FFFFFF; --hover: #F1F3F8;
+            --text: #1A1D28; --text2: #6B7180;
+            --accent: #5B5FE8; --accent-hover: #4A4ED4;
+            --border: #E4E7F0; --shadow: 0 2px 10px rgba(0,0,0,0.06);
+            --red: #E5484D; --green: #30A46C;
         }
-        .auth-logo .logo-icon {
-            font-size: 48px;
-            display: block;
-            margin-bottom: 8px;
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', 'Noto Sans Bengali', system-ui, sans-serif;
+            background: var(--bg); color: var(--text);
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            padding: 20px; transition: background 0.3s, color 0.3s;
+            -webkit-font-smoothing: antialiased;
         }
-        .auth-logo .logo-text {
-            font-family: 'Inter', 'Noto Sans Bengali', sans-serif;
-            font-size: 24px;
-            font-weight: 800;
-            color: var(--atlas-text);
-            text-shadow: 0 0 12px var(--atlas-glow);
-        }
-        .auth-logo .logo-sub {
-            font-size: 13px;
-            color: var(--text-secondary);
-            margin-top: 4px;
-            font-family: 'Noto Sans Bengali', 'Inter', sans-serif;
-        }
-        .auth-tabs {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 20px;
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            padding: 4px;
-            border: 1px solid var(--option-border);
-        }
-        .auth-tab {
-            flex: 1;
-            padding: 12px 8px;
-            border: none;
-            background: transparent;
-            color: var(--text-secondary);
-            font-family: 'Noto Sans Bengali', 'Inter', sans-serif;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-            white-space: nowrap;
-        }
-        .auth-tab.active {
-            background-color: var(--atlas-bg);
-            color: var(--atlas-text);
-            border: 1px solid var(--atlas-border);
-            box-shadow: 0 0 10px var(--atlas-glow);
-        }
-        .auth-tab:hover:not(.active) {
-            color: var(--text-primary);
-            background-color: var(--option-bg);
-        }
-        .auth-form-card {
-            background-color: var(--card-bg);
-            border-radius: 14px;
-            padding: 20px 18px;
-            box-shadow: var(--card-shadow);
-            border: 1px solid var(--option-border);
-        }
-        .auth-form {
-            display: none;
-        }
-        .auth-form.active {
-            display: block;
-        }
-        .form-title {
-            font-family: 'Noto Sans Bengali', 'Inter', sans-serif;
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 16px;
-            text-align: center;
-        }
-        .form-subtitle {
-            font-size: 13px;
-            color: var(--text-secondary);
-            text-align: center;
-            margin-bottom: 16px;
-            font-family: 'Noto Sans Bengali', 'Inter', sans-serif;
-        }
-        .input-group {
-            margin-bottom: 14px;
-        }
-        .input-group label {
-            display: block;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            margin-bottom: 4px;
-            font-family: 'Noto Sans Bengali', 'Inter', sans-serif;
-        }
-        .input-group input,
-        .input-group select {
-            width: 100%;
-            padding: 12px 14px;
-            border: 2px solid var(--option-border);
-            border-radius: 10px;
-            font-family: 'Noto Sans Bengali', 'Inter', sans-serif;
-            font-size: 15px;
-            background-color: var(--body-bg);
-            color: var(--text-primary);
-            transition: all 0.3s ease;
-        }
-        .input-group input:focus,
-        .input-group select:focus {
-            outline: none;
-            border-color: var(--atlas-border);
-            box-shadow: 0 0 8px var(--atlas-glow);
-        }
-        .gpa-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-        .auth-submit-btn {
-            width: 100%;
-            padding: 14px;
-            background-color: var(--atlas-bg);
-            color: var(--atlas-text);
-            border: 2px solid var(--atlas-border);
-            border-radius: 12px;
-            font-family: 'Noto Sans Bengali', 'Inter', sans-serif;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 0 12px var(--atlas-glow);
-            margin-top: 8px;
-        }
-        .auth-submit-btn:hover {
-            background-color: var(--atlas-hover-bg);
-            border-color: #4D82FF;
-            color: var(--atlas-hover-text);
-            box-shadow: 0 0 22px var(--atlas-glow-strong);
-        }
-        .auth-submit-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .auth-footer {
-            text-align: center;
-            margin-top: 14px;
-            font-size: 13px;
-            color: var(--text-secondary);
-            font-family: 'Noto Sans Bengali', 'Inter', sans-serif;
-        }
-        .auth-footer a {
-            color: var(--atlas-text);
-            text-decoration: none;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .input-error {
-            border-color: #EF4444 !important;
-        }
-        .error-msg {
-            font-size: 11px;
-            color: #EF4444;
-            margin-top: 3px;
-            display: none;
-        }
-        .error-msg.show {
-            display: block;
-        }
-        .spinner {
-            display: inline-block;
-            width: 18px;
-            height: 18px;
-            border: 2px solid transparent;
-            border-top-color: var(--atlas-text);
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-            margin-right: 6px;
-            vertical-align: middle;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        .auth-container { width: 100%; max-width: 400px; }
+        .auth-logo { text-align: center; margin-bottom: 24px; }
+        .auth-logo .logo-icon { font-size: 44px; display: block; margin-bottom: 6px; }
+        .auth-logo .logo-text { font-size: 24px; font-weight: 800; color: var(--accent); letter-spacing: -1px; }
+        .auth-logo .logo-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+        
+        .auth-tabs { display: flex; gap: 4px; margin-bottom: 16px; background: var(--card); border-radius: var(--radius-sm); padding: 4px; border: 1px solid var(--border); }
+        .auth-tab { flex: 1; padding: 10px 6px; border: none; background: transparent; color: var(--text2); font-size: 12px; font-weight: 600; cursor: pointer; border-radius: 8px; transition: 0.2s; font-family: inherit; }
+        .auth-tab.active { background: var(--accent); color: #fff; }
+        .auth-tab:hover:not(.active) { color: var(--text); }
+        
+        .auth-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+        .auth-form { display: none; animation: fadeIn 0.25s; }
+        .auth-form.active { display: block; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(4px);} to{opacity:1;transform:translateY(0);} }
+        
+        .form-title { font-size: 16px; font-weight: 700; color: var(--accent); text-align: center; margin-bottom: 4px; }
+        .form-subtitle { font-size: 11px; color: var(--text2); text-align: center; margin-bottom: 14px; }
+        
+        .input-group { margin-bottom: 10px; }
+        .input-group label { display: block; font-size: 10px; font-weight: 600; color: var(--text2); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .input-group input, .input-group select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); font-size: 13px; font-family: inherit; transition: 0.2s; }
+        .input-group input:focus, .input-group select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(108,114,255,0.12); }
+        .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        
+        .btn { display: block; width: 100%; padding: 12px; border-radius: var(--radius-sm); font-weight: 700; cursor: pointer; border: none; font-size: 14px; transition: 0.2s; font-family: inherit; text-align: center; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        
+        .auth-footer { text-align: center; margin-top: 10px; font-size: 11px; color: var(--text2); }
+        .auth-footer a { color: var(--accent); cursor: pointer; font-weight: 600; text-decoration: none; }
+        .auth-footer a:hover { text-decoration: underline; }
+        
+        .error-msg { font-size: 10px; color: var(--red); margin-top: 2px; display: none; }
+        .error-msg.show { display: block; }
+        .input-error { border-color: var(--red) !important; }
+        
+        .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid transparent; border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 6px; vertical-align: middle; }
+        @keyframes spin { to{transform:rotate(360deg);} }
+        
+        .theme-toggle { position: fixed; top: 16px; right: 16px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; z-index: 10; }
+        .theme-toggle:hover { border-color: var(--accent); }
+        
+        .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: var(--card); color: var(--text); border: 1px solid var(--accent); padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 600; z-index: 999; opacity: 0; transition: 0.2s; pointer-events: none; }
+        .toast.show { opacity: 1; }
     </style>
 </head>
 <body class="dark-mode">
 
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">🌙</button>
+<div class="toast" id="toast"></div>
 
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="sidebar-logo">ATLAS EXAM</div>
-        </div>
-        <nav class="sidebar-menu">
-            <button class="sidebar-item" onclick="navigateTo('profile'); closeSidebar();"><span class="icon">👤</span> প্রোফাইল</button>
-            <button class="sidebar-item" onclick="goTo('index.html'); closeSidebar();"><span class="icon">🏠</span> হোম</button>
-            <button class="sidebar-item" onclick="goTo('class.html'); closeSidebar();"><span class="icon">📚</span> ফ্রি ক্লাস</button>
-            <button class="sidebar-item" onclick="goTo('exam.html'); closeSidebar();"><span class="icon">📝</span> ফ্রি এক্সাম</button>
-            <button class="sidebar-item" onclick="goTo('exam.html?mock=true'); closeSidebar();"><span class="icon">🎯</span> মক টেস্ট</button>
-            <button class="sidebar-item" onclick="goTo('dashboard.html'); closeSidebar();"><span class="icon">❌</span> মাই মিসটেকস</button>
-            <button class="sidebar-item" onclick="goTo('ai.html'); closeSidebar();"><span class="icon">🤖</span> ATLAS AI</button>
-            <div class="sidebar-divider"></div>
-            <button class="sidebar-item" onclick="toggleTheme()"><span class="icon" id="sidebarThemeIcon">🌙</span> <span id="sidebarThemeText">ডার্ক মোড</span></button>
-            <button class="sidebar-item" onclick="openWhatsApp()"><span class="icon">💬</span> WhatsApp</button>
-            <button class="sidebar-item" onclick="openTelegram()"><span class="icon">✈️</span> Telegram</button>
-        </nav>
-    </aside>
-
-    <header class="header">
-        <div class="header-left">
-            <button class="hamburger" onclick="toggleSidebar()">☰</button>
-            <div class="logo">ATLAS EXAM</div>
-        </div>
-        <div class="header-right">
-            <button class="header-icon" id="themeToggle" onclick="toggleTheme()">🌙</button>
-            <button class="header-icon" onclick="goTo('auth.html')">👤</button>
-        </div>
-    </header>
-
-    <main class="main-content">
-        <div class="auth-container">
-            <div class="auth-logo">
-                <span class="logo-icon">🟥</span>
-                <div class="logo-text">ATLAS EXAM</div>
-                <div class="logo-sub">বাংলাদেশের সেরা প্রস্তুতি প্ল্যাটফর্ম</div>
-            </div>
-
-            <div class="auth-tabs">
-                <button class="auth-tab active" onclick="switchTab('login')" id="tabLogin">🔐 লগইন</button>
-                <button class="auth-tab" onclick="switchTab('register')" id="tabRegister">📝 রেজিস্টার</button>
-                <button class="auth-tab" onclick="switchTab('forget')" id="tabForget">🔑 ফরগেট</button>
-            </div>
-
-            <div class="auth-form-card">
-
-                <!-- লগইন -->
-                <div class="auth-form active" id="formLogin">
-                    <div class="form-title">🔐 লগইন করুন</div>
-                    <div class="form-subtitle">আপনার ফোন নম্বর ও পাসওয়ার্ড দিন</div>
-                    <div class="input-group">
-                        <label>📱 ফোন নম্বর</label>
-                        <input type="tel" id="loginPhone" placeholder="01XXXXXXXXX" maxlength="11">
-                        <span class="error-msg" id="loginPhoneError">ফোন নম্বর ১১ ডিজিট</span>
-                    </div>
-                    <div class="input-group">
-                        <label>🔒 পাসওয়ার্ড</label>
-                        <input type="password" id="loginPassword" placeholder="পাসওয়ার্ড">
-                        <span class="error-msg" id="loginPassError">ন্যূনতম ৬ ক্যারেক্টার</span>
-                    </div>
-                    <button class="auth-submit-btn" id="loginBtn" onclick="handleLogin()">লগইন করুন</button>
-                    <div class="auth-footer">
-                        একাউন্ট নেই? <a onclick="switchTab('register')">রেজিস্টার করুন</a><br>
-                        <a onclick="switchTab('forget')">পাসওয়ার্ড ভুলে গেছেন?</a>
-                    </div>
-                </div>
-
-                <!-- রেজিস্টার -->
-                <div class="auth-form" id="formRegister">
-                    <div class="form-title">📝 রেজিস্ট্রেশন</div>
-                    <div class="form-subtitle">সব তথ্য সঠিকভাবে পূরণ করুন</div>
-                    <div class="input-group">
-                        <label>👤 নাম *</label>
-                        <input type="text" id="regName" placeholder="আপনার পুরো নাম">
-                        <span class="error-msg" id="regNameError">নাম আবশ্যক</span>
-                    </div>
-                    <div class="input-group">
-                        <label>🎓 HSC Batch *</label>
-                        <input type="text" id="regBatch" placeholder="যেমন: ২০২৬">
-                        <span class="error-msg" id="regBatchError">ব্যাচ আবশ্যক</span>
-                    </div>
-                    <div class="input-group">
-                        <label>🏫 কলেজের নাম *</label>
-                        <input type="text" id="regCollege" placeholder="কলেজের নাম">
-                        <span class="error-msg" id="regCollegeError">কলেজ আবশ্যক</span>
-                    </div>
-                    <div class="input-group">
-                        <label>👨‍👦 পিতার নাম (ঐচ্ছিক)</label>
-                        <input type="text" id="regFather" placeholder="পিতার নাম">
-                    </div>
-                    <div class="input-group">
-                        <label>👩‍👦 মাতার নাম (ঐচ্ছিক)</label>
-                        <input type="text" id="regMother" placeholder="মাতার নাম">
-                    </div>
-                    <div class="gpa-row">
-                        <div class="input-group">
-                            <label>📊 SSC GPA *</label>
-                            <input type="text" id="regSSC" placeholder="৫.০০" maxlength="4">
-                            <span class="error-msg" id="regSSCError">দশমিক ফরম্যাট (৫.০০)</span>
-                        </div>
-                        <div class="input-group">
-                            <label>📊 HSC GPA *</label>
-                            <input type="text" id="regHSC" placeholder="৫.০০" maxlength="4">
-                            <span class="error-msg" id="regHSCError">দশমিক ফরম্যাট (৫.০০)</span>
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <label>🔄 ফার্স্ট/সেকেন্ড টাইমার *</label>
-                        <select id="regTimer">
-                            <option value="">-- নির্বাচন করুন --</option>
-                            <option value="first">ফার্স্ট টাইমার</option>
-                            <option value="second">সেকেন্ড টাইমার</option>
-                        </select>
-                        <span class="error-msg" id="regTimerError">অবশ্যই নির্বাচন করুন</span>
-                    </div>
-                    <div class="input-group">
-                        <label>📱 ফোন নম্বর *</label>
-                        <input type="tel" id="regPhone" placeholder="01XXXXXXXXX" maxlength="11">
-                        <span class="error-msg" id="regPhoneError">ফোন ১১ ডিজিট</span>
-                    </div>
-                    <div class="input-group">
-                        <label>🔒 পাসওয়ার্ড *</label>
-                        <input type="password" id="regPassword" placeholder="ন্যূনতম ৬ ক্যারেক্টার">
-                        <span class="error-msg" id="regPassError">ন্যূনতম ৬ ক্যারেক্টার</span>
-                    </div>
-                    <button class="auth-submit-btn" id="registerBtn" onclick="handleRegister()">রেজিস্টার করুন</button>
-                    <div class="auth-footer">
-                        একাউন্ট আছে? <a onclick="switchTab('login')">লগইন করুন</a>
-                    </div>
-                </div>
-
-                <!-- ফরগেট -->
-                <div class="auth-form" id="formForget">
-                    <div class="form-title">🔑 পাসওয়ার্ড রিসেট</div>
-                    <div class="form-subtitle">নতুন পাসওয়ার্ড সেট করুন</div>
-                    <div class="input-group">
-                        <label>📱 ফোন নম্বর</label>
-                        <input type="tel" id="forgetPhone" placeholder="01XXXXXXXXX" maxlength="11">
-                        <span class="error-msg" id="forgetPhoneError">ফোন ১১ ডিজিট</span>
-                    </div>
-                    <div class="input-group">
-                        <label>🔒 নতুন পাসওয়ার্ড</label>
-                        <input type="password" id="forgetPassword" placeholder="নতুন পাসওয়ার্ড">
-                        <span class="error-msg" id="forgetPassError">ন্যূনতম ৬ ক্যারেক্টার</span>
-                    </div>
-                    <button class="auth-submit-btn" id="forgetBtn" onclick="handleForget()">আপডেট করুন</button>
-                    <div class="auth-footer">
-                        মনে পড়েছে? <a onclick="switchTab('login')">লগইন করুন</a>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </main>
-
-    <nav class="bottom-nav">
-        <button class="nav-item" onclick="goTo('index.html')"><span class="nav-icon">🏠</span><span>হোম</span></button>
-        <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon">📚</span><span>ক্লাস</span></button>
-        <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon">📝</span><span>এক্সাম</span></button>
-        <button class="nav-item" onclick="goTo('exam.html?mock=true')"><span class="nav-icon">🎯</span><span>মক</span></button>
-        <button class="nav-item active" onclick="goTo('auth.html')"><span class="nav-icon">👤</span><span>প্রোফাইল</span></button>
-    </nav>
-
-    <div class="floating-buttons">
-        <button class="fab fab-whatsapp" onclick="openWhatsApp()">💬</button>
-        <button class="fab fab-telegram" onclick="openTelegram()">✈️</button>
+<div class="auth-container">
+    <div class="auth-logo">
+        <span class="logo-icon">🟥</span>
+        <div class="logo-text">ATLAS EXAM</div>
+        <div class="logo-sub">বাংলাদেশের সেরা প্রস্তুতি প্ল্যাটফর্ম</div>
     </div>
 
-    <div class="toast" id="toast"></div>
+    <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchTab('login')">🔐 লগইন</button>
+        <button class="auth-tab" onclick="switchTab('register')">📝 রেজিস্টার</button>
+        <button class="auth-tab" onclick="switchTab('forget')">🔑 ফরগেট</button>
+    </div>
 
-    <script>
-        const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
+    <div class="auth-card">
+        <!-- Login -->
+        <div class="auth-form active" id="formLogin">
+            <div class="form-title">🔐 লগইন</div>
+            <div class="form-subtitle">ফোন নম্বর ও পাসওয়ার্ড দিন</div>
+            <div class="input-group"><label>📱 ফোন নম্বর</label><input type="tel" id="loginPhone" placeholder="01XXXXXXXXX" maxlength="11"><span class="error-msg" id="loginPhoneErr">ফোন ১১ ডিজিট</span></div>
+            <div class="input-group"><label>🔒 পাসওয়ার্ড</label><input type="password" id="loginPass" placeholder="পাসওয়ার্ড"><span class="error-msg" id="loginPassErr">ন্যূনতম ৬ ক্যারেক্টার</span></div>
+            <button class="btn btn-primary" id="loginBtn" onclick="handleLogin()">লগইন করুন</button>
+            <div class="auth-footer">একাউন্ট নেই? <a onclick="switchTab('register')">রেজিস্টার</a> | <a onclick="switchTab('forget')">পাসওয়ার্ড ভুলে গেছেন?</a></div>
+        </div>
 
-        let isDarkMode = true;
-        let isSidebarOpen = false;
-        let currentTab = 'login';
+        <!-- Register -->
+        <div class="auth-form" id="formRegister">
+            <div class="form-title">📝 রেজিস্ট্রেশন</div>
+            <div class="form-subtitle">সব তথ্য সঠিকভাবে পূরণ করুন</div>
+            <div class="input-group"><label>👤 নাম *</label><input type="text" id="regName" placeholder="আপনার পুরো নাম"><span class="error-msg" id="regNameErr">নাম আবশ্যক</span></div>
+            <div class="input-group"><label>🎓 HSC Batch *</label><input type="text" id="regBatch" placeholder="যেমন: ২০২৬"><span class="error-msg" id="regBatchErr">ব্যাচ আবশ্যক</span></div>
+            <div class="input-group"><label>🏫 কলেজ *</label><input type="text" id="regCollege" placeholder="কলেজের নাম"><span class="error-msg" id="regCollegeErr">কলেজ আবশ্যক</span></div>
+            <div class="input-row"><div class="input-group"><label>👨‍👦 পিতা</label><input type="text" id="regFather" placeholder="পিতার নাম"></div><div class="input-group"><label>👩‍👦 মাতা</label><input type="text" id="regMother" placeholder="মাতার নাম"></div></div>
+            <div class="input-row"><div class="input-group"><label>📊 SSC GPA *</label><input type="text" id="regSSC" placeholder="৫.০০"><span class="error-msg" id="regSSCErr">দশমিক (৫.০০)</span></div><div class="input-group"><label>📊 HSC GPA *</label><input type="text" id="regHSC" placeholder="৫.০০"><span class="error-msg" id="regHSCErr">দশমিক (৫.০০)</span></div></div>
+            <div class="input-group"><label>🔄 টাইমার *</label><select id="regTimer"><option value="">— নির্বাচন —</option><option value="first">ফার্স্ট টাইমার</option><option value="second">সেকেন্ড টাইমার</option></select><span class="error-msg" id="regTimerErr">অবশ্যই নির্বাচন করুন</span></div>
+            <div class="input-group"><label>📱 ফোন *</label><input type="tel" id="regPhone" placeholder="01XXXXXXXXX" maxlength="11"><span class="error-msg" id="regPhoneErr">ফোন ১১ ডিজিট</span></div>
+            <div class="input-group"><label>🔒 পাসওয়ার্ড *</label><input type="password" id="regPass" placeholder="ন্যূনতম ৬ ক্যারেক্টার"><span class="error-msg" id="regPassErr">ন্যূনতম ৬</span></div>
+            <button class="btn btn-primary" id="registerBtn" onclick="handleRegister()">রেজিস্টার করুন</button>
+            <div class="auth-footer">একাউন্ট আছে? <a onclick="switchTab('login')">লগইন</a></div>
+        </div>
 
-        function loadTheme() {
-            const saved = localStorage.getItem('atlas-theme');
-            if (saved === 'light') { isDarkMode = false; document.body.classList.remove('dark-mode'); }
-            else { isDarkMode = true; document.body.classList.add('dark-mode'); }
-            updateThemeIcon();
-        }
+        <!-- Forget -->
+        <div class="auth-form" id="formForget">
+            <div class="form-title">🔑 পাসওয়ার্ড রিসেট</div>
+            <div class="form-subtitle">ফোন দিয়ে নতুন পাসওয়ার্ড সেট করুন</div>
+            <div class="input-group"><label>📱 ফোন</label><input type="tel" id="forgetPhone" placeholder="01XXXXXXXXX" maxlength="11"><span class="error-msg" id="forgetPhoneErr">ফোন ১১ ডিজিট</span></div>
+            <div class="input-group"><label>🔒 নতুন পাসওয়ার্ড</label><input type="password" id="forgetPass" placeholder="ন্যূনতম ৬"><span class="error-msg" id="forgetPassErr">ন্যূনতম ৬</span></div>
+            <button class="btn btn-primary" id="forgetBtn" onclick="handleForget()">আপডেট করুন</button>
+            <div class="auth-footer">মনে পড়েছে? <a onclick="switchTab('login')">লগইন</a></div>
+        </div>
+    </div>
+</div>
 
-        function toggleTheme() {
-            isDarkMode = !isDarkMode;
-            document.body.classList.toggle('dark-mode', isDarkMode);
-            localStorage.setItem('atlas-theme', isDarkMode ? 'dark' : 'light');
-            updateThemeIcon();
-            showToast(isDarkMode ? '🌙 ডার্ক মোড' : '☀️ লাইট মোড');
-        }
+<script>
+const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
+let isDarkMode = true, currentTab = 'login';
 
-        function updateThemeIcon() {
-            const btn = document.getElementById('themeToggle');
-            const sIcon = document.getElementById('sidebarThemeIcon');
-            const sText = document.getElementById('sidebarThemeText');
-            if (btn) btn.textContent = isDarkMode ? '🌙' : '☀️';
-            if (sIcon) sIcon.textContent = isDarkMode ? '🌙' : '☀️';
-            if (sText) sText.textContent = isDarkMode ? 'ডার্ক মোড' : 'লাইট মোড';
-        }
+function showToast(m, d = 2000) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), d); }
+function toggleTheme() { isDarkMode = !isDarkMode; document.body.classList.toggle('dark-mode', isDarkMode); document.body.classList.toggle('light-mode', !isDarkMode); document.getElementById('themeToggle').textContent = isDarkMode ? '🌙' : '☀️'; showToast(isDarkMode ? '🌙 ডার্ক' : '☀️ লাইট'); }
 
-        function toggleSidebar() {
-            isSidebarOpen = !isSidebarOpen;
-            document.getElementById('sidebarOverlay').classList.toggle('active', isSidebarOpen);
-            document.getElementById('sidebar').classList.toggle('active', isSidebarOpen);
-        }
-
-        function closeSidebar() {
-            isSidebarOpen = false;
-            document.getElementById('sidebarOverlay').classList.remove('active');
-            document.getElementById('sidebar').classList.remove('active');
-        }
-
-        function switchTab(tab) {
-            currentTab = tab;
-            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
-            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-            document.getElementById('form' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
-            clearAllErrors();
-        }
-
-        function clearAllErrors() {
-            document.querySelectorAll('.error-msg').forEach(e => e.classList.remove('show'));
-            document.querySelectorAll('input, select').forEach(i => i.classList.remove('input-error'));
-        }
-
-        function goTo(url) { window.location.href = url; }
-        function navigateTo(page) {
-            const r = { 'home': 'index.html', 'profile': 'dashboard.html', 'class': 'class.html', 'exam': 'exam.html' };
-            window.location.href = r[page] || 'index.html';
-        }
-        function openWhatsApp() { window.open('https://wa.me/8801999681290', '_blank'); }
-        function openTelegram() { window.open('https://t.me/rafi_somc', '_blank'); }
-
-        function showToast(msg, dur = 2500) {
-            let toast = document.getElementById('toast');
-            toast.textContent = msg;
-            toast.classList.add('show');
-            clearTimeout(toast._t);
-            toast._t = setTimeout(() => toast.classList.remove('show'), dur);
-        }
-
-        function validatePhone(p) { return /^\d{11}$/.test(p); }
-        function validateGPA(g) {
-            if (!g) return false;
-            const n = parseFloat(g);
-            if (isNaN(n) || n < 0 || n > 5.00) return false;
-            const parts = g.split('.');
-            return parts.length === 2 && parts[1].length <= 2;
-        }
-
-        function showError(inpId, errId) {
-            document.getElementById(inpId).classList.add('input-error');
-            document.getElementById(errId).classList.add('show');
-        }
-
-        async function handleLogin() {
-            clearAllErrors();
-            const phone = document.getElementById('loginPhone').value.trim();
-            const pass = document.getElementById('loginPassword').value;
-            let err = false;
-            if (!validatePhone(phone)) { showError('loginPhone', 'loginPhoneError'); err = true; }
-            if (pass.length < 6) { showError('loginPassword', 'loginPassError'); err = true; }
-            if (err) return;
-
-            const btn = document.getElementById('loginBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner"></span> লগইন হচ্ছে...';
-
-            try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}&select=*`, {
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-                });
-                const users = await res.json();
-
-                if (!users || users.length === 0) {
-                    showToast('❌ ফোন নম্বর রেজিস্টার্ড নয়');
-                    btn.disabled = false;
-                    btn.textContent = 'লগইন করুন';
-                    return;
-                }
-
-                const user = users[0];
-                if (user.password_hash !== pass) {
-                    showToast('❌ ভুল পাসওয়ার্ড');
-                    btn.disabled = false;
-                    btn.textContent = 'লগইন করুন';
-                    return;
-                }
-
-                const sess = { phone: user.phone, name: user.name, batch: user.batch, college: user.college, ssc_gpa: user.ssc_gpa, hsc_gpa: user.hsc_gpa, timer_type: user.timer_type, loggedInAt: new Date().toISOString() };
-                localStorage.setItem('atlas-session', JSON.stringify(sess));
-                showToast('✅ লগইন সফল!');
-                setTimeout(() => { window.location.href = 'index.html'; }, 1000);
-
-            } catch(e) {
-                console.error('Login:', e);
-                showToast('❌ নেটওয়ার্ক সমস্যা');
-                btn.disabled = false;
-                btn.textContent = 'লগইন করুন';
-            }
-        }
-async function handleRegister() {
-    clearAllErrors();
-    const name = document.getElementById('regName').value.trim();
-    const batch = document.getElementById('regBatch').value.trim();
-    const college = document.getElementById('regCollege').value.trim();
-    const father = document.getElementById('regFather').value.trim();
-    const mother = document.getElementById('regMother').value.trim();
-    const ssc = document.getElementById('regSSC').value.trim();
-    const hsc = document.getElementById('regHSC').value.trim();
-    const timer = document.getElementById('regTimer').value;
-    const phone = document.getElementById('regPhone').value.trim();
-    const pass = document.getElementById('regPassword').value;
-
-    let err = false;
-    if (!name) { showError('regName', 'regNameError'); err = true; }
-    if (!batch) { showError('regBatch', 'regBatchError'); err = true; }
-    if (!college) { showError('regCollege', 'regCollegeError'); err = true; }
-    if (!validateGPA(ssc)) { showError('regSSC', 'regSSCError'); err = true; }
-    if (!validateGPA(hsc)) { showError('regHSC', 'regHSCError'); err = true; }
-    if (!timer) { showError('regTimer', 'regTimerError'); err = true; }
-    if (!validatePhone(phone)) { showError('regPhone', 'regPhoneError'); err = true; }
-    if (pass.length < 6) { showError('regPassword', 'regPassError'); err = true; }
-    if (err) return;
-
-    const btn = document.getElementById('registerBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> রেজিস্টার হচ্ছে...';
-
-    try {
-        // চেক ডুপ্লিকেট
-        const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}&select=phone`, {
-            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-        });
-        const existing = await checkRes.json();
-        
-        if (existing && existing.length > 0) {
-            showToast('❌ এই ফোন আগেই রেজিস্টার্ড');
-            btn.disabled = false;
-            btn.textContent = 'রেজিস্টার করুন';
-            return;
-        }
-
-        // ইনসার্ট
-        const body = JSON.stringify({
-            phone: phone,
-            name: name,
-            batch: batch,
-            college: college,
-            father_name: father || null,
-            mother_name: mother || null,
-            ssc_gpa: parseFloat(ssc),
-            hsc_gpa: parseFloat(hsc),
-            timer_type: timer,
-            password_hash: pass,
-            created_at: new Date().toISOString()
-        });
-
-        console.log('Inserting:', body);
-
-        const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
-            method: 'POST',
-            headers: {
-                'apikey': SUPABASE_KEY,
-                'Authorization': `Bearer ${SUPABASE_KEY}`,
-                'Content-Type': 'application/json',
-                'Prefer': 'return=representation'
-            },
-            body: body
-        });
-
-        const result = await insertRes.json();
-        console.log('Result:', result);
-
-        if (insertRes.ok) {
-            const sess = { phone: phone, name: name, batch: batch, college: college, ssc_gpa: parseFloat(ssc), hsc_gpa: parseFloat(hsc), timer_type: timer, loggedInAt: new Date().toISOString() };
-            localStorage.setItem('atlas-session', JSON.stringify(sess));
-            showToast('✅ রেজিস্ট্রেশন সফল!');
-            setTimeout(() => { window.location.href = 'index.html'; }, 1200);
-        } else {
-            console.error('Insert failed:', result);
-            showToast('❌ সার্ভার এরর: ' + (result.message || 'আবার চেষ্টা করুন'));
-            btn.disabled = false;
-            btn.textContent = 'রেজিস্টার করুন';
-        }
-
-    } catch(e) {
-        console.error('Register Error:', e);
-        alert('এরর: ' + e.message + '\n\nকনসোলে দেখুন (F12)');
-        showToast('❌ রেজিস্ট্রেশন ব্যর্থ');
-        btn.disabled = false;
-        btn.textContent = 'রেজিস্টার করুন';
-    }
+async function safeFetch(url, opts = {}) {
+    opts.headers = Object.assign({ apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }, opts.headers || {});
+    if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') opts.headers['Content-Type'] = 'application/json';
+    try { const res = await fetch(url, opts); const text = await res.text(); if (!text?.trim()) return []; const data = JSON.parse(text); if (!res.ok) throw new Error(data.message); return data; }
+    catch(e) { console.error('❌', e.message); return []; }
 }
 
-        async function handleForget() {
-            clearAllErrors();
-            const phone = document.getElementById('forgetPhone').value.trim();
-            const pass = document.getElementById('forgetPassword').value;
-            let err = false;
-            if (!validatePhone(phone)) { showError('forgetPhone', 'forgetPhoneError'); err = true; }
-            if (pass.length < 6) { showError('forgetPassword', 'forgetPassError'); err = true; }
-            if (err) return;
+function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1))?.classList.add('active');
+    document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+    document.getElementById('form' + tab.charAt(0).toUpperCase() + tab.slice(1))?.classList.add('active');
+    clearErrors();
+}
+function clearErrors() { document.querySelectorAll('.error-msg').forEach(e => e.classList.remove('show')); document.querySelectorAll('input,select').forEach(i => i.classList.remove('input-error')); }
+function showErr(inpId, errId) { document.getElementById(inpId).classList.add('input-error'); document.getElementById(errId).classList.add('show'); }
+function validatePhone(p) { return /^\d{11}$/.test(p); }
+function validateGPA(g) { if (!g) return false; const n = parseFloat(g); if (isNaN(n) || n < 0 || n > 5) return false; const parts = g.split('.'); return parts.length === 2 && parts[1].length <= 2; }
 
-            const btn = document.getElementById('forgetBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner"></span> আপডেট হচ্ছে...';
+async function handleLogin() {
+    clearErrors(); const phone = document.getElementById('loginPhone').value.trim(), pass = document.getElementById('loginPass').value;
+    let err = false; if (!validatePhone(phone)) { showErr('loginPhone','loginPhoneErr'); err = true; } if (pass.length < 6) { showErr('loginPass','loginPassErr'); err = true; } if (err) return;
+    const btn = document.getElementById('loginBtn'); btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>লগইন...';
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}&select=*`);
+        if (!data?.length) { showToast('❌ রেজিস্টার্ড নয়'); btn.disabled = false; btn.textContent = 'লগইন করুন'; return; }
+        const user = data[0];
+        if (user.password_hash !== pass) { showToast('❌ ভুল পাসওয়ার্ড'); btn.disabled = false; btn.textContent = 'লগইন করুন'; return; }
+        localStorage.setItem('atlas-session', JSON.stringify({ phone:user.phone, name:user.name, batch:user.batch, college:user.college, father_name:user.father_name, mother_name:user.mother_name, ssc_gpa:user.ssc_gpa, hsc_gpa:user.hsc_gpa, timer_type:user.timer_type, role:user.role }));
+        showToast('✅ লগইন সফল!'); setTimeout(() => location.href = 'index.html', 800);
+    } catch(e) { showToast('❌ এরর'); btn.disabled = false; btn.textContent = 'লগইন করুন'; }
+}
 
-            try {
-                const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}&select=phone`, {
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-                });
-                const existing = await checkRes.json();
-                if (!existing || existing.length === 0) {
-                    showToast('❌ ফোন রেজিস্টার্ড নয়');
-                    btn.disabled = false;
-                    btn.textContent = 'আপডেট করুন';
-                    return;
-                }
+async function handleRegister() {
+    clearErrors(); const name = document.getElementById('regName').value.trim(), batch = document.getElementById('regBatch').value.trim(), college = document.getElementById('regCollege').value.trim(), father = document.getElementById('regFather').value.trim(), mother = document.getElementById('regMother').value.trim(), ssc = document.getElementById('regSSC').value.trim(), hsc = document.getElementById('regHSC').value.trim(), timer = document.getElementById('regTimer').value, phone = document.getElementById('regPhone').value.trim(), pass = document.getElementById('regPass').value;
+    let err = false;
+    if (!name) { showErr('regName','regNameErr'); err = true; } if (!batch) { showErr('regBatch','regBatchErr'); err = true; } if (!college) { showErr('regCollege','regCollegeErr'); err = true; }
+    if (!validateGPA(ssc)) { showErr('regSSC','regSSCErr'); err = true; } if (!validateGPA(hsc)) { showErr('regHSC','regHSCErr'); err = true; }
+    if (!timer) { showErr('regTimer','regTimerErr'); err = true; } if (!validatePhone(phone)) { showErr('regPhone','regPhoneErr'); err = true; } if (pass.length < 6) { showErr('regPass','regPassErr'); err = true; }
+    if (err) return;
+    const btn = document.getElementById('registerBtn'); btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>রেজিস্টার...';
+    try {
+        const exist = await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}&select=phone`);
+        if (exist?.length) { showToast('❌ ফোন আগেই রেজিস্টার্ড'); btn.disabled = false; btn.textContent = 'রেজিস্টার করুন'; return; }
+        await safeFetch(`${SUPABASE_URL}/rest/v1/users`, { method:'POST', body:JSON.stringify({ phone, name, batch, college, father_name:father||null, mother_name:mother||null, ssc_gpa:parseFloat(ssc), hsc_gpa:parseFloat(hsc), timer_type:timer, password_hash:pass }) });
+        localStorage.setItem('atlas-session', JSON.stringify({ phone, name, batch, college, father_name:father, mother_name:mother, ssc_gpa:ssc, hsc_gpa:hsc, timer_type:timer }));
+        showToast('✅ রেজিস্ট্রেশন সফল!'); setTimeout(() => location.href = 'index.html', 800);
+    } catch(e) { showToast('❌ এরর'); btn.disabled = false; btn.textContent = 'রেজিস্টার করুন'; }
+}
 
-                const updateRes = await fetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': `Bearer ${SUPABASE_KEY}`,
-                        'Content-Type': 'application/json',
-                        'Prefer': 'return=minimal'
-                    },
-                    body: JSON.stringify({ password_hash: pass })
-                });
+async function handleForget() {
+    clearErrors(); const phone = document.getElementById('forgetPhone').value.trim(), pass = document.getElementById('forgetPass').value;
+    let err = false; if (!validatePhone(phone)) { showErr('forgetPhone','forgetPhoneErr'); err = true; } if (pass.length < 6) { showErr('forgetPass','forgetPassErr'); err = true; } if (err) return;
+    const btn = document.getElementById('forgetBtn'); btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>আপডেট...';
+    try {
+        const exist = await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}&select=phone`);
+        if (!exist?.length) { showToast('❌ রেজিস্টার্ড নয়'); btn.disabled = false; btn.textContent = 'আপডেট করুন'; return; }
+        await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}`, { method:'PATCH', body:JSON.stringify({ password_hash:pass }) });
+        showToast('✅ পাসওয়ার্ড আপডেট!'); setTimeout(() => switchTab('login'), 600);
+    } catch(e) { showToast('❌ এরর'); }
+    btn.disabled = false; btn.textContent = 'আপডেট করুন';
+}
 
-                if (updateRes.ok) {
-                    showToast('✅ পাসওয়ার্ড আপডেট! লগইন করুন');
-                    btn.disabled = false;
-                    btn.textContent = 'আপডেট করুন';
-                    setTimeout(() => { switchTab('login'); document.getElementById('loginPhone').value = phone; }, 800);
-                }
-
-            } catch(e) {
-                console.error('Forget:', e);
-                showToast('❌ আপডেট ব্যর্থ');
-                btn.disabled = false;
-                btn.textContent = 'আপডেট করুন';
-            }
-        }
-
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                if (currentTab === 'login') handleLogin();
-                else if (currentTab === 'register') handleRegister();
-                else if (currentTab === 'forget') handleForget();
-            }
-        });
-
-        document.addEventListener('DOMContentLoaded', function() {
-            loadTheme();
-            const sess = localStorage.getItem('atlas-session');
-            if (sess) {
-                try { JSON.parse(sess); showToast('👋 লগইন আছেন'); setTimeout(() => { window.location.href = 'index.html'; }, 1000); }
-                catch(e) { localStorage.removeItem('atlas-session'); }
-            }
-        });
-    </script>
+document.addEventListener('keydown', e => { if (e.key === 'Enter') { if (currentTab === 'login') handleLogin(); else if (currentTab === 'register') handleRegister(); else if (currentTab === 'forget') handleForget(); } });
+document.addEventListener('DOMContentLoaded', () => { const sess = localStorage.getItem('atlas-session'); if (sess) { try { JSON.parse(sess); showToast('👋 ইতিমধ্যে লগইন'); setTimeout(() => location.href = 'index.html', 600); } catch(e) {} } });
+</script>
 </body>
 </html>
