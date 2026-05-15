@@ -198,7 +198,7 @@ function openSubject(subj){
         html+=`<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0 4px;">📄 ${p}</div>`;
         Object.keys(papers[p]).forEach(ch=>{
             const parts=JSON.stringify(papers[p][ch].map(c=>({id:c.id,youtube_link:c.youtube_link,class_type:c.class_type||'website',class_note:c.class_note,start_time:c.start_time})));
-            html+=`<div class="chapter-item" onclick="showParts('${ch}',${parts})"><div class="chapter-name">📖 ${ch}</div><div class="chapter-parts">${papers[p][ch].length} টি ক্লাস</div></div>`;
+            html+=`<div class="chapter-item" onclick="alert('Clicked: ${ch}');showParts('${ch}',${parts})"><div class="chapter-name">📖 ${ch}</div><div class="chapter-parts">${papers[p][ch].length} টি ক্লাস</div></div>`;
         });
     });
     document.getElementById('chapterList').innerHTML=html||'<p style="text-align:center;color:var(--text2);padding:20px;">কোনো চ্যাপ্টার নেই</p>';
