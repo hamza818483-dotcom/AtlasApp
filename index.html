@@ -4,168 +4,159 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ATLAS EXAM</title>
-    <link rel="stylesheet" href="style.css">
     <style>
         :root {
-            --atlas-bg: #03152F; --atlas-border: #2F6BFF; --atlas-text: #6FA8FF;
-            --atlas-glow: rgba(47,107,255,0.35); --atlas-hover-bg: #061F40;
-            --cd-bg: #1A0A0A; --cd-border: #EF4444; --cd-text: #FCA5A5;
-            --cd-glow: rgba(239,68,68,0.4);
+            --bg: #0D1117; --card: #161B22; --hover: #1C2129;
+            --text: #E6EDF3; --text2: #8B949E;
+            --accent: #7C83FF; --accent-hover: #9499FF;
+            --border: #30363D; --shadow: 0 2px 8px rgba(0,0,0,0.3);
+            --glow: 0 0 0 2px rgba(124,131,255,0.12);
+            --radius: 14px; --radius-sm: 10px;
+            --red: #F85149; --green: #3FB950; --yellow: #D29922;
+            --cd-bg: #1A0A1A; --cd-border: #F85149; --cd-text: #FCA5A5;
+            --cd-glow: rgba(248,81,73,0.35);
         }
-        .dark-mode { --body-bg:#0A0A0F; --text-primary:#F0F0F0; --text-secondary:#B0B0B0; --card-bg:#1C1C1E; --social-bg:#2D2D2D; --option-border:#3A3A3A; }
-        body:not(.dark-mode) { --body-bg:#F0F4FF; --text-primary:#1E293B; --text-secondary:#475569; --card-bg:#FFFFFF; --social-bg:#E2E8F0; --option-border:#CBD5E1; }
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Inter','Noto Sans Bengali',sans-serif; background:var(--body-bg); color:var(--text-primary); min-height:100vh; transition:all 0.3s; padding-top:56px; padding-bottom:60px; }
+        body {
+            font-family: 'Inter', 'Noto Sans Bengali', system-ui, sans-serif;
+            background: var(--bg); color: var(--text);
+            min-height: 100vh; padding: 70px 0 70px;
+            -webkit-font-smoothing: antialiased;
+        }
+        .header {
+            position: fixed; top: 0; left: 0; right: 0; height: 56px;
+            background: var(--card); border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 16px; z-index: 100; backdrop-filter: blur(12px);
+        }
+        .hamburger { background: none; border: none; color: var(--text); font-size: 22px; cursor: pointer; padding: 6px; }
+        .logo { font-size: 20px; font-weight: 800; color: var(--accent); letter-spacing: -1px; }
+        .header-icon { background: var(--card); border: 1px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .header-icon:hover { border-color: var(--accent); box-shadow: var(--glow); }
         
-        .header { position:fixed; top:0; left:0; right:0; height:56px; background:var(--atlas-bg); border-bottom:2px solid var(--atlas-border); display:flex; align-items:center; justify-content:space-between; padding:0 16px; z-index:1000; }
-        .hamburger { background:none; border:none; color:var(--atlas-text); font-size:24px; cursor:pointer; }
-        .logo { font-size:20px; font-weight:800; color:var(--atlas-text); text-shadow:0 0 12px var(--atlas-glow); }
-        .header-icon { background:none; border:1px solid var(--atlas-border); color:var(--atlas-text); width:36px; height:36px; border-radius:50%; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+        .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; opacity: 0; visibility: hidden; transition: 0.2s; }
+        .sidebar-overlay.active { opacity: 1; visibility: visible; }
+        .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--card); z-index: 201; overflow-y: auto; transition: 0.2s; border-right: 1px solid var(--border); }
+        .sidebar.active { left: 0; }
+        .sidebar-header { background: var(--card); padding: 20px 16px; text-align: center; border-bottom: 1px solid var(--border); }
+        .sidebar-logo { font-size: 20px; font-weight: 800; color: var(--accent); }
+        .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 12px 18px; color: var(--text2); border: none; background: none; width: 100%; text-align: left; font-size: 14px; cursor: pointer; transition: 0.2s; font-family: inherit; }
+        .sidebar-item:hover { background: var(--hover); color: var(--text); }
+        .sidebar-divider { height: 1px; background: var(--border); margin: 8px 0; }
         
-        .sidebar-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:2000; opacity:0; visibility:hidden; transition:0.3s; }
-        .sidebar-overlay.active { opacity:1; visibility:visible; }
-        .sidebar { position:fixed; top:0; left:-280px; width:280px; height:100%; background:var(--card-bg); z-index:2001; overflow-y:auto; transition:0.3s; }
-        .sidebar.active { left:0; }
-        .sidebar-header { background:var(--atlas-bg); padding:20px; text-align:center; border-bottom:2px solid var(--atlas-border); }
-        .sidebar-logo { font-size:20px; font-weight:800; color:var(--atlas-text); }
-        .sidebar-item { display:flex; align-items:center; gap:12px; padding:14px 20px; color:var(--text-primary); border:none; background:none; width:100%; text-align:left; font-size:15px; cursor:pointer; }
-        .sidebar-divider { height:1px; background:var(--option-border); margin:8px 0; }
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
+            background: var(--card); border-top: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-around; z-index: 100;
+        }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: none; color: var(--text2); font-size: 10px; cursor: pointer; padding: 6px 10px; border-radius: 8px; transition: 0.2s; font-family: inherit; }
+        .nav-item.active { color: var(--accent); }
+        .nav-item .nav-icon { font-size: 20px; }
         
-        .bottom-nav { position:fixed; bottom:0; left:0; right:0; height:60px; background:var(--atlas-bg); border-top:2px solid var(--atlas-border); display:flex; align-items:center; justify-content:space-around; z-index:1000; }
-        .nav-item { display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:none; color:var(--atlas-text); font-size:10px; cursor:pointer; padding:6px 10px; border-radius:8px; opacity:0.7; }
-        .nav-item.active { opacity:1; color:#FFF; background:rgba(47,107,255,0.3); }
-        .nav-item .nav-icon { font-size:22px; }
+        .floating-buttons { position: fixed; bottom: 80px; right: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 99; }
+        .fab { width: 42px; height: 42px; border-radius: 50%; border: none; font-size: 18px; cursor: pointer; color: #fff; display: flex; align-items: center; justify-content: center; transition: 0.2s; box-shadow: var(--shadow); }
+        .fab-wa { background: #25D366; } .fab-wa:hover { transform: scale(1.08); }
+        .fab-tg { background: #0088CC; } .fab-tg:hover { transform: scale(1.08); }
         
-        .floating-buttons { position:fixed; bottom:80px; right:16px; display:flex; flex-direction:column; gap:10px; z-index:999; }
-        .fab { width:46px; height:46px; border-radius:50%; border:none; font-size:20px; cursor:pointer; color:#FFF; }
-        .fab-whatsapp { background:#25D366; } .fab-telegram { background:#0088CC; }
+        .toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: var(--card); color: var(--text); border: 1px solid var(--accent); padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 600; z-index: 999; opacity: 0; transition: 0.2s; pointer-events: none; }
+        .toast.show { opacity: 1; }
         
-        .toast { position:fixed; top:70px; left:50%; transform:translateX(-50%); background:var(--atlas-bg); color:var(--atlas-text); border:2px solid var(--atlas-border); padding:12px 24px; border-radius:10px; z-index:3000; opacity:0; transition:0.3s; pointer-events:none; }
-        .toast.show { opacity:1; }
+        .main-container { max-width: 520px; margin: 0 auto; padding: 12px 14px 20px; }
         
-        .main-container { max-width:500px; margin:0 auto; padding:16px 16px 32px; }
+        /* Timer */
+        .countdown-card {
+            background: var(--cd-bg); border: 1px solid var(--cd-border);
+            border-radius: var(--radius); padding: 20px 18px; margin-bottom: 14px;
+            text-align: center; box-shadow: 0 0 20px var(--cd-glow);
+            animation: pulseRed 2.5s ease-in-out infinite;
+        }
+        @keyframes pulseRed { 0%,100%{box-shadow: 0 0 20px var(--cd-glow);} 50%{box-shadow: 0 0 32px rgba(248,81,73,0.45);} }
+        .timer-label { font-size: 11px; font-weight: 700; color: var(--cd-text); opacity: 0.8; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
+        .timer-topic { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 2px; }
+        .timer-subtopic { font-size: 12px; color: var(--cd-text); opacity: 0.7; margin-bottom: 12px; }
+        .timer-clock-row { display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .timer-clock { font-size: 28px; }
+        .timer-time { font-size: 28px; font-weight: 800; color: var(--cd-text); letter-spacing: 2px; font-variant-numeric: tabular-nums; }
+        .timer-labels { display: flex; justify-content: center; gap: 20px; font-size: 10px; color: var(--cd-text); opacity: 0.5; margin-top: 4px; }
         
-        /* কাউন্টডাউন — প্রিমিয়াম */
-        .countdown-card { background:var(--cd-bg); border:2px solid var(--cd-border); border-radius:16px; padding:24px 20px; margin-bottom:20px; text-align:center; position:relative; box-shadow:0 0 24px var(--cd-glow),0 0 48px rgba(239,68,68,0.15); animation:pulseRed 2.5s ease-in-out infinite; }
-        @keyframes pulseRed { 0%,100%{box-shadow:0 0 24px var(--cd-glow);} 50%{box-shadow:0 0 36px rgba(239,68,68,0.6),0 0 60px rgba(239,68,68,0.2);} }
-        .countdown-topic { font-size:24px; font-weight:800; background:linear-gradient(135deg,#FFFFFF,#FBBF24); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:4px; }
-        .countdown-subtopic { color:var(--cd-text); font-size:13px; opacity:0.7; margin-bottom:16px; }
-        .countdown-timer-wrap { display:flex; align-items:center; justify-content:center; gap:12px; }
-        .countdown-clock { font-size:36px; animation:rotateClock 60s linear infinite; }
-        @keyframes rotateClock { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
-        .countdown-timer { color:var(--cd-text); font-size:36px; font-weight:800; letter-spacing:3px; text-shadow:0 0 14px rgba(252,165,165,0.5); }
-        .countdown-labels { color:var(--cd-text); font-size:11px; opacity:0.6; display:flex; justify-content:center; gap:22px; margin-top:4px; }
+        /* Special Card */
+        .special-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 16px; margin-bottom: 14px;
+            text-align: center; box-shadow: var(--shadow);
+        }
+        .special-card img { max-width: 100%; max-height: 160px; border-radius: 10px; object-fit: cover; margin-bottom: 8px; }
+        .special-text { font-size: 13px; color: var(--text2); margin-bottom: 6px; }
+        .special-link { display: inline-block; padding: 8px 18px; background: var(--accent); color: #fff; border-radius: 20px; font-size: 12px; font-weight: 700; text-decoration: none; transition: 0.2s; }
+        .special-link:hover { background: var(--accent-hover); transform: translateY(-1px); }
         
-        /* বাটন */
-        .home-buttons { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px; }
-        .home-btn { background:var(--atlas-bg); color:var(--atlas-text); border:2px solid var(--atlas-border); border-radius:12px; padding:18px 10px; font-size:14px; font-weight:600; text-align:center; cursor:pointer; transition:all 0.3s; box-shadow:0 0 10px var(--atlas-glow); display:flex; flex-direction:column; align-items:center; gap:6px; }
-        .home-btn:hover { background:var(--atlas-hover-bg); transform:translateY(-2px); }
-        .home-btn-full { grid-column:1/-1; }
-        .home-btn .btn-icon { font-size:26px; }
-        .home-btn .btn-text { font-size:12px; line-height:1.3; }
-        .home-btn.admin-btn { background:#1A0A0A; border-color:#EF4444; color:#FCA5A5; }
+        /* Buttons */
+        .home-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+        .home-btn {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 14px 10px;
+            font-size: 13px; font-weight: 600; color: var(--text);
+            text-align: center; cursor: pointer; transition: all 0.2s;
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+        }
+        .home-btn:hover { border-color: var(--accent); box-shadow: var(--glow); transform: translateY(-2px); }
+        .home-btn-full { grid-column: 1/-1; }
+        .home-btn .btn-icon { font-size: 24px; }
+        .home-btn .btn-text { font-size: 11px; line-height: 1.2; }
+        .home-btn.admin-btn { border-color: var(--red); color: var(--red); }
+        .home-btn.admin-btn:hover { background: #1A0A0A; box-shadow: 0 0 16px rgba(248,81,73,0.25); }
         
-        .social-row { display:flex; justify-content:center; gap:14px; margin-bottom:24px; }
-        .social-btn { background:var(--social-bg); color:var(--text-secondary); text-decoration:none; width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; }
+        /* Social */
+        .social-row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+        .social-chip {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+            background: var(--card); border: 1px solid var(--border);
+            color: var(--text2); text-decoration: none; transition: 0.2s;
+        }
+        .social-chip:hover { border-color: var(--accent); color: var(--text); }
         
-        /* ফ্লিপ কার্ড */
-        .owner-section { display:flex; justify-content:center; margin-bottom:24px; }
-        .flip-card { width:100px; height:140px; perspective:1000px; cursor:pointer; }
-        .flip-card-inner { position:relative; width:100%; height:100%; transition:0.6s; transform-style:preserve-3d; }
-        .flip-card.flipped .flip-card-inner { transform:rotateY(180deg); }
-        .flip-card-front, .flip-card-back { position:absolute; width:100%; height:100%; backface-visibility:hidden; border-radius:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-        .flip-card-front { background:var(--atlas-bg); border:2px solid var(--atlas-border); }
-        .flip-card-back { background:var(--card-bg); border:2px solid var(--atlas-border); transform:rotateY(180deg); padding:10px; text-align:center; font-size:11px; }
-        .owner-photo { width:70px; height:70px; border-radius:50%; object-fit:cover; border:3px solid var(--atlas-border); }
-        .owner-glow-ring { position:absolute; top:-6px; left:-6px; width:calc(100% + 12px); height:calc(100% + 12px); border-radius:50%; border:3px solid transparent; border-top-color:var(--atlas-border); animation:rotateGlow 2s linear infinite; }
-        @keyframes rotateGlow { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
+        /* Owner */
+        .owner-section { display: flex; flex-direction: column; align-items: center; margin: 20px 0 16px; }
+        .owner-name-top { font-size: 15px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+        .flip-card-owner { width: 120px; height: 120px; perspective: 800px; cursor: pointer; }
+        .flip-card-owner.flipped .flip-card-inner-owner { transform: rotateY(180deg); }
+        .flip-card-inner-owner { position: relative; width: 100%; height: 100%; transition: 0.5s; transform-style: preserve-3d; }
+        .flip-front-owner, .flip-back-owner { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: var(--radius-sm); }
+        .flip-front-owner { background: var(--card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
+        .flip-back-owner { background: var(--card); border: 1px solid var(--accent); transform: rotateY(180deg); padding: 10px; text-align: center; font-size: 10px; color: var(--text2); display: flex; align-items: center; justify-content: center; }
+        .owner-photo-wrapper { position: relative; width: 100px; height: 100px; }
+        .owner-photo-box { width: 100px; height: 100px; border-radius: 10px; object-fit: cover; border: 2px solid var(--border); position: relative; z-index: 2; }
+        .owner-glow-box { position: absolute; top: -6px; left: -6px; width: 112px; height: 112px; border-radius: 14px; border: 2px solid transparent; border-top-color: var(--accent); border-right-color: var(--accent); animation: rotateGlowBox 2s linear infinite; z-index: 1; pointer-events: none; }
+        @keyframes rotateGlowBox { 0%{transform:rotate(0deg);box-shadow:0 0 8px rgba(124,131,255,0.15);} 50%{box-shadow:0 0 18px rgba(124,131,255,0.3);} 100%{transform:rotate(360deg);box-shadow:0 0 8px rgba(124,131,255,0.15);} }
         
-        /* মোডাল */
-        .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:3000; display:none; align-items:center; justify-content:center; }
-        .modal-overlay.active { display:flex; }
-        .modal { background:var(--card-bg); border-radius:14px; padding:20px; max-width:500px; width:90%; max-height:85vh; overflow-y:auto; border:1px solid var(--option-border); }
-        .modal-title { font-size:18px; font-weight:700; color:var(--atlas-text); margin-bottom:16px; text-align:center; }
-        .modal .btn { padding:10px 16px; border-radius:10px; font-weight:600; cursor:pointer; border:none; font-size:14px; width:100%; margin-top:8px; }
-        .btn-outline { background:transparent; border:1px solid var(--atlas-border); color:var(--atlas-text); }
-        .btn-primary { background:var(--atlas-bg); color:var(--atlas-text); border:2px solid var(--atlas-border); }
-        .btn-success { background:#22C55E; color:#FFF; }
-        .btn-danger { background:#EF4444; color:#FFF; }
-        .card-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--option-border); font-size:13px; }
+        /* Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 300; display: none; align-items: center; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; max-width: 480px; width: 94%; max-height: 85vh; overflow-y: auto; }
+        .modal-title { font-size: 17px; font-weight: 700; color: var(--accent); margin-bottom: 14px; text-align: center; }
+        .modal .btn { padding: 9px 14px; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; border: none; font-size: 12px; width: 100%; margin-top: 6px; font-family: inherit; transition: 0.2s; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text2); }
+        .btn-outline:hover { border-color: var(--accent); color: var(--text); }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-success { background: var(--green); color: #fff; }
+        .btn-danger { background: var(--red); color: #fff; }
         
-        @media(min-width:768px) { .main-container{max-width:650px;} .home-buttons{grid-template-columns:1fr 1fr 1fr;} }
-        .owner-photo-wrapper {
-    position: relative;
-    display: inline-block;
-    cursor: pointer;
-    max-width: 90px;
-    margin: 0 auto;
-}
-
-.owner-photo-box {
-    width: 80px;
-    height: 80px;
-    border-radius: 12px;
-    object-fit: cover;
-    border: 3px solid var(--atlas-border);
-    position: relative;
-    z-index: 2;
-    display: block;
-}
-
-.owner-glow-box {
-    position: absolute;
-    top: -6px;
-    left: -6px;
-    width: calc(80px + 12px);
-    height: calc(80px + 12px);
-    border-radius: 16px;
-    border: 3px solid transparent;
-    border-top-color: var(--atlas-border, #2F6BFF);
-    border-right-color: var(--atlas-border, #2F6BFF);
-    animation: rotateGlowBox 2s linear infinite;
-    z-index: 1;
-    pointer-events: none;
-}
-
-@keyframes rotateGlowBox {
-    0% { 
-        transform: rotate(0deg);
-        box-shadow: 0 0 10px var(--atlas-glow, rgba(47,107,255,0.35));
-    }
-    50% { 
-        box-shadow: 0 0 20px rgba(47,107,255,0.5);
-    }
-    100% { 
-        transform: rotate(360deg);
-        box-shadow: 0 0 10px var(--atlas-glow, rgba(47,107,255,0.35));
-    }
-}
-
-.owner-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 24px;
-    padding: 0 16px;
-}
-.owner-section { display: flex; flex-direction: column; align-items: center; margin: 20px 0 30px; }
-.owner-name-top { font-size: 16px; font-weight: 800; color: var(--atlas-text); margin-bottom: 12px; }
-.flip-card-owner { width: 140px; height: 140px; perspective: 1000px; cursor: pointer; }
-.flip-card-owner.flipped .flip-card-inner-owner { transform: rotateY(180deg); }
-.flip-card-inner-owner { position: relative; width: 100%; height: 100%; transition: 0.6s; transform-style: preserve-3d; }
-.flip-front-owner, .flip-back-owner { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 16px; }
-.flip-front-owner { background: transparent; display: flex; align-items: center; justify-content: center; }
-.flip-back-owner { background: var(--card-bg); border: 2px solid var(--atlas-border); transform: rotateY(180deg); padding: 14px; text-align: center; font-size: 11px; color: var(--text-primary); line-height: 1.8; display: flex; align-items: center; justify-content: center; }
-.owner-photo-wrapper { position: relative; width: 120px; height: 120px; }
-.owner-photo-box { width: 120px; height: 120px; border-radius: 14px; object-fit: cover; border: 3px solid var(--atlas-border); position: relative; z-index: 2; }
-.owner-glow-box { position: absolute; top: -10px; left: -10px; width: 140px; height: 140px; border-radius: 18px; border: 3px solid transparent; border-top-color: var(--atlas-border); border-right-color: var(--atlas-border); animation: rotateGlowBox 2s linear infinite; z-index: 1; pointer-events: none; }
-@keyframes rotateGlowBox { 0% { transform: rotate(0deg); box-shadow: 0 0 12px var(--atlas-glow); } 50% { box-shadow: 0 0 24px rgba(47,107,255,0.5); } 100% { transform: rotate(360deg); box-shadow: 0 0 12px var(--atlas-glow); } }
+        .card-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+        .mistake-item { background: var(--hover); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 8px; }
+        .mistake-item summary { font-weight: 700; font-size: 13px; cursor: pointer; color: var(--text); }
+        .mistake-item summary:hover { color: var(--accent); }
+        .mistake-item .dropdown-actions { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+        
+        .filter-row { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+        .filter-row select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font-size: 11px; font-family: inherit; }
+        
+        @media(min-width: 600px) { .home-buttons { grid-template-columns: 1fr 1fr 1fr; } }
     </style>
 </head>
-<body class="dark-mode">
+<body>
 
-<!-- সাইডবার -->
+<!-- Sidebar -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-header"><div class="sidebar-logo">ATLAS EXAM</div></div>
@@ -174,38 +165,33 @@
     <button class="sidebar-item" onclick="goTo('class.html');closeSidebar();">📚 ফ্রি ক্লাস</button>
     <button class="sidebar-item" onclick="goTo('exam.html');closeSidebar();">📝 ফ্রি এক্সাম</button>
     <button class="sidebar-item" onclick="goTo('mock-test.html');closeSidebar();">🎯 মক টেস্ট</button>
-    <button class="sidebar-item" onclick="openModal('mistakes');closeSidebar();">⚠️My Mistakes</button>
+    <button class="sidebar-item" onclick="openModal('mistakes');closeSidebar();">⚠️ My Mistakes</button>
     <button class="sidebar-item" onclick="goTo('ai.html');closeSidebar();">🤖 ATLAS AI</button>
     <div class="sidebar-divider"></div>
     <button class="sidebar-item" onclick="toggleTheme()">🌙 ডার্ক মোড</button>
-    <button class="sidebar-item" onclick="openWhatsApp()">💬 WhatsApp</button>
-    <button class="sidebar-item" onclick="openTelegram()">✈️ Telegram</button>
+    <button class="sidebar-item" onclick="openWA()">💬 WhatsApp</button>
+    <button class="sidebar-item" onclick="openTG()">✈️ Telegram</button>
 </aside>
 
-<!-- হেডার -->
+<!-- Header -->
 <header class="header">
-    <div><button class="hamburger" onclick="toggleSidebar()">☰</button><span class="logo" style="margin-left:12px;">ATLAS EXAM</span></div>
-    <div style="display:flex;gap:8px;"><button class="header-icon" onclick="toggleTheme()">🌙</button><button class="header-icon" onclick="navigateTo('profile')">👤</button></div>
+    <div style="display:flex;align-items:center;gap:10px;"><button class="hamburger" onclick="toggleSidebar()">☰</button><span class="logo">ATLAS EXAM</span></div>
+    <div style="display:flex;gap:6px;"><button class="header-icon" onclick="toggleTheme()">🌙</button><button class="header-icon" onclick="navigateTo('profile')">👤</button></div>
 </header>
 
 <main class="main-container">
 
-<!-- কাউন্টডাউন -->
-<div class="countdown-card">
-    <div class="countdown-topic" id="cdTopic">এইচএসসি ২০২৬ বোর্ড</div>
-    <div class="countdown-subtopic" id="cdSubtopic">ঢাকা বোর্ড প্রস্তুতি</div>
-    <div class="countdown-timer-wrap">
-        <span class="countdown-clock">🕐</span>
-        <span class="countdown-timer" id="cdTimer">১২ : ০৮ : ৪৫ : ৩২</span>
-    </div>
-    <div class="countdown-labels"><span>দিন</span><span>ঘণ্টা</span><span>মিনিট</span><span>সেকেন্ড</span></div>
-</div>
+<!-- Special Card -->
+<div id="specialCardContainer"></div>
 
-<!-- বাটন -->
+<!-- Timers -->
+<div id="timerContainer"></div>
+
+<!-- Buttons -->
 <div class="home-buttons">
-    <button class="home-btn" onclick="goTo('class.html')"><span class="btn-icon">📚</span><span class="btn-text">ফ্রি ক্লাস সেকশন</span></button>
+    <button class="home-btn" onclick="goTo('class.html')"><span class="btn-icon">📚</span><span class="btn-text">ফ্রি ক্লাস</span></button>
     <button class="home-btn" onclick="goTo('exam.html?cat=board')"><span class="btn-icon">🔵</span><span class="btn-text">বোর্ড প্রস্তুতি</span></button>
-    <button class="home-btn" onclick="goTo('exam.html?cat=medical')"><span class="btn-icon">🟢</span><span class="btn-text">মেডিকেল ও ডেন্টাল প্রস্তুতি</span></button>
+    <button class="home-btn" onclick="goTo('exam.html?cat=medical')"><span class="btn-icon">🟢</span><span class="btn-text">মেডিকেল+ডেন্টাল</span></button>
     <button class="home-btn" onclick="goTo('exam.html?cat=varsity')"><span class="btn-icon">🟣</span><span class="btn-text">ভার্সিটি প্রস্তুতি</span></button>
     <button class="home-btn" onclick="goTo('exam.html?cat=onushiloni')"><span class="btn-icon">🟠</span><span class="btn-text">অনুশীলনী এক্সাম</span></button>
     <button class="home-btn home-btn-full" onclick="goTo('mock-test.html')"><span class="btn-icon">🎯</span><span class="btn-text">Unlimited Mock Test</span></button>
@@ -215,16 +201,10 @@
     <button class="home-btn home-btn-full admin-btn" id="adminBtn" onclick="goTo('admin.html')" style="display:none;"><span class="btn-icon">👑</span><span class="btn-text">Admin Control</span></button>
 </div>
 
-<!-- সোশ্যাল -->
-<div class="social-row">
-    <a href="https://facebook.com" target="_blank" class="social-btn">📘</a>
-    <a href="https://youtube.com/@atlasprep" target="_blank" class="social-btn">▶️</a>
-    <a href="https://t.me/rafi_somc" target="_blank" class="social-btn">✈️</a>
-    <a href="https://wa.me/8801999681290" target="_blank" class="social-btn">💬</a>
-</div>
+<!-- Social -->
+<div class="social-row" id="socialRow"></div>
 
-<!-- অনার -->
-<!-- অনার প্রোফাইল -->
+<!-- Owner -->
 <div class="owner-section">
     <div class="owner-name-top" id="ownerNameTop">ATLAS EXAM</div>
     <div class="flip-card-owner" id="flipCardOwner" onclick="this.classList.toggle('flipped')">
@@ -233,117 +213,183 @@
                 <div class="owner-photo-wrapper">
                     <div class="owner-glow-box"></div>
                     <img src="" class="owner-photo-box" id="ownerPhoto" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" alt="Owner">
-                    <div id="ownerPhotoFallback" style="display:flex;width:120px;height:120px;border-radius:14px;background:var(--atlas-bg);color:var(--atlas-text);align-items:center;justify-content:center;font-size:36px;border:3px solid var(--atlas-border);position:relative;z-index:2;">👤</div>
+                    <div id="ownerPhotoFallback" style="display:flex;width:100px;height:100px;border-radius:10px;background:var(--hover);color:var(--text);align-items:center;justify-content:center;font-size:28px;border:2px solid var(--border);position:relative;z-index:2;">👤</div>
                 </div>
             </div>
-            <div class="flip-back-owner" id="ownerInfoBack">📞 ০১৭৫৪৩৬৫৪০৩</div>
+            <div class="flip-back-owner" id="ownerInfoBack"></div>
         </div>
     </div>
 </div>
-</div>
+
 </main>
 
-<!-- মোডাল -->
+<!-- Modal -->
 <div class="modal-overlay" id="mainModal" onclick="closeModal()"><div class="modal" id="modalContent" onclick="event.stopPropagation()"></div></div>
 
-<!-- নিচের বার -->
+<!-- Bottom Nav -->
 <nav class="bottom-nav">
-    <button class="nav-item active" onclick="goTo('index.html')"><span class="nav-icon">🏠</span><span>হোম</span></button>
-    <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon">📚</span><span>ক্লাস</span></button>
-    <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon">📝</span><span>এক্সাম</span></button>
-    <button class="nav-item" onclick="goTo('mock-test.html')"><span class="nav-icon">🎯</span><span>মক</span></button>
-    <button class="nav-item" onclick="goTo('dashboard.html')"><span class="nav-icon">👤</span><span>প্রোফাইল</span></button>
+    <button class="nav-item active" onclick="goTo('index.html')"><span class="nav-icon">🏠</span>হোম</button>
+    <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon">📚</span>ক্লাস</button>
+    <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon">📝</span>এক্সাম</button>
+    <button class="nav-item" onclick="goTo('mock-test.html')"><span class="nav-icon">🎯</span>মক</button>
+    <button class="nav-item" onclick="goTo('dashboard.html')"><span class="nav-icon">👤</span>প্রোফাইল</button>
 </nav>
 
-<div class="floating-buttons"><button class="fab fab-whatsapp" onclick="openWhatsApp()">💬</button><button class="fab fab-telegram" onclick="openTelegram()">✈️</button></div>
+<!-- Floating -->
+<div class="floating-buttons"><button class="fab fab-wa" onclick="openWA()">💬</button><button class="fab fab-tg" onclick="openTG()">✈️</button></div>
 <div class="toast" id="toast"></div>
 
 <script>
-var SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
-var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
-var isDarkMode = true, isSidebarOpen = false;
+const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
+let isDarkMode = true, isSidebarOpen = false;
 
-function loadTheme() { var s = localStorage.getItem('atlas-theme'); isDarkMode = s !== 'light'; document.body.classList.toggle('dark-mode', isDarkMode); }
-function toggleTheme() { isDarkMode = !isDarkMode; document.body.classList.toggle('dark-mode', isDarkMode); localStorage.setItem('atlas-theme', isDarkMode ? 'dark' : 'light'); showToast(isDarkMode ? '🌙 ডার্ক' : '☀️ লাইট'); }
+function showToast(m, d = 2000) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), d); }
+function toggleTheme() { isDarkMode = !isDarkMode; document.body.classList.toggle('dark-mode', isDarkMode); showToast(isDarkMode ? '🌙 ডার্ক' : '☀️ লাইট'); }
 function toggleSidebar() { isSidebarOpen = !isSidebarOpen; document.getElementById('sidebarOverlay').classList.toggle('active', isSidebarOpen); document.getElementById('sidebar').classList.toggle('active', isSidebarOpen); }
 function closeSidebar() { isSidebarOpen = false; document.getElementById('sidebarOverlay').classList.remove('active'); document.getElementById('sidebar').classList.remove('active'); }
-function goTo(u) { window.location.href = u; }
-function navigateTo(p) { var r = { 'home':'index.html', 'profile':'dashboard.html', 'class':'class.html', 'exam':'exam.html' }; goTo(r[p] || 'index.html'); }
-function openWhatsApp() { window.open('https://wa.me/8801999681290', '_blank'); }
-function openTelegram() { window.open('https://t.me/rafi_somc', '_blank'); }
-function showToast(m, d) { d = d || 2500; var t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(function(){ t.classList.remove('show'); }, d); }
+function goTo(u) { location.href = u; }
+function navigateTo(p) { const r = { home:'index.html', profile:'dashboard.html', class:'class.html', exam:'exam.html' }; goTo(r[p]||'index.html'); }
+function openWA() { window.open('https://wa.me/8801999681290', '_blank'); }
+function openTG() { window.open('https://t.me/rafi_somc', '_blank'); }
 
-// কাউন্টডাউন
-function setupCountdown() {
-    var cd = document.getElementById('cdTimer'); if (!cd) return;
-    var target = new Date(); target.setDate(target.getDate() + 12); target.setHours(8,45,32,0);
-    fetch(SUPABASE_URL + '/rest/v1/countdowns?select=*&order=created_at.desc&limit=1', { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } })
-    .then(function(r){ return r.json(); }).then(function(data){
-        if (data && data.length > 0) { document.getElementById('cdTopic').textContent = data[0].main_topic; document.getElementById('cdSubtopic').textContent = data[0].subtopic || ''; target = new Date(data[0].end_time); }
-        function update() { var diff = target - new Date(); if (diff <= 0) { cd.textContent = '০০ : ০০ : ০০ : ০০'; return; } var d = Math.floor(diff/(1000*60*60*24)), h = Math.floor((diff%(1000*60*60*24))/(1000*60*60)), m = Math.floor((diff%(1000*60*60))/(1000*60)), s = Math.floor((diff%(1000*60))/1000); cd.textContent = String(d).padStart(2,'0')+' : '+String(h).padStart(2,'0')+' : '+String(m).padStart(2,'0')+' : '+String(s).padStart(2,'0'); }
-        update(); setInterval(update, 1000);
-    }).catch(function(){ function update() { var diff = target - new Date(); if (diff <= 0) { cd.textContent = '০০ : ০০ : ০০ : ০০'; return; } var d = Math.floor(diff/(1000*60*60*24)), h = Math.floor((diff%(1000*60*60*24))/(1000*60*60)), m = Math.floor((diff%(1000*60*60))/(1000*60)), s = Math.floor((diff%(1000*60))/1000); cd.textContent = String(d).padStart(2,'0')+' : '+String(h).padStart(2,'0')+' : '+String(m).padStart(2,'0')+' : '+String(s).padStart(2,'0'); } update(); setInterval(update, 1000); });
+async function safeFetch(url, opts = {}) {
+    opts.headers = Object.assign({ apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }, opts.headers || {});
+    if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') opts.headers['Content-Type'] = 'application/json';
+    try { const res = await fetch(url, opts); const text = await res.text(); if (!text?.trim()) return []; const data = JSON.parse(text); if (!res.ok) throw new Error(data.message); return data; }
+    catch(e) { console.error('❌', e.message); return []; }
 }
 
-// অ্যাডমিন চেক
-function checkAdmin() { var sess = localStorage.getItem('atlas-session'); if (!sess) return; try { var user = JSON.parse(sess); if (user.phone === '01754365403' || user.role === 'admin') document.getElementById('adminBtn').style.display = 'flex'; } catch(e) {} }
+// ========== TIMERS ==========
+async function loadTimers() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/countdowns?select=*&order=created_at.desc&limit=5`);
+        if (!data?.length) return;
+        const container = document.getElementById('timerContainer');
+        let html = '';
+        const colors = ['#FCA5A5','#60A5FA','#4ADE80','#F472B6','#FB923C'];
+        data.forEach((cd, i) => {
+            const color = colors[i % colors.length];
+            html += `<div class="countdown-card" style="--cd-text:${color};--cd-glow:rgba(${i===0?'248,81,73':i===1?'96,165,250':i===2?'74,222,128':i===3?'244,114,182':'251,146,60'},0.35);border-color:${color};box-shadow:0 0 20px rgba(${i===0?'248,81,73':i===1?'96,165,250':i===2?'74,222,128':i===3?'244,114,182':'251,146,60'},0.3);animation:pulseRed 2.5s ease-in-out infinite;">
+                <div class="timer-label">ATLAS Timer-${String(i+1).padStart(2,'0')}</div>
+                <div class="timer-topic">${cd.main_topic}</div>
+                ${cd.subtopic ? `<div class="timer-subtopic">${cd.subtopic}</div>` : ''}
+                <div class="timer-clock-row"><span class="timer-clock">🕐</span><span class="timer-time countdown-timer-${i}">-- : -- : -- : --</span></div>
+                <div class="timer-labels"><span>দিন</span><span>ঘণ্টা</span><span>মিনিট</span><span>সেকেন্ড</span></div>
+            </div>`;
+            setTimeout(() => startCountdown(cd.end_time, `.countdown-timer-${i}`), i * 100);
+        });
+        container.innerHTML = html;
+    } catch(e) {}
+}
 
-// মোডাল — মাই মিসটেকস / Model Test
+function startCountdown(endTime, selector) {
+    const target = new Date(endTime);
+    const el = document.querySelector(selector);
+    if (!el) return;
+    function update() {
+        const diff = target - new Date();
+        if (diff <= 0) { el.textContent = '০০ : ০০ : ০০ : ০০'; return; }
+        const d = Math.floor(diff/(1000*60*60*24));
+        const h = Math.floor((diff%(1000*60*60*24))/(1000*60*60));
+        const m = Math.floor((diff%(1000*60*60))/(1000*60));
+        const s = Math.floor((diff%(1000*60))/1000);
+        el.textContent = `${String(d).padStart(2,'0')} : ${String(h).padStart(2,'0')} : ${String(m).padStart(2,'0')} : ${String(s).padStart(2,'0')}`;
+    }
+    update(); setInterval(update, 1000);
+}
+
+// ========== SPECIAL CARD ==========
+async function loadSpecialCards() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/special_cards?select=*&order=created_at.desc&limit=1`);
+        if (!data?.length) return;
+        const s = data[0];
+        let html = '<div class="special-card">';
+        if (s.image_url) html += `<img src="${s.image_url}" alt="Special">`;
+        if (s.description) html += `<div class="special-text">${s.description}</div>`;
+        if (s.special_text && s.link) html += `<a href="${s.link}" target="_blank" class="special-link">${s.special_text}</a>`;
+        else if (s.special_text) html += `<span class="special-link" style="cursor:default;">${s.special_text}</span>`;
+        html += '</div>';
+        document.getElementById('specialCardContainer').innerHTML = html;
+    } catch(e) {}
+}
+
+// ========== SOCIAL ==========
+async function loadSocialLinks() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/social_links?select=*&order=created_at.desc&limit=20`);
+        if (!data?.length) return;
+        const icons = { facebook:'📘', youtube:'▶️', telegram:'✈️', whatsapp:'💬', other:'🔗' };
+        document.getElementById('socialRow').innerHTML = data.map(s => `<a href="${s.link}" target="_blank" class="social-chip">${icons[s.type]||'🔗'} ${s.media_name}</a>`).join('');
+    } catch(e) {}
+}
+
+// ========== OWNER ==========
+function loadOwnerInfo() {
+    const photo = localStorage.getItem('owner_photo');
+    const name = localStorage.getItem('owner_name');
+    const info = localStorage.getItem('owner_info');
+    if (name) document.getElementById('ownerNameTop').textContent = name;
+    if (info) document.getElementById('ownerInfoBack').innerHTML = info.replace(/\n/g, '<br>');
+    if (photo) { const img = document.getElementById('ownerPhoto'); img.src = photo; img.style.display = 'block'; document.getElementById('ownerPhotoFallback').style.display = 'none'; }
+}
+
+// ========== ADMIN CHECK ==========
+function checkAdmin() {
+    try { const sess = JSON.parse(localStorage.getItem('atlas-session')); if (sess?.phone === '01754365403' || sess?.role === 'admin') document.getElementById('adminBtn').style.display = 'flex'; } catch(e) {}
+}
+
+// ========== MODAL ==========
 function openModal(type) {
-    var mc = document.getElementById('modalContent'), html = '';
+    const mc = document.getElementById('modalContent');
+    let html = '';
     if (type === 'mistakes') {
-        html = '<div class="modal-title">❌ মাই মিসটেকস</div>';
-        var sess = localStorage.getItem('atlas-session'); if (!sess) { html += '<p>লগইন করুন</p>'; }
+        html = '<div class="modal-title">⚠️ My Mistakes</div>';
+        const sess = localStorage.getItem('atlas-session');
+        if (!sess) { html += '<p style="color:var(--text2);text-align:center;">লগইন করুন</p>'; }
         else {
-            var user = JSON.parse(sess);
-            fetch(SUPABASE_URL + '/rest/v1/exam_results?phone=eq.' + user.phone + '&select=*&order=submitted_at.desc&limit=20', { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } })
-            .then(function(r){ return r.json(); }).then(function(data){
-                var h = ''; if (!data || data.length === 0) h = '<p>কোনো ভুল উত্তর নেই</p>';
-                else { data.forEach(function(r){ if ((r.wrong||0) > 0 || (r.skipped||0) > 0) { h += '<div style="background:var(--card-bg);border:1px solid var(--option-border);border-radius:10px;padding:12px;margin-bottom:8px;"><b>এক্সাম #'+r.exam_id+'</b><div class="card-row"><span>❌ ভুল</span><span>'+r.wrong+'</span></div><div class="card-row"><span>⏭️ স্কিপ</span><span>'+r.skipped+'</span></div><button class="btn btn-outline" onclick="goTo(\'exam.html?id='+r.exam_id+'\')">📋 বিস্তারিত</button><button class="btn btn-success" style="margin-top:4px;">🔁 Practice-01</button><button class="btn btn-primary" style="margin-top:4px;">🔁 Practice-02</button></div>'; } }); if (!h) h = '<p>সব সঠিক! 🎉</p>'; }
-                document.getElementById('modalContent').innerHTML = '<div class="modal-title">❌ মাই মিসটেকস</div>'+h+'<button class="btn btn-outline" onclick="closeModal()">✕ বন্ধ</button>';
-            }).catch(function(){ document.getElementById('modalContent').innerHTML = '<div class="modal-title">❌ মাই মিসটেকস</div><p>লোড ব্যর্থ</p><button class="btn btn-outline" onclick="closeModal()">✕ বন্ধ</button>'; });
-            html += '<p>লোড হচ্ছে...</p>';
+            const user = JSON.parse(sess);
+            safeFetch(`${SUPABASE_URL}/rest/v1/exam_results?phone=eq.${user.phone}&select=*&order=submitted_at.desc&limit=30`).then(data => {
+                let h = '';
+                if (!data?.length) h = '<p style="text-align:center;color:var(--text2);padding:20px;">কোনো ভুল উত্তর নেই</p>';
+                else {
+                    h += '<div class="filter-row"><select id="mistakeFilterCat" onchange="filterMistakes()"><option value="all">সব ক্যাটাগরি</option></select><select id="mistakeFilterSub" onchange="filterMistakes()"><option value="all">সব সাবজেক্ট</option></select></div>';
+                    h += `<div id="mistakeList">`;
+                    data.forEach((r, i) => {
+                        if ((r.wrong||0) > 0 || (r.skipped||0) > 0) {
+                            h += `<details class="mistake-item"><summary>📝 এক্সাম #${r.exam_id} — ❌${r.wrong||0} ⏭️${r.skipped||0} <span style="font-size:10px;color:var(--text2);">${new Date(r.submitted_at).toLocaleDateString('bn-BD')}</span></summary><div class="dropdown-actions"><button class="btn btn-outline" onclick="goTo('exam.html?id=${r.exam_id}')">📋 বিস্তারিত দেখো</button><button class="btn btn-success" onclick="practiceMode(${r.exam_id},'skip')">🔁 Practice-01 (শুধু স্কিপ)</button><button class="btn btn-primary" onclick="practiceMode(${r.exam_id},'all')">🔁 Practice-02 (ভুল+স্কিপ)</button></div></details>`;
+                        }
+                    });
+                    h += `</div>`;
+                    if (!h.includes('details')) h = '<p style="text-align:center;color:var(--text2);padding:20px;">সব সঠিক! 🎉</p>';
+                }
+                document.getElementById('modalContent').innerHTML = '<div class="modal-title">⚠️ My Mistakes</div>' + h + '<button class="btn btn-outline" onclick="closeModal()" style="margin-top:8px;">✕ বন্ধ</button>';
+            });
         }
     } else if (type === 'modeltest') {
         html = '<div class="modal-title">📖 Model Test</div>';
-        html += '<button class="btn btn-outline" onclick="closeModal();goTo(\'exam.html?model=medical_subject\')">◾ Medical (Subject Final)</button>';
-        html += '<button class="btn btn-outline" onclick="closeModal();goTo(\'exam.html?model=medical_paper\')">◾ Medical (Paper Final)</button>';
-        html += '<button class="btn btn-primary" onclick="closeModal();goTo(\'exam.html?model=full\')">◾ Full Model Test</button>';
-        html += '<p style="font-size:11px;color:var(--text-secondary);margin:8px 0;">মানবন্টন: Bio=30, Chem=25, Phy=15, GK=15, Eng=15</p>';
-        html += '<button class="btn btn-outline" onclick="closeModal();goTo(\'exam.html?model=varsity\')">◾ Varsity</button>';
-        html += '<button class="btn btn-outline" onclick="closeModal()" style="margin-top:8px;">✕ বন্ধ</button>';
+        html += '<button class="btn btn-outline" onclick="closeModal();goTo(\'exam.html?cat=model&sub=medical_subject\')">◾ Medical (Subject Final)</button>';
+        html += '<button class="btn btn-outline" onclick="closeModal();goTo(\'exam.html?cat=model&sub=medical_paper\')">◾ Medical (Paper Final)</button>';
+        html += '<button class="btn btn-primary" onclick="closeModal();goTo(\'exam.html?cat=model&sub=full\')">◾ Full Model Test</button>';
+        html += '<p style="font-size:10px;color:var(--text2);margin:6px 0;text-align:center;">Bio=30, Chem=25, Phy=15, GK=15, Eng=15</p>';
+        html += '<button class="btn btn-outline" onclick="closeModal();goTo(\'exam.html?cat=model&sub=varsity\')">◾ Varsity</button>';
+        html += '<button class="btn btn-outline" onclick="closeModal()" style="margin-top:6px;">✕ বন্ধ</button>';
     }
     mc.innerHTML = html; document.getElementById('mainModal').classList.add('active');
 }
 function closeModal() { document.getElementById('mainModal').classList.remove('active'); }
+function filterMistakes() { showToast('🔜 ফিল্টার শীঘ্রই'); }
+function practiceMode(id, mode) { showToast('🔜 Practice-0' + (mode==='skip'?'1':'2') + ' — শীঘ্রই'); }
 
-// অনার ফটো
-function loadOwnerPhoto() {
-    var photo = localStorage.getItem('owner_photo'); var info = localStorage.getItem('owner_info');
-    if (photo) { document.getElementById('ownerPhoto').src = photo; document.getElementById('ownerPhoto').style.display = 'block'; document.getElementById('ownerPhotoFallback').style.display = 'none'; }
-    if (info) document.getElementById('ownerInfo').innerHTML = info;
-}
-
-document.addEventListener('DOMContentLoaded', function() { loadTheme(); setupCountdown(); checkAdmin(); loadOwnerPhoto(); });
-loadOwnerInfo();
-function loadOwnerInfo() {
-    var photo = localStorage.getItem('owner_photo');
-    var name = localStorage.getItem('owner_name');
-    var info = localStorage.getItem('owner_info');
-    
-    if (name) {
-        document.getElementById('ownerNameTop').textContent = name;
-    }
-    if (info) {
-        document.getElementById('ownerInfoBack').innerHTML = info.replace(/\n/g, '<br>');
-    }
-    if (photo) {
-        var img = document.getElementById('ownerPhoto');
-        img.src = photo;
-        img.style.display = 'block';
-        document.getElementById('ownerPhotoFallback').style.display = 'none';
-    }
-}
+// ========== INIT ==========
+document.addEventListener('DOMContentLoaded', () => {
+    loadTimers();
+    loadSpecialCards();
+    loadSocialLinks();
+    loadOwnerInfo();
+    checkAdmin();
+});
 </script>
 </body>
 </html>
