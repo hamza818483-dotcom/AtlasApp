@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATLAS EXAM - আনলিমিটেড মক টেস্ট</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --atlas-bg: #03152F; --atlas-border: #2F6BFF; --atlas-text: #6FA8FF;
+            --atlas-glow: rgba(47,107,255,0.35); --atlas-hover-bg: #061F40;
+        }
+        .mock-container { max-width: 600px; margin: 0 auto; padding: 16px 16px 80px; }
+        .section-header { background: var(--atlas-bg); border: 2px solid var(--atlas-border); border-radius: 14px; padding: 16px; margin-bottom: 16px; text-align: center; box-shadow: 0 0 14px var(--atlas-glow); }
+        .section-title { color: var(--atlas-text); font-size: 18px; font-weight: 700; }
+        
+        .mode-container { display: none; }
+        .mode-container.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
+        
+        .input-group { margin-bottom: 14px; }
+        .input-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+        .input-group select, .input-group input { width: 100%; padding: 12px 14px; border: 2px solid var(--option-border); border-radius: 10px; font-size: 14px; background: var(--body-bg); color: var(--text-primary); font-family: 'Noto Sans Bengali','Inter',sans-serif; transition: all 0.3s; }
+        .input-group select:focus, .input-group input:focus { outline: none; border-color: var(--atlas-border); box-shadow: 0 0 8px var(--atlas-glow); }
+        
+        .standard-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+        .standard-chip { flex: 1; min-width: 80px; padding: 12px; border-radius: 10px; border: 2px solid var(--option-border); text-align: center; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.3s; color: var(--text-secondary); background: var(--card-bg); }
+        .standard-chip.active { background: var(--atlas-bg); color: var(--atlas-text); border-color: var(--atlas-border); box-shadow: 0 0 10px var(--atlas-glow); }
+        
+        .count-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+        .count-chip { flex: 1; min-width: 55px; padding: 12px; border-radius: 10px; border: 2px solid var(--option-border); text-align: center; cursor: pointer; font-size: 14px; font-weight: 700; transition: all 0.3s; color: var(--text-secondary); background: var(--card-bg); }
+        .count-chip.active { background: var(--atlas-bg); color: var(--atlas-text); border-color: var(--atlas-border); box-shadow: 0 0 10px var(--atlas-glow); }
+        
+        .start-btn { width: 100%; padding: 16px; background: linear-gradient(135deg,#22C55E,#16A34A); color: #FFF; border: none; border-radius: 12px; font-size: 18px; font-weight: 700; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 16px rgba(34,197,94,0.4); }
+        .start-btn:hover { box-shadow: 0 6px 20px rgba(34,197,94,0.6); transform: translateY(-2px); }
+        .start-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        /* এক্সাম হল */
+        .timer-sticky { position: sticky; top: 56px; background: var(--atlas-bg); border-bottom: 2px solid var(--atlas-border); padding: 10px 16px; display: flex; justify-content: center; gap: 24px; z-index: 98; }
+        .timer-text { color: var(--atlas-text); font-size: 22px; font-weight: 800; font-family: 'Inter', monospace; }
+        .progress-text { color: #22C55E; font-size: 14px; font-weight: 700; }
+        .timer-warning { color: #EF4444 !important; animation: pulse 0.5s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+        
+        .questions-area { padding: 16px; }
+        .mcq-card { background: var(--card-bg); border-radius: 14px; padding: 18px; margin-bottom: 14px; box-shadow: var(--card-shadow); border: 1px solid var(--option-border); }
+        .q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .q-number { font-size: 12px; color: var(--atlas-text); font-weight: 700; }
+        .q-text { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 14px; line-height: 1.6; }
+        .q-text img { max-width: 100%; border-radius: 8px; margin: 8px 0; }
+        .option-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; margin-bottom: 8px; background: var(--option-bg); border: 2px solid var(--option-border); border-radius: 10px; cursor: pointer; font-size: 14px; color: var(--text-primary); transition: all 0.2s; }
+        .option-item:hover:not(.dimmed) { border-color: var(--atlas-border); }
+        .option-item.selected { background: var(--selected-bg); border-color: var(--selected-border); opacity: 1; cursor: default; }
+        .option-item.dimmed { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+        .option-item.correct-reveal { background: var(--correct-bg); border-color: var(--correct-border); }
+        .option-item.wrong-reveal { background: var(--wrong-bg); border-color: var(--wrong-border); }
+        .option-radio { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--text-secondary); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 12px; font-weight: 700; color: var(--text-secondary); }
+        .option-item.selected .option-radio { border-color: var(--selected-border); background: var(--selected-border); color: #FFF; }
+        .option-text { flex: 1; }
+        .lock-icon { font-size: 14px; color: var(--atlas-text); }
+        
+        .submit-fixed { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg,#22C55E,#16A34A); color: #FFF; border: none; padding: 14px 48px; border-radius: 30px; font-size: 18px; font-weight: 700; cursor: pointer; z-index: 100; box-shadow: 0 6px 24px rgba(34,197,94,0.5); }
+        
+        /* রেজাল্ট */
+        .result-wrap { padding: 16px; }
+        .result-card { background: var(--card-bg); border-radius: 14px; padding: 20px; margin-bottom: 14px; border: 1px solid var(--option-border); text-align: center; }
+        .result-big { font-size: 48px; font-weight: 800; color: var(--atlas-text); }
+        .result-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 16px 0; }
+        .result-stat { background: var(--option-bg); padding: 12px; border-radius: 10px; text-align: center; }
+        .result-stat-val { font-size: 24px; font-weight: 700; }
+        .result-stat-label { font-size: 11px; color: var(--text-secondary); }
+        .correct-val { color: #22C55E; } .wrong-val { color: #EF4444; } .skipped-val { color: #F59E0B; }
+        
+        .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid transparent; border-top-color: var(--atlas-text); border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 6px; vertical-align: middle; }
+        @keyframes spin { to{transform:rotate(360deg);} }
+    </style>
+</head>
+<body class="dark-mode">
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-header"><div class="sidebar-logo">ATLAS EXAM</div></div>
+    <nav class="sidebar-menu">
+        <button class="sidebar-item" onclick="navigateTo('profile');closeSidebar();"><span class="icon">👤</span> প্রোফাইল</button>
+        <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();"><span class="icon">🏠</span> হোম</button>
+        <button class="sidebar-item" onclick="goTo('class.html');closeSidebar();"><span class="icon">📚</span> ফ্রি ক্লাস</button>
+        <button class="sidebar-item" onclick="goTo('exam.html');closeSidebar();"><span class="icon">📝</span> ফ্রি এক্সাম</button>
+        <button class="sidebar-item" onclick="goTo('mock-test.html');closeSidebar();"><span class="icon">🎯</span> মক টেস্ট</button>
+        <button class="sidebar-item" onclick="goTo('dashboard.html');closeSidebar();"><span class="icon">❌</span> মাই মিসটেকস</button>
+        <button class="sidebar-item" onclick="goTo('ai.html');closeSidebar();"><span class="icon">🤖</span> ATLAS AI</button>
+        <div class="sidebar-divider"></div>
+        <button class="sidebar-item" onclick="toggleTheme()"><span class="icon" id="sidebarThemeIcon">🌙</span> <span id="sidebarThemeText">ডার্ক মোড</span></button>
+        <button class="sidebar-item" onclick="openWhatsApp()"><span class="icon">💬</span> WhatsApp</button>
+        <button class="sidebar-item" onclick="openTelegram()"><span class="icon">✈️</span> Telegram</button>
+    </nav>
+</aside>
+
+<header class="header">
+    <div class="header-left"><button class="hamburger" onclick="toggleSidebar()">☰</button><div class="logo">ATLAS EXAM</div></div>
+    <div class="header-right"><button class="header-icon" id="themeToggle" onclick="toggleTheme()">🌙</button><button class="header-icon" onclick="goTo('auth.html')">👤</button></div>
+</header>
+
+<main class="main-content">
+<div class="mock-container">
+
+<!-- মোড ১: সিলেকশন -->
+<div class="mode-container active" id="modeSelect">
+    <div class="section-header"><div class="section-title">🎯 আনলিমিটেড মক টেস্ট</div></div>
+    
+    <div class="input-group">
+        <label>📘 সাবজেক্ট *</label>
+        <select id="mockSubject" onchange="loadChapters()"><option value="">— সাবজেক্ট নির্বাচন করুন —</option></select>
+    </div>
+    
+    <div class="input-group">
+        <label>📖 চ্যাপ্টার *</label>
+        <select id="mockChapter" onchange="loadTopics()"><option value="">— প্রথমে সাবজেক্ট নির্বাচন করুন —</option></select>
+    </div>
+    
+    <div class="input-group">
+        <label>📋 টপিক (ঐচ্ছিক)</label>
+        <select id="mockTopic"><option value="">— ঐচ্ছিক —</option></select>
+    </div>
+    
+    <label style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;display:block;">🏷️ স্ট্যান্ডার্ড *</label>
+    <div class="standard-row">
+        <div class="standard-chip active" onclick="selectStandard('medical', this)">🏥 Medical</div>
+        <div class="standard-chip" onclick="selectStandard('varsity', this)">🎓 Varsity</div>
+        <div class="standard-chip" onclick="selectStandard('onushiloni', this)">🟠 Onushiloni</div>
+    </div>
+    
+    <label style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;display:block;">❓ প্রশ্ন সংখ্যা</label>
+    <div class="count-row">
+        <div class="count-chip" onclick="selectCount(25, this)">২৫</div>
+        <div class="count-chip" onclick="selectCount(35, this)">৩৫</div>
+        <div class="count-chip active" onclick="selectCount(50, this)">৫০</div>
+        <div class="count-chip" onclick="selectCount(75, this)">৭৫</div>
+        <div class="count-chip" onclick="selectCount(100, this)">১০০</div>
+    </div>
+    
+    <button class="start-btn" id="startMockBtn" onclick="startMockExam()">▶️ এক্সাম শুরু করুন</button>
+</div>
+
+<!-- মোড ২: এক্সাম হল -->
+<div class="mode-container" id="modeHall">
+    <div class="timer-sticky">
+        <span class="timer-text" id="timerText">৬০:০০</span>
+        <span class="progress-text" id="progressText">📈 ০%</span>
+    </div>
+    <div class="questions-area" id="questionsArea"></div>
+    <button class="submit-fixed" id="submitBtn" onclick="submitMock()">Submit</button>
+</div>
+
+<!-- মোড ৩: রেজাল্ট -->
+<div class="mode-container" id="modeResult">
+    <div class="result-wrap" id="resultContent"></div>
+</div>
+
+</div>
+</main>
+
+<nav class="bottom-nav">
+    <button class="nav-item" onclick="goTo('index.html')"><span class="nav-icon">🏠</span><span>হোম</span></button>
+    <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon">📚</span><span>ক্লাস</span></button>
+    <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon">📝</span><span>এক্সাম</span></button>
+    <button class="nav-item active" onclick="goTo('mock-test.html')"><span class="nav-icon">🎯</span><span>মক</span></button>
+    <button class="nav-item" onclick="goTo('dashboard.html')"><span class="nav-icon">👤</span><span>প্রোফাইল</span></button>
+</nav>
+
+<div class="floating-buttons">
+    <button class="fab fab-whatsapp" onclick="openWhatsApp()">💬</button>
+    <button class="fab fab-telegram" onclick="openTelegram()">✈️</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+var SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
+var isDarkMode = true, isSidebarOpen = false;
+var mockQuestions = [], userAnswers = {}, examTimer = null, examSeconds = 0, totalSeconds = 0, isExamSubmitted = false;
+var selectedStandard = 'medical', selectedCount = 50;
+
+async function safeFetch(url, opts) {
+    opts = opts || {}; opts.headers = opts.headers || {};
+    opts.headers['apikey'] = SUPABASE_KEY; opts.headers['Authorization'] = 'Bearer ' + SUPABASE_KEY;
+    if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') opts.headers['Content-Type'] = 'application/json';
+    try { var res = await fetch(url, opts); var text = await res.text(); if (!text || text.trim() === '') return []; var data = JSON.parse(text); if (!res.ok) throw new Error(data.message || 'API Error'); return data; }
+    catch(e) { console.error('❌', e.message); throw e; }
+}
+
+function loadTheme() { var s = localStorage.getItem('atlas-theme'); isDarkMode = s !== 'light'; document.body.classList.toggle('dark-mode', isDarkMode); }
+function toggleTheme() { isDarkMode = !isDarkMode; document.body.classList.toggle('dark-mode', isDarkMode); localStorage.setItem('atlas-theme', isDarkMode ? 'dark' : 'light'); showToast(isDarkMode ? '🌙 ডার্ক' : '☀️ লাইট'); }
+function toggleSidebar() { isSidebarOpen = !isSidebarOpen; document.getElementById('sidebarOverlay').classList.toggle('active', isSidebarOpen); document.getElementById('sidebar').classList.toggle('active', isSidebarOpen); }
+function closeSidebar() { isSidebarOpen = false; document.getElementById('sidebarOverlay').classList.remove('active'); document.getElementById('sidebar').classList.remove('active'); }
+function goTo(u) { window.location.href = u; }
+function navigateTo(p) { var r = { 'home':'index.html', 'profile':'dashboard.html', 'class':'class.html', 'exam':'exam.html' }; goTo(r[p] || 'index.html'); }
+function openWhatsApp() { window.open('https://wa.me/8801999681290', '_blank'); }
+function openTelegram() { window.open('https://t.me/rafi_somc', '_blank'); }
+function showToast(m, d) { d = d || 2500; var t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(function(){ t.classList.remove('show'); }, d); }
+
+function selectStandard(std, el) { selectedStandard = std; document.querySelectorAll('.standard-chip').forEach(function(c){ c.classList.remove('active'); }); el.classList.add('active'); }
+function selectCount(cnt, el) { selectedCount = cnt; document.querySelectorAll('.count-chip').forEach(function(c){ c.classList.remove('active'); }); el.classList.add('active'); }
+
+// ========== ড্রপডাউন লোড ==========
+async function loadSubjects() {
+    try {
+        var data = await safeFetch(SUPABASE_URL + '/rest/v1/mock_questions?select=subject');
+        var subjects = [...new Set(data.map(function(d){ return d.subject; }))];
+        var sel = document.getElementById('mockSubject');
+        sel.innerHTML = '<option value="">— সাবজেক্ট নির্বাচন করুন —</option>';
+        subjects.forEach(function(s){ sel.innerHTML += '<option value="'+s+'">'+s+'</option>'; });
+    } catch(e) { console.error(e); }
+}
+
+async function loadChapters() {
+    var subject = document.getElementById('mockSubject').value;
+    var chapterSel = document.getElementById('mockChapter');
+    if (!subject) { chapterSel.innerHTML = '<option value="">— প্রথমে সাবজেক্ট নির্বাচন করুন —</option>'; return; }
+    try {
+        var data = await safeFetch(SUPABASE_URL + '/rest/v1/mock_questions?subject=eq.' + encodeURIComponent(subject) + '&select=chapter');
+        var chapters = [...new Set(data.map(function(d){ return d.chapter; }))];
+        chapterSel.innerHTML = '<option value="">— চ্যাপ্টার নির্বাচন করুন —</option>';
+        chapters.forEach(function(c){ chapterSel.innerHTML += '<option value="'+c+'">'+c+'</option>'; });
+    } catch(e) { console.error(e); }
+}
+
+async function loadTopics() {
+    var subject = document.getElementById('mockSubject').value;
+    var chapter = document.getElementById('mockChapter').value;
+    var topicSel = document.getElementById('mockTopic');
+    if (!subject || !chapter) { topicSel.innerHTML = '<option value="">— ঐচ্ছিক —</option>'; return; }
+    try {
+        var data = await safeFetch(SUPABASE_URL + '/rest/v1/mock_questions?subject=eq.' + encodeURIComponent(subject) + '&chapter=eq.' + encodeURIComponent(chapter) + '&select=topic');
+        var topics = [...new Set(data.map(function(d){ return d.topic; }).filter(function(t){ return t; }))];
+        topicSel.innerHTML = '<option value="">— ঐচ্ছিক —</option>';
+        topics.forEach(function(t){ topicSel.innerHTML += '<option value="'+t+'">'+t+'</option>'; });
+    } catch(e) { console.error(e); }
+}
+
+// ========== এক্সাম শুরু ==========
+async function startMockExam() {
+    var subject = document.getElementById('mockSubject').value;
+    var chapter = document.getElementById('mockChapter').value;
+    var topic = document.getElementById('mockTopic').value;
+    
+    if (!subject || !chapter) { showToast('⚠️ সাবজেক্ট ও চ্যাপ্টার নির্বাচন করুন'); return; }
+    
+    var btn = document.getElementById('startMockBtn');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> প্রশ্ন লোড হচ্ছে...';
+    
+    try {
+        var query = 'subject=eq.' + encodeURIComponent(subject) + '&chapter=eq.' + encodeURIComponent(chapter) + '&standard=eq.' + selectedStandard;
+        if (topic) query += '&topic=eq.' + encodeURIComponent(topic);
+        query += '&select=*';
+        
+        var data = await safeFetch(SUPABASE_URL + '/rest/v1/mock_questions?' + query);
+        
+        if (!data || data.length === 0) {
+            // ডেমো প্রশ্ন
+            mockQuestions = generateDemoQuestions(selectedCount);
+            showToast('⚠️ ডাটাবেসে প্রশ্ন নেই — ডেমো প্রশ্ন');
+        } else {
+            var allQuestions = [];
+            data.forEach(function(d){ var qs = JSON.parse(d.questions_json || '[]'); allQuestions = allQuestions.concat(qs); });
+            allQuestions.sort(function(){ return Math.random() - 0.5; });
+            mockQuestions = allQuestions.slice(0, selectedCount);
+        }
+        
+        startExamHall();
+    } catch(e) {
+        mockQuestions = generateDemoQuestions(selectedCount);
+        showToast('⚠️ ডেমো প্রশ্ন লোড');
+        startExamHall();
+    }
+    btn.disabled = false; btn.innerHTML = '▶️ এক্সাম শুরু করুন';
+}
+
+function generateDemoQuestions(count) {
+    var qBank = [
+        { question_text: 'পানির রাসায়নিক সংকেত কী?', option1: 'H₂O', option2: 'CO₂', option3: 'NaCl', option4: 'O₂', option5: '—', answer_index: 1 },
+        { question_text: 'বাংলাদেশের রাজধানী?', option1: 'চট্টগ্রাম', option2: 'ঢাকা', option3: 'খুলনা', option4: 'রাজশাহী', option5: '—', answer_index: 2 },
+        { question_text: 'সালোকসংশ্লেষণ কোথায়?', option1: 'মাইটোকন্ড্রিয়া', option2: 'ক্লোরোপ্লাস্ট', option3: 'নিউক্লিয়াস', option4: 'রাইবোজোম', option5: '—', answer_index: 2 },
+        { question_text: 'DNA পূর্ণরূপ?', option1: 'Deoxyribonucleic Acid', option2: 'Ribonucleic Acid', option3: 'Amino Acid', option4: 'Fatty Acid', option5: '—', answer_index: 1 },
+        { question_text: 'নিকটতম গ্রহ?', option1: 'মঙ্গল', option2: 'শুক্র', option3: 'বুধ', option4: 'বৃহস্পতি', option5: 'শনি', answer_index: 2 },
+        { question_text: 'কম্পিউটারের মস্তিষ্ক?', option1: 'RAM', option2: 'CPU', option3: 'Hard Disk', option4: 'Monitor', option5: 'Mouse', answer_index: 2 },
+        { question_text: 'আলোর বেগ?', option1: '৩×১০⁸ m/s', option2: '৩×১০⁶', option3: '৩×১০⁴', option4: '৩×১০²', option5: '—', answer_index: 1 },
+        { question_text: 'মানবদেহে হাড়?', option1: '১০৬', option2: '২০৬', option3: '৩০৬', option4: '৪০৬', option5: '—', answer_index: 2 },
+        { question_text: 'বাংলাদেশের মুদ্রা?', option1: 'টাকা', option2: 'রুপি', option3: 'ডলার', option4: 'ইউরো', option5: '—', answer_index: 1 },
+        { question_text: 'রক্ত লাল কেন?', option1: 'হিমোগ্লোবিন', option2: 'ক্লোরোফিল', option3: 'মেলানিন', option4: 'কেরাটিন', option5: '—', answer_index: 1 }
+    ];
+    var qs = [];
+    for (var i = 0; i < count; i++) { var q = qBank[i % qBank.length]; qs.push({ id: i+1, question_text: q.question_text, option1: q.option1, option2: q.option2, option3: q.option3, option4: q.option4, option5: q.option5, answer_index: q.answer_index }); }
+    return qs;
+}
+
+function startExamHall() {
+    userAnswers = {}; isExamSubmitted = false;
+    totalSeconds = Math.ceil(selectedCount / 2) * 60; examSeconds = totalSeconds;
+    
+    var qHTML = '';
+    mockQuestions.forEach(function(q, i){
+        qHTML += '<div class="mcq-card" id="qCard'+q.id+'"><div class="q-header"><span class="q-number">প্রশ্ন '+(i+1)+'/'+mockQuestions.length+'</span></div>';
+        qHTML += '<div class="q-text">'+q.question_text+'</div>';
+        [q.option1, q.option2, q.option3, q.option4, q.option5].forEach(function(opt, oi){
+            if (opt && opt !== '—') {
+                var labels = ['ক','খ','গ','ঘ','ঙ'];
+                qHTML += '<div class="option-item" id="opt'+q.id+'_'+(oi+1)+'" onclick="selectOption('+q.id+','+(oi+1)+',this)" data-qid="'+q.id+'"><span class="option-radio">'+labels[oi]+'</span><span class="option-text">'+opt+'</span><span class="lock-icon" id="lock'+q.id+'_'+(oi+1)+'" style="display:none;">🔒</span></div>';
+            }
+        });
+        qHTML += '</div>';
+    });
+    document.getElementById('questionsArea').innerHTML = qHTML;
+    
+    document.getElementById('modeSelect').classList.remove('active');
+    document.getElementById('modeHall').classList.add('active');
+    document.getElementById('modeResult').classList.remove('active');
+    
+    document.getElementById('submitBtn').style.display = 'block';
+    startTimer(); updateProgress();
+}
+
+function selectOption(qid, oid, el) { if (isExamSubmitted || userAnswers[qid]) return; userAnswers[qid] = oid; var all = document.querySelectorAll('[data-qid="'+qid+'"]'); all.forEach(function(o){ o.classList.remove('selected'); o.classList.add('dimmed'); }); el.classList.add('selected'); el.classList.remove('dimmed'); document.getElementById('lock'+qid+'_'+oid).style.display = 'inline'; updateProgress(); }
+function startTimer() { stopTimer(); updateTimerDisplay(); examTimer = setInterval(function(){ examSeconds--; updateTimerDisplay(); if (examSeconds <= 0) submitMock(); }, 1000); }
+function stopTimer() { if (examTimer) { clearInterval(examTimer); examTimer = null; } }
+function updateTimerDisplay() { var m = Math.floor(examSeconds/60), s = examSeconds%60; var t = document.getElementById('timerText'); t.textContent = String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); if (examSeconds <= 60) t.classList.add('timer-warning'); else t.classList.remove('timer-warning'); }
+function updateProgress() { var t = mockQuestions.length, a = Object.keys(userAnswers).length; document.getElementById('progressText').textContent = '📈 '+Math.round(a/t*100)+'%'; }
+
+function submitMock() {
+    if (isExamSubmitted) return; isExamSubmitted = true; stopTimer();
+    document.getElementById('submitBtn').style.display = 'none';
+    var c = 0, w = 0, s = 0;
+    mockQuestions.forEach(function(q){ var ua = userAnswers[q.id]; if (!ua) s++; else if (ua === q.answer_index) c++; else w++; });
+    showResult(c, w, s);
+    document.getElementById('modeHall').classList.remove('active');
+    document.getElementById('modeResult').classList.add('active');
+}
+
+function showResult(c, w, s) {
+    var t = mockQuestions.length, neg = w * 0.25, fs = c - neg; if (fs < 0) fs = 0;
+    var html = '<div class="result-card"><div style="font-size:16px;">ফাইনাল স্কোর</div><div class="result-big">'+fs.toFixed(2)+'</div><div>'+t+' এর মধ্যে</div></div>';
+    html += '<div class="result-grid"><div class="result-stat"><div class="result-stat-val correct-val">✅ '+c+'</div><div class="result-stat-label">সঠিক</div></div><div class="result-stat"><div class="result-stat-val wrong-val">❌ '+w+'</div><div class="result-stat-label">ভুল</div></div><div class="result-stat"><div class="result-stat-val skipped-val">⏭️ '+s+'</div><div class="result-stat-label">স্কিপ</div></div></div>';
+    html += '<button class="start-btn" onclick="retakeMock()" style="background:var(--atlas-bg);color:var(--atlas-text);border:2px solid var(--atlas-border);">🔄 আবার দিন</button>';
+    html += '<button class="start-btn" onclick="goTo(\'index.html\')" style="background:var(--btn-bg);color:var(--btn-text);margin-top:8px;">🏠 হোম</button>';
+    document.getElementById('resultContent').innerHTML = html;
+}
+
+function retakeMock() {
+    document.getElementById('modeSelect').classList.add('active');
+    document.getElementById('modeHall').classList.remove('active');
+    document.getElementById('modeResult').classList.remove('active');
+    userAnswers = {}; isExamSubmitted = false;
+}
+
+document.addEventListener('DOMContentLoaded', function() { loadTheme(); loadSubjects(); });
+</script>
+</body>
+</html>
