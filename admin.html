@@ -350,7 +350,56 @@ async function loadClasses() { try { var data = await safeFetch(SUPABASE_URL + '
 
 // ========== EXAM ==========
 function toggleExamFields() { var t = document.getElementById('examType').value; document.getElementById('examSubTypeField').style.display = (t === 'medical') ? 'block' : 'none'; document.getElementById('examBoardYear').style.display = (t === 'board' || t === 'varsity') ? 'grid' : 'none'; document.getElementById('examWriterField').style.display = (t === 'onushiloni') ? 'block' : 'none'; }
-
+function saveExam() {
+    if (!examCSVData || examCSVData.length === 0) { showToast('⚠️ CSV আপলোড করুন'); return; }
+    var d = {
+        title: document.getElementById('examSubject').value.trim() + ' - ' + document.getElementById('examChapter').value.trim(),
+        subject: document.getElementById('examSubject').value.trim(),
+        chapter: document.getElementById('examChapter').value.trim(),
+        exam_type: document.getElementById('examType').value,
+        sub_type: document.getElementById('examSubType').value || null,
+        board: document.getElementById('examBoard').value.trim() || null,
+        year: document.getElementById('examYear').value.trim() || null,
+        writer: document.getElementById('examWriter').value.trim() || null,
+        start_time: document.getElementById('examStart').value,
+        end_time: document.getElementById('examEnd').value,
+        total_marks: examCSVData.length,
+        duration_minutes: Math.ceil(examCSVData.length / 2),
+        created_by: currentUser.phone
+    };
+    if (!d.subject || !d.chapter || !d.exam_type) { showToast('⚠️ পূরণ করুন'); return; }
+    
+    var eid = document.getElementById('examEditId').value;
+    var method = eid ? 'PATCH' : 'POST';
+    var url = SUPABASE_URL + '/rest/v1/exams' + (eid ? '?id=eq.' + eid : '');
+    
+    safeFetch(url, { method: method, body: JSON.stringify(d) }).then(function(res) {
+        var examId = eid || (Array.isArray(res) ? res[0].id : (res && res.id ? res.id : null));
+        if (examId && !eid) {
+            var qs = examCSVData.map(function(q) {
+                return {
+                    exam_id: examId,
+                    question_text: q.questions,
+                    option1: q.option1,
+                    option2: q.option2,
+                    option3: q.option3,
+                    option4: q.option4,
+                    option5: q.option5,
+                    answer_index: q.answer,
+                    explanation: q.explanation,
+                    type: q.type || 1,
+                    section: q.section || 1
+                };
+            });
+            safeFetch(SUPABASE_URL + '/rest/v1/questions', { method: 'POST', body: JSON.stringify(qs) });
+        }
+        alert('📋 লিংক: ' + window.location.origin + '/exam.html?id=' + examId);
+        clearExamForm();
+        loadExams();
+    }).catch(function(e) {
+        alert('এরর: ' + e.message);
+    });
+}
 function clearExamForm() { ['examSubject','examChapter','examType','examSubType','examBoard','examYear','examWriter','examStart','examEnd','examEditId'].forEach(function(id){ document.getElementById(id).value = ''; }); examCSVData = null; document.getElementById('examCSVName').textContent = ''; document.getElementById('examSubTypeField').style.display = 'none'; document.getElementById('examBoardYear').style.display = 'none'; document.getElementById('examWriterField').style.display = 'none'; }
 async function loadExams() {
     try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/exams?select=*&order=created_at.desc&limit=100');
