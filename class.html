@@ -262,22 +262,7 @@ function playVideo(link, title, classType, classNote, time) {
         window.open(link, '_blank');
     } else {
        if (videoId) {
-    document.getElementById('videoPlayer').innerHTML = '<iframe src="https://www.youtube.com/embed/' + videoId + '?enablejsapi=1&rel=0" id="ytFrame" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>';
-    setTimeout(function() {
-        if (window.YT && window.YT.Player) {
-            ytPlayer = new YT.Player('ytFrame');
-        } else {
-            var tag = document.createElement('script');
-            tag.src = 'https://www.youtube.com/iframe_api';
-            document.head.appendChild(tag);
-            window.onYouTubeIframeAPIReady = function() {
-                ytPlayer = new YT.Player('ytFrame');
-            };
-        }
-    }, 500);
-} else {
-    document.getElementById('videoPlayer').innerHTML = '<p style="color:var(--text2);text-align:center;padding:30px;">⚠️ ভিডিও লিংক সঠিক নয়</p>';
-}
+  
         setTimeout(() => { if (window.YT) ytPlayer = new YT.Player('ytFrame'); else { const tag = document.createElement('script'); tag.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(tag); window.onYouTubeIframeAPIReady = () => { ytPlayer = new YT.Player('ytFrame'); }; } }, 500);
     }
     
