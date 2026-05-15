@@ -224,28 +224,22 @@
 </div>
 
 <!-- অনার -->
+<!-- অনার প্রোফাইল -->
 <div class="owner-section">
-    <!-- উপরে নাম -->
     <div class="owner-name-top" id="ownerNameTop">ATLAS EXAM</div>
-    
-    <!-- ফ্লিপ কার্ড -->
     <div class="flip-card-owner" id="flipCardOwner" onclick="this.classList.toggle('flipped')">
         <div class="flip-card-inner-owner">
-            <!-- সামনে: ছবি -->
             <div class="flip-front-owner">
                 <div class="owner-photo-wrapper">
                     <div class="owner-glow-box"></div>
                     <img src="" class="owner-photo-box" id="ownerPhoto" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" alt="Owner">
-                    <div id="ownerPhotoFallback" style="display:flex;width:120px;height:120px;border-radius:14px;background:var(--atlas-bg);color:var(--atlas-text);align-items:center;justify-content:center;font-size:32px;border:3px solid var(--atlas-border);position:relative;z-index:2;">👤</div>
+                    <div id="ownerPhotoFallback" style="display:flex;width:120px;height:120px;border-radius:14px;background:var(--atlas-bg);color:var(--atlas-text);align-items:center;justify-content:center;font-size:36px;border:3px solid var(--atlas-border);position:relative;z-index:2;">👤</div>
                 </div>
             </div>
-            <!-- পিছনে: বিস্তারিত -->
-            <div class="flip-back-owner" id="ownerInfoBack">
-                📞 ০১৭৫৪৩৬৫৪০৩<br>
-                ✉️ hamza818483@gmail.com
-            </div>
+            <div class="flip-back-owner" id="ownerInfoBack">📞 ০১৭৫৪৩৬৫৪০৩</div>
         </div>
     </div>
+</div>
 </div>
 </main>
 
@@ -331,6 +325,25 @@ function loadOwnerPhoto() {
 }
 
 document.addEventListener('DOMContentLoaded', function() { loadTheme(); setupCountdown(); checkAdmin(); loadOwnerPhoto(); });
+loadOwnerInfo();
+function loadOwnerInfo() {
+    var photo = localStorage.getItem('owner_photo');
+    var name = localStorage.getItem('owner_name');
+    var info = localStorage.getItem('owner_info');
+    
+    if (name) {
+        document.getElementById('ownerNameTop').textContent = name;
+    }
+    if (info) {
+        document.getElementById('ownerInfoBack').innerHTML = info.replace(/\n/g, '<br>');
+    }
+    if (photo) {
+        var img = document.getElementById('ownerPhoto');
+        img.src = photo;
+        img.style.display = 'block';
+        document.getElementById('ownerPhotoFallback').style.display = 'none';
+    }
+}
 </script>
 </body>
 </html>
