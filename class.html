@@ -200,6 +200,7 @@ async function loadClasses() {
         }
         
         allClasses = JSON.parse(text);
+        alert('Parsed classes: ' + allClasses.length + '\nFirst subject: ' + (allClasses[0]?.subject || 'none'));
         
         if (!allClasses.length) { 
             document.getElementById('subjectList').innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">কোনো ক্লাস নেই</p>'; 
