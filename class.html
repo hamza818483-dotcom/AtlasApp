@@ -185,6 +185,7 @@ function openWA() { window.open('https://wa.me/8801999681290', '_blank'); }
 function openTG() { window.open('https://t.me/rafi_somc', '_blank'); }
 
 async function loadClasses() {
+   alert('loadClasses called!');  // ← এটা যোগ করুন
     try {
         const url = `${SUPABASE_URL}/rest/v1/classes?select=*&order=created_at.desc&limit=100`;
         const res = await fetch(url, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
