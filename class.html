@@ -251,7 +251,10 @@ function openSubject(subj) {
 function showParts(ch, parts) {
     currentChapter = ch;
     alert('showParts called! Parts count: ' + parts.length + '\nFirst part link: ' + (parts[0]?.youtube_link || 'none'));
-      // 🔽 এই ৪ লাইন নতুন যোগ করুন
+    function showParts(ch, parts) {
+    currentChapter = ch;
+    alert('showParts called! Parts count: ' + parts.length + '\nFirst part link: ' + (parts[0]?.youtube_link || 'none'));
+    
     if (parts && parts.length > 0) {
         var p = parts[0];
         playVideo(p.youtube_link, ch, p.class_type || 'website', p.class_note || '', p.start_time || '');
