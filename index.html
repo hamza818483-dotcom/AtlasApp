@@ -8,139 +8,142 @@
     <style>
         :root {
             --atlas-bg: #03152F; --atlas-border: #2F6BFF; --atlas-text: #6FA8FF;
-            --atlas-glow: rgba(47,107,255,0.35); --atlas-glow-strong: rgba(47,107,255,0.5);
-            --atlas-hover-bg: #061F40; --atlas-hover-text: #8DBEFF;
+            --atlas-glow: rgba(47,107,255,0.35); --atlas-hover-bg: #061F40;
             --cd-bg: #1A0A0A; --cd-border: #EF4444; --cd-text: #FCA5A5;
-            --cd-glow: rgba(239,68,68,0.35); --cd-glow-strong: rgba(239,68,68,0.5);
+            --cd-glow: rgba(239,68,68,0.4);
         }
-        .dark-mode { --body-bg:#0A0A0F; --text-primary:#F0F0F0; --text-secondary:#B0B0B0; --card-bg:#1C1C1E; --social-bg:#2D2D2D; --social-hover:#3D3D3D; }
-        body:not(.dark-mode) { --body-bg:#F0F4FF; --text-primary:#1E293B; --text-secondary:#475569; --card-bg:#FFFFFF; --social-bg:#E2E8F0; --social-hover:#CBD5E1; }
+        .dark-mode { --body-bg:#0A0A0F; --text-primary:#F0F0F0; --text-secondary:#B0B0B0; --card-bg:#1C1C1E; --social-bg:#2D2D2D; --option-border:#3A3A3A; }
+        body:not(.dark-mode) { --body-bg:#F0F4FF; --text-primary:#1E293B; --text-secondary:#475569; --card-bg:#FFFFFF; --social-bg:#E2E8F0; --option-border:#CBD5E1; }
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:'Inter','Noto Sans Bengali',sans-serif; background:var(--body-bg); color:var(--text-primary); min-height:100vh; transition:all 0.3s; padding-top:56px; padding-bottom:60px; }
         
-        .header { position:fixed; top:0; left:0; right:0; height:56px; background:var(--atlas-bg); border-bottom:2px solid var(--atlas-border); display:flex; align-items:center; justify-content:space-between; padding:0 16px; z-index:1000; box-shadow:0 2px 12px rgba(0,0,0,0.3); }
-        .header-left { display:flex; align-items:center; gap:12px; }
-        .hamburger { background:none; border:none; color:var(--atlas-text); font-size:24px; cursor:pointer; padding:4px 8px; border-radius:8px; }
+        .header { position:fixed; top:0; left:0; right:0; height:56px; background:var(--atlas-bg); border-bottom:2px solid var(--atlas-border); display:flex; align-items:center; justify-content:space-between; padding:0 16px; z-index:1000; }
+        .hamburger { background:none; border:none; color:var(--atlas-text); font-size:24px; cursor:pointer; }
         .logo { font-size:20px; font-weight:800; color:var(--atlas-text); text-shadow:0 0 12px var(--atlas-glow); }
-        .header-right { display:flex; align-items:center; gap:8px; }
         .header-icon { background:none; border:1px solid var(--atlas-border); color:var(--atlas-text); width:36px; height:36px; border-radius:50%; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
         
-        .sidebar-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:2000; opacity:0; visibility:hidden; transition:all 0.3s; }
+        .sidebar-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:2000; opacity:0; visibility:hidden; transition:0.3s; }
         .sidebar-overlay.active { opacity:1; visibility:visible; }
-        .sidebar { position:fixed; top:0; left:-280px; width:280px; height:100%; background:var(--card-bg); z-index:2001; overflow-y:auto; transition:left 0.3s; box-shadow:4px 0 20px rgba(0,0,0,0.3); }
+        .sidebar { position:fixed; top:0; left:-280px; width:280px; height:100%; background:var(--card-bg); z-index:2001; overflow-y:auto; transition:0.3s; }
         .sidebar.active { left:0; }
-        .sidebar-header { background:var(--atlas-bg); padding:20px 16px; text-align:center; border-bottom:2px solid var(--atlas-border); }
+        .sidebar-header { background:var(--atlas-bg); padding:20px; text-align:center; border-bottom:2px solid var(--atlas-border); }
         .sidebar-logo { font-size:20px; font-weight:800; color:var(--atlas-text); }
-        .sidebar-menu { padding:8px 0; }
-        .sidebar-item { display:flex; align-items:center; gap:12px; padding:14px 20px; color:var(--text-primary); border:none; background:none; width:100%; text-align:left; font-size:15px; font-weight:500; cursor:pointer; font-family:'Inter','Noto Sans Bengali',sans-serif; }
-        .sidebar-item:hover { background:var(--option-bg, #262626); }
-        .sidebar-item .icon { font-size:20px; width:28px; text-align:center; }
-        .sidebar-divider { height:1px; background:var(--divider, #2D2D2D); margin:8px 0; }
+        .sidebar-item { display:flex; align-items:center; gap:12px; padding:14px 20px; color:var(--text-primary); border:none; background:none; width:100%; text-align:left; font-size:15px; cursor:pointer; }
+        .sidebar-divider { height:1px; background:var(--option-border); margin:8px 0; }
         
         .bottom-nav { position:fixed; bottom:0; left:0; right:0; height:60px; background:var(--atlas-bg); border-top:2px solid var(--atlas-border); display:flex; align-items:center; justify-content:space-around; z-index:1000; }
-        .nav-item { display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:none; color:var(--atlas-text); font-size:10px; font-weight:500; cursor:pointer; padding:6px 10px; border-radius:8px; opacity:0.7; font-family:'Noto Sans Bengali','Inter',sans-serif; }
+        .nav-item { display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:none; color:var(--atlas-text); font-size:10px; cursor:pointer; padding:6px 10px; border-radius:8px; opacity:0.7; }
         .nav-item.active { opacity:1; color:#FFF; background:rgba(47,107,255,0.3); }
         .nav-item .nav-icon { font-size:22px; }
         
         .floating-buttons { position:fixed; bottom:80px; right:16px; display:flex; flex-direction:column; gap:10px; z-index:999; }
-        .fab { width:46px; height:46px; border-radius:50%; border:none; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#FFF; box-shadow:0 4px 14px rgba(0,0,0,0.3); }
-        .fab-whatsapp { background:#25D366; }
-        .fab-telegram { background:#0088CC; }
+        .fab { width:46px; height:46px; border-radius:50%; border:none; font-size:20px; cursor:pointer; color:#FFF; }
+        .fab-whatsapp { background:#25D366; } .fab-telegram { background:#0088CC; }
         
-        .toast { position:fixed; top:70px; left:50%; transform:translateX(-50%); background:var(--atlas-bg); color:var(--atlas-text); border:2px solid var(--atlas-border); padding:12px 24px; border-radius:10px; font-size:14px; font-weight:600; z-index:3000; opacity:0; transition:opacity 0.3s; pointer-events:none; }
+        .toast { position:fixed; top:70px; left:50%; transform:translateX(-50%); background:var(--atlas-bg); color:var(--atlas-text); border:2px solid var(--atlas-border); padding:12px 24px; border-radius:10px; z-index:3000; opacity:0; transition:0.3s; pointer-events:none; }
         .toast.show { opacity:1; }
         
         .main-container { max-width:500px; margin:0 auto; padding:16px 16px 32px; }
         
-        /* কাউন্টডাউন — রেডিশ */
-        .countdown-card { background:var(--cd-bg); border:2px solid var(--cd-border); border-radius:16px; padding:24px 20px; margin-bottom:20px; text-align:center; position:relative; overflow:hidden; box-shadow:0 0 20px var(--cd-glow),0 0 40px rgba(239,68,68,0.1),0 8px 32px rgba(0,0,0,0.3); animation:pulseRed 3s ease-in-out infinite; }
-        .countdown-card::before { content:''; position:absolute; top:0; left:0; right:0; bottom:0; border-radius:16px; background:linear-gradient(135deg,rgba(239,68,68,0.06) 0%,rgba(239,68,68,0) 50%); pointer-events:none; }
-        @keyframes pulseRed { 0%,100%{box-shadow:0 0 20px var(--cd-glow),0 0 40px rgba(239,68,68,0.1);} 50%{box-shadow:0 0 30px var(--cd-glow-strong),0 0 50px rgba(239,68,68,0.2);} }
-        .countdown-topic { color:var(--cd-text); font-size:20px; font-weight:700; margin-bottom:4px; }
+        /* কাউন্টডাউন — প্রিমিয়াম */
+        .countdown-card { background:var(--cd-bg); border:2px solid var(--cd-border); border-radius:16px; padding:24px 20px; margin-bottom:20px; text-align:center; position:relative; box-shadow:0 0 24px var(--cd-glow),0 0 48px rgba(239,68,68,0.15); animation:pulseRed 2.5s ease-in-out infinite; }
+        @keyframes pulseRed { 0%,100%{box-shadow:0 0 24px var(--cd-glow);} 50%{box-shadow:0 0 36px rgba(239,68,68,0.6),0 0 60px rgba(239,68,68,0.2);} }
+        .countdown-topic { font-size:24px; font-weight:800; background:linear-gradient(135deg,#FFFFFF,#FBBF24); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:4px; }
         .countdown-subtopic { color:var(--cd-text); font-size:13px; opacity:0.7; margin-bottom:16px; }
-        .countdown-timer { color:var(--cd-text); font-size:34px; font-weight:800; letter-spacing:3px; text-shadow:0 0 14px rgba(252,165,165,0.5); }
+        .countdown-timer-wrap { display:flex; align-items:center; justify-content:center; gap:12px; }
+        .countdown-clock { font-size:36px; animation:rotateClock 60s linear infinite; }
+        @keyframes rotateClock { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+        .countdown-timer { color:var(--cd-text); font-size:36px; font-weight:800; letter-spacing:3px; text-shadow:0 0 14px rgba(252,165,165,0.5); }
         .countdown-labels { color:var(--cd-text); font-size:11px; opacity:0.6; display:flex; justify-content:center; gap:22px; margin-top:4px; }
         
         /* বাটন */
         .home-buttons { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px; }
-        .home-btn { background:var(--atlas-bg); color:var(--atlas-text); border:2px solid var(--atlas-border); border-radius:12px; padding:18px 10px; font-size:14px; font-weight:600; text-align:center; cursor:pointer; transition:all 0.3s; box-shadow:0 0 10px var(--atlas-glow),0 4px 16px rgba(0,0,0,0.2); text-shadow:0 0 6px rgba(111,168,255,0.2); display:flex; flex-direction:column; align-items:center; gap:6px; }
-        .home-btn:hover { background:var(--atlas-hover-bg); border-color:#4D82FF; color:var(--atlas-hover-text); box-shadow:0 0 22px var(--atlas-glow-strong); transform:translateY(-2px); }
+        .home-btn { background:var(--atlas-bg); color:var(--atlas-text); border:2px solid var(--atlas-border); border-radius:12px; padding:18px 10px; font-size:14px; font-weight:600; text-align:center; cursor:pointer; transition:all 0.3s; box-shadow:0 0 10px var(--atlas-glow); display:flex; flex-direction:column; align-items:center; gap:6px; }
+        .home-btn:hover { background:var(--atlas-hover-bg); transform:translateY(-2px); }
         .home-btn-full { grid-column:1/-1; }
         .home-btn .btn-icon { font-size:26px; }
         .home-btn .btn-text { font-size:12px; line-height:1.3; }
+        .home-btn.admin-btn { background:#1A0A0A; border-color:#EF4444; color:#FCA5A5; }
         
-        .home-btn.admin-btn { background:#1A0A0A; border-color:#EF4444; color:#FCA5A5; box-shadow:0 0 10px rgba(239,68,68,0.35); }
-        .home-btn.admin-btn:hover { background:#2E1A1A; border-color:#EF4444; color:#FCA5A5; box-shadow:0 0 22px rgba(239,68,68,0.5); }
+        .social-row { display:flex; justify-content:center; gap:14px; margin-bottom:24px; }
+        .social-btn { background:var(--social-bg); color:var(--text-secondary); text-decoration:none; width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; }
         
-        /* সোশ্যাল */
-        .social-row { display:flex; justify-content:center; gap:14px; margin-bottom:24px; flex-wrap:wrap; }
-        .social-btn { background:var(--social-bg); color:var(--text-secondary); text-decoration:none; width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; transition:all 0.3s; }
-        .social-btn:hover { background:var(--atlas-border); color:#FFF; box-shadow:0 0 14px var(--atlas-glow); transform:translateY(-2px); }
-        
-        /* অনার ফ্লিপ কার্ড */
+        /* ফ্লিপ কার্ড */
         .owner-section { display:flex; justify-content:center; margin-bottom:24px; }
         .flip-card { width:100px; height:140px; perspective:1000px; cursor:pointer; }
-        .flip-card-inner { position:relative; width:100%; height:100%; transition:transform 0.6s; transform-style:preserve-3d; }
+        .flip-card-inner { position:relative; width:100%; height:100%; transition:0.6s; transform-style:preserve-3d; }
         .flip-card.flipped .flip-card-inner { transform:rotateY(180deg); }
         .flip-card-front, .flip-card-back { position:absolute; width:100%; height:100%; backface-visibility:hidden; border-radius:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
         .flip-card-front { background:var(--atlas-bg); border:2px solid var(--atlas-border); }
-        .flip-card-back { background:var(--card-bg); border:2px solid var(--atlas-border); transform:rotateY(180deg); padding:10px; text-align:center; font-size:11px; color:var(--text-primary); }
-        .owner-photo { width:70px; height:70px; border-radius:50%; object-fit:cover; border:3px solid var(--atlas-border); margin-bottom:8px; }
-        .owner-glow-ring { position:absolute; top:-6px; left:-6px; width:calc(100% + 12px); height:calc(100% + 12px); border-radius:50%; border:3px solid transparent; border-top-color:var(--atlas-border); border-right-color:var(--atlas-border); animation:rotateGlow 2s linear infinite; z-index:1; }
-        @keyframes rotateGlow { 0%{transform:rotate(0deg);box-shadow:0 0 10px var(--atlas-glow);} 50%{box-shadow:0 0 22px var(--atlas-glow-strong);} 100%{transform:rotate(360deg);box-shadow:0 0 10px var(--atlas-glow);} }
+        .flip-card-back { background:var(--card-bg); border:2px solid var(--atlas-border); transform:rotateY(180deg); padding:10px; text-align:center; font-size:11px; }
+        .owner-photo { width:70px; height:70px; border-radius:50%; object-fit:cover; border:3px solid var(--atlas-border); }
+        .owner-glow-ring { position:absolute; top:-6px; left:-6px; width:calc(100% + 12px); height:calc(100% + 12px); border-radius:50%; border:3px solid transparent; border-top-color:var(--atlas-border); animation:rotateGlow 2s linear infinite; }
+        @keyframes rotateGlow { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
+        
+        /* মোডাল */
+        .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:3000; display:none; align-items:center; justify-content:center; }
+        .modal-overlay.active { display:flex; }
+        .modal { background:var(--card-bg); border-radius:14px; padding:20px; max-width:500px; width:90%; max-height:85vh; overflow-y:auto; border:1px solid var(--option-border); }
+        .modal-title { font-size:18px; font-weight:700; color:var(--atlas-text); margin-bottom:16px; text-align:center; }
+        .modal .btn { padding:10px 16px; border-radius:10px; font-weight:600; cursor:pointer; border:none; font-size:14px; width:100%; margin-top:8px; }
+        .btn-outline { background:transparent; border:1px solid var(--atlas-border); color:var(--atlas-text); }
+        .btn-primary { background:var(--atlas-bg); color:var(--atlas-text); border:2px solid var(--atlas-border); }
+        .btn-success { background:#22C55E; color:#FFF; }
+        .btn-danger { background:#EF4444; color:#FFF; }
+        .card-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--option-border); font-size:13px; }
         
         @media(min-width:768px) { .main-container{max-width:650px;} .home-buttons{grid-template-columns:1fr 1fr 1fr;} }
     </style>
 </head>
 <body class="dark-mode">
 
+<!-- সাইডবার -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-header"><div class="sidebar-logo">ATLAS EXAM</div></div>
-    <nav class="sidebar-menu">
-        <button class="sidebar-item" onclick="navigateTo('profile');closeSidebar();"><span class="icon">👤</span> প্রোফাইল</button>
-        <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();"><span class="icon">🏠</span> হোম</button>
-        <button class="sidebar-item" onclick="goTo('class.html');closeSidebar();"><span class="icon">📚</span> ফ্রি ক্লাস</button>
-        <button class="sidebar-item" onclick="goTo('exam.html');closeSidebar();"><span class="icon">📝</span> ফ্রি এক্সাম</button>
-        <button class="sidebar-item" onclick="goTo('exam.html?mock=true');closeSidebar();"><span class="icon">🎯</span> মক টেস্ট</button>
-        <button class="sidebar-item" onclick="goTo('dashboard.html');closeSidebar();"><span class="icon">❌</span> মাই মিসটেকস</button>
-        <button class="sidebar-item" onclick="goTo('ai.html');closeSidebar();"><span class="icon">🤖</span> ATLAS AI</button>
-        <div class="sidebar-divider"></div>
-        <button class="sidebar-item" onclick="toggleTheme()"><span class="icon" id="sidebarThemeIcon">🌙</span> <span id="sidebarThemeText">ডার্ক মোড</span></button>
-        <button class="sidebar-item" onclick="openWhatsApp()"><span class="icon">💬</span> WhatsApp</button>
-        <button class="sidebar-item" onclick="openTelegram()"><span class="icon">✈️</span> Telegram</button>
-        <button class="sidebar-item" onclick="logout()"><span class="icon">🚪</span> লগআউট</button>
-    </nav>
+    <button class="sidebar-item" onclick="navigateTo('profile');closeSidebar();">👤 প্রোফাইল</button>
+    <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();">🏠 হোম</button>
+    <button class="sidebar-item" onclick="goTo('class.html');closeSidebar();">📚 ফ্রি ক্লাস</button>
+    <button class="sidebar-item" onclick="goTo('exam.html');closeSidebar();">📝 ফ্রি এক্সাম</button>
+    <button class="sidebar-item" onclick="goTo('mock-test.html');closeSidebar();">🎯 মক টেস্ট</button>
+    <button class="sidebar-item" onclick="openModal('mistakes');closeSidebar();">❌ মাই মিসটেকস</button>
+    <button class="sidebar-item" onclick="goTo('ai.html');closeSidebar();">🤖 ATLAS AI</button>
+    <div class="sidebar-divider"></div>
+    <button class="sidebar-item" onclick="toggleTheme()">🌙 ডার্ক মোড</button>
+    <button class="sidebar-item" onclick="openWhatsApp()">💬 WhatsApp</button>
+    <button class="sidebar-item" onclick="openTelegram()">✈️ Telegram</button>
 </aside>
 
+<!-- হেডার -->
 <header class="header">
-    <div class="header-left"><button class="hamburger" onclick="toggleSidebar()">☰</button><div class="logo">ATLAS EXAM</div></div>
-    <div class="header-right"><button class="header-icon" id="themeToggle" onclick="toggleTheme()">🌙</button><button class="header-icon" onclick="navigateTo('profile')">👤</button></div>
+    <div><button class="hamburger" onclick="toggleSidebar()">☰</button><span class="logo" style="margin-left:12px;">ATLAS EXAM</span></div>
+    <div style="display:flex;gap:8px;"><button class="header-icon" onclick="toggleTheme()">🌙</button><button class="header-icon" onclick="navigateTo('profile')">👤</button></div>
 </header>
 
 <main class="main-container">
 
-<!-- কাউন্টডাউন — রেডিশ -->
+<!-- কাউন্টডাউন -->
 <div class="countdown-card">
     <div class="countdown-topic" id="cdTopic">এইচএসসি ২০২৬ বোর্ড</div>
     <div class="countdown-subtopic" id="cdSubtopic">ঢাকা বোর্ড প্রস্তুতি</div>
-    <div class="countdown-timer" id="cdTimer">১২ : ০৮ : ৪৫ : ৩২</div>
+    <div class="countdown-timer-wrap">
+        <span class="countdown-clock">🕐</span>
+        <span class="countdown-timer" id="cdTimer">১২ : ০৮ : ৪৫ : ৩২</span>
+    </div>
     <div class="countdown-labels"><span>দিন</span><span>ঘণ্টা</span><span>মিনিট</span><span>সেকেন্ড</span></div>
 </div>
 
-<!-- মেইন বাটন -->
+<!-- বাটন -->
 <div class="home-buttons">
     <button class="home-btn" onclick="goTo('class.html')"><span class="btn-icon">📚</span><span class="btn-text">ফ্রি ক্লাস সেকশন</span></button>
-    
     <button class="home-btn" onclick="goTo('exam.html?cat=board')"><span class="btn-icon">🔵</span><span class="btn-text">বোর্ড প্রস্তুতি</span></button>
     <button class="home-btn" onclick="goTo('exam.html?cat=medical')"><span class="btn-icon">🟢</span><span class="btn-text">মেডিকেল প্রস্তুতি</span></button>
     <button class="home-btn" onclick="goTo('exam.html?cat=varsity')"><span class="btn-icon">🟣</span><span class="btn-text">ভার্সিটি প্রস্তুতি</span></button>
     <button class="home-btn" onclick="goTo('exam.html?cat=onushiloni')"><span class="btn-icon">🟠</span><span class="btn-text">অনুশীলনী এক্সাম</span></button>
-    
-    <button class="home-btn home-btn-full" onclick="goTo('exam.html?mock=true')"><span class="btn-icon">🎯</span><span class="btn-text">আনলিমিটেড মক টেস্ট</span></button>
-    <button class="home-btn" onclick="goTo('dashboard.html')"><span class="btn-icon">❌</span><span class="btn-text">মাই মিসটেকস</span></button>
+    <button class="home-btn home-btn-full" onclick="goTo('mock-test.html')"><span class="btn-icon">🎯</span><span class="btn-text">আনলিমিটেড মক টেস্ট</span></button>
+    <button class="home-btn home-btn-full" onclick="openModal('modeltest')"><span class="btn-icon">📖</span><span class="btn-text">Model Test</span></button>
+    <button class="home-btn" onclick="openModal('mistakes')"><span class="btn-icon">❌</span><span class="btn-text">মাই মিসটেকস</span></button>
     <button class="home-btn" onclick="goTo('ai.html')"><span class="btn-icon">🤖</span><span class="btn-text">ATLAS AI</span></button>
-    
     <button class="home-btn home-btn-full admin-btn" id="adminBtn" onclick="goTo('admin.html')" style="display:none;"><span class="btn-icon">👑</span><span class="btn-text">Admin Control</span></button>
 </div>
 
@@ -152,41 +155,35 @@
     <a href="https://wa.me/8801999681290" target="_blank" class="social-btn">💬</a>
 </div>
 
-<!-- অনার ফ্লিপ কার্ড -->
+<!-- অনার -->
 <div class="owner-section">
-    <div class="flip-card" id="flipCard" onclick="this.classList.toggle('flipped')">
+    <div class="flip-card" onclick="this.classList.toggle('flipped')">
         <div class="flip-card-inner">
             <div class="flip-card-front">
-                <div style="position:relative;display:inline-block;">
-                    <div class="owner-glow-ring"></div>
-                    <img src="" class="owner-photo" id="ownerPhoto" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" alt="Owner">
-                    <div class="owner-photo" id="ownerPhotoFallback" style="display:flex;background:var(--atlas-bg);color:var(--atlas-text);font-size:16px;">👤</div>
-                </div>
-                <div style="font-size:10px;color:var(--atlas-text);">ATLAS</div>
+                <div style="position:relative;"><div class="owner-glow-ring"></div>
+                <img src="" class="owner-photo" id="ownerPhoto" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="owner-photo" id="ownerPhotoFallback" style="display:flex;background:var(--atlas-bg);color:var(--atlas-text);font-size:16px;">👤</div></div>
+                <div style="font-size:10px;color:var(--atlas-text);margin-top:4px;">ATLAS</div>
             </div>
-            <div class="flip-card-back" id="ownerInfo">
-                <b>ATLAS EXAM</b><br>
-                বাংলাদেশের সেরা<br>প্রস্তুতি প্ল্যাটফর্ম<br><br>
-                📞 ০১৭৫৪৩৬৫৪০৩
-            </div>
+            <div class="flip-card-back" id="ownerInfo">📞 ০১৭৫৪৩৬৫৪০৩</div>
         </div>
     </div>
 </div>
 
 </main>
 
+<!-- মোডাল -->
+<div class="modal-overlay" id="mainModal" onclick="closeModal()"><div class="modal" id="modalContent" onclick="event.stopPropagation()"></div></div>
+
+<!-- নিচের বার -->
 <nav class="bottom-nav">
     <button class="nav-item active" onclick="goTo('index.html')"><span class="nav-icon">🏠</span><span>হোম</span></button>
     <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon">📚</span><span>ক্লাস</span></button>
     <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon">📝</span><span>এক্সাম</span></button>
-    <button class="nav-item" onclick="goTo('exam.html?mock=true')"><span class="nav-icon">🎯</span><span>মক</span></button>
+    <button class="nav-item" onclick="goTo('mock-test.html')"><span class="nav-icon">🎯</span><span>মক</span></button>
     <button class="nav-item" onclick="goTo('dashboard.html')"><span class="nav-icon">👤</span><span>প্রোফাইল</span></button>
 </nav>
 
-<div class="floating-buttons">
-    <button class="fab fab-whatsapp" onclick="openWhatsApp()">💬</button>
-    <button class="fab fab-telegram" onclick="openTelegram()">✈️</button>
-</div>
+<div class="floating-buttons"><button class="fab fab-whatsapp" onclick="openWhatsApp()">💬</button><button class="fab fab-telegram" onclick="openTelegram()">✈️</button></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -194,68 +191,68 @@ var SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
 var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
 var isDarkMode = true, isSidebarOpen = false;
 
-function loadTheme() { var s = localStorage.getItem('atlas-theme'); isDarkMode = s !== 'light'; document.body.classList.toggle('dark-mode', isDarkMode); updateThemeIcon(); }
-function toggleTheme() { isDarkMode = !isDarkMode; document.body.classList.toggle('dark-mode', isDarkMode); localStorage.setItem('atlas-theme', isDarkMode ? 'dark' : 'light'); updateThemeIcon(); showToast(isDarkMode ? '🌙 ডার্ক' : '☀️ লাইট'); }
-function updateThemeIcon() { var b = document.getElementById('themeToggle'), si = document.getElementById('sidebarThemeIcon'), st = document.getElementById('sidebarThemeText'); if (b) b.textContent = isDarkMode ? '🌙' : '☀️'; if (si) si.textContent = isDarkMode ? '🌙' : '☀️'; if (st) st.textContent = isDarkMode ? 'ডার্ক মোড' : 'লাইট মোড'; }
+function loadTheme() { var s = localStorage.getItem('atlas-theme'); isDarkMode = s !== 'light'; document.body.classList.toggle('dark-mode', isDarkMode); }
+function toggleTheme() { isDarkMode = !isDarkMode; document.body.classList.toggle('dark-mode', isDarkMode); localStorage.setItem('atlas-theme', isDarkMode ? 'dark' : 'light'); showToast(isDarkMode ? '🌙 ডার্ক' : '☀️ লাইট'); }
 function toggleSidebar() { isSidebarOpen = !isSidebarOpen; document.getElementById('sidebarOverlay').classList.toggle('active', isSidebarOpen); document.getElementById('sidebar').classList.toggle('active', isSidebarOpen); }
 function closeSidebar() { isSidebarOpen = false; document.getElementById('sidebarOverlay').classList.remove('active'); document.getElementById('sidebar').classList.remove('active'); }
 function goTo(u) { window.location.href = u; }
 function navigateTo(p) { var r = { 'home':'index.html', 'profile':'dashboard.html', 'class':'class.html', 'exam':'exam.html' }; goTo(r[p] || 'index.html'); }
 function openWhatsApp() { window.open('https://wa.me/8801999681290', '_blank'); }
 function openTelegram() { window.open('https://t.me/rafi_somc', '_blank'); }
-function logout() { localStorage.removeItem('atlas-session'); goTo('index.html'); }
 function showToast(m, d) { d = d || 2500; var t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(function(){ t.classList.remove('show'); }, d); }
 
 // কাউন্টডাউন
 function setupCountdown() {
     var cd = document.getElementById('cdTimer'); if (!cd) return;
     var target = new Date(); target.setDate(target.getDate() + 12); target.setHours(8,45,32,0);
-    // Supabase থেকে লোড
-    fetch(SUPABASE_URL + '/rest/v1/countdowns?select=*&order=created_at.desc&limit=1', {
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
-    }).then(function(r){ return r.json(); }).then(function(data){
-        if (data && data.length > 0) {
-            document.getElementById('cdTopic').textContent = data[0].main_topic;
-            document.getElementById('cdSubtopic').textContent = data[0].subtopic || '';
-            target = new Date(data[0].end_time);
-        }
-        startCountdown(target);
-    }).catch(function(){ startCountdown(target); });
-    
-    function startCountdown(target) {
-        function update() {
-            var diff = target - new Date(); if (diff <= 0) { cd.textContent = '০০ : ০০ : ০০ : ০০'; return; }
-            var d = Math.floor(diff/(1000*60*60*24)), h = Math.floor((diff%(1000*60*60*24))/(1000*60*60));
-            var m = Math.floor((diff%(1000*60*60))/(1000*60)), s = Math.floor((diff%(1000*60))/1000);
-            cd.textContent = String(d).padStart(2,'0')+' : '+String(h).padStart(2,'0')+' : '+String(m).padStart(2,'0')+' : '+String(s).padStart(2,'0');
-        }
+    fetch(SUPABASE_URL + '/rest/v1/countdowns?select=*&order=created_at.desc&limit=1', { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } })
+    .then(function(r){ return r.json(); }).then(function(data){
+        if (data && data.length > 0) { document.getElementById('cdTopic').textContent = data[0].main_topic; document.getElementById('cdSubtopic').textContent = data[0].subtopic || ''; target = new Date(data[0].end_time); }
+        function update() { var diff = target - new Date(); if (diff <= 0) { cd.textContent = '০০ : ০০ : ০০ : ০০'; return; } var d = Math.floor(diff/(1000*60*60*24)), h = Math.floor((diff%(1000*60*60*24))/(1000*60*60)), m = Math.floor((diff%(1000*60*60))/(1000*60)), s = Math.floor((diff%(1000*60))/1000); cd.textContent = String(d).padStart(2,'0')+' : '+String(h).padStart(2,'0')+' : '+String(m).padStart(2,'0')+' : '+String(s).padStart(2,'0'); }
         update(); setInterval(update, 1000);
-    }
+    }).catch(function(){ function update() { var diff = target - new Date(); if (diff <= 0) { cd.textContent = '০০ : ০০ : ০০ : ০০'; return; } var d = Math.floor(diff/(1000*60*60*24)), h = Math.floor((diff%(1000*60*60*24))/(1000*60*60)), m = Math.floor((diff%(1000*60*60))/(1000*60)), s = Math.floor((diff%(1000*60))/1000); cd.textContent = String(d).padStart(2,'0')+' : '+String(h).padStart(2,'0')+' : '+String(m).padStart(2,'0')+' : '+String(s).padStart(2,'0'); } update(); setInterval(update, 1000); });
 }
 
 // অ্যাডমিন চেক
-function checkAdmin() {
-    var sess = localStorage.getItem('atlas-session'); if (!sess) return;
-    try { var user = JSON.parse(sess); if (user.phone === '01754365403' || user.role === 'admin') { document.getElementById('adminBtn').style.display = 'flex'; } }
-    catch(e) {}
-}
+function checkAdmin() { var sess = localStorage.getItem('atlas-session'); if (!sess) return; try { var user = JSON.parse(sess); if (user.phone === '01754365403' || user.role === 'admin') document.getElementById('adminBtn').style.display = 'flex'; } catch(e) {} }
 
-// অনার ফটো লোড
-function loadOwnerPhoto() {
-    fetch(SUPABASE_URL + '/rest/v1/users?phone=eq.01754365403&select=photo_url', {
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
-    }).then(function(r){ return r.json(); }).then(function(data){
-        if (data && data.length > 0 && data[0].photo_url) {
-            document.getElementById('ownerPhoto').src = data[0].photo_url;
-            document.getElementById('ownerPhoto').style.display = 'block';
-            document.getElementById('ownerPhotoFallback').style.display = 'none';
+// মোডাল — মাই মিসটেকস / Model Test
+function openModal(type) {
+    var mc = document.getElementById('modalContent'), html = '';
+    if (type === 'mistakes') {
+        html = '<div class="modal-title">❌ মাই মিসটেকস</div>';
+        var sess = localStorage.getItem('atlas-session'); if (!sess) { html += '<p>লগইন করুন</p>'; }
+        else {
+            var user = JSON.parse(sess);
+            fetch(SUPABASE_URL + '/rest/v1/exam_results?phone=eq.' + user.phone + '&select=*&order=submitted_at.desc&limit=20', { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } })
+            .then(function(r){ return r.json(); }).then(function(data){
+                var h = ''; if (!data || data.length === 0) h = '<p>কোনো ভুল উত্তর নেই</p>';
+                else { data.forEach(function(r){ if ((r.wrong||0) > 0 || (r.skipped||0) > 0) { h += '<div style="background:var(--card-bg);border:1px solid var(--option-border);border-radius:10px;padding:12px;margin-bottom:8px;"><b>এক্সাম #'+r.exam_id+'</b><div class="card-row"><span>❌ ভুল</span><span>'+r.wrong+'</span></div><div class="card-row"><span>⏭️ স্কিপ</span><span>'+r.skipped+'</span></div><button class="btn btn-outline" onclick="goTo(\'exam.html?id='+r.exam_id+'\')">📋 বিস্তারিত</button><button class="btn btn-success" style="margin-top:4px;">🔁 Practice-01</button><button class="btn btn-primary" style="margin-top:4px;">🔁 Practice-02</button></div>'; } }); if (!h) h = '<p>সব সঠিক! 🎉</p>'; }
+                document.getElementById('modalContent').innerHTML = '<div class="modal-title">❌ মাই মিসটেকস</div>'+h+'<button class="btn btn-outline" onclick="closeModal()">✕ বন্ধ</button>';
+            }).catch(function(){ document.getElementById('modalContent').innerHTML = '<div class="modal-title">❌ মাই মিসটেকস</div><p>লোড ব্যর্থ</p><button class="btn btn-outline" onclick="closeModal()">✕ বন্ধ</button>'; });
+            html += '<p>লোড হচ্ছে...</p>';
         }
-    }).catch(function(){});
+    } else if (type === 'modeltest') {
+        html = '<div class="modal-title">📖 Model Test</div>';
+        html += '<button class="btn btn-outline" onclick="closeModal();goTo(\'exam.html?model=medical_subject\')">◾ Medical (Subject Final)</button>';
+        html += '<button class="btn btn-outline" onclick="closeModal();goTo(\'exam.html?model=medical_paper\')">◾ Medical (Paper Final)</button>';
+        html += '<button class="btn btn-primary" onclick="closeModal();goTo(\'exam.html?model=full\')">◾ Full Model Test</button>';
+        html += '<p style="font-size:11px;color:var(--text-secondary);margin:8px 0;">মানবন্টন: Bio=30, Chem=25, Phy=15, GK=15, Eng=15</p>';
+        html += '<button class="btn btn-outline" onclick="closeModal();goTo(\'exam.html?model=varsity\')">◾ Varsity</button>';
+        html += '<button class="btn btn-outline" onclick="closeModal()" style="margin-top:8px;">✕ বন্ধ</button>';
+    }
+    mc.innerHTML = html; document.getElementById('mainModal').classList.add('active');
+}
+function closeModal() { document.getElementById('mainModal').classList.remove('active'); }
+
+// অনার ফটো
+function loadOwnerPhoto() {
+    var photo = localStorage.getItem('owner_photo'); var info = localStorage.getItem('owner_info');
+    if (photo) { document.getElementById('ownerPhoto').src = photo; document.getElementById('ownerPhoto').style.display = 'block'; document.getElementById('ownerPhotoFallback').style.display = 'none'; }
+    if (info) document.getElementById('ownerInfo').innerHTML = info;
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    loadTheme(); setupCountdown(); checkAdmin(); loadOwnerPhoto();
-});
+document.addEventListener('DOMContentLoaded', function() { loadTheme(); setupCountdown(); checkAdmin(); loadOwnerPhoto(); });
 </script>
 </body>
 </html>
