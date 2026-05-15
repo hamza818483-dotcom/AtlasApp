@@ -18,20 +18,13 @@
             --text: #1A1D28; --text2: #6B7180;
             --accent: #5B5FE8; --accent-hover: #4A4ED4;
             --border: #E4E7F0; --shadow: 0 2px 10px rgba(0,0,0,0.06);
-            --green: #30A46C; --red: #E5484D;
         }
         * { margin:0; padding:0; box-sizing:border-box; }
-        body {
-            font-family: 'Inter', 'Noto Sans Bengali', system-ui, sans-serif;
-            background: var(--bg); color: var(--text);
-            min-height: 100vh; padding: 56px 0 70px;
-            -webkit-font-smoothing: antialiased; transition: background 0.3s, color 0.3s;
-        }
+        body { font-family:'Inter','Noto Sans Bengali',system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:56px 0 70px; -webkit-font-smoothing:antialiased; transition:0.3s; }
         .header { position:fixed;top:0;left:0;right:0;height:56px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 14px;z-index:100; }
         .hamburger{background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:6px;}
-        .logo{font-size:20px;font-weight:800;color:var(--accent);letter-spacing:-1px;}
+        .logo{font-size:20px;font-weight:800;color:var(--accent);}
         .header-icon{background:var(--card);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:0.2s;}
-        
         .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;opacity:0;visibility:hidden;transition:0.2s;}
         .sidebar-overlay.active{opacity:1;visibility:visible;}
         .sidebar{position:fixed;top:0;left:-280px;width:280px;height:100%;background:var(--card);z-index:201;overflow-y:auto;transition:0.2s;border-right:1px solid var(--border);}
@@ -41,59 +34,40 @@
         .sidebar-item{display:flex;align-items:center;gap:10px;padding:12px 18px;color:var(--text2);border:none;background:none;width:100%;text-align:left;font-size:14px;cursor:pointer;transition:0.2s;font-family:inherit;}
         .sidebar-item:hover{background:var(--hover);color:var(--text);}
         .sidebar-divider{height:1px;background:var(--border);margin:8px 0;}
-        
         .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:60px;background:var(--card);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;z-index:100;}
         .nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;color:var(--text2);font-size:10px;cursor:pointer;padding:6px 10px;border-radius:8px;transition:0.2s;font-family:inherit;}
-        .nav-item.active{color:var(--accent);}
-        .nav-item .nav-icon{font-size:20px;}
-        
+        .nav-item.active{color:var(--accent);}.nav-item .nav-icon{font-size:20px;}
         .floating-buttons{position:fixed;bottom:80px;right:16px;display:flex;flex-direction:column;gap:8px;z-index:99;}
         .fab{width:42px;height:42px;border-radius:50%;border:none;font-size:18px;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;transition:0.2s;box-shadow:var(--shadow);}
         .fab-wa{background:#25D366;}.fab-tg{background:#0088CC;}
-        
         .toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--card);color:var(--text);border:1px solid var(--accent);padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:0.2s;pointer-events:none;}
         .toast.show{opacity:1;}
-        
         .class-container{max-width:600px;margin:0 auto;padding:12px 14px 20px;}
         .section-header{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px;text-align:center;box-shadow:var(--shadow);}
         .section-title{color:var(--accent);font-size:17px;font-weight:700;}
         .search-box{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--text);font-size:13px;margin-bottom:12px;font-family:inherit;transition:0.2s;}
         .search-box:focus{outline:none;border-color:var(--accent);}
-        
         .subject-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:8px;cursor:pointer;transition:0.2s;display:flex;justify-content:space-between;align-items:center;}
-        .subject-card:hover{border-color:var(--accent);}
-        .subject-name{font-size:15px;font-weight:700;}
-        .subject-count{font-size:11px;color:var(--text2);}
-        
+        .subject-card:hover{border-color:var(--accent);}.subject-name{font-size:15px;font-weight:700;}.subject-count{font-size:11px;color:var(--text2);}
         .back-btn{background:none;border:1px solid var(--border);color:var(--text2);padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;margin-bottom:10px;font-family:inherit;transition:0.2s;}
         .chapter-item{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:6px;cursor:pointer;transition:0.2s;}
-        .chapter-item:hover{border-color:var(--accent);background:var(--hover);}
-        .chapter-name{font-size:13px;font-weight:600;}
-        .chapter-parts{font-size:10px;color:var(--text2);margin-top:2px;}
-        
+        .chapter-item:hover{border-color:var(--accent);background:var(--hover);}.chapter-name{font-size:13px;font-weight:600;}.chapter-parts{font-size:10px;color:var(--text2);}
         .part-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px;cursor:pointer;transition:0.2s;}
-        .part-item:hover{border-color:var(--accent);}
-        .part-icon{font-size:24px;}.part-info{flex:1;}.part-name{font-size:13px;font-weight:600;}.part-meta{font-size:10px;color:var(--text2);}.part-arrow{color:var(--accent);}
-        
+        .part-item:hover{border-color:var(--accent);}.part-icon{font-size:24px;}.part-info{flex:1;}.part-name{font-size:13px;font-weight:600;}.part-meta{font-size:10px;color:var(--text2);}.part-arrow{color:var(--accent);}
         .video-container{position:relative;width:100%;padding-bottom:56.25%;margin-bottom:12px;border-radius:var(--radius-sm);overflow:hidden;background:#000;}
         .video-container iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;}
-        .video-controls{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:center;}
+        .video-controls{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
         .ctrl-btn{background:var(--card);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit;transition:0.2s;}
         .ctrl-btn:hover{border-color:var(--accent);}
         .settings-popup{position:absolute;top:40px;right:0;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;z-index:10;display:none;min-width:140px;}
         .settings-popup.show{display:block;}
         .settings-popup select{width:100%;padding:5px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-size:11px;margin-bottom:4px;font-family:inherit;}
-        
         .info-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px;}
         .info-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;}
-        .info-row:last-child{border-bottom:none;}
         .info-label{color:var(--text2);}.info-value{font-weight:600;}
-        .breadcrumb{font-size:10px;color:var(--text2);margin-bottom:8px;}
-        .breadcrumb span{color:var(--accent);}
-        
+        .breadcrumb{font-size:10px;color:var(--text2);margin-bottom:8px;}.breadcrumb span{color:var(--accent);}
         .btn{display:inline-block;padding:9px 16px;border-radius:var(--radius-sm);font-weight:600;cursor:pointer;border:none;font-size:12px;transition:0.2s;font-family:inherit;text-align:center;}
         .btn-outline{background:transparent;border:1px solid var(--border);color:var(--text2);}
-        .btn-outline:hover{border-color:var(--accent);color:var(--text);}
     </style>
 </head>
 <body class="dark-mode">
@@ -126,13 +100,11 @@
     <input type="text" class="search-box" id="searchInput" placeholder="🔍 সাবজেক্ট বা চ্যাপ্টার খুঁজুন..." oninput="filterSubjects()">
     <div id="subjectList"><p style="text-align:center;color:var(--text2);padding:20px;">লোড হচ্ছে...</p></div>
 </div>
-
 <div id="viewChapters" style="display:none;">
     <button class="back-btn" onclick="goToSubjects()">← ফিরে যান</button>
     <div class="section-header"><div class="section-title" id="chapterTitle">চ্যাপ্টার</div></div>
     <div id="chapterList"></div>
 </div>
-
 <div id="viewVideo" style="display:none;">
     <button class="back-btn" onclick="goToChapters()">← ফিরে যান</button>
     <div class="breadcrumb" id="videoBreadcrumb"></div>
@@ -166,165 +138,109 @@
     <button class="nav-item" onclick="goTo('mock-test.html')"><span class="nav-icon">🎯</span>মক</button>
     <button class="nav-item" onclick="goTo('dashboard.html')"><span class="nav-icon">👤</span>প্রোফাইল</button>
 </nav>
-
 <div class="floating-buttons"><button class="fab fab-wa" onclick="openWA()">💬</button><button class="fab fab-tg" onclick="openTG()">✈️</button></div>
 <div class="toast" id="toast"></div>
 
 <script>
 const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
-let isDarkMode = true, isSidebarOpen = false, allClasses = [], currentSubject = null, currentChapter = null, ytPlayer = null;
+let isDarkMode=true,isSidebarOpen=false,allClasses=[],currentSubject=null,currentChapter=null,ytPlayer=null;
 
-function showToast(m, d = 2000) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), d); }
-function toggleTheme() { isDarkMode = !isDarkMode; document.body.classList.toggle('dark-mode', isDarkMode); document.body.classList.toggle('light-mode', !isDarkMode); document.getElementById('themeToggle').textContent = isDarkMode ? '🌙' : '☀️'; showToast(isDarkMode ? '🌙 ডার্ক' : '☀️ লাইট'); }
-function toggleSidebar() { isSidebarOpen = !isSidebarOpen; document.getElementById('sidebarOverlay').classList.toggle('active', isSidebarOpen); document.getElementById('sidebar').classList.toggle('active', isSidebarOpen); }
-function closeSidebar() { isSidebarOpen = false; document.getElementById('sidebarOverlay').classList.remove('active'); document.getElementById('sidebar').classList.remove('active'); }
-function goTo(u) { location.href = u; }
-function navigateTo(p) { const r = { home:'index.html', profile:'dashboard.html', class:'class.html', exam:'exam.html' }; goTo(r[p]||'index.html'); }
-function openWA() { window.open('https://wa.me/8801999681290', '_blank'); }
-function openTG() { window.open('https://t.me/rafi_somc', '_blank'); }
+function showToast(m,d=2000){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
+function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'🌙':'☀️';showToast(isDarkMode?'🌙 ডার্ক':'☀️ লাইট');}
+function toggleSidebar(){isSidebarOpen=!isSidebarOpen;document.getElementById('sidebarOverlay').classList.toggle('active',isSidebarOpen);document.getElementById('sidebar').classList.toggle('active',isSidebarOpen);}
+function closeSidebar(){isSidebarOpen=false;document.getElementById('sidebarOverlay').classList.remove('active');document.getElementById('sidebar').classList.remove('active');}
+function goTo(u){location.href=u;}
+function navigateTo(p){const r={home:'index.html',profile:'dashboard.html',class:'class.html',exam:'exam.html'};goTo(r[p]||'index.html');}
+function openWA(){window.open('https://wa.me/8801999681290','_blank');}
+function openTG(){window.open('https://t.me/rafi_somc','_blank');}
 
-async function loadClasses() {
-   alert('loadClasses called!');  // ← এটা যোগ করুন
-    try {
-        const url = `${SUPABASE_URL}/rest/v1/classes?select=*&order=created_at.desc&limit=100`;
-        const res = await fetch(url, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
-        const text = await res.text();
-        
-        if (!text || text.trim() === '' || text.trim() === '[]') { 
-            allClasses = []; 
-            document.getElementById('subjectList').innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">কোনো ক্লাস নেই।<br>অ্যাডমিন থেকে Add করুন।</p>'; 
-            return; 
-        }
-        
-        allClasses = JSON.parse(text);
-        
-        if (!allClasses.length) { 
-            document.getElementById('subjectList').innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">কোনো ক্লাস নেই</p>'; 
-            return; 
-        }
-        
+async function loadClasses(){
+    try{
+        const url=`${SUPABASE_URL}/rest/v1/classes?select=*&order=created_at.desc&limit=100`;
+        const res=await fetch(url,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+        const text=await res.text();
+        if(!text||text.trim()===''||text.trim()==='[]'){allClasses=[];document.getElementById('subjectList').innerHTML='<p style="text-align:center;color:var(--text2);padding:20px;">কোনো ক্লাস নেই।<br>অ্যাডমিন থেকে Add করুন।</p>';return;}
+        allClasses=JSON.parse(text);
+        if(!allClasses.length){document.getElementById('subjectList').innerHTML='<p style="text-align:center;color:var(--text2);padding:20px;">কোনো ক্লাস নেই</p>';return;}
         renderSubjects();
-        
-    } catch(e) { 
-        document.getElementById('subjectList').innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">লোড ব্যর্থ</p>'; 
-    }
+    }catch(e){alert('❌ loadClasses Error: '+e.message);}
 }
 
-function renderSubjects(filter = '') {
-    const subjects = {};
-    allClasses.forEach(c => {
-        const s = c.subject || 'সাধারণ';
-        if (filter && !s.toLowerCase().includes(filter) && !(c.chapter||'').toLowerCase().includes(filter)) return;
-        if (!subjects[s]) subjects[s] = { papers: {}, count: 0 };
-        const p = c.paper || 'সাধারণ';
-        if (!subjects[s].papers[p]) subjects[s].papers[p] = { chapters: {}, count: 0 };
-        const ch = c.chapter || 'সাধারণ';
-        if (!subjects[s].papers[p].chapters[ch]) subjects[s].papers[p].chapters[ch] = [];
+function renderSubjects(filter=''){
+    const subjects={};
+    allClasses.forEach(c=>{
+        const s=c.subject||'সাধারণ';
+        if(filter&&!s.toLowerCase().includes(filter)&&!(c.chapter||'').toLowerCase().includes(filter))return;
+        if(!subjects[s])subjects[s]={papers:{},count:0};
+        const p=c.paper||'সাধারণ';
+        if(!subjects[s].papers[p])subjects[s].papers[p]={chapters:{},count:0};
+        const ch=c.chapter||'সাধারণ';
+        if(!subjects[s].papers[p].chapters[ch])subjects[s].papers[p].chapters[ch]=[];
         subjects[s].papers[p].chapters[ch].push(c);
-        subjects[s].papers[p].count++; subjects[s].count++;
+        subjects[s].papers[p].count++;subjects[s].count++;
     });
-    const keys = Object.keys(subjects);
-    if (!keys.length) { document.getElementById('subjectList').innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">কোনো ক্লাস পাওয়া যায়নি</p>'; return; }
-    document.getElementById('subjectList').innerHTML = keys.map(s => `<div class="subject-card" onclick="openSubject('${s}')"><div><div class="subject-name">📘 ${s}</div><div class="subject-count">${subjects[s].count} টি ক্লাস</div></div><span style="color:var(--accent);">→</span></div>`).join('');
+    const keys=Object.keys(subjects);
+    if(!keys.length){document.getElementById('subjectList').innerHTML='<p style="text-align:center;color:var(--text2);padding:20px;">কোনো ক্লাস পাওয়া যায়নি</p>';return;}
+    let html='';
+    keys.forEach(s=>{html+=`<div class="subject-card" onclick="openSubject('${s}')"><div><div class="subject-name">📘 ${s}</div><div class="subject-count">${subjects[s].count} টি ক্লাস</div></div><span style="color:var(--accent);">→</span></div>`;});
+    document.getElementById('subjectList').innerHTML=html;
 }
-function filterSubjects() { renderSubjects(document.getElementById('searchInput').value.trim().toLowerCase()); }
+function filterSubjects(){renderSubjects(document.getElementById('searchInput').value.trim().toLowerCase());}
 
-function openSubject(subj) {
-    currentSubject = subj;
-    const papers = {};
-    allClasses.forEach(c => { if ((c.subject||'সাধারণ') === subj) { const p = c.paper||'সাধারণ', ch = c.chapter||'সাধারণ'; if (!papers[p]) papers[p] = {}; if (!papers[p][ch]) papers[p][ch] = []; papers[p][ch].push(c); } });
-    document.getElementById('chapterTitle').textContent = '📘 ' + subj;
-    let html = '';
-    Object.keys(papers).forEach(p => {
-        html += `<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0 4px;">📄 ${p}</div>`;
-        Object.keys(papers[p]).forEach(ch => {
-            html += `<div class="chapter-item" onclick="showParts('${ch}', ${JSON.stringify(papers[p][ch].map(c => ({ id:c.id, youtube_link:c.youtube_link, class_type:c.class_type||'website', class_note:c.class_note, start_time:c.start_time })))})"><div class="chapter-name">📖 ${ch}</div><div class="chapter-parts">${papers[p][ch].length} টি ক্লাস</div></div>`;
+function openSubject(subj){
+    currentSubject=subj;
+    const papers={};
+    allClasses.forEach(c=>{if((c.subject||'সাধারণ')===subj){const p=c.paper||'সাধারণ',ch=c.chapter||'সাধারণ';if(!papers[p])papers[p]={};if(!papers[p][ch])papers[p][ch]=[];papers[p][ch].push(c);}});
+    document.getElementById('chapterTitle').textContent='📘 '+subj;
+    let html='';
+    Object.keys(papers).forEach(p=>{
+        html+=`<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0 4px;">📄 ${p}</div>`;
+        Object.keys(papers[p]).forEach(ch=>{
+            const parts=JSON.stringify(papers[p][ch].map(c=>({id:c.id,youtube_link:c.youtube_link,class_type:c.class_type||'website',class_note:c.class_note,start_time:c.start_time})));
+            html+=`<div class="chapter-item" onclick="showParts('${ch}',${parts})"><div class="chapter-name">📖 ${ch}</div><div class="chapter-parts">${papers[p][ch].length} টি ক্লাস</div></div>`;
         });
     });
-    document.getElementById('chapterList').innerHTML = html || '<p style="text-align:center;color:var(--text2);padding:20px;">কোনো চ্যাপ্টার নেই</p>';
-    document.getElementById('viewSubjects').style.display = 'none';
-    document.getElementById('viewChapters').style.display = 'block';
-    document.getElementById('viewVideo').style.display = 'none';
+    document.getElementById('chapterList').innerHTML=html||'<p style="text-align:center;color:var(--text2);padding:20px;">কোনো চ্যাপ্টার নেই</p>';
+    document.getElementById('viewSubjects').style.display='none';
+    document.getElementById('viewChapters').style.display='block';
+    document.getElementById('viewVideo').style.display='none';
 }
-function showParts(ch, parts) {
-    currentChapter = ch;
-    alert('showParts called! Parts count: ' + parts.length + '\nFirst part link: ' + (parts[0]?.youtube_link || 'none'));
-    function showParts(ch, parts) {
-    currentChapter = ch;
-    alert('showParts called! Parts count: ' + parts.length + '\nFirst part link: ' + (parts[0]?.youtube_link || 'none'));
-    
-    if (parts && parts.length > 0) {
-        var p = parts[0];
-        playVideo(p.youtube_link, ch, p.class_type || 'website', p.class_note || '', p.start_time || '');
+
+function showParts(ch,parts){
+    currentChapter=ch;
+    if(parts&&parts.length>0){
+        const p=parts[0];
+        playVideo(p.youtube_link,ch,p.class_type||'website',p.class_note||'',p.start_time||'');
+    }else{alert('⚠️ No parts found');}
+}
+
+function playVideo(link,title,classType,classNote,time){
+    const videoId=extractYouTubeID(link);
+    document.getElementById('videoBreadcrumb').innerHTML=`📘 <span>${currentSubject}</span> › 📖 <span>${currentChapter}</span> › 🎥 <span>${title}</span>`;
+    document.getElementById('videoTitle').textContent='🎥 '+title;
+    if(classType==='youtube'){document.getElementById('videoPlayer').innerHTML=`<div style="padding:40px;text-align:center;"><p>▶️ YouTube-এ ওপেন হচ্ছে...</p><a href="${link}" target="_blank" class="btn btn-outline">YouTube-এ দেখুন</a></div>`;window.open(link,'_blank');}
+    else{
+        if(videoId){document.getElementById('videoPlayer').innerHTML=`<iframe src="https://www.youtube.com/embed/${videoId}?enablejsapi=1&rel=0" id="ytFrame" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;}
+        else{document.getElementById('videoPlayer').innerHTML='<p style="text-align:center;padding:30px;">⚠️ ভিডিও লিংক সঠিক নয়</p>';}
     }
+    document.getElementById('videoInfo').innerHTML=`<div class="info-row"><span class="info-label">সাবজেক্ট</span><span class="info-value">${currentSubject}</span></div><div class="info-row"><span class="info-label">চ্যাপ্টার</span><span class="info-value">${currentChapter}</span></div><div class="info-row"><span class="info-label">পার্ট</span><span class="info-value">${title}</span></div>`;
+    if(classNote){document.getElementById('classNoteCard').style.display='block';document.getElementById('classNoteContent').innerHTML=classNote.startsWith('http')?`<a href="${classNote}" target="_blank" style="color:var(--accent);">${classNote}</a>`:classNote;}
+    else{document.getElementById('classNoteCard').style.display='none';}
+    let otherHTML='';
+    allClasses.forEach(c=>{if((c.subject||'সাধারণ')===currentSubject&&(c.chapter||'সাধারণ')===currentChapter&&c.youtube_link!==link){otherHTML+=`<div class="part-item" onclick="playVideo('${c.youtube_link}','${c.chapter||'Part'}','${c.class_type||'website'}','${(c.class_note||'').replace(/'/g,"\\'")}','${c.start_time||''}')"><span class="part-icon">🎥</span><div class="part-info"><div class="part-name">${c.chapter||'Part'}</div></div><span class="part-arrow">▶️</span></div>`;}});
+    document.getElementById('otherParts').innerHTML=otherHTML||'<p style="color:var(--text2);">কোনো পার্ট নেই</p>';
+    saveClassHistory(currentSubject,currentChapter,title);
+    document.getElementById('viewSubjects').style.display='none';
+    document.getElementById('viewChapters').style.display='none';
+    document.getElementById('viewVideo').style.display='block';
 }
-    document.getElementById('chapterList').innerHTML = parts.map(...).join('');
-}
-<div class="part-item" onclick="playVideo('${p.youtube_link}', 'Part ${i+1}', '${p.class_type||'website'}', '${(p.class_note||'').replace(/'/g, "\\'")}', '${p.start_time||''}')"><span class="part-icon">🎥</span><div class="part-info"><div class="part-name">Part ${i+1}</div><div class="part-meta">${p.class_type==='youtube'?'▶️ Direct YouTube':'🌐 Website Style'} | ${p.start_time?new Date(p.start_time).toLocaleDateString('bn-BD'):''}</div></div><span class="part-arrow">▶️</span></div>`).join('');
-}
+function extractYouTubeID(url){if(!url)return null;const m=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/);return m?m[1]:null;}
+function saveClassHistory(subject,chapter,part){try{const user=JSON.parse(localStorage.getItem('atlas-session'));if(!user)return;const h=JSON.parse(localStorage.getItem('class_history_'+user.phone)||'[]');h.push({subject,chapter,part,time:new Date().toISOString()});if(h.length>50)h.splice(0,h.length-50);localStorage.setItem('class_history_'+user.phone,JSON.stringify(h));}catch(e){}}
+function goToSubjects(){document.getElementById('viewSubjects').style.display='block';document.getElementById('viewChapters').style.display='none';document.getElementById('viewVideo').style.display='none';}
+function goToChapters(){document.getElementById('viewSubjects').style.display='none';document.getElementById('viewChapters').style.display='block';document.getElementById('viewVideo').style.display='none';}
 
-function playVideo(link, title, classType, classNote, time) {
-    const videoId = extractYouTubeID(link);
-    document.getElementById('videoBreadcrumb').innerHTML = `📘 <span>${currentSubject}</span> › 📖 <span>${currentChapter}</span> › 🎥 <span>${title}</span>`;
-    document.getElementById('videoTitle').textContent = '🎥 ' + title;
-    
-    if (classType === 'youtube') {
-        document.getElementById('videoPlayer').innerHTML = `<div style="padding:40px;text-align:center;"><p style="color:var(--text2);margin-bottom:10px;">▶️ YouTube-এ ওপেন হচ্ছে...</p><a href="${link}" target="_blank" class="btn btn-outline">YouTube-এ দেখুন</a></div>`;
-        window.open(link, '_blank');
-    } else {
-  if (videoId) {
-    document.getElementById('videoPlayer').innerHTML = '<iframe src="https://www.youtube.com/embed/' + videoId + '?enablejsapi=1&rel=0" id="ytFrame" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>';
-    setTimeout(function() {
-        if (window.YT && window.YT.Player) {
-            ytPlayer = new YT.Player('ytFrame');
-        } else {
-            var tag = document.createElement('script');
-            tag.src = 'https://www.youtube.com/iframe_api';
-            document.head.appendChild(tag);
-            window.onYouTubeIframeAPIReady = function() {
-                ytPlayer = new YT.Player('ytFrame');
-            };
-        }
-    }, 500);
-} else {
-    document.getElementById('videoPlayer').innerHTML = '<p style="color:var(--text2);text-align:center;padding:30px;">⚠️ ভিডিও লিংক সঠিক নয়</p>';
-}
-        setTimeout(() => { if (window.YT) ytPlayer = new YT.Player('ytFrame'); else { const tag = document.createElement('script'); tag.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(tag); window.onYouTubeIframeAPIReady = () => { ytPlayer = new YT.Player('ytFrame'); }; } }, 500);
-    }
-    
-    document.getElementById('videoInfo').innerHTML = `<div class="info-row"><span class="info-label">সাবজেক্ট</span><span class="info-value">${currentSubject}</span></div><div class="info-row"><span class="info-label">চ্যাপ্টার</span><span class="info-value">${currentChapter}</span></div><div class="info-row"><span class="info-label">পার্ট</span><span class="info-value">${title}</span></div><div class="info-row"><span class="info-label">টাইপ</span><span class="info-value">${classType==='youtube'?'▶️ Direct YouTube':'🌐 Website Style'}</span></div>`;
-    
-    if (classNote) { document.getElementById('classNoteCard').style.display = 'block'; document.getElementById('classNoteContent').innerHTML = classNote.startsWith('http') ? `<a href="${classNote}" target="_blank" style="color:var(--accent);">${classNote}</a>` : classNote; }
-    else { document.getElementById('classNoteCard').style.display = 'none'; }
-    
-    let otherHTML = '';
-    allClasses.forEach(c => { if ((c.subject||'সাধারণ') === currentSubject && (c.chapter||'সাধারণ') === currentChapter && c.youtube_link !== link) { otherHTML += `<div class="part-item" onclick="playVideo('${c.youtube_link}', '${c.chapter||'Part'}', '${c.class_type||'website'}', '${(c.class_note||'').replace(/'/g, "\\'")}', '${c.start_time||''}')"><span class="part-icon">🎥</span><div class="part-info"><div class="part-name">${c.chapter||'Part'}</div></div><span class="part-arrow">▶️</span></div>`; } });
-    document.getElementById('otherParts').innerHTML = otherHTML || '<p style="color:var(--text2);">কোনো পার্ট নেই</p>';
-    
-    saveClassHistory(currentSubject, currentChapter, title);
-    document.getElementById('viewSubjects').style.display = 'none';
-    document.getElementById('viewChapters').style.display = 'none';
-    document.getElementById('viewVideo').style.display = 'block';
-}
-
-function extractYouTubeID(url) { if (!url) return null; const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/); return m ? m[1] : null; }
-function seekVideo(s) { if (ytPlayer?.seekTo) ytPlayer.seekTo((ytPlayer.getCurrentTime()||0) + s, true); else showToast('⚠️ Video ready নয়'); }
-function togglePlayPause() { if (!ytPlayer) return; ytPlayer.getPlayerState() === 1 ? ytPlayer.pauseVideo() : ytPlayer.playVideo(); }
-function toggleSettings() { document.getElementById('settingsPopup').classList.toggle('show'); }
-function changeSpeed(s) { if (ytPlayer) ytPlayer.setPlaybackRate(parseFloat(s)); }
-function changeQuality(q) { if (ytPlayer) ytPlayer.setPlaybackQuality(q); }
-
-function saveClassHistory(subject, chapter, part) {
-    try { const user = JSON.parse(localStorage.getItem('atlas-session')); if (!user) return; const h = JSON.parse(localStorage.getItem('class_history_'+user.phone) || '[]'); h.push({ subject, chapter, part, time: new Date().toISOString() }); if (h.length > 50) h.splice(0, h.length - 50); localStorage.setItem('class_history_'+user.phone, JSON.stringify(h)); } catch(e) {}
-}
-
-function goToSubjects() { document.getElementById('viewSubjects').style.display = 'block'; document.getElementById('viewChapters').style.display = 'none'; document.getElementById('viewVideo').style.display = 'none'; }
-function goToChapters() { document.getElementById('viewSubjects').style.display = 'none'; document.getElementById('viewChapters').style.display = 'block'; document.getElementById('viewVideo').style.display = 'none'; }
-
-document.addEventListener('DOMContentLoaded', loadClasses);
-// সব ফাংশনের পরে
-loadClasses();
+window.onload=function(){loadClasses();};
 </script>
 </body>
 </html>
