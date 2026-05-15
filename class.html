@@ -247,7 +247,20 @@ function openSubject(subj) {
     document.getElementById('viewChapters').style.display = 'block';
     document.getElementById('viewVideo').style.display = 'none';
 }
-
+function showParts(ch, parts) {
+    currentChapter = ch;
+    alert('showParts called! Parts count: ' + parts.length + '\nFirst part link: ' + (parts[0]?.youtube_link || 'none'));
+    function showParts(ch, parts) {
+    currentChapter = ch;
+    alert('showParts called! Parts count: ' + parts.length + '\nFirst part link: ' + (parts[0]?.youtube_link || 'none'));
+    
+    if (parts && parts.length > 0) {
+        var p = parts[0];
+        playVideo(p.youtube_link, ch, p.class_type || 'website', p.class_note || '', p.start_time || '');
+    }
+}
+    document.getElementById('chapterList').innerHTML = parts.map(...).join('');
+}
 <div class="part-item" onclick="playVideo('${p.youtube_link}', 'Part ${i+1}', '${p.class_type||'website'}', '${(p.class_note||'').replace(/'/g, "\\'")}', '${p.start_time||''}')"><span class="part-icon">🎥</span><div class="part-info"><div class="part-name">Part ${i+1}</div><div class="part-meta">${p.class_type==='youtube'?'▶️ Direct YouTube':'🌐 Website Style'} | ${p.start_time?new Date(p.start_time).toLocaleDateString('bn-BD'):''}</div></div><span class="part-arrow">▶️</span></div>`).join('');
 }
 
