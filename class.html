@@ -262,7 +262,6 @@ function playVideo(link, title, classType, classNote, time) {
         document.getElementById('videoPlayer').innerHTML = `<div style="padding:40px;text-align:center;"><p style="color:var(--text2);margin-bottom:10px;">▶️ YouTube-এ ওপেন হচ্ছে...</p><a href="${link}" target="_blank" class="btn btn-outline">YouTube-এ দেখুন</a></div>`;
         window.open(link, '_blank');
     } else {
-       if (videoId) {
   if (videoId) {
     document.getElementById('videoPlayer').innerHTML = '<iframe src="https://www.youtube.com/embed/' + videoId + '?enablejsapi=1&rel=0" id="ytFrame" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>';
     setTimeout(function() {
@@ -313,6 +312,8 @@ function goToSubjects() { document.getElementById('viewSubjects').style.display 
 function goToChapters() { document.getElementById('viewSubjects').style.display = 'none'; document.getElementById('viewChapters').style.display = 'block'; document.getElementById('viewVideo').style.display = 'none'; }
 
 document.addEventListener('DOMContentLoaded', loadClasses);
+// সব ফাংশনের পরে
+loadClasses();
 </script>
 </body>
 </html>
