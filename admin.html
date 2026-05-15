@@ -293,10 +293,32 @@ function showToast(m, d) { d = d || 2500; var t = document.getElementById('toast
 
 // ========== safeFetch ==========
 async function safeFetch(url, opts) {
-    opts = opts || {}; opts.headers = opts.headers || {}; opts.headers['apikey'] = SUPABASE_KEY; opts.headers['Authorization'] = 'Bearer ' + SUPABASE_KEY;
-    if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') opts.headers['Content-Type'] = 'application/json';
-    try { var res = await fetch(url, opts); var text = await res.text(); if (!text || text.trim() === '') return []; var data = JSON.parse(text); if (!res.ok) throw new Error(data.message || 'API Error'); return data; }
-    catch(e) { console.error('❌', e.message); throw e; }
+    opts = opts || {};
+    // 🔧 এই লাইনটা নিশ্চিত করুন:
+    opts.headers = opts.headers || {};
+    
+    opts.headers['apikey'] = SUPABASE_KEY;
+    opts.headers['Authorization'] = 'Bearer ' + SUPABASE_KEY;
+    
+    if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') {
+        opts.headers['Content-Type'] = 'application/json';
+    }
+    
+    try {
+        var res = await fetch(url, opts);
+        var text = await res.text();
+        
+        if (!text || text.trim() === '') {
+            return (opts.method === 'DELETE' || opts.method === 'PATCH') ? null : [];
+        }
+        
+        var data = JSON.parse(text);
+        if (!res.ok) throw new Error(data.message || 'API Error');
+        return data;
+    } catch(e) {
+        console.error('❌', e.message);
+        throw e;
+    }
 }
 
 // ========== সেকশন সুইচ ==========
