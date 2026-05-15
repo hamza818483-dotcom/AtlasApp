@@ -339,7 +339,7 @@ function loadOwnerInfo() {
 function checkAdmin() {
     try { const sess = JSON.parse(localStorage.getItem('atlas-session')); if (sess?.phone === '01754365403' || sess?.role === 'admin') document.getElementById('adminBtn').style.display = 'flex'; } catch(e) {}
 }
-// Mentors
+// mentors
 async function loadMentors() {
     try {
         const data = await safeFetch(`${SUPABASE_URL}/rest/v1/mentors?select=*&order=sort_order,created_at&limit=6`);
