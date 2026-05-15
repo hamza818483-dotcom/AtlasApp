@@ -127,8 +127,44 @@
         .flip-back-owner { background: var(--card); border: 1px solid var(--accent); transform: rotateY(180deg); padding: 10px; text-align: center; font-size: 10px; color: var(--text2); display: flex; align-items: center; justify-content: center; }
         .owner-photo-wrapper { position: relative; width: 100px; height: 100px; }
         .owner-photo-box { width: 100px; height: 100px; border-radius: 10px; object-fit: cover; border: 2px solid var(--border); position: relative; z-index: 2; }
-        .owner-glow-box { position: absolute; top: -6px; left: -6px; width: 112px; height: 112px; border-radius: 14px; border: 2px solid transparent; border-top-color: var(--accent); border-right-color: var(--accent); animation: rotateGlowBox 2s linear infinite; z-index: 1; pointer-events: none; }
-        @keyframes rotateGlowBox { 0%{transform:rotate(0deg);box-shadow:0 0 8px rgba(124,131,255,0.15);} 50%{box-shadow:0 0 18px rgba(124,131,255,0.3);} 100%{transform:rotate(360deg);box-shadow:0 0 8px rgba(124,131,255,0.15);} }
+           .owner-glow-box {
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    width: calc(100px + 16px);
+    height: calc(100px + 16px);
+    border-radius: 16px;
+    background: transparent;
+    animation: rotateGlowBox 3s linear infinite;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.owner-glow-box::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    width: calc(100% + 6px);
+    height: calc(100% + 6px);
+    border-radius: 18px;
+    background: conic-gradient(
+        from 0deg,
+        transparent 0deg,
+        var(--accent) 90deg,
+        transparent 180deg,
+        transparent 270deg,
+        var(--accent) 360deg
+    );
+    animation: rotateGlowBox 1.5s linear infinite;
+    opacity: 0.3;
+    filter: blur(6px);
+}
+
+@keyframes rotateGlowBox {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
         
         /* Modal */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 300; display: none; align-items: center; justify-content: center; }
