@@ -217,6 +217,7 @@ function showParts(ch,parts){
 
 function playVideo(link,title,classType,classNote,time){
     const videoId=extractYouTubeID(link);
+    alert('playVideo called!\nVideoID: ' + (videoId || 'NULL') + '\nClassType: ' + classType);
     document.getElementById('videoBreadcrumb').innerHTML=`📘 <span>${currentSubject}</span> › 📖 <span>${currentChapter}</span> › 🎥 <span>${title}</span>`;
     document.getElementById('videoTitle').textContent='🎥 '+title;
     if(classType==='youtube'){document.getElementById('videoPlayer').innerHTML=`<div style="padding:40px;text-align:center;"><p>▶️ YouTube-এ ওপেন হচ্ছে...</p><a href="${link}" target="_blank" class="btn btn-outline">YouTube-এ দেখুন</a></div>`;window.open(link,'_blank');}
