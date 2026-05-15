@@ -93,6 +93,62 @@
         .card-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--option-border); font-size:13px; }
         
         @media(min-width:768px) { .main-container{max-width:650px;} .home-buttons{grid-template-columns:1fr 1fr 1fr;} }
+        .owner-photo-wrapper {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    max-width: 90px;
+    margin: 0 auto;
+}
+
+.owner-photo-box {
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 3px solid var(--atlas-border);
+    position: relative;
+    z-index: 2;
+    display: block;
+}
+
+.owner-glow-box {
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    width: calc(80px + 12px);
+    height: calc(80px + 12px);
+    border-radius: 16px;
+    border: 3px solid transparent;
+    border-top-color: var(--atlas-border, #2F6BFF);
+    border-right-color: var(--atlas-border, #2F6BFF);
+    animation: rotateGlowBox 2s linear infinite;
+    z-index: 1;
+    pointer-events: none;
+}
+
+@keyframes rotateGlowBox {
+    0% { 
+        transform: rotate(0deg);
+        box-shadow: 0 0 10px var(--atlas-glow, rgba(47,107,255,0.35));
+    }
+    50% { 
+        box-shadow: 0 0 20px rgba(47,107,255,0.5);
+    }
+    100% { 
+        transform: rotate(360deg);
+        box-shadow: 0 0 10px var(--atlas-glow, rgba(47,107,255,0.35));
+    }
+}
+
+.owner-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    padding: 0 16px;
+}
     </style>
 </head>
 <body class="dark-mode">
