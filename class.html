@@ -239,21 +239,8 @@ function playVideo(link,title,classType,classNote,time){
 function extractYouTubeID(url){if(!url)return null;const m=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/);return m?m[1]:null;}
 function saveClassHistory(subject,chapter,part){try{const user=JSON.parse(localStorage.getItem('atlas-session'));if(!user)return;const h=JSON.parse(localStorage.getItem('class_history_'+user.phone)||'[]');h.push({subject,chapter,part,time:new Date().toISOString()});if(h.length>50)h.splice(0,h.length-50);localStorage.setItem('class_history_'+user.phone,JSON.stringify(h));}catch(e){}}
 function goToSubjects(){document.getElementById('viewSubjects').style.display='block';document.getElementById('viewChapters').style.display='none';document.getElementById('viewVideo').style.display='none';}
-function goToChapters(){document.getElementById('viewSubjects').style.display='none';document.getElementById('viewChapters').style.display='block';document.getElementById('viewVideo').style.display='none';}
-// সরাসরি Supabase টেস্ট
-fetch('https://btezborkuiqfogykrjrn.supabase.co/rest/v1/classes?select=*&limit=5', {
-    headers: {
-        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw',
-        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw'
-    }
-})
-.then(function(res) { return res.text(); })
-.then(function(text) {
-    alert('RAW Response (' + text.length + ' chars):\n' + text.substring(0, 500));
-})
-.catch(function(e) {
-    alert('FETCH Error: ' + e.message);
-});
+     // পেজ লোড
+loadClasses();
 </script>
 </body>
 </html>
