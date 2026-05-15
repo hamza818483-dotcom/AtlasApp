@@ -3,102 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATLAS EXAM - ড্যাশবোর্ড</title>
-    <link rel="stylesheet" href="style.css">
+    <title>ATLAS EXAM · প্রোফাইল</title>
     <style>
-        .dash-container { max-width: 700px; margin: 0 auto; padding: 16px 16px 80px; }
+        :root {
+            --bg: #0D1117; --card: #161B22; --hover: #1C2129;
+            --text: #E6EDF3; --text2: #8B949E;
+            --accent: #7C83FF; --accent-hover: #9499FF;
+            --border: #30363D; --shadow: 0 2px 8px rgba(0,0,0,0.3);
+            --glow: 0 0 0 2px rgba(124,131,255,0.12);
+            --radius: 14px; --radius-sm: 10px;
+            --red: #F85149; --green: #3FB950; --yellow: #D29922;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', 'Noto Sans Bengali', system-ui, sans-serif;
+            background: var(--bg); color: var(--text);
+            min-height: 100vh; padding: 70px 0 70px;
+            -webkit-font-smoothing: antialiased;
+        }
+        .header { position:fixed;top:0;left:0;right:0;height:56px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 14px;z-index:100; }
+        .hamburger{background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:6px;}
+        .logo{font-size:20px;font-weight:800;color:var(--accent);letter-spacing:-1px;}
+        .header-icon{background:var(--card);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:0.2s;}
+        .header-icon:hover{border-color:var(--accent);box-shadow:var(--glow);}
         
-        .profile-header { background: var(--atlas-bg); border: 2px solid var(--atlas-border); border-radius: 14px; padding: 20px; margin-bottom: 16px; text-align: center; box-shadow: 0 0 14px var(--atlas-glow); position: relative; }
-        .profile-avatar-wrap { position: relative; width: 80px; height: 80px; margin: 0 auto 10px; cursor: pointer; }
-        .profile-avatar { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--atlas-border); object-fit: cover; background: var(--option-bg); display: flex; align-items: center; justify-content: center; font-size: 36px; color: var(--atlas-text); }
-        .profile-avatar-upload { position: absolute; bottom: 0; right: 0; width: 28px; height: 28px; border-radius: 50%; background: var(--atlas-border); color: #FFF; font-size: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid var(--card-bg); }
-        .profile-avatar input { display: none; }
-        .profile-name { font-size: 20px; font-weight: 800; color: var(--atlas-text); }
-        .profile-meta { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+        .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;opacity:0;visibility:hidden;transition:0.2s;}
+        .sidebar-overlay.active{opacity:1;visibility:visible;}
+        .sidebar{position:fixed;top:0;left:-280px;width:280px;height:100%;background:var(--card);z-index:201;overflow-y:auto;transition:0.2s;border-right:1px solid var(--border);}
+        .sidebar.active{left:0;}
+        .sidebar-header{background:var(--card);padding:20px 16px;text-align:center;border-bottom:1px solid var(--border);}
+        .sidebar-logo{font-size:20px;font-weight:800;color:var(--accent);}
+        .sidebar-item{display:flex;align-items:center;gap:10px;padding:12px 18px;color:var(--text2);border:none;background:none;width:100%;text-align:left;font-size:14px;cursor:pointer;transition:0.2s;font-family:inherit;}
+        .sidebar-item:hover{background:var(--hover);color:var(--text);}
+        .sidebar-divider{height:1px;background:var(--border);margin:8px 0;}
         
-        .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-        .dash-box { background: var(--card-bg); border: 1px solid var(--option-border); border-radius: 14px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s; }
-        .dash-box:hover { border-color: var(--atlas-border); box-shadow: 0 0 14px var(--atlas-glow); transform: translateY(-2px); }
-        .dash-box-icon { font-size: 36px; display: block; margin-bottom: 8px; }
-        .dash-box-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
-        .dash-box-count { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+        .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:60px;background:var(--card);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;z-index:100;}
+        .nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;color:var(--text2);font-size:10px;cursor:pointer;padding:6px 10px;border-radius:8px;transition:0.2s;font-family:inherit;}
+        .nav-item.active{color:var(--accent);}
+        .nav-item .nav-icon{font-size:20px;}
         
-        .tab-content { display: none; animation: fadeIn 0.3s; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
+        .floating-buttons{position:fixed;bottom:80px;right:16px;display:flex;flex-direction:column;gap:8px;z-index:99;}
+        .fab{width:42px;height:42px;border-radius:50%;border:none;font-size:18px;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;transition:0.2s;box-shadow:var(--shadow);}
+        .fab-wa{background:#25D366;}.fab-wa:hover{transform:scale(1.08);}
+        .fab-tg{background:#0088CC;}.fab-tg:hover{transform:scale(1.08);}
         
-        .back-btn { background: none; border: 1px solid var(--option-border); color: var(--text-secondary); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; margin-bottom: 12px; }
-        .section-header { background: var(--atlas-bg); border: 2px solid var(--atlas-border); border-radius: 14px; padding: 14px; margin-bottom: 14px; text-align: center; box-shadow: 0 0 10px var(--atlas-glow); }
-        .section-title { color: var(--atlas-text); font-size: 16px; font-weight: 700; }
+        .toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--card);color:var(--text);border:1px solid var(--accent);padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:0.2s;pointer-events:none;}
+        .toast.show{opacity:1;}
         
-        .card { background: var(--card-bg); border: 1px solid var(--option-border); border-radius: 14px; padding: 16px; margin-bottom: 10px; }
-        .card-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
-        .card-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--divider); font-size: 13px; }
-        .card-row:last-child { border-bottom: none; }
+        .dash-container{max-width:580px;margin:0 auto;padding:12px 14px 20px;}
         
-        .btn-sm { padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; }
-        .btn-outline { background: transparent; border: 1px solid var(--atlas-border); color: var(--atlas-text); }
-        .btn-outline:hover { background: var(--atlas-hover-bg); }
-        .btn-danger-sm { background: #EF4444; color: #FFF; }
-        .btn-success-sm { background: #22C55E; color: #FFF; }
+        .profile-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:14px;text-align:center;box-shadow:var(--shadow);}
+        .profile-avatar-wrap{position:relative;width:90px;height:90px;margin:0 auto 10px;cursor:pointer;}
+        .profile-avatar{width:90px;height:90px;border-radius:12px;object-fit:cover;border:2px solid var(--border);background:var(--hover);}
+        .profile-avatar-upload{position:absolute;bottom:-2px;right:-2px;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid var(--card);}
+        .profile-name{font-size:18px;font-weight:800;color:var(--text);margin-top:6px;}
+        .profile-meta{font-size:11px;color:var(--text2);margin-top:3px;line-height:1.5;}
+        .profile-meta span{color:var(--accent);font-weight:600;}
         
-        .input-group { margin-bottom: 10px; }
-        .input-group label { display: block; font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-bottom: 3px; }
-        .input-group input { width: 100%; padding: 10px 12px; border: 2px solid var(--option-border); border-radius: 8px; font-size: 14px; background: var(--body-bg); color: var(--text-primary); font-family: 'Noto Sans Bengali','Inter',sans-serif; }
+        .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+        .dash-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:18px 14px;text-align:center;cursor:pointer;transition:0.2s;box-shadow:var(--shadow);}
+        .dash-box:hover{border-color:var(--accent);box-shadow:var(--glow);transform:translateY(-2px);}
+        .dash-box-icon{font-size:30px;display:block;margin-bottom:6px;}
+        .dash-box-title{font-size:13px;font-weight:700;color:var(--text);}
+        .dash-box-count{font-size:10px;color:var(--text2);margin-top:2px;}
         
-        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-secondary); }
-        .empty-state .icon { font-size: 48px; display: block; margin-bottom: 12px; }
+        .tab-content{display:none;animation:fadeIn 0.25s;}
+        .tab-content.active{display:block;}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
         
-        .notification-dot { width: 8px; height: 8px; border-radius: 50%; background: #EF4444; display: inline-block; margin-right: 6px; }
-        .notification-read { opacity: 0.6; }
+        .back-btn{background:none;border:1px solid var(--border);color:var(--text2);padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;margin-bottom:10px;font-family:inherit;transition:0.2s;}
+        .back-btn:hover{border-color:var(--accent);color:var(--text);}
+        .section-header{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:10px;text-align:center;}
+        .section-title{color:var(--accent);font-size:15px;font-weight:700;}
         
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 3000; display: none; align-items: center; justify-content: center; }
-        .modal-overlay.active { display: flex; }
-        .modal { background: var(--card-bg); border-radius: 14px; padding: 20px; max-width: 500px; width: 90%; max-height: 85vh; overflow-y: auto; border: 1px solid var(--option-border); }
-        .modal-title { font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 16px; text-align: center; }
+        .card-item{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow);}
+        .card-item-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;}
+        .card-item-sub{font-size:11px;color:var(--text2);}
+        .card-item-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px;border-bottom:1px solid var(--border);}
+        .card-item-row:last-child{border-bottom:none;}
+        
+        .btn{display:inline-block;padding:8px 14px;border-radius:var(--radius-sm);font-weight:600;cursor:pointer;border:none;font-size:11px;transition:0.2s;font-family:inherit;text-align:center;}
+        .btn-outline{background:transparent;border:1px solid var(--border);color:var(--text2);}
+        .btn-outline:hover{border-color:var(--accent);color:var(--text);}
+        .btn-primary{background:var(--accent);color:#fff;}
+        .btn-success{background:var(--green);color:#fff;}
+        .btn-danger{background:var(--red);color:#fff;}
+        
+        .filter-row{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;}
+        .filter-row select,.filter-row input{padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:11px;font-family:inherit;}
+        
+        .input-group{margin-bottom:8px;}
+        .input-group label{display:block;font-size:10px;font-weight:600;color:var(--text2);margin-bottom:2px;text-transform:uppercase;letter-spacing:0.5px;}
+        .input-group input{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px;font-family:inherit;}
+        .input-group input:focus{outline:none;border-color:var(--accent);box-shadow:var(--glow);}
+        
+        .notification-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block;margin-right:5px;}
+        .notification-read{opacity:0.5;}
+        
+        .score-badge{padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;}
+        .score-high{background:rgba(63,185,80,0.15);color:var(--green);}
+        .score-mid{background:rgba(210,153,34,0.15);color:var(--yellow);}
+        .score-low{background:rgba(248,81,73,0.15);color:var(--red);}
+        
+        .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:300;display:none;align-items:center;justify-content:center;}
+        .modal-overlay.active{display:flex;}
+        .modal{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;max-width:460px;width:94%;max-height:80vh;overflow-y:auto;}
+        .modal-title{font-size:16px;font-weight:700;color:var(--accent);margin-bottom:12px;text-align:center;}
     </style>
 </head>
-<body class="dark-mode">
+<body>
 
+<!-- Sidebar -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-header"><div class="sidebar-logo">ATLAS EXAM</div></div>
-    <nav class="sidebar-menu">
-        <button class="sidebar-item" onclick="navigateTo('profile');closeSidebar();"><span class="icon">👤</span> প্রোফাইল</button>
-        <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();"><span class="icon">🏠</span> হোম</button>
-        <button class="sidebar-item" onclick="goTo('class.html');closeSidebar();"><span class="icon">📚</span> ফ্রি ক্লাস</button>
-        <button class="sidebar-item" onclick="goTo('exam.html');closeSidebar();"><span class="icon">📝</span> ফ্রি এক্সাম</button>
-        <button class="sidebar-item" onclick="goTo('exam.html?mock=true');closeSidebar();"><span class="icon">🎯</span> মক টেস্ট</button>
-        <button class="sidebar-item" onclick="goTo('dashboard.html');closeSidebar();"><span class="icon">❌</span> মাই মিসটেকস</button>
-        <button class="sidebar-item" onclick="goTo('ai.html');closeSidebar();"><span class="icon">🤖</span> ATLAS AI</button>
-        <div class="sidebar-divider"></div>
-        <button class="sidebar-item" onclick="toggleTheme()"><span class="icon" id="sidebarThemeIcon">🌙</span> <span id="sidebarThemeText">ডার্ক মোড</span></button>
-        <button class="sidebar-item" onclick="openWhatsApp()"><span class="icon">💬</span> WhatsApp</button>
-        <button class="sidebar-item" onclick="openTelegram()"><span class="icon">✈️</span> Telegram</button>
-        <button class="sidebar-item" onclick="logout()"><span class="icon">🚪</span> লগআউট</button>
-    </nav>
+    <button class="sidebar-item" onclick="navigateTo('profile');closeSidebar();">👤 প্রোফাইল</button>
+    <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();">🏠 হোম</button>
+    <button class="sidebar-item" onclick="goTo('class.html');closeSidebar();">📚 ফ্রি ক্লাস</button>
+    <button class="sidebar-item" onclick="goTo('exam.html');closeSidebar();">📝 ফ্রি এক্সাম</button>
+    <button class="sidebar-item" onclick="goTo('mock-test.html');closeSidebar();">🎯 মক টেস্ট</button>
+    <button class="sidebar-item" onclick="goTo('dashboard.html');closeSidebar();">⚠️ My Mistakes</button>
+    <button class="sidebar-item" onclick="goTo('ai.html');closeSidebar();">🤖 ATLAS AI</button>
+    <div class="sidebar-divider"></div>
+    <button class="sidebar-item" onclick="toggleTheme()">🌙 ডার্ক মোড</button>
+    <button class="sidebar-item" onclick="openWA()">💬 WhatsApp</button>
+    <button class="sidebar-item" onclick="openTG()">✈️ Telegram</button>
+    <button class="sidebar-item" onclick="logout()">🚪 লগআউট</button>
 </aside>
 
+<!-- Header -->
 <header class="header">
-    <div class="header-left"><button class="hamburger" onclick="toggleSidebar()">☰</button><div class="logo">ATLAS EXAM</div></div>
-    <div class="header-right"><button class="header-icon" id="themeToggle" onclick="toggleTheme()">🌙</button></div>
+    <div style="display:flex;align-items:center;gap:10px;"><button class="hamburger" onclick="toggleSidebar()">☰</button><span class="logo">ATLAS EXAM</span></div>
+    <div style="display:flex;gap:6px;"><button class="header-icon" onclick="toggleTheme()">🌙</button></div>
 </header>
 
-<main class="main-content"><div class="dash-container">
+<main class="dash-container">
 
-<!-- প্রোফাইল -->
-<div class="profile-header">
+<!-- Profile Card -->
+<div class="profile-card">
     <div class="profile-avatar-wrap" onclick="document.getElementById('avatarInput').click()">
         <img class="profile-avatar" id="profileAvatar" src="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" alt="Photo">
-        <div class="profile-avatar" id="profileAvatarFallback" style="display:flex;">👤</div>
+        <div class="profile-avatar" id="profileAvatarFallback" style="display:flex;align-items:center;justify-content:center;font-size:32px;">👤</div>
         <div class="profile-avatar-upload">📷</div>
-        <input type="file" id="avatarInput" accept="image/*" onchange="uploadAvatar(this)">
+        <input type="file" id="avatarInput" accept="image/*" onchange="uploadAvatar(this)" style="display:none;">
     </div>
     <div class="profile-name" id="profileName">লোড হচ্ছে...</div>
     <div class="profile-meta" id="profileMeta"></div>
+    <button class="btn btn-outline" onclick="showTab('edit')" style="margin-top:8px;width:100%;">✏️ এডিট প্রোফাইল</button>
 </div>
 
-<!-- ৪টা বক্স -->
+<!-- 4 Boxes -->
 <div class="dash-grid" id="mainGrid">
     <div class="dash-box" onclick="showTab('history')">
         <span class="dash-box-icon">📚</span>
@@ -122,80 +176,126 @@
     </div>
 </div>
 
-<!-- ট্যাব কন্টেন্ট -->
+<!-- Tab Content -->
 <div id="tabContent">
     <div class="tab-content active" id="tabMain"></div>
-    <div class="tab-content" id="tabHistoryContent"><button class="back-btn" onclick="showTab('main')">← ফিরে যান</button><div class="section-header"><div class="section-title">📚 Exam History</div></div><div id="historyList"></div></div>
-    <div class="tab-content" id="tabClassHistoryContent"><button class="back-btn" onclick="showTab('main')">← ফিরে যান</button><div class="section-header"><div class="section-title">🎥 Class History</div></div><div id="classHistoryList"></div></div>
-    <div class="tab-content" id="tabBookmarksContent"><button class="back-btn" onclick="showTab('main')">← ফিরে যান</button><div class="section-header"><div class="section-title">🔖 Bookmarks</div></div><div id="bookmarksList"></div></div>
-    <div class="tab-content" id="tabNotificationsContent"><button class="back-btn" onclick="showTab('main')">← ফিরে যান</button><div class="section-header"><div class="section-title">🔔 Notifications</div></div><div id="notifList"></div></div>
-    <div class="tab-content" id="tabProfileContent"><button class="back-btn" onclick="showTab('main')">← ফিরে যান</button><div class="section-header"><div class="section-title">👤 প্রোফাইল এডিট</div></div><div class="card"><div class="input-group"><label>নাম</label><input type="text" id="editName"></div><div class="input-group"><label>HSC Batch</label><input type="text" id="editBatch"></div><div class="input-group"><label>কলেজ</label><input type="text" id="editCollege"></div><div class="input-group"><label>পিতার নাম</label><input type="text" id="editFather"></div><div class="input-group"><label>মাতার নাম</label><input type="text" id="editMother"></div><div class="input-group"><label>পাসওয়ার্ড</label><input type="password" id="editPass" placeholder="নতুন পাসওয়ার্ড"></div><button class="btn-sm btn-outline" onclick="updateProfile()" style="width:100%;padding:12px;">💾 আপডেট</button></div></div>
+    
+    <!-- Exam History -->
+    <div class="tab-content" id="tabHistoryContent">
+        <button class="back-btn" onclick="showTab('main')">← ফিরে যান</button>
+        <div class="section-header"><div class="section-title">📚 Exam History</div></div>
+        <div class="filter-row">
+            <select id="filterCat" onchange="loadHistory()"><option value="all">সব ক্যাটাগরি</option></select>
+            <select id="filterSub" onchange="loadHistory()"><option value="all">সব সাবজেক্ট</option></select>
+        </div>
+        <div id="historyList"></div>
+    </div>
+    
+    <!-- Class History -->
+    <div class="tab-content" id="tabClassHistoryContent">
+        <button class="back-btn" onclick="showTab('main')">← ফিরে যান</button>
+        <div class="section-header"><div class="section-title">🎥 Class History</div></div>
+        <div id="classHistoryList"></div>
+    </div>
+    
+    <!-- Bookmarks -->
+    <div class="tab-content" id="tabBookmarksContent">
+        <button class="back-btn" onclick="showTab('main')">← ফিরে যান</button>
+        <div class="section-header"><div class="section-title">🔖 Bookmarks</div></div>
+        <div id="bookmarksList"></div>
+    </div>
+    
+    <!-- Notifications -->
+    <div class="tab-content" id="tabNotificationsContent">
+        <button class="back-btn" onclick="showTab('main')">← ফিরে যান</button>
+        <div class="section-header"><div class="section-title">🔔 Notifications</div></div>
+        <div id="notifList"></div>
+    </div>
+    
+    <!-- Edit Profile -->
+    <div class="tab-content" id="tabEditContent">
+        <button class="back-btn" onclick="showTab('main')">← ফিরে যান</button>
+        <div class="section-header"><div class="section-title">✏️ প্রোফাইল এডিট</div></div>
+        <div class="card-item">
+            <div class="input-group"><label>নাম</label><input type="text" id="editName"></div>
+            <div class="input-group"><label>HSC Batch</label><input type="text" id="editBatch"></div>
+            <div class="input-group"><label>কলেজ</label><input type="text" id="editCollege"></div>
+            <div class="input-group"><label>পিতার নাম</label><input type="text" id="editFather"></div>
+            <div class="input-group"><label>মাতার নাম</label><input type="text" id="editMother"></div>
+            <div class="input-group"><label>পাসওয়ার্ড</label><input type="password" id="editPass" placeholder="নতুন পাসওয়ার্ড (৬+ ক্যারেক্টার)"></div>
+            <button class="btn btn-primary" onclick="updateProfile()" style="width:100%;padding:12px;">💾 সেইভ</button>
+        </div>
+    </div>
 </div>
 
-</div></main>
+</main>
 
-<div class="modal-overlay" id="detailModal"><div class="modal" id="detailModalContent"></div></div>
+<!-- Detail Modal -->
+<div class="modal-overlay" id="detailModal" onclick="this.classList.remove('active')"><div class="modal" id="detailModalContent" onclick="event.stopPropagation()"></div></div>
 
+<!-- Bottom Nav -->
 <nav class="bottom-nav">
-    <button class="nav-item" onclick="goTo('index.html')"><span class="nav-icon">🏠</span><span>হোম</span></button>
-    <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon">📚</span><span>ক্লাস</span></button>
-    <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon">📝</span><span>এক্সাম</span></button>
-    <button class="nav-item" onclick="goTo('exam.html?mock=true')"><span class="nav-icon">🎯</span><span>মক</span></button>
-    <button class="nav-item active" onclick="goTo('dashboard.html')"><span class="nav-icon">👤</span><span>প্রোফাইল</span></button>
+    <button class="nav-item" onclick="goTo('index.html')"><span class="nav-icon">🏠</span>হোম</button>
+    <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon">📚</span>ক্লাস</button>
+    <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon">📝</span>এক্সাম</button>
+    <button class="nav-item" onclick="goTo('mock-test.html')"><span class="nav-icon">🎯</span>মক</button>
+    <button class="nav-item active" onclick="goTo('dashboard.html')"><span class="nav-icon">👤</span>প্রোফাইল</button>
 </nav>
 
-<div class="floating-buttons">
-    <button class="fab fab-whatsapp" onclick="openWhatsApp()">💬</button>
-    <button class="fab fab-telegram" onclick="openTelegram()">✈️</button>
-</div>
+<div class="floating-buttons"><button class="fab fab-wa" onclick="openWA()">💬</button><button class="fab fab-tg" onclick="openTG()">✈️</button></div>
 <div class="toast" id="toast"></div>
 
 <script>
-var SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
-var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
-var isDarkMode = true, isSidebarOpen = false, currentUser = null;
+const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
+let isDarkMode = true, isSidebarOpen = false, currentUser = null;
 
-async function safeFetch(url, opts) {
-    opts = opts || {}; opts.headers = opts.headers || {}; opts.headers['apikey'] = SUPABASE_KEY; opts.headers['Authorization'] = 'Bearer ' + SUPABASE_KEY;
-    if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') opts.headers['Content-Type'] = 'application/json';
-    try { var res = await fetch(url, opts); var text = await res.text(); if (!text || text.trim() === '') return []; var data = JSON.parse(text); if (!res.ok) throw new Error(data.message); return data; }
-    catch(e) { console.error(e); return []; }
-}
-
-function checkAuth() { var sess = localStorage.getItem('atlas-session'); if (!sess) { goTo('auth.html'); return false; } try { currentUser = JSON.parse(sess); return true; } catch(e) { goTo('auth.html'); return false; } }
-
-function loadTheme() { var s = localStorage.getItem('atlas-theme'); isDarkMode = s !== 'light'; document.body.classList.toggle('dark-mode', isDarkMode); updateThemeIcon(); }
-function toggleTheme() { isDarkMode = !isDarkMode; document.body.classList.toggle('dark-mode', isDarkMode); localStorage.setItem('atlas-theme', isDarkMode ? 'dark' : 'light'); updateThemeIcon(); showToast(isDarkMode ? '🌙 ডার্ক' : '☀️ লাইট'); }
-function updateThemeIcon() { var b = document.getElementById('themeToggle'), si = document.getElementById('sidebarThemeIcon'), st = document.getElementById('sidebarThemeText'); if (b) b.textContent = isDarkMode ? '🌙' : '☀️'; if (si) si.textContent = isDarkMode ? '🌙' : '☀️'; if (st) st.textContent = isDarkMode ? 'ডার্ক মোড' : 'লাইট মোড'; }
+function showToast(m, d = 2000) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), d); }
+function toggleTheme() { isDarkMode = !isDarkMode; document.body.classList.toggle('dark-mode', isDarkMode); showToast(isDarkMode ? '🌙 ডার্ক' : '☀️ লাইট'); }
 function toggleSidebar() { isSidebarOpen = !isSidebarOpen; document.getElementById('sidebarOverlay').classList.toggle('active', isSidebarOpen); document.getElementById('sidebar').classList.toggle('active', isSidebarOpen); }
 function closeSidebar() { isSidebarOpen = false; document.getElementById('sidebarOverlay').classList.remove('active'); document.getElementById('sidebar').classList.remove('active'); }
-function goTo(u) { window.location.href = u; }
-function navigateTo(p) { var r = { 'home':'index.html', 'profile':'dashboard.html', 'class':'class.html', 'exam':'exam.html' }; goTo(r[p] || 'index.html'); }
-function openWhatsApp() { window.open('https://wa.me/8801999681290', '_blank'); }
-function openTelegram() { window.open('https://t.me/rafi_somc', '_blank'); }
+function goTo(u) { location.href = u; }
+function navigateTo(p) { const r = { home:'index.html', profile:'dashboard.html', class:'class.html', exam:'exam.html' }; goTo(r[p]||'index.html'); }
+function openWA() { window.open('https://wa.me/8801999681290', '_blank'); }
+function openTG() { window.open('https://t.me/rafi_somc', '_blank'); }
 function logout() { localStorage.removeItem('atlas-session'); goTo('index.html'); }
-function showToast(m, d) { d = d || 2500; var t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(function(){ t.classList.remove('show'); }, d); }
 
-// ========== ছবি আপলোড ==========
+async function safeFetch(url, opts = {}) {
+    opts.headers = Object.assign({ apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }, opts.headers || {});
+    if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') opts.headers['Content-Type'] = 'application/json';
+    try { const res = await fetch(url, opts); const text = await res.text(); if (!text?.trim()) return []; const data = JSON.parse(text); if (!res.ok) throw new Error(data.message); return data; }
+    catch(e) { console.error('❌', e.message); return []; }
+}
+
+function checkAuth() {
+    try { currentUser = JSON.parse(localStorage.getItem('atlas-session')); if (!currentUser) { goTo('auth.html'); return false; } return true; }
+    catch(e) { goTo('auth.html'); return false; }
+}
+
+// ========== AVATAR ==========
 function uploadAvatar(input) {
-    var file = input.files[0]; if (!file) return;
-    var reader = new FileReader();
-    reader.onload = function(e) {
-        var img = document.getElementById('profileAvatar'); img.src = e.target.result; img.style.display = 'block';
+    const file = input.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        document.getElementById('profileAvatar').src = e.target.result;
+        document.getElementById('profileAvatar').style.display = 'block';
         document.getElementById('profileAvatarFallback').style.display = 'none';
-        localStorage.setItem('avatar_' + currentUser.phone, e.target.result);
-        showToast('✅ ছবি আপলোড হয়েছে');
+        localStorage.setItem('avatar_'+currentUser.phone, e.target.result);
+        showToast('✅ ছবি আপলোড');
     };
     reader.readAsDataURL(file);
 }
 
-// ========== প্রোফাইল ==========
+// ========== PROFILE ==========
 function loadProfile() {
     if (!currentUser) return;
     document.getElementById('profileName').textContent = currentUser.name || 'স্টুডেন্ট';
-    document.getElementById('profileMeta').textContent = 'ব্যাচ: ' + (currentUser.batch||'—') + ' | SSC: ' + (currentUser.ssc_gpa||'—') + ' | HSC: ' + (currentUser.hsc_gpa||'—') + ' | ' + (currentUser.timer_type==='first'?'ফার্স্ট টাইমার':'সেকেন্ড টাইমার');
-    var savedAvatar = localStorage.getItem('avatar_' + currentUser.phone);
-    if (savedAvatar) { document.getElementById('profileAvatar').src = savedAvatar; document.getElementById('profileAvatar').style.display = 'block'; document.getElementById('profileAvatarFallback').style.display = 'none'; }
+    document.getElementById('profileMeta').innerHTML = `
+        📱 <span>${currentUser.phone||'—'}</span> | 🎓 <span>${currentUser.batch||'—'}</span> | 🏫 ${currentUser.college||'—'}<br>
+        📊 SSC: <span>${currentUser.ssc_gpa||'—'}</span> | HSC: <span>${currentUser.hsc_gpa||'—'}</span> | 🔄 <span>${currentUser.timer_type==='first'?'ফার্স্ট টাইমার':'সেকেন্ড টাইমার'}</span>
+    `;
+    const avatar = localStorage.getItem('avatar_'+currentUser.phone);
+    if (avatar) { document.getElementById('profileAvatar').src = avatar; document.getElementById('profileAvatar').style.display = 'block'; document.getElementById('profileAvatarFallback').style.display = 'none'; }
     document.getElementById('editName').value = currentUser.name || '';
     document.getElementById('editBatch').value = currentUser.batch || '';
     document.getElementById('editCollege').value = currentUser.college || '';
@@ -204,62 +304,133 @@ function loadProfile() {
 }
 
 async function updateProfile() {
-    var data = { name: document.getElementById('editName').value.trim(), batch: document.getElementById('editBatch').value.trim(), college: document.getElementById('editCollege').value.trim(), father_name: document.getElementById('editFather').value.trim(), mother_name: document.getElementById('editMother').value.trim() };
-    var pass = document.getElementById('editPass').value.trim(); if (pass.length >= 6) data.password_hash = pass;
-    try { await safeFetch(SUPABASE_URL + '/rest/v1/users?phone=eq.' + currentUser.phone, 'PATCH', data); Object.assign(currentUser, data); localStorage.setItem('atlas-session', JSON.stringify(currentUser)); loadProfile(); showToast('✅ প্রোফাইল আপডেট হয়েছে'); showTab('main'); }
-    catch(e) { alert('আপডেট এরর: ' + e.message); }
+    const data = { name: document.getElementById('editName').value.trim(), batch: document.getElementById('editBatch').value.trim(), college: document.getElementById('editCollege').value.trim(), father_name: document.getElementById('editFather').value.trim(), mother_name: document.getElementById('editMother').value.trim() };
+    const pass = document.getElementById('editPass').value.trim();
+    if (pass.length >= 6) data.password_hash = pass;
+    try {
+        await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${currentUser.phone}`, { method:'PATCH', body:JSON.stringify(data) });
+        Object.assign(currentUser, data);
+        localStorage.setItem('atlas-session', JSON.stringify(currentUser));
+        loadProfile(); showToast('✅ প্রোফাইল আপডেট'); showTab('main');
+    } catch(e) { alert('এরর: ' + e.message); }
 }
 
-// ========== ট্যাব ==========
+// ========== TABS ==========
 function showTab(tab) {
-    document.querySelectorAll('.tab-content').forEach(function(c){ c.classList.remove('active'); });
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     if (tab === 'main') { document.getElementById('tabMain').classList.add('active'); return; }
-    document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1) + 'Content').classList.add('active');
+    document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1) + 'Content')?.classList.add('active');
     if (tab === 'history') loadHistory();
     else if (tab === 'classhistory') loadClassHistory();
     else if (tab === 'bookmarks') loadBookmarks();
     else if (tab === 'notifications') loadNotifications();
-    else if (tab === 'profile') {}
 }
 
-// ========== হিস্টোরি ==========
+// ========== EXAM HISTORY ==========
 async function loadHistory() {
-    try { var results = await safeFetch(SUPABASE_URL + '/rest/v1/exam_results?phone=eq.' + currentUser.phone + '&select=*&order=submitted_at.desc&limit=30'); if (!results || results.length === 0) { document.getElementById('historyList').innerHTML = '<div class="empty-state"><span class="icon">📝</span>কোনো এক্সাম নেই</div>'; return; } document.getElementById('countExams').textContent = results.length + ' এক্সাম'; var html = ''; results.forEach(function(r){ html += '<div class="card"><div class="card-title">📝 এক্সাম #' + r.exam_id + '</div><div class="card-row"><span>স্কোর</span><span style="font-weight:700;color:var(--atlas-text);">'+(r.final_score||0)+'</span></div><div class="card-row"><span>তারিখ</span><span>'+new Date(r.submitted_at).toLocaleDateString('bn-BD')+'</span></div><button class="btn-sm btn-outline" onclick="viewDetails('+r.exam_id+')">📋 বিস্তারিত</button></div>'; }); document.getElementById('historyList').innerHTML = html; }
-    catch(e) { document.getElementById('historyList').innerHTML = '<div class="empty-state">লোড ব্যর্থ</div>'; }
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/exam_results?phone=eq.${currentUser.phone}&select=*&order=submitted_at.desc&limit=30`);
+        document.getElementById('countExams').textContent = (data?.length||0) + ' এক্সাম';
+        if (!data?.length) { document.getElementById('historyList').innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">কোনো এক্সাম হিস্টোরি নেই</p>'; return; }
+        let html = '';
+        data.forEach(r => {
+            const score = parseFloat(r.final_score) || 0;
+            const total = r.total_questions || 50;
+            const pct = Math.round((score / total) * 100);
+            const badge = pct >= 80 ? 'score-high' : pct >= 50 ? 'score-mid' : 'score-low';
+            html += `<div class="card-item">
+                <div class="card-item-title">📝 এক্সাম #${r.exam_id} <span class="score-badge ${badge}">${score.toFixed(1)}/${total}</span></div>
+                <div class="card-item-row"><span>✅ সঠিক</span><span style="color:var(--green);">${r.correct||0}</span></div>
+                <div class="card-item-row"><span>❌ ভুল</span><span style="color:var(--red);">${r.wrong||0}</span></div>
+                <div class="card-item-row"><span>⏭️ স্কিপ</span><span style="color:var(--yellow);">${r.skipped||0}</span></div>
+                <div class="card-item-sub">📅 ${new Date(r.submitted_at).toLocaleString('bn-BD')}</div>
+                <button class="btn btn-outline" onclick="viewDetails(${r.exam_id})" style="margin-top:6px;">📋 বিস্তারিত</button>
+            </div>`;
+        });
+        document.getElementById('historyList').innerHTML = html;
+    } catch(e) {}
 }
 
-// ========== ক্লাস হিস্টোরি ==========
+// ========== CLASS HISTORY ==========
 function loadClassHistory() {
-    var saved = localStorage.getItem('class_history_' + currentUser.phone); var history = saved ? JSON.parse(saved) : [];
+    const saved = localStorage.getItem('class_history_'+currentUser.phone);
+    const history = saved ? JSON.parse(saved) : [];
     document.getElementById('countClasses').textContent = history.length + ' ক্লাস';
-    if (history.length === 0) { document.getElementById('classHistoryList').innerHTML = '<div class="empty-state"><span class="icon">🎥</span>কোনো ক্লাস হিস্টোরি নেই</div>'; return; }
-    var html = ''; history.reverse().forEach(function(h){ html += '<div class="card"><div class="card-title">📘 '+h.subject+'</div><div class="card-row"><span>চ্যাপ্টার</span><span>'+h.chapter+'</span></div><div class="card-row"><span>পার্ট</span><span>'+h.part+'</span></div><div class="card-row"><span>সময়</span><span>'+new Date(h.time).toLocaleString('bn-BD')+'</span></div></div>'; }); document.getElementById('classHistoryList').innerHTML = html;
+    if (!history.length) { document.getElementById('classHistoryList').innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">কোনো ক্লাস হিস্টোরি নেই</p>'; return; }
+    let html = '';
+    history.reverse().forEach(h => {
+        html += `<div class="card-item">
+            <div class="card-item-title">📘 ${h.subject}</div>
+            <div class="card-item-row"><span>📖 চ্যাপ্টার</span><span>${h.chapter}</span></div>
+            <div class="card-item-row"><span>🎥 পার্ট</span><span>${h.part}</span></div>
+            <div class="card-item-sub">📅 ${new Date(h.time).toLocaleString('bn-BD')}</div>
+            <button class="btn btn-outline" onclick="goTo('class.html')" style="margin-top:6px;">▶️ Rewatch</button>
+        </div>`;
+    });
+    document.getElementById('classHistoryList').innerHTML = html;
 }
 
-// ========== বুকমার্ক ==========
+// ========== BOOKMARKS ==========
 function loadBookmarks() {
-    var saved = localStorage.getItem('bookmarks_' + currentUser.phone); var bookmarks = saved ? JSON.parse(saved) : {}; var count = Object.keys(bookmarks).length;
+    const saved = localStorage.getItem('bookmarks_'+currentUser.phone);
+    const bookmarks = saved ? JSON.parse(saved) : {};
+    const count = Object.keys(bookmarks).length;
     document.getElementById('countBookmarks').textContent = count + ' বুকমার্ক';
-    if (count === 0) { document.getElementById('bookmarksList').innerHTML = '<div class="empty-state"><span class="icon">🔖</span>কোনো বুকমার্ক নেই</div>'; return; }
-    var html = ''; Object.keys(bookmarks).forEach(function(qid){ html += '<div class="card"><div class="card-title">📝 প্রশ্ন #'+qid+'</div><button class="btn-sm btn-danger-sm" onclick="removeBookmark('+qid+')">🗑️ রিমুভ</button></div>'; }); document.getElementById('bookmarksList').innerHTML = html;
+    if (!count) { document.getElementById('bookmarksList').innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">কোনো বুকমার্ক নেই</p>'; return; }
+    let html = '';
+    Object.keys(bookmarks).forEach(qid => {
+        html += `<div class="card-item">
+            <div class="card-item-title">📝 প্রশ্ন #${qid}</div>
+            <button class="btn btn-danger" onclick="removeBookmark('${qid}')" style="margin-top:4px;">🗑️ রিমুভ</button>
+        </div>`;
+    });
+    document.getElementById('bookmarksList').innerHTML = html;
 }
-function removeBookmark(qid) { var saved = localStorage.getItem('bookmarks_' + currentUser.phone); var bookmarks = saved ? JSON.parse(saved) : {}; delete bookmarks[qid]; localStorage.setItem('bookmarks_' + currentUser.phone, JSON.stringify(bookmarks)); loadBookmarks(); showToast('🔖 রিমুভ হয়েছে'); }
+function removeBookmark(qid) {
+    const saved = localStorage.getItem('bookmarks_'+currentUser.phone);
+    const bookmarks = saved ? JSON.parse(saved) : {};
+    delete bookmarks[qid];
+    localStorage.setItem('bookmarks_'+currentUser.phone, JSON.stringify(bookmarks));
+    loadBookmarks(); showToast('🔖 রিমুভ');
+}
 
-// ========== নোটিফিকেশন ==========
+// ========== NOTIFICATIONS ==========
 async function loadNotifications() {
-    try { var notifs = await safeFetch(SUPABASE_URL + '/rest/v1/notifications?user_phone=eq.' + currentUser.phone + '&select=*&order=created_at.desc&limit=20'); var unread = notifs ? notifs.filter(function(n){ return !n.is_read; }).length : 0; document.getElementById('countNotifs').textContent = unread + ' নতুন'; if (!notifs || notifs.length === 0) { document.getElementById('notifList').innerHTML = '<div class="empty-state"><span class="icon">🔔</span>কোনো নোটিফিকেশন নেই</div>'; return; } var html = ''; notifs.forEach(function(n){ html += '<div class="card'+(n.is_read?' notification-read':'')+'" onclick="markNotifRead(\''+n.id+'\')">'+(n.is_read?'':'<span class="notification-dot"></span>')+'<div class="card-title">'+(n.title||'নোটিফিকেশন')+'</div><div style="font-size:12px;color:var(--text-secondary);">'+(n.message||'')+'</div><div style="font-size:10px;margin-top:4px;">'+new Date(n.created_at).toLocaleDateString('bn-BD')+'</div></div>'; }); document.getElementById('notifList').innerHTML = html; }
-    catch(e) {}
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/notifications?phone=eq.${currentUser.phone}&select=*&order=created_at.desc&limit=20`);
+        const unread = data?.filter(n => !n.is_read).length || 0;
+        document.getElementById('countNotifs').textContent = unread + ' নতুন';
+        if (!data?.length) { document.getElementById('notifList').innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">কোনো নোটিফিকেশন নেই</p>'; return; }
+        let html = '';
+        data.forEach(n => {
+            html += `<div class="card-item ${n.is_read?'notification-read':''}" onclick="markNotifRead('${n.id}')">
+                ${!n.is_read?'<span class="notification-dot"></span>':''}
+                <div class="card-item-title">${n.title||'নোটিফিকেশন'}</div>
+                <div class="card-item-sub">${n.message||''}</div>
+                <div style="font-size:10px;color:var(--text2);margin-top:3px;">📅 ${new Date(n.created_at).toLocaleString('bn-BD')}</div>
+                <button class="btn btn-danger" onclick="event.stopPropagation();deleteNotif('${n.id}')" style="margin-top:4px;font-size:10px;">🗑️</button>
+            </div>`;
+        });
+        document.getElementById('notifList').innerHTML = html;
+    } catch(e) {}
 }
-async function markNotifRead(id) { try { await safeFetch(SUPABASE_URL + '/rest/v1/notifications?id=eq.' + id, 'PATCH', { is_read: true }); loadNotifications(); } catch(e) {} }
+async function markNotifRead(id) { try { await safeFetch(`${SUPABASE_URL}/rest/v1/notifications?id=eq.${id}`, { method:'PATCH', body:JSON.stringify({ is_read:true }) }); loadNotifications(); } catch(e) {} }
+async function deleteNotif(id) { if (!confirm('ডিলিট করবেন?')) return; try { await safeFetch(`${SUPABASE_URL}/rest/v1/notifications?id=eq.${id}`, { method:'DELETE' }); loadNotifications(); showToast('🗑️ ডিলিট'); } catch(e) {} }
 
 function viewDetails(examId) {
-    var html = '<div class="modal-title">📋 এক্সাম #'+examId+'</div><p style="text-align:center;color:var(--text-secondary);">বিস্তারিত শীঘ্রই আসছে</p><button class="btn-sm btn-outline" onclick="document.getElementById(\'detailModal\').classList.remove(\'active\')" style="width:100%;margin-top:12px;">✕ বন্ধ</button>';
-    document.getElementById('detailModalContent').innerHTML = html; document.getElementById('detailModal').classList.add('active');
+    const html = `<div class="modal-title">📋 এক্সাম #${examId}</div><p style="text-align:center;color:var(--text2);">বিস্তারিত শীঘ্রই আসছে</p><button class="btn btn-outline" onclick="document.getElementById('detailModal').classList.remove('active')" style="width:100%;margin-top:8px;">✕ বন্ধ</button>`;
+    document.getElementById('detailModalContent').innerHTML = html;
+    document.getElementById('detailModal').classList.add('active');
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    loadTheme(); if (!checkAuth()) return; loadProfile(); loadHistory(); loadClassHistory(); loadBookmarks(); loadNotifications();
-    document.getElementById('detailModal').addEventListener('click', function(e){ if (e.target === this) this.classList.remove('active'); });
+// ========== INIT ==========
+document.addEventListener('DOMContentLoaded', () => {
+    if (!checkAuth()) return;
+    loadProfile();
+    loadHistory();
+    loadClassHistory();
+    loadBookmarks();
+    loadNotifications();
 });
 </script>
 </body>
