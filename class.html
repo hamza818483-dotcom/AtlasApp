@@ -207,12 +207,22 @@ function openSubject(subj){
     document.getElementById('viewVideo').style.display='none';
 }
 
-function showParts(ch,parts){
-    currentChapter=ch;
-    if(parts&&parts.length>0){
-        const p=parts[0];
-        playVideo(p.youtube_link,ch,p.class_type||'website',p.class_note||'',p.start_time||'');
-    }else{alert('⚠️ No parts found');}
+function showParts(ch, parts) {
+    currentChapter = ch;
+    
+    // parts JSON string হলে parse
+    if (typeof parts === 'string') {
+        try { parts = JSON.parse(parts); } catch(e) {}
+    }
+    
+    alert('showParts: ' + (Array.isArray(parts) ? parts.length : typeof parts) + ' items');
+    
+    if (parts && Array.isArray(parts) && parts.length > 0) {
+        var p = parts[0];
+        playVideo(p.youtube_link, ch, p.class_type || 'website', p.class_note || '', p.start_time || '');
+    } else {
+        alert('⚠️ No valid parts');
+    }
 }
 
 function playVideo(link,title,classType,classNote,time){
