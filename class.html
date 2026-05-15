@@ -6,26 +6,31 @@
     <title>ATLAS EXAM · ফ্রি ক্লাস</title>
     <style>
         :root {
-            --bg: #0D1117; --card: #161B22; --hover: #1C2129;
-            --text: #E6EDF3; --text2: #8B949E;
-            --accent: #7C83FF; --accent-hover: #9499FF;
-            --border: #30363D; --shadow: 0 2px 8px rgba(0,0,0,0.3);
-            --glow: 0 0 0 2px rgba(124,131,255,0.12);
+            --bg: #0A0E17; --card: #131822; --hover: #1A2130;
+            --text: #ECEEF2; --text2: #8E94A0;
+            --accent: #6C72FF; --accent-hover: #858AFF;
+            --border: #252B38; --shadow: 0 2px 10px rgba(0,0,0,0.4);
             --radius: 14px; --radius-sm: 10px;
-            --green: #3FB950; --red: #F85149;
+            --green: #3ECF8E; --red: #FF5A5A;
+        }
+        .light-mode {
+            --bg: #F8F9FC; --card: #FFFFFF; --hover: #F1F3F8;
+            --text: #1A1D28; --text2: #6B7180;
+            --accent: #5B5FE8; --accent-hover: #4A4ED4;
+            --border: #E4E7F0; --shadow: 0 2px 10px rgba(0,0,0,0.06);
+            --green: #30A46C; --red: #E5484D;
         }
         * { margin:0; padding:0; box-sizing:border-box; }
         body {
             font-family: 'Inter', 'Noto Sans Bengali', system-ui, sans-serif;
             background: var(--bg); color: var(--text);
             min-height: 100vh; padding: 56px 0 70px;
-            -webkit-font-smoothing: antialiased;
+            -webkit-font-smoothing: antialiased; transition: background 0.3s, color 0.3s;
         }
         .header { position:fixed;top:0;left:0;right:0;height:56px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 14px;z-index:100; }
         .hamburger{background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:6px;}
         .logo{font-size:20px;font-weight:800;color:var(--accent);letter-spacing:-1px;}
         .header-icon{background:var(--card);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:0.2s;}
-        .header-icon:hover{border-color:var(--accent);box-shadow:var(--glow);}
         
         .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;opacity:0;visibility:hidden;transition:0.2s;}
         .sidebar-overlay.active{opacity:1;visibility:visible;}
@@ -44,28 +49,23 @@
         
         .floating-buttons{position:fixed;bottom:80px;right:16px;display:flex;flex-direction:column;gap:8px;z-index:99;}
         .fab{width:42px;height:42px;border-radius:50%;border:none;font-size:18px;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;transition:0.2s;box-shadow:var(--shadow);}
-        .fab-wa{background:#25D366;}.fab-wa:hover{transform:scale(1.08);}
-        .fab-tg{background:#0088CC;}.fab-tg:hover{transform:scale(1.08);}
+        .fab-wa{background:#25D366;}.fab-tg{background:#0088CC;}
         
         .toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--card);color:var(--text);border:1px solid var(--accent);padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:0.2s;pointer-events:none;}
         .toast.show{opacity:1;}
         
         .class-container{max-width:600px;margin:0 auto;padding:12px 14px 20px;}
-        
         .section-header{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px;text-align:center;box-shadow:var(--shadow);}
         .section-title{color:var(--accent);font-size:17px;font-weight:700;}
-        
         .search-box{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--text);font-size:13px;margin-bottom:12px;font-family:inherit;transition:0.2s;}
-        .search-box:focus{outline:none;border-color:var(--accent);box-shadow:var(--glow);}
+        .search-box:focus{outline:none;border-color:var(--accent);}
         
         .subject-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:8px;cursor:pointer;transition:0.2s;display:flex;justify-content:space-between;align-items:center;}
-        .subject-card:hover{border-color:var(--accent);box-shadow:var(--glow);}
+        .subject-card:hover{border-color:var(--accent);}
         .subject-name{font-size:15px;font-weight:700;}
         .subject-count{font-size:11px;color:var(--text2);}
         
         .back-btn{background:none;border:1px solid var(--border);color:var(--text2);padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;margin-bottom:10px;font-family:inherit;transition:0.2s;}
-        .back-btn:hover{border-color:var(--accent);color:var(--text);}
-        
         .chapter-item{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:6px;cursor:pointer;transition:0.2s;}
         .chapter-item:hover{border-color:var(--accent);background:var(--hover);}
         .chapter-name{font-size:13px;font-weight:600;}
@@ -73,16 +73,10 @@
         
         .part-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px;cursor:pointer;transition:0.2s;}
         .part-item:hover{border-color:var(--accent);}
-        .part-icon{font-size:24px;}
-        .part-info{flex:1;}
-        .part-name{font-size:13px;font-weight:600;}
-        .part-meta{font-size:10px;color:var(--text2);}
-        .part-arrow{color:var(--accent);}
+        .part-icon{font-size:24px;}.part-info{flex:1;}.part-name{font-size:13px;font-weight:600;}.part-meta{font-size:10px;color:var(--text2);}.part-arrow{color:var(--accent);}
         
-        /* Video */
         .video-container{position:relative;width:100%;padding-bottom:56.25%;margin-bottom:12px;border-radius:var(--radius-sm);overflow:hidden;background:#000;}
         .video-container iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;}
-        .video-wrapper{position:relative;}
         .video-controls{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:center;}
         .ctrl-btn{background:var(--card);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit;transition:0.2s;}
         .ctrl-btn:hover{border-color:var(--accent);}
@@ -94,23 +88,16 @@
         .info-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;}
         .info-row:last-child{border-bottom:none;}
         .info-label{color:var(--text2);}.info-value{font-weight:600;}
-        
-        .other-parts{margin-top:10px;}
-        .other-parts .section-title{font-size:13px;margin-bottom:6px;}
-        
         .breadcrumb{font-size:10px;color:var(--text2);margin-bottom:8px;}
         .breadcrumb span{color:var(--accent);}
         
         .btn{display:inline-block;padding:9px 16px;border-radius:var(--radius-sm);font-weight:600;cursor:pointer;border:none;font-size:12px;transition:0.2s;font-family:inherit;text-align:center;}
         .btn-outline{background:transparent;border:1px solid var(--border);color:var(--text2);}
         .btn-outline:hover{border-color:var(--accent);color:var(--text);}
-        
-        @media(min-width:600px){.video-controls{gap:10px;}}
     </style>
 </head>
-<body>
+<body class="dark-mode">
 
-<!-- Sidebar -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-header"><div class="sidebar-logo">ATLAS EXAM</div></div>
@@ -127,33 +114,28 @@
     <button class="sidebar-item" onclick="openTG()">✈️ Telegram</button>
 </aside>
 
-<!-- Header -->
 <header class="header">
     <div style="display:flex;align-items:center;gap:10px;"><button class="hamburger" onclick="toggleSidebar()">☰</button><span class="logo">ATLAS EXAM</span></div>
-    <div style="display:flex;gap:6px;"><button class="header-icon" onclick="toggleTheme()">🌙</button><button class="header-icon" onclick="goTo('auth.html')">👤</button></div>
+    <div style="display:flex;gap:6px;"><button class="header-icon" onclick="toggleTheme()" id="themeToggle">🌙</button><button class="header-icon" onclick="goTo('auth.html')">👤</button></div>
 </header>
 
 <main class="class-container">
 
-<!-- VIEW 1: Subjects -->
 <div id="viewSubjects">
     <div class="section-header"><div class="section-title">📚 ফ্রি ক্লাস সেকশন</div></div>
     <input type="text" class="search-box" id="searchInput" placeholder="🔍 সাবজেক্ট বা চ্যাপ্টার খুঁজুন..." oninput="filterSubjects()">
     <div id="subjectList"><p style="text-align:center;color:var(--text2);padding:20px;">লোড হচ্ছে...</p></div>
 </div>
 
-<!-- VIEW 2: Chapters -->
 <div id="viewChapters" style="display:none;">
     <button class="back-btn" onclick="goToSubjects()">← ফিরে যান</button>
     <div class="section-header"><div class="section-title" id="chapterTitle">চ্যাপ্টার</div></div>
     <div id="chapterList"></div>
 </div>
 
-<!-- VIEW 3: Video -->
 <div id="viewVideo" style="display:none;">
     <button class="back-btn" onclick="goToChapters()">← ফিরে যান</button>
     <div class="breadcrumb" id="videoBreadcrumb"></div>
-    
     <div class="video-wrapper">
         <div class="video-controls">
             <button class="ctrl-btn" onclick="seekVideo(-10)">⏪ 10s</button>
@@ -169,16 +151,14 @@
         </div>
         <div class="video-container" id="videoPlayer"></div>
     </div>
-    
     <div class="section-header"><div class="section-title" id="videoTitle">ভিডিও</div></div>
     <div class="info-card" id="videoInfo"></div>
     <div class="info-card" id="classNoteCard" style="display:none;"><div style="font-weight:700;color:var(--accent);margin-bottom:4px;">📋 ক্লাস নোট</div><div id="classNoteContent"></div></div>
-    <div class="other-parts"><div class="section-title">📋 অন্যান্য পার্ট</div><div id="otherParts"></div></div>
+    <div class="other-parts"><div class="section-title" style="font-size:13px;margin-bottom:6px;">📋 অন্যান্য পার্ট</div><div id="otherParts"></div></div>
 </div>
 
 </main>
 
-<!-- Bottom Nav -->
 <nav class="bottom-nav">
     <button class="nav-item" onclick="goTo('index.html')"><span class="nav-icon">🏠</span>হোম</button>
     <button class="nav-item active" onclick="goTo('class.html')"><span class="nav-icon">📚</span>ক্লাস</button>
@@ -193,11 +173,10 @@
 <script>
 const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
-let isDarkMode = true, isSidebarOpen = false;
-let allClasses = [], currentSubject = null, currentChapter = null, ytPlayer = null, currentVideoLink = null;
+let isDarkMode = true, isSidebarOpen = false, allClasses = [], currentSubject = null, currentChapter = null, ytPlayer = null;
 
 function showToast(m, d = 2000) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), d); }
-function toggleTheme() { isDarkMode = !isDarkMode; document.body.classList.toggle('dark-mode', isDarkMode); showToast(isDarkMode ? '🌙 ডার্ক' : '☀️ লাইট'); }
+function toggleTheme() { isDarkMode = !isDarkMode; document.body.classList.toggle('dark-mode', isDarkMode); document.body.classList.toggle('light-mode', !isDarkMode); document.getElementById('themeToggle').textContent = isDarkMode ? '🌙' : '☀️'; showToast(isDarkMode ? '🌙 ডার্ক' : '☀️ লাইট'); }
 function toggleSidebar() { isSidebarOpen = !isSidebarOpen; document.getElementById('sidebarOverlay').classList.toggle('active', isSidebarOpen); document.getElementById('sidebar').classList.toggle('active', isSidebarOpen); }
 function closeSidebar() { isSidebarOpen = false; document.getElementById('sidebarOverlay').classList.remove('active'); document.getElementById('sidebar').classList.remove('active'); }
 function goTo(u) { location.href = u; }
@@ -205,17 +184,14 @@ function navigateTo(p) { const r = { home:'index.html', profile:'dashboard.html'
 function openWA() { window.open('https://wa.me/8801999681290', '_blank'); }
 function openTG() { window.open('https://t.me/rafi_somc', '_blank'); }
 
-async function safeFetch(url, opts = {}) {
-    opts.headers = Object.assign({ apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }, opts.headers || {});
-    if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') opts.headers['Content-Type'] = 'application/json';
-    try { const res = await fetch(url, opts); const text = await res.text(); if (!text?.trim()) return []; const data = JSON.parse(text); if (!res.ok) throw new Error(data.message); return data; }
-    catch(e) { console.error('❌', e.message); return []; }
-}
-
-// ========== LOAD CLASSES ==========
 async function loadClasses() {
     try {
-        allClasses = await safeFetch(`${SUPABASE_URL}/rest/v1/classes?select=*&order=created_at.desc&limit=100`);
+        const url = `${SUPABASE_URL}/rest/v1/classes?select=*&order=created_at.desc&limit=100`;
+        const res = await fetch(url, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
+        const text = await res.text();
+        if (!text || text.trim() === '' || text.trim() === '[]') { allClasses = []; document.getElementById('subjectList').innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">কোনো ক্লাস নেই।<br><a href="admin.html" style="color:var(--accent);">অ্যাডমিন থেকে Add করুন</a></p>'; return; }
+        allClasses = JSON.parse(text);
+        if (!allClasses.length) { document.getElementById('subjectList').innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">কোনো ক্লাস নেই</p>'; return; }
         renderSubjects();
     } catch(e) { document.getElementById('subjectList').innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">লোড ব্যর্থ</p>'; }
 }
@@ -231,23 +207,18 @@ function renderSubjects(filter = '') {
         const ch = c.chapter || 'সাধারণ';
         if (!subjects[s].papers[p].chapters[ch]) subjects[s].papers[p].chapters[ch] = [];
         subjects[s].papers[p].chapters[ch].push(c);
-        subjects[s].papers[p].count++;
-        subjects[s].count++;
+        subjects[s].papers[p].count++; subjects[s].count++;
     });
     const keys = Object.keys(subjects);
     if (!keys.length) { document.getElementById('subjectList').innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">কোনো ক্লাস পাওয়া যায়নি</p>'; return; }
-    let html = '';
-    keys.forEach(s => { html += `<div class="subject-card" onclick="openSubject('${s}')"><div><div class="subject-name">📘 ${s}</div><div class="subject-count">${subjects[s].count} টি ক্লাস</div></div><span style="color:var(--accent);">→</span></div>`; });
-    document.getElementById('subjectList').innerHTML = html;
+    document.getElementById('subjectList').innerHTML = keys.map(s => `<div class="subject-card" onclick="openSubject('${s}')"><div><div class="subject-name">📘 ${s}</div><div class="subject-count">${subjects[s].count} টি ক্লাস</div></div><span style="color:var(--accent);">→</span></div>`).join('');
 }
-
 function filterSubjects() { renderSubjects(document.getElementById('searchInput').value.trim().toLowerCase()); }
 
-// ========== OPEN SUBJECT ==========
 function openSubject(subj) {
     currentSubject = subj;
     const papers = {};
-    allClasses.forEach(c => { if ((c.subject||'সাধারণ') === subj) { const p = c.paper||'সাধারণ'; const ch = c.chapter||'সাধারণ'; if (!papers[p]) papers[p] = {}; if (!papers[p][ch]) papers[p][ch] = []; papers[p][ch].push(c); } });
+    allClasses.forEach(c => { if ((c.subject||'সাধারণ') === subj) { const p = c.paper||'সাধারণ', ch = c.chapter||'সাধারণ'; if (!papers[p]) papers[p] = {}; if (!papers[p][ch]) papers[p][ch] = []; papers[p][ch].push(c); } });
     document.getElementById('chapterTitle').textContent = '📘 ' + subj;
     let html = '';
     Object.keys(papers).forEach(p => {
@@ -262,100 +233,53 @@ function openSubject(subj) {
     document.getElementById('viewVideo').style.display = 'none';
 }
 
-// ========== SHOW PARTS ==========
 function showParts(ch, parts) {
     currentChapter = ch;
-    let html = '';
-    parts.forEach((p, i) => {
-        html += `<div class="part-item" onclick="playVideo('${p.youtube_link}', 'Part ${i+1}', '${p.class_type||'website'}', '${(p.class_note||'').replace(/'/g, "\\'")}', '${p.start_time||''}')"><span class="part-icon">🎥</span><div class="part-info"><div class="part-name">Part ${i+1}</div><div class="part-meta">${p.class_type==='youtube'?'▶️ Direct YouTube':'🌐 Website Style'} | ${p.start_time?new Date(p.start_time).toLocaleDateString('bn-BD'):''}</div></div><span class="part-arrow">▶️</span></div>`;
-    });
-    document.getElementById('chapterList').innerHTML = html;
+    document.getElementById('chapterList').innerHTML = parts.map((p, i) => `<div class="part-item" onclick="playVideo('${p.youtube_link}', 'Part ${i+1}', '${p.class_type||'website'}', '${(p.class_note||'').replace(/'/g, "\\'")}', '${p.start_time||''}')"><span class="part-icon">🎥</span><div class="part-info"><div class="part-name">Part ${i+1}</div><div class="part-meta">${p.class_type==='youtube'?'▶️ Direct YouTube':'🌐 Website Style'} | ${p.start_time?new Date(p.start_time).toLocaleDateString('bn-BD'):''}</div></div><span class="part-arrow">▶️</span></div>`).join('');
 }
 
-// ========== PLAY VIDEO ==========
 function playVideo(link, title, classType, classNote, time) {
-    currentVideoLink = link;
     const videoId = extractYouTubeID(link);
     document.getElementById('videoBreadcrumb').innerHTML = `📘 <span>${currentSubject}</span> › 📖 <span>${currentChapter}</span> › 🎥 <span>${title}</span>`;
     document.getElementById('videoTitle').textContent = '🎥 ' + title;
     
     if (classType === 'youtube') {
-        document.getElementById('videoPlayer').innerHTML = `<div style="padding:40px;text-align:center;"><p style="color:var(--text2);margin-bottom:10px;">▶️ Direct YouTube-এ ওপেন হচ্ছে...</p><a href="${link}" target="_blank" class="btn btn-outline" style="display:inline-block;">YouTube-এ দেখুন</a></div>`;
+        document.getElementById('videoPlayer').innerHTML = `<div style="padding:40px;text-align:center;"><p style="color:var(--text2);margin-bottom:10px;">▶️ YouTube-এ ওপেন হচ্ছে...</p><a href="${link}" target="_blank" class="btn btn-outline">YouTube-এ দেখুন</a></div>`;
         window.open(link, '_blank');
     } else {
         document.getElementById('videoPlayer').innerHTML = videoId ? `<iframe src="https://www.youtube.com/embed/${videoId}?enablejsapi=1&rel=0" id="ytFrame" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>` : '<p style="color:var(--text2);text-align:center;padding:30px;">⚠️ ভিডিও লিংক সঠিক নয়</p>';
-        setTimeout(initYouTubeAPI, 500);
+        setTimeout(() => { if (window.YT) ytPlayer = new YT.Player('ytFrame'); else { const tag = document.createElement('script'); tag.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(tag); window.onYouTubeIframeAPIReady = () => { ytPlayer = new YT.Player('ytFrame'); }; } }, 500);
     }
     
     document.getElementById('videoInfo').innerHTML = `<div class="info-row"><span class="info-label">সাবজেক্ট</span><span class="info-value">${currentSubject}</span></div><div class="info-row"><span class="info-label">চ্যাপ্টার</span><span class="info-value">${currentChapter}</span></div><div class="info-row"><span class="info-label">পার্ট</span><span class="info-value">${title}</span></div><div class="info-row"><span class="info-label">টাইপ</span><span class="info-value">${classType==='youtube'?'▶️ Direct YouTube':'🌐 Website Style'}</span></div>`;
     
-    if (classNote) {
-        document.getElementById('classNoteCard').style.display = 'block';
-        document.getElementById('classNoteContent').innerHTML = classNote.startsWith('http') ? `<a href="${classNote}" target="_blank" style="color:var(--accent);">${classNote}</a>` : classNote;
-    } else { document.getElementById('classNoteCard').style.display = 'none'; }
+    if (classNote) { document.getElementById('classNoteCard').style.display = 'block'; document.getElementById('classNoteContent').innerHTML = classNote.startsWith('http') ? `<a href="${classNote}" target="_blank" style="color:var(--accent);">${classNote}</a>` : classNote; }
+    else { document.getElementById('classNoteCard').style.display = 'none'; }
     
-    // Other parts
     let otherHTML = '';
     allClasses.forEach(c => { if ((c.subject||'সাধারণ') === currentSubject && (c.chapter||'সাধারণ') === currentChapter && c.youtube_link !== link) { otherHTML += `<div class="part-item" onclick="playVideo('${c.youtube_link}', '${c.chapter||'Part'}', '${c.class_type||'website'}', '${(c.class_note||'').replace(/'/g, "\\'")}', '${c.start_time||''}')"><span class="part-icon">🎥</span><div class="part-info"><div class="part-name">${c.chapter||'Part'}</div></div><span class="part-arrow">▶️</span></div>`; } });
     document.getElementById('otherParts').innerHTML = otherHTML || '<p style="color:var(--text2);">কোনো পার্ট নেই</p>';
     
-    // Save history
     saveClassHistory(currentSubject, currentChapter, title);
-    
     document.getElementById('viewSubjects').style.display = 'none';
     document.getElementById('viewChapters').style.display = 'none';
     document.getElementById('viewVideo').style.display = 'block';
 }
 
-function extractYouTubeID(url) {
-    if (!url) return null;
-    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/);
-    return match ? match[1] : null;
-}
-
-// ========== YOUTUBE API ==========
-function initYouTubeAPI() {
-    if (!window.YT) {
-        const tag = document.createElement('script');
-        tag.src = 'https://www.youtube.com/iframe_api';
-        document.head.appendChild(tag);
-        window.onYouTubeIframeAPIReady = () => {
-            ytPlayer = new YT.Player('ytFrame', { events: { 'onReady': () => {} } });
-        };
-    } else {
-        if (document.getElementById('ytFrame')) ytPlayer = new YT.Player('ytFrame');
-    }
-}
-
-function seekVideo(sec) {
-    if (ytPlayer?.seekTo) { ytPlayer.seekTo((ytPlayer.getCurrentTime()||0) + sec, true); }
-    else { showToast('⚠️ Video ready নয়'); }
-}
-function togglePlayPause() {
-    if (!ytPlayer) return;
-    if (ytPlayer.getPlayerState() === 1) ytPlayer.pauseVideo(); else ytPlayer.playVideo();
-}
+function extractYouTubeID(url) { if (!url) return null; const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/); return m ? m[1] : null; }
+function seekVideo(s) { if (ytPlayer?.seekTo) ytPlayer.seekTo((ytPlayer.getCurrentTime()||0) + s, true); else showToast('⚠️ Video ready নয়'); }
+function togglePlayPause() { if (!ytPlayer) return; ytPlayer.getPlayerState() === 1 ? ytPlayer.pauseVideo() : ytPlayer.playVideo(); }
 function toggleSettings() { document.getElementById('settingsPopup').classList.toggle('show'); }
-function changeSpeed(speed) { if (ytPlayer) ytPlayer.setPlaybackRate(parseFloat(speed)); }
+function changeSpeed(s) { if (ytPlayer) ytPlayer.setPlaybackRate(parseFloat(s)); }
 function changeQuality(q) { if (ytPlayer) ytPlayer.setPlaybackQuality(q); }
 
-// ========== HISTORY ==========
 function saveClassHistory(subject, chapter, part) {
-    try {
-        const user = JSON.parse(localStorage.getItem('atlas-session'));
-        if (!user) return;
-        const history = JSON.parse(localStorage.getItem('class_history_'+user.phone) || '[]');
-        history.push({ subject, chapter, part, time: new Date().toISOString() });
-        if (history.length > 50) history.splice(0, history.length - 50);
-        localStorage.setItem('class_history_'+user.phone, JSON.stringify(history));
-    } catch(e) {}
+    try { const user = JSON.parse(localStorage.getItem('atlas-session')); if (!user) return; const h = JSON.parse(localStorage.getItem('class_history_'+user.phone) || '[]'); h.push({ subject, chapter, part, time: new Date().toISOString() }); if (h.length > 50) h.splice(0, h.length - 50); localStorage.setItem('class_history_'+user.phone, JSON.stringify(h)); } catch(e) {}
 }
 
-// ========== NAVIGATION ==========
 function goToSubjects() { document.getElementById('viewSubjects').style.display = 'block'; document.getElementById('viewChapters').style.display = 'none'; document.getElementById('viewVideo').style.display = 'none'; }
 function goToChapters() { document.getElementById('viewSubjects').style.display = 'none'; document.getElementById('viewChapters').style.display = 'block'; document.getElementById('viewVideo').style.display = 'none'; }
 
-// ========== INIT ==========
 document.addEventListener('DOMContentLoaded', loadClasses);
 </script>
 </body>
