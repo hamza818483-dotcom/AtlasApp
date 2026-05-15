@@ -157,16 +157,14 @@
 
 <!-- অনার -->
 <div class="owner-section">
-    <div class="flip-card" onclick="this.classList.toggle('flipped')">
-        <div class="flip-card-inner">
-            <div class="flip-card-front">
-                <div style="position:relative;"><div class="owner-glow-ring"></div>
-                <img src="" class="owner-photo" id="ownerPhoto" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="owner-photo" id="ownerPhotoFallback" style="display:flex;background:var(--atlas-bg);color:var(--atlas-text);font-size:16px;">👤</div></div>
-                <div style="font-size:10px;color:var(--atlas-text);margin-top:4px;">ATLAS</div>
-            </div>
-            <div class="flip-card-back" id="ownerInfo">📞 ০১৭৫৪৩৬৫৪০৩</div>
-        </div>
+    <div class="owner-photo-wrapper" onclick="document.getElementById('flipCard').classList.toggle('flipped')" style="position:relative;display:inline-block;cursor:pointer;">
+        <!-- ঘূর্ণায়মান আলো — বক্সের চারপাশে -->
+        <div class="owner-glow-box"></div>
+        <!-- বক্স শেপ ছবি -->
+        <img src="" class="owner-photo-box" id="ownerPhoto" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" alt="Owner">
+        <div id="ownerPhotoFallback" style="display:flex;width:120px;height:120px;border-radius:16px;background:var(--atlas-bg);color:var(--atlas-text);align-items:center;justify-content:center;font-size:28px;border:3px solid var(--atlas-border);position:relative;z-index:2;">👤</div>
     </div>
+    <div style="font-size:11px;color:var(--atlas-text);margin-top:8px;text-align:center;font-weight:700;">ATLAS EXAM</div>
 </div>
 
 </main>
