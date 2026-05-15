@@ -213,16 +213,28 @@
 
 <!-- অনার -->
 <div class="owner-section">
-    <div class="owner-photo-wrapper" onclick="document.getElementById('flipCard').classList.toggle('flipped')" style="position:relative;display:inline-block;cursor:pointer;">
-        <!-- ঘূর্ণায়মান আলো — বক্সের চারপাশে -->
-        <div class="owner-glow-box"></div>
-        <!-- বক্স শেপ ছবি -->
-        <img src="" class="owner-photo-box" id="ownerPhoto" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" alt="Owner">
-        <div id="ownerPhotoFallback" style="display:flex;width:120px;height:120px;border-radius:16px;background:var(--atlas-bg);color:var(--atlas-text);align-items:center;justify-content:center;font-size:28px;border:3px solid var(--atlas-border);position:relative;z-index:2;">👤</div>
+    <!-- উপরে নাম -->
+    <div class="owner-name-top" id="ownerNameTop">ATLAS EXAM</div>
+    
+    <!-- ফ্লিপ কার্ড -->
+    <div class="flip-card-owner" id="flipCardOwner" onclick="this.classList.toggle('flipped')">
+        <div class="flip-card-inner-owner">
+            <!-- সামনে: ছবি -->
+            <div class="flip-front-owner">
+                <div class="owner-photo-wrapper">
+                    <div class="owner-glow-box"></div>
+                    <img src="" class="owner-photo-box" id="ownerPhoto" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" alt="Owner">
+                    <div id="ownerPhotoFallback" style="display:flex;width:120px;height:120px;border-radius:14px;background:var(--atlas-bg);color:var(--atlas-text);align-items:center;justify-content:center;font-size:32px;border:3px solid var(--atlas-border);position:relative;z-index:2;">👤</div>
+                </div>
+            </div>
+            <!-- পিছনে: বিস্তারিত -->
+            <div class="flip-back-owner" id="ownerInfoBack">
+                📞 ০১৭৫৪৩৬৫৪০৩<br>
+                ✉️ hamza818483@gmail.com
+            </div>
+        </div>
     </div>
-    <div style="font-size:11px;color:var(--atlas-text);margin-top:8px;text-align:center;font-weight:700;">ATLAS EXAM</div>
 </div>
-
 </main>
 
 <!-- মোডাল -->
