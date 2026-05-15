@@ -250,6 +250,7 @@ function openSubject(subj) {
 
 function showParts(ch, parts) {
     currentChapter = ch;
+    alert('showParts called! Parts count: ' + parts.length + '\nFirst part link: ' + (parts[0]?.youtube_link || 'none'));
     document.getElementById('chapterList').innerHTML = parts.map((p, i) => `<div class="part-item" onclick="playVideo('${p.youtube_link}', 'Part ${i+1}', '${p.class_type||'website'}', '${(p.class_note||'').replace(/'/g, "\\'")}', '${p.start_time||''}')"><span class="part-icon">🎥</span><div class="part-info"><div class="part-name">Part ${i+1}</div><div class="part-meta">${p.class_type==='youtube'?'▶️ Direct YouTube':'🌐 Website Style'} | ${p.start_time?new Date(p.start_time).toLocaleDateString('bn-BD'):''}</div></div><span class="part-arrow">▶️</span></div>`).join('');
 }
 
