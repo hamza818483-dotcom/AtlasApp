@@ -210,12 +210,10 @@ function openSubject(subj){
 function showParts(ch, parts) {
     currentChapter = ch;
     
-    // parts JSON string হলে parse
+    // JSON string পার্স
     if (typeof parts === 'string') {
-        try { parts = JSON.parse(parts); } catch(e) {}
+        try { parts = JSON.parse(parts); } catch(e) { alert('Parse error: ' + e.message); return; }
     }
-    
-    alert('showParts: ' + (Array.isArray(parts) ? parts.length : typeof parts) + ' items');
     
     if (parts && Array.isArray(parts) && parts.length > 0) {
         var p = parts[0];
