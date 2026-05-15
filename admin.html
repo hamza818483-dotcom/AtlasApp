@@ -293,32 +293,10 @@ function showToast(m, d) { d = d || 2500; var t = document.getElementById('toast
 
 // ========== safeFetch ==========
 async function safeFetch(url, opts) {
-    opts = opts || {};
-    // 🔧 এই লাইনটা নিশ্চিত করুন:
-    opts.headers = opts.headers || {};
-    
-    opts.headers['apikey'] = SUPABASE_KEY;
-    opts.headers['Authorization'] = 'Bearer ' + SUPABASE_KEY;
-    
-    if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') {
-        opts.headers['Content-Type'] = 'application/json';
-    }
-    
-    try {
-        var res = await fetch(url, opts);
-        var text = await res.text();
-        
-        if (!text || text.trim() === '') {
-            return (opts.method === 'DELETE' || opts.method === 'PATCH') ? null : [];
-        }
-        
-        var data = JSON.parse(text);
-        if (!res.ok) throw new Error(data.message || 'API Error');
-        return data;
-    } catch(e) {
-        console.error('❌', e.message);
-        throw e;
-    }
+    opts = opts || {}; opts.headers = opts.headers || {}; opts.headers['apikey'] = SUPABASE_KEY; opts.headers['Authorization'] = 'Bearer ' + SUPABASE_KEY;
+    if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') opts.headers['Content-Type'] = 'application/json';
+    try { var res = await fetch(url, opts); var text = await res.text(); if (!text || text.trim() === '') return []; var data = JSON.parse(text); if (!res.ok) throw new Error(data.message || 'API Error'); return data; }
+    catch(e) { console.error('❌', e.message); throw e; }
 }
 
 // ========== সেকশন সুইচ ==========
@@ -342,12 +320,24 @@ function handleCSV(input, labelId) {
 }
 
 // ========== CRUD Helper ==========
-async function saveItem(table, data, editId, clearFn, loadFn) {
+ async function saveItem(table, data, editId, clearFn, loadFn) {
     try {
-        if (editId) { await safeFetch(SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + editId, 'PATCH', data); showToast('✅ আপডেট'); }
-        else { await safeFetch(SUPABASE_URL + '/rest/v1/' + table, 'POST', data); showToast('✅ সেইভ'); }
-        if (clearFn) clearFn(); if (loadFn) loadFn();
-    } catch(e) { alert('সেইভ এরর: ' + e.message); }
+        if (editId) {
+            await safeFetch(SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + editId, 
+                { method: 'PATCH', body: JSON.stringify(data) }  // ← method + body
+            );
+            showToast('✅ আপডেট');
+        } else {
+            await safeFetch(SUPABASE_URL + '/rest/v1/' + table, 
+                { method: 'POST', body: JSON.stringify(data) }  // ← method + body
+            );
+            showToast('✅ সেইভ');
+        }
+        if (clearFn) clearFn();
+        if (loadFn) loadFn();
+    } catch(e) {
+        alert('সেইভ এরর: ' + e.message);
+    }
 }
 async function editItem(table, id, fillFn) { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + id + '&select=*'); if (data && data.length > 0 && fillFn) fillFn(data[0]); } catch(e) { alert('লোড এরর'); } }
 async function deleteItem(table, id, loadFn) { if (!isAdmin) { showToast('⛔ ডিলিট নিষেধ'); return; } if (!confirm('ডিলিট করবেন?')) return; try { await safeFetch(SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + id, 'DELETE'); showToast('🗑️ ডিলিট'); if (loadFn) loadFn(); } catch(e) { alert('ডিলিট এরর'); } }
