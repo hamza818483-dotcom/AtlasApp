@@ -37,6 +37,7 @@
         .btn-success { background: #22C55E; color: #FFF; }
         .btn-outline { background: transparent; border: 1px solid var(--atlas-border); color: var(--atlas-text); }
         .btn-copy { background: #22C55E; color: #FFF; font-size: 11px; }
+        .btn-warning { background: #F59E0B; color: #000; }
         
         .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
         .data-table th { background: var(--atlas-bg); color: var(--atlas-text); padding: 8px; text-align: left; border-bottom: 2px solid var(--atlas-border); }
@@ -47,13 +48,22 @@
         .csv-upload:hover { border-color: var(--atlas-border); background: var(--option-bg); }
         .csv-upload input { display: none; }
         
-        .owner-preview { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--atlas-border); margin: 0 auto 10px; display: block; }
+        .chip-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+        .chip { padding: 8px 16px; border-radius: 20px; border: 1px solid var(--option-border); cursor: pointer; font-size: 12px; font-weight: 600; color: var(--text-secondary); background: var(--card-bg); transition: all 0.3s; }
+        .chip.active { background: var(--atlas-bg); color: var(--atlas-text); border-color: var(--atlas-border); box-shadow: 0 0 8px var(--atlas-glow); }
+        
+        .owner-preview { width: 120px; height: 120px; border-radius: 12px; object-fit: cover; border: 3px solid var(--atlas-border); margin: 0 auto 10px; display: block; background: var(--option-bg); }
         
         .filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
         .filter-row input { flex: 1; min-width: 100px; padding: 8px 12px; border: 2px solid var(--option-border); border-radius: 8px; background: var(--body-bg); color: var(--text-primary); }
         
+        .list-item { background: var(--card-bg); border: 1px solid var(--option-border); border-radius: 10px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+        
         .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid transparent; border-top-color: var(--atlas-text); border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 6px; vertical-align: middle; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .section-header { background: var(--atlas-bg); border: 2px solid var(--atlas-border); border-radius: 14px; padding: 14px; margin-bottom: 14px; text-align: center; box-shadow: 0 0 10px var(--atlas-glow); }
+        .section-title { color: var(--atlas-text); font-size: 16px; font-weight: 700; }
     </style>
 </head>
 <body class="dark-mode">
@@ -66,7 +76,7 @@
         <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();"><span class="icon">🏠</span> হোম</button>
         <button class="sidebar-item" onclick="goTo('class.html');closeSidebar();"><span class="icon">📚</span> ফ্রি ক্লাস</button>
         <button class="sidebar-item" onclick="goTo('exam.html');closeSidebar();"><span class="icon">📝</span> ফ্রি এক্সাম</button>
-        <button class="sidebar-item" onclick="goTo('exam.html?mock=true');closeSidebar();"><span class="icon">🎯</span> মক টেস্ট</button>
+        <button class="sidebar-item" onclick="goTo('mock-test.html');closeSidebar();"><span class="icon">🎯</span> মক টেস্ট</button>
         <button class="sidebar-item" onclick="goTo('dashboard.html');closeSidebar();"><span class="icon">❌</span> মাই মিসটেকস</button>
         <button class="sidebar-item" onclick="goTo('ai.html');closeSidebar();"><span class="icon">🤖</span> ATLAS AI</button>
         <div class="sidebar-divider"></div>
@@ -97,17 +107,18 @@
     <button class="tab-btn" onclick="switchSection('subadmin')">👮 Sub-Admin</button>
     <button class="tab-btn" onclick="switchSection('reports')">🚩 Reports</button>
     <button class="tab-btn" onclick="switchSection('owner')">👤 Owner</button>
+    <button class="tab-btn" onclick="switchSection('mentors')">👨‍🏫 Mentors</button>
 </div>
 
 <!-- ====== CLASS ====== -->
 <div class="admin-section active" id="secClass">
     <div class="form-card"><h3>📚 ক্লাস যোগ/এডিট</h3>
         <input type="hidden" id="classEditId">
-        <div class="input-group"><label>সাবজেক্ট *</label><input type="text" id="classSubject" placeholder="যেমন: জীববিজ্ঞান" list="subjectList"><datalist id="subjectList"></datalist></div>
-        <div class="input-group"><label>পেপার (ঐচ্ছিক)</label><input type="text" id="classPaper" placeholder="যেমন: ১ম পত্র"></div>
-        <div class="input-group"><label>চ্যাপ্টার *</label><input type="text" id="classChapter" placeholder="যেমন: কোষ" list="chapterList"><datalist id="chapterList"></datalist></div>
+        <div class="input-group"><label>সাবজেক্ট *</label><input type="text" id="classSubject" list="subjectList"><datalist id="subjectList"></datalist></div>
+        <div class="input-group"><label>পেপার (ঐচ্ছিক)</label><input type="text" id="classPaper"></div>
+        <div class="input-group"><label>চ্যাপ্টার *</label><input type="text" id="classChapter" list="chapterList"><datalist id="chapterList"></datalist></div>
         <div class="input-row"><div class="input-group"><label>শুরু</label><input type="datetime-local" id="classStart"></div><div class="input-group"><label>শেষ</label><input type="datetime-local" id="classEnd"></div></div>
-        <div class="input-group"><label>YouTube লিংক *</label><input type="url" id="classLink" placeholder="https://youtube.com/watch?v=..."></div>
+        <div class="input-group"><label>YouTube লিংক *</label><input type="url" id="classLink"></div>
         <button class="btn btn-primary" onclick="saveClass()">✅ সেইভ</button>
     </div>
     <div class="form-card"><h3>📋 ক্লাস তালিকা</h3><div id="classList"></div></div>
@@ -119,9 +130,21 @@
         <input type="hidden" id="examEditId">
         <div class="input-group"><label>সাবজেক্ট *</label><input type="text" id="examSubject" list="subjectList"></div>
         <div class="input-group"><label>চ্যাপ্টার *</label><input type="text" id="examChapter" list="chapterList"></div>
-        <div class="input-group"><label>টাইপ *</label><select id="examType"><option value="">— নির্বাচন —</option><option value="board">বোর্ড</option><option value="medical">মেডিকেল</option><option value="varsity">ভার্সিটি</option><option value="onushiloni">অনুশীলনী</option></select></div>
-        <div class="input-row"><div class="input-group"><label>বোর্ড/ভার্সিটি</label><input type="text" id="examBoard"></div><div class="input-group"><label>সাল</label><input type="text" id="examYear"></div></div>
-        <div class="input-group"><label>রাইটার</label><input type="text" id="examWriter"></div>
+        <div class="input-group"><label>টাইপ *</label>
+            <select id="examType" onchange="toggleExamFields()">
+                <option value="">— নির্বাচন —</option>
+                <option value="board">🔵 বোর্ড</option>
+                <option value="medical">🏥 Medical</option>
+                <option value="dental">🦷 Dental</option>
+                <option value="afmc">🎖️ AFMC</option>
+                <option value="varsity">🟣 ভার্সিটি</option>
+                <option value="onushiloni">🟠 অনুশীলনী</option>
+                <option value="model">📖 Model Test</option>
+            </select>
+        </div>
+        <div id="examSubTypeField" style="display:none;"><div class="input-group"><label>সাব-টাইপ</label><select id="examSubType"><option value="">— নির্বাচন —</option><option value="demo">🏥 Demo</option><option value="chapter">📖 চাপ্টারভিত্তিক</option><option value="year">📅 সালভিত্তিক</option></select></div></div>
+        <div class="input-row" id="examBoardYear" style="display:none;"><div class="input-group"><label>বোর্ড/ভার্সিটি</label><input type="text" id="examBoard"></div><div class="input-group"><label>সাল</label><input type="text" id="examYear"></div></div>
+        <div class="input-group" id="examWriterField" style="display:none;"><label>রাইটার</label><input type="text" id="examWriter"></div>
         <div class="input-row"><div class="input-group"><label>শুরু</label><input type="datetime-local" id="examStart"></div><div class="input-group"><label>শেষ</label><input type="datetime-local" id="examEnd"></div></div>
         <div class="csv-upload" onclick="document.getElementById('examCSV').click()"><p>📄 CSV আপলোড</p><input type="file" id="examCSV" accept=".csv" onchange="handleCSV(this,'examCSVName')"><p id="examCSVName" style="color:var(--atlas-text);"></p></div>
         <button class="btn btn-primary" onclick="saveExam()">✅ সেইভ</button>
@@ -161,13 +184,15 @@
     </div>
 </div>
 
-<!-- ====== MOCK ====== -->
+<!-- ====== MOCK TEST ====== -->
 <div class="admin-section" id="secMock">
-    <div class="form-card"><h3>🎯 মক টেস্ট যোগ</h3>
+    <div class="form-card"><h3>🎯 মক টেস্ট যোগ/এডিট</h3>
         <input type="hidden" id="mockEditId">
-        <div class="input-group"><label>সাবজেক্ট *</label><input type="text" id="mockSubject" list="subjectList"></div>
-        <div class="input-group"><label>চ্যাপ্টার *</label><input type="text" id="mockChapter" list="chapterList"></div>
+        <div class="input-group"><label>সাবজেক্ট *</label><select id="mockSubject" onchange="loadMockChapters()"><option value="">— নির্বাচন —</option></select></div>
+        <div class="input-group"><label>চ্যাপ্টার *</label><select id="mockChapter"><option value="">— প্রথমে সাবজেক্ট —</option></select></div>
         <div class="input-group"><label>টপিক (ঐচ্ছিক)</label><input type="text" id="mockTopic"></div>
+        <div class="input-group"><label>স্ট্যান্ডার্ড *</label><div class="chip-row" id="mockStandardChips"><span class="chip active" onclick="selectMockStandard('medical',this)">🏥 Medical</span><span class="chip" onclick="selectMockStandard('varsity',this)">🎓 Varsity</span><span class="chip" onclick="selectMockStandard('onushiloni',this)">🟠 Onushiloni</span></div></div>
+        <div class="input-group"><label>প্রশ্ন সংখ্যা *</label><div class="chip-row" id="mockCountChips"><span class="chip" onclick="selectMockCount(25,this)">২৫</span><span class="chip" onclick="selectMockCount(35,this)">৩৫</span><span class="chip active" onclick="selectMockCount(50,this)">৫০</span><span class="chip" onclick="selectMockCount(75,this)">৭৫</span><span class="chip" onclick="selectMockCount(100,this)">১০০</span></div></div>
         <div class="csv-upload" onclick="document.getElementById('mockCSV').click()"><p>📄 CSV আপলোড</p><input type="file" id="mockCSV" accept=".csv" onchange="handleCSV(this,'mockCSVName')"><p id="mockCSVName" style="color:var(--atlas-text);"></p></div>
         <button class="btn btn-primary" onclick="saveMock()">✅ সেইভ</button>
     </div>
@@ -179,6 +204,7 @@
     <div class="form-card"><h3>🔗 সোশ্যাল লিংক</h3>
         <input type="hidden" id="socialEditId">
         <div class="input-group"><label>মিডিয়া নাম *</label><input type="text" id="socialName"></div>
+        <div class="input-group"><label>টাইপ *</label><select id="socialType"><option value="facebook">📘 Facebook</option><option value="youtube">▶️ YouTube</option><option value="telegram">✈️ Telegram</option><option value="whatsapp">💬 WhatsApp</option><option value="other">🔗 অন্যান্য</option></select></div>
         <div class="input-group"><label>বর্ণনা</label><input type="text" id="socialDesc"></div>
         <div class="input-group"><label>লিংক *</label><input type="url" id="socialLink"></div>
         <button class="btn btn-primary" onclick="saveSocial()">✅ সেইভ</button>
@@ -203,12 +229,25 @@
 <!-- ====== OWNER ====== -->
 <div class="admin-section" id="secOwner">
     <div class="form-card"><h3>👤 অনার প্রোফাইল</h3>
-        <div class="input-group"><label>নাম</label><input type="text" id="ownerName" value="ATLAS EXAM"></div>
-        <div class="input-group"><label>বিস্তারিত</label><textarea id="ownerInfo" rows="3">বাংলাদেশের সেরা প্রস্তুতি প্ল্যাটফর্ম</textarea></div>
-        <div class="input-group"><label>ছবি (URL)</label><input type="url" id="ownerPhotoUrl" placeholder="https://..."></div>
+        <div class="input-group"><label>নাম</label><input type="text" id="ownerName"></div>
+        <div class="input-group"><label>বিস্তারিত</label><textarea id="ownerInfo" rows="3"></textarea></div>
+        <div class="input-group"><label>ছবি আপলোড</label><input type="file" id="ownerPhotoFile" accept="image/*" onchange="previewOwnerPhoto(this)"></div>
         <img class="owner-preview" id="ownerPreview" src="" onerror="this.style.display='none'" style="display:none;">
         <button class="btn btn-primary" onclick="saveOwner()">💾 সেইভ</button>
     </div>
+</div>
+
+<!-- ====== MENTORS ====== -->
+<div class="admin-section" id="secMentors">
+    <div class="form-card"><h3>👨‍🏫 মেন্টর যোগ/এডিট</h3>
+        <input type="hidden" id="mentorEditId">
+        <div class="input-group"><label>নাম *</label><input type="text" id="mentorName"></div>
+        <div class="input-group"><label>সাবজেক্ট</label><input type="text" id="mentorSubject"></div>
+        <div class="input-group"><label>বিস্তারিত</label><textarea id="mentorDetails" rows="2"></textarea></div>
+        <div class="input-group"><label>ছবি আপলোড</label><input type="file" id="mentorPhotoFile" accept="image/*"></div>
+        <button class="btn btn-primary" onclick="saveMentor()">✅ সেইভ</button>
+    </div>
+    <div class="form-card"><h3>📋 মেন্টর তালিকা</h3><div id="mentorList"></div></div>
 </div>
 
 </div></main>
@@ -217,14 +256,11 @@
     <button class="nav-item" onclick="goTo('index.html')"><span class="nav-icon">🏠</span><span>হোম</span></button>
     <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon">📚</span><span>ক্লাস</span></button>
     <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon">📝</span><span>এক্সাম</span></button>
-    <button class="nav-item" onclick="goTo('exam.html?mock=true')"><span class="nav-icon">🎯</span><span>মক</span></button>
+    <button class="nav-item" onclick="goTo('mock-test.html')"><span class="nav-icon">🎯</span><span>মক</span></button>
     <button class="nav-item" onclick="goTo('dashboard.html')"><span class="nav-icon">👤</span><span>প্রোফাইল</span></button>
 </nav>
 
-<div class="floating-buttons">
-    <button class="fab fab-whatsapp" onclick="openWhatsApp()">💬</button>
-    <button class="fab fab-telegram" onclick="openTelegram()">✈️</button>
-</div>
+<div class="floating-buttons"><button class="fab fab-whatsapp" onclick="openWhatsApp()">💬</button><button class="fab fab-telegram" onclick="openTelegram()">✈️</button></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -233,7 +269,9 @@ var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 var ADMIN_PHONE = '01754365403';
 var isDarkMode = true, isSidebarOpen = false, currentUser = null, isAdmin = false, isSubAdmin = false;
 var examCSVData = null, mockCSVData = null, currentSection = 'class';
+var mockStandard = 'medical', mockCount = 50;
 
+// ========== AUTH ==========
 function checkAdmin() {
     var sess = localStorage.getItem('atlas-session'); if (!sess) { showToast('⚠️ লগইন করুন'); setTimeout(function(){ goTo('auth.html'); }, 1000); return false; }
     try { currentUser = JSON.parse(sess); if (currentUser.phone === ADMIN_PHONE || currentUser.role === 'admin') { isAdmin = true; isSubAdmin = false; } else if (currentUser.role === 'sub_admin') { isAdmin = false; isSubAdmin = true; } else { showToast('⛔ নিষেধ'); goTo('index.html'); return false; }
@@ -253,6 +291,7 @@ function openTelegram() { window.open('https://t.me/rafi_somc', '_blank'); }
 function logout() { localStorage.removeItem('atlas-session'); goTo('index.html'); }
 function showToast(m, d) { d = d || 2500; var t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(function(){ t.classList.remove('show'); }, d); }
 
+// ========== safeFetch ==========
 async function safeFetch(url, opts) {
     opts = opts || {}; opts.headers = opts.headers || {}; opts.headers['apikey'] = SUPABASE_KEY; opts.headers['Authorization'] = 'Bearer ' + SUPABASE_KEY;
     if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') opts.headers['Content-Type'] = 'application/json';
@@ -260,13 +299,18 @@ async function safeFetch(url, opts) {
     catch(e) { console.error('❌', e.message); throw e; }
 }
 
+// ========== সেকশন সুইচ ==========
 function switchSection(sec) {
     currentSection = sec; document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); }); document.querySelectorAll('.admin-section').forEach(function(s){ s.classList.remove('active'); });
-    document.getElementById('sec' + sec.charAt(0).toUpperCase() + sec.slice(1)).classList.add('active'); event.target.classList.add('active');
-    if (sec === 'class') loadClasses(); else if (sec === 'exam') loadExams(); else if (sec === 'kakha') loadKaKha(); else if (sec === 'countdown') loadCountdown(); else if (sec === 'students') loadStudents();
-    else if (sec === 'mock') loadMocks(); else if (sec === 'social') loadSocial(); else if (sec === 'subadmin') loadSubAdmins(); else if (sec === 'reports') loadReports(); else if (sec === 'owner') loadOwner();
+    var el = document.getElementById('sec' + sec.charAt(0).toUpperCase() + sec.slice(1)); if (el) el.classList.add('active');
+    event.target.classList.add('active');
+    if (sec === 'class') loadClasses(); else if (sec === 'exam') loadExams(); else if (sec === 'kakha') loadKaKha();
+    else if (sec === 'countdown') loadCountdown(); else if (sec === 'students') loadStudents(); else if (sec === 'mock') { loadMockSubjects(); loadMocks(); }
+    else if (sec === 'social') loadSocial(); else if (sec === 'subadmin') loadSubAdmins(); else if (sec === 'reports') loadReports();
+    else if (sec === 'owner') loadOwner(); else if (sec === 'mentors') loadMentors();
 }
 
+// ========== CSV ==========
 function handleCSV(input, labelId) {
     var file = input.files[0]; if (!file) return; document.getElementById(labelId).textContent = '📄 ' + file.name;
     var reader = new FileReader(); reader.onload = function(e) { var text = e.target.result; var lines = text.split('\n').filter(function(l){ return l.trim(); }); if (lines.length < 2) { showToast('⚠️ ডাটা নেই'); return; }
@@ -275,92 +319,86 @@ function handleCSV(input, labelId) {
     }; reader.readAsText(file);
 }
 
-// ========== CRUD অপারেশন ==========
+// ========== CRUD Helper ==========
 async function saveItem(table, data, editId, clearFn, loadFn) {
-    if (editId) { await safeFetch(SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + editId, 'PATCH', data); showToast('✅ আপডেট'); }
-    else { await safeFetch(SUPABASE_URL + '/rest/v1/' + table, 'POST', data); showToast('✅ সেইভ'); }
-    if (clearFn) clearFn(); if (loadFn) loadFn();
+    try {
+        if (editId) { await safeFetch(SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + editId, 'PATCH', data); showToast('✅ আপডেট'); }
+        else { await safeFetch(SUPABASE_URL + '/rest/v1/' + table, 'POST', data); showToast('✅ সেইভ'); }
+        if (clearFn) clearFn(); if (loadFn) loadFn();
+    } catch(e) { alert('সেইভ এরর: ' + e.message); }
 }
 async function editItem(table, id, fillFn) { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + id + '&select=*'); if (data && data.length > 0 && fillFn) fillFn(data[0]); } catch(e) { alert('লোড এরর'); } }
 async function deleteItem(table, id, loadFn) { if (!isAdmin) { showToast('⛔ ডিলিট নিষেধ'); return; } if (!confirm('ডিলিট করবেন?')) return; try { await safeFetch(SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + id, 'DELETE'); showToast('🗑️ ডিলিট'); if (loadFn) loadFn(); } catch(e) { alert('ডিলিট এরর'); } }
 
 // ========== CLASS ==========
-function saveClass() { var d = { subject: document.getElementById('classSubject').value.trim(), paper: document.getElementById('classPaper').value.trim(), chapter: document.getElementById('classChapter').value.trim(), start_time: document.getElementById('classStart').value, end_time: document.getElementById('classEnd').value, youtube_link: document.getElementById('classLink').value.trim(), created_by: currentUser.phone }; if (!d.subject || !d.chapter || !d.youtube_link) { showToast('⚠️ পূরণ করুন'); return; } var eid = document.getElementById('classEditId').value; saveItem('classes', d, eid || null, clearClassForm, loadClasses); }
+function saveClass() { var d = { subject: document.getElementById('classSubject').value.trim(), paper: document.getElementById('classPaper').value.trim(), chapter: document.getElementById('classChapter').value.trim(), start_time: document.getElementById('classStart').value, end_time: document.getElementById('classEnd').value, youtube_link: document.getElementById('classLink').value.trim(), created_by: currentUser.phone }; if (!d.subject || !d.chapter || !d.youtube_link) { showToast('⚠️ পূরণ করুন'); return; } saveItem('classes', d, document.getElementById('classEditId').value || null, clearClassForm, loadClasses); }
 function clearClassForm() { ['classSubject','classPaper','classChapter','classStart','classEnd','classLink','classEditId'].forEach(function(id){ document.getElementById(id).value = ''; }); }
 function editClass(id) { editItem('classes', id, function(d){ document.getElementById('classEditId').value = d.id; document.getElementById('classSubject').value = d.subject||''; document.getElementById('classPaper').value = d.paper||''; document.getElementById('classChapter').value = d.chapter||''; document.getElementById('classStart').value = d.start_time||''; document.getElementById('classEnd').value = d.end_time||''; document.getElementById('classLink').value = d.youtube_link||''; }); }
 async function loadClasses() { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/classes?select=*&order=created_at.desc&limit=20'); var html = '<table class="data-table"><tr><th>সাবজেক্ট</th><th>চ্যাপ্টার</th><th>অ্যাকশন</th></tr>'; if (data) data.forEach(function(c){ html += '<tr><td>'+c.subject+'</td><td>'+c.chapter+'</td><td><button class="btn btn-sm btn-outline" onclick="editClass(\''+c.id+'\')">✏️</button>'+(isAdmin?'<button class="btn btn-sm btn-danger" onclick="deleteItem(\'classes\',\''+c.id+'\',loadClasses)">🗑️</button>':'')+'</td></tr>'; }); html += '</table>'; document.getElementById('classList').innerHTML = html || '<p>কোনো ডাটা নেই</p>'; } catch(e) {} }
 
 // ========== EXAM ==========
-function saveExam() { if (!examCSVData || examCSVData.length === 0) { showToast('⚠️ CSV আপলোড করুন'); return; } var d = { title: document.getElementById('examSubject').value.trim() + ' - ' + document.getElementById('examChapter').value.trim(), subject: document.getElementById('examSubject').value.trim(), chapter: document.getElementById('examChapter').value.trim(), exam_type: document.getElementById('examType').value, board: document.getElementById('examBoard').value.trim(), year: document.getElementById('examYear').value.trim(), writer: document.getElementById('examWriter').value.trim(), start_time: document.getElementById('examStart').value, end_time: document.getElementById('examEnd').value, total_marks: examCSVData.length, duration_minutes: Math.ceil(examCSVData.length / 2), created_by: currentUser.phone }; if (!d.subject || !d.chapter || !d.exam_type) { showToast('⚠️ পূরণ করুন'); return; }
+function toggleExamFields() { var t = document.getElementById('examType').value; document.getElementById('examSubTypeField').style.display = (t === 'medical') ? 'block' : 'none'; document.getElementById('examBoardYear').style.display = (t === 'board' || t === 'varsity') ? 'grid' : 'none'; document.getElementById('examWriterField').style.display = (t === 'onushiloni') ? 'block' : 'none'; }
+function saveExam() { if (!examCSVData || examCSVData.length === 0) { showToast('⚠️ CSV আপলোড করুন'); return; } var d = { title: document.getElementById('examSubject').value.trim() + ' - ' + document.getElementById('examChapter').value.trim(), subject: document.getElementById('examSubject').value.trim(), chapter: document.getElementById('examChapter').value.trim(), exam_type: document.getElementById('examType').value, sub_type: document.getElementById('examSubType').value || null, board: document.getElementById('examBoard').value.trim() || null, year: document.getElementById('examYear').value.trim() || null, writer: document.getElementById('examWriter').value.trim() || null, start_time: document.getElementById('examStart').value, end_time: document.getElementById('examEnd').value, total_marks: examCSVData.length, duration_minutes: Math.ceil(examCSVData.length / 2), created_by: currentUser.phone }; if (!d.subject || !d.chapter || !d.exam_type) { showToast('⚠️ পূরণ করুন'); return; }
     var eid = document.getElementById('examEditId').value;
     safeFetch(SUPABASE_URL + '/rest/v1/exams' + (eid ? '?id=eq.' + eid : ''), eid ? 'PATCH' : 'POST', d).then(function(res){
         var examId = eid || (Array.isArray(res) ? res[0].id : res.id); if (examId && !eid) { var qs = examCSVData.map(function(q){ return { exam_id: examId, question_text: q.questions, option1: q.option1, option2: q.option2, option3: q.option3, option4: q.option4, option5: q.option5, answer_index: q.answer, explanation: q.explanation, type: q.type || 1, section: q.section || 1 }; }); safeFetch(SUPABASE_URL + '/rest/v1/questions', 'POST', qs); }
         alert('📋 লিংক: ' + window.location.origin + '/exam.html?id=' + examId); clearExamForm(); loadExams();
     }).catch(function(e){ alert('এরর: ' + e.message); });
 }
-function clearExamForm() { ['examSubject','examChapter','examType','examBoard','examYear','examWriter','examStart','examEnd','examEditId'].forEach(function(id){ document.getElementById(id).value = ''; }); examCSVData = null; document.getElementById('examCSVName').textContent = ''; }
-async function loadExams() { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/exams?select=*&order=created_at.desc&limit=20'); var html = '<table class="data-table"><tr><th>সাবজেক্ট</th><th>টাইপ</th><th>অ্যাকশন</th></tr>'; if (data) data.forEach(function(e){ var link = window.location.origin + '/exam.html?id=' + e.id; html += '<tr><td>'+e.subject+' - '+e.chapter+'</td><td>'+e.exam_type+'</td><td><button class="btn btn-sm btn-copy" onclick="navigator.clipboard.writeText(\''+link+'\');showToast(\'📋 কপি\')">📋</button>'+(isAdmin?'<button class="btn btn-sm btn-danger" onclick="deleteItem(\'exams\',\''+e.id+'\',loadExams)">🗑️</button>':'')+'</td></tr>'; }); html += '</table>'; document.getElementById('examList').innerHTML = html || '<p>কোনো ডাটা নেই</p>'; } catch(e) {} }
+function clearExamForm() { ['examSubject','examChapter','examType','examSubType','examBoard','examYear','examWriter','examStart','examEnd','examEditId'].forEach(function(id){ document.getElementById(id).value = ''; }); examCSVData = null; document.getElementById('examCSVName').textContent = ''; document.getElementById('examSubTypeField').style.display = 'none'; document.getElementById('examBoardYear').style.display = 'none'; document.getElementById('examWriterField').style.display = 'none'; }
+async function loadExams() {
+    try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/exams?select=*&order=created_at.desc&limit=100');
+        var groups = { 'board': { title: '🔵 বোর্ড প্রস্তুতি', items: [] }, 'medical': { title: '🏥 Medical', items: [] }, 'dental': { title: '🦷 Dental', items: [] }, 'afmc': { title: '🎖️ AFMC', items: [] }, 'varsity': { title: '🟣 ভার্সিটি', items: [] }, 'onushiloni': { title: '🟠 অনুশীলনী', items: [] }, 'model': { title: '📖 Model Test', items: [] } };
+        if (data) data.forEach(function(e){ if (groups[e.exam_type]) groups[e.exam_type].items.push(e); });
+        var html = ''; Object.keys(groups).forEach(function(key){ var g = groups[key]; if (g.items.length === 0) return; html += '<div class="section-header" style="margin-top:12px;"><div class="section-title">'+g.title+'</div></div>'; g.items.forEach(function(e){ var link = window.location.origin + '/exam.html?id=' + e.id; var info = e.subject + ' > ' + e.chapter; if (e.sub_type) info += ' > ' + e.sub_type; if (e.board) info += ' > ' + e.board; if (e.year) info += ' > ' + e.year; if (e.writer) info += ' > ' + e.writer; info += ' (' + e.total_marks + ' প্রশ্ন)'; html += '<div class="list-item"><div><b>'+info+'</b></div><div style="display:flex;gap:4px;"><button class="btn btn-sm btn-copy" onclick="copyLink(\''+link+'\')">📋</button><button class="btn btn-sm btn-outline" onclick="editExam(\''+e.id+'\')">✏️</button>'+(isAdmin?'<button class="btn btn-sm btn-danger" onclick="deleteItem(\'exams\',\''+e.id+'\',loadExams)">🗑️</button>':'')+'</div></div>'; }); }); document.getElementById('examList').innerHTML = html || '<p>কোনো এক্সাম নেই</p>'; } catch(e) {}
+}
+function copyLink(link) { navigator.clipboard.writeText(link); showToast('📋 কপি'); }
 
 // ========== ক,খ,CQ ==========
-function saveKaKha() { var d = { subject: document.getElementById('kaSubject').value.trim(), chapter: document.getElementById('kaChapter').value.trim(), link_or_file: document.getElementById('kaLink').value.trim(), created_by: currentUser.phone }; if (!d.subject || !d.chapter || !d.link_or_file) { showToast('⚠️ পূরণ করুন'); return; } var eid = document.getElementById('kaEditId').value; saveItem('ka_kha_cq', d, eid || null, clearKaForm, loadKaKha); }
+function saveKaKha() { var d = { subject: document.getElementById('kaSubject').value.trim(), chapter: document.getElementById('kaChapter').value.trim(), link_or_file: document.getElementById('kaLink').value.trim(), created_by: currentUser.phone }; if (!d.subject || !d.chapter || !d.link_or_file) { showToast('⚠️ পূরণ করুন'); return; } saveItem('ka_kha_cq', d, document.getElementById('kaEditId').value || null, clearKaForm, loadKaKha); }
 function clearKaForm() { ['kaSubject','kaChapter','kaLink','kaEditId'].forEach(function(id){ document.getElementById(id).value = ''; }); }
 async function loadKaKha() { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/ka_kha_cq?select=*&order=created_at.desc&limit=20'); var html = '<table class="data-table"><tr><th>সাবজেক্ট</th><th>চ্যাপ্টার</th><th>অ্যাকশন</th></tr>'; if (data) data.forEach(function(k){ html += '<tr><td>'+k.subject+'</td><td>'+k.chapter+'</td><td>'+(isAdmin?'<button class="btn btn-sm btn-danger" onclick="deleteItem(\'ka_kha_cq\',\''+k.id+'\',loadKaKha)">🗑️</button>':'')+'</td></tr>'; }); html += '</table>'; document.getElementById('kaList').innerHTML = html || '<p>কোনো ডাটা নেই</p>'; } catch(e) {} }
 
 // ========== COUNTDOWN ==========
-function saveCountdown() { var d = { main_topic: document.getElementById('cdTopic').value.trim(), subtopic: document.getElementById('cdSubtopic').value.trim(), start_time: document.getElementById('cdStart').value, end_time: document.getElementById('cdEnd').value }; if (!d.main_topic || !d.end_time) { showToast('⚠️ পূরণ করুন'); return; } var eid = document.getElementById('cdEditId').value; saveItem('countdowns', d, eid || null, null, loadCountdown); }
+function saveCountdown() { var d = { main_topic: document.getElementById('cdTopic').value.trim(), subtopic: document.getElementById('cdSubtopic').value.trim(), start_time: document.getElementById('cdStart').value, end_time: document.getElementById('cdEnd').value }; if (!d.main_topic || !d.end_time) { showToast('⚠️ পূরণ করুন'); return; } saveItem('countdowns', d, document.getElementById('cdEditId').value || null, null, loadCountdown); }
 async function loadCountdown() { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/countdowns?select=*&order=created_at.desc&limit=1'); if (data && data.length > 0) { var cd = data[0]; document.getElementById('cdTopic').value = cd.main_topic; document.getElementById('cdSubtopic').value = cd.subtopic||''; document.getElementById('cdStart').value = cd.start_time||''; document.getElementById('cdEnd').value = cd.end_time||''; document.getElementById('cdEditId').value = cd.id; document.getElementById('cdCurrent').innerHTML = '<p>📌 <b>'+cd.main_topic+'</b> — '+new Date(cd.end_time).toLocaleString('bn-BD')+'</p>'; } } catch(e) {} }
 
 // ========== STUDENTS ==========
-async function loadStudents() { var name = document.getElementById('filterName').value.trim(), batch = document.getElementById('filterBatch').value.trim(), college = document.getElementById('filterCollege').value.trim(); var q = 'select=*&order=created_at.desc&limit=50'; try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/users?' + q); var html = '<table class="data-table"><tr><th>নাম</th><th>ব্যাচ</th><th>কলেজ</th><th>ফোন</th></tr>'; if (data) data.forEach(function(u){ html += '<tr><td>'+u.name+'</td><td>'+u.batch+'</td><td>'+u.college+'</td><td>'+u.phone+'</td></tr>'; }); html += '</table>'; document.getElementById('studentTable').innerHTML = html || '<p>কোনো স্টুডেন্ট নেই</p>'; } catch(e) {} }
+async function loadStudents() { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/users?select=*&order=created_at.desc&limit=50'); var html = '<table class="data-table"><tr><th>নাম</th><th>ব্যাচ</th><th>কলেজ</th><th>ফোন</th></tr>'; if (data) data.forEach(function(u){ html += '<tr><td>'+u.name+'</td><td>'+u.batch+'</td><td>'+u.college+'</td><td>'+u.phone+'</td></tr>'; }); html += '</table>'; document.getElementById('studentTable').innerHTML = html || '<p>কোনো স্টুডেন্ট নেই</p>'; } catch(e) {} }
 
 // ========== MOCK ==========
-function saveMock() { if (!mockCSVData || mockCSVData.length === 0) { showToast('⚠️ CSV আপলোড করুন'); return; } var d = { subject: document.getElementById('mockSubject').value.trim(), chapter: document.getElementById('mockChapter').value.trim(), topic: document.getElementById('mockTopic').value.trim(), questions_json: JSON.stringify(mockCSVData), created_by: currentUser.phone }; if (!d.subject || !d.chapter) { showToast('⚠️ পূরণ করুন'); return; } var eid = document.getElementById('mockEditId').value; saveItem('mock_questions', d, eid || null, function(){ mockCSVData = null; document.getElementById('mockCSVName').textContent = ''; document.getElementById('mockEditId').value = ''; }, loadMocks); }
-async function loadMocks() { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/mock_questions?select=*&order=created_at.desc&limit=20'); var html = '<table class="data-table"><tr><th>সাবজেক্ট</th><th>চ্যাপ্টার</th><th>প্রশ্ন</th><th>অ্যাকশন</th></tr>'; if (data) data.forEach(function(m){ var cnt = JSON.parse(m.questions_json||'[]').length; html += '<tr><td>'+m.subject+'</td><td>'+m.chapter+'</td><td>'+cnt+'</td><td>'+(isAdmin?'<button class="btn btn-sm btn-danger" onclick="deleteItem(\'mock_questions\',\''+m.id+'\',loadMocks)">🗑️</button>':'')+'</td></tr>'; }); html += '</table>'; document.getElementById('mockList').innerHTML = html || '<p>কোনো ডাটা নেই</p>'; } catch(e) {} }
+function selectMockStandard(std, el) { mockStandard = std; document.querySelectorAll('#mockStandardChips .chip').forEach(function(c){ c.classList.remove('active'); }); el.classList.add('active'); }
+function selectMockCount(cnt, el) { mockCount = cnt; document.querySelectorAll('#mockCountChips .chip').forEach(function(c){ c.classList.remove('active'); }); el.classList.add('active'); }
+async function loadMockSubjects() { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/mock_questions?select=subject'); var subjects = [...new Set(data.map(function(d){ return d.subject; }))]; var sel = document.getElementById('mockSubject'); sel.innerHTML = '<option value="">— নির্বাচন —</option>'; subjects.forEach(function(s){ sel.innerHTML += '<option value="'+s+'">'+s+'</option>'; }); } catch(e) {} }
+async function loadMockChapters() { var subject = document.getElementById('mockSubject').value; var sel = document.getElementById('mockChapter'); if (!subject) { sel.innerHTML = '<option value="">— প্রথমে সাবজেক্ট —</option>'; return; } try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/mock_questions?subject=eq.' + encodeURIComponent(subject) + '&select=chapter'); var chapters = [...new Set(data.map(function(d){ return d.chapter; }))]; sel.innerHTML = '<option value="">— নির্বাচন —</option>'; chapters.forEach(function(c){ sel.innerHTML += '<option value="'+c+'">'+c+'</option>'; }); } catch(e) {} }
+function saveMock() { if (!mockCSVData || mockCSVData.length === 0) { showToast('⚠️ CSV আপলোড করুন'); return; } var d = { subject: document.getElementById('mockSubject').value, chapter: document.getElementById('mockChapter').value, topic: document.getElementById('mockTopic').value.trim(), standard: mockStandard, question_count: mockCount, questions_json: JSON.stringify(mockCSVData), created_by: currentUser.phone }; if (!d.subject || !d.chapter) { showToast('⚠️ সাবজেক্ট ও চ্যাপ্টার দিন'); return; } saveItem('mock_questions', d, document.getElementById('mockEditId').value || null, function(){ mockCSVData = null; document.getElementById('mockCSVName').textContent = ''; document.getElementById('mockEditId').value = ''; }, loadMocks); }
+async function loadMocks() { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/mock_questions?select=*&order=created_at.desc&limit=20'); var html = '<table class="data-table"><tr><th>সাবজেক্ট</th><th>চ্যাপ্টার</th><th>স্ট্যান্ডার্ড</th><th>প্রশ্ন</th><th>অ্যাকশন</th></tr>'; if (data) data.forEach(function(m){ var cnt = JSON.parse(m.questions_json||'[]').length; html += '<tr><td>'+m.subject+'</td><td>'+m.chapter+'</td><td>'+(m.standard||'—')+'</td><td>'+(m.question_count||cnt)+'</td><td>'+(isAdmin?'<button class="btn btn-sm btn-danger" onclick="deleteItem(\'mock_questions\',\''+m.id+'\',loadMocks)">🗑️</button>':'')+'</td></tr>'; }); html += '</table>'; document.getElementById('mockList').innerHTML = html || '<p>কোনো ডাটা নেই</p>'; } catch(e) {} }
 
 // ========== SOCIAL ==========
-function saveSocial() { var d = { media_name: document.getElementById('socialName').value.trim(), description: document.getElementById('socialDesc').value.trim(), link: document.getElementById('socialLink').value.trim() }; if (!d.media_name || !d.link) { showToast('⚠️ পূরণ করুন'); return; } var eid = document.getElementById('socialEditId').value; saveItem('social_links', d, eid || null, function(){ ['socialName','socialDesc','socialLink','socialEditId'].forEach(function(id){ document.getElementById(id).value = ''; }); }, loadSocial); }
-async function loadSocial() { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/social_links?select=*&order=created_at.desc&limit=20'); var html = '<table class="data-table"><tr><th>নাম</th><th>লিংক</th><th>অ্যাকশন</th></tr>'; if (data) data.forEach(function(s){ html += '<tr><td><b>'+s.media_name+'</b></td><td><a href="'+s.link+'" target="_blank">লিংক</a></td><td>'+(isAdmin?'<button class="btn btn-sm btn-danger" onclick="deleteItem(\'social_links\',\''+s.id+'\',loadSocial)">🗑️</button>':'')+'</td></tr>'; }); html += '</table>'; document.getElementById('socialList').innerHTML = html || '<p>কোনো লিংক নেই</p>'; } catch(e) {} }
+function saveSocial() { var d = { media_name: document.getElementById('socialName').value.trim(), type: document.getElementById('socialType').value, description: document.getElementById('socialDesc').value.trim(), link: document.getElementById('socialLink').value.trim() }; if (!d.media_name || !d.link) { showToast('⚠️ পূরণ করুন'); return; } saveItem('social_links', d, document.getElementById('socialEditId').value || null, function(){ ['socialName','socialDesc','socialLink','socialEditId'].forEach(function(id){ document.getElementById(id).value = ''; }); }, loadSocial); }
+async function loadSocial() { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/social_links?select=*&order=created_at.desc&limit=20'); var html = '<table class="data-table"><tr><th>নাম</th><th>টাইপ</th><th>লিংক</th><th>অ্যাকশন</th></tr>'; if (data) data.forEach(function(s){ html += '<tr><td><b>'+s.media_name+'</b></td><td>'+(s.type||'—')+'</td><td><a href="'+s.link+'" target="_blank">লিংক</a></td><td>'+(isAdmin?'<button class="btn btn-sm btn-danger" onclick="deleteItem(\'social_links\',\''+s.id+'\',loadSocial)">🗑️</button>':'')+'</td></tr>'; }); html += '</table>'; document.getElementById('socialList').innerHTML = html || '<p>কোনো লিংক নেই</p>'; } catch(e) {} }
 
 // ========== SUB-ADMIN ==========
 function grantSubAdmin() { var ph = document.getElementById('subPhone').value.trim(); if (!/^\d{11}$/.test(ph)) { showToast('⚠️ ১১ ডিজিট'); return; } safeFetch(SUPABASE_URL + '/rest/v1/users?phone=eq.' + ph, 'PATCH', { role: 'sub_admin' }).then(function(){ showToast('✅ গ্র্যান্ট'); document.getElementById('subPhone').value = ''; loadSubAdmins(); }); }
 async function loadSubAdmins() { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/users?role=eq.sub_admin&select=phone,name'); var html = '<table class="data-table"><tr><th>নাম</th><th>ফোন</th></tr>'; if (data) data.forEach(function(u){ html += '<tr><td>'+u.name+'</td><td>'+u.phone+'</td></tr>'; }); html += '</table>'; document.getElementById('subList').innerHTML = html || '<p>কোনো সাব-অ্যাডমিন নেই</p>'; } catch(e) {} }
 
 // ========== REPORTS ==========
-async function loadReports() { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/question_reports?select=*&order=created_at.desc&limit=20'); if (!data || data.length === 0) { document.getElementById('reportList').innerHTML = '<p>কোনো রিপোর্ট নেই</p>'; return; }
-    var html = ''; data.forEach(function(r){ html += '<div class="form-card"><p><b>প্রশ্ন #'+r.question_id+'</b></p><p>টাইপ: '+r.report_type+' | স্ট্যাটাস: <b>'+(r.status==='pending'?'🔴 পেন্ডিং':r.status==='approved'?'✅ এপ্রুভড':'❌ রিজেক্ট')+'</b></p><p>সাজেশন: '+(r.suggested_answer||'—')+'</p>'+(r.status==='pending'?'<button class="btn btn-sm btn-success" onclick="approveReport(\''+r.id+'\',\''+r.question_id+'\')">✅ Approve</button> <button class="btn btn-sm btn-danger" onclick="rejectReport(\''+r.id+'\')">❌ Reject</button>':'')+'</div>'; }); document.getElementById('reportList').innerHTML = html;
-} catch(e) {} }
-async function approveReport(rid, qid) {
-    var correct = prompt('সঠিক উত্তর (1-5):'); if (!correct) return;
-    var explanation = prompt('ব্যাখ্যা (ঐচ্ছিক):');
-    try { await safeFetch(SUPABASE_URL + '/rest/v1/question_reports?id=eq.' + rid, 'PATCH', { status: 'approved', admin_response: explanation, corrected_answer: correct, admin_phone: currentUser.phone });
-        if (correct) await safeFetch(SUPABASE_URL + '/rest/v1/questions?id=eq.' + qid, 'PATCH', { answer_index: parseInt(correct), explanation: explanation || undefined });
-        // নোটিফিকেশন
-        var report = await safeFetch(SUPABASE_URL + '/rest/v1/question_reports?id=eq.' + rid + '&select=reporter_phone');
-        if (report && report.length > 0 && report[0].reporter_phone) { await safeFetch(SUPABASE_URL + '/rest/v1/notifications', 'POST', { user_phone: report[0].reporter_phone, title: '✅ রিপোর্ট এপ্রুভ', message: 'আপনার রিপোর্ট এপ্রুভ হয়েছে। প্রশ্ন #'+qid, type: 'report_approved', is_read: false }); }
-        showToast('✅ এপ্রুভ'); loadReports();
-    } catch(e) { alert('এরর: ' + e.message); }
-}
+async function loadReports() { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/question_reports?select=*&order=created_at.desc&limit=20'); if (!data || data.length === 0) { document.getElementById('reportList').innerHTML = '<p>কোনো রিপোর্ট নেই</p>'; return; } var html = ''; data.forEach(function(r){ html += '<div class="form-card"><p><b>প্রশ্ন #'+r.question_id+'</b></p><p>টাইপ: '+r.report_type+' | স্ট্যাটাস: <b>'+(r.status==='pending'?'🔴 পেন্ডিং':r.status==='approved'?'✅ এপ্রুভড':'❌ রিজেক্ট')+'</b></p><p>সাজেশন: '+(r.suggested_answer||'—')+'</p>'+(r.status==='pending'?'<button class="btn btn-sm btn-success" onclick="approveReport(\''+r.id+'\',\''+r.question_id+'\')">✅ Approve</button> <button class="btn btn-sm btn-danger" onclick="rejectReport(\''+r.id+'\')">❌ Reject</button>':'')+'</div>'; }); document.getElementById('reportList').innerHTML = html; } catch(e) {} }
+async function approveReport(rid, qid) { var correct = prompt('সঠিক উত্তর (1-5):'); if (!correct) return; var explanation = prompt('ব্যাখ্যা (ঐচ্ছিক):'); try { await safeFetch(SUPABASE_URL + '/rest/v1/question_reports?id=eq.' + rid, 'PATCH', { status: 'approved', admin_response: explanation, corrected_answer: correct, admin_phone: currentUser.phone }); if (correct) await safeFetch(SUPABASE_URL + '/rest/v1/questions?id=eq.' + qid, 'PATCH', { answer_index: parseInt(correct), explanation: explanation || undefined }); var report = await safeFetch(SUPABASE_URL + '/rest/v1/question_reports?id=eq.' + rid + '&select=reporter_phone'); if (report && report.length > 0 && report[0].reporter_phone) { await safeFetch(SUPABASE_URL + '/rest/v1/notifications', 'POST', { user_phone: report[0].reporter_phone, title: '✅ রিপোর্ট এপ্রুভ', message: 'প্রশ্ন #'+qid, type: 'report_approved', is_read: false }); } showToast('✅ এপ্রুভ'); loadReports(); } catch(e) { alert('এরর: ' + e.message); } }
 async function rejectReport(rid) { var reason = prompt('কারণ:'); if (!reason) return; try { await safeFetch(SUPABASE_URL + '/rest/v1/question_reports?id=eq.' + rid, 'PATCH', { status: 'rejected', admin_response: reason, admin_phone: currentUser.phone }); showToast('❌ রিজেক্ট'); loadReports(); } catch(e) { alert('এরর'); } }
 
 // ========== OWNER ==========
-function saveOwner() {
-    var name = document.getElementById('ownerName').value.trim();
-    var info = document.getElementById('ownerInfo').value.trim();
-    var photo = document.getElementById('ownerPhotoUrl').value.trim();
-    var data = { name: name };
-    if (info) data.info = info;
-    if (photo) data.photo_url = photo;
-    safeFetch(SUPABASE_URL + '/rest/v1/users?phone=eq.' + ADMIN_PHONE, 'PATCH', data).then(function(){
-        localStorage.setItem('owner_name', name); localStorage.setItem('owner_info', info); localStorage.setItem('owner_photo', photo);
-        showToast('✅ অনার সেইভ'); if (photo) { document.getElementById('ownerPreview').src = photo; document.getElementById('ownerPreview').style.display = 'block'; }
-    });
-}
-function loadOwner() {
-    document.getElementById('ownerName').value = localStorage.getItem('owner_name') || 'ATLAS EXAM';
-    document.getElementById('ownerInfo').value = localStorage.getItem('owner_info') || '';
-    var photo = localStorage.getItem('owner_photo'); if (photo) { document.getElementById('ownerPhotoUrl').value = photo; document.getElementById('ownerPreview').src = photo; document.getElementById('ownerPreview').style.display = 'block'; }
-}
+function previewOwnerPhoto(input) { var file = input.files[0]; if (!file) return; var reader = new FileReader(); reader.onload = function(e) { document.getElementById('ownerPreview').src = e.target.result; document.getElementById('ownerPreview').style.display = 'block'; }; reader.readAsDataURL(file); }
+function saveOwner() { var name = document.getElementById('ownerName').value.trim(); var info = document.getElementById('ownerInfo').value.trim(); var photo = document.getElementById('ownerPreview').src; if (photo && photo.startsWith('data:')) { localStorage.setItem('owner_photo', photo); } localStorage.setItem('owner_name', name); localStorage.setItem('owner_info', info); safeFetch(SUPABASE_URL + '/rest/v1/users?phone=eq.' + ADMIN_PHONE, 'PATCH', { name: name, photo_url: photo || null }).then(function(){ showToast('✅ অনার সেইভ'); }); }
+function loadOwner() { document.getElementById('ownerName').value = localStorage.getItem('owner_name') || 'ATLAS EXAM'; document.getElementById('ownerInfo').value = localStorage.getItem('owner_info') || ''; var photo = localStorage.getItem('owner_photo'); if (photo) { document.getElementById('ownerPreview').src = photo; document.getElementById('ownerPreview').style.display = 'block'; } }
 
+// ========== MENTORS ==========
+function saveMentor() { var file = document.getElementById('mentorPhotoFile').files[0]; var d = { name: document.getElementById('mentorName').value.trim(), subject: document.getElementById('mentorSubject').value.trim(), details: document.getElementById('mentorDetails').value.trim() }; if (!d.name) { showToast('⚠️ নাম দিন'); return; } if (file) { var reader = new FileReader(); reader.onload = function(e) { d.photo_url = e.target.result; saveItem('mentors', d, document.getElementById('mentorEditId').value || null, clearMentorForm, loadMentors); }; reader.readAsDataURL(file); } else { saveItem('mentors', d, document.getElementById('mentorEditId').value || null, clearMentorForm, loadMentors); } }
+function clearMentorForm() { ['mentorName','mentorSubject','mentorDetails','mentorEditId'].forEach(function(id){ document.getElementById(id).value = ''; }); document.getElementById('mentorPhotoFile').value = ''; }
+async function loadMentors() { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/mentors?select=*&order=sort_order,created_at'); var html = '<div style="display:flex;flex-wrap:wrap;gap:12px;">'; if (data) data.forEach(function(m){ html += '<div class="form-card" style="flex:1;min-width:180px;text-align:center;"><img src="'+(m.photo_url||'')+'" style="width:60px;height:60px;border-radius:12px;object-fit:cover;background:var(--option-bg);" onerror="this.src=\'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22><rect fill=%22%23333%22 width=%2260%22 height=%2260%22/><text fill=%22%23fff%22 x=%2220%22 y=%2238%22>👤</text></svg>\'"><p><b>'+m.name+'</b></p><p style="font-size:11px;">'+(m.subject||'')+'</p><button class="btn btn-sm btn-outline" onclick="editMentor(\''+m.id+'\')">✏️</button> '+(isAdmin?'<button class="btn btn-sm btn-danger" onclick="deleteItem(\'mentors\',\''+m.id+'\',loadMentors)">🗑️</button>':'')+'</div>'; }); html += '</div>'; document.getElementById('mentorList').innerHTML = html || '<p>কোনো মেন্টর নেই</p>'; } catch(e) {} }
+function editMentor(id) { editItem('mentors', id, function(m){ document.getElementById('mentorEditId').value = m.id; document.getElementById('mentorName').value = m.name||''; document.getElementById('mentorSubject').value = m.subject||''; document.getElementById('mentorDetails').value = m.details||''; }); }
+
+// ========== INIT ==========
 document.addEventListener('DOMContentLoaded', function() { loadTheme(); if (!checkAdmin()) return; loadClasses(); loadOwner(); });
 </script>
 </body>
