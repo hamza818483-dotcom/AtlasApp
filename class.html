@@ -189,11 +189,30 @@ async function loadClasses() {
         const url = `${SUPABASE_URL}/rest/v1/classes?select=*&order=created_at.desc&limit=100`;
         const res = await fetch(url, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
         const text = await res.text();
-        if (!text || text.trim() === '' || text.trim() === '[]') { allClasses = []; document.getElementById('subjectList').innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">কোনো ক্লাস নেই।<br><a href="admin.html" style="color:var(--accent);">অ্যাডমিন থেকে Add করুন</a></p>'; return; }
+        
+        // Alert দিয়ে ডিবাগ
+        alert('Supabase Response Status: ' + res.status + '\nData length: ' + (text ? text.length : 0) + '\nFirst 200 chars: ' + (text ? text.substring(0, 200) : 'EMPTY'));
+        
+        if (!text || text.trim() === '' || text.trim() === '[]') { 
+            allClasses = []; 
+            document.getElementById('subjectList').innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">⚠️ Supabase-এ কোনো ক্লাস ডাটা নেই।<br>অ্যাডমিন প্যানেল থেকে Class Add করুন।</p>'; 
+            return; 
+        }
+        
         allClasses = JSON.parse(text);
-        if (!allClasses.length) { document.getElementById('subjectList').innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">কোনো ক্লাস নেই</p>'; return; }
+        
+        if (!allClasses.length) { 
+            document.getElementById('subjectList').innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">কোনো ক্লাস নেই</p>'; 
+            return; 
+        }
+        
         renderSubjects();
-    } catch(e) { document.getElementById('subjectList').innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">লোড ব্যর্থ</p>'; }
+        alert('✅ সফল! ' + allClasses.length + ' টি ক্লাস লোড হয়েছে');
+        
+    } catch(e) { 
+        alert('❌ এরর: ' + e.message);
+        document.getElementById('subjectList').innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">লোড ব্যর্থ: ' + e.message + '</p>'; 
+    }
 }
 
 function renderSubjects(filter = '') {
