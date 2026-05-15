@@ -144,7 +144,7 @@
 <script>
 const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
-let isDarkMode=true,isSidebarOpen=false,allClasses=[],currentSubject=null,currentChapter=null,ytPlayer=null;
+let isDarkMode=true,isSidebarOpen=false,allClasses=[],currentSubject=null,currentChapter=null;
 
 function showToast(m,d=2000){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
 function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'🌙':'☀️';showToast(isDarkMode?'🌙 ডার্ক':'☀️ লাইট');}
@@ -155,19 +155,21 @@ function navigateTo(p){const r={home:'index.html',profile:'dashboard.html',class
 function openWA(){window.open('https://wa.me/8801999681290','_blank');}
 function openTG(){window.open('https://t.me/rafi_somc','_blank');}
 
+// ========== লোড ক্লাস ==========
 async function loadClasses(){
     try{
-        const url=`${SUPABASE_URL}/rest/v1/classes?select=*&order=created_at.desc&limit=100`;
+        const url=SUPABASE_URL+'/rest/v1/classes?select=*&order=created_at.desc&limit=100';
         const res=await fetch(url,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
         const text=await res.text();
         if(!text||text.trim()===''||text.trim()==='[]'){allClasses=[];document.getElementById('subjectList').innerHTML='<p style="text-align:center;color:var(--text2);padding:20px;">কোনো ক্লাস নেই।<br>অ্যাডমিন থেকে Add করুন।</p>';return;}
         allClasses=JSON.parse(text);
-        if(!allClasses.length){document.getElementById('subjectList').innerHTML='<p style="text-align:center;color:var(--text2);padding:20px;">কোনো ক্লাস নেই</p>';return;}
+        if(!allClasses.length){document.getElementById('subjectList').innerHTML='<p>কোনো ক্লাস নেই</p>';return;}
         renderSubjects();
     }catch(e){alert('❌ loadClasses Error: '+e.message);}
 }
 
-function renderSubjects(filter=''){
+function renderSubjects(filter){
+    filter=filter||'';
     const subjects={};
     allClasses.forEach(c=>{
         const s=c.subject||'সাধারণ';
@@ -181,13 +183,14 @@ function renderSubjects(filter=''){
         subjects[s].papers[p].count++;subjects[s].count++;
     });
     const keys=Object.keys(subjects);
-    if(!keys.length){document.getElementById('subjectList').innerHTML='<p style="text-align:center;color:var(--text2);padding:20px;">কোনো ক্লাস পাওয়া যায়নি</p>';return;}
+    if(!keys.length){document.getElementById('subjectList').innerHTML='<p>কোনো ক্লাস পাওয়া যায়নি</p>';return;}
     let html='';
-    keys.forEach(s=>{html+=`<div class="subject-card" onclick="openSubject('${s}')"><div><div class="subject-name">📘 ${s}</div><div class="subject-count">${subjects[s].count} টি ক্লাস</div></div><span style="color:var(--accent);">→</span></div>`;});
+    keys.forEach(s=>{html+='<div class="subject-card" onclick="openSubject(\''+s+'\')"><div><div class="subject-name">📘 '+s+'</div><div class="subject-count">'+subjects[s].count+' টি ক্লাস</div></div><span style="color:var(--accent);">→</span></div>';});
     document.getElementById('subjectList').innerHTML=html;
 }
 function filterSubjects(){renderSubjects(document.getElementById('searchInput').value.trim().toLowerCase());}
 
+// ========== ওপেন সাবজেক্ট ==========
 function openSubject(subj){
     currentSubject=subj;
     const papers={};
@@ -195,50 +198,38 @@ function openSubject(subj){
     document.getElementById('chapterTitle').textContent='📘 '+subj;
     let html='';
     Object.keys(papers).forEach(p=>{
-        html+=`<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0 4px;">📄 ${p}</div>`;
+        html+='<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0 4px;">📄 '+p+'</div>';
         Object.keys(papers[p]).forEach(ch=>{
-            const parts=JSON.stringify(papers[p][ch].map(c=>({id:c.id,youtube_link:c.youtube_link,class_type:c.class_type||'website',class_note:c.class_note,start_time:c.start_time})));
-            html+=`<div class="chapter-item" onclick="alert('Clicked: ${ch}');showParts('${ch}',${parts})"><div class="chapter-name">📖 ${ch}</div><div class="chapter-parts">${papers[p][ch].length} টি ক্লাস</div></div>`;
+            var pd=papers[p][ch];
+            var link=pd[0].youtube_link.replace(/'/g,"\\'");
+            var type=pd[0].class_type||'website';
+            var note=(pd[0].class_note||'').replace(/'/g,"\\'");
+            var time=pd[0].start_time||'';
+            html+='<div class="chapter-item" onclick="alert(\'Clicked: '+ch+'\');playVideo(\''+link+'\',\''+ch+'\',\''+type+'\',\''+note+'\',\''+time+'\')"><div class="chapter-name">📖 '+ch+'</div><div class="chapter-parts">'+pd.length+' টি ক্লাস</div></div>';
         });
     });
-    document.getElementById('chapterList').innerHTML=html||'<p style="text-align:center;color:var(--text2);padding:20px;">কোনো চ্যাপ্টার নেই</p>';
+    document.getElementById('chapterList').innerHTML=html||'<p>কোনো চ্যাপ্টার নেই</p>';
     document.getElementById('viewSubjects').style.display='none';
     document.getElementById('viewChapters').style.display='block';
     document.getElementById('viewVideo').style.display='none';
 }
 
-function showParts(ch, parts) {
-    currentChapter = ch;
-    
-    // JSON string পার্স
-    if (typeof parts === 'string') {
-        try { parts = JSON.parse(parts); } catch(e) { alert('Parse error: ' + e.message); return; }
-    }
-    
-    if (parts && Array.isArray(parts) && parts.length > 0) {
-        var p = parts[0];
-        playVideo(p.youtube_link, ch, p.class_type || 'website', p.class_note || '', p.start_time || '');
-    } else {
-        alert('⚠️ No valid parts');
-    }
-}
-
+// ========== প্লে ভিডিও ==========
 function playVideo(link,title,classType,classNote,time){
     const videoId=extractYouTubeID(link);
-    alert('playVideo called!\nVideoID: ' + (videoId || 'NULL') + '\nClassType: ' + classType);
-    document.getElementById('videoBreadcrumb').innerHTML=`📘 <span>${currentSubject}</span> › 📖 <span>${currentChapter}</span> › 🎥 <span>${title}</span>`;
+    alert('▶️ Playing: '+title+'\nVideoID: '+(videoId||'NULL')+'\nType: '+classType);
+    document.getElementById('videoBreadcrumb').innerHTML='📘 <span>'+currentSubject+'</span> › 📖 <span>'+currentChapter+'</span> › 🎥 <span>'+title+'</span>';
     document.getElementById('videoTitle').textContent='🎥 '+title;
-    if(classType==='youtube'){document.getElementById('videoPlayer').innerHTML=`<div style="padding:40px;text-align:center;"><p>▶️ YouTube-এ ওপেন হচ্ছে...</p><a href="${link}" target="_blank" class="btn btn-outline">YouTube-এ দেখুন</a></div>`;window.open(link,'_blank');}
-    else{
-        if(videoId){document.getElementById('videoPlayer').innerHTML=`<iframe src="https://www.youtube.com/embed/${videoId}?enablejsapi=1&rel=0" id="ytFrame" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;}
+    if(classType==='youtube'){
+        document.getElementById('videoPlayer').innerHTML='<div style="padding:40px;text-align:center;"><p>▶️ YouTube-এ ওপেন হচ্ছে...</p><a href="'+link+'" target="_blank" class="btn btn-outline">YouTube-এ দেখুন</a></div>';
+        window.open(link,'_blank');
+    }else{
+        if(videoId){document.getElementById('videoPlayer').innerHTML='<iframe src="https://www.youtube.com/embed/'+videoId+'?enablejsapi=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>';}
         else{document.getElementById('videoPlayer').innerHTML='<p style="text-align:center;padding:30px;">⚠️ ভিডিও লিংক সঠিক নয়</p>';}
     }
-    document.getElementById('videoInfo').innerHTML=`<div class="info-row"><span class="info-label">সাবজেক্ট</span><span class="info-value">${currentSubject}</span></div><div class="info-row"><span class="info-label">চ্যাপ্টার</span><span class="info-value">${currentChapter}</span></div><div class="info-row"><span class="info-label">পার্ট</span><span class="info-value">${title}</span></div>`;
-    if(classNote){document.getElementById('classNoteCard').style.display='block';document.getElementById('classNoteContent').innerHTML=classNote.startsWith('http')?`<a href="${classNote}" target="_blank" style="color:var(--accent);">${classNote}</a>`:classNote;}
+    document.getElementById('videoInfo').innerHTML='<div class="info-row"><span class="info-label">সাবজেক্ট</span><span class="info-value">'+currentSubject+'</span></div><div class="info-row"><span class="info-label">চ্যাপ্টার</span><span class="info-value">'+currentChapter+'</span></div><div class="info-row"><span class="info-label">পার্ট</span><span class="info-value">'+title+'</span></div>';
+    if(classNote){document.getElementById('classNoteCard').style.display='block';document.getElementById('classNoteContent').innerHTML=classNote.startsWith('http')?'<a href="'+classNote+'" target="_blank" style="color:var(--accent);">'+classNote+'</a>':classNote;}
     else{document.getElementById('classNoteCard').style.display='none';}
-    let otherHTML='';
-    allClasses.forEach(c=>{if((c.subject||'সাধারণ')===currentSubject&&(c.chapter||'সাধারণ')===currentChapter&&c.youtube_link!==link){otherHTML+=`<div class="part-item" onclick="playVideo('${c.youtube_link}','${c.chapter||'Part'}','${c.class_type||'website'}','${(c.class_note||'').replace(/'/g,"\\'")}','${c.start_time||''}')"><span class="part-icon">🎥</span><div class="part-info"><div class="part-name">${c.chapter||'Part'}</div></div><span class="part-arrow">▶️</span></div>`;}});
-    document.getElementById('otherParts').innerHTML=otherHTML||'<p style="color:var(--text2);">কোনো পার্ট নেই</p>';
     saveClassHistory(currentSubject,currentChapter,title);
     document.getElementById('viewSubjects').style.display='none';
     document.getElementById('viewChapters').style.display='none';
@@ -247,7 +238,9 @@ function playVideo(link,title,classType,classNote,time){
 function extractYouTubeID(url){if(!url)return null;const m=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/);return m?m[1]:null;}
 function saveClassHistory(subject,chapter,part){try{const user=JSON.parse(localStorage.getItem('atlas-session'));if(!user)return;const h=JSON.parse(localStorage.getItem('class_history_'+user.phone)||'[]');h.push({subject,chapter,part,time:new Date().toISOString()});if(h.length>50)h.splice(0,h.length-50);localStorage.setItem('class_history_'+user.phone,JSON.stringify(h));}catch(e){}}
 function goToSubjects(){document.getElementById('viewSubjects').style.display='block';document.getElementById('viewChapters').style.display='none';document.getElementById('viewVideo').style.display='none';}
-     // পেজ লোড
+function goToChapters(){document.getElementById('viewSubjects').style.display='none';document.getElementById('viewChapters').style.display='block';document.getElementById('viewVideo').style.display='none';}
+
+// পেজ লোড
 loadClasses();
 </script>
 </body>
