@@ -3,458 +3,624 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATLAS EXAM - অ্যাডমিন</title>
-    <link rel="stylesheet" href="style.css">
+    <title>ATLAS EXAM · অ্যাডমিন</title>
     <style>
-        .admin-container { max-width: 800px; margin: 0 auto; padding: 16px 16px 80px; }
-        .admin-header { background: var(--atlas-bg); border: 2px solid var(--atlas-border); border-radius: 14px; padding: 18px; margin-bottom: 16px; text-align: center; box-shadow: 0 0 14px var(--atlas-glow); }
-        .admin-title { font-size: 22px; font-weight: 800; color: var(--atlas-text); }
-        .admin-sub { font-size: 12px; color: var(--atlas-text); opacity: 0.7; }
+        :root {
+            --bg: #0D1117; --card: #161B22; --hover: #1C2129;
+            --text: #E6EDF3; --text2: #8B949E;
+            --accent: #7C83FF; --accent-hover: #9499FF;
+            --border: #30363D; --shadow: 0 2px 8px rgba(0,0,0,0.3);
+            --glow: 0 0 0 2px rgba(124,131,255,0.12);
+            --radius: 12px; --radius-sm: 8px;
+            --red: #F85149; --green: #3FB950; --yellow: #D29922;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', 'Noto Sans Bengali', system-ui, sans-serif;
+            background: var(--bg); color: var(--text);
+            min-height: 100vh; padding: 16px 16px 80px;
+            line-height: 1.5; -webkit-font-smoothing: antialiased;
+        }
+        .admin-container { max-width: 840px; margin: 0 auto; }
+        .admin-header {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
+            text-align: center; box-shadow: var(--shadow);
+        }
+        .admin-title { font-size: 22px; font-weight: 800; color: var(--accent); letter-spacing: -0.5px; }
+        .admin-sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
         
         .tab-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 16px; }
         @media (max-width: 500px) { .tab-grid { grid-template-columns: repeat(3, 1fr); } }
-        .tab-btn { padding: 10px 6px; background: var(--card-bg); border: 1px solid var(--option-border); border-radius: 10px; color: var(--text-secondary); font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.3s; text-align: center; font-family: 'Noto Sans Bengali','Inter',sans-serif; }
-        .tab-btn.active { background: var(--atlas-bg); color: var(--atlas-text); border-color: var(--atlas-border); box-shadow: 0 0 10px var(--atlas-glow); }
-        .tab-btn:hover:not(.active) { border-color: var(--atlas-border); }
+        .tab-btn {
+            padding: 10px 6px; background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); color: var(--text2); font-size: 11px; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; text-align: center;
+        }
+        .tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: var(--glow); }
+        .tab-btn:hover:not(.active) { border-color: var(--accent); color: var(--text); }
         
-        .admin-section { display: none; animation: fadeIn 0.3s; }
+        .admin-section { display: none; animation: fadeIn 0.25s; }
         .admin-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
         
-        .form-card { background: var(--card-bg); border: 1px solid var(--option-border); border-radius: 14px; padding: 18px; margin-bottom: 14px; }
-        .form-card h3 { margin-bottom: 12px; font-size: 16px; color: var(--text-primary); }
-        .input-group { margin-bottom: 12px; }
-        .input-group label { display: block; font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
-        .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 10px 12px; border: 2px solid var(--option-border); border-radius: 8px; font-size: 14px; background: var(--body-bg); color: var(--text-primary); font-family: 'Noto Sans Bengali','Inter',sans-serif; transition: all 0.3s; }
-        .input-group input:focus, .input-group select:focus, .input-group textarea:focus { outline: none; border-color: var(--atlas-border); box-shadow: 0 0 8px var(--atlas-glow); }
-        .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .form-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 12px; box-shadow: var(--shadow); }
+        .form-card h3 { margin-bottom: 12px; font-size: 15px; font-weight: 700; color: var(--text); }
+        .input-group { margin-bottom: 10px; }
+        .input-group label { display: block; font-size: 11px; font-weight: 600; color: var(--text2); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .input-group input, .input-group select, .input-group textarea {
+            width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+            background: var(--bg); color: var(--text); font-size: 13px; font-family: inherit;
+            transition: all 0.2s; outline: none;
+        }
+        .input-group input:focus, .input-group select:focus, .input-group textarea:focus { border-color: var(--accent); box-shadow: var(--glow); }
+        .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         
-        .btn { padding: 10px 18px; border-radius: 10px; font-weight: 600; cursor: pointer; border: none; font-size: 14px; transition: all 0.3s; }
-        .btn-primary { background: var(--atlas-bg); color: var(--atlas-text); border: 2px solid var(--atlas-border); width: 100%; }
-        .btn-primary:hover { background: var(--atlas-hover-bg); }
-        .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
-        .btn-danger { background: #EF4444; color: #FFF; }
-        .btn-success { background: #22C55E; color: #FFF; }
-        .btn-outline { background: transparent; border: 1px solid var(--atlas-border); color: var(--atlas-text); }
-        .btn-copy { background: #22C55E; color: #FFF; font-size: 11px; }
-        .btn-warning { background: #F59E0B; color: #000; }
+        .btn { padding: 10px 18px; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; border: none; font-size: 13px; transition: all 0.2s; font-family: inherit; }
+        .btn-primary { background: var(--accent); color: #fff; width: 100%; }
+        .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .btn-sm { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
+        .btn-danger { background: var(--red); color: #fff; }
+        .btn-success { background: var(--green); color: #fff; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text2); }
+        .btn-outline:hover { border-color: var(--accent); color: var(--text); }
+        .btn-copy { background: var(--green); color: #fff; font-size: 11px; }
         
         .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        .data-table th { background: var(--atlas-bg); color: var(--atlas-text); padding: 8px; text-align: left; border-bottom: 2px solid var(--atlas-border); }
-        .data-table td { padding: 8px; border-bottom: 1px solid var(--option-border); }
-        .data-table tr:hover td { background: var(--option-bg); }
+        .data-table th { background: var(--card); color: var(--text2); padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .data-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+        .data-table tr:hover td { background: var(--hover); }
         
-        .csv-upload { border: 2px dashed var(--option-border); border-radius: 10px; padding: 16px; text-align: center; cursor: pointer; margin-bottom: 12px; transition: all 0.3s; }
-        .csv-upload:hover { border-color: var(--atlas-border); background: var(--option-bg); }
+        .csv-upload { border: 2px dashed var(--border); border-radius: var(--radius-sm); padding: 14px; text-align: center; cursor: pointer; margin-bottom: 10px; transition: all 0.2s; }
+        .csv-upload:hover { border-color: var(--accent); background: var(--hover); }
         .csv-upload input { display: none; }
         
-        .chip-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-        .chip { padding: 8px 16px; border-radius: 20px; border: 1px solid var(--option-border); cursor: pointer; font-size: 12px; font-weight: 600; color: var(--text-secondary); background: var(--card-bg); transition: all 0.3s; }
-        .chip.active { background: var(--atlas-bg); color: var(--atlas-text); border-color: var(--atlas-border); box-shadow: 0 0 8px var(--atlas-glow); }
+        .chip-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+        .chip { padding: 7px 14px; border-radius: 20px; border: 1px solid var(--border); cursor: pointer; font-size: 11px; font-weight: 600; color: var(--text2); background: var(--card); transition: all 0.2s; }
+        .chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .chip:hover:not(.active) { border-color: var(--accent); }
         
-        .owner-preview { width: 120px; height: 120px; border-radius: 12px; object-fit: cover; border: 3px solid var(--atlas-border); margin: 0 auto 10px; display: block; background: var(--option-bg); }
+        .owner-preview { width: 100px; height: 100px; border-radius: var(--radius); object-fit: cover; border: 2px solid var(--border); margin: 8px auto; display: block; background: var(--hover); }
         
-        .filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-        .filter-row input { flex: 1; min-width: 100px; padding: 8px 12px; border: 2px solid var(--option-border); border-radius: 8px; background: var(--body-bg); color: var(--text-primary); }
+        .filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+        .filter-row input { flex: 1; min-width: 100px; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); font-size: 12px; }
         
-        .list-item { background: var(--card-bg); border: 1px solid var(--option-border); border-radius: 10px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .list-item { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; transition: all 0.2s; }
+        .list-item:hover { border-color: var(--accent); background: var(--hover); }
         
-        .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid transparent; border-top-color: var(--atlas-text); border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 6px; vertical-align: middle; }
+        .section-header { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; margin-bottom: 10px; text-align: center; }
+        .section-title { color: var(--accent); font-size: 14px; font-weight: 700; }
+        
+        .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid transparent; border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 4px; vertical-align: middle; }
         @keyframes spin { to { transform: rotate(360deg); } }
         
-        .section-header { background: var(--atlas-bg); border: 2px solid var(--atlas-border); border-radius: 14px; padding: 14px; margin-bottom: 14px; text-align: center; box-shadow: 0 0 10px var(--atlas-glow); }
-        .section-title { color: var(--atlas-text); font-size: 16px; font-weight: 700; }
+        .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: var(--card); color: var(--text); border: 1px solid var(--accent); padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 600; z-index: 9999; opacity: 0; transition: 0.2s; pointer-events: none; }
+        .toast.show { opacity: 1; }
     </style>
 </head>
-<body class="dark-mode">
+<body>
 
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
-<aside class="sidebar" id="sidebar">
-    <div class="sidebar-header"><div class="sidebar-logo">ATLAS EXAM</div></div>
-    <nav class="sidebar-menu">
-        <button class="sidebar-item" onclick="navigateTo('profile');closeSidebar();"><span class="icon">👤</span> প্রোফাইল</button>
-        <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();"><span class="icon">🏠</span> হোম</button>
-        <button class="sidebar-item" onclick="goTo('class.html');closeSidebar();"><span class="icon">📚</span> ফ্রি ক্লাস</button>
-        <button class="sidebar-item" onclick="goTo('exam.html');closeSidebar();"><span class="icon">📝</span> ফ্রি এক্সাম</button>
-        <button class="sidebar-item" onclick="goTo('mock-test.html');closeSidebar();"><span class="icon">🎯</span> মক টেস্ট</button>
-        <button class="sidebar-item" onclick="goTo('dashboard.html');closeSidebar();"><span class="icon">❌</span> মাই মিসটেকস</button>
-        <button class="sidebar-item" onclick="goTo('ai.html');closeSidebar();"><span class="icon">🤖</span> ATLAS AI</button>
-        <div class="sidebar-divider"></div>
-        <button class="sidebar-item" onclick="toggleTheme()"><span class="icon" id="sidebarThemeIcon">🌙</span> <span id="sidebarThemeText">ডার্ক মোড</span></button>
-        <button class="sidebar-item" onclick="openWhatsApp()"><span class="icon">💬</span> WhatsApp</button>
-        <button class="sidebar-item" onclick="openTelegram()"><span class="icon">✈️</span> Telegram</button>
-        <button class="sidebar-item" onclick="logout()"><span class="icon">🚪</span> লগআউট</button>
-    </nav>
-</aside>
-
-<header class="header">
-    <div class="header-left"><button class="hamburger" onclick="toggleSidebar()">☰</button><div class="logo">ADMIN PANEL</div></div>
-    <div class="header-right"><button class="header-icon" id="themeToggle" onclick="toggleTheme()">🌙</button><button class="header-icon" onclick="logout()" style="color:#EF4444;">🚪</button></div>
-</header>
-
-<main class="main-content"><div class="admin-container">
-
-<div class="admin-header"><div class="admin-title">👑 অ্যাডমিন প্যানেল</div><div class="admin-sub" id="adminRole"></div></div>
-
-<div class="tab-grid">
-    <button class="tab-btn active" onclick="switchSection('class')">📚 Class</button>
-    <button class="tab-btn" onclick="switchSection('exam')">📝 Exam</button>
-    <button class="tab-btn" onclick="switchSection('kakha')">📦 ক,খ,CQ</button>
-    <button class="tab-btn" onclick="switchSection('countdown')">⏰ Timer</button>
-    <button class="tab-btn" onclick="switchSection('students')">👥 Students</button>
-    <button class="tab-btn" onclick="switchSection('mock')">🎯 Mock</button>
-    <button class="tab-btn" onclick="switchSection('social')">🔗 Social</button>
-    <button class="tab-btn" onclick="switchSection('subadmin')">👮 Sub-Admin</button>
-    <button class="tab-btn" onclick="switchSection('reports')">🚩 Reports</button>
-    <button class="tab-btn" onclick="switchSection('owner')">👤 Owner</button>
-    <button class="tab-btn" onclick="switchSection('mentors')">👨‍🏫 Mentors</button>
-</div>
-
-<!-- ====== CLASS ====== -->
-<div class="admin-section active" id="secClass">
-    <div class="form-card"><h3>📚 ক্লাস যোগ/এডিট</h3>
-        <input type="hidden" id="classEditId">
-        <div class="input-group"><label>সাবজেক্ট *</label><input type="text" id="classSubject" list="subjectList"><datalist id="subjectList"></datalist></div>
-        <div class="input-group"><label>পেপার (ঐচ্ছিক)</label><input type="text" id="classPaper"></div>
-        <div class="input-group"><label>চ্যাপ্টার *</label><input type="text" id="classChapter" list="chapterList"><datalist id="chapterList"></datalist></div>
-        <div class="input-row"><div class="input-group"><label>শুরু</label><input type="datetime-local" id="classStart"></div><div class="input-group"><label>শেষ</label><input type="datetime-local" id="classEnd"></div></div>
-        <div class="input-group"><label>YouTube লিংক *</label><input type="url" id="classLink"></div>
-        <button class="btn btn-primary" onclick="saveClass()">✅ সেইভ</button>
-    </div>
-    <div class="form-card"><h3>📋 ক্লাস তালিকা</h3><div id="classList"></div></div>
-</div>
-
-<!-- ====== EXAM ====== -->
-<div class="admin-section" id="secExam">
-    <div class="form-card"><h3>📝 এক্সাম যোগ/এডিট</h3>
-        <input type="hidden" id="examEditId">
-        <div class="input-group"><label>সাবজেক্ট *</label><input type="text" id="examSubject" list="subjectList"></div>
-        <div class="input-group"><label>চ্যাপ্টার *</label><input type="text" id="examChapter" list="chapterList"></div>
-        <div class="input-group"><label>টাইপ *</label>
-            <select id="examType" onchange="toggleExamFields()">
-                <option value="">— নির্বাচন —</option>
-                <option value="board">🔵 বোর্ড</option>
-                <option value="medical">🏥 Medical</option>
-                <option value="dental">🦷 Dental</option>
-                <option value="afmc">🎖️ AFMC</option>
-                <option value="varsity">🟣 ভার্সিটি</option>
-                <option value="onushiloni">🟠 অনুশীলনী</option>
-                <option value="model">📖 Model Test</option>
-            </select>
-        </div>
-        <div id="examSubTypeField" style="display:none;"><div class="input-group"><label>সাব-টাইপ</label><select id="examSubType"><option value="">— নির্বাচন —</option><option value="demo">🏥 Demo</option><option value="chapter">📖 চাপ্টারভিত্তিক</option><option value="year">📅 সালভিত্তিক</option></select></div></div>
-        <div class="input-row" id="examBoardYear" style="display:none;"><div class="input-group"><label>বোর্ড/ভার্সিটি</label><input type="text" id="examBoard"></div><div class="input-group"><label>সাল</label><input type="text" id="examYear"></div></div>
-        <div class="input-group" id="examWriterField" style="display:none;"><label>রাইটার</label><input type="text" id="examWriter"></div>
-        <div class="input-row"><div class="input-group"><label>শুরু</label><input type="datetime-local" id="examStart"></div><div class="input-group"><label>শেষ</label><input type="datetime-local" id="examEnd"></div></div>
-        <div class="csv-upload" onclick="document.getElementById('examCSV').click()"><p>📄 CSV আপলোড</p><input type="file" id="examCSV" accept=".csv" onchange="handleCSV(this,'examCSVName')"><p id="examCSVName" style="color:var(--atlas-text);"></p></div>
-        <button class="btn btn-primary" onclick="saveExam()">✅ সেইভ</button>
-    </div>
-    <div class="form-card"><h3>📋 এক্সাম তালিকা</h3><div id="examList"></div></div>
-</div>
-
-<!-- ====== ক,খ,CQ ====== -->
-<div class="admin-section" id="secKakha">
-    <div class="form-card"><h3>📦 ক,খ,CQ যোগ/এডিট</h3>
-        <input type="hidden" id="kaEditId">
-        <div class="input-group"><label>সাবজেক্ট *</label><input type="text" id="kaSubject" list="subjectList"></div>
-        <div class="input-group"><label>চ্যাপ্টার *</label><input type="text" id="kaChapter" list="chapterList"></div>
-        <div class="input-group"><label>লিংক বা ফাইল</label><input type="text" id="kaLink"></div>
-        <button class="btn btn-primary" onclick="saveKaKha()">✅ সেইভ</button>
-    </div>
-    <div class="form-card"><h3>📋 তালিকা</h3><div id="kaList"></div></div>
-</div>
-
-<!-- ====== COUNTDOWN ====== -->
-<div class="admin-section" id="secCountdown">
-    <div class="form-card"><h3>⏰ কাউন্টডাউন</h3>
-        <input type="hidden" id="cdEditId">
-        <div class="input-group"><label>মূল টপিক *</label><input type="text" id="cdTopic"></div>
-        <div class="input-group"><label>সাবটপিক</label><input type="text" id="cdSubtopic"></div>
-        <div class="input-row"><div class="input-group"><label>শুরু</label><input type="datetime-local" id="cdStart"></div><div class="input-group"><label>শেষ *</label><input type="datetime-local" id="cdEnd"></div></div>
-        <button class="btn btn-primary" onclick="saveCountdown()">✅ সেইভ</button>
-    </div>
-    <div class="form-card"><h3>📋 বর্তমান</h3><div id="cdCurrent"></div></div>
-</div>
-
-<!-- ====== STUDENTS ====== -->
-<div class="admin-section" id="secStudents">
-    <div class="form-card"><h3>👥 স্টুডেন্ট</h3>
-        <div class="filter-row"><input type="text" id="filterName" placeholder="নাম" oninput="loadStudents()"><input type="text" id="filterBatch" placeholder="ব্যাচ" oninput="loadStudents()"><input type="text" id="filterCollege" placeholder="কলেজ" oninput="loadStudents()"></div>
-        <div id="studentTable"></div>
-    </div>
-</div>
-
-<!-- ====== MOCK TEST ====== -->
-<div class="admin-section" id="secMock">
-    <div class="form-card"><h3>🎯 মক টেস্ট যোগ/এডিট</h3>
-        <input type="hidden" id="mockEditId">
-        <div class="input-group"><label>সাবজেক্ট *</label><select id="mockSubject" onchange="loadMockChapters()"><option value="">— নির্বাচন —</option></select></div>
-        <div class="input-group"><label>চ্যাপ্টার *</label><select id="mockChapter"><option value="">— প্রথমে সাবজেক্ট —</option></select></div>
-        <div class="input-group"><label>টপিক (ঐচ্ছিক)</label><input type="text" id="mockTopic"></div>
-        <div class="input-group"><label>স্ট্যান্ডার্ড *</label><div class="chip-row" id="mockStandardChips"><span class="chip active" onclick="selectMockStandard('medical',this)">🏥 Medical</span><span class="chip" onclick="selectMockStandard('varsity',this)">🎓 Varsity</span><span class="chip" onclick="selectMockStandard('onushiloni',this)">🟠 Onushiloni</span></div></div>
-        <div class="input-group"><label>প্রশ্ন সংখ্যা *</label><div class="chip-row" id="mockCountChips"><span class="chip" onclick="selectMockCount(25,this)">২৫</span><span class="chip" onclick="selectMockCount(35,this)">৩৫</span><span class="chip active" onclick="selectMockCount(50,this)">৫০</span><span class="chip" onclick="selectMockCount(75,this)">৭৫</span><span class="chip" onclick="selectMockCount(100,this)">১০০</span></div></div>
-        <div class="csv-upload" onclick="document.getElementById('mockCSV').click()"><p>📄 CSV আপলোড</p><input type="file" id="mockCSV" accept=".csv" onchange="handleCSV(this,'mockCSVName')"><p id="mockCSVName" style="color:var(--atlas-text);"></p></div>
-        <button class="btn btn-primary" onclick="saveMock()">✅ সেইভ</button>
-    </div>
-    <div class="form-card"><h3>📋 মক তালিকা</h3><div id="mockList"></div></div>
-</div>
-
-<!-- ====== SOCIAL ====== -->
-<div class="admin-section" id="secSocial">
-    <div class="form-card"><h3>🔗 সোশ্যাল লিংক</h3>
-        <input type="hidden" id="socialEditId">
-        <div class="input-group"><label>মিডিয়া নাম *</label><input type="text" id="socialName"></div>
-        <div class="input-group"><label>টাইপ *</label><select id="socialType"><option value="facebook">📘 Facebook</option><option value="youtube">▶️ YouTube</option><option value="telegram">✈️ Telegram</option><option value="whatsapp">💬 WhatsApp</option><option value="other">🔗 অন্যান্য</option></select></div>
-        <div class="input-group"><label>বর্ণনা</label><input type="text" id="socialDesc"></div>
-        <div class="input-group"><label>লিংক *</label><input type="url" id="socialLink"></div>
-        <button class="btn btn-primary" onclick="saveSocial()">✅ সেইভ</button>
-    </div>
-    <div class="form-card"><h3>📋 লিংক তালিকা</h3><div id="socialList"></div></div>
-</div>
-
-<!-- ====== SUB-ADMIN ====== -->
-<div class="admin-section" id="secSubadmin">
-    <div class="form-card"><h3>👮 সাব-অ্যাডমিন</h3>
-        <div class="input-group"><label>ফোন নম্বর *</label><input type="tel" id="subPhone" maxlength="11"></div>
-        <button class="btn btn-primary" onclick="grantSubAdmin()">✅ গ্র্যান্ট</button>
-    </div>
-    <div class="form-card"><h3>📋 সাব-অ্যাডমিন তালিকা</h3><div id="subList"></div></div>
-</div>
-
-<!-- ====== REPORTS ====== -->
-<div class="admin-section" id="secReports">
-    <div class="form-card"><h3>🚩 রিপোর্ট ম্যানেজমেন্ট</h3><div id="reportList"></div></div>
-</div>
-
-<!-- ====== OWNER ====== -->
-<div class="admin-section" id="secOwner">
-    <div class="form-card"><h3>👤 অনার প্রোফাইল</h3>
-        <div class="input-group"><label>নাম</label><input type="text" id="ownerName"></div>
-        <div class="input-group"><label>বিস্তারিত</label><textarea id="ownerInfo" rows="3"></textarea></div>
-        <div class="input-group"><label>ছবি আপলোড</label><input type="file" id="ownerPhotoFile" accept="image/*" onchange="previewOwnerPhoto(this)"></div>
-        <img class="owner-preview" id="ownerPreview" src="" onerror="this.style.display='none'" style="display:none;">
-        <button class="btn btn-primary" onclick="saveOwner()">💾 সেইভ</button>
-    </div>
-</div>
-
-<!-- ====== MENTORS ====== -->
-<div class="admin-section" id="secMentors">
-    <div class="form-card"><h3>👨‍🏫 মেন্টর যোগ/এডিট</h3>
-        <input type="hidden" id="mentorEditId">
-        <div class="input-group"><label>নাম *</label><input type="text" id="mentorName"></div>
-        <div class="input-group"><label>সাবজেক্ট</label><input type="text" id="mentorSubject"></div>
-        <div class="input-group"><label>বিস্তারিত</label><textarea id="mentorDetails" rows="2"></textarea></div>
-        <div class="input-group"><label>ছবি আপলোড</label><input type="file" id="mentorPhotoFile" accept="image/*"></div>
-        <button class="btn btn-primary" onclick="saveMentor()">✅ সেইভ</button>
-    </div>
-    <div class="form-card"><h3>📋 মেন্টর তালিকা</h3><div id="mentorList"></div></div>
-</div>
-
-</div></main>
-
-<nav class="bottom-nav">
-    <button class="nav-item" onclick="goTo('index.html')"><span class="nav-icon">🏠</span><span>হোম</span></button>
-    <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon">📚</span><span>ক্লাস</span></button>
-    <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon">📝</span><span>এক্সাম</span></button>
-    <button class="nav-item" onclick="goTo('mock-test.html')"><span class="nav-icon">🎯</span><span>মক</span></button>
-    <button class="nav-item" onclick="goTo('dashboard.html')"><span class="nav-icon">👤</span><span>প্রোফাইল</span></button>
-</nav>
-
-<div class="floating-buttons"><button class="fab fab-whatsapp" onclick="openWhatsApp()">💬</button><button class="fab fab-telegram" onclick="openTelegram()">✈️</button></div>
 <div class="toast" id="toast"></div>
 
+<main class="admin-container">
+    <div class="admin-header">
+        <div class="admin-title">👑 Admin Panel</div>
+        <div class="admin-sub" id="adminRole">প্রধান অ্যাডমিন</div>
+    </div>
+
+    <div class="tab-grid">
+        <button class="tab-btn active" onclick="switchSection('class')">📚 Class</button>
+        <button class="tab-btn" onclick="switchSection('exam')">📝 Exam</button>
+        <button class="tab-btn" onclick="switchSection('kakha')">📦 ক,খ,CQ</button>
+        <button class="tab-btn" onclick="switchSection('timer')">⏰ Timer</button>
+        <button class="tab-btn" onclick="switchSection('students')">👥 Students</button>
+        <button class="tab-btn" onclick="switchSection('mock')">🎯 Mock</button>
+        <button class="tab-btn" onclick="switchSection('social')">🔗 Social</button>
+        <button class="tab-btn" onclick="switchSection('subadmin')">👮 Sub-Admin</button>
+        <button class="tab-btn" onclick="switchSection('reports')">🚩 Reports</button>
+        <button class="tab-btn" onclick="switchSection('owner')">👤 Owner</button>
+        <button class="tab-btn" onclick="switchSection('mentors')">👨‍🏫 Mentors</button>
+        <button class="tab-btn" onclick="switchSection('special')">🃏 Special Card</button>
+    </div>
+
+    <!-- CLASS -->
+    <div class="admin-section active" id="secClass">
+        <div class="form-card"><h3>📚 ক্লাস যোগ/এডিট</h3>
+            <input type="hidden" id="classEditId">
+            <div class="input-group"><label>সাবজেক্ট</label><input type="text" id="classSubject" list="subjectList"><datalist id="subjectList"></datalist></div>
+            <div class="input-group"><label>পেপার (ঐচ্ছিক)</label><input type="text" id="classPaper"></div>
+            <div class="input-group"><label>চ্যাপ্টার</label><input type="text" id="classChapter" list="chapterList"><datalist id="chapterList"></datalist></div>
+            <div class="input-group"><label>ক্লাস টাইপ</label><select id="classType"><option value="website">🌐 Website Style</option><option value="youtube">▶️ Direct YouTube</option></select></div>
+            <div class="input-group"><label>YouTube লিংক</label><input type="url" id="classLink"></div>
+            <div class="input-group"><label>ক্লাস নোট (ঐচ্ছিক)</label><input type="text" id="classNote" placeholder="লিংক বা ফাইল"></div>
+            <div class="input-row"><div class="input-group"><label>শুরু</label><input type="datetime-local" id="classStart"></div><div class="input-group"><label>শেষ</label><input type="datetime-local" id="classEnd"></div></div>
+            <button class="btn btn-primary" onclick="saveClass()">✅ সেইভ</button>
+        </div>
+        <div class="form-card"><h3>📋 তালিকা</h3><div id="classList"></div></div>
+    </div>
+
+    <!-- EXAM -->
+    <div class="admin-section" id="secExam">
+        <div class="form-card"><h3>📝 এক্সাম যোগ/এডিট</h3>
+            <input type="hidden" id="examEditId">
+            <div class="input-group"><label>সাবজেক্ট</label><input type="text" id="examSubject" list="subjectList"></div>
+            <div class="input-group"><label>চ্যাপ্টার</label><input type="text" id="examChapter" list="chapterList"></div>
+            <div class="input-group"><label>টাইপ</label><select id="examType" onchange="toggleExamFields()">
+                <option value="">— নির্বাচন —</option><option value="board">🔵 বোর্ড</option><option value="medical">🏥 Medical</option>
+                <option value="dental">🦷 Dental</option><option value="afmc">🎖️ AFMC</option>
+                <option value="varsity">🟣 ভার্সিটি</option><option value="onushiloni">🟠 অনুশীলনী</option><option value="model">📖 Model Test</option>
+            </select></div>
+            <div id="examSubTypeField" style="display:none;"><div class="input-group"><label>সাব-টাইপ</label><select id="examSubType"><option value="">— নির্বাচন —</option></select></div></div>
+            <div class="input-row" id="examBoardYear" style="display:none;"><div class="input-group"><label id="examBoardLabel">বোর্ড/ভার্সিটি</label><input type="text" id="examBoard"></div><div class="input-group"><label>সাল</label><input type="text" id="examYear"></div></div>
+            <div class="input-group" id="examWriterField" style="display:none;"><label>রাইটার</label><input type="text" id="examWriter"></div>
+            <div class="input-row"><div class="input-group"><label>শুরু</label><input type="datetime-local" id="examStart"></div><div class="input-group"><label>শেষ</label><input type="datetime-local" id="examEnd"></div></div>
+            <div class="csv-upload" onclick="document.getElementById('examCSV').click()"><p>📄 CSV আপলোড</p><input type="file" id="examCSV" accept=".csv" onchange="handleCSV(this,'examCSVName')"><p id="examCSVName" style="color:var(--accent);font-size:11px;"></p></div>
+            <button class="btn btn-primary" onclick="saveExam()">✅ সেইভ</button>
+        </div>
+        <div class="form-card"><h3>📋 তালিকা</h3><div id="examList"></div></div>
+    </div>
+
+    <!-- ক,খ,CQ -->
+    <div class="admin-section" id="secKakha">
+        <div class="form-card"><h3>📦 ক,খ,CQ যোগ/এডিট</h3>
+            <input type="hidden" id="kaEditId">
+            <div class="input-group"><label>সাবজেক্ট</label><input type="text" id="kaSubject" list="subjectList"></div>
+            <div class="input-group"><label>চ্যাপ্টার</label><input type="text" id="kaChapter" list="chapterList"></div>
+            <div class="input-group"><label>লিংক/ফাইল</label><input type="text" id="kaLink"></div>
+            <button class="btn btn-primary" onclick="saveKaKha()">✅ সেইভ</button>
+        </div>
+        <div class="form-card"><h3>📋 তালিকা</h3><div id="kaList"></div></div>
+    </div>
+
+    <!-- TIMER -->
+    <div class="admin-section" id="secTimer">
+        <div class="form-card"><h3>⏰ কাউন্টডাউন টাইমার</h3>
+            <input type="hidden" id="cdEditId">
+            <div class="input-group"><label>মূল টপিক</label><input type="text" id="cdTopic"></div>
+            <div class="input-group"><label>সাবটপিক</label><input type="text" id="cdSubtopic"></div>
+            <div class="input-row"><div class="input-group"><label>শুরু</label><input type="datetime-local" id="cdStart"></div><div class="input-group"><label>শেষ</label><input type="datetime-local" id="cdEnd"></div></div>
+            <button class="btn btn-primary" onclick="saveCountdown()">✅ সেইভ</button>
+        </div>
+        <div class="form-card"><h3>📋 সব টাইমার</h3><div id="cdList"></div></div>
+    </div>
+
+    <!-- STUDENTS -->
+    <div class="admin-section" id="secStudents">
+        <div class="form-card"><h3>👥 স্টুডেন্ট</h3>
+            <div class="filter-row"><input type="text" id="filterName" placeholder="নাম" oninput="loadStudents()"><input type="text" id="filterBatch" placeholder="ব্যাচ" oninput="loadStudents()"><input type="text" id="filterCollege" placeholder="কলেজ" oninput="loadStudents()"></div>
+            <div id="studentTable"></div>
+        </div>
+    </div>
+
+    <!-- MOCK -->
+    <div class="admin-section" id="secMock">
+        <div class="form-card"><h3>🎯 মক টেস্ট যোগ/এডিট</h3>
+            <input type="hidden" id="mockEditId">
+            <div class="input-group"><label>সাবজেক্ট</label><select id="mockSubject" onchange="loadMockChapters()"><option value="">— নির্বাচন —</option></select></div>
+            <div class="input-group"><label>চ্যাপ্টার</label><select id="mockChapter"><option value="">— প্রথমে সাবজেক্ট —</option></select></div>
+            <div class="input-group"><label>টপিক (ঐচ্ছিক)</label><input type="text" id="mockTopic"></div>
+            <div class="input-group"><label>স্ট্যান্ডার্ড</label><div class="chip-row" id="mockStdChips"><span class="chip active" onclick="selectMockStd('medical',this)">🏥 Medical</span><span class="chip" onclick="selectMockStd('varsity',this)">🎓 Varsity</span><span class="chip" onclick="selectMockStd('onushiloni',this)">🟠 Onushiloni</span></div></div>
+            <div class="input-group"><label>প্রশ্ন সংখ্যা</label><div class="chip-row" id="mockCntChips"><span class="chip" onclick="selectMockCnt(25,this)">২৫</span><span class="chip" onclick="selectMockCnt(35,this)">৩৫</span><span class="chip active" onclick="selectMockCnt(50,this)">৫০</span><span class="chip" onclick="selectMockCnt(75,this)">৭৫</span><span class="chip" onclick="selectMockCnt(100,this)">১০০</span></div></div>
+            <div class="csv-upload" onclick="document.getElementById('mockCSV').click()"><p>📄 CSV আপলোড</p><input type="file" id="mockCSV" accept=".csv" onchange="handleCSV(this,'mockCSVName')"><p id="mockCSVName" style="color:var(--accent);font-size:11px;"></p></div>
+            <button class="btn btn-primary" onclick="saveMock()">✅ সেইভ</button>
+        </div>
+        <div class="form-card"><h3>📋 তালিকা</h3><div id="mockList"></div></div>
+    </div>
+
+    <!-- SOCIAL -->
+    <div class="admin-section" id="secSocial">
+        <div class="form-card"><h3>🔗 সোশ্যাল লিংক</h3>
+            <input type="hidden" id="socialEditId">
+            <div class="input-group"><label>নাম</label><input type="text" id="socialName"></div>
+            <div class="input-group"><label>টাইপ</label><select id="socialType"><option value="facebook">📘 Facebook</option><option value="youtube">▶️ YouTube</option><option value="telegram">✈️ Telegram</option><option value="whatsapp">💬 WhatsApp</option><option value="other">🔗 অন্যান্য</option></select></div>
+            <div class="input-group"><label>বর্ণনা</label><input type="text" id="socialDesc"></div>
+            <div class="input-group"><label>লিংক</label><input type="url" id="socialLink"></div>
+            <button class="btn btn-primary" onclick="saveSocial()">✅ সেইভ</button>
+        </div>
+        <div class="form-card"><h3>📋 তালিকা</h3><div id="socialList"></div></div>
+    </div>
+
+    <!-- SUB-ADMIN -->
+    <div class="admin-section" id="secSubadmin">
+        <div class="form-card"><h3>👮 সাব-অ্যাডমিন</h3>
+            <div class="input-group"><label>ফোন নম্বর</label><input type="tel" id="subPhone" maxlength="11"></div>
+            <button class="btn btn-primary" onclick="grantSubAdmin()">✅ গ্র্যান্ট</button>
+        </div>
+        <div class="form-card"><h3>📋 তালিকা</h3><div id="subList"></div></div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="admin-section" id="secReports">
+        <div class="form-card"><h3>🚩 রিপোর্ট</h3><div id="reportList"></div></div>
+    </div>
+
+    <!-- OWNER -->
+    <div class="admin-section" id="secOwner">
+        <div class="form-card"><h3>👤 অনার</h3>
+            <div class="input-group"><label>নাম</label><input type="text" id="ownerName"></div>
+            <div class="input-group"><label>বিস্তারিত</label><textarea id="ownerInfo" rows="3"></textarea></div>
+            <div class="input-group"><label>ছবি</label><input type="file" id="ownerPhotoFile" accept="image/*" onchange="previewOwner(this)"></div>
+            <img class="owner-preview" id="ownerPreview" src="" style="display:none;" onerror="this.style.display='none'">
+            <button class="btn btn-primary" onclick="saveOwner()">💾 সেইভ</button>
+        </div>
+    </div>
+
+    <!-- MENTORS -->
+    <div class="admin-section" id="secMentors">
+        <div class="form-card"><h3>👨‍🏫 মেন্টর যোগ/এডিট</h3>
+            <input type="hidden" id="mentorEditId">
+            <div class="input-group"><label>নাম</label><input type="text" id="mentorName"></div>
+            <div class="input-group"><label>পদবী/রোল</label><input type="text" id="mentorRole"></div>
+            <div class="input-group"><label>ছবি</label><input type="file" id="mentorPhotoFile" accept="image/*" onchange="previewMentor(this)"></div>
+            <img id="mentorPreview" src="" style="width:80px;height:80px;border-radius:10px;object-fit:cover;border:2px solid var(--border);display:none;margin:6px auto;">
+            <button class="btn btn-primary" onclick="saveMentor()">✅ সেইভ</button>
+        </div>
+        <div class="form-card"><h3>📋 তালিকা</h3><div id="mentorList"></div></div>
+    </div>
+
+    <!-- SPECIAL CARD -->
+    <div class="admin-section" id="secSpecial">
+        <div class="form-card"><h3>🃏 স্পেশাল কার্ড</h3>
+            <input type="hidden" id="specialEditId">
+            <div class="input-group"><label>ছবি</label><input type="file" id="specialPhotoFile" accept="image/*" onchange="previewSpecial(this)"></div>
+            <img id="specialPreview" src="" style="width:100%;max-height:180px;border-radius:10px;object-fit:cover;border:2px solid var(--border);display:none;margin:6px 0;">
+            <div class="input-group"><label>বিস্তারিত</label><textarea id="specialDesc" rows="2"></textarea></div>
+            <div class="input-group"><label>স্পেশাল টেক্সট (ক্লিকেবল)</label><input type="text" id="specialText"></div>
+            <div class="input-group"><label>লিংক</label><input type="url" id="specialLink"></div>
+            <button class="btn btn-primary" onclick="saveSpecial()">✅ সেইভ</button>
+        </div>
+        <div class="form-card"><h3>📋 তালিকা</h3><div id="specialList"></div></div>
+    </div>
+</main>
+
 <script>
-var SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
-var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
-var ADMIN_PHONE = '01754365403';
-var isDarkMode = true, isSidebarOpen = false, currentUser = null, isAdmin = false, isSubAdmin = false;
-var examCSVData = null, mockCSVData = null, currentSection = 'class';
-var mockStandard = 'medical', mockCount = 50;
+const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
+const ADMIN_PHONE = '01754365403';
+let currentUser = null, isAdmin = true, isSubAdmin = false;
+let examCSVData = null, mockCSVData = null, currentSection = 'class';
+let mockStd = 'medical', mockCnt = 50;
 
-// ========== AUTH ==========
-function checkAdmin() {
-    var sess = localStorage.getItem('atlas-session'); if (!sess) { showToast('⚠️ লগইন করুন'); setTimeout(function(){ goTo('auth.html'); }, 1000); return false; }
-    try { currentUser = JSON.parse(sess); if (currentUser.phone === ADMIN_PHONE || currentUser.role === 'admin') { isAdmin = true; isSubAdmin = false; } else if (currentUser.role === 'sub_admin') { isAdmin = false; isSubAdmin = true; } else { showToast('⛔ নিষেধ'); goTo('index.html'); return false; }
-        document.getElementById('adminRole').textContent = isAdmin ? '👑 প্রধান অ্যাডমিন' : '👮 সাব-অ্যাডমিন';
-        if (isSubAdmin) { document.querySelectorAll('.btn-danger').forEach(function(b){ b.style.display = 'none'; }); } return true; }
-    catch(e) { goTo('auth.html'); return false; }
-}
+function showToast(m, d) { d = d || 2000; const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), d); }
 
-function loadTheme() { var s = localStorage.getItem('atlas-theme'); isDarkMode = s !== 'light'; document.body.classList.toggle('dark-mode', isDarkMode); }
-function toggleTheme() { isDarkMode = !isDarkMode; document.body.classList.toggle('dark-mode', isDarkMode); localStorage.setItem('atlas-theme', isDarkMode ? 'dark' : 'light'); showToast(isDarkMode ? '🌙 ডার্ক' : '☀️ লাইট'); }
-function toggleSidebar() { isSidebarOpen = !isSidebarOpen; document.getElementById('sidebarOverlay').classList.toggle('active', isSidebarOpen); document.getElementById('sidebar').classList.toggle('active', isSidebarOpen); }
-function closeSidebar() { isSidebarOpen = false; document.getElementById('sidebarOverlay').classList.remove('active'); document.getElementById('sidebar').classList.remove('active'); }
-function goTo(u) { window.location.href = u; }
-function navigateTo(p) { var r = { 'home':'index.html', 'profile':'dashboard.html', 'class':'class.html', 'exam':'exam.html' }; goTo(r[p] || 'index.html'); }
-function openWhatsApp() { window.open('https://wa.me/8801999681290', '_blank'); }
-function openTelegram() { window.open('https://t.me/rafi_somc', '_blank'); }
-function logout() { localStorage.removeItem('atlas-session'); goTo('index.html'); }
-function showToast(m, d) { d = d || 2500; var t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(function(){ t.classList.remove('show'); }, d); }
-
-// ========== safeFetch ==========
-async function safeFetch(url, opts) {
-    opts = opts || {}; opts.headers = opts.headers || {}; opts.headers['apikey'] = SUPABASE_KEY; opts.headers['Authorization'] = 'Bearer ' + SUPABASE_KEY;
+async function safeFetch(url, opts = {}) {
+    opts.headers = Object.assign({ apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }, opts.headers || {});
     if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') opts.headers['Content-Type'] = 'application/json';
-    try { var res = await fetch(url, opts); var text = await res.text(); if (!text || text.trim() === '') return []; var data = JSON.parse(text); if (!res.ok) throw new Error(data.message || 'API Error'); return data; }
-    catch(e) { console.error('❌', e.message); throw e; }
-}
-
-// ========== সেকশন সুইচ ==========
-function switchSection(sec) {
-    currentSection = sec; document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); }); document.querySelectorAll('.admin-section').forEach(function(s){ s.classList.remove('active'); });
-    var el = document.getElementById('sec' + sec.charAt(0).toUpperCase() + sec.slice(1)); if (el) el.classList.add('active');
-    event.target.classList.add('active');
-    if (sec === 'class') loadClasses(); else if (sec === 'exam') loadExams(); else if (sec === 'kakha') loadKaKha();
-    else if (sec === 'countdown') loadCountdown(); else if (sec === 'students') loadStudents(); else if (sec === 'mock') { loadMockSubjects(); loadMocks(); }
-    else if (sec === 'social') loadSocial(); else if (sec === 'subadmin') loadSubAdmins(); else if (sec === 'reports') loadReports();
-    else if (sec === 'owner') loadOwner(); else if (sec === 'mentors') loadMentors();
-}
-
-// ========== CSV ==========
-function handleCSV(input, labelId) {
-    var file = input.files[0]; if (!file) return; document.getElementById(labelId).textContent = '📄 ' + file.name;
-    var reader = new FileReader(); reader.onload = function(e) { var text = e.target.result; var lines = text.split('\n').filter(function(l){ return l.trim(); }); if (lines.length < 2) { showToast('⚠️ ডাটা নেই'); return; }
-        var data = []; for (var i = 1; i < lines.length; i++) { var cols = lines[i].split(',').map(function(c){ return c.trim(); }); if (cols.length >= 9) { data.push({ questions: cols[0], option1: cols[1], option2: cols[2], option3: cols[3], option4: cols[4], option5: cols[5] || null, answer: parseInt(cols[6]) || 1, explanation: cols[7] || '', type: parseInt(cols[8]) || 1, section: parseInt(cols[9]) || 1 }); } }
-        if (input.id === 'examCSV') examCSVData = data; else mockCSVData = data; showToast('✅ ' + data.length + ' প্রশ্ন লোড');
-    }; reader.readAsText(file);
-}
-
-// ========== CRUD Helper ==========
- async function saveItem(table, data, editId, clearFn, loadFn) {
     try {
-        if (editId) {
-            await safeFetch(SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + editId, 
-                { method: 'PATCH', body: JSON.stringify(data) }  // ← method + body
-            );
-            showToast('✅ আপডেট');
-        } else {
-            await safeFetch(SUPABASE_URL + '/rest/v1/' + table, 
-                { method: 'POST', body: JSON.stringify(data) }  // ← method + body
-            );
-            showToast('✅ সেইভ');
-        }
-        if (clearFn) clearFn();
-        if (loadFn) loadFn();
-    } catch(e) {
-        alert('সেইভ এরর: ' + e.message);
-    }
+        const res = await fetch(url, opts);
+        const text = await res.text();
+        if (!text || !text.trim()) return (opts.method === 'DELETE' || opts.method === 'PATCH') ? null : [];
+        const data = JSON.parse(text);
+        if (!res.ok) throw new Error(data.message || 'API Error');
+        return data;
+    } catch(e) { console.error('❌', e.message); throw e; }
 }
-async function editItem(table, id, fillFn) { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + id + '&select=*'); if (data && data.length > 0 && fillFn) fillFn(data[0]); } catch(e) { alert('লোড এরর'); } }
-async function deleteItem(table, id, loadFn) { if (!isAdmin) { showToast('⛔ ডিলিট নিষেধ'); return; } if (!confirm('ডিলিট করবেন?')) return; try { await safeFetch(SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + id, 'DELETE'); showToast('🗑️ ডিলিট'); if (loadFn) loadFn(); } catch(e) { alert('ডিলিট এরর'); } }
+
+async function saveItem(table, data, editId, clearFn, loadFn) {
+    try {
+        if (editId) { await safeFetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${editId}`, { method: 'PATCH', body: JSON.stringify(data) }); showToast('✅ আপডেট'); }
+        else { await safeFetch(`${SUPABASE_URL}/rest/v1/${table}`, { method: 'POST', body: JSON.stringify(data) }); showToast('✅ সেইভ'); }
+        if (clearFn) clearFn(); if (loadFn) loadFn();
+    } catch(e) { alert('এরর: ' + e.message); }
+}
+
+async function editItem(table, id, fillFn) {
+    try { const data = await safeFetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}&select=*`); if (data?.length && fillFn) fillFn(data[0]); } catch(e) {}
+}
+
+async function deleteItem(table, id, loadFn) {
+    if (!isAdmin) { showToast('⛔ নিষেধ'); return; }
+    if (!confirm('ডিলিট করবেন?')) return;
+    try { await safeFetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, { method: 'DELETE' }); showToast('🗑️ ডিলিট'); if (loadFn) loadFn(); } catch(e) {}
+}
+
+function switchSection(sec) {
+    currentSection = sec;
+    document.querySelectorAll('.tab-btn,.admin-section').forEach(el => el.classList.remove('active'));
+    document.getElementById('sec' + sec.charAt(0).toUpperCase() + sec.slice(1))?.classList.add('active');
+    event.target.classList.add('active');
+    const loaders = { class: loadClasses, exam: loadExams, kakha: loadKaKha, timer: loadCountdowns, students: loadStudents, mock: () => { loadMockSubjects(); loadMocks(); }, social: loadSocial, subadmin: loadSubAdmins, reports: loadReports, owner: loadOwner, mentors: loadMentors, special: loadSpecials };
+    if (loaders[sec]) loaders[sec]();
+}
+
+function handleCSV(input, labelId) {
+    const file = input.files[0]; if (!file) return;
+    document.getElementById(labelId).textContent = '📄 ' + file.name;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const lines = e.target.result.split('\n').filter(l => l.trim());
+        if (lines.length < 2) { showToast('⚠️ ডাটা নেই'); return; }
+        const data = [];
+        for (let i = 1; i < lines.length; i++) {
+            const cols = lines[i].split(',').map(c => c.trim());
+            if (cols.length >= 9) data.push({ questions: cols[0], option1: cols[1], option2: cols[2], option3: cols[3], option4: cols[4], option5: cols[5] || null, answer: parseInt(cols[6]) || 1, explanation: cols[7] || '', type: parseInt(cols[8]) || 1, section: parseInt(cols[9]) || 1 });
+        }
+        if (input.id === 'examCSV') examCSVData = data; else mockCSVData = data;
+        showToast('✅ ' + data.length + ' প্রশ্ন');
+    };
+    reader.readAsText(file);
+}
 
 // ========== CLASS ==========
-function saveClass() { var d = { subject: document.getElementById('classSubject').value.trim(), paper: document.getElementById('classPaper').value.trim(), chapter: document.getElementById('classChapter').value.trim(), start_time: document.getElementById('classStart').value, end_time: document.getElementById('classEnd').value, youtube_link: document.getElementById('classLink').value.trim(), created_by: currentUser.phone }; if (!d.subject || !d.chapter || !d.youtube_link) { showToast('⚠️ পূরণ করুন'); return; } saveItem('classes', d, document.getElementById('classEditId').value || null, clearClassForm, loadClasses); }
-function clearClassForm() { ['classSubject','classPaper','classChapter','classStart','classEnd','classLink','classEditId'].forEach(function(id){ document.getElementById(id).value = ''; }); }
-function editClass(id) { editItem('classes', id, function(d){ document.getElementById('classEditId').value = d.id; document.getElementById('classSubject').value = d.subject||''; document.getElementById('classPaper').value = d.paper||''; document.getElementById('classChapter').value = d.chapter||''; document.getElementById('classStart').value = d.start_time||''; document.getElementById('classEnd').value = d.end_time||''; document.getElementById('classLink').value = d.youtube_link||''; }); }
-async function loadClasses() { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/classes?select=*&order=created_at.desc&limit=20'); var html = '<table class="data-table"><tr><th>সাবজেক্ট</th><th>চ্যাপ্টার</th><th>অ্যাকশন</th></tr>'; if (data) data.forEach(function(c){ html += '<tr><td>'+c.subject+'</td><td>'+c.chapter+'</td><td><button class="btn btn-sm btn-outline" onclick="editClass(\''+c.id+'\')">✏️</button>'+(isAdmin?'<button class="btn btn-sm btn-danger" onclick="deleteItem(\'classes\',\''+c.id+'\',loadClasses)">🗑️</button>':'')+'</td></tr>'; }); html += '</table>'; document.getElementById('classList').innerHTML = html || '<p>কোনো ডাটা নেই</p>'; } catch(e) {} }
+function saveClass() {
+    const d = { subject: document.getElementById('classSubject').value.trim(), paper: document.getElementById('classPaper').value.trim(), chapter: document.getElementById('classChapter').value.trim(), class_type: document.getElementById('classType').value, youtube_link: document.getElementById('classLink').value.trim(), class_note: document.getElementById('classNote').value.trim() || null, start_time: document.getElementById('classStart').value, end_time: document.getElementById('classEnd').value, created_by: currentUser?.phone };
+    if (!d.subject || !d.chapter || !d.youtube_link) { showToast('⚠️ পূরণ করুন'); return; }
+    saveItem('classes', d, document.getElementById('classEditId').value || null, clearClassForm, loadClasses);
+}
+function clearClassForm() { ['classSubject','classPaper','classChapter','classLink','classNote','classStart','classEnd','classEditId'].forEach(id => document.getElementById(id).value = ''); }
+function editClass(id) { editItem('classes', id, d => { document.getElementById('classEditId').value = d.id; document.getElementById('classSubject').value = d.subject||''; document.getElementById('classPaper').value = d.paper||''; document.getElementById('classChapter').value = d.chapter||''; document.getElementById('classType').value = d.class_type||'website'; document.getElementById('classLink').value = d.youtube_link||''; document.getElementById('classNote').value = d.class_note||''; document.getElementById('classStart').value = d.start_time||''; document.getElementById('classEnd').value = d.end_time||''; }); }
+async function loadClasses() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/classes?select=*&order=created_at.desc&limit=50`);
+        let html = '<table class="data-table"><tr><th>সাবজেক্ট</th><th>চ্যাপ্টার</th><th>টাইপ</th><th></th></tr>';
+        if (data) data.forEach(c => { html += `<tr><td>${c.subject}</td><td>${c.chapter}</td><td>${c.class_type||'website'}</td><td><button class="btn btn-sm btn-outline" onclick="editClass('${c.id}')">✏️</button> ${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('classes','${c.id}',loadClasses)">🗑️</button>`:''}</td></tr>`; });
+        html += '</table>';
+        document.getElementById('classList').innerHTML = html || '<p style="color:var(--text2);">কোনো ক্লাস নেই</p>';
+    } catch(e) {}
+}
 
 // ========== EXAM ==========
-function toggleExamFields() { var t = document.getElementById('examType').value; document.getElementById('examSubTypeField').style.display = (t === 'medical') ? 'block' : 'none'; document.getElementById('examBoardYear').style.display = (t === 'board' || t === 'varsity') ? 'grid' : 'none'; document.getElementById('examWriterField').style.display = (t === 'onushiloni') ? 'block' : 'none'; }
-function saveExam() {
-    if (!examCSVData || examCSVData.length === 0) { showToast('⚠️ CSV আপলোড করুন'); return; }
-    var d = {
-        title: document.getElementById('examSubject').value.trim() + ' - ' + document.getElementById('examChapter').value.trim(),
-        subject: document.getElementById('examSubject').value.trim(),
-        chapter: document.getElementById('examChapter').value.trim(),
-        exam_type: document.getElementById('examType').value,
-        sub_type: document.getElementById('examSubType').value || null,
-        board: document.getElementById('examBoard').value.trim() || null,
-        year: document.getElementById('examYear').value.trim() || null,
-        writer: document.getElementById('examWriter').value.trim() || null,
-        start_time: document.getElementById('examStart').value,
-        end_time: document.getElementById('examEnd').value,
-        total_marks: examCSVData.length,
-        duration_minutes: Math.ceil(examCSVData.length / 2),
-        created_by: currentUser.phone
-    };
-    if (!d.subject || !d.chapter || !d.exam_type) { showToast('⚠️ পূরণ করুন'); return; }
-    
-    var eid = document.getElementById('examEditId').value;
-    var method = eid ? 'PATCH' : 'POST';
-    var url = SUPABASE_URL + '/rest/v1/exams' + (eid ? '?id=eq.' + eid : '');
-    
-    safeFetch(url, { method: method, body: JSON.stringify(d) }).then(function(res) {
-        var examId = eid || (Array.isArray(res) ? res[0].id : (res && res.id ? res.id : null));
-        if (examId && !eid) {
-            var qs = examCSVData.map(function(q) {
-                return {
-                    exam_id: examId,
-                    question_text: q.questions,
-                    option1: q.option1,
-                    option2: q.option2,
-                    option3: q.option3,
-                    option4: q.option4,
-                    option5: q.option5,
-                    answer_index: q.answer,
-                    explanation: q.explanation,
-                    type: q.type || 1,
-                    section: q.section || 1
-                };
-            });
-            safeFetch(SUPABASE_URL + '/rest/v1/questions', { method: 'POST', body: JSON.stringify(qs) });
-        }
-        alert('📋 লিংক: ' + window.location.origin + '/exam.html?id=' + examId);
-        clearExamForm();
-        loadExams();
-    }).catch(function(e) {
-        alert('এরর: ' + e.message);
-    });
+function toggleExamFields() {
+    const t = document.getElementById('examType').value;
+    const sf = document.getElementById('examSubTypeField'), by = document.getElementById('examBoardYear'), wf = document.getElementById('examWriterField');
+    const ss = document.getElementById('examSubType'), bl = document.getElementById('examBoardLabel');
+    sf.style.display = by.style.display = wf.style.display = 'none';
+    if (t === 'medical') { sf.style.display = 'block'; ss.innerHTML = '<option value="">— নির্বাচন —</option><option value="demo">🏥 Demo</option><option value="chapter">📖 চাপ্টারভিত্তিক</option><option value="year">📅 সালভিত্তিক</option>'; }
+    else if (t === 'board') { sf.style.display = 'block'; ss.innerHTML = '<option value="">— নির্বাচন —</option><option value="board_q">🔵 বোর্ড প্রশ্ন</option><option value="college_q">🏫 কলেজ প্রশ্ন</option>'; by.style.display = 'grid'; bl.textContent = 'বোর্ড/কলেজের নাম'; ss.onchange = () => { bl.textContent = ss.value === 'college_q' ? 'কলেজের নাম' : 'বোর্ডের নাম'; }; }
+    else if (t === 'varsity') { by.style.display = 'grid'; bl.textContent = 'ভার্সিটির নাম'; }
+    else if (t === 'onushiloni') { wf.style.display = 'block'; }
 }
-function clearExamForm() { ['examSubject','examChapter','examType','examSubType','examBoard','examYear','examWriter','examStart','examEnd','examEditId'].forEach(function(id){ document.getElementById(id).value = ''; }); examCSVData = null; document.getElementById('examCSVName').textContent = ''; document.getElementById('examSubTypeField').style.display = 'none'; document.getElementById('examBoardYear').style.display = 'none'; document.getElementById('examWriterField').style.display = 'none'; }
+function saveExam() {
+    if (!examCSVData?.length) { showToast('⚠️ CSV আপলোড করুন'); return; }
+    const d = { title: document.getElementById('examSubject').value.trim() + ' - ' + document.getElementById('examChapter').value.trim(), subject: document.getElementById('examSubject').value.trim(), chapter: document.getElementById('examChapter').value.trim(), exam_type: document.getElementById('examType').value, sub_type: document.getElementById('examSubType').value || null, board: document.getElementById('examBoard').value.trim() || null, year: document.getElementById('examYear').value.trim() || null, writer: document.getElementById('examWriter').value.trim() || null, start_time: document.getElementById('examStart').value, end_time: document.getElementById('examEnd').value, total_marks: examCSVData.length, duration_minutes: Math.ceil(examCSVData.length / 2), created_by: currentUser?.phone };
+    if (!d.subject || !d.chapter || !d.exam_type) { showToast('⚠️ পূরণ করুন'); return; }
+    const eid = document.getElementById('examEditId').value;
+    const method = eid ? 'PATCH' : 'POST';
+    const url = `${SUPABASE_URL}/rest/v1/exams${eid ? '?id=eq.' + eid : ''}`;
+    safeFetch(url, { method, body: JSON.stringify(d) }).then(res => {
+        const examId = eid || (Array.isArray(res) ? res[0]?.id : res?.id);
+        if (examId && !eid) { const qs = examCSVData.map(q => ({ exam_id: examId, question_text: q.questions, option1: q.option1, option2: q.option2, option3: q.option3, option4: q.option4, option5: q.option5, answer_index: q.answer, explanation: q.explanation, type: q.type||1, section: q.section||1 })); safeFetch(`${SUPABASE_URL}/rest/v1/questions`, { method: 'POST', body: JSON.stringify(qs) }); }
+        alert('📋 লিংক: ' + location.origin + '/exam.html?id=' + examId);
+        clearExamForm(); loadExams();
+    }).catch(e => alert('এরর: ' + e.message));
+}
+function clearExamForm() { ['examSubject','examChapter','examType','examSubType','examBoard','examYear','examWriter','examStart','examEnd','examEditId'].forEach(id => document.getElementById(id).value = ''); examCSVData = null; document.getElementById('examCSVName').textContent = ''; document.getElementById('examSubTypeField').style.display = 'none'; document.getElementById('examBoardYear').style.display = 'none'; document.getElementById('examWriterField').style.display = 'none'; }
 async function loadExams() {
-    try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/exams?select=*&order=created_at.desc&limit=100');
-        var groups = { 'board': { title: '🔵 বোর্ড প্রস্তুতি', items: [] }, 'medical': { title: '🏥 Medical', items: [] }, 'dental': { title: '🦷 Dental', items: [] }, 'afmc': { title: '🎖️ AFMC', items: [] }, 'varsity': { title: '🟣 ভার্সিটি', items: [] }, 'onushiloni': { title: '🟠 অনুশীলনী', items: [] }, 'model': { title: '📖 Model Test', items: [] } };
-        if (data) data.forEach(function(e){ if (groups[e.exam_type]) groups[e.exam_type].items.push(e); });
-        var html = ''; Object.keys(groups).forEach(function(key){ var g = groups[key]; if (g.items.length === 0) return; html += '<div class="section-header" style="margin-top:12px;"><div class="section-title">'+g.title+'</div></div>'; g.items.forEach(function(e){ var link = window.location.origin + '/exam.html?id=' + e.id; var info = e.subject + ' > ' + e.chapter; if (e.sub_type) info += ' > ' + e.sub_type; if (e.board) info += ' > ' + e.board; if (e.year) info += ' > ' + e.year; if (e.writer) info += ' > ' + e.writer; info += ' (' + e.total_marks + ' প্রশ্ন)'; html += '<div class="list-item"><div><b>'+info+'</b></div><div style="display:flex;gap:4px;"><button class="btn btn-sm btn-copy" onclick="copyLink(\''+link+'\')">📋</button><button class="btn btn-sm btn-outline" onclick="editExam(\''+e.id+'\')">✏️</button>'+(isAdmin?'<button class="btn btn-sm btn-danger" onclick="deleteItem(\'exams\',\''+e.id+'\',loadExams)">🗑️</button>':'')+'</div></div>'; }); }); document.getElementById('examList').innerHTML = html || '<p>কোনো এক্সাম নেই</p>'; } catch(e) {}
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/exams?select=*&order=created_at.desc&limit=100`);
+        const groups = { board: { title: '🔵 বোর্ড', items: [] }, medical: { title: '🏥 Medical', items: [] }, dental: { title: '🦷 Dental', items: [] }, afmc: { title: '🎖️ AFMC', items: [] }, varsity: { title: '🟣 ভার্সিটি', items: [] }, onushiloni: { title: '🟠 অনুশীলনী', items: [] }, model: { title: '📖 Model Test', items: [] } };
+        if (data) data.forEach(e => { if (groups[e.exam_type]) groups[e.exam_type].items.push(e); });
+        let html = '';
+        Object.keys(groups).forEach(key => {
+            const g = groups[key]; if (!g.items.length) return;
+            html += `<div class="section-header" style="margin-top:8px;"><div class="section-title">${g.title} (${g.items.length})</div></div>`;
+            g.items.forEach(e => {
+                const link = location.origin + '/exam.html?id=' + e.id;
+                let info = `${e.subject} › ${e.chapter}`;
+                if (e.sub_type) info += ` › ${e.sub_type}`;
+                if (e.board) info += ` › ${e.board}`;
+                if (e.year) info += ` › ${e.year}`;
+                if (e.writer) info += ` › ${e.writer}`;
+                info += ` (${e.total_marks} প্রশ্ন)`;
+                html += `<div class="list-item"><div><b>${info}</b></div><div style="display:flex;gap:4px;"><button class="btn btn-sm btn-copy" onclick="copyLink('${link}')">📋</button><button class="btn btn-sm btn-outline" onclick="editExam('${e.id}')">✏️</button>${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('exams','${e.id}',loadExams)">🗑️</button>`:''}</div></div>`;
+            });
+        });
+        document.getElementById('examList').innerHTML = html || '<p style="color:var(--text2);">কোনো এক্সাম নেই</p>';
+    } catch(e) {}
 }
 function copyLink(link) { navigator.clipboard.writeText(link); showToast('📋 কপি'); }
 
 // ========== ক,খ,CQ ==========
-function saveKaKha() { var d = { subject: document.getElementById('kaSubject').value.trim(), chapter: document.getElementById('kaChapter').value.trim(), link_or_file: document.getElementById('kaLink').value.trim(), created_by: currentUser.phone }; if (!d.subject || !d.chapter || !d.link_or_file) { showToast('⚠️ পূরণ করুন'); return; } saveItem('ka_kha_cq', d, document.getElementById('kaEditId').value || null, clearKaForm, loadKaKha); }
-function clearKaForm() { ['kaSubject','kaChapter','kaLink','kaEditId'].forEach(function(id){ document.getElementById(id).value = ''; }); }
-async function loadKaKha() { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/ka_kha_cq?select=*&order=created_at.desc&limit=20'); var html = '<table class="data-table"><tr><th>সাবজেক্ট</th><th>চ্যাপ্টার</th><th>অ্যাকশন</th></tr>'; if (data) data.forEach(function(k){ html += '<tr><td>'+k.subject+'</td><td>'+k.chapter+'</td><td>'+(isAdmin?'<button class="btn btn-sm btn-danger" onclick="deleteItem(\'ka_kha_cq\',\''+k.id+'\',loadKaKha)">🗑️</button>':'')+'</td></tr>'; }); html += '</table>'; document.getElementById('kaList').innerHTML = html || '<p>কোনো ডাটা নেই</p>'; } catch(e) {} }
+function saveKaKha() {
+    const d = { subject: document.getElementById('kaSubject').value.trim(), chapter: document.getElementById('kaChapter').value.trim(), link_or_file: document.getElementById('kaLink').value.trim(), created_by: currentUser?.phone };
+    if (!d.subject || !d.chapter || !d.link_or_file) { showToast('⚠️ পূরণ করুন'); return; }
+    saveItem('ka_kha_cq', d, document.getElementById('kaEditId').value || null, () => { ['kaSubject','kaChapter','kaLink','kaEditId'].forEach(id => document.getElementById(id).value = ''); }, loadKaKha);
+}
+async function loadKaKha() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/ka_kha_cq?select=*&order=created_at.desc&limit=50`);
+        let html = '<table class="data-table"><tr><th>সাবজেক্ট</th><th>চ্যাপ্টার</th><th></th></tr>';
+        if (data) data.forEach(k => { html += `<tr><td>${k.subject}</td><td>${k.chapter}</td><td><button class="btn btn-sm btn-outline" onclick="editKaKha('${k.id}')">✏️</button> ${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('ka_kha_cq','${k.id}',loadKaKha)">🗑️</button>`:''}</td></tr>`; });
+        html += '</table>';
+        document.getElementById('kaList').innerHTML = html || '<p style="color:var(--text2);">কোনো ডাটা নেই</p>';
+    } catch(e) {}
+}
+function editKaKha(id) { editItem('ka_kha_cq', id, d => { document.getElementById('kaEditId').value = d.id; document.getElementById('kaSubject').value = d.subject||''; document.getElementById('kaChapter').value = d.chapter||''; document.getElementById('kaLink').value = d.link_or_file||''; }); }
 
 // ========== COUNTDOWN ==========
-function saveCountdown() { var d = { main_topic: document.getElementById('cdTopic').value.trim(), subtopic: document.getElementById('cdSubtopic').value.trim(), start_time: document.getElementById('cdStart').value, end_time: document.getElementById('cdEnd').value }; if (!d.main_topic || !d.end_time) { showToast('⚠️ পূরণ করুন'); return; } saveItem('countdowns', d, document.getElementById('cdEditId').value || null, null, loadCountdown); }
-async function loadCountdown() { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/countdowns?select=*&order=created_at.desc&limit=1'); if (data && data.length > 0) { var cd = data[0]; document.getElementById('cdTopic').value = cd.main_topic; document.getElementById('cdSubtopic').value = cd.subtopic||''; document.getElementById('cdStart').value = cd.start_time||''; document.getElementById('cdEnd').value = cd.end_time||''; document.getElementById('cdEditId').value = cd.id; document.getElementById('cdCurrent').innerHTML = '<p>📌 <b>'+cd.main_topic+'</b> — '+new Date(cd.end_time).toLocaleString('bn-BD')+'</p>'; } } catch(e) {} }
+function saveCountdown() {
+    const d = { main_topic: document.getElementById('cdTopic').value.trim(), subtopic: document.getElementById('cdSubtopic').value.trim(), start_time: document.getElementById('cdStart').value, end_time: document.getElementById('cdEnd').value };
+    if (!d.main_topic || !d.end_time) { showToast('⚠️ পূরণ করুন'); return; }
+    saveItem('countdowns', d, document.getElementById('cdEditId').value || null, () => { ['cdTopic','cdSubtopic','cdStart','cdEnd','cdEditId'].forEach(id => document.getElementById(id).value = ''); }, loadCountdowns);
+}
+async function loadCountdowns() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/countdowns?select=*&order=created_at.desc&limit=20`);
+        let html = '<table class="data-table"><tr><th>টপিক</th><th>শেষ</th><th></th></tr>';
+        if (data) data.forEach(c => { html += `<tr><td><b>${c.main_topic}</b></td><td>${new Date(c.end_time).toLocaleString('bn-BD')}</td><td><button class="btn btn-sm btn-outline" onclick="editCountdown('${c.id}')">✏️</button> ${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('countdowns','${c.id}',loadCountdowns)">🗑️</button>`:''}</td></tr>`; });
+        html += '</table>';
+        document.getElementById('cdList').innerHTML = html || '<p style="color:var(--text2);">কোনো টাইমার নেই</p>';
+    } catch(e) {}
+}
+function editCountdown(id) { editItem('countdowns', id, d => { document.getElementById('cdEditId').value = d.id; document.getElementById('cdTopic').value = d.main_topic||''; document.getElementById('cdSubtopic').value = d.subtopic||''; document.getElementById('cdStart').value = d.start_time||''; document.getElementById('cdEnd').value = d.end_time||''; }); }
 
 // ========== STUDENTS ==========
-async function loadStudents() { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/users?select=*&order=created_at.desc&limit=50'); var html = '<table class="data-table"><tr><th>নাম</th><th>ব্যাচ</th><th>কলেজ</th><th>ফোন</th></tr>'; if (data) data.forEach(function(u){ html += '<tr><td>'+u.name+'</td><td>'+u.batch+'</td><td>'+u.college+'</td><td>'+u.phone+'</td></tr>'; }); html += '</table>'; document.getElementById('studentTable').innerHTML = html || '<p>কোনো স্টুডেন্ট নেই</p>'; } catch(e) {} }
+async function loadStudents() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/users?select=*&order=created_at.desc&limit=50`);
+        let html = '<table class="data-table"><tr><th>নাম</th><th>ব্যাচ</th><th>কলেজ</th><th>ফোন</th></tr>';
+        if (data) data.forEach(u => { html += `<tr><td>${u.name}</td><td>${u.batch||'—'}</td><td>${u.college||'—'}</td><td>${u.phone}</td></tr>`; });
+        html += '</table>';
+        document.getElementById('studentTable').innerHTML = html || '<p style="color:var(--text2);">কোনো স্টুডেন্ট নেই</p>';
+    } catch(e) {}
+}
 
 // ========== MOCK ==========
-function selectMockStandard(std, el) { mockStandard = std; document.querySelectorAll('#mockStandardChips .chip').forEach(function(c){ c.classList.remove('active'); }); el.classList.add('active'); }
-function selectMockCount(cnt, el) { mockCount = cnt; document.querySelectorAll('#mockCountChips .chip').forEach(function(c){ c.classList.remove('active'); }); el.classList.add('active'); }
-async function loadMockSubjects() { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/mock_questions?select=subject'); var subjects = [...new Set(data.map(function(d){ return d.subject; }))]; var sel = document.getElementById('mockSubject'); sel.innerHTML = '<option value="">— নির্বাচন —</option>'; subjects.forEach(function(s){ sel.innerHTML += '<option value="'+s+'">'+s+'</option>'; }); } catch(e) {} }
-async function loadMockChapters() { var subject = document.getElementById('mockSubject').value; var sel = document.getElementById('mockChapter'); if (!subject) { sel.innerHTML = '<option value="">— প্রথমে সাবজেক্ট —</option>'; return; } try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/mock_questions?subject=eq.' + encodeURIComponent(subject) + '&select=chapter'); var chapters = [...new Set(data.map(function(d){ return d.chapter; }))]; sel.innerHTML = '<option value="">— নির্বাচন —</option>'; chapters.forEach(function(c){ sel.innerHTML += '<option value="'+c+'">'+c+'</option>'; }); } catch(e) {} }
-function saveMock() { if (!mockCSVData || mockCSVData.length === 0) { showToast('⚠️ CSV আপলোড করুন'); return; } var d = { subject: document.getElementById('mockSubject').value, chapter: document.getElementById('mockChapter').value, topic: document.getElementById('mockTopic').value.trim(), standard: mockStandard, question_count: mockCount, questions_json: JSON.stringify(mockCSVData), created_by: currentUser.phone }; if (!d.subject || !d.chapter) { showToast('⚠️ সাবজেক্ট ও চ্যাপ্টার দিন'); return; } saveItem('mock_questions', d, document.getElementById('mockEditId').value || null, function(){ mockCSVData = null; document.getElementById('mockCSVName').textContent = ''; document.getElementById('mockEditId').value = ''; }, loadMocks); }
-async function loadMocks() { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/mock_questions?select=*&order=created_at.desc&limit=20'); var html = '<table class="data-table"><tr><th>সাবজেক্ট</th><th>চ্যাপ্টার</th><th>স্ট্যান্ডার্ড</th><th>প্রশ্ন</th><th>অ্যাকশন</th></tr>'; if (data) data.forEach(function(m){ var cnt = JSON.parse(m.questions_json||'[]').length; html += '<tr><td>'+m.subject+'</td><td>'+m.chapter+'</td><td>'+(m.standard||'—')+'</td><td>'+(m.question_count||cnt)+'</td><td>'+(isAdmin?'<button class="btn btn-sm btn-danger" onclick="deleteItem(\'mock_questions\',\''+m.id+'\',loadMocks)">🗑️</button>':'')+'</td></tr>'; }); html += '</table>'; document.getElementById('mockList').innerHTML = html || '<p>কোনো ডাটা নেই</p>'; } catch(e) {} }
+function selectMockStd(s, el) { mockStd = s; document.querySelectorAll('#mockStdChips .chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); }
+function selectMockCnt(c, el) { mockCnt = c; document.querySelectorAll('#mockCntChips .chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); }
+async function loadMockSubjects() {
+    try { const data = await safeFetch(`${SUPABASE_URL}/rest/v1/mock_questions?select=subject`); const subjects = [...new Set(data.map(d => d.subject))]; const sel = document.getElementById('mockSubject'); sel.innerHTML = '<option value="">— নির্বাচন —</option>' + subjects.map(s => `<option>${s}</option>`).join(''); } catch(e) {}
+}
+async function loadMockChapters() {
+    const subject = document.getElementById('mockSubject').value; const sel = document.getElementById('mockChapter');
+    if (!subject) { sel.innerHTML = '<option value="">— প্রথমে সাবজেক্ট —</option>'; return; }
+    try { const data = await safeFetch(`${SUPABASE_URL}/rest/v1/mock_questions?subject=eq.${encodeURIComponent(subject)}&select=chapter`); const chapters = [...new Set(data.map(d => d.chapter))]; sel.innerHTML = '<option value="">— নির্বাচন —</option>' + chapters.map(c => `<option>${c}</option>`).join(''); } catch(e) {}
+}
+function saveMock() {
+    if (!mockCSVData?.length) { showToast('⚠️ CSV আপলোড করুন'); return; }
+    const d = { subject: document.getElementById('mockSubject').value, chapter: document.getElementById('mockChapter').value, topic: document.getElementById('mockTopic').value.trim() || null, standard: mockStd, question_count: mockCnt, questions_json: JSON.stringify(mockCSVData), created_by: currentUser?.phone };
+    if (!d.subject || !d.chapter) { showToast('⚠️ সাবজেক্ট ও চ্যাপ্টার দিন'); return; }
+    saveItem('mock_questions', d, document.getElementById('mockEditId').value || null, () => { mockCSVData = null; document.getElementById('mockCSVName').textContent = ''; document.getElementById('mockEditId').value = ''; }, loadMocks);
+}
+async function loadMocks() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/mock_questions?select=*&order=created_at.desc&limit=30`);
+        let html = '<table class="data-table"><tr><th>সাবজেক্ট</th><th>চ্যাপ্টার</th><th>স্ট্যান্ডার্ড</th><th>প্রশ্ন</th><th></th></tr>';
+        if (data) data.forEach(m => { const cnt = JSON.parse(m.questions_json||'[]').length; html += `<tr><td>${m.subject}</td><td>${m.chapter}</td><td>${m.standard||'—'}</td><td>${m.question_count||cnt}</td><td>${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('mock_questions','${m.id}',loadMocks)">🗑️</button>`:''}</td></tr>`; });
+        html += '</table>';
+        document.getElementById('mockList').innerHTML = html || '<p style="color:var(--text2);">কোনো ডাটা নেই</p>';
+    } catch(e) {}
+}
 
 // ========== SOCIAL ==========
-function saveSocial() { var d = { media_name: document.getElementById('socialName').value.trim(), type: document.getElementById('socialType').value, description: document.getElementById('socialDesc').value.trim(), link: document.getElementById('socialLink').value.trim() }; if (!d.media_name || !d.link) { showToast('⚠️ পূরণ করুন'); return; } saveItem('social_links', d, document.getElementById('socialEditId').value || null, function(){ ['socialName','socialDesc','socialLink','socialEditId'].forEach(function(id){ document.getElementById(id).value = ''; }); }, loadSocial); }
-async function loadSocial() { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/social_links?select=*&order=created_at.desc&limit=20'); var html = '<table class="data-table"><tr><th>নাম</th><th>টাইপ</th><th>লিংক</th><th>অ্যাকশন</th></tr>'; if (data) data.forEach(function(s){ html += '<tr><td><b>'+s.media_name+'</b></td><td>'+(s.type||'—')+'</td><td><a href="'+s.link+'" target="_blank">লিংক</a></td><td>'+(isAdmin?'<button class="btn btn-sm btn-danger" onclick="deleteItem(\'social_links\',\''+s.id+'\',loadSocial)">🗑️</button>':'')+'</td></tr>'; }); html += '</table>'; document.getElementById('socialList').innerHTML = html || '<p>কোনো লিংক নেই</p>'; } catch(e) {} }
+function saveSocial() {
+    const d = { media_name: document.getElementById('socialName').value.trim(), type: document.getElementById('socialType').value, description: document.getElementById('socialDesc').value.trim(), link: document.getElementById('socialLink').value.trim() };
+    if (!d.media_name || !d.link) { showToast('⚠️ পূরণ করুন'); return; }
+    saveItem('social_links', d, document.getElementById('socialEditId').value || null, () => { ['socialName','socialDesc','socialLink','socialEditId'].forEach(id => document.getElementById(id).value = ''); }, loadSocial);
+}
+async function loadSocial() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/social_links?select=*&order=created_at.desc&limit=30`);
+        let html = '<table class="data-table"><tr><th>নাম</th><th>টাইপ</th><th>লিংক</th><th></th></tr>';
+        if (data) data.forEach(s => { html += `<tr><td><b>${s.media_name}</b></td><td>${s.type||'—'}</td><td><a href="${s.link}" target="_blank" style="color:var(--accent);">লিংক</a></td><td><button class="btn btn-sm btn-outline" onclick="editSocial('${s.id}')">✏️</button> ${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('social_links','${s.id}',loadSocial)">🗑️</button>`:''}</td></tr>`; });
+        html += '</table>';
+        document.getElementById('socialList').innerHTML = html || '<p style="color:var(--text2);">কোনো লিংক নেই</p>';
+    } catch(e) {}
+}
+function editSocial(id) { editItem('social_links', id, d => { document.getElementById('socialEditId').value = d.id; document.getElementById('socialName').value = d.media_name||''; document.getElementById('socialType').value = d.type||'other'; document.getElementById('socialDesc').value = d.description||''; document.getElementById('socialLink').value = d.link||''; }); }
 
 // ========== SUB-ADMIN ==========
-function grantSubAdmin() { var ph = document.getElementById('subPhone').value.trim(); if (!/^\d{11}$/.test(ph)) { showToast('⚠️ ১১ ডিজিট'); return; } safeFetch(SUPABASE_URL + '/rest/v1/users?phone=eq.' + ph, 'PATCH', { role: 'sub_admin' }).then(function(){ showToast('✅ গ্র্যান্ট'); document.getElementById('subPhone').value = ''; loadSubAdmins(); }); }
-async function loadSubAdmins() { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/users?role=eq.sub_admin&select=phone,name'); var html = '<table class="data-table"><tr><th>নাম</th><th>ফোন</th></tr>'; if (data) data.forEach(function(u){ html += '<tr><td>'+u.name+'</td><td>'+u.phone+'</td></tr>'; }); html += '</table>'; document.getElementById('subList').innerHTML = html || '<p>কোনো সাব-অ্যাডমিন নেই</p>'; } catch(e) {} }
+async function grantSubAdmin() {
+    const ph = document.getElementById('subPhone').value.trim();
+    if (!/^\d{11}$/.test(ph)) { showToast('⚠️ ১১ ডিজিট'); return; }
+    try {
+        await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${ph}`, { method: 'PATCH', body: JSON.stringify({ role: 'sub_admin' }) });
+        await safeFetch(`${SUPABASE_URL}/rest/v1/notifications`, { method: 'POST', body: JSON.stringify({ phone: ADMIN_PHONE, title: '👮 সাব-অ্যাডমিন', message: ph + ' গ্র্যান্ট হয়েছে', type: 'subadmin', is_read: false }) });
+        showToast('✅ গ্র্যান্ট'); document.getElementById('subPhone').value = ''; loadSubAdmins();
+    } catch(e) { alert('এরর: ' + e.message); }
+}
+async function loadSubAdmins() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/users?role=eq.sub_admin&select=phone,name`);
+        let html = '<table class="data-table"><tr><th>নাম</th><th>ফোন</th></tr>';
+        if (data) data.forEach(u => { html += `<tr><td>${u.name}</td><td>${u.phone}</td></tr>`; });
+        html += '</table>';
+        document.getElementById('subList').innerHTML = html || '<p style="color:var(--text2);">কোনো সাব-অ্যাডমিন নেই</p>';
+    } catch(e) {}
+}
 
 // ========== REPORTS ==========
-async function loadReports() { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/question_reports?select=*&order=created_at.desc&limit=20'); if (!data || data.length === 0) { document.getElementById('reportList').innerHTML = '<p>কোনো রিপোর্ট নেই</p>'; return; } var html = ''; data.forEach(function(r){ html += '<div class="form-card"><p><b>প্রশ্ন #'+r.question_id+'</b></p><p>টাইপ: '+r.report_type+' | স্ট্যাটাস: <b>'+(r.status==='pending'?'🔴 পেন্ডিং':r.status==='approved'?'✅ এপ্রুভড':'❌ রিজেক্ট')+'</b></p><p>সাজেশন: '+(r.suggested_answer||'—')+'</p>'+(r.status==='pending'?'<button class="btn btn-sm btn-success" onclick="approveReport(\''+r.id+'\',\''+r.question_id+'\')">✅ Approve</button> <button class="btn btn-sm btn-danger" onclick="rejectReport(\''+r.id+'\')">❌ Reject</button>':'')+'</div>'; }); document.getElementById('reportList').innerHTML = html; } catch(e) {} }
-async function approveReport(rid, qid) { var correct = prompt('সঠিক উত্তর (1-5):'); if (!correct) return; var explanation = prompt('ব্যাখ্যা (ঐচ্ছিক):'); try { await safeFetch(SUPABASE_URL + '/rest/v1/question_reports?id=eq.' + rid, 'PATCH', { status: 'approved', admin_response: explanation, corrected_answer: correct, admin_phone: currentUser.phone }); if (correct) await safeFetch(SUPABASE_URL + '/rest/v1/questions?id=eq.' + qid, 'PATCH', { answer_index: parseInt(correct), explanation: explanation || undefined }); var report = await safeFetch(SUPABASE_URL + '/rest/v1/question_reports?id=eq.' + rid + '&select=reporter_phone'); if (report && report.length > 0 && report[0].reporter_phone) { await safeFetch(SUPABASE_URL + '/rest/v1/notifications', 'POST', { user_phone: report[0].reporter_phone, title: '✅ রিপোর্ট এপ্রুভ', message: 'প্রশ্ন #'+qid, type: 'report_approved', is_read: false }); } showToast('✅ এপ্রুভ'); loadReports(); } catch(e) { alert('এরর: ' + e.message); } }
-async function rejectReport(rid) { var reason = prompt('কারণ:'); if (!reason) return; try { await safeFetch(SUPABASE_URL + '/rest/v1/question_reports?id=eq.' + rid, 'PATCH', { status: 'rejected', admin_response: reason, admin_phone: currentUser.phone }); showToast('❌ রিজেক্ট'); loadReports(); } catch(e) { alert('এরর'); } }
+async function loadReports() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?select=*&order=created_at.desc&limit=30`);
+        if (!data?.length) { document.getElementById('reportList').innerHTML = '<p style="color:var(--text2);text-align:center;padding:20px;">কোনো রিপোর্ট নেই</p>'; return; }
+        let html = '';
+        data.forEach(r => {
+            const badge = r.status === 'pending' ? '🔴 পেন্ডিং' : r.status === 'approved' ? '✅ এপ্রুভড' : '❌ রিজেক্ট';
+            html += `<div class="form-card" style="border-left:3px solid ${r.status==='pending'?'var(--yellow)':r.status==='approved'?'var(--green)':'var(--red)'};"><p><b>📝 প্রশ্ন #${r.question_id||'—'}</b></p><p style="font-size:12px;">👤 ${r.reporter_phone||'—'} | ${r.report_type||'—'}</p><p style="font-size:12px;">💬 ${r.suggested_answer||'—'}</p><p><b>${badge}</b></p>${r.status==='pending'?`<div style="display:flex;gap:6px;margin-top:6px;"><button class="btn btn-sm btn-success" onclick="approveReport('${r.id}','${r.question_id}')">✅ Approve</button><button class="btn btn-sm btn-danger" onclick="rejectReport('${r.id}')">❌ Reject</button></div>`:''}${r.admin_response?`<p style="font-size:11px;color:var(--accent);margin-top:4px;">👑 ${r.admin_response}</p>`:''}</div>`;
+        });
+        document.getElementById('reportList').innerHTML = html;
+    } catch(e) {}
+}
+async function approveReport(rid, qid) {
+    const correct = prompt('সঠিক উত্তর (1-5):'); if (!correct) return;
+    const explanation = prompt('ব্যাখ্যা:');
+    try {
+        await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}`, { method: 'PATCH', body: JSON.stringify({ status: 'approved', admin_response: explanation||'এপ্রুভ', corrected_answer: correct, admin_phone: ADMIN_PHONE }) });
+        if (correct && qid) await safeFetch(`${SUPABASE_URL}/rest/v1/questions?id=eq.${qid}`, { method: 'PATCH', body: JSON.stringify({ answer_index: parseInt(correct), explanation: explanation||undefined }) });
+        const report = await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}&select=reporter_phone`);
+        if (report?.length && report[0].reporter_phone) {
+            await safeFetch(`${SUPABASE_URL}/rest/v1/notifications`, { method: 'POST', body: JSON.stringify({ phone: report[0].reporter_phone, title: '✅ রিপোর্ট এপ্রুভ', message: `প্রশ্ন #${qid} আপডেট: ${explanation||'সঠিক উত্তর সেট'}`, type: 'report_approved', is_read: false }) });
+        }
+        await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}`, { method: 'DELETE' });
+        showToast('✅ এপ্রুভ'); loadReports();
+    } catch(e) { alert('এরর: ' + e.message); }
+}
+async function rejectReport(rid) {
+    const reason = prompt('কারণ:'); if (!reason) return;
+    try {
+        await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}`, { method: 'PATCH', body: JSON.stringify({ status: 'rejected', admin_response: reason, admin_phone: ADMIN_PHONE }) });
+        const report = await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}&select=reporter_phone`);
+        if (report?.length && report[0].reporter_phone) {
+            await safeFetch(`${SUPABASE_URL}/rest/v1/notifications`, { method: 'POST', body: JSON.stringify({ phone: report[0].reporter_phone, title: '❌ রিপোর্ট রিজেক্ট', message: 'কারণ: ' + reason, type: 'report_rejected', is_read: false }) });
+        }
+        await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}`, { method: 'DELETE' });
+        showToast('❌ রিজেক্ট'); loadReports();
+    } catch(e) { alert('এরর: ' + e.message); }
+}
 
 // ========== OWNER ==========
-function previewOwnerPhoto(input) { var file = input.files[0]; if (!file) return; var reader = new FileReader(); reader.onload = function(e) { document.getElementById('ownerPreview').src = e.target.result; document.getElementById('ownerPreview').style.display = 'block'; }; reader.readAsDataURL(file); }
-function saveOwner() { var name = document.getElementById('ownerName').value.trim(); var info = document.getElementById('ownerInfo').value.trim(); var photo = document.getElementById('ownerPreview').src; if (photo && photo.startsWith('data:')) { localStorage.setItem('owner_photo', photo); } localStorage.setItem('owner_name', name); localStorage.setItem('owner_info', info); safeFetch(SUPABASE_URL + '/rest/v1/users?phone=eq.' + ADMIN_PHONE, 'PATCH', { name: name, photo_url: photo || null }).then(function(){ showToast('✅ অনার সেইভ'); }); }
-function loadOwner() { document.getElementById('ownerName').value = localStorage.getItem('owner_name') || 'ATLAS EXAM'; document.getElementById('ownerInfo').value = localStorage.getItem('owner_info') || ''; var photo = localStorage.getItem('owner_photo'); if (photo) { document.getElementById('ownerPreview').src = photo; document.getElementById('ownerPreview').style.display = 'block'; } }
+function previewOwner(input) { const f = input.files[0]; if (!f) return; const r = new FileReader(); r.onload = e => { document.getElementById('ownerPreview').src = e.target.result; document.getElementById('ownerPreview').style.display = 'block'; }; r.readAsDataURL(f); }
+function saveOwner() {
+    const name = document.getElementById('ownerName').value.trim();
+    const info = document.getElementById('ownerInfo').value.trim();
+    const photo = document.getElementById('ownerPreview').src;
+    if (photo?.startsWith('data:')) localStorage.setItem('owner_photo', photo);
+    localStorage.setItem('owner_name', name); localStorage.setItem('owner_info', info);
+    safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${ADMIN_PHONE}`, { method: 'PATCH', body: JSON.stringify({ name, photo_url: photo||null }) }).then(() => showToast('✅ সেইভ'));
+}
+function loadOwner() {
+    document.getElementById('ownerName').value = localStorage.getItem('owner_name') || 'ATLAS EXAM';
+    document.getElementById('ownerInfo').value = localStorage.getItem('owner_info') || '';
+    const photo = localStorage.getItem('owner_photo');
+    if (photo) { document.getElementById('ownerPreview').src = photo; document.getElementById('ownerPreview').style.display = 'block'; }
+}
 
 // ========== MENTORS ==========
-function saveMentor() { var file = document.getElementById('mentorPhotoFile').files[0]; var d = { name: document.getElementById('mentorName').value.trim(), subject: document.getElementById('mentorSubject').value.trim(), details: document.getElementById('mentorDetails').value.trim() }; if (!d.name) { showToast('⚠️ নাম দিন'); return; } if (file) { var reader = new FileReader(); reader.onload = function(e) { d.photo_url = e.target.result; saveItem('mentors', d, document.getElementById('mentorEditId').value || null, clearMentorForm, loadMentors); }; reader.readAsDataURL(file); } else { saveItem('mentors', d, document.getElementById('mentorEditId').value || null, clearMentorForm, loadMentors); } }
-function clearMentorForm() { ['mentorName','mentorSubject','mentorDetails','mentorEditId'].forEach(function(id){ document.getElementById(id).value = ''; }); document.getElementById('mentorPhotoFile').value = ''; }
-async function loadMentors() { try { var data = await safeFetch(SUPABASE_URL + '/rest/v1/mentors?select=*&order=sort_order,created_at'); var html = '<div style="display:flex;flex-wrap:wrap;gap:12px;">'; if (data) data.forEach(function(m){ html += '<div class="form-card" style="flex:1;min-width:180px;text-align:center;"><img src="'+(m.photo_url||'')+'" style="width:60px;height:60px;border-radius:12px;object-fit:cover;background:var(--option-bg);" onerror="this.src=\'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22><rect fill=%22%23333%22 width=%2260%22 height=%2260%22/><text fill=%22%23fff%22 x=%2220%22 y=%2238%22>👤</text></svg>\'"><p><b>'+m.name+'</b></p><p style="font-size:11px;">'+(m.subject||'')+'</p><button class="btn btn-sm btn-outline" onclick="editMentor(\''+m.id+'\')">✏️</button> '+(isAdmin?'<button class="btn btn-sm btn-danger" onclick="deleteItem(\'mentors\',\''+m.id+'\',loadMentors)">🗑️</button>':'')+'</div>'; }); html += '</div>'; document.getElementById('mentorList').innerHTML = html || '<p>কোনো মেন্টর নেই</p>'; } catch(e) {} }
-function editMentor(id) { editItem('mentors', id, function(m){ document.getElementById('mentorEditId').value = m.id; document.getElementById('mentorName').value = m.name||''; document.getElementById('mentorSubject').value = m.subject||''; document.getElementById('mentorDetails').value = m.details||''; }); }
+function previewMentor(input) { const f = input.files[0]; if (!f) return; const r = new FileReader(); r.onload = e => { document.getElementById('mentorPreview').src = e.target.result; document.getElementById('mentorPreview').style.display = 'block'; }; r.readAsDataURL(f); }
+function saveMentor() {
+    const file = document.getElementById('mentorPhotoFile').files[0];
+    const d = { name: document.getElementById('mentorName').value.trim(), role: document.getElementById('mentorRole').value.trim(), subject: document.getElementById('mentorRole').value.trim() };
+    if (!d.name) { showToast('⚠️ নাম দিন'); return; }
+    if (file) { const r = new FileReader(); r.onload = e => { d.photo_url = e.target.result; saveItem('mentors', d, document.getElementById('mentorEditId').value || null, clearMentorForm, loadMentors); }; r.readAsDataURL(file); }
+    else { saveItem('mentors', d, document.getElementById('mentorEditId').value || null, clearMentorForm, loadMentors); }
+}
+function clearMentorForm() { ['mentorName','mentorRole','mentorEditId'].forEach(id => document.getElementById(id).value = ''); document.getElementById('mentorPhotoFile').value = ''; document.getElementById('mentorPreview').style.display = 'none'; }
+async function loadMentors() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/mentors?select=*&order=sort_order,created_at`);
+        let html = '<div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;">';
+        if (data) data.forEach(m => { html += `<div style="text-align:center;width:100px;"><img src="${m.photo_url||''}" style="width:80px;height:80px;border-radius:10px;object-fit:cover;border:2px solid var(--border);background:var(--hover);" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22><rect fill=%22%23333%22 width=%2280%22 height=%2280%22 rx=%2210%22/><text fill=%22%23fff%22 x=%2225%22 y=%2248%22 font-size=%2228%22>👤</text></svg>'"><p style="font-size:11px;font-weight:700;margin-top:4px;">${m.name}</p><p style="font-size:10px;color:var(--text2);">${m.role||''}</p><button class="btn btn-sm btn-outline" onclick="editMentor('${m.id}')">✏️</button> ${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('mentors','${m.id}',loadMentors)">🗑️</button>`:''}</div>`; });
+        html += '</div>';
+        document.getElementById('mentorList').innerHTML = html || '<p style="color:var(--text2);">কোনো মেন্টর নেই</p>';
+    } catch(e) {}
+}
+function editMentor(id) { editItem('mentors', id, m => { document.getElementById('mentorEditId').value = m.id; document.getElementById('mentorName').value = m.name||''; document.getElementById('mentorRole').value = m.role||m.subject||''; if (m.photo_url) { document.getElementById('mentorPreview').src = m.photo_url; document.getElementById('mentorPreview').style.display = 'block'; } }); }
+
+// ========== SPECIAL CARD ==========
+function previewSpecial(input) { const f = input.files[0]; if (!f) return; const r = new FileReader(); r.onload = e => { document.getElementById('specialPreview').src = e.target.result; document.getElementById('specialPreview').style.display = 'block'; }; r.readAsDataURL(f); }
+function saveSpecial() {
+    const file = document.getElementById('specialPhotoFile').files[0];
+    const d = { description: document.getElementById('specialDesc').value.trim(), special_text: document.getElementById('specialText').value.trim(), link: document.getElementById('specialLink').value.trim() };
+    if (file) { const r = new FileReader(); r.onload = e => { d.image_url = e.target.result; saveItem('special_cards', d, document.getElementById('specialEditId').value || null, clearSpecialForm, loadSpecials); }; r.readAsDataURL(file); }
+    else { saveItem('special_cards', d, document.getElementById('specialEditId').value || null, clearSpecialForm, loadSpecials); }
+}
+function clearSpecialForm() { ['specialDesc','specialText','specialLink','specialEditId'].forEach(id => document.getElementById(id).value = ''); document.getElementById('specialPhotoFile').value = ''; document.getElementById('specialPreview').style.display = 'none'; }
+async function loadSpecials() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/special_cards?select=*&order=created_at.desc&limit=10`);
+        let html = '';
+        if (data) data.forEach(s => { html += `<div class="list-item"><div><b>${s.special_text||'🃏 কার্ড'}</b><br><span style="font-size:11px;color:var(--text2);">${s.description||''}</span></div><div style="display:flex;gap:4px;"><button class="btn btn-sm btn-outline" onclick="editSpecial('${s.id}')">✏️</button> ${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('special_cards','${s.id}',loadSpecials)">🗑️</button>`:''}</div></div>`; });
+        document.getElementById('specialList').innerHTML = html || '<p style="color:var(--text2);">কোনো কার্ড নেই</p>';
+    } catch(e) {}
+}
+function editSpecial(id) { editItem('special_cards', id, s => { document.getElementById('specialEditId').value = s.id; document.getElementById('specialDesc').value = s.description||''; document.getElementById('specialText').value = s.special_text||''; document.getElementById('specialLink').value = s.link||''; if (s.image_url) { document.getElementById('specialPreview').src = s.image_url; document.getElementById('specialPreview').style.display = 'block'; } }); }
 
 // ========== INIT ==========
-document.addEventListener('DOMContentLoaded', function() { loadTheme(); if (!checkAdmin()) return; loadClasses(); loadOwner(); });
+document.addEventListener('DOMContentLoaded', () => {
+    currentUser = { phone: ADMIN_PHONE, role: 'admin' };
+    loadClasses(); loadOwner();
+});
 </script>
 </body>
 </html>
