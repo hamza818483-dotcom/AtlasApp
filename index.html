@@ -149,6 +149,18 @@
     margin-bottom: 24px;
     padding: 0 16px;
 }
+.owner-section { display: flex; flex-direction: column; align-items: center; margin: 20px 0 30px; }
+.owner-name-top { font-size: 16px; font-weight: 800; color: var(--atlas-text); margin-bottom: 12px; }
+.flip-card-owner { width: 140px; height: 140px; perspective: 1000px; cursor: pointer; }
+.flip-card-owner.flipped .flip-card-inner-owner { transform: rotateY(180deg); }
+.flip-card-inner-owner { position: relative; width: 100%; height: 100%; transition: 0.6s; transform-style: preserve-3d; }
+.flip-front-owner, .flip-back-owner { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 16px; }
+.flip-front-owner { background: transparent; display: flex; align-items: center; justify-content: center; }
+.flip-back-owner { background: var(--card-bg); border: 2px solid var(--atlas-border); transform: rotateY(180deg); padding: 14px; text-align: center; font-size: 11px; color: var(--text-primary); line-height: 1.8; display: flex; align-items: center; justify-content: center; }
+.owner-photo-wrapper { position: relative; width: 120px; height: 120px; }
+.owner-photo-box { width: 120px; height: 120px; border-radius: 14px; object-fit: cover; border: 3px solid var(--atlas-border); position: relative; z-index: 2; }
+.owner-glow-box { position: absolute; top: -10px; left: -10px; width: 140px; height: 140px; border-radius: 18px; border: 3px solid transparent; border-top-color: var(--atlas-border); border-right-color: var(--atlas-border); animation: rotateGlowBox 2s linear infinite; z-index: 1; pointer-events: none; }
+@keyframes rotateGlowBox { 0% { transform: rotate(0deg); box-shadow: 0 0 12px var(--atlas-glow); } 50% { box-shadow: 0 0 24px rgba(47,107,255,0.5); } 100% { transform: rotate(360deg); box-shadow: 0 0 12px var(--atlas-glow); } }
     </style>
 </head>
 <body class="dark-mode">
