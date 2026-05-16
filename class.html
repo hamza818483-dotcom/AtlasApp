@@ -3,48 +3,466 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATLAS APP · ফ্রি ক্লাস</title>
+    <title>ATLAS APP · ক্লাস+গাইডলাইন</title>
+    <script src="api.js"></script>
+    <script src="storage.js"></script>
     <link rel="stylesheet" href="style.css">
-    <script src="https://www.youtube.com/iframe_api"></script>
     <style>
-        .class-container{max-width:600px;margin:0 auto;padding:12px 14px 20px;}
-        .subject-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:9px;cursor:pointer;transition:all 0.2s ease;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow-sm);}
-        .subject-card:hover{border-color:var(--accent);box-shadow:var(--shadow-glow),var(--shadow-sm);transform:translateX(3px);}
-        .subject-name{font-size:14px;font-weight:700;color:var(--text);font-family:'Noto Sans Bengali','Inter',sans-serif;}
-        .subject-count{font-size:11px;color:var(--text-tertiary);margin-top:2px;}
-        .chapter-item{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px;margin-bottom:8px;cursor:pointer;transition:all 0.2s ease;}
-        .chapter-item:hover{border-color:var(--accent);}
-        .chapter-name{font-size:13px;font-weight:700;color:var(--text);font-family:'Noto Sans Bengali','Inter',sans-serif;}
-        .chapter-parts{font-size:11px;color:var(--text-tertiary);margin-top:3px;}
-        .back-btn{display:inline-flex;align-items:center;gap:4px;padding:7px 14px;background:var(--btn-bg);border:1px solid var(--border);border-radius:var(--radius-full);color:var(--text-secondary);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s ease;margin-bottom:12px;font-family:'Noto Sans Bengali','Inter',sans-serif;}
-        .back-btn:hover{border-color:var(--accent);color:var(--accent);}
-        .video-wrapper{position:relative;background:#000;border-radius:var(--radius-sm);overflow:hidden;margin-bottom:12px;}
-        .video-container{position:relative;padding-top:56.25%;}
-        .video-container iframe{position:absolute;inset:0;width:100%;height:100%;border:none;}
-        .video-controls{display:flex;gap:6px;padding:8px;background:var(--card-bg);border:1px solid var(--border);border-radius:0 0 var(--radius-sm) var(--radius-sm);flex-wrap:wrap;}
-        .ctrl-btn{padding:8px 16px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--btn-bg);color:var(--text-secondary);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s ease;font-family:'Noto Sans Bengali','Inter',sans-serif;}
-        .ctrl-btn:hover{border-color:var(--accent);color:var(--accent);}
-        .settings-popup{position:absolute;top:40px;right:0;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;z-index:10;display:none;min-width:140px;box-shadow:var(--shadow-lg);}
-        .settings-popup.show{display:block;}
-        .settings-popup select{width:100%;padding:5px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-size:11px;margin-bottom:4px;font-family:inherit;}
-        .info-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px;}
-        .info-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--divider);font-size:12px;}
-        .info-label{color:var(--text-secondary);}
-        .info-value{font-weight:600;}
-        .breadcrumb{font-size:11px;color:var(--text-tertiary);margin-bottom:10px;font-family:'Noto Sans Bengali','Inter',sans-serif;}
-        .breadcrumb span{color:var(--accent);}
-        .paper-label{font-size:12px;color:var(--accent);font-weight:700;margin:8px 0 4px;}
+        /* ===== FLUTTER-STYLE DESIGN SYSTEM ===== */
+        :root {
+            --cl-primary: #6C63FF;
+            --cl-primary-light: rgba(108,99,255,0.12);
+            --cl-secondary: #00D4AA;
+            --cl-surface: #16162A;
+            --cl-card: #1E1E35;
+            --cl-card2: #252540;
+            --cl-border: rgba(108,99,255,0.18);
+            --cl-text: #E8E8F5;
+            --cl-text2: #9898BB;
+            --cl-text3: #5A5A7A;
+            --cl-success: #00D4AA;
+            --cl-error: #FF5B7A;
+            --cl-warn: #FFB347;
+            --cl-glow: rgba(108,99,255,0.22);
+            --cl-radius: 18px;
+            --cl-radius-sm: 12px;
+            --shadow-float: 0 8px 32px rgba(0,0,0,0.32), 0 2px 8px rgba(0,0,0,0.18);
+            --shadow-card: 0 2px 12px rgba(0,0,0,0.18);
+        }
+        body.light-mode {
+            --cl-surface: #F0F0FF;
+            --cl-card: #FFFFFF;
+            --cl-card2: #F0F0FA;
+            --cl-border: rgba(108,99,255,0.2);
+            --cl-text: #1A1A35;
+            --cl-text2: #5A5A8A;
+            --cl-text3: #9898BB;
+            --cl-glow: rgba(108,99,255,0.1);
+        }
+        * { box-sizing: border-box; }
+
+        .class-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 10px 12px 24px;
+        }
+
+        /* ===== PAGE HERO ===== */
+        .page-hero {
+            background: linear-gradient(135deg, var(--cl-card) 0%, var(--cl-card2) 100%);
+            border: 1.5px solid var(--cl-border);
+            border-radius: var(--cl-radius);
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow-float), 0 0 24px var(--cl-glow);
+            position: relative;
+            overflow: hidden;
+        }
+        .page-hero::before {
+            content: '';
+            position: absolute;
+            top: -25px; right: -25px;
+            width: 90px; height: 90px;
+            background: radial-gradient(circle, var(--cl-primary) 0%, transparent 70%);
+            opacity: 0.1;
+        }
+        .hero-icon {
+            width: 46px; height: 46px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--cl-primary), var(--cl-secondary));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 16px var(--cl-glow);
+        }
+        .hero-info { flex: 1; }
+        .hero-title { font-size: 16px; font-weight: 800; color: var(--cl-text); }
+        .hero-sub { font-size: 10px; color: var(--cl-text2); margin-top: 2px; }
+        .hero-badge {
+            background: var(--cl-card2);
+            border: 1px solid var(--cl-border);
+            border-radius: 20px;
+            padding: 4px 10px;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--cl-secondary);
+        }
+
+        /* ===== SEARCH BOX ===== */
+        .search-wrapper {
+            position: relative;
+            margin-bottom: 12px;
+        }
+        .search-wrapper .search-icon {
+            position: absolute;
+            left: 14px; top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            color: var(--cl-text3);
+            pointer-events: none;
+        }
+        .search-box-fl {
+            width: 100%;
+            background: var(--cl-card);
+            border: 1.5px solid var(--cl-border);
+            border-radius: 14px;
+            padding: 11px 14px 11px 38px;
+            color: var(--cl-text);
+            font-size: 13px;
+            font-family: 'Noto Sans Bengali', 'Inter', sans-serif;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .search-box-fl:focus {
+            border-color: var(--cl-primary);
+            box-shadow: 0 0 0 3px var(--cl-glow);
+        }
+        .search-box-fl::placeholder { color: var(--cl-text3); }
+
+        /* ===== CATEGORY TABS ===== */
+        .category-tabs {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            scrollbar-width: none;
+            margin-bottom: 4px;
+        }
+        .category-tabs::-webkit-scrollbar { display: none; }
+        .cat-tab {
+            flex-shrink: 0;
+            background: var(--cl-card);
+            border: 1.5px solid var(--cl-border);
+            border-radius: 20px;
+            padding: 7px 14px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--cl-text2);
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            font-family: 'Noto Sans Bengali', sans-serif;
+        }
+        .cat-tab.active {
+            background: var(--cl-primary-light);
+            border-color: var(--cl-primary);
+            color: var(--cl-text);
+        }
+        .cat-tab:hover { border-color: var(--cl-primary); color: var(--cl-text); }
+
+        /* ===== BACK BUTTON ===== */
+        .back-btn-fl {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: var(--cl-card);
+            border: 1.5px solid var(--cl-border);
+            border-radius: 20px;
+            color: var(--cl-text2);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 12px;
+            font-family: 'Noto Sans Bengali', sans-serif;
+        }
+        .back-btn-fl:hover {
+            border-color: var(--cl-primary);
+            color: var(--cl-primary);
+        }
+
+        /* ===== SECTION TITLE ===== */
+        .sec-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--cl-text);
+            margin-bottom: 10px;
+            font-family: 'Noto Sans Bengali', sans-serif;
+        }
+        .sec-count {
+            font-size: 10px;
+            color: var(--cl-text3);
+            font-weight: 500;
+            margin-left: 6px;
+        }
+
+        /* ===== BREADCRUMB ===== */
+        .breadcrumb-fl {
+            font-size: 10px;
+            color: var(--cl-text3);
+            margin-bottom: 10px;
+            font-family: 'Noto Sans Bengali', sans-serif;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            align-items: center;
+        }
+        .breadcrumb-fl .bc-sep { color: var(--cl-text3); }
+        .breadcrumb-fl .bc-active { color: var(--cl-primary); font-weight: 700; }
+
+        /* ===== FLUTTER LIST CARDS ===== */
+        .list-card {
+            background: var(--cl-card);
+            border: 1.5px solid var(--cl-border);
+            border-radius: var(--cl-radius-sm);
+            padding: 14px 16px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            box-shadow: var(--shadow-card);
+            animation: cardFadeIn 0.25s ease;
+        }
+        @keyframes cardFadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .list-card:hover {
+            border-color: var(--cl-primary);
+            box-shadow: 0 0 0 2px var(--cl-glow), var(--shadow-float);
+            transform: translateX(3px);
+        }
+        .list-card:active { transform: scale(0.98); }
+
+        .lc-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+        .lc-icon {
+            width: 40px; height: 40px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        .lc-icon.blue { background: rgba(108,99,255,0.15); }
+        .lc-icon.green { background: rgba(0,212,170,0.15); }
+        .lc-icon.orange { background: rgba(255,179,71,0.15); }
+        .lc-icon.pink { background: rgba(255,91,122,0.15); }
+        .lc-icon.teal { background: rgba(0,180,180,0.15); }
+
+        .lc-info { flex: 1; min-width: 0; }
+        .lc-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--cl-text);
+            font-family: 'Noto Sans Bengali', sans-serif;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .lc-sub {
+            font-size: 11px;
+            color: var(--cl-text2);
+            margin-top: 2px;
+        }
+        .lc-pill {
+            background: var(--cl-primary-light);
+            color: var(--cl-primary);
+            border-radius: 20px;
+            padding: 3px 10px;
+            font-size: 10px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .lc-arrow {
+            color: var(--cl-text3);
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        /* ===== TIMER TYPE CARDS (Medical Guidelines) ===== */
+        .timer-card {
+            background: var(--cl-card);
+            border: 1.5px solid var(--cl-border);
+            border-radius: var(--cl-radius);
+            padding: 20px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            box-shadow: var(--shadow-card);
+        }
+        .timer-card:hover {
+            border-color: var(--cl-primary);
+            box-shadow: 0 0 0 3px var(--cl-glow);
+            transform: translateY(-2px);
+        }
+        .timer-card .tc-icon { font-size: 36px; margin-bottom: 8px; }
+        .timer-card .tc-title { font-size: 15px; font-weight: 800; color: var(--cl-text); font-family: 'Noto Sans Bengali', sans-serif; }
+        .timer-card .tc-sub { font-size: 11px; color: var(--cl-text2); margin-top: 4px; }
+        .timer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        /* ===== VIDEO PLAYER ===== */
+        .video-outer {
+            background: #000;
+            border-radius: var(--cl-radius-sm);
+            overflow: hidden;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow-float);
+        }
+        .video-ratio {
+            position: relative;
+            padding-top: 56.25%;
+        }
+        .video-ratio iframe {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .video-no-embed {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: var(--cl-card2);
+        }
+        .video-no-embed .vne-icon { font-size: 40px; }
+        .video-no-embed .vne-text { font-size: 13px; color: var(--cl-text2); font-family: 'Noto Sans Bengali', sans-serif; }
+        .video-no-embed .vne-btn {
+            background: var(--cl-primary);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: 'Noto Sans Bengali', sans-serif;
+        }
+
+        /* ===== INFO CARD ===== */
+        .info-card-fl {
+            background: var(--cl-card);
+            border: 1.5px solid var(--cl-border);
+            border-radius: var(--cl-radius-sm);
+            padding: 14px;
+            margin-bottom: 10px;
+            box-shadow: var(--shadow-card);
+        }
+        .info-card-fl .ic-title {
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--cl-primary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .info-row-fl {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--cl-border);
+            font-size: 12px;
+            gap: 10px;
+        }
+        .info-row-fl:last-child { border-bottom: none; }
+        .info-lbl { color: var(--cl-text2); flex-shrink: 0; }
+        .info-val { font-weight: 700; color: var(--cl-text); text-align: right; font-family: 'Noto Sans Bengali', sans-serif; }
+
+        /* ===== CLASS NOTE CARD ===== */
+        .note-card {
+            background: rgba(0,212,170,0.08);
+            border: 1.5px solid rgba(0,212,170,0.25);
+            border-radius: var(--cl-radius-sm);
+            padding: 14px;
+            margin-bottom: 10px;
+        }
+        .note-card .nc-title {
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--cl-secondary);
+            margin-bottom: 8px;
+        }
+        .note-card .nc-content {
+            font-size: 12px;
+            color: var(--cl-text);
+            line-height: 1.6;
+            font-family: 'Noto Sans Bengali', sans-serif;
+        }
+        .note-card a { color: var(--cl-primary); text-decoration: underline; }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--cl-text2);
+            font-size: 13px;
+            font-family: 'Noto Sans Bengali', sans-serif;
+        }
+        .empty-state .es-icon { font-size: 40px; margin-bottom: 10px; }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-in { animation: fadeSlide 0.3s ease; }
+
+        /* ===== LOADING ===== */
+        .loading-state {
+            text-align: center;
+            padding: 30px;
+            color: var(--cl-text2);
+            font-size: 13px;
+        }
+        .loading-dots::after {
+            content: '';
+            animation: ldots 1.5s infinite;
+        }
+        @keyframes ldots {
+            0% { content: ''; }
+            33% { content: '.'; }
+            66% { content: '..'; }
+            100% { content: '...'; }
+        }
+
+        /* ===== ERROR POPUP ===== */
+        .error-popup-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .error-popup {
+            background: var(--cl-card);
+            border: 1px solid var(--cl-border);
+            border-radius: var(--cl-radius);
+            padding: 24px;
+            max-width: 340px;
+            width: 100%;
+            text-align: center;
+        }
+        .error-popup-icon { font-size: 40px; margin-bottom: 10px; }
+        .error-popup-title { font-size: 16px; font-weight: 800; color: var(--cl-text); margin-bottom: 8px; }
+        .error-popup-message { font-size: 13px; color: var(--cl-text2); margin-bottom: 14px; }
+        .error-popup-details { font-size: 10px; color: var(--cl-text3); margin-bottom: 14px; background: var(--cl-surface); padding: 8px; border-radius: 8px; }
+        .error-popup-btn { background: var(--cl-primary); color: #fff; border: none; border-radius: 12px; padding: 10px 20px; cursor: pointer; font-weight: 700; font-size: 13px; }
+        .error-popup-retry { background: var(--cl-card2); color: var(--cl-text); border: 1px solid var(--cl-border); border-radius: 12px; padding: 10px 20px; cursor: pointer; font-weight: 600; font-size: 13px; margin-right: 8px; }
     </style>
 </head>
 <body class="dark-mode">
 
+<!-- ===== SIDEBAR ===== -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-header"><div class="sidebar-logo">ATLAS APP</div></div>
     <div class="sidebar-menu">
         <button class="sidebar-item" onclick="navigateTo('profile');closeSidebar();">👤 প্রোফাইল</button>
         <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();">🏠 হোম</button>
-        <button class="sidebar-item" onclick="goTo('class.html');closeSidebar();">📚 ফ্রি ক্লাস</button>
+        <button class="sidebar-item active" onclick="goTo('class.html');closeSidebar();">📚 ক্লাস+গাইডলাইন</button>
         <button class="sidebar-item" onclick="goTo('exam.html');closeSidebar();">📝 ফ্রি এক্সাম</button>
         <button class="sidebar-item" onclick="goTo('mock-test.html');closeSidebar();">🎯 মক টেস্ট</button>
         <button class="sidebar-item" onclick="goTo('dashboard.html');closeSidebar();">⚠️ My Mistakes</button>
@@ -57,6 +475,7 @@
     </div>
 </aside>
 
+<!-- ===== HEADER ===== -->
 <header class="header">
     <div class="header-left">
         <button class="hamburger" onclick="toggleSidebar()">☰</button>
@@ -73,43 +492,111 @@
 
 <main class="class-container">
 
-<div id="viewSubjects">
-    <div class="section-header"><div class="section-title">📚 ফ্রি ক্লাস সেকশন</div></div>
-    <input type="text" class="search-box" id="searchInput" placeholder="🔍 সাবজেক্ট বা চ্যাপ্টার খুঁজুন..." oninput="filterSubjects()">
-    <div id="subjectList"><p style="text-align:center;color:var(--text-secondary);padding:20px;">লোড হচ্ছে...</p></div>
-</div>
+    <!-- ===== VIEW: HOME (Category Select) ===== -->
+    <div id="viewHome">
+        <div class="page-hero">
+            <div class="hero-icon">📚</div>
+            <div class="hero-info">
+                <div class="hero-title">ক্লাস+গাইডলাইন</div>
+                <div class="hero-sub">Medical · Varsity · Short Trick · Course Feature</div>
+            </div>
+            <div class="hero-badge" id="totalBadge">লোড হচ্ছে</div>
+        </div>
 
-<div id="viewChapters" style="display:none;">
-    <button class="back-btn" onclick="goToSubjects()">← ফিরে যান</button>
-    <div class="section-header"><div class="section-title" id="chapterTitle">চ্যাপ্টার</div></div>
-    <div id="chapterList"></div>
-</div>
+        <div class="search-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-box-fl" id="searchInput"
+                placeholder="সাবজেক্ট বা চ্যাপ্টার খুঁজুন..."
+                oninput="filterHome()">
+        </div>
 
-<div id="viewVideo" style="display:none;">
-    <button class="back-btn" onclick="goToChapters()">← ফিরে যান</button>
-    <div class="breadcrumb" id="videoBreadcrumb"></div>
-    <div class="video-wrapper">
-        <div class="video-controls">
-            <button class="ctrl-btn" onclick="seekVideo(-10)">⏪ 10s</button>
-            <button class="ctrl-btn" onclick="seekVideo(10)">⏩ 10s</button>
-            <button class="ctrl-btn" onclick="togglePlayPause()">⏯️ Play/Pause</button>
-            <button class="ctrl-btn" onclick="toggleSettings()">⚙️ Settings</button>
-            <div class="settings-popup" id="settingsPopup">
-                <label style="font-size:10px;color:var(--text-secondary);">Speed</label>
-                <select onchange="changeSpeed(this.value)"><option value="0.5">0.5x</option><option value="0.75">0.75x</option><option value="1" selected>1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option><option value="2">2x</option></select>
-                <label style="font-size:10px;color:var(--text-secondary);">Quality</label>
-                <select onchange="changeQuality(this.value)"><option value="auto">Auto</option><option value="small">360p</option><option value="medium">720p</option><option value="large">1080p</option></select>
+        <!-- Category Quick Tabs -->
+        <div class="category-tabs" id="catTabs">
+            <div class="cat-tab active" onclick="filterByCategory('all', this)">🌐 সব</div>
+            <div class="cat-tab" onclick="filterByCategory('medical_class', this)">🧬 Medical Class</div>
+            <div class="cat-tab" onclick="filterByCategory('medical_guide', this)">📋 Medical Guide</div>
+            <div class="cat-tab" onclick="filterByCategory('varsity_guide', this)">🎓 Varsity Guide</div>
+            <div class="cat-tab" onclick="filterByCategory('short_trick', this)">⚡ Short Trick</div>
+            <div class="cat-tab" onclick="filterByCategory('course_feature', this)">🎯 Course Feature</div>
+        </div>
+
+        <div id="homeList">
+            <div class="loading-state">লোড হচ্ছে<span class="loading-dots"></span></div>
+        </div>
+    </div>
+
+    <!-- ===== VIEW: SUBJECT LIST (Medical Class) ===== -->
+    <div id="viewSubjects" style="display:none;">
+        <button class="back-btn-fl" onclick="goHome()">← ফিরে যান</button>
+        <div class="sec-title" id="subjectTitle">সাবজেক্ট</div>
+        <div id="subjectList"></div>
+    </div>
+
+    <!-- ===== VIEW: PAPER LIST ===== -->
+    <div id="viewPapers" style="display:none;">
+        <button class="back-btn-fl" onclick="goToSubjects()">← ফিরে যান</button>
+        <div class="breadcrumb-fl" id="paperBreadcrumb"></div>
+        <div class="sec-title" id="paperTitle">পেপার</div>
+        <div id="paperList"></div>
+    </div>
+
+    <!-- ===== VIEW: CHAPTER LIST ===== -->
+    <div id="viewChapters" style="display:none;">
+        <button class="back-btn-fl" onclick="goToPapers()">← ফিরে যান</button>
+        <div class="breadcrumb-fl" id="chapterBreadcrumb"></div>
+        <div class="sec-title" id="chapterTitle">চ্যাপ্টার</div>
+        <div id="chapterList"></div>
+    </div>
+
+    <!-- ===== VIEW: TIMER TYPE (Medical Guidelines) ===== -->
+    <div id="viewTimerType" style="display:none;">
+        <button class="back-btn-fl" onclick="goHome()">← ফিরে যান</button>
+        <div class="sec-title">⏱️ কোন টাইমার?</div>
+        <div class="timer-grid">
+            <div class="timer-card" onclick="openTimerVideos('1st Timer')">
+                <div class="tc-icon">🥇</div>
+                <div class="tc-title">1st Timer</div>
+                <div class="tc-sub">প্রথমবার প্রস্তুতি নিচ্ছ</div>
+            </div>
+            <div class="timer-card" onclick="openTimerVideos('2nd Timer')">
+                <div class="tc-icon">🔄</div>
+                <div class="tc-title">2nd Timer</div>
+                <div class="tc-sub">দ্বিতীয়বার চেষ্টা করছ</div>
             </div>
         </div>
-        <div class="video-container" id="videoPlayer"></div>
     </div>
-    <div class="info-card" id="videoInfo"></div>
-    <div class="info-card" id="classNoteCard" style="display:none;"><div style="font-weight:700;color:var(--accent);margin-bottom:4px;">📋 ক্লাস নোট</div><div id="classNoteContent"></div></div>
-    <div style="margin-top:10px;"><div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px;">📋 অন্যান্য পার্ট</div><div id="otherParts"></div></div>
-</div>
+
+    <!-- ===== VIEW: GENERIC VIDEO LIST (Varsity / Short Trick / Course Feature / Timer) ===== -->
+    <div id="viewVideoList" style="display:none;">
+        <button class="back-btn-fl" id="videoListBackBtn" onclick="videoListBack()">← ফিরে যান</button>
+        <div class="breadcrumb-fl" id="videoListBreadcrumb"></div>
+        <div class="sec-title" id="videoListTitle">ভিডিও</div>
+        <div id="videoListItems"></div>
+    </div>
+
+    <!-- ===== VIEW: VIDEO PLAYER ===== -->
+    <div id="viewVideo" style="display:none;">
+        <button class="back-btn-fl" id="videoBackBtn" onclick="videoBack()">← ফিরে যান</button>
+        <div class="breadcrumb-fl" id="videoBreadcrumb"></div>
+
+        <div class="video-outer">
+            <div class="video-ratio" id="videoPlayer"></div>
+        </div>
+
+        <div class="info-card-fl" id="videoInfoCard">
+            <div class="ic-title">📊 ক্লাস তথ্য</div>
+            <div id="videoInfoRows"></div>
+        </div>
+
+        <div class="note-card" id="classNoteCard" style="display:none;">
+            <div class="nc-title">📋 ক্লাস নোট</div>
+            <div class="nc-content" id="classNoteContent"></div>
+        </div>
+    </div>
 
 </main>
 
+<!-- ===== BOTTOM NAV ===== -->
 <nav class="bottom-nav">
     <button class="nav-item" onclick="goTo('index.html')"><span class="nav-icon">🏠</span>হোম</button>
     <button class="nav-item active" onclick="goTo('class.html')"><span class="nav-icon">📚</span>ক্লাস</button>
@@ -118,162 +605,504 @@
     <button class="nav-item" onclick="navigateTo('profile')"><span class="nav-icon">👤</span>প্রোফাইল</button>
 </nav>
 
+<!-- ===== FLOATING BUTTONS ===== -->
 <div class="floating-buttons">
-    <button class="fab fab-wa" onclick="openWA()"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg></button>
-    <button class="fab fab-tg" onclick="openTG()"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.223-.548.082l.183-2.852 5.19-4.688c.226-.198-.05-.308-.348-.11l-6.415 4.04-2.762-.862c-.6-.186-.61-.6.127-.892l10.79-4.155c.497-.185.93.12.773.862z"/></svg></button>
+    <button class="fab fab-wa" onclick="openWA()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg>
+    </button>
+    <button class="fab fab-tg" onclick="openTG()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.223-.548.082l.183-2.852 5.19-4.688c.226-.198-.05-.308-.348-.11l-6.415 4.04-2.762-.862c-.6-.186-.61-.6.127-.892l10.79-4.155c.497-.185.93.12.773.862z"/></svg>
+    </button>
 </div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-const SUPABASE_URL='https://btezborkuiqfogykrjrn.supabase.co';
-const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
-let isDarkMode=true,isSidebarOpen=false,allClasses=[],currentSubject=null,currentChapter=null,ytPlayer=null;
+// ===== GLOBALS =====
+let isDarkMode = true, isSidebarOpen = false;
+let allClasses = [];
+let currentSubject = null, currentPaper = null, currentChapter = null;
+let currentCategory = null, currentTimerType = null, currentVideoListBack = null;
+let activeFilter = 'all';
+let videoBackTarget = null;
 
-function showToast(m,d=2000){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
-function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'☀️':'🌙';}
-function toggleSidebar(){isSidebarOpen=!isSidebarOpen;document.getElementById('sidebarOverlay').classList.toggle('active',isSidebarOpen);document.getElementById('sidebar').classList.toggle('active',isSidebarOpen);}
-function closeSidebar(){isSidebarOpen=false;document.getElementById('sidebarOverlay').classList.remove('active');document.getElementById('sidebar').classList.remove('active');}
-function goTo(u){location.href=u;}
-function navigateTo(p){const r={home:'index.html',profile:'dashboard.html',class:'class.html',exam:'exam.html'};goTo(r[p]||'index.html');}
-function openWA(){window.open('https://wa.me/8801999681290','_blank');}
-function openTG(){window.open('https://t.me/rafi_somc','_blank');}
-function logout(){localStorage.removeItem('atlas-session');goTo('index.html');}
+// ===== CATEGORY CONFIG =====
+const CAT_CONFIG = {
+    medical_class:   { label: '🧬 Medical Admission Class',     icon: '🧬', color: 'blue',   key: 'medical_class' },
+    medical_guide:   { label: '📋 Medical Admission Guidelines', icon: '📋', color: 'green',  key: 'medical_guide' },
+    varsity_guide:   { label: '🎓 Varsity Admission Guidelines', icon: '🎓', color: 'orange', key: 'varsity_guide' },
+    short_trick:     { label: '⚡ Short Trick Video',            icon: '⚡', color: 'pink',   key: 'short_trick' },
+    course_feature:  { label: '🎯 Course Feature Video',         icon: '🎯', color: 'teal',   key: 'course_feature' },
+};
 
-async function safeFetch(url,opts={}){
-    opts.headers=Object.assign({apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY},opts.headers||{});
-    if(!opts.headers['Content-Type']&&opts.method!=='DELETE')opts.headers['Content-Type']='application/json';
-    try{const res=await fetch(url,opts);const text=await res.text();if(!text?.trim())return[];const data=JSON.parse(text);if(!res.ok)throw new Error(data.message);return data;}
-    catch(e){console.error('❌',e.message);return[];}
-}
-
-async function loadClasses(){
-    try{
-        const url=SUPABASE_URL+'/rest/v1/classes?select=*&order=sort_order.asc,created_at.desc&limit=100';
-        const res=await fetch(url,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
-        const text=await res.text();
-        if(!text||text.trim()===''||text.trim()==='[]'){allClasses=[];document.getElementById('subjectList').innerHTML='<p style="text-align:center;color:var(--text-secondary);padding:20px;">কোনো ক্লাস নেই।</p>';return;}
-        allClasses=JSON.parse(text);
-        if(!allClasses.length){document.getElementById('subjectList').innerHTML='<p>কোনো ক্লাস নেই</p>';return;}
-        renderSubjects();
-    }catch(e){showToast('❌ ক্লাস লোড করতে সমস্যা');}
-}
-
-function renderSubjects(filter){
-    filter=filter||'';
-    const subjects={};
-    allClasses.forEach(c=>{
-        const s=c.subject||'সাধারণ';
-        if(filter&&!s.toLowerCase().includes(filter)&&!(c.chapter||'').toLowerCase().includes(filter))return;
-        if(!subjects[s])subjects[s]={papers:{},count:0};
-        const p=c.paper||'সাধারণ';
-        if(!subjects[s].papers[p])subjects[s].papers[p]={chapters:{},count:0};
-        const ch=c.chapter||'সাধারণ';
-        if(!subjects[s].papers[p].chapters[ch])subjects[s].papers[p].chapters[ch]=[];
-        subjects[s].papers[p].chapters[ch].push(c);
-        subjects[s].papers[p].count++;subjects[s].count++;
-    });
-    const keys=Object.keys(subjects);
-    if(!keys.length){document.getElementById('subjectList').innerHTML='<p>কোনো ক্লাস পাওয়া যায়নি</p>';return;}
-    let html='';
-    keys.forEach(s=>{html+='<div class="subject-card" onclick="openSubject(\''+s.replace(/'/g,"\\'")+'\')"><div><div class="subject-name">📘 '+s+'</div><div class="subject-count">'+subjects[s].count+' টি ক্লাস</div></div><span style="color:var(--accent);">→</span></div>';});
-    document.getElementById('subjectList').innerHTML=html;
-}
-function filterSubjects(){renderSubjects(document.getElementById('searchInput').value.trim().toLowerCase());}
-
-function openSubject(subj){
-    currentSubject=subj;
-    const papers={};
-    allClasses.forEach(c=>{if((c.subject||'সাধারণ')===subj){const p=c.paper||'সাধারণ',ch=c.chapter||'সাধারণ';if(!papers[p])papers[p]={};if(!papers[p][ch])papers[p][ch]=[];papers[p][ch].push(c);}});
-    document.getElementById('chapterTitle').textContent='📘 '+subj;
-    let html='';
-    Object.keys(papers).forEach(p=>{
-        html+='<div class="paper-label">📄 '+p+'</div>';
-        Object.keys(papers[p]).forEach(ch=>{
-            const pd=papers[p][ch];
-            html+='<div class="chapter-item" onclick="currentChapter=\''+ch.replace(/'/g,"\\'")+'\';playVideo(\''+pd[0].youtube_link.replace(/'/g,"\\'")+'\',\''+ch.replace(/'/g,"\\'")+'\',\''+(pd[0].class_type||'website')+'\',\''+(pd[0].class_note||'').replace(/'/g,"\\'")+'\')"><div class="chapter-name">📖 '+ch+'</div><div class="chapter-parts">'+pd.length+' টি ক্লাস</div></div>';
-        });
-    });
-    document.getElementById('chapterList').innerHTML=html||'<p>কোনো চ্যাপ্টার নেই</p>';
-    document.getElementById('viewSubjects').style.display='none';
-    document.getElementById('viewChapters').style.display='block';
-    document.getElementById('viewVideo').style.display='none';
-}
-
-function playVideo(link,title,classType,classNote){
-    const videoId=extractYouTubeID(link);
-    document.getElementById('videoBreadcrumb').innerHTML='📘 <span>'+currentSubject+'</span> › 📖 <span>'+currentChapter+'</span> › 🎥 <span>'+title+'</span>';
-    document.getElementById('videoInfo').innerHTML='<div class="info-row"><span class="info-label">সাবজেক্ট</span><span class="info-value">'+currentSubject+'</span></div><div class="info-row"><span class="info-label">চ্যাপ্টার</span><span class="info-value">'+currentChapter+'</span></div><div class="info-row"><span class="info-label">পার্ট</span><span class="info-value">'+title+'</span></div>';
-    if(classType==='youtube'){
-        document.getElementById('videoPlayer').innerHTML='<div style="padding:40px;text-align:center;"><p>▶️ YouTube-এ ওপেন হচ্ছে...</p><a href="'+link+'" target="_blank" class="btn btn-outline">YouTube-এ দেখুন</a></div>';
-        window.open(link,'_blank');
-    }else{
-        if(videoId){
-            document.getElementById('videoPlayer').innerHTML='<iframe src="https://www.youtube.com/embed/'+videoId+'?enablejsapi=1&rel=0" allow="autoplay;encrypted-media;picture-in-picture" allowfullscreen id="ytIframe"></iframe>';
-        }else{
-            document.getElementById('videoPlayer').innerHTML='<p style="text-align:center;padding:30px;">⚠️ ভিডিও লিংক সঠিক নয়</p>';
-        }
+// ===== LOAD CLASSES =====
+async function loadClasses() {
+    try {
+        allClasses = await API.classes.list();
+        // Sort by serial_order if available
+        allClasses.sort((a, b) => (a.serial_order || 999) - (b.serial_order || 999));
+        renderHome();
+        updateTotalBadge();
+    } catch(e) {
+        document.getElementById('homeList').innerHTML = `
+            <div class="empty-state"><div class="es-icon">⚠️</div>ক্লাস লোড করতে সমস্যা হয়েছে।<br><button onclick="loadClasses()" style="margin-top:10px;background:var(--cl-primary);color:#fff;border:none;border-radius:10px;padding:8px 16px;cursor:pointer;font-size:12px;">🔄 আবার চেষ্টা</button></div>
+        `;
     }
-    if(classNote){document.getElementById('classNoteCard').style.display='block';document.getElementById('classNoteContent').innerHTML=classNote.startsWith('http')?'<a href="'+classNote+'" target="_blank" style="color:var(--accent);">'+classNote+'</a>':classNote;}
-    else{document.getElementById('classNoteCard').style.display='none';}
-    saveClassHistory(currentSubject,currentChapter,title);
-    document.getElementById('viewSubjects').style.display='none';
-    document.getElementById('viewChapters').style.display='none';
-    document.getElementById('viewVideo').style.display='block';
 }
 
-function extractYouTubeID(url){if(!url)return null;const m=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/);return m?m[1]:null;}
-
-function saveClassHistory(subject,chapter,part){
-    try{const user=JSON.parse(localStorage.getItem('atlas-session'));if(!user)return;const h=JSON.parse(localStorage.getItem('class_history_'+user.phone)||'[]');h.push({subject,chapter,part,time:new Date().toISOString()});if(h.length>50)h.splice(0,h.length-50);localStorage.setItem('class_history_'+user.phone,JSON.stringify(h));}catch(e){}
+function updateTotalBadge() {
+    document.getElementById('totalBadge').textContent = allClasses.length + ' ক্লাস';
 }
 
-function goToSubjects(){document.getElementById('viewSubjects').style.display='block';document.getElementById('viewChapters').style.display='none';document.getElementById('viewVideo').style.display='none';}
-function goToChapters(){document.getElementById('viewSubjects').style.display='none';document.getElementById('viewChapters').style.display='block';document.getElementById('viewVideo').style.display='none';}
+// ===== RENDER HOME =====
+function renderHome(searchVal) {
+    const q = (searchVal || '').toLowerCase();
+    const container = document.getElementById('homeList');
+    let html = '';
 
-// Video Controls
-function getPlayer(){
-    if(ytPlayer)return ytPlayer;
-    const iframe=document.getElementById('ytIframe');
-    if(!iframe)return null;
-    try{ytPlayer=new YT.Player(iframe);return ytPlayer;}catch(e){return null;}
-}
-function seekVideo(sec){
-    const player=getPlayer();
-    if(!player||!player.getCurrentTime){showToast('⚠️ প্রথমে ভিডিও চালু করুন');return;}
-    player.seekTo(Math.max(0,player.getCurrentTime()+sec),true);
-    showToast(sec>0?'⏩ ১০ সেকেন্ড':'⏪ ১০ সেকেন্ড');
-}
-function togglePlayPause(){
-    const player=getPlayer();
-    if(!player){showToast('⚠️ ভিডিও রেডি নয়');return;}
-    try{if(player.getPlayerState()===1){player.pauseVideo();showToast('⏸️ Paused');}else{player.playVideo();showToast('▶️ Playing');}}catch(e){showToast('⚠️ ভিডিও নিয়ন্ত্রণ সম্ভব নয়');}
-}
-function toggleSettings(){document.getElementById('settingsPopup').classList.toggle('show');}
-function changeSpeed(val){
-    const player=getPlayer();
-    if(!player||!player.setPlaybackRate)return;
-    player.setPlaybackRate(parseFloat(val));
-    showToast('⚡ স্পিড: '+val+'x');
-    document.getElementById('settingsPopup').classList.remove('show');
-}
-function changeQuality(val){
-    const player=getPlayer();
-    if(!player)return;
-    try{player.setPlaybackQuality(val);showToast('📺 কোয়ালিটি: '+val);}catch(e){showToast('⚠️ কোয়ালিটি পরিবর্তন সম্ভব নয়');}
-    document.getElementById('settingsPopup').classList.remove('show');
+    // Group by category
+    const cats = Object.keys(CAT_CONFIG);
+    cats.forEach(cat => {
+        if (activeFilter !== 'all' && activeFilter !== cat) return;
+        const cfg = CAT_CONFIG[cat];
+        const items = allClasses.filter(c => {
+            const c_cat = c.category || 'medical_class';
+            if (c_cat !== cat) return false;
+            if (!q) return true;
+            return (c.subject||'').toLowerCase().includes(q) ||
+                   (c.chapter||'').toLowerCase().includes(q) ||
+                   (c.paper||'').toLowerCase().includes(q) ||
+                   (c.topic||'').toLowerCase().includes(q) ||
+                   (c.course_name||'').toLowerCase().includes(q);
+        });
+        if (!items.length) return;
+
+        html += `
+            <div class="list-card animate-in" onclick="openCategory('${cat}')">
+                <div class="lc-left">
+                    <div class="lc-icon ${cfg.color}">${cfg.icon}</div>
+                    <div class="lc-info">
+                        <div class="lc-name">${cfg.label}</div>
+                        <div class="lc-sub">${items.length} টি ক্লাস উপলব্ধ</div>
+                    </div>
+                </div>
+                <div class="lc-pill">${items.length}</div>
+                <div class="lc-arrow">›</div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html || `<div class="empty-state"><div class="es-icon">🔍</div>কোনো ফলাফল পাওয়া যায়নি।</div>`;
 }
 
-function showError(title,message,details,retryFn){
-    const existing=document.querySelector('.error-popup-overlay');if(existing)existing.remove();
-    const overlay=document.createElement('div');overlay.className='error-popup-overlay';
-    let retryHTML='';if(retryFn){retryHTML='<button class="error-popup-retry" onclick="this.closest(\'.error-popup-overlay\').remove();('+retryFn.toString()+')();">🔄 আবার চেষ্টা</button>';}
-    overlay.innerHTML='<div class="error-popup" onclick="event.stopPropagation()"><div class="error-popup-icon">⚠️</div><div class="error-popup-title">'+(title||'কিছু সমস্যা হয়েছে')+'</div><div class="error-popup-message">'+(message||'পরে আবার চেষ্টা করুন')+'</div>'+(details?'<div class="error-popup-details">'+details+'</div>':'')+'<div style="display:flex;justify-content:center;gap:8px;">'+retryHTML+'<button class="error-popup-btn" onclick="this.closest(\'.error-popup-overlay\').remove()">✕ বন্ধ</button></div></div>';
-    overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});document.body.appendChild(overlay);
+function filterHome() {
+    renderHome(document.getElementById('searchInput').value.trim());
 }
-window.addEventListener('error',function(e){showError('💥 সমস্যা','পৃষ্ঠাটি রিলোড করুন',e.error?.message,()=>location.reload());});
-window.addEventListener('unhandledrejection',function(e){showError('⚠️ প্রসেসিং সমস্যা','অনুরোধ সম্পূর্ণ করা যায়নি',e.reason?.message,null);});
 
+function filterByCategory(cat, tabEl) {
+    activeFilter = cat;
+    document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+    tabEl.classList.add('active');
+    renderHome(document.getElementById('searchInput').value.trim());
+}
+
+// ===== OPEN CATEGORY =====
+function openCategory(cat) {
+    currentCategory = cat;
+    switch(cat) {
+        case 'medical_class':   openMedicalSubjects(); break;
+        case 'medical_guide':   openMedicalGuide(); break;
+        case 'varsity_guide':   openVarsityGuide(); break;
+        case 'short_trick':     openShortTrick(); break;
+        case 'course_feature':  openCourseFeature(); break;
+    }
+}
+
+// ===== MEDICAL ADMISSION CLASS =====
+function openMedicalSubjects() {
+    const items = allClasses.filter(c => (c.category || 'medical_class') === 'medical_class');
+    const subjects = {};
+    items.forEach(c => {
+        const s = c.subject || 'সাধারণ';
+        if (!subjects[s]) subjects[s] = [];
+        subjects[s].push(c);
+    });
+
+    document.getElementById('subjectTitle').innerHTML = '🧬 Medical Admission Class <span class="sec-count">' + items.length + ' ক্লাস</span>';
+    let html = '';
+    Object.keys(subjects).forEach(s => {
+        html += listCard('📘', 'blue', s, subjects[s].length + ' টি ক্লাস', `openSubject('${esc(s)}')`);
+    });
+    document.getElementById('subjectList').innerHTML = html || emptyState('কোনো সাবজেক্ট নেই');
+    showOnly('viewSubjects');
+}
+
+function openSubject(subj) {
+    currentSubject = subj;
+    const items = allClasses.filter(c => (c.category||'medical_class') === 'medical_class' && (c.subject||'সাধারণ') === subj);
+    const papers = {};
+    items.forEach(c => { const p = c.paper||'সাধারণ'; if(!papers[p]) papers[p]=[]; papers[p].push(c); });
+
+    document.getElementById('paperBreadcrumb').innerHTML = bc(['🧬 Medical', subj]);
+    document.getElementById('paperTitle').innerHTML = '📄 পেপার <span class="sec-count">' + Object.keys(papers).length + '</span>';
+    let html = '';
+    Object.keys(papers).forEach(p => {
+        html += listCard('📄', 'green', p, papers[p].length + ' টি ক্লাস', `openPaper('${esc(subj)}','${esc(p)}')`);
+    });
+    document.getElementById('paperList').innerHTML = html || emptyState('কোনো পেপার নেই');
+    showOnly('viewPapers');
+}
+
+function openPaper(subj, paper) {
+    currentPaper = paper;
+    const items = allClasses.filter(c =>
+        (c.category||'medical_class')==='medical_class' &&
+        (c.subject||'সাধারণ')===subj &&
+        (c.paper||'সাধারণ')===paper
+    );
+    const chapters = {};
+    items.forEach(c => { const ch = c.chapter||'সাধারণ'; if(!chapters[ch]) chapters[ch]=[]; chapters[ch].push(c); });
+
+    document.getElementById('chapterBreadcrumb').innerHTML = bc(['🧬 Medical', subj, paper]);
+    document.getElementById('chapterTitle').innerHTML = '📖 চ্যাপ্টার <span class="sec-count">' + Object.keys(chapters).length + '</span>';
+    let html = '';
+    Object.keys(chapters).forEach(ch => {
+        const first = chapters[ch][0];
+        html += listCard('📖', 'orange', ch, chapters[ch].length + ' টি পার্ট',
+            `playVideo('${esc(first.youtube_link||'')}','${esc(ch)}','${esc(first.class_type||'website')}','${esc(first.class_note||'')}','viewChapters',[['🧬 Medical','${esc(subj)}','${esc(paper)}','${esc(ch)}']]);currentChapter='${esc(ch)}'`
+        );
+    });
+    document.getElementById('chapterList').innerHTML = html || emptyState('কোনো চ্যাপ্টার নেই');
+    showOnly('viewChapters');
+}
+
+// ===== MEDICAL GUIDELINES =====
+function openMedicalGuide() {
+    showOnly('viewTimerType');
+}
+
+function openTimerVideos(timerType) {
+    currentTimerType = timerType;
+    currentVideoListBack = () => showOnly('viewTimerType');
+    const items = allClasses.filter(c => c.category === 'medical_guide' && (c.timer_type||'1st Timer') === timerType);
+
+    document.getElementById('videoListBreadcrumb').innerHTML = bc(['📋 Medical Guide', timerType]);
+    document.getElementById('videoListTitle').innerHTML = (timerType === '1st Timer' ? '🥇' : '🔄') + ' ' + timerType + ' ভিডিও <span class="sec-count">' + items.length + '</span>';
+
+    let html = '';
+    items.forEach((c, i) => {
+        html += listCard('▶️', 'blue',
+            c.topic || c.title || ('ভিডিও ' + (i+1)),
+            c.description || '',
+            `playVideo('${esc(c.youtube_link||'')}','${esc(c.topic||c.title||'')}','${esc(c.class_type||'website')}','${esc(c.class_note||'')}','viewVideoList',[['📋 Medical Guide','${esc(timerType)}','${esc(c.topic||'')}']])`
+        );
+    });
+    document.getElementById('videoListItems').innerHTML = html || emptyState('কোনো ভিডিও নেই');
+    showOnly('viewVideoList');
+}
+
+// ===== VARSITY GUIDELINES =====
+function openVarsityGuide() {
+    currentVideoListBack = () => goHome();
+    const items = allClasses.filter(c => c.category === 'varsity_guide');
+    document.getElementById('videoListBreadcrumb').innerHTML = bc(['🎓 Varsity Admission Guidelines']);
+    document.getElementById('videoListTitle').innerHTML = '🎓 Varsity Guide <span class="sec-count">' + items.length + '</span>';
+
+    let html = '';
+    items.forEach((c, i) => {
+        html += listCard('▶️', 'orange',
+            c.topic || c.title || ('ভিডিও ' + (i+1)),
+            c.description || '',
+            `playVideo('${esc(c.youtube_link||'')}','${esc(c.topic||c.title||'')}','${esc(c.class_type||'website')}','${esc(c.class_note||'')}','viewVideoList',[['🎓 Varsity Guide','${esc(c.topic||'')}']])`
+        );
+    });
+    document.getElementById('videoListItems').innerHTML = html || emptyState('কোনো ভিডিও নেই');
+    showOnly('viewVideoList');
+}
+
+// ===== SHORT TRICK =====
+function openShortTrick() {
+    currentVideoListBack = () => goHome();
+    const items = allClasses.filter(c => c.category === 'short_trick');
+    // group by subject
+    const subjects = {};
+    items.forEach(c => { const s = c.subject||'সাধারণ'; if(!subjects[s]) subjects[s]=[]; subjects[s].push(c); });
+
+    if (Object.keys(subjects).length === 1 || Object.keys(subjects).length === 0) {
+        // Show video list directly
+        document.getElementById('videoListBreadcrumb').innerHTML = bc(['⚡ Short Trick Video']);
+        document.getElementById('videoListTitle').innerHTML = '⚡ Short Trick <span class="sec-count">' + items.length + '</span>';
+        let html = '';
+        items.forEach((c, i) => {
+            html += listCard('⚡', 'pink',
+                c.subject || c.topic || ('ট্রিক ' + (i+1)),
+                c.description || '',
+                `playVideo('${esc(c.youtube_link||'')}','${esc(c.subject||c.topic||'')}','${esc(c.class_type||'website')}','${esc(c.class_note||'')}','viewVideoList',[['⚡ Short Trick','${esc(c.subject||'')}']])`
+            );
+        });
+        document.getElementById('videoListItems').innerHTML = html || emptyState('কোনো ভিডিও নেই');
+        showOnly('viewVideoList');
+    } else {
+        // Show subject cards → video list
+        document.getElementById('videoListBreadcrumb').innerHTML = bc(['⚡ Short Trick Video']);
+        document.getElementById('videoListTitle').innerHTML = '⚡ Short Trick সাবজেক্ট <span class="sec-count">' + Object.keys(subjects).length + '</span>';
+        let html = '';
+        Object.keys(subjects).forEach(s => {
+            html += listCard('⚡', 'pink', s, subjects[s].length + ' টি ট্রিক',
+                `openShortTrickSubject('${esc(s)}')`
+            );
+        });
+        document.getElementById('videoListItems').innerHTML = html || emptyState('কোনো সাবজেক্ট নেই');
+        showOnly('viewVideoList');
+    }
+}
+
+function openShortTrickSubject(subj) {
+    currentVideoListBack = () => openShortTrick();
+    const items = allClasses.filter(c => c.category === 'short_trick' && (c.subject||'সাধারণ') === subj);
+    document.getElementById('videoListBreadcrumb').innerHTML = bc(['⚡ Short Trick', subj]);
+    document.getElementById('videoListTitle').innerHTML = '⚡ ' + subj + ' <span class="sec-count">' + items.length + '</span>';
+    let html = '';
+    items.forEach((c, i) => {
+        html += listCard('▶️', 'pink',
+            c.topic || c.title || ('ট্রিক ' + (i+1)),
+            c.description || '',
+            `playVideo('${esc(c.youtube_link||'')}','${esc(c.topic||c.title||'')}','${esc(c.class_type||'website')}','${esc(c.class_note||'')}','viewVideoList',[['⚡ Short Trick','${esc(subj)}','${esc(c.topic||'')}']])`
+        );
+    });
+    document.getElementById('videoListItems').innerHTML = html || emptyState('কোনো ভিডিও নেই');
+}
+
+// ===== COURSE FEATURE =====
+function openCourseFeature() {
+    currentVideoListBack = () => goHome();
+    const items = allClasses.filter(c => c.category === 'course_feature');
+    const courses = {};
+    items.forEach(c => { const cn = c.course_name||'Course'; if(!courses[cn]) courses[cn]=[]; courses[cn].push(c); });
+
+    document.getElementById('videoListBreadcrumb').innerHTML = bc(['🎯 Course Feature']);
+    document.getElementById('videoListTitle').innerHTML = '🎯 Course Feature <span class="sec-count">' + Object.keys(courses).length + ' কোর্স</span>';
+    let html = '';
+    Object.keys(courses).forEach(cn => {
+        html += listCard('🎯', 'teal', cn, courses[cn].length + ' টি ফিচার ভিডিও',
+            `openCourseVideos('${esc(cn)}')`
+        );
+    });
+    document.getElementById('videoListItems').innerHTML = html || emptyState('কোনো কোর্স নেই');
+    showOnly('viewVideoList');
+}
+
+function openCourseVideos(courseName) {
+    currentVideoListBack = () => openCourseFeature();
+    const items = allClasses.filter(c => c.category === 'course_feature' && (c.course_name||'Course') === courseName);
+    document.getElementById('videoListBreadcrumb').innerHTML = bc(['🎯 Course Feature', courseName]);
+    document.getElementById('videoListTitle').innerHTML = '🎯 ' + courseName + ' <span class="sec-count">' + items.length + '</span>';
+    let html = '';
+    items.forEach((c, i) => {
+        html += listCard('▶️', 'teal',
+            c.feature_name || c.title || ('ফিচার ' + (i+1)),
+            c.description || '',
+            `playVideo('${esc(c.youtube_link||'')}','${esc(c.feature_name||c.title||'')}','${esc(c.class_type||'website')}','${esc(c.class_note||'')}','viewVideoList',[['🎯 Course Feature','${esc(courseName)}','${esc(c.feature_name||'')}']])`
+        );
+    });
+    document.getElementById('videoListItems').innerHTML = html || emptyState('কোনো ভিডিও নেই');
+}
+
+// ===== VIDEO PLAYER =====
+function playVideo(link, title, classType, classNote, backView, breadcrumbParts) {
+    videoBackTarget = backView || 'viewChapters';
+
+    // Breadcrumb
+    document.getElementById('videoBreadcrumb').innerHTML = bc(breadcrumbParts ? breadcrumbParts[0] : []);
+
+    // Info rows
+    if (breadcrumbParts && breadcrumbParts[0]) {
+        const labels = ['সাবজেক্ট','পেপার','চ্যাপ্টার','পার্ট','টপিক','ফিচার'];
+        const parts = breadcrumbParts[0].filter(p => p && !p.startsWith('🧬') && !p.startsWith('📋') && !p.startsWith('🎓') && !p.startsWith('⚡') && !p.startsWith('🎯'));
+        let rows = '';
+        parts.forEach((p, i) => {
+            rows += `<div class="info-row-fl"><span class="info-lbl">${labels[i]||'তথ্য'}</span><span class="info-val">${p}</span></div>`;
+        });
+        rows += `<div class="info-row-fl"><span class="info-lbl">টাইটেল</span><span class="info-val">${title}</span></div>`;
+        document.getElementById('videoInfoRows').innerHTML = rows;
+    }
+
+    // Player
+    const videoId = extractYouTubeID(link);
+    if (classType === 'youtube') {
+        document.getElementById('videoPlayer').innerHTML = `
+            <div class="video-no-embed">
+                <div class="vne-icon">▶️</div>
+                <div class="vne-text">YouTube-এ খুলুন</div>
+                <button class="vne-btn" onclick="window.open('${link}','_blank')">YouTube-এ দেখুন</button>
+            </div>
+        `;
+        window.open(link, '_blank');
+    } else if (videoId) {
+        document.getElementById('videoPlayer').innerHTML =
+            `<iframe src="https://www.youtube.com/embed/${videoId}?rel=0" allow="autoplay;encrypted-media;picture-in-picture" allowfullscreen></iframe>`;
+    } else {
+        document.getElementById('videoPlayer').innerHTML = `
+            <div class="video-no-embed">
+                <div class="vne-icon">⚠️</div>
+                <div class="vne-text">ভিডিও লিংক পাওয়া যায়নি</div>
+            </div>
+        `;
+    }
+
+    // Class note
+    if (classNote) {
+        document.getElementById('classNoteCard').style.display = 'block';
+        document.getElementById('classNoteContent').innerHTML = classNote.startsWith('http')
+            ? `<a href="${classNote}" target="_blank">${classNote}</a>`
+            : classNote;
+    } else {
+        document.getElementById('classNoteCard').style.display = 'none';
+    }
+
+    // Save history
+    try { Storage.saveClassHistory(currentSubject || currentCategory, currentChapter || title, title); } catch(e) {}
+
+    showOnly('viewVideo');
+}
+
+// ===== BACK NAVIGATION =====
+function videoBack() {
+    showOnly(videoBackTarget || 'viewHome');
+}
+function videoListBack() {
+    if (typeof currentVideoListBack === 'function') currentVideoListBack();
+    else goHome();
+}
+function goHome() { activeFilter = 'all'; renderHome(); showOnly('viewHome'); }
+function goToSubjects() { showOnly('viewSubjects'); }
+function goToPapers() { showOnly('viewPapers'); }
+function goToChapters() { showOnly('viewChapters'); }
+
+// ===== HELPERS =====
+function showOnly(viewId) {
+    ['viewHome','viewSubjects','viewPapers','viewChapters','viewTimerType','viewVideoList','viewVideo']
+        .forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = (id === viewId) ? 'block' : 'none';
+        });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function extractYouTubeID(url) {
+    if (!url) return null;
+    const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s?]+)/);
+    return m ? m[1] : null;
+}
+
+function esc(str) {
+    return (str || '').replace(/'/g, "\\'").replace(/\n/g, ' ');
+}
+
+function bc(parts) {
+    if (!parts || !parts.length) return '';
+    return parts.map((p, i) => {
+        if (i === parts.length - 1) return `<span class="bc-active">${p}</span>`;
+        return `<span>${p}</span><span class="bc-sep"> › </span>`;
+    }).join('');
+}
+
+function listCard(emoji, color, name, sub, onclick) {
+    return `
+        <div class="list-card animate-in" onclick="${onclick}">
+            <div class="lc-left">
+                <div class="lc-icon ${color}">${emoji}</div>
+                <div class="lc-info">
+                    <div class="lc-name">${name}</div>
+                    ${sub ? `<div class="lc-sub">${sub}</div>` : ''}
+                </div>
+            </div>
+            <div class="lc-arrow">›</div>
+        </div>
+    `;
+}
+
+function emptyState(msg) {
+    return `<div class="empty-state"><div class="es-icon">📭</div>${msg}</div>`;
+}
+
+// ===== AD BLOCK DETECTION =====
+function detectAdBlocker() {
+    const test = document.createElement('div');
+    test.innerHTML = '&nbsp;';
+    test.className = 'adsbox';
+    document.body.appendChild(test);
+    setTimeout(() => {
+        if (test.offsetHeight === 0) showToast('⚠️ দয়া করে Ad Blocker বন্ধ করুন');
+        test.remove();
+    }, 100);
+}
+
+// ===== COMMON UTILS =====
+function showToast(m, d = 2200) {
+    const t = document.getElementById('toast');
+    t.textContent = m; t.classList.add('show');
+    clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), d);
+}
+function toggleTheme() {
+    isDarkMode = !isDarkMode;
+    document.body.classList.toggle('dark-mode', isDarkMode);
+    document.body.classList.toggle('light-mode', !isDarkMode);
+    document.getElementById('themeToggle').textContent = isDarkMode ? '☀️' : '🌙';
+    try { Storage.saveTheme(isDarkMode ? 'dark' : 'light'); } catch(e) {}
+}
+function toggleSidebar() {
+    isSidebarOpen = !isSidebarOpen;
+    document.getElementById('sidebarOverlay').classList.toggle('active', isSidebarOpen);
+    document.getElementById('sidebar').classList.toggle('active', isSidebarOpen);
+}
+function closeSidebar() {
+    isSidebarOpen = false;
+    document.getElementById('sidebarOverlay').classList.remove('active');
+    document.getElementById('sidebar').classList.remove('active');
+}
+function goTo(u) { location.href = u; }
+function navigateTo(p) {
+    const r = { home: 'index.html', profile: 'dashboard.html', class: 'class.html', exam: 'exam.html' };
+    goTo(r[p] || 'index.html');
+}
+function openWA() { window.open('https://wa.me/8801999681290', '_blank'); }
+function openTG() { window.open('https://t.me/rafi_somc', '_blank'); }
+function logout() { try { Storage.clearSession(); } catch(e) {} goTo('index.html'); }
+
+// ===== ERROR HANDLING =====
+function showError(title, message, details, retryFn) {
+    const existing = document.querySelector('.error-popup-overlay');
+    if (existing) existing.remove();
+    const overlay = document.createElement('div');
+    overlay.className = 'error-popup-overlay';
+    let retryHTML = '';
+    if (retryFn) retryHTML = `<button class="error-popup-retry" onclick="this.closest('.error-popup-overlay').remove();(${retryFn.toString()})();">🔄 আবার চেষ্টা</button>`;
+    overlay.innerHTML = `
+        <div class="error-popup" onclick="event.stopPropagation()">
+            <div class="error-popup-icon">⚠️</div>
+            <div class="error-popup-title">${title || 'কিছু সমস্যা হয়েছে'}</div>
+            <div class="error-popup-message">${message || 'পরে আবার চেষ্টা করুন'}</div>
+            ${details ? `<div class="error-popup-details">${details}</div>` : ''}
+            <div style="display:flex;justify-content:center;gap:8px;">
+                ${retryHTML}
+                <button class="error-popup-btn" onclick="this.closest('.error-popup-overlay').remove()">✕ বন্ধ</button>
+            </div>
+        </div>
+    `;
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+}
+window.addEventListener('error', e => {
+    showError('💥 সমস্যা', 'পৃষ্ঠাটি রিলোড করুন', e.error?.message, () => location.reload());
+});
+window.addEventListener('unhandledrejection', e => {
+    showError('⚠️ প্রসেসিং সমস্যা', 'অনুরোধ সম্পূর্ণ করা যায়নি', e.reason?.message, null);
+});
+
+// ===== INIT =====
 loadClasses();
+detectAdBlocker();
 </script>
 </body>
 </html>
