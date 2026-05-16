@@ -3,138 +3,253 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATLAS APP</title>
-    
-    <!-- FEATURE 20: PWA Support -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#7B82FF">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
-    <!-- FEATURE 17-18: API + Storage -->
-    <script src="api.js"></script>
-    <script src="storage.js"></script>
-    
-    <!-- Styles -->
-    <link rel="stylesheet" href="style.css">
+    <title>ATLAS EXAM</title>
     <style>
-        /* FEATURE 8: Home Buttons Grid */
-        .home-buttons{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
-        .home-btn{background-color:var(--card-bg);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px 10px;font-family:'Noto Sans Bengali','Inter',sans-serif;font-size:13px;font-weight:600;text-align:center;cursor:pointer;transition:all 0.2s ease;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;align-items:center;gap:6px;}
-        .home-btn:hover{border-color:var(--accent);box-shadow:var(--shadow-glow),var(--shadow);transform:translateY(-2px);}
-        .home-btn .btn-icon{font-size:24px;}
-        .home-btn .btn-text{font-size:11px;line-height:1.3;}
-        .home-btn-full{grid-column:1/-1;}
-        .home-btn.admin-btn{border-color:var(--error);color:var(--error);display:none;}
-        .home-btn.admin-btn:hover{background:var(--error-light);box-shadow:var(--error-glow);}
+        :root {
+            --bg: #0D1117; --card: #161B22; --hover: #1C2129;
+            --text: #E6EDF3; --text2: #8B949E;
+            --accent: #7C83FF; --accent-hover: #9499FF;
+            --border: #30363D; --shadow: 0 2px 8px rgba(0,0,0,0.3);
+            --glow: 0 0 0 2px rgba(124,131,255,0.12);
+            --radius: 14px; --radius-sm: 10px;
+            --red: #F85149; --green: #3FB950; --yellow: #D29922;
+            --cd-bg: #1A0A1A; --cd-border: #F85149; --cd-text: #FCA5A5;
+            --cd-glow: rgba(248,81,73,0.35);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', 'Noto Sans Bengali', system-ui, sans-serif;
+            background: var(--bg); color: var(--text);
+            min-height: 100vh; padding: 70px 0 70px;
+            -webkit-font-smoothing: antialiased;
+        }
+        .header {
+            position: fixed; top: 0; left: 0; right: 0; height: 56px;
+            background: var(--card); border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 16px; z-index: 100; backdrop-filter: blur(12px);
+        }
+        .hamburger { background: none; border: none; color: var(--text); font-size: 22px; cursor: pointer; padding: 6px; }
+        .logo { font-size: 20px; font-weight: 800; color: var(--accent); letter-spacing: -1px; }
+        .header-icon { background: var(--card); border: 1px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .header-icon:hover { border-color: var(--accent); box-shadow: var(--glow); }
         
-        /* FEATURE 7: Timer Colors */
-        .timer-1{--timer-accent:#F85149;} .timer-2{--timer-accent:#3B82F6;} .timer-3{--timer-accent:#22C55E;} .timer-4{--timer-accent:#EC4899;} .timer-5{--timer-accent:#F97316;}
+        .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; opacity: 0; visibility: hidden; transition: 0.2s; }
+        .sidebar-overlay.active { opacity: 1; visibility: visible; }
+        .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--card); z-index: 201; overflow-y: auto; transition: 0.2s; border-right: 1px solid var(--border); }
+        .sidebar.active { left: 0; }
+        .sidebar-header { background: var(--card); padding: 20px 16px; text-align: center; border-bottom: 1px solid var(--border); }
+        .sidebar-logo { font-size: 20px; font-weight: 800; color: var(--accent); }
+        .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 12px 18px; color: var(--text2); border: none; background: none; width: 100%; text-align: left; font-size: 14px; cursor: pointer; transition: 0.2s; font-family: inherit; }
+        .sidebar-item:hover { background: var(--hover); color: var(--text); }
+        .sidebar-divider { height: 1px; background: var(--border); margin: 8px 0; }
         
-        /* FEATURE 12: Owner Flip Card */
-        .owner-section{display:flex;flex-direction:column;align-items:center;margin:18px 0 14px;}
-        .owner-name-top{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:10px;}
-        .flip-card-owner{width:130px;height:130px;perspective:800px;cursor:pointer;}
-        .flip-card-owner.flipped .flip-card-inner-owner{transform:rotateY(180deg);}
-        .flip-card-inner-owner{position:relative;width:100%;height:100%;transition:transform 0.5s ease;transform-style:preserve-3d;}
-        .flip-front-owner,.flip-back-owner{position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:var(--radius-sm);}
-        .flip-front-owner{background:var(--card-bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;}
-        .flip-back-owner{background:var(--card-bg);border:1px solid var(--accent);transform:rotateY(180deg);padding:10px;text-align:center;font-size:10px;color:var(--text-secondary);display:flex;align-items:center;justify-content:center;}
-        .owner-photo-wrapper{position:relative;width:130px;height:130px;}
-        .owner-photo-box{width:130px;height:130px;border-radius:var(--radius-sm);object-fit:cover;border:2px solid var(--border);position:relative;z-index:2;}
-        .owner-glow-box{position:absolute;top:-8px;left:-8px;width:calc(130px + 16px);height:calc(130px + 16px);border-radius:calc(var(--radius-sm) + 8px);background:transparent;animation:rotateGlowBox 3s linear infinite;z-index:1;pointer-events:none;}
-        .owner-glow-box::before{content:'';position:absolute;top:-3px;left:-3px;width:calc(100% + 6px);height:calc(100% + 6px);border-radius:calc(var(--radius-sm) + 10px);background:conic-gradient(from 0deg,transparent 0deg,var(--accent)90deg,transparent 180deg,transparent 270deg,var(--accent)360deg);animation:rotateGlowBox 1.8s linear infinite;opacity:0.32;filter:blur(5px);}
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
+            background: var(--card); border-top: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-around; z-index: 100;
+        }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: none; color: var(--text2); font-size: 10px; cursor: pointer; padding: 6px 10px; border-radius: 8px; transition: 0.2s; font-family: inherit; }
+        .nav-item.active { color: var(--accent); }
+        .nav-item .nav-icon { font-size: 20px; }
         
-        /* FEATURE 10: My Mistakes Modal */
-        .filter-row{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
-        .filter-row select{padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:11px;font-family:inherit;}
-        .mistake-item{background:var(--card-hover);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;}
-        .mistake-item summary{font-weight:700;font-size:13px;cursor:pointer;color:var(--text);}
-        .mistake-item summary:hover{color:var(--accent);}
-        .mistake-item .dropdown-actions{display:flex;flex-direction:column;gap:4px;margin-top:8px;}
+        .floating-buttons { position: fixed; bottom: 80px; right: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 99; }
+        .fab { width: 42px; height: 42px; border-radius: 50%; border: none; font-size: 18px; cursor: pointer; color: #fff; display: flex; align-items: center; justify-content: center; transition: 0.2s; box-shadow: var(--shadow); }
+        .fab-wa { background: #25D366; } .fab-wa:hover { transform: scale(1.08); }
+        .fab-tg { background: #0088CC; } .fab-tg:hover { transform: scale(1.08); }
         
-        @media(min-width:600px){.home-buttons{grid-template-columns:repeat(3,1fr);}}
+        .toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: var(--card); color: var(--text); border: 1px solid var(--accent); padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 600; z-index: 999; opacity: 0; transition: 0.2s; pointer-events: none; }
+        .toast.show { opacity: 1; }
+        
+        .main-container { max-width: 520px; margin: 0 auto; padding: 12px 14px 20px; }
+        
+        /* Timer */
+        .countdown-card {
+            background: var(--cd-bg); border: 1px solid var(--cd-border);
+            border-radius: var(--radius); padding: 20px 18px; margin-bottom: 14px;
+            text-align: center; box-shadow: 0 0 20px var(--cd-glow);
+            animation: pulseRed 2.5s ease-in-out infinite;
+        }
+        @keyframes pulseRed { 0%,100%{box-shadow: 0 0 20px var(--cd-glow);} 50%{box-shadow: 0 0 32px rgba(248,81,73,0.45);} }
+        .timer-label { font-size: 11px; font-weight: 700; color: var(--cd-text); opacity: 0.8; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
+        .timer-topic { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 2px; }
+        .timer-subtopic { font-size: 12px; color: var(--cd-text); opacity: 0.7; margin-bottom: 12px; }
+        .timer-clock-row { display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .timer-clock { font-size: 28px; }
+        .timer-time { font-size: 28px; font-weight: 800; color: var(--cd-text); letter-spacing: 2px; font-variant-numeric: tabular-nums; }
+        .timer-labels { display: flex; justify-content: center; gap: 20px; font-size: 10px; color: var(--cd-text); opacity: 0.5; margin-top: 4px; }
+        
+        /* Special Card */
+        .special-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 16px; margin-bottom: 14px;
+            text-align: center; box-shadow: var(--shadow);
+        }
+        .special-card img { max-width: 100%; max-height: 160px; border-radius: 10px; object-fit: cover; margin-bottom: 8px; }
+        .special-text { font-size: 13px; color: var(--text2); margin-bottom: 6px; }
+        .special-link { display: inline-block; padding: 8px 18px; background: var(--accent); color: #fff; border-radius: 20px; font-size: 12px; font-weight: 700; text-decoration: none; transition: 0.2s; }
+        .special-link:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        
+        /* Buttons */
+        .home-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+        .home-btn {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 14px 10px;
+            font-size: 13px; font-weight: 600; color: var(--text);
+            text-align: center; cursor: pointer; transition: all 0.2s;
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+        }
+        .home-btn:hover { border-color: var(--accent); box-shadow: var(--glow); transform: translateY(-2px); }
+        .home-btn-full { grid-column: 1/-1; }
+        .home-btn .btn-icon { font-size: 24px; }
+        .home-btn .btn-text { font-size: 11px; line-height: 1.2; }
+        .home-btn.admin-btn { border-color: var(--red); color: var(--red); }
+        .home-btn.admin-btn:hover { background: #1A0A0A; box-shadow: 0 0 16px rgba(248,81,73,0.25); }
+        
+        /* Social */
+        .social-row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+        .social-chip {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+            background: var(--card); border: 1px solid var(--border);
+            color: var(--text2); text-decoration: none; transition: 0.2s;
+        }
+        .social-chip:hover { border-color: var(--accent); color: var(--text); }
+        
+        /* Owner */
+        .owner-section { display: flex; flex-direction: column; align-items: center; margin: 20px 0 16px; }
+        .owner-name-top { font-size: 15px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+        .flip-card-owner { width: 120px; height: 120px; perspective: 800px; cursor: pointer; }
+        .flip-card-owner.flipped .flip-card-inner-owner { transform: rotateY(180deg); }
+        .flip-card-inner-owner { position: relative; width: 100%; height: 100%; transition: 0.5s; transform-style: preserve-3d; }
+        .flip-front-owner, .flip-back-owner { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: var(--radius-sm); }
+        .flip-front-owner { background: var(--card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
+        .flip-back-owner { background: var(--card); border: 1px solid var(--accent); transform: rotateY(180deg); padding: 10px; text-align: center; font-size: 10px; color: var(--text2); display: flex; align-items: center; justify-content: center; }
+        .owner-photo-wrapper { position: relative; width: 100px; height: 100px; }
+        .owner-photo-box { width: 100px; height: 100px; border-radius: 10px; object-fit: cover; border: 2px solid var(--border); position: relative; z-index: 2; }
+           .owner-glow-box {
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    width: calc(100px + 16px);
+    height: calc(100px + 16px);
+    border-radius: 16px;
+    background: transparent;
+    animation: rotateGlowBox 3s linear infinite;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.owner-glow-box::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    width: calc(100% + 6px);
+    height: calc(100% + 6px);
+    border-radius: 18px;
+    background: conic-gradient(
+        from 0deg,
+        transparent 0deg,
+        var(--accent) 90deg,
+        transparent 180deg,
+        transparent 270deg,
+        var(--accent) 360deg
+    );
+    animation: rotateGlowBox 1.5s linear infinite;
+    opacity: 0.3;
+    filter: blur(6px);
+}
+
+@keyframes rotateGlowBox {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+        
+        /* Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 300; display: none; align-items: center; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; max-width: 480px; width: 94%; max-height: 85vh; overflow-y: auto; }
+        .modal-title { font-size: 17px; font-weight: 700; color: var(--accent); margin-bottom: 14px; text-align: center; }
+        .modal .btn { padding: 9px 14px; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; border: none; font-size: 12px; width: 100%; margin-top: 6px; font-family: inherit; transition: 0.2s; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text2); }
+        .btn-outline:hover { border-color: var(--accent); color: var(--text); }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-success { background: var(--green); color: #fff; }
+        .btn-danger { background: var(--red); color: #fff; }
+        
+        .card-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+        .mistake-item { background: var(--hover); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 8px; }
+        .mistake-item summary { font-weight: 700; font-size: 13px; cursor: pointer; color: var(--text); }
+        .mistake-item summary:hover { color: var(--accent); }
+        .mistake-item .dropdown-actions { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+        
+        .filter-row { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+        .filter-row select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font-size: 11px; font-family: inherit; }
+        
+        @media(min-width: 600px) { .home-buttons { grid-template-columns: 1fr 1fr 1fr; } }
     </style>
 </head>
-<body class="dark-mode">
+<body>
 
-<!-- FEATURE 2: Sidebar -->
+<!-- Sidebar -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header"><div class="sidebar-logo">ATLAS APP</div></div>
-    <div class="sidebar-menu">
-        <button class="sidebar-item" onclick="navigateTo('profile');closeSidebar();">👤 প্রোফাইল</button>
-        <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();">🏠 হোম</button>
-        <button class="sidebar-item" onclick="goTo('class.html');closeSidebar();">📚 ফ্রি ক্লাস</button>
-        <button class="sidebar-item" onclick="goTo('exam.html');closeSidebar();">📝 ফ্রি এক্সাম</button>
-        <button class="sidebar-item" onclick="goTo('mock-test.html');closeSidebar();">🎯 মক টেস্ট</button>
-        <button class="sidebar-item" onclick="openModelTestModal();closeSidebar();">📖 Model Test</button>
-        <button class="sidebar-item" onclick="openMistakesModal();closeSidebar();">⚠️ My Mistakes</button>
-        <button class="sidebar-item" onclick="goTo('ai.html');closeSidebar();">🤖 ATLAS AI</button>
-        <button class="sidebar-item" id="adminSidebarBtn" onclick="goTo('admin.html');closeSidebar();" style="display:none;">👑 Admin Control</button>
-        <div class="sidebar-divider"></div>
-        <button class="sidebar-item" onclick="openSocial('facebook')">📘 Facebook</button>
-        <button class="sidebar-item" onclick="openSocial('youtube')">▶️ YouTube</button>
-        <button class="sidebar-item" onclick="openSocial('telegram')">✈️ Telegram</button>
-        <button class="sidebar-item" onclick="openSocial('whatsapp')">💬 WhatsApp</button>
-        <div class="sidebar-divider"></div>
-        <button class="sidebar-item" onclick="toggleTheme()">🌙 ডার্ক মোড</button>
-    </div>
-    <div class="sidebar-footer">
-        <button class="sidebar-item logout-btn" onclick="logout()">🚪 লগআউট</button>
-    </div>
+    <div class="sidebar-header"><div class="sidebar-logo">ATLAS EXAM</div></div>
+    <button class="sidebar-item" onclick="navigateTo('profile');closeSidebar();">👤 প্রোফাইল</button>
+    <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();">🏠 হোম</button>
+    <button class="sidebar-item" onclick="goTo('class.html');closeSidebar();">📚 ফ্রি ক্লাস</button>
+    <button class="sidebar-item" onclick="goTo('exam.html');closeSidebar();">📝 ফ্রি এক্সাম</button>
+    <button class="sidebar-item" onclick="goTo('mock-test.html');closeSidebar();">🎯 মক টেস্ট</button>
+    <button class="sidebar-item" onclick="openModal('mistakes');closeSidebar();">⚠️ My Mistakes</button>
+    <button class="sidebar-item" onclick="goTo('ai.html');closeSidebar();">🤖 ATLAS AI</button>
+    <div class="sidebar-divider"></div>
+    <button class="sidebar-item" onclick="toggleTheme()">🌙 ডার্ক মোড</button>
+    <button class="sidebar-item" onclick="openWA()">💬 WhatsApp</button>
+    <button class="sidebar-item" onclick="openTG()">✈️ Telegram</button>
 </aside>
 
-<!-- FEATURE 1: Header -->
+<!-- Header -->
 <header class="header">
-    <div class="header-left">
-        <button class="hamburger" onclick="toggleSidebar()">☰</button>
-        <div class="atlas-brand-box">
-            <img src="https://cdn.phototourl.com/free/2026-05-15-b45df560-6dc8-4cb7-9040-238612c8a161.png" class="atlas-logo-img" alt="ATLAS">
-            <span class="atlas-brand-text">ATLAS APP</span>
-        </div>
-    </div>
-    <div class="header-right">
-        <button class="header-icon" onclick="toggleTheme()" id="themeToggle">🌙</button>
-        <button class="header-icon" onclick="navigateTo('profile')">👤</button>
-    </div>
+    <div style="display:flex;align-items:center;gap:10px;"><button class="hamburger" onclick="toggleSidebar()">☰</button><span class="logo">ATLAS EXAM</span></div>
+    <div style="display:flex;gap:6px;"><button class="header-icon" onclick="toggleTheme()">🌙</button><button class="header-icon" onclick="navigateTo('profile')">👤</button></div>
 </header>
 
 <main class="main-container">
 
-<!-- FEATURE 6: Special Card -->
+<!-- Special Card -->
 <div id="specialCardContainer"></div>
 
-<!-- FEATURE 7: Timers -->
+<!-- Timers -->
 <div id="timerContainer"></div>
 
-<!-- FEATURE 8: Home Buttons Grid -->
+<!-- Buttons -->
 <div class="home-buttons">
     <button class="home-btn" onclick="goTo('class.html')"><span class="btn-icon">📚</span><span class="btn-text">ফ্রি ক্লাস</span></button>
     <button class="home-btn" onclick="goTo('exam.html?cat=board')"><span class="btn-icon">🔵</span><span class="btn-text">বোর্ড প্রস্তুতি</span></button>
     <button class="home-btn" onclick="goTo('exam.html?cat=medical')"><span class="btn-icon">🟢</span><span class="btn-text">মেডিকেল+ডেন্টাল</span></button>
     <button class="home-btn" onclick="goTo('exam.html?cat=varsity')"><span class="btn-icon">🟣</span><span class="btn-text">ভার্সিটি প্রস্তুতি</span></button>
     <button class="home-btn" onclick="goTo('exam.html?cat=onushiloni')"><span class="btn-icon">🟠</span><span class="btn-text">অনুশীলনী এক্সাম</span></button>
-    <button class="home-btn" onclick="openModelTestModal()"><span class="btn-icon">📖</span><span class="btn-text">Model Test</span></button>
+    <button class="home-btn" onclick="openModal('modeltest')"><span class="btn-icon">📖</span><span class="btn-text">Model Test</span></button>
     <button class="home-btn home-btn-full" onclick="goTo('mock-test.html')"><span class="btn-icon">🎯</span><span class="btn-text">Unlimited Mock Test</span></button>
-    <button class="home-btn" onclick="openMistakesModal()"><span class="btn-icon">⚠️</span><span class="btn-text">My Mistakes</span></button>
+    <button class="home-btn" onclick="openModal('mistakes')"><span class="btn-icon">⚠️</span><span class="btn-text">My Mistakes</span></button>
     <button class="home-btn" onclick="goTo('ai.html')"><span class="btn-icon">🤖</span><span class="btn-text">ATLAS AI</span></button>
-    <button class="home-btn home-btn-full admin-btn" id="adminBtn" onclick="goTo('admin.html')">👑 Admin Control</button>
+    <button class="home-btn home-btn-full admin-btn" id="adminBtn" onclick="goTo('admin.html')" style="display:none;"><span class="btn-icon">👑</span><span class="btn-text">Admin Control</span></button>
 </div>
 
-<!-- FEATURE 11: Social Row -->
+<!-- Social -->
 <div class="social-row" id="socialRow"></div>
 
-<!-- FEATURE 12: Owner Section -->
+<!-- Owner -->
 <div class="owner-section">
-    <div class="owner-name-top" id="ownerNameTop">ATLAS APP</div>
+    <div class="owner-name-top" id="ownerNameTop">ATLAS EXAM</div>
     <div class="flip-card-owner" id="flipCardOwner" onclick="this.classList.toggle('flipped')">
         <div class="flip-card-inner-owner">
             <div class="flip-front-owner">
                 <div class="owner-photo-wrapper">
                     <div class="owner-glow-box"></div>
                     <img src="" class="owner-photo-box" id="ownerPhoto" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" alt="Owner">
-                    <div id="ownerPhotoFallback" style="display:flex;width:130px;height:130px;border-radius:10px;background:var(--card-hover);color:var(--text);align-items:center;justify-content:center;font-size:32px;border:2px solid var(--border);position:relative;z-index:2;">👤</div>
+                    <div id="ownerPhotoFallback" style="display:flex;width:100px;height:100px;border-radius:10px;background:var(--hover);color:var(--text);align-items:center;justify-content:center;font-size:28px;border:2px solid var(--border);position:relative;z-index:2;">👤</div>
                 </div>
             </div>
             <div class="flip-back-owner" id="ownerInfoBack"></div>
@@ -142,239 +257,183 @@
     </div>
 </div>
 
-<!-- FEATURE 13: Mentors -->
-<div id="mentorsContainer"></div>
-
 </main>
 
-<!-- FEATURE 9-10: Modals -->
-<div class="modal-overlay" id="mainModal"><div class="modal" id="modalContent" onclick="event.stopPropagation()"></div></div>
+<!-- Modal -->
+<div class="modal-overlay" id="mainModal" onclick="closeModal()"><div class="modal" id="modalContent" onclick="event.stopPropagation()"></div></div>
 
-<!-- FEATURE 3: Bottom Nav -->
+<!-- Bottom Nav -->
 <nav class="bottom-nav">
     <button class="nav-item active" onclick="goTo('index.html')"><span class="nav-icon">🏠</span>হোম</button>
     <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon">📚</span>ক্লাস</button>
     <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon">📝</span>এক্সাম</button>
     <button class="nav-item" onclick="goTo('mock-test.html')"><span class="nav-icon">🎯</span>মক</button>
-    <button class="nav-item" onclick="navigateTo('profile')"><span class="nav-icon">👤</span>প্রোফাইল</button>
+    <button class="nav-item" onclick="goTo('dashboard.html')"><span class="nav-icon">👤</span>প্রোফাইল</button>
 </nav>
 
-<!-- FEATURE 4: Floating Buttons -->
-<div class="floating-buttons">
-    <button class="fab fab-wa" onclick="openWA()"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg></button>
-    <button class="fab fab-tg" onclick="openTG()"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.223-.548.082l.183-2.852 5.19-4.688c.226-.198-.05-.308-.348-.11l-6.415 4.04-2.762-.862c-.6-.186-.61-.6.127-.892l10.79-4.155c.497-.185.93.12.773.862z"/></svg></button>
-</div>
-
-<!-- FEATURE 5: Toast -->
+<!-- Floating -->
+<div class="floating-buttons"><button class="fab fab-wa" onclick="openWA()">💬</button><button class="fab fab-tg" onclick="openTG()">✈️</button></div>
 <div class="toast" id="toast"></div>
 
 <script>
-// ============================================
-// FEATURE 15-16: Admin Check + Theme
-// ============================================
+const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
 let isDarkMode = true, isSidebarOpen = false;
 
-// FEATURE 16: Theme Toggle
-function toggleTheme() {
-    isDarkMode = !isDarkMode;
-    document.body.classList.toggle('dark-mode', isDarkMode);
-    document.body.classList.toggle('light-mode', !isDarkMode);
-    document.getElementById('themeToggle').textContent = isDarkMode ? '☀️' : '🌙';
-    Storage.saveTheme(isDarkMode ? 'dark' : 'light');
-}
-
-// FEATURE 2: Sidebar
+function showToast(m, d = 2000) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), d); }
+function toggleTheme() { isDarkMode = !isDarkMode; document.body.classList.toggle('dark-mode', isDarkMode); showToast(isDarkMode ? '🌙 ডার্ক' : '☀️ লাইট'); }
 function toggleSidebar() { isSidebarOpen = !isSidebarOpen; document.getElementById('sidebarOverlay').classList.toggle('active', isSidebarOpen); document.getElementById('sidebar').classList.toggle('active', isSidebarOpen); }
 function closeSidebar() { isSidebarOpen = false; document.getElementById('sidebarOverlay').classList.remove('active'); document.getElementById('sidebar').classList.remove('active'); }
-
-// Navigation
 function goTo(u) { location.href = u; }
 function navigateTo(p) { const r = { home:'index.html', profile:'dashboard.html', class:'class.html', exam:'exam.html' }; goTo(r[p]||'index.html'); }
 function openWA() { window.open('https://wa.me/8801999681290', '_blank'); }
 function openTG() { window.open('https://t.me/rafi_somc', '_blank'); }
-function logout() { Storage.clearSession(); goTo('index.html'); }
-function openSocial(p) { window.open(p==='facebook'?'https://facebook.com/':p==='youtube'?'https://youtube.com/':p==='telegram'?'https://t.me/':'https://wa.me/', '_blank'); }
 
-// FEATURE 5: Toast
-function showToast(m, d = 2000) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), d); }
+async function safeFetch(url, opts = {}) {
+    opts.headers = Object.assign({ apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }, opts.headers || {});
+    if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') opts.headers['Content-Type'] = 'application/json';
+    try { const res = await fetch(url, opts); const text = await res.text(); if (!text?.trim()) return []; const data = JSON.parse(text); if (!res.ok) throw new Error(data.message); return data; }
+    catch(e) { console.error('❌', e.message); return []; }
+}
 
-// ============================================
-// FEATURE 6: Special Card
-// ============================================
+// ========== TIMERS ==========
+async function loadTimers() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/countdowns?select=*&order=created_at.desc&limit=5`);
+        if (!data?.length) return;
+        const container = document.getElementById('timerContainer');
+        let html = '';
+        const colors = ['#FCA5A5','#60A5FA','#4ADE80','#F472B6','#FB923C'];
+        data.forEach((cd, i) => {
+            const color = colors[i % colors.length];
+            html += `<div class="countdown-card" style="--cd-text:${color};--cd-glow:rgba(${i===0?'248,81,73':i===1?'96,165,250':i===2?'74,222,128':i===3?'244,114,182':'251,146,60'},0.35);border-color:${color};box-shadow:0 0 20px rgba(${i===0?'248,81,73':i===1?'96,165,250':i===2?'74,222,128':i===3?'244,114,182':'251,146,60'},0.3);animation:pulseRed 2.5s ease-in-out infinite;">
+                <div class="timer-label">ATLAS Timer-${String(i+1).padStart(2,'0')}</div>
+                <div class="timer-topic">${cd.main_topic}</div>
+                ${cd.subtopic ? `<div class="timer-subtopic">${cd.subtopic}</div>` : ''}
+                <div class="timer-clock-row"><span class="timer-clock">🕐</span><span class="timer-time countdown-timer-${i}">-- : -- : -- : --</span></div>
+                <div class="timer-labels"><span>দিন</span><span>ঘণ্টা</span><span>মিনিট</span><span>সেকেন্ড</span></div>
+            </div>`;
+            setTimeout(() => startCountdown(cd.end_time, `.countdown-timer-${i}`), i * 100);
+        });
+        container.innerHTML = html;
+    } catch(e) {}
+}
+
+function startCountdown(endTime, selector) {
+    const target = new Date(endTime);
+    const el = document.querySelector(selector);
+    if (!el) return;
+    function update() {
+        const diff = target - new Date();
+        if (diff <= 0) { el.textContent = '০০ : ০০ : ০০ : ০০'; return; }
+        const d = Math.floor(diff/(1000*60*60*24));
+        const h = Math.floor((diff%(1000*60*60*24))/(1000*60*60));
+        const m = Math.floor((diff%(1000*60*60))/(1000*60));
+        const s = Math.floor((diff%(1000*60))/1000);
+        el.textContent = `${String(d).padStart(2,'0')} : ${String(h).padStart(2,'0')} : ${String(m).padStart(2,'0')} : ${String(s).padStart(2,'0')}`;
+    }
+    update(); setInterval(update, 1000);
+}
+
+// ========== SPECIAL CARD ==========
 async function loadSpecialCards() {
     try {
-        const data = await API.specialCards.list();
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/special_cards?select=*&order=created_at.desc&limit=1`);
         if (!data?.length) return;
         const s = data[0];
         let html = '<div class="special-card">';
         if (s.image_url) html += `<img src="${s.image_url}" alt="Special">`;
         if (s.description) html += `<div class="special-text">${s.description}</div>`;
-        if (s.special_text && s.link) {
-            let link = s.link;
-            if (!link.startsWith('http://') && !link.startsWith('https://')) link = 'https://' + link;
-            html += `<a href="${link}" target="_blank" class="special-link">${s.special_text}</a>`;
-        } else if (s.special_text) {
-            html += `<span class="special-link" style="cursor:default;">${s.special_text}</span>`;
-        }
+        if (s.special_text && s.link) html += `<a href="${s.link}" target="_blank" class="special-link">${s.special_text}</a>`;
+        else if (s.special_text) html += `<span class="special-link" style="cursor:default;">${s.special_text}</span>`;
         html += '</div>';
         document.getElementById('specialCardContainer').innerHTML = html;
     } catch(e) {}
 }
 
-// ============================================
-// FEATURE 7: Timers
-// ============================================
-async function loadTimers() {
-    try {
-        const data = await API.countdowns.list();
-        if (!data?.length) return;
-        let html = '';
-        data.forEach((cd, i) => {
-            html += `<div class="countdown-card timer-${i+1}">
-                <div class="timer-serial-box" style="background:${['#F85149','#3B82F6','#22C55E','#EC4899','#F97316'][i]}">ATLAS Timer-${String(i+1).padStart(2,'0')}</div>
-                <div class="timer-main-topic">${cd.main_topic}</div>
-                ${cd.subtopic ? `<div class="timer-subtopic">${cd.subtopic}</div>` : ''}
-                <div class="timer-row">
-                    <span class="timer-clock-icon">🕐</span>
-                    <div class="timer-values">
-                        <div class="timer-block"><span class="timer-number countdown-d-${i}">--</span><span class="timer-label">দিন</span></div>
-                        <span class="timer-separator">:</span>
-                        <div class="timer-block"><span class="timer-number countdown-h-${i}">--</span><span class="timer-label">ঘণ্টা</span></div>
-                        <span class="timer-separator">:</span>
-                        <div class="timer-block"><span class="timer-number countdown-m-${i}">--</span><span class="timer-label">মিনিট</span></div>
-                        <span class="timer-separator">:</span>
-                        <div class="timer-block"><span class="timer-number countdown-s-${i}">--</span><span class="timer-label">সেকেন্ড</span></div>
-                    </div>
-                </div>
-            </div>`;
-            setTimeout(() => startCountdown(cd.end_time, i), i * 100);
-        });
-        document.getElementById('timerContainer').innerHTML = html;
-    } catch(e) {}
-}
-
-function startCountdown(endTime, i) {
-    const target = new Date(endTime);
-    const dEl = document.querySelector(`.countdown-d-${i}`);
-    const hEl = document.querySelector(`.countdown-h-${i}`);
-    const mEl = document.querySelector(`.countdown-m-${i}`);
-    const sEl = document.querySelector(`.countdown-s-${i}`);
-    if (!dEl) return;
-    function update() {
-        const diff = target - new Date();
-        if (diff <= 0) { dEl.textContent = '০০'; hEl.textContent = '০০'; mEl.textContent = '০০'; sEl.textContent = '০০'; return; }
-        dEl.textContent = String(Math.floor(diff / (1000 * 60 * 60 * 24))).padStart(2, '0');
-        hEl.textContent = String(Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))).padStart(2, '0');
-        mEl.textContent = String(Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
-        sEl.textContent = String(Math.floor((diff % (1000 * 60)) / 1000)).padStart(2, '0');
-    }
-    update(); setInterval(update, 1000);
-}
-
-// ============================================
-// FEATURE 9: Model Test Modal
-// ============================================
-function openModelTestModal() {
-    const mc = document.getElementById('modalContent');
-    mc.innerHTML = `<div class="modal-title">📖 Model Test</div>
-        <button class="btn btn-outline" onclick="closeModal();goTo('exam.html?cat=model&sub=medical_subject')" style="width:100%;margin-bottom:6px;">🏥 Medical (Subject Final)</button>
-        <button class="btn btn-outline" onclick="closeModal();goTo('exam.html?cat=model&sub=medical_paper')" style="width:100%;margin-bottom:6px;">🏥 Medical (Paper Final)</button>
-        <button class="btn btn-primary" onclick="closeModal();goTo('exam.html?cat=model&sub=full')" style="width:100%;margin-bottom:6px;">📖 Full Model Test</button>
-        <p style="font-size:10px;color:var(--text-secondary);text-align:center;">Bio=30, Chem=25, Phy=15, GK=15, Eng=15</p>
-        <button class="btn btn-outline" onclick="closeModal();goTo('exam.html?cat=model&sub=varsity')" style="width:100%;margin-bottom:6px;">🟣 Varsity</button>
-        <button class="btn btn-outline" onclick="closeModal()" style="width:100%;">✕ বন্ধ</button>`;
-    document.getElementById('mainModal').classList.add('active');
-}
-function closeModal() { document.getElementById('mainModal').classList.remove('active'); }
-
-// ============================================
-// FEATURE 10: My Mistakes Modal
-// ============================================
-function openMistakesModal() {
-    if (!Storage.isLoggedIn()) {
-        document.getElementById('modalContent').innerHTML = `<div class="modal-title">⚠️ My Mistakes</div><p style="color:var(--text-secondary);text-align:center;">লগইন করুন</p><button class="btn btn-outline" onclick="closeModal()" style="width:100%;margin-top:8px;">✕ বন্ধ</button>`;
-        document.getElementById('mainModal').classList.add('active');
-        return;
-    }
-    goTo('dashboard.html');
-}
-
-// ============================================
-// FEATURE 11: Social Links
-// ============================================
+// ========== SOCIAL ==========
 async function loadSocialLinks() {
     try {
-        const data = await API.social.list();
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/social_links?select=*&order=created_at.desc&limit=20`);
         if (!data?.length) return;
         const icons = { facebook:'📘', youtube:'▶️', telegram:'✈️', whatsapp:'💬', other:'🔗' };
         document.getElementById('socialRow').innerHTML = data.map(s => `<a href="${s.link}" target="_blank" class="social-chip">${icons[s.type]||'🔗'} ${s.media_name}</a>`).join('');
     } catch(e) {}
 }
 
-// ============================================
-// FEATURE 12: Owner Section
-// ============================================
+// ========== OWNER ==========
 function loadOwnerInfo() {
-    const owner = Storage.getOwner();
-    if (owner.name) document.getElementById('ownerNameTop').textContent = owner.name;
-    if (owner.info) document.getElementById('ownerInfoBack').innerHTML = owner.info.replace(/\n/g, '<br>');
-    if (owner.photo) {
-        const img = document.getElementById('ownerPhoto');
-        img.src = owner.photo;
-        img.style.display = 'block';
-        document.getElementById('ownerPhotoFallback').style.display = 'none';
-    }
+    const photo = localStorage.getItem('owner_photo');
+    const name = localStorage.getItem('owner_name');
+    const info = localStorage.getItem('owner_info');
+    if (name) document.getElementById('ownerNameTop').textContent = name;
+    if (info) document.getElementById('ownerInfoBack').innerHTML = info.replace(/\n/g, '<br>');
+    if (photo) { const img = document.getElementById('ownerPhoto'); img.src = photo; img.style.display = 'block'; document.getElementById('ownerPhotoFallback').style.display = 'none'; }
 }
 
-// ============================================
-// FEATURE 13: Mentors
-// ============================================
+// ========== ADMIN CHECK ==========
+function checkAdmin() {
+    try { const sess = JSON.parse(localStorage.getItem('atlas-session')); if (sess?.phone === '01754365403' || sess?.role === 'admin') document.getElementById('adminBtn').style.display = 'flex'; } catch(e) {}
+}
+// Mentors 
 async function loadMentors() {
     try {
-        const data = await API.mentors.list();
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/mentors?select=*&order=sort_order,created_at&limit=6`);
         if (!data?.length) return;
         let html = '<div style="text-align:center;margin:16px 0;"><div style="font-size:12px;color:var(--accent);font-weight:700;margin-bottom:8px;">👨‍🏫 Mentors</div><div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;">';
         data.forEach(m => {
-            html += `<div style="text-align:center;width:80px;"><img src="${m.photo_url||''}" style="width:60px;height:60px;border-radius:10px;object-fit:cover;border:2px solid var(--border);" onerror="this.style.display='none'"><div style="font-size:10px;font-weight:600;margin-top:3px;">${m.name}</div><div style="font-size:9px;color:var(--text-secondary);">${m.role||''}</div></div>`;
+            html += `<div style="text-align:center;width:80px;"><img src="${m.photo_url||''}" style="width:60px;height:60px;border-radius:10px;object-fit:cover;border:2px solid var(--border);" onerror="this.style.display='none'"><div style="font-size:10px;font-weight:600;margin-top:3px;">${m.name}</div><div style="font-size:9px;color:var(--text2);">${m.role||''}</div></div>`;
         });
         html += '</div></div>';
-        document.getElementById('mentorsContainer').innerHTML = html;
+        document.querySelector('.owner-section').insertAdjacentHTML('afterend', html);
     } catch(e) {}
 }
-
-// ============================================
-// FEATURE 14-15: Admin Check
-// ============================================
-function checkAdmin() {
-    if (Storage.isAdmin() || Storage.isSubAdmin()) {
-        document.getElementById('adminBtn').style.display = 'flex';
-        document.getElementById('adminSidebarBtn').style.display = 'flex';
+// ========== MODAL ==========
+function openModal(type) {
+    const mc = document.getElementById('modalContent');
+    let html = '';
+    if (type === 'mistakes') {
+        html = '<div class="modal-title">⚠️ My Mistakes</div>';
+        const sess = localStorage.getItem('atlas-session');
+        if (!sess) { html += '<p style="color:var(--text2);text-align:center;">লগইন করুন</p>'; }
+        else {
+            const user = JSON.parse(sess);
+            safeFetch(`${SUPABASE_URL}/rest/v1/exam_results?phone=eq.${user.phone}&select=*&order=submitted_at.desc&limit=30`).then(data => {
+                let h = '';
+                if (!data?.length) h = '<p style="text-align:center;color:var(--text2);padding:20px;">কোনো ভুল উত্তর নেই</p>';
+                else {
+                    h += '<div class="filter-row"><select id="mistakeFilterCat" onchange="filterMistakes()"><option value="all">সব ক্যাটাগরি</option></select><select id="mistakeFilterSub" onchange="filterMistakes()"><option value="all">সব সাবজেক্ট</option></select></div>';
+                    h += `<div id="mistakeList">`;
+                    data.forEach((r, i) => {
+                        if ((r.wrong||0) > 0 || (r.skipped||0) > 0) {
+                            h += `<details class="mistake-item"><summary>📝 এক্সাম #${r.exam_id} — ❌${r.wrong||0} ⏭️${r.skipped||0} <span style="font-size:10px;color:var(--text2);">${new Date(r.submitted_at).toLocaleDateString('bn-BD')}</span></summary><div class="dropdown-actions"><button class="btn btn-outline" onclick="goTo('exam.html?id=${r.exam_id}')">📋 বিস্তারিত দেখো</button><button class="btn btn-success" onclick="practiceMode(${r.exam_id},'skip')">🔁 Practice-01 (শুধু স্কিপ)</button><button class="btn btn-primary" onclick="practiceMode(${r.exam_id},'all')">🔁 Practice-02 (ভুল+স্কিপ)</button></div></details>`;
+                        }
+                    });
+                    h += `</div>`;
+                    if (!h.includes('details')) h = '<p style="text-align:center;color:var(--text2);padding:20px;">সব সঠিক! 🎉</p>';
+                }
+                document.getElementById('modalContent').innerHTML = '<div class="modal-title">⚠️ My Mistakes</div>' + h + '<button class="btn btn-outline" onclick="closeModal()" style="margin-top:8px;">✕ বন্ধ</button>';
+            });
+        }
+    } else if (type === 'modeltest') {
+        html = '<div class="modal-title">📖 Model Test</div>';
+        html += '<button class="btn btn-outline" onclick="closeModal();goTo(\'exam.html?cat=model&sub=medical_subject\')">◾ Medical (Subject Final)</button>';
+        html += '<button class="btn btn-outline" onclick="closeModal();goTo(\'exam.html?cat=model&sub=medical_paper\')">◾ Medical (Paper Final)</button>';
+        html += '<button class="btn btn-primary" onclick="closeModal();goTo(\'exam.html?cat=model&sub=full\')">◾ Full Model Test</button>';
+        html += '<p style="font-size:10px;color:var(--text2);margin:6px 0;text-align:center;">Bio=30, Chem=25, Phy=15, GK=15, Eng=15</p>';
+        html += '<button class="btn btn-outline" onclick="closeModal();goTo(\'exam.html?cat=model&sub=varsity\')">◾ Varsity</button>';
+        html += '<button class="btn btn-outline" onclick="closeModal()" style="margin-top:6px;">✕ বন্ধ</button>';
     }
+    mc.innerHTML = html; document.getElementById('mainModal').classList.add('active');
 }
+function closeModal() { document.getElementById('mainModal').classList.remove('active'); }
+function filterMistakes() { showToast('🔜 ফিল্টার শীঘ্রই'); }
+function practiceMode(id, mode) { showToast('🔜 Practice-0' + (mode==='skip'?'1':'2') + ' — শীঘ্রই'); }
 
-// ============================================
-// FEATURE 19: Error Handler
-// ============================================
-function showError(title, message, details, retryFn) {
-    const existing = document.querySelector('.error-popup-overlay');
-    if (existing) existing.remove();
-    const overlay = document.createElement('div');
-    overlay.className = 'error-popup-overlay';
-    let retryHTML = '';
-    if (retryFn) retryHTML = `<button class="error-popup-retry" onclick="this.closest('.error-popup-overlay').remove();(${retryFn.toString()})();">🔄 আবার চেষ্টা</button>`;
-    overlay.innerHTML = `<div class="error-popup" onclick="event.stopPropagation()"><div class="error-popup-icon">⚠️</div><div class="error-popup-title">${title||'কিছু সমস্যা হয়েছে'}</div><div class="error-popup-message">${message||'পরে আবার চেষ্টা করুন'}</div>${details?`<div class="error-popup-details">${details}</div>`:''}<div style="display:flex;justify-content:center;gap:8px;">${retryHTML}<button class="error-popup-btn" onclick="this.closest('.error-popup-overlay').remove()">✕ বন্ধ</button></div></div>`;
-    overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
-    document.body.appendChild(overlay);
-}
-window.addEventListener('error', function(e) { showError('💥 সমস্যা', 'পৃষ্ঠাটি রিলোড করুন', e.error?.message, () => location.reload()); });
-window.addEventListener('unhandledrejection', function(e) { showError('⚠️ প্রসেসিং সমস্যা', 'অনুরোধ সম্পূর্ণ করা যায়নি', e.reason?.message, null); });
-
-// ============================================
-// INIT
-// ============================================
+// ========== INIT ==========
 document.addEventListener('DOMContentLoaded', () => {
-    loadSpecialCards();
     loadTimers();
+    loadSpecialCards();
     loadSocialLinks();
     loadOwnerInfo();
     loadMentors();
