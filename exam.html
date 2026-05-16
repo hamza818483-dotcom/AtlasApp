@@ -637,7 +637,53 @@ else {
 }
     } catch(e) {}
 }
+function showExamListWithPaper(data, cat, sub) {
+    const byPaper = {};
+    data.forEach(e => {
+        const p = e.paper || 'সাধারণ';
+        if (!byPaper[p]) byPaper[p] = [];
+        byPaper[p].push(e);
+    });
+    let html = '';
+    Object.keys(byPaper).forEach(paper => {
+        html += `<div class="cat-card" onclick="showChapterList('${paper}')" style="margin-bottom:8px;">
+            <span class="cat-name">📄 ${paper}</span>
+            <span class="cat-count">${byPaper[paper].length} exams</span></div>`;
+        window._paperData = window._paperData || {};
+        window._paperData[paper] = byPaper[paper];
+    });
+    document.getElementById('categoryContent').innerHTML = html || '<p>কোনো এক্সাম নেই</p>';
+    switchMode('Category');
+}
 
+function showChapterList(paper) {
+    const data = window._paperData?.[paper] || [];
+    const grouped = {};
+    data.forEach(e => {
+        const s = e.subject || 'সাধারণ';
+        if (!grouped[s]) grouped[s] = [];
+        grouped[s].push(e);
+    });
+    let html = `<button class="back-btn" onclick="backToPaperList()">← ফিরে যান</button>
+        <div class="section-header"><div class="section-title">📄 ${paper}</div></div>`;
+    Object.keys(grouped).forEach(s => {
+        html += `<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;">📘 ${s} (${grouped[s].length})</div>`;
+        grouped[s].forEach(e => {
+            html += `<div class="list-item" onclick="loadExamById(${e.id})">
+                <div><div class="list-item-title">📖 ${e.chapter||e.title||'Exam'}</div>
+                <div class="list-item-sub">${[e.board,e.year].filter(Boolean).join(' | ')} | ${e.total_marks||0} প্রশ্ন</div></div>
+                <span class="list-item-arrow">→</span></div>`;
+        });
+    });
+    document.getElementById('categoryContent').innerHTML = html;
+    switchMode('Category');
+}
+
+function backToPaperList() {
+    const allData = [];
+    Object.values(window._paperData || {}).forEach(arr => allData.push(...arr));
+    showExamListWithPaper(allData);
+}
 function showExamList(data) {
     const grouped = {};
     data.forEach(e => { const s = e.subject || 'সাধারণ'; if (!grouped[s]) grouped[s] = []; grouped[s].push(e); });
