@@ -3,121 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATLAS EXAM · AI</title>
+    <title>ATLAS APP · AI</title>
+    <link rel="stylesheet" href="style.css">
     <style>
-        :root {
-            --bg: #0A0E17; --card: #131822; --hover: #1A2130;
-            --text: #ECEEF2; --text2: #8E94A0;
-            --accent: #6C72FF; --accent-hover: #858AFF;
-            --border: #252B38; --shadow: 0 2px 10px rgba(0,0,0,0.4);
-            --radius: 14px; --radius-sm: 10px;
-            --red: #FF5A5A; --green: #3ECF8E;
-        }
-        .light-mode {
-            --bg: #F8F9FC; --card: #FFFFFF; --hover: #F1F3F8;
-            --text: #1A1D28; --text2: #6B7180;
-            --accent: #5B5FE8; --accent-hover: #4A4ED4;
-            --border: #E4E7F0; --shadow: 0 2px 10px rgba(0,0,0,0.06);
-        }
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body {
-            font-family: 'Inter', 'Noto Sans Bengali', system-ui, sans-serif;
-            background: var(--bg); color: var(--text);
-            min-height: 100vh; padding: 70px 0 70px;
-            -webkit-font-smoothing: antialiased; transition: background 0.3s, color 0.3s;
-        }
-        .header { position:fixed;top:0;left:0;right:0;height:56px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 14px;z-index:100; }
-        .hamburger{background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:6px;}
-        .logo{font-size:20px;font-weight:800;color:var(--accent);letter-spacing:-1px;}
-        .header-icon{background:var(--card);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:0.2s;}
-        .header-icon:hover{border-color:var(--accent);}
-        
-        .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;opacity:0;visibility:hidden;transition:0.2s;}
-        .sidebar-overlay.active{opacity:1;visibility:visible;}
-        .sidebar{position:fixed;top:0;left:-280px;width:280px;height:100%;background:var(--card);z-index:201;overflow-y:auto;transition:0.2s;border-right:1px solid var(--border);}
-        .sidebar.active{left:0;}
-        .sidebar-header{background:var(--card);padding:20px 16px;text-align:center;border-bottom:1px solid var(--border);}
-        .sidebar-logo{font-size:20px;font-weight:800;color:var(--accent);}
-        .sidebar-item{display:flex;align-items:center;gap:10px;padding:12px 18px;color:var(--text2);border:none;background:none;width:100%;text-align:left;font-size:14px;cursor:pointer;transition:0.2s;font-family:inherit;}
-        .sidebar-item:hover{background:var(--hover);color:var(--text);}
-        .sidebar-divider{height:1px;background:var(--border);margin:8px 0;}
-        
-        .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:60px;background:var(--card);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;z-index:100;}
-        .nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;color:var(--text2);font-size:10px;cursor:pointer;padding:6px 10px;border-radius:8px;transition:0.2s;font-family:inherit;}
-        .nav-item.active{color:var(--accent);}
-        .nav-item .nav-icon{font-size:20px;}
-        
-        .toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--card);color:var(--text);border:1px solid var(--accent);padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:0.2s;pointer-events:none;}
-        .toast.show{opacity:1;}
-        
-        .ai-container { max-width: 600px; margin: 0 auto; padding: 12px 14px; display: flex; flex-direction: column; height: calc(100vh - 56px - 60px - 24px); }
-        .ai-header-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 10px; text-align: center; box-shadow: var(--shadow); }
-        .ai-header-title { color: var(--accent); font-size: 16px; font-weight: 700; }
-        .ai-header-sub { color: var(--text2); font-size: 10px; margin-top: 2px; }
-        
-        .chat-area { flex: 1; overflow-y: auto; background: var(--card); border-radius: var(--radius); padding: 12px; margin-bottom: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
-        .chat-empty { text-align: center; color: var(--text2); padding: 30px 20px; font-size: 13px; }
-        .chat-empty .icon { font-size: 40px; display: block; margin-bottom: 10px; }
-        
-        .message { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 1.5; animation: fadeIn 0.2s; }
-        @keyframes fadeIn { from{opacity:0;transform:translateY(6px);} to{opacity:1;transform:translateY(0);} }
-        .message.user { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
-        .message.ai { align-self: flex-start; background: var(--hover); color: var(--text); border-bottom-left-radius: 4px; }
-        .message .msg-time { font-size: 9px; opacity: 0.5; margin-top: 3px; text-align: right; }
-        
-        .typing-dots { display: flex; gap: 4px; padding: 8px 14px; }
-        .typing-dots span { width: 7px; height: 7px; border-radius: 50%; background: var(--text2); animation: bounce 1.2s infinite; }
-        .typing-dots span:nth-child(2){animation-delay:0.2s;} .typing-dots span:nth-child(3){animation-delay:0.4s;}
-        @keyframes bounce { 0%,60%,100%{transform:translateY(0);} 30%{transform:translateY(-6px);} }
-        
-        .input-area { display: flex; gap: 6px; background: var(--card); border-radius: var(--radius-sm); padding: 6px; border: 1px solid var(--border); }
-        .input-area input { flex: 1; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font-size: 13px; font-family: inherit; transition: 0.2s; }
-        .input-area input:focus { outline: none; border-color: var(--accent); }
-        .send-btn { width: 44px; height: 44px; border-radius: 10px; border: none; background: var(--accent); color: #fff; font-size: 18px; cursor: pointer; transition: 0.2s; flex-shrink: 0; }
-        .send-btn:hover { background: var(--accent-hover); }
-        .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        
-        .clear-btn { display: block; margin: 6px auto 0; padding: 6px 16px; background: transparent; border: 1px solid var(--border); color: var(--text2); border-radius: 20px; font-size: 10px; cursor: pointer; font-family: inherit; transition: 0.2s; }
-        .clear-btn:hover { border-color: var(--red); color: var(--red); }
+        .ai-container{max-width:600px;margin:0 auto;padding:12px 14px;display:flex;flex-direction:column;height:calc(100vh - 56px - 60px - 24px);}
+        .ai-header-card{background:linear-gradient(140deg,var(--atlas-bg)0%,var(--atlas-card)100%);border:1.5px solid var(--atlas-border);border-radius:var(--radius);padding:18px;text-align:center;margin-bottom:12px;box-shadow:var(--shadow-md),0 0 20px var(--atlas-glow);}
+        .ai-header-title{font-size:18px;font-weight:800;color:#fff;margin-bottom:3px;}
+        .ai-header-sub{font-size:11px;color:var(--atlas-text);opacity:0.75;}
+        .model-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:9px;font-weight:600;margin-top:4px;background:var(--success);color:#fff;}
+        .chat-area{flex:1;overflow-y:auto;background:var(--card-bg);border-radius:var(--radius);padding:12px;margin-bottom:8px;border:1px solid var(--border);display:flex;flex-direction:column;gap:8px;}
+        .chat-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;min-height:200px;color:var(--text-tertiary);font-size:13px;gap:8px;text-align:center;}
+        .chat-empty .icon{font-size:36px;}
+        .message{max-width:90%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.6;animation:fadeIn 0.2s;word-break:break-word;}
+        .message.user{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:4px;}
+        .message.ai{align-self:flex-start;background:var(--card-hover);color:var(--text);border-bottom-left-radius:4px;border-left:3px solid var(--accent);}
+        .message .msg-meta{display:flex;justify-content:space-between;align-items:center;margin-top:4px;font-size:9px;opacity:0.5;gap:8px;}
+        .message .copy-btn{background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:10px;padding:2px 6px;border-radius:4px;}
+        .message .copy-btn:hover{background:var(--accent-light);color:var(--accent);}
+        .typing-dots{display:flex;gap:4px;padding:8px 14px;align-self:flex-start;}
+        .typing-dots span{width:7px;height:7px;border-radius:50%;background:var(--text-tertiary);animation:bounce 1.2s infinite;}
+        .typing-dots span:nth-child(2){animation-delay:0.2s;}
+        .typing-dots span:nth-child(3){animation-delay:0.4s;}
+        @keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+        .input-area{display:flex;gap:8px;align-items:flex-end;}
+        .input-area textarea{flex:1;padding:10px 13px;border:1.5px solid var(--input-border);border-radius:var(--radius-sm);background:var(--input-bg);color:var(--text);font-size:13px;font-family:'Noto Sans Bengali','Inter',sans-serif;resize:none;outline:none;transition:all 0.2s ease;min-height:42px;max-height:120px;}
+        .input-area textarea:focus{border-color:var(--border-focus);box-shadow:var(--shadow-glow);}
+        .send-btn{width:42px;height:42px;border-radius:var(--radius-full);border:none;background:var(--accent);color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;flex-shrink:0;box-shadow:var(--shadow-sm);}
+        .send-btn:hover{background:var(--accent-hover);box-shadow:var(--shadow-glow);}
+        .send-btn:disabled{opacity:0.5;cursor:not-allowed;}
+        .clear-btn{padding:6px 14px;border-radius:var(--radius-full);border:1px solid var(--border);background:var(--btn-bg);color:var(--text-secondary);font-size:11px;font-weight:600;cursor:pointer;transition:all 0.2s ease;margin-bottom:8px;display:inline-block;align-self:center;}
+        .clear-btn:hover{border-color:var(--error);color:var(--error);}
+        .ai-answer .correct{color:var(--success);font-weight:700;}
+        .ai-answer .wrong{color:var(--error);}
+        .ai-answer .highlight{background:var(--accent-light);padding:2px 6px;border-radius:4px;font-weight:600;}
     </style>
 </head>
 <body class="dark-mode">
 
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header"><div class="sidebar-logo">ATLAS EXAM</div></div>
-    <button class="sidebar-item" onclick="navigateTo('profile');closeSidebar();">👤 প্রোফাইল</button>
-    <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();">🏠 হোম</button>
-    <button class="sidebar-item" onclick="goTo('class.html');closeSidebar();">📚 ফ্রি ক্লাস</button>
-    <button class="sidebar-item" onclick="goTo('exam.html');closeSidebar();">📝 ফ্রি এক্সাম</button>
-    <button class="sidebar-item" onclick="goTo('mock-test.html');closeSidebar();">🎯 মক টেস্ট</button>
-    <button class="sidebar-item" onclick="goTo('dashboard.html');closeSidebar();">⚠️ My Mistakes</button>
-    <button class="sidebar-item" onclick="goTo('ai.html');closeSidebar();">🤖 ATLAS AI</button>
-    <div class="sidebar-divider"></div>
-    <button class="sidebar-item" onclick="toggleTheme()">🌙 ডার্ক মোড</button>
-    <button class="sidebar-item" onclick="openWA()">💬 WhatsApp</button>
-    <button class="sidebar-item" onclick="openTG()">✈️ Telegram</button>
+    <div class="sidebar-header"><div class="sidebar-logo">ATLAS APP</div></div>
+    <div class="sidebar-menu">
+        <button class="sidebar-item" onclick="navigateTo('profile');closeSidebar();">👤 প্রোফাইল</button>
+        <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();">🏠 হোম</button>
+        <button class="sidebar-item" onclick="goTo('class.html');closeSidebar();">📚 ফ্রি ক্লাস</button>
+        <button class="sidebar-item" onclick="goTo('exam.html');closeSidebar();">📝 ফ্রি এক্সাম</button>
+        <button class="sidebar-item" onclick="goTo('mock-test.html');closeSidebar();">🎯 মক টেস্ট</button>
+        <button class="sidebar-item" onclick="goTo('dashboard.html');closeSidebar();">⚠️ My Mistakes</button>
+        <button class="sidebar-item" onclick="goTo('ai.html');closeSidebar();">🤖 ATLAS AI</button>
+        <div class="sidebar-divider"></div>
+        <button class="sidebar-item" onclick="toggleTheme()">🌙 ডার্ক মোড</button>
+    </div>
+    <div class="sidebar-footer">
+        <button class="sidebar-item logout-btn" onclick="logout()">🚪 লগআউট</button>
+    </div>
 </aside>
 
 <header class="header">
-    <div style="display:flex;align-items:center;gap:10px;"><button class="hamburger" onclick="toggleSidebar()">☰</button><span class="logo">ATLAS EXAM</span></div>
-    <div style="display:flex;gap:6px;"><button class="header-icon" onclick="toggleTheme()" id="themeToggle">🌙</button></div>
+    <div class="header-left">
+        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+        <div class="atlas-brand-box">
+            <img src="https://cdn.phototourl.com/free/2026-05-15-b45df560-6dc8-4cb7-9040-238612c8a161.png" class="atlas-logo-img" alt="ATLAS">
+            <span class="atlas-brand-text">ATLAS APP</span>
+        </div>
+    </div>
+    <div class="header-right">
+        <button class="header-icon" onclick="toggleTheme()" id="themeToggle">🌙</button>
+    </div>
 </header>
 
 <main class="ai-container">
     <div class="ai-header-card">
         <div class="ai-header-title">🤖 ATLAS AI</div>
-        <div class="ai-header-sub">Gemini 2.0 Flash · আপনার পড়াশোনার বন্ধু</div>
+        <div class="ai-header-sub">Llama 3.3 70B + Gemini Flash · সব প্রশ্নের উত্তর</div>
+        <div class="model-badge" id="modelBadge">🟢 Ready</div>
     </div>
 
     <div class="chat-area" id="chatArea">
-        <div class="chat-empty" id="chatEmpty"><span class="icon">🤖</span>ATLAS AI-তে স্বাগতম!<br>আপনার পড়াশোনার প্রশ্ন করুন।</div>
+        <div class="chat-empty" id="chatEmpty">
+            <span class="icon">🤖</span>
+            ATLAS AI-তে স্বাগতম!<br>
+            <small>যেকোনো MCQ, HSC, Medical, Varsity প্রশ্ন করুন</small>
+        </div>
     </div>
 
     <button class="clear-btn" onclick="clearChat()">🗑️ চ্যাট ক্লিয়ার</button>
 
     <div class="input-area">
-        <input type="text" id="chatInput" placeholder="এখানে প্রশ্ন লিখুন..." maxlength="500">
+        <textarea id="chatInput" rows="1" placeholder="প্রশ্ন লিখুন... (MCQ দিলে সঠিক উত্তর priority পাবে)" maxlength="2000"></textarea>
         <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
     </div>
 </main>
@@ -127,83 +100,269 @@
     <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon">📚</span>ক্লাস</button>
     <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon">📝</span>এক্সাম</button>
     <button class="nav-item" onclick="goTo('mock-test.html')"><span class="nav-icon">🎯</span>মক</button>
-    <button class="nav-item active" onclick="goTo('dashboard.html')"><span class="nav-icon">👤</span>প্রোফাইল</button>
+    <button class="nav-item active" onclick="navigateTo('profile')"><span class="nav-icon">👤</span>প্রোফাইল</button>
 </nav>
 
 <div class="toast" id="toast"></div>
 
 <script>
+// ========== CONFIG ==========
+const GROQ_KEY = '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'; // Groq থেকে নিবে: https://console.groq.com
 const GEMINI_KEYS = ['AIzaSyBHfdZwqQkrBWF2pp1hLCGZKaXKrinP9ew'];
-let isDarkMode = true, isSidebarOpen = false, chatHistory = [], currentKeyIdx = 0, keyUsage = {};
+let isDarkMode=true,isSidebarOpen=false,chatHistory=[],keyUsage={};
 
-function showToast(m, d = 2000) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), d); }
-function toggleTheme() { isDarkMode = !isDarkMode; document.body.classList.toggle('dark-mode', isDarkMode); document.body.classList.toggle('light-mode', !isDarkMode); document.getElementById('themeToggle').textContent = isDarkMode ? '🌙' : '☀️'; showToast(isDarkMode ? '🌙 ডার্ক' : '☀️ লাইট'); }
-function toggleSidebar() { isSidebarOpen = !isSidebarOpen; document.getElementById('sidebarOverlay').classList.toggle('active', isSidebarOpen); document.getElementById('sidebar').classList.toggle('active', isSidebarOpen); }
-function closeSidebar() { isSidebarOpen = false; document.getElementById('sidebarOverlay').classList.remove('active'); document.getElementById('sidebar').classList.remove('active'); }
-function goTo(u) { location.href = u; }
-function navigateTo(p) { const r = { home:'index.html', profile:'dashboard.html', class:'class.html', exam:'exam.html' }; goTo(r[p]||'index.html'); }
-function openWA() { window.open('https://wa.me/8801999681290', '_blank'); }
-function openTG() { window.open('https://t.me/rafi_somc', '_blank'); }
+// ========== AI MODELS (Free Only) ==========
+const ALL_MODELS = [
+    {name:'Llama 3.3 70B', provider:'groq', model:'llama-3.3-70b-versatile', key:GROQ_KEY},
+    {name:'Llama 3.1 8B', provider:'groq', model:'llama-3.1-8b-instant', key:GROQ_KEY},
+    {name:'Mixtral 8x7B', provider:'groq', model:'mixtral-8x7b-32768', key:GROQ_KEY},
+    {name:'Gemma 9B', provider:'groq', model:'gemma2-9b-it', key:GROQ_KEY},
+    {name:'Gemini 2.0 Flash', provider:'google', model:'gemini-2.0-flash', key:getNextGeminiKey},
+];
 
-function getNextKey() {
-    const today = new Date().toDateString();
-    if (keyUsage._date !== today) keyUsage = { _date: today };
-    let best = null, bestCnt = Infinity;
-    GEMINI_KEYS.forEach(k => { const c = keyUsage[k]||0; if (c < 1450 && c < bestCnt) { best = k; bestCnt = c; } });
-    if (best) { keyUsage[best] = (keyUsage[best]||0) + 1; return best; }
-    return null;
+function getNextGeminiKey(){
+    const today=new Date().toDateString();
+    if(keyUsage._date!==today)keyUsage={_date:today};
+    let best=null,bestCnt=Infinity;
+    GEMINI_KEYS.forEach(k=>{const c=keyUsage[k]||0;if(c<1450&&c<bestCnt){best=k;bestCnt=c;}});
+    if(best){keyUsage[best]=(keyUsage[best]||0)+1;return best;}
+    return GEMINI_KEYS[GEMINI_KEYS.length-1];
 }
 
-async function callGemini(text, retry = 0) {
-    if (retry > GEMINI_KEYS.length + 2) return '❌ সব API Key ব্যর্থ। পরে চেষ্টা করুন।';
-    const key = getNextKey();
-    if (!key) return '❌ আজকের API লিমিট শেষ।';
-    try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: 'তুমি একজন সহায়ক AI টিচার। বাংলা ও ইংরেজিতে উত্তর দাও। প্রশ্ন: ' + text }] }] })
+// ========== SUBJECT DETECT ==========
+function detectSubject(question){
+    const q=question.toLowerCase();
+    const rules=[
+        {subj:'biology', kw:['dna','rna','কোষ','প্রাণী','উদ্ভিদ','সালোকসংশ্লেষণ','জীবাণু','হরমোন','এনজাইম','রক্ত','হৃদযন্ত্র','মস্তিষ্ক','প্রোটিন','জিন','ক্রোমোজোম','মাইটোসিস','মিয়োসিস']},
+        {subj:'chemistry', kw:['রাসায়নিক','বন্ধন','মৌল','যৌগ','পর্যায়','অ্যাসিড','ক্ষার','লবণ','h₂o','co₂','nacl','ph','বিক্রিয়া','অক্সিজেন','হাইড্রোজেন','ইলেকট্রন','আয়ন']},
+        {subj:'physics', kw:['বল','ভর','বেগ','ত্বরণ','তরঙ্গ','তাপ','আলো','শব্দ','চৌম্বক','বিদ্যুৎ','নিউটন','ওহম','ভোল্ট','শক্তি','কাজ','গতি']},
+        {subj:'math', kw:['ম্যাট্রিক্স','ভেক্টর','ক্যালকুলাস','যোগফল','গুণফল','সমীকরণ','matrix','vector','sin','cos','tan','log','যোগ','গুণ']},
+        {subj:'bangla', kw:['বাংলা','ব্যাকরণ','রচনা','কবি','সাহিত্য','সমাস','সন্ধি','কারক','বিভক্তি','উপন্যাস','কবিতা']},
+        {subj:'english', kw:['tense','preposition','verb','noun','grammar','voice','narration','paragraph','article','sentence']}
+    ];
+    for(const r of rules){if(r.kw.some(k=>q.includes(k)))return r.subj;}
+    return 'general';
+}
+
+// ========== SYSTEM PROMPT ==========
+function getSystemPrompt(question){
+    const subj=detectSubject(question);
+    const isMCQ=/\(ক\)|\(খ\)|\(গ\)|\(ঘ\)|ক\)|খ\)|গ\)|ঘ\)|A\)|B\)|C\)|D\)|🅰️|🅱️|©️|🅳️/.test(question);
+    
+    let prompt=`তুমি একজন সহায়ক শিক্ষক। নিচের নিয়ম কঠোরভাবে অনুসরণ করবে:
+
+১। সব উত্তর বাংলায় দিবে। English word-এর পাশে বাংলা উচ্চারণ দিবে।
+২। গাণিতিক সূত্র Unicode-এ লেখো (LaTeX নয়)। যেমন: sin²θ + cos²θ = 1, H₂O, x² + y² = r²
+৩। রাসায়নিক সমীকরণ Unicode-এ লেখো। যেমন: 2H₂ + O₂ → 2H₂O
+৪। সহজ ভাষায় বুঝিয়ে বলবে — যেন normal মানুষ বুঝতে পারে।
+৫। প্রয়োজনে উদাহরণ দিবে।
+`;
+
+    if(isMCQ){
+        prompt+=`
+৬। এটি একটি MCQ প্রশ্ন। প্রথমেই ✅ সঠিক উত্তর বলবে।
+৭। FORMAT:
+✅ সঠিক উত্তর: [অপশন] — [Answer]
+
+তারপর প্রতিটি অপশন বিশ্লেষণ:
+❌ [অপশন] — কেন ভুল (সংক্ষেপে)
+❌ [অপশন] — কেন ভুল (সংক্ষেপে)
+
+শেষে:
+📋 টিপস (যদি থাকে)
+`;
+    }
+
+    switch(subj){
+        case 'biology': prompt+='\nতুমি HSC Biology বিশেষজ্ঞ।'; break;
+        case 'chemistry': prompt+='\nতুমি HSC Chemistry বিশেষজ্ঞ।'; break;
+        case 'physics': prompt+='\nতুমি HSC Physics বিশেষজ্ঞ।'; break;
+        case 'math': prompt+='\nতুমি HSC Higher Math বিশেষজ্ঞ।'; break;
+        case 'bangla': prompt+='\nতুমি বাংলা ব্যাকরণ বিশেষজ্ঞ।'; break;
+        case 'english': prompt+='\nতুমি English Grammar বিশেষজ্ঞ।'; break;
+    }
+    
+    return prompt;
+}
+
+// ========== COMMON FUNCTIONS ==========
+function showToast(m,d=2000){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
+function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'☀️':'🌙';}
+function toggleSidebar(){isSidebarOpen=!isSidebarOpen;document.getElementById('sidebarOverlay').classList.toggle('active',isSidebarOpen);document.getElementById('sidebar').classList.toggle('active',isSidebarOpen);}
+function closeSidebar(){isSidebarOpen=false;document.getElementById('sidebarOverlay').classList.remove('active');document.getElementById('sidebar').classList.remove('active');}
+function goTo(u){location.href=u;}
+function navigateTo(p){const r={home:'index.html',profile:'dashboard.html',class:'class.html',exam:'exam.html'};goTo(r[p]||'index.html');}
+function logout(){localStorage.removeItem('atlas-session');goTo('index.html');}
+function getTime(){const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+
+// ========== CHAT FUNCTIONS ==========
+function addMessage(text,type,modelName=''){
+    const area=document.getElementById('chatArea'),empty=document.getElementById('chatEmpty');
+    if(empty)empty.style.display='none';
+    const div=document.createElement('div');
+    div.className='message '+type;
+    if(type==='ai'){
+        div.innerHTML='<div class="ai-answer">'+text.replace(/\n/g,'<br>')+'</div>'+
+            '<div class="msg-meta"><span>'+getTime()+(modelName?' · '+modelName:'')+'</span>'+
+            '<button class="copy-btn" onclick="copyAnswer(this)">📋 কপি</button></div>';
+    }else{
+        div.innerHTML=text.replace(/\n/g,'<br>')+'<div class="msg-meta"><span>'+getTime()+'</span></div>';
+    }
+    area.appendChild(div);area.scrollTop=area.scrollHeight;
+    chatHistory.push({text,type,time:getTime(),model:modelName});
+    if(chatHistory.length>50)chatHistory=chatHistory.slice(-50);
+    localStorage.setItem('atlas-chat',JSON.stringify(chatHistory));
+}
+
+function copyAnswer(btn){
+    const msgDiv=btn.closest('.message');
+    const text=msgDiv.querySelector('.ai-answer').innerText;
+    navigator.clipboard.writeText(text).then(()=>{
+        btn.textContent='✅ কপিড!';
+        setTimeout(()=>btn.textContent='📋 কপি',2000);
+    });
+}
+
+function showTyping(){
+    const area=document.getElementById('chatArea'),empty=document.getElementById('chatEmpty');
+    if(empty)empty.style.display='none';
+    const div=document.createElement('div');
+    div.className='typing-dots';
+    div.id='typingIndicator';
+    div.innerHTML='<span></span><span></span><span></span>';
+    area.appendChild(div);area.scrollTop=area.scrollHeight;
+}
+
+function hideTyping(){
+    const el=document.getElementById('typingIndicator');
+    if(el)el.remove();
+}
+
+function loadChat(){
+    try{
+        const saved=JSON.parse(localStorage.getItem('atlas-chat')||'[]');
+        chatHistory=saved;
+        const area=document.getElementById('chatArea'),empty=document.getElementById('chatEmpty');
+        if(saved.length&&empty)empty.style.display='none';
+        saved.forEach(m=>{
+            const div=document.createElement('div');
+            div.className='message '+m.type;
+            if(m.type==='ai'){
+                div.innerHTML='<div class="ai-answer">'+m.text.replace(/\n/g,'<br>')+'</div>'+
+                    '<div class="msg-meta"><span>'+m.time+(m.model?' · '+m.model:'')+'</span></div>';
+            }else{
+                div.innerHTML=m.text.replace(/\n/g,'<br>')+'<div class="msg-meta"><span>'+m.time+'</span></div>';
+            }
+            area.appendChild(div);
         });
-        if (res.status === 429 || res.status === 403) return await callGemini(text, retry + 1);
-        const data = await res.json();
-        return data.candidates ? data.candidates[0].content.parts[0].text : '❌ উত্তর পাওয়া যায়নি।';
-    } catch(e) { return await callGemini(text, retry + 1); }
+        area.scrollTop=area.scrollHeight;
+    }catch(e){}
 }
 
-function getTime() { const d = new Date(); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
-
-function addMessage(text, type) {
-    const area = document.getElementById('chatArea'), empty = document.getElementById('chatEmpty');
-    if (empty) empty.style.display = 'none';
-    const div = document.createElement('div'); div.className = 'message ' + type;
-    div.innerHTML = text.replace(/\n/g, '<br>') + `<div class="msg-time">${getTime()}</div>`;
-    area.appendChild(div); area.scrollTop = area.scrollHeight;
-    chatHistory.push({ text, type, time: getTime() });
-    if (chatHistory.length > 50) chatHistory = chatHistory.slice(-50);
-    localStorage.setItem('atlas-chat', JSON.stringify(chatHistory));
+function clearChat(){
+    chatHistory=[];
+    localStorage.removeItem('atlas-chat');
+    document.getElementById('chatArea').innerHTML='<div class="chat-empty"><span class="icon">🤖</span>চ্যাট ক্লিয়ার!<br>নতুন প্রশ্ন করুন।</div>';
+    showToast('🗑️ ক্লিয়ার');
 }
 
-function loadChat() {
-    try {
-        const saved = JSON.parse(localStorage.getItem('atlas-chat')||'[]');
-        chatHistory = saved;
-        saved.forEach(m => { const area = document.getElementById('chatArea'), empty = document.getElementById('chatEmpty'); if (empty) empty.style.display = 'none'; const div = document.createElement('div'); div.className = 'message ' + m.type; div.innerHTML = m.text.replace(/\n/g,'<br>') + `<div class="msg-time">${m.time}</div>`; area.appendChild(div); });
-        document.getElementById('chatArea').scrollTop = document.getElementById('chatArea').scrollHeight;
-    } catch(e) {}
+// ========== AI API CALLS ==========
+async function callGroq(model,question,systemPrompt){
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+        method:'POST',
+        headers:{'Authorization':'Bearer '+model.key,'Content-Type':'application/json'},
+        body:JSON.stringify({
+            model:model.model,
+            messages:[
+                {role:'system',content:systemPrompt},
+                {role:'user',content:question}
+            ],
+            temperature:0.7,
+            max_tokens:1024
+        })
+    });
+    if(!res.ok)return null;
+    const data=await res.json();
+    return data.choices?.[0]?.message?.content||null;
 }
 
-function clearChat() { chatHistory = []; localStorage.removeItem('atlas-chat'); document.getElementById('chatArea').innerHTML = '<div class="chat-empty"><span class="icon">🤖</span>চ্যাট ক্লিয়ার!<br>নতুন প্রশ্ন করুন।</div>'; showToast('🗑️ ক্লিয়ার'); }
-
-async function sendMessage() {
-    const input = document.getElementById('chatInput'), text = input.value.trim();
-    if (!text) return;
-    input.value = ''; addMessage(text, 'user');
-    const btn = document.getElementById('sendBtn'); btn.disabled = true;
-    const reply = await callGemini(text);
-    addMessage(reply, 'ai'); btn.disabled = false;
+async function callGoogle(model,question,systemPrompt){
+    const key=typeof model.key==='function'?model.key():model.key;
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model.model}:generateContent?key=${key}`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{parts:[{text:systemPrompt+'\n\nপ্রশ্ন: '+question}]}]})
+    });
+    if(!res.ok)return null;
+    const data=await res.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text||null;
 }
 
-document.addEventListener('keydown', e => { if (e.key === 'Enter' && document.activeElement === document.getElementById('chatInput')) sendMessage(); });
-document.addEventListener('DOMContentLoaded', () => { loadChat(); });
+async function callModel(model,question,systemPrompt){
+    try{
+        if(model.provider==='groq')return await callGroq(model,question,systemPrompt);
+        else return await callGoogle(model,question,systemPrompt);
+    }catch(e){return null;}
+}
+
+// ========== MAIN AI FUNCTION ==========
+async function askAI(question){
+    const systemPrompt=getSystemPrompt(question);
+    
+    for(const model of ALL_MODELS){
+        try{
+            const answer=await callModel(model,question,systemPrompt);
+            if(answer&&!answer.includes('❌')&&!answer.includes('error')&&!answer.includes('rate_limit')){
+                return {answer,model:model.name};
+            }
+        }catch(e){continue;}
+    }
+    return {answer:'❌ দুঃখিত! সব AI সার্ভার busy। পরে চেষ্টা করুন। 🙏',model:'None'};
+}
+
+// ========== SEND MESSAGE ==========
+async function sendMessage(){
+    const input=document.getElementById('chatInput');
+    const text=input.value.trim();
+    if(!text)return;
+    
+    input.value='';
+    addMessage(text,'user');
+    
+    const btn=document.getElementById('sendBtn');
+    btn.disabled=true;
+    document.getElementById('modelBadge').textContent='🟡 Thinking...';
+    
+    showTyping();
+    
+    const result=await askAI(text);
+    
+    hideTyping();
+    addMessage(result.answer,'ai',result.model);
+    
+    btn.disabled=false;
+    document.getElementById('modelBadge').textContent='🟢 '+result.model;
+    input.focus();
+}
+
+// ========== EVENT LISTENERS ==========
+document.addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&!e.shiftKey&&document.activeElement===document.getElementById('chatInput')){
+        e.preventDefault();sendMessage();
+    }
+});
+
+document.addEventListener('DOMContentLoaded',()=>{loadChat();});
+
+function showError(title,message,details,retryFn){
+    const existing=document.querySelector('.error-popup-overlay');if(existing)existing.remove();
+    const overlay=document.createElement('div');overlay.className='error-popup-overlay';
+    let retryHTML='';if(retryFn){retryHTML='<button class="error-popup-retry" onclick="this.closest(\'.error-popup-overlay\').remove();('+retryFn.toString()+')();">🔄 আবার চেষ্টা</button>';}
+    overlay.innerHTML='<div class="error-popup" onclick="event.stopPropagation()"><div class="error-popup-icon">⚠️</div><div class="error-popup-title">'+(title||'কিছু সমস্যা হয়েছে')+'</div><div class="error-popup-message">'+(message||'পরে আবার চেষ্টা করুন')+'</div>'+(details?'<div class="error-popup-details">'+details+'</div>':'')+'<div style="display:flex;justify-content:center;gap:8px;">'+retryHTML+'<button class="error-popup-btn" onclick="this.closest(\'.error-popup-overlay\').remove()">✕ বন্ধ</button></div></div>';
+    overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});document.body.appendChild(overlay);
+}
+window.addEventListener('error',function(e){showError('💥 সমস্যা','পৃষ্ঠাটি রিলোড করুন',e.error?.message,()=>location.reload());});
+window.addEventListener('unhandledrejection',function(e){showError('⚠️ প্রসেসিং সমস্যা','অনুরোধ সম্পূর্ণ করা যায়নি',e.reason?.message,null);});
 </script>
 </body>
 </html>
