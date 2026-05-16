@@ -1106,7 +1106,52 @@ function mistakePractice() {
     showToast('❌ ' + wrongIds.length + ' টি ভুল প্রশ্ন নিয়ে প্র্যাকটিস');
 }
 
-// ========== AI ==========
+// ========== ATLAS AI — Multiple Models Fallback ==========
+const GROQ_KEY = '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'; // ← তোমার Groq Key
+
+const AI_MODELS_EXAM = [
+    {name:'Llama 3.3 70B', provider:'groq', model:'llama-3.3-70b-versatile', key:GROQ_KEY},
+    {name:'Llama 3.1 8B', provider:'groq', model:'llama-3.1-8b-instant', key:GROQ_KEY},
+    {name:'Mixtral 8x7B', provider:'groq', model:'mixtral-8x7b-32768', key:GROQ_KEY},
+    {name:'Gemini 2.0 Flash', provider:'google', model:'gemini-2.0-flash', key:GEMINI_KEY}
+];
+
+async function callAIForMCQ(prompt) {
+    for (const model of AI_MODELS_EXAM) {
+        try {
+            let answer;
+            if (model.provider === 'groq') {
+                const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method:'POST',
+                    headers:{'Authorization':'Bearer '+model.key,'Content-Type':'application/json'},
+                    body:JSON.stringify({
+                        model:model.model,
+                        messages:[
+                            {role:'system',content:'তুমি শিক্ষক। বাংলায় উত্তর দিবে। সংক্ষেপে।'},
+                            {role:'user',content:prompt}
+                        ],
+                        temperature:0.7, max_tokens:1024
+                    })
+                });
+                const data = await res.json();
+                answer = data.choices?.[0]?.message?.content;
+            } else {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model.model}:generateContent?key=${model.key}`, {
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
+                });
+                const data = await res.json();
+                answer = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            }
+            if (answer && !answer.includes('error') && !answer.includes('rate_limit')) {
+                return answer.replace(/\n/g,'<br>');
+            }
+        } catch(e) { continue; }
+    }
+    return '❌ AI ব্যাখ্যা পাওয়া যায়নি। পরে চেষ্টা করুন।';
+}
+
 async function toggleAIBox(header, qid) {
     if (!checkGuestAction()) return;
     const content = header.nextElementSibling, arrow = header.querySelector('.exp-arrow');
@@ -1114,19 +1159,14 @@ async function toggleAIBox(header, qid) {
     const q = examQuestions.find(q => q.id === qid); if (!q) return;
     content.classList.add('show'); arrow.classList.add('open');
     content.innerHTML = '⏳ AI ব্যাখ্যা আনা হচ্ছে...';
+    
     const options = [q.option1,q.option2,q.option3,q.option4,q.option5].filter(o => o && o !== '—');
     const labels = ['ক','খ','গ','ঘ','ঙ'];
     let prompt = `তুমি একজন শিক্ষক। MCQ বিশ্লেষণ করো:\n\nপ্রশ্ন: ${q.question_text}\n\n`;
     options.forEach((opt,i) => { prompt += `${labels[i]}) ${opt}\n`; });
     prompt += `\nসঠিক উত্তর: ${labels[q.answer_index-1]}) ${options[q.answer_index-1]}\n\nপ্রতিটি অপশন ব্যাখ্যা করো। ✅ কেন সঠিক, ❌ কেন ভুল। বাংলায়। সংক্ষেপে।`;
-    try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`, {
-            method:'POST', headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
-        });
-        const data = await res.json();
-        content.innerHTML = data.candidates ? data.candidates[0].content.parts[0].text.replace(/\n/g,'<br>') : '❌ ব্যাখ্যা পাওয়া যায়নি।';
-    } catch(e) { content.innerHTML = '❌ AI সার্ভার সমস্যা।'; }
+    
+    content.innerHTML = await callAIForMCQ(prompt);
 }
 
 // ========== PDF ==========
