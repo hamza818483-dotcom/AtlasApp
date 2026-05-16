@@ -1,79 +1,31 @@
+
 <!DOCTYPE html>
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATLAS EXAM · লগইন</title>
+    <title>ATLAS APP · লগইন</title>
+    <link rel="stylesheet" href="style.css">
     <style>
-        :root {
-            --bg: #0A0E17; --card: #131822; --hover: #1A2130;
-            --text: #ECEEF2; --text2: #8E94A0;
-            --accent: #6C72FF; --accent-hover: #858AFF;
-            --border: #252B38; --shadow: 0 2px 10px rgba(0,0,0,0.4);
-            --radius: 14px; --radius-sm: 10px;
-            --red: #FF5A5A; --green: #3ECF8E;
-        }
-        .light-mode {
-            --bg: #F8F9FC; --card: #FFFFFF; --hover: #F1F3F8;
-            --text: #1A1D28; --text2: #6B7180;
-            --accent: #5B5FE8; --accent-hover: #4A4ED4;
-            --border: #E4E7F0; --shadow: 0 2px 10px rgba(0,0,0,0.06);
-            --red: #E5484D; --green: #30A46C;
-        }
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body {
-            font-family: 'Inter', 'Noto Sans Bengali', system-ui, sans-serif;
-            background: var(--bg); color: var(--text);
-            min-height: 100vh; display: flex; align-items: center; justify-content: center;
-            padding: 20px; transition: background 0.3s, color 0.3s;
-            -webkit-font-smoothing: antialiased;
-        }
-        .auth-container { width: 100%; max-width: 400px; }
-        .auth-logo { text-align: center; margin-bottom: 24px; }
-        .auth-logo .logo-icon { font-size: 44px; display: block; margin-bottom: 6px; }
-        .auth-logo .logo-text { font-size: 24px; font-weight: 800; color: var(--accent); letter-spacing: -1px; }
-        .auth-logo .logo-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
-        
-        .auth-tabs { display: flex; gap: 4px; margin-bottom: 16px; background: var(--card); border-radius: var(--radius-sm); padding: 4px; border: 1px solid var(--border); }
-        .auth-tab { flex: 1; padding: 10px 6px; border: none; background: transparent; color: var(--text2); font-size: 12px; font-weight: 600; cursor: pointer; border-radius: 8px; transition: 0.2s; font-family: inherit; }
-        .auth-tab.active { background: var(--accent); color: #fff; }
-        .auth-tab:hover:not(.active) { color: var(--text); }
-        
-        .auth-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
-        .auth-form { display: none; animation: fadeIn 0.25s; }
-        .auth-form.active { display: block; }
-        @keyframes fadeIn { from{opacity:0;transform:translateY(4px);} to{opacity:1;transform:translateY(0);} }
-        
-        .form-title { font-size: 16px; font-weight: 700; color: var(--accent); text-align: center; margin-bottom: 4px; }
-        .form-subtitle { font-size: 11px; color: var(--text2); text-align: center; margin-bottom: 14px; }
-        
-        .input-group { margin-bottom: 10px; }
-        .input-group label { display: block; font-size: 10px; font-weight: 600; color: var(--text2); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .input-group input, .input-group select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); font-size: 13px; font-family: inherit; transition: 0.2s; }
-        .input-group input:focus, .input-group select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(108,114,255,0.12); }
-        .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        
-        .btn { display: block; width: 100%; padding: 12px; border-radius: var(--radius-sm); font-weight: 700; cursor: pointer; border: none; font-size: 14px; transition: 0.2s; font-family: inherit; text-align: center; }
-        .btn-primary { background: var(--accent); color: #fff; }
-        .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
-        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        
-        .auth-footer { text-align: center; margin-top: 10px; font-size: 11px; color: var(--text2); }
-        .auth-footer a { color: var(--accent); cursor: pointer; font-weight: 600; text-decoration: none; }
-        .auth-footer a:hover { text-decoration: underline; }
-        
-        .error-msg { font-size: 10px; color: var(--red); margin-top: 2px; display: none; }
-        .error-msg.show { display: block; }
-        .input-error { border-color: var(--red) !important; }
-        
-        .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid transparent; border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 6px; vertical-align: middle; }
-        @keyframes spin { to{transform:rotate(360deg);} }
-        
-        .theme-toggle { position: fixed; top: 16px; right: 16px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; z-index: 10; }
-        .theme-toggle:hover { border-color: var(--accent); }
-        
-        .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: var(--card); color: var(--text); border: 1px solid var(--accent); padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 600; z-index: 999; opacity: 0; transition: 0.2s; pointer-events: none; }
-        .toast.show { opacity: 1; }
+        body{padding-top:0;display:flex;align-items:center;justify-content:center;min-height:100vh;}
+        .auth-container{width:100%;max-width:400px;padding:20px;}
+        .auth-logo{text-align:center;margin-bottom:28px;}
+        .logo-icon{font-size:40px;display:block;margin-bottom:6px;}
+        .logo-text{font-size:22px;font-weight:800;color:var(--accent);letter-spacing:-0.5px;}
+        .logo-sub{font-size:12px;color:var(--text-secondary);margin-top:3px;font-family:'Noto Sans Bengali','Inter',sans-serif;}
+        .auth-tabs{display:flex;gap:6px;margin-bottom:14px;}
+        .auth-tab{flex:1;padding:9px 8px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--option-bg);color:var(--text-secondary);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s ease;font-family:'Noto Sans Bengali','Inter',sans-serif;}
+        .auth-tab.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+        .auth-tab:hover:not(.active){border-color:var(--accent);color:var(--accent);}
+        .auth-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-md);}
+        .auth-form{display:none;animation:fadeIn 0.22s ease;}
+        .auth-form.active{display:block;}
+        .form-title{font-size:16px;font-weight:800;color:var(--text);margin-bottom:3px;font-family:'Noto Sans Bengali','Inter',sans-serif;}
+        .form-subtitle{font-size:11px;color:var(--text-secondary);margin-bottom:16px;font-family:'Noto Sans Bengali','Inter',sans-serif;}
+        .auth-footer{text-align:center;font-size:11px;color:var(--text-secondary);margin-top:12px;font-family:'Noto Sans Bengali','Inter',sans-serif;}
+        .auth-footer a{color:var(--accent);cursor:pointer;text-decoration:none;font-weight:600;}
+        .auth-footer a:hover{text-decoration:underline;}
+        .input-error{border-color:var(--error)!important;}
     </style>
 </head>
 <body class="dark-mode">
@@ -84,14 +36,14 @@
 <div class="auth-container">
     <div class="auth-logo">
         <span class="logo-icon">🟥</span>
-        <div class="logo-text">ATLAS EXAM</div>
+        <div class="logo-text">ATLAS APP</div>
         <div class="logo-sub">বাংলাদেশের সেরা প্রস্তুতি প্ল্যাটফর্ম</div>
     </div>
 
     <div class="auth-tabs">
-        <button class="auth-tab active" onclick="switchTab('login')">🔐 লগইন</button>
-        <button class="auth-tab" onclick="switchTab('register')">📝 রেজিস্টার</button>
-        <button class="auth-tab" onclick="switchTab('forget')">🔑 ফরগেট</button>
+        <button class="auth-tab active" id="tabLoginBtn" onclick="switchTab('login')">🔐 লগইন</button>
+        <button class="auth-tab" id="tabRegisterBtn" onclick="switchTab('register')">📝 রেজিস্টার</button>
+        <button class="auth-tab" id="tabForgetBtn" onclick="switchTab('forget')">🔑 ফরগেট</button>
     </div>
 
     <div class="auth-card">
@@ -136,77 +88,87 @@
 <script>
 const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
-let isDarkMode = true, currentTab = 'login';
+let isDarkMode=true,currentTab='login';
 
-function showToast(m, d = 2000) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), d); }
-function toggleTheme() { isDarkMode = !isDarkMode; document.body.classList.toggle('dark-mode', isDarkMode); document.body.classList.toggle('light-mode', !isDarkMode); document.getElementById('themeToggle').textContent = isDarkMode ? '🌙' : '☀️'; showToast(isDarkMode ? '🌙 ডার্ক' : '☀️ লাইট'); }
+function showToast(m,d=2000){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
+function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'☀️':'🌙';}
 
-async function safeFetch(url, opts = {}) {
-    opts.headers = Object.assign({ apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }, opts.headers || {});
-    if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') opts.headers['Content-Type'] = 'application/json';
-    try { const res = await fetch(url, opts); const text = await res.text(); if (!text?.trim()) return []; const data = JSON.parse(text); if (!res.ok) throw new Error(data.message); return data; }
-    catch(e) { console.error('❌', e.message); return []; }
+async function safeFetch(url,opts={}){
+    opts.headers=Object.assign({apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY},opts.headers||{});
+    if(!opts.headers['Content-Type']&&opts.method!=='DELETE')opts.headers['Content-Type']='application/json';
+    try{const res=await fetch(url,opts);const text=await res.text();if(!text?.trim())return[];const data=JSON.parse(text);if(!res.ok)throw new Error(data.message);return data;}
+    catch(e){console.error('❌',e.message);return[];}
 }
 
-function switchTab(tab) {
-    currentTab = tab;
-    document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('active'));
-    document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1))?.classList.add('active');
-    document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-    document.getElementById('form' + tab.charAt(0).toUpperCase() + tab.slice(1))?.classList.add('active');
+function switchTab(tab){
+    currentTab=tab;
+    document.querySelectorAll('.auth-tab').forEach(b=>b.classList.remove('active'));
+    document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1)+'Btn')?.classList.add('active');
+    document.querySelectorAll('.auth-form').forEach(f=>f.classList.remove('active'));
+    document.getElementById('form'+tab.charAt(0).toUpperCase()+tab.slice(1))?.classList.add('active');
     clearErrors();
 }
-function clearErrors() { document.querySelectorAll('.error-msg').forEach(e => e.classList.remove('show')); document.querySelectorAll('input,select').forEach(i => i.classList.remove('input-error')); }
-function showErr(inpId, errId) { document.getElementById(inpId).classList.add('input-error'); document.getElementById(errId).classList.add('show'); }
-function validatePhone(p) { return /^\d{11}$/.test(p); }
-function validateGPA(g) { if (!g) return false; const n = parseFloat(g); if (isNaN(n) || n < 0 || n > 5) return false; const parts = g.split('.'); return parts.length === 2 && parts[1].length <= 2; }
+function clearErrors(){document.querySelectorAll('.error-msg').forEach(e=>e.classList.remove('show'));document.querySelectorAll('input,select').forEach(i=>i.classList.remove('input-error'));}
+function showErr(inpId,errId){document.getElementById(inpId).classList.add('input-error');document.getElementById(errId).classList.add('show');}
+function validatePhone(p){return /^\d{11}$/.test(p);}
+function validateGPA(g){if(!g)return false;const n=parseFloat(g);if(isNaN(n)||n<0||n>5)return false;const parts=g.split('.');return parts.length===2&&parts[1].length<=2;}
 
-async function handleLogin() {
-    clearErrors(); const phone = document.getElementById('loginPhone').value.trim(), pass = document.getElementById('loginPass').value;
-    let err = false; if (!validatePhone(phone)) { showErr('loginPhone','loginPhoneErr'); err = true; } if (pass.length < 6) { showErr('loginPass','loginPassErr'); err = true; } if (err) return;
-    const btn = document.getElementById('loginBtn'); btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>লগইন...';
-    try {
-        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}&select=*`);
-        if (!data?.length) { showToast('❌ রেজিস্টার্ড নয়'); btn.disabled = false; btn.textContent = 'লগইন করুন'; return; }
-        const user = data[0];
-        if (user.password_hash !== pass) { showToast('❌ ভুল পাসওয়ার্ড'); btn.disabled = false; btn.textContent = 'লগইন করুন'; return; }
-        localStorage.setItem('atlas-session', JSON.stringify({ phone:user.phone, name:user.name, batch:user.batch, college:user.college, father_name:user.father_name, mother_name:user.mother_name, ssc_gpa:user.ssc_gpa, hsc_gpa:user.hsc_gpa, timer_type:user.timer_type, role:user.role }));
-        showToast('✅ লগইন সফল!'); setTimeout(() => location.href = 'index.html', 800);
-    } catch(e) { showToast('❌ এরর'); btn.disabled = false; btn.textContent = 'লগইন করুন'; }
+async function handleLogin(){
+    clearErrors();const phone=document.getElementById('loginPhone').value.trim(),pass=document.getElementById('loginPass').value;
+    let err=false;if(!validatePhone(phone)){showErr('loginPhone','loginPhoneErr');err=true;}if(pass.length<6){showErr('loginPass','loginPassErr');err=true;}if(err)return;
+    const btn=document.getElementById('loginBtn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>লগইন...';
+    try{
+        const data=await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}&select=*`);
+        if(!data?.length){showToast('❌ রেজিস্টার্ড নয়');btn.disabled=false;btn.textContent='লগইন করুন';return;}
+        const user=data[0];
+        if(user.password_hash!==pass){showToast('❌ ভুল পাসওয়ার্ড');btn.disabled=false;btn.textContent='লগইন করুন';return;}
+        localStorage.setItem('atlas-session',JSON.stringify({phone:user.phone,name:user.name,batch:user.batch,college:user.college,father_name:user.father_name,mother_name:user.mother_name,ssc_gpa:user.ssc_gpa,hsc_gpa:user.hsc_gpa,timer_type:user.timer_type,role:user.role}));
+        showToast('✅ লগইন সফল!');setTimeout(()=>location.href='index.html',800);
+    }catch(e){showToast('❌ এরর');btn.disabled=false;btn.textContent='লগইন করুন';}
 }
 
-async function handleRegister() {
-    clearErrors(); const name = document.getElementById('regName').value.trim(), batch = document.getElementById('regBatch').value.trim(), college = document.getElementById('regCollege').value.trim(), father = document.getElementById('regFather').value.trim(), mother = document.getElementById('regMother').value.trim(), ssc = document.getElementById('regSSC').value.trim(), hsc = document.getElementById('regHSC').value.trim(), timer = document.getElementById('regTimer').value, phone = document.getElementById('regPhone').value.trim(), pass = document.getElementById('regPass').value;
-    let err = false;
-    if (!name) { showErr('regName','regNameErr'); err = true; } if (!batch) { showErr('regBatch','regBatchErr'); err = true; } if (!college) { showErr('regCollege','regCollegeErr'); err = true; }
-    if (!validateGPA(ssc)) { showErr('regSSC','regSSCErr'); err = true; } if (!validateGPA(hsc)) { showErr('regHSC','regHSCErr'); err = true; }
-    if (!timer) { showErr('regTimer','regTimerErr'); err = true; } if (!validatePhone(phone)) { showErr('regPhone','regPhoneErr'); err = true; } if (pass.length < 6) { showErr('regPass','regPassErr'); err = true; }
-    if (err) return;
-    const btn = document.getElementById('registerBtn'); btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>রেজিস্টার...';
-    try {
-        const exist = await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}&select=phone`);
-        if (exist?.length) { showToast('❌ ফোন আগেই রেজিস্টার্ড'); btn.disabled = false; btn.textContent = 'রেজিস্টার করুন'; return; }
-        await safeFetch(`${SUPABASE_URL}/rest/v1/users`, { method:'POST', body:JSON.stringify({ phone, name, batch, college, father_name:father||null, mother_name:mother||null, ssc_gpa:parseFloat(ssc), hsc_gpa:parseFloat(hsc), timer_type:timer, password_hash:pass }) });
-        localStorage.setItem('atlas-session', JSON.stringify({ phone, name, batch, college, father_name:father, mother_name:mother, ssc_gpa:ssc, hsc_gpa:hsc, timer_type:timer }));
-        showToast('✅ রেজিস্ট্রেশন সফল!'); setTimeout(() => location.href = 'index.html', 800);
-    } catch(e) { showToast('❌ এরর'); btn.disabled = false; btn.textContent = 'রেজিস্টার করুন'; }
+async function handleRegister(){
+    clearErrors();const name=document.getElementById('regName').value.trim(),batch=document.getElementById('regBatch').value.trim(),college=document.getElementById('regCollege').value.trim(),father=document.getElementById('regFather').value.trim(),mother=document.getElementById('regMother').value.trim(),ssc=document.getElementById('regSSC').value.trim(),hsc=document.getElementById('regHSC').value.trim(),timer=document.getElementById('regTimer').value,phone=document.getElementById('regPhone').value.trim(),pass=document.getElementById('regPass').value;
+    let err=false;
+    if(!name){showErr('regName','regNameErr');err=true;}if(!batch){showErr('regBatch','regBatchErr');err=true;}if(!college){showErr('regCollege','regCollegeErr');err=true;}
+    if(!validateGPA(ssc)){showErr('regSSC','regSSCErr');err=true;}if(!validateGPA(hsc)){showErr('regHSC','regHSCErr');err=true;}
+    if(!timer){showErr('regTimer','regTimerErr');err=true;}if(!validatePhone(phone)){showErr('regPhone','regPhoneErr');err=true;}if(pass.length<6){showErr('regPass','regPassErr');err=true;}
+    if(err)return;
+    const btn=document.getElementById('registerBtn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>রেজিস্টার...';
+    try{
+        const exist=await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}&select=phone`);
+        if(exist?.length){showToast('❌ ফোন আগেই রেজিস্টার্ড');btn.disabled=false;btn.textContent='রেজিস্টার করুন';return;}
+        await safeFetch(`${SUPABASE_URL}/rest/v1/users`,{method:'POST',body:JSON.stringify({phone,name,batch,college,father_name:father||null,mother_name:mother||null,ssc_gpa:parseFloat(ssc),hsc_gpa:parseFloat(hsc),timer_type:timer,password_hash:pass})});
+        localStorage.setItem('atlas-session',JSON.stringify({phone,name,batch,college,father_name:father,mother_name:mother,ssc_gpa:ssc,hsc_gpa:hsc,timer_type:timer}));
+        showToast('✅ রেজিস্ট্রেশন সফল!');setTimeout(()=>location.href='index.html',800);
+    }catch(e){showToast('❌ এরর');btn.disabled=false;btn.textContent='রেজিস্টার করুন';}
 }
 
-async function handleForget() {
-    clearErrors(); const phone = document.getElementById('forgetPhone').value.trim(), pass = document.getElementById('forgetPass').value;
-    let err = false; if (!validatePhone(phone)) { showErr('forgetPhone','forgetPhoneErr'); err = true; } if (pass.length < 6) { showErr('forgetPass','forgetPassErr'); err = true; } if (err) return;
-    const btn = document.getElementById('forgetBtn'); btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>আপডেট...';
-    try {
-        const exist = await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}&select=phone`);
-        if (!exist?.length) { showToast('❌ রেজিস্টার্ড নয়'); btn.disabled = false; btn.textContent = 'আপডেট করুন'; return; }
-        await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}`, { method:'PATCH', body:JSON.stringify({ password_hash:pass }) });
-        showToast('✅ পাসওয়ার্ড আপডেট!'); setTimeout(() => switchTab('login'), 600);
-    } catch(e) { showToast('❌ এরর'); }
-    btn.disabled = false; btn.textContent = 'আপডেট করুন';
+async function handleForget(){
+    clearErrors();const phone=document.getElementById('forgetPhone').value.trim(),pass=document.getElementById('forgetPass').value;
+    let err=false;if(!validatePhone(phone)){showErr('forgetPhone','forgetPhoneErr');err=true;}if(pass.length<6){showErr('forgetPass','forgetPassErr');err=true;}if(err)return;
+    const btn=document.getElementById('forgetBtn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>আপডেট...';
+    try{
+        const exist=await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}&select=phone`);
+        if(!exist?.length){showToast('❌ রেজিস্টার্ড নয়');btn.disabled=false;btn.textContent='আপডেট করুন';return;}
+        await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}`,{method:'PATCH',body:JSON.stringify({password_hash:pass})});
+        showToast('✅ পাসওয়ার্ড আপডেট!');setTimeout(()=>switchTab('login'),600);
+    }catch(e){showToast('❌ এরর');}
+    btn.disabled=false;btn.textContent='আপডেট করুন';
 }
 
-document.addEventListener('keydown', e => { if (e.key === 'Enter') { if (currentTab === 'login') handleLogin(); else if (currentTab === 'register') handleRegister(); else if (currentTab === 'forget') handleForget(); } });
-document.addEventListener('DOMContentLoaded', () => { const sess = localStorage.getItem('atlas-session'); if (sess) { try { JSON.parse(sess); showToast('👋 ইতিমধ্যে লগইন'); setTimeout(() => location.href = 'index.html', 600); } catch(e) {} } });
+function showError(title,message,details,retryFn){
+    const existing=document.querySelector('.error-popup-overlay');if(existing)existing.remove();
+    const overlay=document.createElement('div');overlay.className='error-popup-overlay';
+    let retryHTML='';if(retryFn){retryHTML=`<button class="error-popup-retry" onclick="this.closest('.error-popup-overlay').remove();(${retryFn.toString()})();">🔄 আবার চেষ্টা</button>`;}
+    overlay.innerHTML=`<div class="error-popup" onclick="event.stopPropagation()"><div class="error-popup-icon">⚠️</div><div class="error-popup-title">${title||'কিছু সমস্যা হয়েছে'}</div><div class="error-popup-message">${message||'পরে আবার চেষ্টা করুন'}</div>${details?`<div class="error-popup-details">${details}</div>`:''}<div style="display:flex;justify-content:center;gap:8px;">${retryHTML}<button class="error-popup-btn" onclick="this.closest('.error-popup-overlay').remove()">✕ বন্ধ</button></div></div>`;
+    overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});document.body.appendChild(overlay);
+}
+window.addEventListener('error',function(e){showError('💥 সমস্যা','পৃষ্ঠাটি রিলোড করুন',e.error?.message,()=>location.reload());});
+window.addEventListener('unhandledrejection',function(e){showError('⚠️ প্রসেসিং সমস্যা','অনুরোধ সম্পূর্ণ করা যায়নি',e.reason?.message,null);});
+
+document.addEventListener('keydown',e=>{if(e.key==='Enter'){if(currentTab==='login')handleLogin();else if(currentTab==='register')handleRegister();else if(currentTab==='forget')handleForget();}});
+document.addEventListener('DOMContentLoaded',()=>{const sess=localStorage.getItem('atlas-session');if(sess){try{JSON.parse(sess);showToast('👋 ইতিমধ্যে লগইন');setTimeout(()=>location.href='index.html',600);}catch(e){}}});
 </script>
 </body>
 </html>
