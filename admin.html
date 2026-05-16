@@ -324,21 +324,104 @@ function switchSection(sec) {
 }
 
 function handleCSV(input, labelId) {
-    const file = input.files[0]; if (!file) return;
+    const file = input.files[0];
+    if (!file) return;
     document.getElementById(labelId).textContent = '📄 ' + file.name;
     const reader = new FileReader();
     reader.onload = function(e) {
-        const lines = e.target.result.split('\n').filter(l => l.trim());
+        const text = e.target.result;
+        const lines = parseCSV(text);
         if (lines.length < 2) { showToast('⚠️ ডাটা নেই'); return; }
+        
+        // Find header row
+        const header = lines[0];
+        const qIdx = header.indexOf('question');
+        const o1Idx = header.indexOf('option1');
+        const o2Idx = header.indexOf('option2');
+        const o3Idx = header.indexOf('option3');
+        const o4Idx = header.indexOf('option4');
+        const o5Idx = header.indexOf('option5');
+        const aIdx = header.indexOf('answer');
+        const eIdx = header.indexOf('explanation');
+        const tIdx = header.indexOf('type');
+        const sIdx = header.indexOf('section');
+        
         const data = [];
         for (let i = 1; i < lines.length; i++) {
-            const cols = lines[i].split(',').map(c => c.trim());
-            if (cols.length >= 9) data.push({ questions: cols[0], option1: cols[1], option2: cols[2], option3: cols[3], option4: cols[4], option5: cols[5] || null, answer: parseInt(cols[6]) || 1, explanation: cols[7] || '', type: parseInt(cols[8]) || 1, section: parseInt(cols[9]) || 1 });
+            const cols = lines[i];
+            if (cols.length < 7) continue;
+            
+            data.push({
+                questions: cols[qIdx] || '',
+                option1: cols[o1Idx] || '',
+                option2: cols[o2Idx] || '',
+                option3: cols[o3Idx] || '',
+                option4: cols[o4Idx] || '',
+                option5: cols[o5Idx] || null,
+                answer: parseInt(cols[aIdx]) || 1,
+                explanation: cols[eIdx] || '',
+                type: parseInt(cols[tIdx]) || 1,
+                section: parseInt(cols[sIdx]) || 1
+            });
         }
-        if (input.id === 'examCSV') examCSVData = data; else mockCSVData = data;
-        showToast('✅ ' + data.length + ' প্রশ্ন');
+        
+        if (input.id === 'examCSV') examCSVData = data;
+        else mockCSVData = data;
+        
+        showToast('✅ ' + data.length + ' প্রশ্ন (Image সহ)');
     };
     reader.readAsText(file);
+}
+
+// Better CSV Parser - handles quotes and commas inside fields
+function parseCSV(text) {
+    const rows = [];
+    let currentRow = [];
+    let currentField = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const nextChar = text[i + 1];
+        
+        if (inQuotes) {
+            if (char === '"' && nextChar === '"') {
+                currentField += '"';
+                i++;
+            } else if (char === '"') {
+                inQuotes = false;
+            } else {
+                currentField += char;
+            }
+        } else {
+            if (char === '"') {
+                inQuotes = true;
+            } else if (char === ',') {
+                currentRow.push(currentField);
+                currentField = '';
+            } else if (char === '\n' || (char === '\r' && nextChar === '\n')) {
+                currentRow.push(currentField);
+                if (currentRow.some(f => f.trim())) {
+                    rows.push(currentRow);
+                }
+                currentRow = [];
+                currentField = '';
+                if (char === '\r') i++;
+            } else if (char === '\r') {
+                // Skip standalone \r
+            } else {
+                currentField += char;
+            }
+        }
+    }
+    
+    // Last field
+    currentRow.push(currentField);
+    if (currentRow.some(f => f.trim())) {
+        rows.push(currentRow);
+    }
+    
+    return rows;
 }
 
 // ========== CLASS ==========
@@ -370,19 +453,97 @@ function toggleExamFields() {
     else if (t === 'varsity') { by.style.display = 'grid'; bl.textContent = 'ভার্সিটির নাম'; }
     else if (t === 'onushiloni') { wf.style.display = 'block'; }
 }
-function saveExam() {
+async function saveExam() {
     if (!examCSVData?.length) { showToast('⚠️ CSV আপলোড করুন'); return; }
-    const d = { title: document.getElementById('examSubject').value.trim() + ' - ' + document.getElementById('examChapter').value.trim(), subject: document.getElementById('examSubject').value.trim(), chapter: document.getElementById('examChapter').value.trim(), exam_type: document.getElementById('examType').value, sub_type: document.getElementById('examSubType').value || null, board: document.getElementById('examBoard').value.trim() || null, year: document.getElementById('examYear').value.trim() || null, writer: document.getElementById('examWriter').value.trim() || null, start_time: document.getElementById('examStart').value, end_time: document.getElementById('examEnd').value, total_marks: examCSVData.length, duration_minutes: Math.ceil(examCSVData.length / 2), created_by: currentUser?.phone };
+    
+    const d = {
+        title: document.getElementById('examSubject').value.trim() + ' - ' + document.getElementById('examChapter').value.trim(),
+        subject: document.getElementById('examSubject').value.trim(),
+        chapter: document.getElementById('examChapter').value.trim(),
+        exam_type: document.getElementById('examType').value,
+        sub_type: document.getElementById('examSubType').value || null,
+        board: document.getElementById('examBoard').value.trim() || null,
+        year: document.getElementById('examYear').value.trim() || null,
+        writer: document.getElementById('examWriter').value.trim() || null,
+        start_time: document.getElementById('examStart').value,
+        end_time: document.getElementById('examEnd').value,
+        total_marks: examCSVData.length,
+        duration_minutes: Math.ceil(examCSVData.length / 2),
+        created_by: currentUser?.phone
+    };
+    
     if (!d.subject || !d.chapter || !d.exam_type) { showToast('⚠️ পূরণ করুন'); return; }
+    
     const eid = document.getElementById('examEditId').value;
-    const method = eid ? 'PATCH' : 'POST';
-    const url = `${SUPABASE_URL}/rest/v1/exams${eid ? '?id=eq.' + eid : ''}`;
-    safeFetch(url, { method, body: JSON.stringify(d) }).then(res => {
-        const examId = eid || (Array.isArray(res) ? res[0]?.id : res?.id);
-        if (examId && !eid) { const qs = examCSVData.map(q => ({ exam_id: examId, question_text: q.questions, option1: q.option1, option2: q.option2, option3: q.option3, option4: q.option4, option5: q.option5, answer_index: q.answer, explanation: q.explanation, type: q.type||1, section: q.section||1 })); safeFetch(`${SUPABASE_URL}/rest/v1/questions`, { method: 'POST', body: JSON.stringify(qs) }); }
-        alert('📋 লিংক: ' + location.origin + '/exam.html?id=' + examId);
-        clearExamForm(); loadExams();
-    }).catch(e => alert('এরর: ' + e.message));
+    
+    try {
+        let examId = eid;
+        
+        // Step 1: Save or Update Exam
+        if (eid) {
+            await safeFetch(`${SUPABASE_URL}/rest/v1/exams?id=eq.${eid}`, {
+                method: 'PATCH', body: JSON.stringify(d)
+            });
+            await safeFetch(`${SUPABASE_URL}/rest/v1/questions?exam_id=eq.${eid}`, {
+                method: 'DELETE'
+            });
+        } else {
+            const examRes = await fetch(`${SUPABASE_URL}/rest/v1/exams`, {
+                method: 'POST',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': 'Bearer ' + SUPABASE_KEY,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=representation'
+                },
+                body: JSON.stringify(d)
+            });
+            const examData = await examRes.json();
+            if (Array.isArray(examData) && examData.length > 0) {
+                examId = examData[0].id;
+            }
+        }
+        
+        if (!examId) { showToast('❌ Exam ID পাওয়া যায়নি'); return; }
+        
+        // Step 2: Save Questions ONE BY ONE
+        let saved = 0;
+        for (const q of examCSVData) {
+            const qData = {
+                exam_id: examId,
+                question_text: q.questions || q.question_text || '',
+                option1: q.option1 || '',
+                option2: q.option2 || '',
+                option3: q.option3 || '',
+                option4: q.option4 || '',
+                option5: q.option5 || null,
+                answer_index: parseInt(q.answer) || 1,
+                explanation: q.explanation || '',
+                type: parseInt(q.type) || 1,
+                section: parseInt(q.section) || 1
+            };
+            
+            await fetch(`${SUPABASE_URL}/rest/v1/questions`, {
+                method: 'POST',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': 'Bearer ' + SUPABASE_KEY,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify(qData)
+            });
+            saved++;
+        }
+        
+        alert(`✅ এক্সাম সেভ হয়েছে!\n📝 প্রশ্ন: ${saved}/${examCSVData.length}\n📋 লিংক: ${location.origin}/exam.html?id=${examId}`);
+        clearExamForm();
+        loadExams();
+        
+    } catch(e) {
+        showToast('❌ এরর: ' + e.message);
+        console.error(e);
+    }
 }
 function clearExamForm() { ['examSubject','examChapter','examType','examSubType','examBoard','examYear','examWriter','examStart','examEnd','examEditId'].forEach(id => document.getElementById(id).value = ''); examCSVData = null; document.getElementById('examCSVName').textContent = ''; document.getElementById('examSubTypeField').style.display = 'none'; document.getElementById('examBoardYear').style.display = 'none'; document.getElementById('examWriterField').style.display = 'none'; }
 async function loadExams() {
