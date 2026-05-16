@@ -523,6 +523,8 @@ async function saveExam() {
                 type: parseInt(q.type) || 1,
                 section: parseInt(q.section) || 1
             };
+            console.log('Saving Q:', qData.question_text.substring(0, 50));
+console.log('Full Q Data:', JSON.stringify(qData).substring(0, 100));
             
             await fetch(`${SUPABASE_URL}/rest/v1/questions`, {
                 method: 'POST',
