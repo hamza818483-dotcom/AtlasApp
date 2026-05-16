@@ -337,14 +337,14 @@ function handleCSV(input, labelId) {
         
 // Header - cleaned (BOM + space + case fix)
 const cleanHeader = lines[0].map(h => h.replace(/^\uFEFF/, '').trim().toLowerCase());
-const qIdx = cleanHeader.indexOf('question');
-const o1Idx = cleanHeader.indexOf('option1');
-const o2Idx = cleanHeader.indexOf('option2');
-const o3Idx = cleanHeader.indexOf('option3');
-const o4Idx = cleanHeader.indexOf('option4');
-const o5Idx = cleanHeader.indexOf('option5');
-const aIdx = cleanHeader.indexOf('answer');
-const eIdx = cleanHeader.indexOf('explanation');
+const qIdx = cleanHeader.indexOf('question') >= 0 ? cleanHeader.indexOf('question') : cleanHeader.indexOf('questions');
+const o1Idx = cleanHeader.indexOf('option1') >= 0 ? cleanHeader.indexOf('option1') : cleanHeader.indexOf('option 1');
+const o2Idx = cleanHeader.indexOf('option2') >= 0 ? cleanHeader.indexOf('option2') : cleanHeader.indexOf('option 2');
+const o3Idx = cleanHeader.indexOf('option3') >= 0 ? cleanHeader.indexOf('option3') : cleanHeader.indexOf('option 3');
+const o4Idx = cleanHeader.indexOf('option4') >= 0 ? cleanHeader.indexOf('option4') : cleanHeader.indexOf('option 4');
+const o5Idx = cleanHeader.indexOf('option5') >= 0 ? cleanHeader.indexOf('option5') : cleanHeader.indexOf('option 5');
+const aIdx = cleanHeader.indexOf('answer') >= 0 ? cleanHeader.indexOf('answer') : cleanHeader.indexOf('answers');
+const eIdx = cleanHeader.indexOf('explanation') >= 0 ? cleanHeader.indexOf('explanation') : cleanHeader.indexOf('explanations');
 const tIdx = cleanHeader.indexOf('type');
 const sIdx = cleanHeader.indexOf('section');
         
