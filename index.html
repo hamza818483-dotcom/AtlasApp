@@ -4,10 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ATLAS APP</title>
+    
+    <!-- FEATURE 20: PWA Support -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#7B82FF">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- FEATURE 17-18: API + Storage -->
+    <script src="api.js"></script>
+    <script src="storage.js"></script>
+    
+    <!-- Styles -->
     <link rel="stylesheet" href="style.css">
     <style>
+        /* FEATURE 8: Home Buttons Grid */
         .home-buttons{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
-        @media(min-width:600px){.home-buttons{grid-template-columns:repeat(3,1fr);}}
         .home-btn{background-color:var(--card-bg);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px 10px;font-family:'Noto Sans Bengali','Inter',sans-serif;font-size:13px;font-weight:600;text-align:center;cursor:pointer;transition:all 0.2s ease;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;align-items:center;gap:6px;}
         .home-btn:hover{border-color:var(--accent);box-shadow:var(--shadow-glow),var(--shadow);transform:translateY(-2px);}
         .home-btn .btn-icon{font-size:24px;}
@@ -16,33 +28,10 @@
         .home-btn.admin-btn{border-color:var(--error);color:var(--error);display:none;}
         .home-btn.admin-btn:hover{background:var(--error-light);box-shadow:var(--error-glow);}
         
-        .countdown-card{background:linear-gradient(140deg,var(--atlas-bg)0%,var(--atlas-card)100%);border:1.5px solid var(--atlas-border);border-radius:var(--radius);padding:20px 16px;margin-bottom:14px;text-align:center;position:relative;animation:pulseGlow 3s ease-in-out infinite;display:flex;flex-direction:column;align-items:center;justify-content:center;}
-        .timer-serial-box{position:absolute;top:0;left:0;padding:4px 12px;border-radius:0 0 8px 0;font-size:10px;font-weight:700;color:#fff;letter-spacing:0.5px;}
-        .timer-main-topic{font-size:20px;font-weight:800;color:#fff;margin-bottom:4px;}
-        .timer-subtopic{font-size:12px;color:var(--atlas-text);opacity:0.75;margin-bottom:12px;}
-        .timer-row{display:flex;align-items:center;justify-content:center;gap:8px;}
-        .timer-clock-icon{font-size:24px;}
-        .timer-values{display:flex;align-items:center;gap:4px;}
-        .timer-block{display:flex;flex-direction:column;align-items:center;}
-        .timer-number{font-size:16px;font-weight:700;color:var(--atlas-text);letter-spacing:1px;}
-        .timer-separator{font-size:16px;font-weight:700;color:var(--atlas-text);margin-top:-8px;}
-        .timer-label{font-size:9px;color:var(--atlas-text);opacity:0.6;}
-        .timer-1{--timer-border-color:#F85149;--timer-accent:#F85149;--timer-glow:rgba(248,81,73,0.4);}
-        .timer-2{--timer-border-color:#3B82F6;--timer-accent:#3B82F6;--timer-glow:rgba(59,130,246,0.4);}
-        .timer-3{--timer-border-color:#22C55E;--timer-accent:#22C55E;--timer-glow:rgba(34,197,94,0.4);}
-        .timer-4{--timer-border-color:#EC4899;--timer-accent:#EC4899;--timer-glow:rgba(236,72,153,0.4);}
-        .timer-5{--timer-border-color:#F97316;--timer-accent:#F97316;--timer-glow:rgba(249,115,22,0.4);}
+        /* FEATURE 7: Timer Colors */
+        .timer-1{--timer-accent:#F85149;} .timer-2{--timer-accent:#3B82F6;} .timer-3{--timer-accent:#22C55E;} .timer-4{--timer-accent:#EC4899;} .timer-5{--timer-accent:#F97316;}
         
-        .special-card{background:var(--card-bg);border:2px solid #F85149;border-radius:var(--radius);padding:16px;margin-bottom:14px;text-align:center;box-shadow:var(--shadow-sm);animation:specialGlow 2s ease-in-out infinite;}
-        @keyframes specialGlow{0%,100%{box-shadow:0 0 8px rgba(248,81,73,0.3),0 0 16px rgba(248,81,73,0.15);border-color:rgba(248,81,73,0.6);}50%{box-shadow:0 0 18px rgba(248,81,73,0.5),0 0 32px rgba(248,81,73,0.25);border-color:rgba(248,81,73,1);}}
-        .special-card img{max-width:100%;max-height:160px;border-radius:var(--radius-sm);object-fit:cover;margin-bottom:8px;}
-        .special-text{font-size:12px;color:var(--text-secondary);margin-bottom:8px;font-family:'Noto Sans Bengali','Inter',sans-serif;}
-        .special-link{display:inline-block;padding:8px 20px;background:var(--accent);color:#fff;border-radius:var(--radius-full);font-size:12px;font-weight:700;text-decoration:none;transition:all 0.2s ease;box-shadow:var(--shadow-sm);}
-        
-        .social-row{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
-        .social-chip{display:inline-flex;align-items:center;gap:4px;padding:7px 14px;border-radius:var(--radius-full);font-size:11px;font-weight:600;background:var(--card-bg);border:1px solid var(--border);color:var(--text-secondary);text-decoration:none;cursor:pointer;transition:all 0.2s ease;}
-        .social-chip:hover{border-color:var(--accent);color:var(--accent);box-shadow:var(--shadow-glow);transform:translateY(-1px);}
-        
+        /* FEATURE 12: Owner Flip Card */
         .owner-section{display:flex;flex-direction:column;align-items:center;margin:18px 0 14px;}
         .owner-name-top{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:10px;}
         .flip-card-owner{width:130px;height:130px;perspective:800px;cursor:pointer;}
@@ -54,18 +43,22 @@
         .owner-photo-wrapper{position:relative;width:130px;height:130px;}
         .owner-photo-box{width:130px;height:130px;border-radius:var(--radius-sm);object-fit:cover;border:2px solid var(--border);position:relative;z-index:2;}
         .owner-glow-box{position:absolute;top:-8px;left:-8px;width:calc(130px + 16px);height:calc(130px + 16px);border-radius:calc(var(--radius-sm) + 8px);background:transparent;animation:rotateGlowBox 3s linear infinite;z-index:1;pointer-events:none;}
-        .owner-glow-box::before{content:'';position:absolute;top:-3px;left:-3px;width:calc(100% + 6px);height:calc(100% + 6px);border-radius:calc(var(--radius-sm) + 10px);background:conic-gradient(from 0deg,transparent 0deg,var(--accent) 90deg,transparent 180deg,transparent 270deg,var(--accent) 360deg);animation:rotateGlowBox 1.8s linear infinite;opacity:0.32;filter:blur(5px);}
+        .owner-glow-box::before{content:'';position:absolute;top:-3px;left:-3px;width:calc(100% + 6px);height:calc(100% + 6px);border-radius:calc(var(--radius-sm) + 10px);background:conic-gradient(from 0deg,transparent 0deg,var(--accent)90deg,transparent 180deg,transparent 270deg,var(--accent)360deg);animation:rotateGlowBox 1.8s linear infinite;opacity:0.32;filter:blur(5px);}
         
+        /* FEATURE 10: My Mistakes Modal */
         .filter-row{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
         .filter-row select{padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:11px;font-family:inherit;}
         .mistake-item{background:var(--card-hover);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;}
         .mistake-item summary{font-weight:700;font-size:13px;cursor:pointer;color:var(--text);}
         .mistake-item summary:hover{color:var(--accent);}
         .mistake-item .dropdown-actions{display:flex;flex-direction:column;gap:4px;margin-top:8px;}
+        
+        @media(min-width:600px){.home-buttons{grid-template-columns:repeat(3,1fr);}}
     </style>
 </head>
 <body class="dark-mode">
 
+<!-- FEATURE 2: Sidebar -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-header"><div class="sidebar-logo">ATLAS APP</div></div>
@@ -92,6 +85,7 @@
     </div>
 </aside>
 
+<!-- FEATURE 1: Header -->
 <header class="header">
     <div class="header-left">
         <button class="hamburger" onclick="toggleSidebar()">☰</button>
@@ -108,9 +102,13 @@
 
 <main class="main-container">
 
+<!-- FEATURE 6: Special Card -->
 <div id="specialCardContainer"></div>
+
+<!-- FEATURE 7: Timers -->
 <div id="timerContainer"></div>
 
+<!-- FEATURE 8: Home Buttons Grid -->
 <div class="home-buttons">
     <button class="home-btn" onclick="goTo('class.html')"><span class="btn-icon">📚</span><span class="btn-text">ফ্রি ক্লাস</span></button>
     <button class="home-btn" onclick="goTo('exam.html?cat=board')"><span class="btn-icon">🔵</span><span class="btn-text">বোর্ড প্রস্তুতি</span></button>
@@ -124,8 +122,10 @@
     <button class="home-btn home-btn-full admin-btn" id="adminBtn" onclick="goTo('admin.html')">👑 Admin Control</button>
 </div>
 
+<!-- FEATURE 11: Social Row -->
 <div class="social-row" id="socialRow"></div>
 
+<!-- FEATURE 12: Owner Section -->
 <div class="owner-section">
     <div class="owner-name-top" id="ownerNameTop">ATLAS APP</div>
     <div class="flip-card-owner" id="flipCardOwner" onclick="this.classList.toggle('flipped')">
@@ -142,12 +142,15 @@
     </div>
 </div>
 
+<!-- FEATURE 13: Mentors -->
 <div id="mentorsContainer"></div>
 
 </main>
 
+<!-- FEATURE 9-10: Modals -->
 <div class="modal-overlay" id="mainModal"><div class="modal" id="modalContent" onclick="event.stopPropagation()"></div></div>
 
+<!-- FEATURE 3: Bottom Nav -->
 <nav class="bottom-nav">
     <button class="nav-item active" onclick="goTo('index.html')"><span class="nav-icon">🏠</span>হোম</button>
     <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon">📚</span>ক্লাস</button>
@@ -156,52 +159,81 @@
     <button class="nav-item" onclick="navigateTo('profile')"><span class="nav-icon">👤</span>প্রোফাইল</button>
 </nav>
 
+<!-- FEATURE 4: Floating Buttons -->
 <div class="floating-buttons">
-    <button class="fab fab-wa" onclick="openWA()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg>
-    </button>
-    <button class="fab fab-tg" onclick="openTG()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.223-.548.082l.183-2.852 5.19-4.688c.226-.198-.05-.308-.348-.11l-6.415 4.04-2.762-.862c-.6-.186-.61-.6.127-.892l10.79-4.155c.497-.185.93.12.773.862z"/></svg>
-    </button>
+    <button class="fab fab-wa" onclick="openWA()"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg></button>
+    <button class="fab fab-tg" onclick="openTG()"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.223-.548.082l.183-2.852 5.19-4.688c.226-.198-.05-.308-.348-.11l-6.415 4.04-2.762-.862c-.6-.186-.61-.6.127-.892l10.79-4.155c.497-.185.93.12.773.862z"/></svg></button>
 </div>
+
+<!-- FEATURE 5: Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
-const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
-let isDarkMode=true,isSidebarOpen=false;
+// ============================================
+// FEATURE 15-16: Admin Check + Theme
+// ============================================
+let isDarkMode = true, isSidebarOpen = false;
 
-function showToast(m,d=2000){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
-function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'☀️':'🌙';}
-function toggleSidebar(){isSidebarOpen=!isSidebarOpen;document.getElementById('sidebarOverlay').classList.toggle('active',isSidebarOpen);document.getElementById('sidebar').classList.toggle('active',isSidebarOpen);}
-function closeSidebar(){isSidebarOpen=false;document.getElementById('sidebarOverlay').classList.remove('active');document.getElementById('sidebar').classList.remove('active');}
-function goTo(u){location.href=u;}
-function navigateTo(p){const r={home:'index.html',profile:'dashboard.html',class:'class.html',exam:'exam.html'};goTo(r[p]||'index.html');}
-function openWA(){window.open('https://wa.me/8801999681290','_blank');}
-function openTG(){window.open('https://t.me/rafi_somc','_blank');}
-function logout(){localStorage.removeItem('atlas-session');goTo('index.html');}
-function openSocial(p){window.open(p==='facebook'?'https://facebook.com/':p==='youtube'?'https://youtube.com/':p==='telegram'?'https://t.me/':'https://wa.me/','_blank');}
-function openModelTestModal(){const mc=document.getElementById('modalContent');mc.innerHTML='<div class="modal-title">📖 Model Test</div><button class="btn btn-outline" onclick="closeModal();goTo(\'exam.html?cat=model&sub=medical_subject\')" style="width:100%;margin-bottom:6px;">🏥 Medical (Subject Final)</button><button class="btn btn-outline" onclick="closeModal();goTo(\'exam.html?cat=model&sub=medical_paper\')" style="width:100%;margin-bottom:6px;">🏥 Medical (Paper Final)</button><button class="btn btn-primary" onclick="closeModal();goTo(\'exam.html?cat=model&sub=full\')" style="width:100%;margin-bottom:6px;">📖 Full Model Test</button><p style="font-size:10px;color:var(--text-secondary);text-align:center;">Bio=30, Chem=25, Phy=15, GK=15, Eng=15</p><button class="btn btn-outline" onclick="closeModal();goTo(\'exam.html?cat=model&sub=varsity\')" style="width:100%;margin-bottom:6px;">🟣 Varsity</button><button class="btn btn-outline" onclick="closeModal()" style="width:100%;">✕ বন্ধ</button>';document.getElementById('mainModal').classList.add('active');}
-function closeModal(){document.getElementById('mainModal').classList.remove('active');}
-
-async function safeFetch(url,opts={}){
-    opts.headers=Object.assign({apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY},opts.headers||{});
-    if(!opts.headers['Content-Type']&&opts.method!=='DELETE')opts.headers['Content-Type']='application/json';
-    try{const res=await fetch(url,opts);const text=await res.text();if(!text?.trim())return[];const data=JSON.parse(text);if(!res.ok)throw new Error(data.message);return data;}
-    catch(e){console.error('❌',e.message);return[];}
+// FEATURE 16: Theme Toggle
+function toggleTheme() {
+    isDarkMode = !isDarkMode;
+    document.body.classList.toggle('dark-mode', isDarkMode);
+    document.body.classList.toggle('light-mode', !isDarkMode);
+    document.getElementById('themeToggle').textContent = isDarkMode ? '☀️' : '🌙';
+    Storage.saveTheme(isDarkMode ? 'dark' : 'light');
 }
 
-async function loadTimers(){
-    try{
-        const data=await safeFetch(`${SUPABASE_URL}/rest/v1/countdowns?select=*&order=sort_order.asc&limit=5`);
-        if(!data?.length)return;
-        const container=document.getElementById('timerContainer');
-        let html='';
-        data.forEach((cd,i)=>{
-            html+=`<div class="countdown-card timer-${i+1}">
-                <div class="timer-serial-box">ATLAS Timer-${String(i+1).padStart(2,'0')}</div>
+// FEATURE 2: Sidebar
+function toggleSidebar() { isSidebarOpen = !isSidebarOpen; document.getElementById('sidebarOverlay').classList.toggle('active', isSidebarOpen); document.getElementById('sidebar').classList.toggle('active', isSidebarOpen); }
+function closeSidebar() { isSidebarOpen = false; document.getElementById('sidebarOverlay').classList.remove('active'); document.getElementById('sidebar').classList.remove('active'); }
+
+// Navigation
+function goTo(u) { location.href = u; }
+function navigateTo(p) { const r = { home:'index.html', profile:'dashboard.html', class:'class.html', exam:'exam.html' }; goTo(r[p]||'index.html'); }
+function openWA() { window.open('https://wa.me/8801999681290', '_blank'); }
+function openTG() { window.open('https://t.me/rafi_somc', '_blank'); }
+function logout() { Storage.clearSession(); goTo('index.html'); }
+function openSocial(p) { window.open(p==='facebook'?'https://facebook.com/':p==='youtube'?'https://youtube.com/':p==='telegram'?'https://t.me/':'https://wa.me/', '_blank'); }
+
+// FEATURE 5: Toast
+function showToast(m, d = 2000) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), d); }
+
+// ============================================
+// FEATURE 6: Special Card
+// ============================================
+async function loadSpecialCards() {
+    try {
+        const data = await API.specialCards.list();
+        if (!data?.length) return;
+        const s = data[0];
+        let html = '<div class="special-card">';
+        if (s.image_url) html += `<img src="${s.image_url}" alt="Special">`;
+        if (s.description) html += `<div class="special-text">${s.description}</div>`;
+        if (s.special_text && s.link) {
+            let link = s.link;
+            if (!link.startsWith('http://') && !link.startsWith('https://')) link = 'https://' + link;
+            html += `<a href="${link}" target="_blank" class="special-link">${s.special_text}</a>`;
+        } else if (s.special_text) {
+            html += `<span class="special-link" style="cursor:default;">${s.special_text}</span>`;
+        }
+        html += '</div>';
+        document.getElementById('specialCardContainer').innerHTML = html;
+    } catch(e) {}
+}
+
+// ============================================
+// FEATURE 7: Timers
+// ============================================
+async function loadTimers() {
+    try {
+        const data = await API.countdowns.list();
+        if (!data?.length) return;
+        let html = '';
+        data.forEach((cd, i) => {
+            html += `<div class="countdown-card timer-${i+1}">
+                <div class="timer-serial-box" style="background:${['#F85149','#3B82F6','#22C55E','#EC4899','#F97316'][i]}">ATLAS Timer-${String(i+1).padStart(2,'0')}</div>
                 <div class="timer-main-topic">${cd.main_topic}</div>
-                ${cd.subtopic?`<div class="timer-subtopic">${cd.subtopic}</div>`:''}
+                ${cd.subtopic ? `<div class="timer-subtopic">${cd.subtopic}</div>` : ''}
                 <div class="timer-row">
                     <span class="timer-clock-icon">🕐</span>
                     <div class="timer-values">
@@ -215,96 +247,138 @@ async function loadTimers(){
                     </div>
                 </div>
             </div>`;
-            setTimeout(()=>startCountdown(cd.end_time,i),i*100);
+            setTimeout(() => startCountdown(cd.end_time, i), i * 100);
         });
-        container.innerHTML=html;
-    }catch(e){}
+        document.getElementById('timerContainer').innerHTML = html;
+    } catch(e) {}
 }
 
-function startCountdown(endTime,i){
-    const target=new Date(endTime);
-    const dEl=document.querySelector(`.countdown-d-${i}`);
-    const hEl=document.querySelector(`.countdown-h-${i}`);
-    const mEl=document.querySelector(`.countdown-m-${i}`);
-    const sEl=document.querySelector(`.countdown-s-${i}`);
-    if(!dEl)return;
-    function update(){
-        const diff=target-new Date();
-        if(diff<=0){dEl.textContent='০০';hEl.textContent='০০';mEl.textContent='০০';sEl.textContent='০০';return;}
-        dEl.textContent=String(Math.floor(diff/(1000*60*60*24))).padStart(2,'0');
-        hEl.textContent=String(Math.floor((diff%(1000*60*60*24))/(1000*60*60))).padStart(2,'0');
-        mEl.textContent=String(Math.floor((diff%(1000*60*60))/(1000*60))).padStart(2,'0');
-        sEl.textContent=String(Math.floor((diff%(1000*60))/1000)).padStart(2,'0');
+function startCountdown(endTime, i) {
+    const target = new Date(endTime);
+    const dEl = document.querySelector(`.countdown-d-${i}`);
+    const hEl = document.querySelector(`.countdown-h-${i}`);
+    const mEl = document.querySelector(`.countdown-m-${i}`);
+    const sEl = document.querySelector(`.countdown-s-${i}`);
+    if (!dEl) return;
+    function update() {
+        const diff = target - new Date();
+        if (diff <= 0) { dEl.textContent = '০০'; hEl.textContent = '০০'; mEl.textContent = '০০'; sEl.textContent = '০০'; return; }
+        dEl.textContent = String(Math.floor(diff / (1000 * 60 * 60 * 24))).padStart(2, '0');
+        hEl.textContent = String(Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))).padStart(2, '0');
+        mEl.textContent = String(Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
+        sEl.textContent = String(Math.floor((diff % (1000 * 60)) / 1000)).padStart(2, '0');
     }
-    update();setInterval(update,1000);
+    update(); setInterval(update, 1000);
 }
 
-async function loadSpecialCards(){
-    try{
-        const data=await safeFetch(`${SUPABASE_URL}/rest/v1/special_cards?select=*&order=sort_order.asc&limit=1`);
-        if(!data?.length)return;
-        const s=data[0];
-        let html='<div class="special-card">';
-        if(s.image_url)html+=`<img src="${s.image_url}" alt="Special">`;
-        if(s.description)html+=`<div class="special-text">${s.description}</div>`;
-        if(s.special_text&&s.link)html+=`<a href="${s.link}" target="_blank" class="special-link">${s.special_text}</a>`;
-        else if(s.special_text)html+=`<span class="special-link" style="cursor:default;">${s.special_text}</span>`;
-        html+='</div>';
-        document.getElementById('specialCardContainer').innerHTML=html;
-    }catch(e){}
+// ============================================
+// FEATURE 9: Model Test Modal
+// ============================================
+function openModelTestModal() {
+    const mc = document.getElementById('modalContent');
+    mc.innerHTML = `<div class="modal-title">📖 Model Test</div>
+        <button class="btn btn-outline" onclick="closeModal();goTo('exam.html?cat=model&sub=medical_subject')" style="width:100%;margin-bottom:6px;">🏥 Medical (Subject Final)</button>
+        <button class="btn btn-outline" onclick="closeModal();goTo('exam.html?cat=model&sub=medical_paper')" style="width:100%;margin-bottom:6px;">🏥 Medical (Paper Final)</button>
+        <button class="btn btn-primary" onclick="closeModal();goTo('exam.html?cat=model&sub=full')" style="width:100%;margin-bottom:6px;">📖 Full Model Test</button>
+        <p style="font-size:10px;color:var(--text-secondary);text-align:center;">Bio=30, Chem=25, Phy=15, GK=15, Eng=15</p>
+        <button class="btn btn-outline" onclick="closeModal();goTo('exam.html?cat=model&sub=varsity')" style="width:100%;margin-bottom:6px;">🟣 Varsity</button>
+        <button class="btn btn-outline" onclick="closeModal()" style="width:100%;">✕ বন্ধ</button>`;
+    document.getElementById('mainModal').classList.add('active');
 }
+function closeModal() { document.getElementById('mainModal').classList.remove('active'); }
 
-async function loadSocialLinks(){
-    try{
-        const data=await safeFetch(`${SUPABASE_URL}/rest/v1/social_links?select=*&order=sort_order.asc&limit=20`);
-        if(!data?.length)return;
-        const icons={facebook:'📘',youtube:'▶️',telegram:'✈️',whatsapp:'💬',other:'🔗'};
-        document.getElementById('socialRow').innerHTML=data.map(s=>`<a href="${s.link}" target="_blank" class="social-chip">${icons[s.type]||'🔗'} ${s.media_name}</a>`).join('');
-    }catch(e){}
-}
-
-function loadOwnerInfo(){
-    const photo=localStorage.getItem('owner_photo');
-    const name=localStorage.getItem('owner_name');
-    const info=localStorage.getItem('owner_info');
-    if(name)document.getElementById('ownerNameTop').textContent=name;
-    if(info)document.getElementById('ownerInfoBack').innerHTML=info.replace(/\n/g,'<br>');
-    if(photo){const img=document.getElementById('ownerPhoto');img.src=photo;img.style.display='block';document.getElementById('ownerPhotoFallback').style.display='none';}
-}
-
-async function loadMentors(){
-    try{
-        const data=await safeFetch(`${SUPABASE_URL}/rest/v1/mentors?select=*&order=sort_order.asc&limit=6`);
-        if(!data?.length)return;
-        let html='<div style="text-align:center;margin:16px 0;"><div style="font-size:12px;color:var(--accent);font-weight:700;margin-bottom:8px;">👨‍🏫 Mentors</div><div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;">';
-        data.forEach(m=>{html+=`<div style="text-align:center;width:80px;"><img src="${m.photo_url||''}" style="width:60px;height:60px;border-radius:10px;object-fit:cover;border:2px solid var(--border);" onerror="this.style.display='none'"><div style="font-size:10px;font-weight:600;margin-top:3px;">${m.name}</div><div style="font-size:9px;color:var(--text-secondary);">${m.role||''}</div></div>`;});
-        html+='</div></div>';
-        document.getElementById('mentorsContainer').innerHTML=html;
-    }catch(e){}
-}
-
-function checkAdmin(){
-    try{const sess=JSON.parse(localStorage.getItem('atlas-session'));if(sess?.phone==='01754365403'||sess?.role==='admin'||sess?.role==='sub_admin'){document.getElementById('adminBtn').style.display='flex';document.getElementById('adminSidebarBtn').style.display='flex';}}catch(e){}
-}
-
-function openMistakesModal(){
-    const sess=localStorage.getItem('atlas-session');
-    if(!sess){document.getElementById('modalContent').innerHTML='<div class="modal-title">⚠️ My Mistakes</div><p style="color:var(--text-secondary);text-align:center;">লগইন করুন</p><button class="btn btn-outline" onclick="closeModal()" style="width:100%;margin-top:8px;">✕ বন্ধ</button>';document.getElementById('mainModal').classList.add('active');return;}
+// ============================================
+// FEATURE 10: My Mistakes Modal
+// ============================================
+function openMistakesModal() {
+    if (!Storage.isLoggedIn()) {
+        document.getElementById('modalContent').innerHTML = `<div class="modal-title">⚠️ My Mistakes</div><p style="color:var(--text-secondary);text-align:center;">লগইন করুন</p><button class="btn btn-outline" onclick="closeModal()" style="width:100%;margin-top:8px;">✕ বন্ধ</button>`;
+        document.getElementById('mainModal').classList.add('active');
+        return;
+    }
     goTo('dashboard.html');
 }
 
-function showError(title,message,details,retryFn){
-    const existing=document.querySelector('.error-popup-overlay');if(existing)existing.remove();
-    const overlay=document.createElement('div');overlay.className='error-popup-overlay';
-    let retryHTML='';if(retryFn){retryHTML=`<button class="error-popup-retry" onclick="this.closest('.error-popup-overlay').remove();(${retryFn.toString()})();">🔄 আবার চেষ্টা</button>`;}
-    overlay.innerHTML=`<div class="error-popup" onclick="event.stopPropagation()"><div class="error-popup-icon">⚠️</div><div class="error-popup-title">${title||'কিছু সমস্যা হয়েছে'}</div><div class="error-popup-message">${message||'পরে আবার চেষ্টা করুন'}</div>${details?`<div class="error-popup-details">${details}</div>`:''}<div style="display:flex;justify-content:center;gap:8px;">${retryHTML}<button class="error-popup-btn" onclick="this.closest('.error-popup-overlay').remove()">✕ বন্ধ</button></div></div>`;
-    overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});document.body.appendChild(overlay);
+// ============================================
+// FEATURE 11: Social Links
+// ============================================
+async function loadSocialLinks() {
+    try {
+        const data = await API.social.list();
+        if (!data?.length) return;
+        const icons = { facebook:'📘', youtube:'▶️', telegram:'✈️', whatsapp:'💬', other:'🔗' };
+        document.getElementById('socialRow').innerHTML = data.map(s => `<a href="${s.link}" target="_blank" class="social-chip">${icons[s.type]||'🔗'} ${s.media_name}</a>`).join('');
+    } catch(e) {}
 }
-window.addEventListener('error',function(e){showError('💥 সমস্যা','পৃষ্ঠাটি রিলোড করুন',e.error?.message,()=>location.reload());});
-window.addEventListener('unhandledrejection',function(e){showError('⚠️ প্রসেসিং সমস্যা','অনুরোধ সম্পূর্ণ করা যায়নি',e.reason?.message,null);});
 
-document.addEventListener('DOMContentLoaded',()=>{
-    loadTimers();loadSpecialCards();loadSocialLinks();loadOwnerInfo();loadMentors();checkAdmin();
+// ============================================
+// FEATURE 12: Owner Section
+// ============================================
+function loadOwnerInfo() {
+    const owner = Storage.getOwner();
+    if (owner.name) document.getElementById('ownerNameTop').textContent = owner.name;
+    if (owner.info) document.getElementById('ownerInfoBack').innerHTML = owner.info.replace(/\n/g, '<br>');
+    if (owner.photo) {
+        const img = document.getElementById('ownerPhoto');
+        img.src = owner.photo;
+        img.style.display = 'block';
+        document.getElementById('ownerPhotoFallback').style.display = 'none';
+    }
+}
+
+// ============================================
+// FEATURE 13: Mentors
+// ============================================
+async function loadMentors() {
+    try {
+        const data = await API.mentors.list();
+        if (!data?.length) return;
+        let html = '<div style="text-align:center;margin:16px 0;"><div style="font-size:12px;color:var(--accent);font-weight:700;margin-bottom:8px;">👨‍🏫 Mentors</div><div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;">';
+        data.forEach(m => {
+            html += `<div style="text-align:center;width:80px;"><img src="${m.photo_url||''}" style="width:60px;height:60px;border-radius:10px;object-fit:cover;border:2px solid var(--border);" onerror="this.style.display='none'"><div style="font-size:10px;font-weight:600;margin-top:3px;">${m.name}</div><div style="font-size:9px;color:var(--text-secondary);">${m.role||''}</div></div>`;
+        });
+        html += '</div></div>';
+        document.getElementById('mentorsContainer').innerHTML = html;
+    } catch(e) {}
+}
+
+// ============================================
+// FEATURE 14-15: Admin Check
+// ============================================
+function checkAdmin() {
+    if (Storage.isAdmin() || Storage.isSubAdmin()) {
+        document.getElementById('adminBtn').style.display = 'flex';
+        document.getElementById('adminSidebarBtn').style.display = 'flex';
+    }
+}
+
+// ============================================
+// FEATURE 19: Error Handler
+// ============================================
+function showError(title, message, details, retryFn) {
+    const existing = document.querySelector('.error-popup-overlay');
+    if (existing) existing.remove();
+    const overlay = document.createElement('div');
+    overlay.className = 'error-popup-overlay';
+    let retryHTML = '';
+    if (retryFn) retryHTML = `<button class="error-popup-retry" onclick="this.closest('.error-popup-overlay').remove();(${retryFn.toString()})();">🔄 আবার চেষ্টা</button>`;
+    overlay.innerHTML = `<div class="error-popup" onclick="event.stopPropagation()"><div class="error-popup-icon">⚠️</div><div class="error-popup-title">${title||'কিছু সমস্যা হয়েছে'}</div><div class="error-popup-message">${message||'পরে আবার চেষ্টা করুন'}</div>${details?`<div class="error-popup-details">${details}</div>`:''}<div style="display:flex;justify-content:center;gap:8px;">${retryHTML}<button class="error-popup-btn" onclick="this.closest('.error-popup-overlay').remove()">✕ বন্ধ</button></div></div>`;
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+}
+window.addEventListener('error', function(e) { showError('💥 সমস্যা', 'পৃষ্ঠাটি রিলোড করুন', e.error?.message, () => location.reload()); });
+window.addEventListener('unhandledrejection', function(e) { showError('⚠️ প্রসেসিং সমস্যা', 'অনুরোধ সম্পূর্ণ করা যায়নি', e.reason?.message, null); });
+
+// ============================================
+// INIT
+// ============================================
+document.addEventListener('DOMContentLoaded', () => {
+    loadSpecialCards();
+    loadTimers();
+    loadSocialLinks();
+    loadOwnerInfo();
+    loadMentors();
+    checkAdmin();
 });
 </script>
 </body>
