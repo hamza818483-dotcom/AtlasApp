@@ -244,7 +244,7 @@
 // F30: CONFIGURATION
 // ============================================
 const GEMINI_KEY = 'AIzaSyBHfdZwqQkrBWF2pp1hLCGZKaXKrinP9ew';
-const GROQ_KEY = 'gsk_xxxxxxxxxxxxxxxxxxxxx'; // তোমার Groq Key
+const GROQ_KEY = 'gsk_xxxxxxxxxxxxxxxxxxxxx';
 const AUTH_URL = 'https://atlasprep.pages.dev/auth';
 let isDarkMode=true,isSidebarOpen=false,currentExam=null,examQuestions=[],userAnswers={},bookmarkedQuestions={};
 let examTimer=null,examSeconds=0,totalSeconds=0,currentCategory=null,isExamSubmitted=false,isMockTest=false,mockQuestionCount=20,reportQid=null;
@@ -277,21 +277,7 @@ function switchMode(mode){
     window.scrollTo(0,0);
 }
 
-// F34: LOAD CATEGORY COUNTS
-async function loadCategoryCounts(){
-    try{
-        const data=await API.exams.list(500);
-        const counts={board:0,medical:0,dental:0,afmc:0,varsity:0,onushiloni:0,model:0};
-        data.forEach(e=>{if(counts[e.exam_type]!==undefined)counts[e.exam_type]++;});
-        document.getElementById('catGrid').innerHTML=`
-            <div class="cat-card" onclick="showCategory('board')"><span class="cat-icon">🔵</span><span class="cat-name">বোর্ড প্রস্তুতি</span><span class="cat-count">${counts.board} exams</span></div>
-            <div class="cat-card" onclick="showCategory('medical')"><span class="cat-icon">🟢</span><span class="cat-name">মেডিকেল+ডেন্টাল</span><span class="cat-count">${counts.medical+counts.dental+counts.afmc} exams</span></div>
-            <div class="cat-card" onclick="showCategory('varsity')"><span class="cat-icon">🟣</span><span class="cat-name">ভার্সিটি প্রস্তুতি</span><span class="cat-count">${counts.varsity} exams</span></div>
-            <div class="cat-card" onclick="showCategory('onushiloni')"><span class="cat-icon">🟠</span><span class="cat-name">অনুশীলনী এক্সাম</span><span class="cat-count">${counts.onushiloni} exams</span></div>`;
-    }catch(e){}
-}
-
-// F35: SHOW CATEGORY
+// F34: SHOW CATEGORY
 function showCategory(cat){
     currentCategory=cat;
     const titles={board:'🔵 বোর্ড প্রস্তুতি',medical:'🟢 মেডিকেল+ডেন্টাল',varsity:'🟣 ভার্সিটি প্রস্তুতি',onushiloni:'🟠 অনুশীলনী'};
@@ -321,161 +307,7 @@ function showCategory(cat){
     document.getElementById('categoryContent').innerHTML=html;switchMode('Category');
 }
 
-// F36-F80: CONTINUED IN PART 2...
-// F36: SHOW MEDICAL SUB-TYPES
-function showMedicalSub(type){
-    let html=`<div class="section-header"><div class="section-title">${type==='medical'?'🏥 Medical':type==='dental'?'🦷 Dental':'🎖️ AFMC'}</div></div>`;
-    html+=`<div class="cat-grid">
-        <div class="cat-card" onclick="loadExamsByType('${type}','demo')"><span class="cat-name">Demo</span></div>
-        <div class="cat-card" onclick="loadExamsByType('${type}','chapter')"><span class="cat-name">Chapter</span></div>
-        <div class="cat-card" onclick="loadExamsByType('${type}','year')"><span class="cat-name">Year</span></div>
-    </div>`;
-    document.getElementById('categoryContent').innerHTML=html;switchMode('Category');
-}
-
-// F37: SHOW SUB-CATEGORY
-function showSubCategory(cat,sub){
-    if(cat==='board'){
-        if(['ka','kha','cq'].includes(sub)){loadKaKhaContent(sub);}
-        else{loadExamsBySubType(cat,sub);}
-    }else if(cat==='varsity'){loadExamsBySubType(cat,sub);}
-}
-
-// F38: LOAD EXAMS BY SUB-TYPE
-async function loadExamsBySubType(cat,sub){
-    try{
-        let query=`exam_type=eq.${cat}`;
-        if(cat==='board'){
-            if(sub==='board_q_year')query+=`&sub_type=eq.board_q_year`;
-            else if(sub==='board_q_chapter')query+=`&sub_type=eq.board_q_chapter`;
-            else if(sub==='college_q')query+=`&sub_type=eq.college_q`;
-        }
-        const data=await API.fetchTable('exams',`?${query}&select=*&order=sort_order.asc&limit=100`);
-        if(!data?.length){document.getElementById('categoryContent').innerHTML='<p style="text-align:center;color:var(--text-secondary);padding:20px;">কোনো এক্সাম নেই</p>';switchMode('Category');return;}
-        showExamGroupedList(data,cat,sub);
-    }catch(e){}
-}
-
-// F39: SHOW EXAM GROUPED LIST
-function showExamGroupedList(data,cat,sub){
-    const grouped={};
-    if(cat==='board'&&(sub==='board_q_year'||sub==='college_q')){
-        data.forEach(e=>{const board=e.board||'সাধারণ';if(!grouped[board])grouped[board]=[];grouped[board].push(e);});
-    }else{data.forEach(e=>{const s=e.subject||'সাধারণ';if(!grouped[s])grouped[s]=[];grouped[s].push(e);});}
-    let html='';
-    Object.keys(grouped).forEach(key=>{
-        html+=`<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;">📘 ${key} (${grouped[key].length})</div>`;
-        if(cat==='board'&&(sub==='board_q_year'||sub==='college_q')){
-            const bySubject={};
-            grouped[key].forEach(e=>{const s=e.subject||'সাধারণ';if(!bySubject[s])bySubject[s]=[];bySubject[s].push(e);});
-            Object.keys(bySubject).forEach(s=>{
-                html+=`<div style="font-size:11px;color:var(--text-secondary);margin-left:8px;">📗 ${s}</div>`;
-                bySubject[s].forEach(e=>{html+=`<div class="list-item" onclick="loadExamById(${e.id})"><div><div class="list-item-title">📖 ${e.chapter||e.title}</div><div class="list-item-sub">${e.year||''} | ${e.total_marks||0} প্রশ্ন</div></div><span class="list-item-arrow">→</span></div>`;});
-            });
-        }else{
-            grouped[key].forEach(e=>{html+=`<div class="list-item" onclick="loadExamById(${e.id})"><div><div class="list-item-title">📖 ${e.chapter||e.title}</div><div class="list-item-sub">${e.total_marks||0} প্রশ্ন</div></div><span class="list-item-arrow">→</span></div>`;});
-        }
-    });
-    document.getElementById('categoryContent').innerHTML=html||'<p style="text-align:center;color:var(--text-secondary);padding:20px;">কোনো এক্সাম নেই</p>';
-    switchMode('Category');
-}
-
-// F40: LOAD EXAMS BY TYPE (Medical)
-async function loadExamsByType(type,subType){
-    try{
-        const data=await API.fetchTable('exams',`?exam_type=eq.${type}&sub_type=eq.${subType}&select=*&order=sort_order.asc&limit=50`);
-        if(!data?.length){document.getElementById('categoryContent').innerHTML='<p style="text-align:center;color:var(--text-secondary);padding:20px;">কোনো এক্সাম নেই</p>';switchMode('Category');return;}
-        showExamGroupedList(data,type,subType);
-    }catch(e){}
-}
-
-// F41: LOAD ক,খ,CQ CONTENT
-async function loadKaKhaContent(type){
-    try{
-        const data=await API.kaKhaCQ.list();
-        const filtered=data.filter(d=>d.cq_type===type||(!d.cq_type&&type==='ka'));
-        if(!filtered.length){document.getElementById('categoryContent').innerHTML='<div class="section-header"><div class="section-title">📦 '+(type==='ka'?'ক ভান্ডার':type==='kha'?'খ ভান্ডার':'টাইপ CQ')+'</div></div><p style="text-align:center;color:var(--text-secondary);padding:20px;">কোনো কন্টেন্ট নেই</p>';switchMode('Category');return;}
-        const grouped={};
-        filtered.forEach(d=>{const s=d.subject||'সাধারণ';if(!grouped[s])grouped[s]=[];grouped[s].push(d);});
-        let html=`<div class="section-header"><div class="section-title">📦 ${type==='ka'?'ক ভান্ডার':type==='kha'?'খ ভান্ডার':'টাইপ CQ'}</div></div>`;
-        Object.keys(grouped).forEach(s=>{
-            html+=`<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;">📘 ${s} (${grouped[s].length})</div>`;
-            grouped[s].forEach(d=>{
-                const link=d.link_or_file||'#';
-                const isFile=d.file_type==='file';
-                html+=`<div class="list-item" onclick="window.open('${link}','_blank')">
-                    <div><div class="list-item-title">📖 ${d.chapter||'সাধারণ'}</div>
-                    <div class="list-item-sub">${d.year||''} ${d.topic||''} ${isFile?'📄 ফাইল':'🔗 লিংক'}</div></div>
-                    <span class="list-item-arrow">→</span></div>`;
-            });
-        });
-        document.getElementById('categoryContent').innerHTML=html;switchMode('Category');
-    }catch(e){}
-}
-
-// F42: LOAD EXAM BY ID
-async function loadExamById(examId){
-    try{
-        const [examData]=await API.exams.getById(examId);
-        if(!examData){showToast('❌ এক্সাম পাওয়া যায়নি');return;}
-        currentExam=examData;
-        examQuestions=await API.questions.getByExam(examId);
-        if(!examQuestions?.length){showNoQuestions();return;}
-        showPreExamFromData(currentExam,examQuestions);
-    }catch(e){showToast('❌ এরর');}
-}
-
-// F43: NO QUESTIONS MESSAGE
-function showNoQuestions(){
-    const html=`<div class="no-questions"><div class="icon">⚠️</div><div class="title">Database এ প্রশ্ন নেই</div><div class="subtitle">প্রিয় শিক্ষার্থী,</div><div class="subtitle">এডমিনকে ইনফর্ম করুন, দ্রুতই প্রশ্ন এড করার চেষ্টা করবো</div><button class="btn btn-outline" onclick="backToCategory()" style="margin-top:16px;">🔙 ফিরে যান</button></div>`;
-    document.getElementById('preExamContent').innerHTML=html;document.getElementById('startExamBtn').style.display='none';switchMode('PreExam');
-}
-
-// F44: SHOW PRE-EXAM
-function showPreExamFromData(exam,questions){
-    document.getElementById('startExamBtn').style.display='block';examQuestions=questions||[];
-    let html=`<div class="exam-hero"><div class="exam-hero-title">📝 ${exam.title||(exam.subject+' - '+exam.chapter)}</div>
-        <div class="exam-hero-stats"><div class="hero-stat"><div class="hero-stat-val">${questions.length}</div><div class="hero-stat-label">📋 প্রশ্ন</div></div>
-        <div class="hero-stat"><div class="hero-stat-val">${exam.duration_minutes||Math.ceil(questions.length/2)}</div><div class="hero-stat-label">⏱️ মিনিট</div></div>
-        <div class="hero-stat"><div class="hero-stat-val">${exam.total_marks||questions.length}</div><div class="hero-stat-label">🎯 মার্ক</div></div></div></div>
-        <div class="pre-exam-card">
-            <div class="info-row"><span class="info-label">সাবজেক্ট</span><span class="info-value">${exam.subject||'—'}</span></div>
-            <div class="info-row"><span class="info-label">চ্যাপ্টার</span><span class="info-value">${exam.chapter||'—'}</span></div>
-            ${exam.exam_type?`<div class="info-row"><span class="info-label">টাইপ</span><span class="info-value">${exam.exam_type}</span></div>`:''}
-            ${exam.sub_type?`<div class="info-row"><span class="info-label">সাব-টাইপ</span><span class="info-value">${exam.sub_type}</span></div>`:''}
-            ${exam.board?`<div class="info-row"><span class="info-label">বোর্ড/কলেজ</span><span class="info-value">${exam.board}</span></div>`:''}
-            ${exam.year?`<div class="info-row"><span class="info-label">সাল</span><span class="info-value">${exam.year}</span></div>`:''}
-            ${exam.writer?`<div class="info-row"><span class="info-label">রাইটার</span><span class="info-value">${exam.writer}</span></div>`:''}
-            ${exam.unit?`<div class="info-row"><span class="info-label">ইউনিট</span><span class="info-value">${exam.unit}</span></div>`:''}
-        </div>`;
-    document.getElementById('preExamContent').innerHTML=html;switchMode('PreExam');
-}
-
-// F45: BACK NAVIGATION
-function backToList(){switchMode('List');currentCategory=null;}
-function backToCategory(){if(currentCategory)showCategory(currentCategory);else backToList();}
-
-// F46: MOCK TEST
-function startMockTest(){
-    isMockTest=true;
-    let html='<div class="section-header"><div class="section-title">🎯 প্রশ্ন সংখ্যা ও সময়</div></div><div class="mock-options">';
-    [{count:25,time:12},{count:35,time:17},{count:50,time:25},{count:75,time:37},{count:100,time:50}].forEach(n=>{
-        html+=`<button class="mock-option-btn" onclick="selectMockCount(${n.count})">${n.count} টি প্রশ্ন<br><small>⏱️ ${n.time} মিনিট</small></button>`;
-    });
-    html+='</div>';
-    document.getElementById('categoryContent').innerHTML=html;switchMode('Category');
-}
-function selectMockCount(count){
-    mockQuestionCount=count;examQuestions=[];
-    currentExam={title:'মক টেস্ট',subject:'মক',chapter:'মক',total_marks:count,duration_minutes:Math.ceil(count/2),id:'mock_'+Date.now()};
-    showNoQuestionsForMock();
-}
-function showNoQuestionsForMock(){
-    const html=`<div class="no-questions"><div class="icon">⚠️</div><div class="title">Database এ প্রশ্ন নেই</div><div class="subtitle">প্রিয় শিক্ষার্থী,</div><div class="subtitle">এডমিনকে ইনফর্ম করুন, দ্রুতই প্রশ্ন এড করার চেষ্টা করবো</div><button class="btn btn-outline" onclick="backToList()" style="margin-top:16px;">🔙 ফিরে যান</button></div>`;
-    document.getElementById('preExamContent').innerHTML=html;document.getElementById('startExamBtn').style.display='none';switchMode('PreExam');
-}
-
-// F47: START EXAM HALL
+// F35: START EXAM HALL
 function startExamHall(){
     userAnswers={};isExamSubmitted=false;bookmarkedQuestions={};
     totalSeconds=(currentExam.duration_minutes||30)*60;examSeconds=totalSeconds;
@@ -501,7 +333,7 @@ function startExamHall(){
     history.pushState(null,'',location.href);
 }
 
-// F48: SELECT OPTION
+// F36: SELECT OPTION
 function selectOption(qid,oid,el){
     if(isExamSubmitted||userAnswers[qid])return;
     userAnswers[qid]=oid;
@@ -511,7 +343,7 @@ function selectOption(qid,oid,el){
     updateProgress();
 }
 
-// F49: TIMER
+// F37: TIMER
 function startTimer(){stopTimer();updateTimerDisplay();examTimer=setInterval(()=>{examSeconds--;updateTimerDisplay();if(examSeconds<=0)submitExam();},1000);}
 function stopTimer(){if(examTimer){clearInterval(examTimer);examTimer=null;}}
 function updateTimerDisplay(){
@@ -521,7 +353,7 @@ function updateTimerDisplay(){
 }
 function updateProgress(){const total=examQuestions.length,answered=Object.keys(userAnswers).length;document.getElementById('progressText').textContent=`📈 ${Math.round(answered/total*100)}%`;}
 
-// F50: NAVIGATION POPUP
+// F38: NAVIGATION POPUP
 function openNavPopup(){
     let html='';examQuestions.forEach((q,i)=>{
         let cls='nav-num';
@@ -536,7 +368,7 @@ function openNavPopup(){
 function closeNavPopup(){document.getElementById('navOverlay').classList.remove('active');}
 function goToQuestion(qid){const card=document.getElementById(`qCard${qid}`);if(card)card.scrollIntoView({behavior:'smooth',block:'center'});}
 
-// F51: BOOKMARK
+// F39: BOOKMARK
 function loadBookmarks(){try{const saved=Storage.getBookmarks();if(saved)bookmarkedQuestions=saved;}catch(e){}}
 function toggleBookmark(qid){
     if(!checkGuestAction())return;
@@ -556,7 +388,7 @@ function toggleBookmark(qid){
     }catch(e){}
 }
 
-// F52: REPORT
+// F40: REPORT
 function openReportModal(qid){reportQid=qid;document.getElementById('reportModal').classList.add('active');}
 function closeReportModal(){document.getElementById('reportModal').classList.remove('active');}
 async function submitReport(){
@@ -577,7 +409,7 @@ async function submitReport(){
     }catch(e){showToast('❌ এরর');}
 }
 
-// F53: SUBMIT EXAM
+// F41: SUBMIT EXAM
 function submitExam(){
     if(isExamSubmitted)return;
     if(!confirm('এক্সাম সাবমিট করবেন? ফেরত আসা যাবে না।'))return;
@@ -597,7 +429,7 @@ function submitExam(){
     if(isLoggedIn()&&!isMockTest)saveResultToDB(correct,wrong,skipped,negMark,finalScore,gpaScore,withGpa,totalQ);
 }
 
-// F54: SAVE RESULT
+// F42: SAVE RESULT
 async function saveResultToDB(c,w,s,n,f,g,wg,t){
     try{
         const user=Storage.getSession();if(!user)return;
@@ -608,7 +440,7 @@ async function saveResultToDB(c,w,s,n,f,g,wg,t){
     }catch(e){}
 }
 
-// F55: SHOW RESULT
+// F43: SHOW RESULT
 function showResult(correct,wrong,skipped,negMark,finalScore,withGpa,gpaScore,deduction,isSecondTimer,totalQ){
     const examName=currentExam?.title||(currentExam?.subject+' - '+currentExam?.chapter)||'এক্সাম';
     let html=`<div class="result-score-card"><div class="result-exam-name">📝 ${examName}</div><div class="result-big-score">${finalScore.toFixed(2)}</div><div class="result-total">/ ${totalQ}</div></div>`;
@@ -644,14 +476,14 @@ function showResult(correct,wrong,skipped,negMark,finalScore,withGpa,gpaScore,de
     },300);
 }
 
-// F56: FILTER RESULT
+// F44: FILTER RESULT
 function filterResult(type){
     document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
     event.target.classList.add('active');
     document.querySelectorAll('.solve-item').forEach(item=>{item.style.display=(type==='all'||item.dataset.status===type)?'block':'none';});
 }
 
-// F57: RETAKE & PRACTICE
+// F45: RETAKE & PRACTICE
 function retakeExam(){if(!checkGuestAction())return;userAnswers={};isExamSubmitted=false;bookmarkedQuestions={};startExamHall();}
 function mistakePractice(){
     if(!checkGuestAction())return;
@@ -662,775 +494,88 @@ function mistakePractice(){
     startExamHall();showToast('❌ '+wrongIds.length+' টি ভুল প্রশ্ন নিয়ে প্র্যাকটিস');
 }
 
-// F58: AI EXPLANATION (Multiple Models)
+// F46: AI EXPLANATION (Multiple Models)
 const AI_MODELS_EXAM=[{name:'Llama 3.3 70B',provider:'groq',model:'llama-3.3-70b-versatile',key:GROQ_KEY},{name:'Llama 3.1 8B',provider:'groq',model:'llama-3.1-8b-instant',key:GROQ_KEY},{name:'Mixtral 8x7B',provider:'groq',model:'mixtral-8x7b-32768',key:GROQ_KEY},{name:'Gemini 2.0 Flash',provider:'google',model:'gemini-2.0-flash',key:GEMINI_KEY}];
+async function callAIForMCQ(prompt){for(const model of AI_MODELS_EXAM){try{let answer;if(model.provider==='groq'){const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{'Authorization':'Bearer '+model.key,'Content-Type':'application/json'},body:JSON.stringify({model:model.model,messages:[{role:'system',content:'তুমি শিক্ষক। বাংলায় উত্তর দিবে। সংক্ষেপে।'},{role:'user',content:prompt}],temperature:0.7,max_tokens:1024})});const data=await res.json();answer=data.choices?.[0]?.message?.content;}else{const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model.model}:generateContent?key=${model.key}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})});const data=await res.json();answer=data.candidates?.[0]?.content?.parts?.[0]?.text;}if(answer&&!answer.includes('error')&&!answer.includes('rate_limit'))return answer.replace(/\n/g,'<br>');}catch(e){continue;}}return '❌ AI ব্যাখ্যা পাওয়া যায়নি। পরে চেষ্টা করুন।';}
+async function toggleAIBox(header,qid){if(!checkGuestAction())return;const content=header.nextElementSibling,arrow=header.querySelector('.exp-arrow');if(content.classList.contains('show')){content.classList.remove('show');arrow.classList.remove('open');return;}const q=examQuestions.find(q=>q.id===qid);if(!q)return;content.classList.add('show');arrow.classList.add('open');content.innerHTML='⏳ AI ব্যাখ্যা আনা হচ্ছে...';const options=[q.option1,q.option2,q.option3,q.option4,q.option5].filter(o=>o&&o!=='—');const labels=['ক','খ','গ','ঘ','ঙ'];let prompt=`তুমি একজন শিক্ষক। MCQ বিশ্লেষণ করো:\n\nপ্রশ্ন: ${q.question_text}\n\n`;options.forEach((opt,i)=>{prompt+=`${labels[i]}) ${opt}\n`;});prompt+=`\nসঠিক উত্তর: ${labels[q.answer_index-1]}) ${options[q.answer_index-1]}\n\nপ্রতিটি অপশন ব্যাখ্যা করো। ✅ কেন সঠিক, ❌ কেন ভুল। বাংলায়। সংক্ষেপে।`;content.innerHTML=await callAIForMCQ(prompt);}
 
-async function callAIForMCQ(prompt){
-    for(const model of AI_MODELS_EXAM){try{let answer;if(model.provider==='groq'){const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{'Authorization':'Bearer '+model.key,'Content-Type':'application/json'},body:JSON.stringify({model:model.model,messages:[{role:'system',content:'তুমি শিক্ষক। বাংলায় উত্তর দিবে। সংক্ষেপে।'},{role:'user',content:prompt}],temperature:0.7,max_tokens:1024})});const data=await res.json();answer=data.choices?.[0]?.message?.content;}else{const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model.model}:generateContent?key=${model.key}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})});const data=await res.json();answer=data.candidates?.[0]?.content?.parts?.[0]?.text;}if(answer&&!answer.includes('error')&&!answer.includes('rate_limit'))return answer.replace(/\n/g,'<br>');}catch(e){continue;}}
-    return '❌ AI ব্যাখ্যা পাওয়া যায়নি। পরে চেষ্টা করুন।';
-}
+// F47: LOAD CATEGORY COUNTS
+async function loadCategoryCounts(){try{const data=await API.exams.list(500);const counts={board:0,medical:0,dental:0,afmc:0,varsity:0,onushiloni:0,model:0};data.forEach(e=>{if(counts[e.exam_type]!==undefined)counts[e.exam_type]++;});document.getElementById('catGrid').innerHTML=`<div class="cat-card" onclick="showCategory('board')"><span class="cat-icon">🔵</span><span class="cat-name">বোর্ড প্রস্তুতি</span><span class="cat-count">${counts.board} exams</span></div><div class="cat-card" onclick="showCategory('medical')"><span class="cat-icon">🟢</span><span class="cat-name">মেডিকেল+ডেন্টাল</span><span class="cat-count">${counts.medical+counts.dental+counts.afmc} exams</span></div><div class="cat-card" onclick="showCategory('varsity')"><span class="cat-icon">🟣</span><span class="cat-name">ভার্সিটি প্রস্তুতি</span><span class="cat-count">${counts.varsity} exams</span></div><div class="cat-card" onclick="showCategory('onushiloni')"><span class="cat-icon">🟠</span><span class="cat-name">অনুশীলনী এক্সাম</span><span class="cat-count">${counts.onushiloni} exams</span></div>`;}catch(e){}}
 
-async function toggleAIBox(header,qid){
-    if(!checkGuestAction())return;
-    const content=header.nextElementSibling,arrow=header.querySelector('.exp-arrow');
-    if(content.classList.contains('show')){content.classList.remove('show');arrow.classList.remove('open');return;}
-    const q=examQuestions.find(q=>q.id===qid);if(!q)return;
-    content.classList.add('show');arrow.classList.add('open');content.innerHTML='⏳ AI ব্যাখ্যা আনা হচ্ছে...';
-    const options=[q.option1,q.option2,q.option3,q.option4,q.option5].filter(o=>o&&o!=='—');
-    const labels=['ক','খ','গ','ঘ','ঙ'];let prompt=`তুমি একজন শিক্ষক। MCQ বিশ্লেষণ করো:\n\nপ্রশ্ন: ${q.question_text}\n\n`;
-    options.forEach((opt,i)=>{prompt+=`${labels[i]}) ${opt}\n`;});
-    prompt+=`\nসঠিক উত্তর: ${labels[q.answer_index-1]}) ${options[q.answer_index-1]}\n\nপ্রতিটি অপশন ব্যাখ্যা করো। ✅ কেন সঠিক, ❌ কেন ভুল। বাংলায়। সংক্ষেপে।`;
-    content.innerHTML=await callAIForMCQ(prompt);
-}
+// F48: LOAD ALL EXAMS
+async function loadAllExams(){try{const data=await API.exams.list(50);if(!data?.length)return;const grouped={};const titles={board:'🔵 বোর্ড',medical:'🏥 Medical',dental:'🦷 Dental',afmc:'🎖️ AFMC',varsity:'🟣 ভার্সিটি',onushiloni:'🟠 অনুশীলনী',model:'📖 Model Test'};data.forEach(e=>{const t=e.exam_type||'other';if(!grouped[t])grouped[t]=[];grouped[t].push(e);});let html='';Object.keys(grouped).forEach(t=>{html+=`<div class="section-header" style="margin-top:10px;"><div class="section-title">${titles[t]||t} (${grouped[t].length})</div></div>`;const bySubject={};grouped[t].forEach(e=>{const s=e.subject||'সাধারণ';if(!bySubject[s])bySubject[s]=[];bySubject[s].push(e);});Object.keys(bySubject).forEach(s=>{html+=`<div style="font-size:11px;color:var(--accent);font-weight:700;margin:4px 0;">📘 ${s} (${bySubject[s].length})</div>`;bySubject[s].forEach(e=>{html+=`<div class="list-item" onclick="loadExamById(${e.id})"><div><div class="list-item-title">📖 ${e.chapter||e.title}</div><div class="list-item-sub">${e.board||''} ${e.year||''} | ${e.total_marks} প্রশ্ন</div></div><span class="list-item-arrow">→</span></div>`;});});});document.getElementById('savedExamsList').innerHTML=html||'<p style="color:var(--text-secondary);text-align:center;">কোনো এক্সাম নেই</p>';}catch(e){}}
 
-// F59: SOLVE SHEET + PDF
-function openSolveSheet(){
-    if(!checkGuestAction())return;
-    const w=window.open('','SolveSheet','width=900,height=700');
-    const examName=currentExam?.title||'Exam';const totalPages=Math.ceil(examQuestions.length/10);
-    let html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Solve Sheet - ${examName}</title><style>@page{size:A4;margin:15mm}body{font-family:'Noto Sans Bengali',sans-serif;background:white;color:#1A1D2E;font-size:11px;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{page-break-after:always;padding:0}.page:last-child{page-break-after:auto}.pdf-header{text-align:center;padding:12px 0;border-bottom:2px solid #5A5FE0;margin-bottom:14px}.pdf-header h2{color:#5A5FE0;margin:0;font-size:18px}.pdf-columns{column-count:2;column-gap:14px}.mcq-card{border:1px solid #D4D8EE;border-radius:10px;padding:10px;margin-bottom:10px;break-inside:avoid;background:#FAFBFF}.mcq-status{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;margin-bottom:6px}.status-correct{background:#DCFBEE;color:#0EA867}.status-wrong{background:#FEE8E8;color:#E53E3E}.status-skipped{background:#FEF5DC;color:#D97706}.q-text{font-size:12px;font-weight:700;margin-bottom:6px}.opt{padding:2px 0;font-size:11px}.opt-correct{color:#0EA867;font-weight:700}.opt-wrong{color:#E53E3E;text-decoration:line-through}.exp-box{background:#F4F6FF;border-left:2px solid #5A5FE0;padding:6px 8px;margin-top:5px;font-size:10px;border-radius:4px}.pdf-footer{text-align:center;font-size:10px;color:#7A82A8;padding:10px 0;border-top:1px solid #D4D8EE;margin-top:10px}img{max-width:100%;height:auto}</style></head><body>`;
-    for(let page=0;page<totalPages;page++){const start=page*10;const end=Math.min(start+10,examQuestions.length);const pageQuestions=examQuestions.slice(start,end);html+=`<div class="page"><div class="pdf-header"><h2>📋 ATLAS APP · Solve Sheet</h2><p>📝 ${examName} | 📅 ${new Date().toLocaleDateString('bn-BD')}</p></div><div class="pdf-columns">`;pageQuestions.forEach((q,idx)=>{const qNum=start+idx+1;const ua=userAnswers[q.id];const status=ua===q.answer_index?'correct':(ua?'wrong':'skipped');const statusText=status==='correct'?'✅ সঠিক':status==='wrong'?'❌ ভুল':'⏭️ স্কিপ';const statusClass=status==='correct'?'status-correct':status==='wrong'?'status-wrong':'status-skipped';html+=`<div class="mcq-card"><span class="mcq-status ${statusClass}">${statusText}</span><div class="q-text">${qNum}. ${q.question_text}</div>`;[q.option1,q.option2,q.option3,q.option4,q.option5].forEach((opt,oi)=>{if(opt&&opt!=='—'){let optClass='';if(oi+1===q.answer_index)optClass='opt-correct';else if(oi+1===ua&&ua!==q.answer_index)optClass='opt-wrong';html+=`<div class="opt ${optClass}">${['ক','খ','গ','ঘ','ঙ'][oi]}) ${opt} ${oi+1===q.answer_index?'✅':ua===oi+1&&ua!==q.answer_index?'❌':''}</div>`;}});if(q.explanation){html+=`<div class="exp-box"><strong>💡 ব্যাখ্যা:</strong> ${q.explanation}</div>`;}html+=`</div>`;});html+=`</div><div class="pdf-footer">Page ${page+1}/${totalPages} | ATLAS APP © 2026 | atlasprep.pages.dev</div></div>`;}html+=`<div style="text-align:center;padding:20px"><button onclick="window.print()" style="padding:12px 30px;background:#5A5FE0;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">📥 Download PDF / Print</button></div></body></html>`;w.document.write(html);w.document.close();}
-function downloadPDF(){if(!checkGuestAction())return;openSolveSheet();setTimeout(()=>window.print(),500);}
+// F49: SHOW MEDICAL SUB-TYPES
+function showMedicalSub(type){let html=`<div class="section-header"><div class="section-title">${type==='medical'?'🏥 Medical':type==='dental'?'🦷 Dental':'🎖️ AFMC'}</div></div>`;html+=`<div class="cat-grid"><div class="cat-card" onclick="loadExamsByType('${type}','demo')"><span class="cat-name">Demo</span></div><div class="cat-card" onclick="loadExamsByType('${type}','chapter')"><span class="cat-name">Chapter</span></div><div class="cat-card" onclick="loadExamsByType('${type}','year')"><span class="cat-name">Year</span></div></div>`;document.getElementById('categoryContent').innerHTML=html;switchMode('Category');}
 
-// F60: MODEL TEST (SIDEBAR)
-function openModelTest(){const html=`<div class="modal-title">📖 Model Test</div><button class="btn btn-outline" onclick="closeModelTest();loadModelExams('medical','subject')" style="width:100%;margin-bottom:6px;">🏥 Medical (Subject Final)</button><button class="btn btn-outline" onclick="closeModelTest();loadModelExams('medical','paper')" style="width:100%;margin-bottom:6px;">🏥 Medical (Paper Final)</button><button class="btn btn-primary" onclick="closeModelTest();loadModelExams('medical','full')" style="width:100%;margin-bottom:6px;">📖 Full Model Test</button><p style="font-size:10px;color:var(--text-secondary);text-align:center;">Bio=30, Chem=25, Phy=15, GK=15, Eng=15</p><button class="btn btn-outline" onclick="closeModelTest();loadModelExams('varsity','')" style="width:100%;margin-bottom:6px;">🟣 Varsity</button><button class="btn btn-outline" onclick="closeModelTest()" style="width:100%;">✕ বন্ধ</button>`;document.getElementById('guestModalContent').innerHTML=html;document.getElementById('guestModal').classList.add('active');}
+// F50: SHOW SUB-CATEGORY
+function showSubCategory(cat,sub){if(cat==='board'){if(['ka','kha','cq'].includes(sub)){loadKaKhaContent(sub);}else{loadExamsBySubType(cat,sub);}}else if(cat==='varsity'){loadVarsityExams(sub);}}
+
+// F51: LOAD EXAMS BY SUB-TYPE
+async function loadExamsBySubType(cat,sub){try{let query=`exam_type=eq.${cat}`;if(cat==='board'){if(sub==='board_q_year')query+=`&sub_type=eq.board_q_year`;else if(sub==='board_q_chapter')query+=`&sub_type=eq.board_q_chapter`;else if(sub==='college_q')query+=`&sub_type=eq.college_q`;}const data=await API.fetchTable('exams',`?${query}&select=*&order=sort_order.asc&limit=100`);if(!data?.length){document.getElementById('categoryContent').innerHTML='<p style="text-align:center;color:var(--text-secondary);padding:20px;">কোনো এক্সাম নেই</p>';switchMode('Category');return;}showExamGroupedList(data,cat,sub);}catch(e){}}
+
+// F52: LOAD EXAMS BY TYPE (Medical)
+async function loadExamsByType(type,subType){try{const data=await API.fetchTable('exams',`?exam_type=eq.${type}&sub_type=eq.${subType}&select=*&order=sort_order.asc&limit=50`);if(!data?.length){document.getElementById('categoryContent').innerHTML='<p style="text-align:center;color:var(--text-secondary);padding:20px;">কোনো এক্সাম নেই</p>';switchMode('Category');return;}showExamGroupedList(data,type,subType);}catch(e){}}
+
+// F53: SHOW EXAM GROUPED LIST
+function showExamGroupedList(data,cat,sub){const grouped={};if(cat==='board'&&(sub==='board_q_year'||sub==='college_q')){data.forEach(e=>{const board=e.board||'সাধারণ';if(!grouped[board])grouped[board]=[];grouped[board].push(e);});}else{data.forEach(e=>{const s=e.subject||'সাধারণ';if(!grouped[s])grouped[s]=[];grouped[s].push(e);});}let html='';Object.keys(grouped).forEach(key=>{html+=`<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;">📘 ${key} (${grouped[key].length})</div>`;if(cat==='board'&&(sub==='board_q_year'||sub==='college_q')){const bySubject={};grouped[key].forEach(e=>{const s=e.subject||'সাধারণ';if(!bySubject[s])bySubject[s]=[];bySubject[s].push(e);});Object.keys(bySubject).forEach(s=>{html+=`<div style="font-size:11px;color:var(--text-secondary);margin-left:8px;">📗 ${s}</div>`;bySubject[s].forEach(e=>{html+=`<div class="list-item" onclick="loadExamById(${e.id})"><div><div class="list-item-title">📖 ${e.chapter||e.title}</div><div class="list-item-sub">${e.year||''} | ${e.total_marks||0} প্রশ্ন</div></div><span class="list-item-arrow">→</span></div>`;});});}else{grouped[key].forEach(e=>{html+=`<div class="list-item" onclick="loadExamById(${e.id})"><div><div class="list-item-title">📖 ${e.chapter||e.title}</div><div class="list-item-sub">${e.total_marks||0} প্রশ্ন</div></div><span class="list-item-arrow">→</span></div>`;});}});document.getElementById('categoryContent').innerHTML=html||'<p style="text-align:center;color:var(--text-secondary);padding:20px;">কোনো এক্সাম নেই</p>';switchMode('Category');}
+
+// F54: LOAD ক,খ,CQ CONTENT
+async function loadKaKhaContent(type){try{const data=await API.kaKhaCQ.list();const filtered=data.filter(d=>d.cq_type===type||(!d.cq_type&&type==='ka'));if(!filtered.length){const titles={ka:'ক ভান্ডার',kha:'খ ভান্ডার',cq:'টাইপ CQ'};document.getElementById('categoryContent').innerHTML=`<div class="section-header"><div class="section-title">📦 ${titles[type]}</div></div><p style="text-align:center;color:var(--text-secondary);padding:20px;">কোনো কন্টেন্ট নেই</p>`;switchMode('Category');return;}const grouped={};filtered.forEach(d=>{const s=d.subject||'সাধারণ';if(!grouped[s])grouped[s]=[];grouped[s].push(d);});const titles={ka:'ক ভান্ডার',kha:'খ ভান্ডার',cq:'টাইপ CQ'};let html=`<div class="section-header"><div class="section-title">📦 ${titles[type]}</div></div>`;Object.keys(grouped).forEach(s=>{html+=`<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;">📘 ${s} (${grouped[s].length})</div>`;grouped[s].forEach(d=>{const link=d.link_or_file||'#';const isFile=d.file_type==='file';html+=`<div class="list-item" onclick="window.open('${link}','_blank')"><div><div class="list-item-title">📖 ${d.chapter||'সাধারণ'}</div><div class="list-item-sub">${d.year||''} ${d.topic||''} ${isFile?'📄 ফাইল':'🔗 লিংক'}</div></div><span class="list-item-arrow">→</span></div>`;});});document.getElementById('categoryContent').innerHTML=html;switchMode('Category');}catch(e){}}
+
+// F55: LOAD EXAM BY ID
+async function loadExamById(examId){try{const [examData]=await API.exams.getById(examId);if(!examData){showToast('❌ এক্সাম পাওয়া যায়নি');return;}currentExam=examData;examQuestions=await API.questions.getByExam(examId);if(!examQuestions?.length){showNoQuestions();return;}showPreExamFromData(currentExam,examQuestions);}catch(e){showToast('❌ এরর');}}
+
+// F56: NO QUESTIONS MESSAGE
+function showNoQuestions(){const html=`<div class="no-questions"><div class="icon">⚠️</div><div class="title">Database এ প্রশ্ন নেই</div><div class="subtitle">প্রিয় শিক্ষার্থী,</div><div class="subtitle">এডমিনকে ইনফর্ম করুন, দ্রুতই প্রশ্ন এড করার চেষ্টা করবো</div><button class="btn btn-outline" onclick="backToCategory()" style="margin-top:16px;">🔙 ফিরে যান</button></div>`;document.getElementById('preExamContent').innerHTML=html;document.getElementById('startExamBtn').style.display='none';switchMode('PreExam');}
+
+// F57: SHOW PRE-EXAM DATA
+function showPreExamFromData(exam,questions){document.getElementById('startExamBtn').style.display='block';examQuestions=questions||[];let html=`<div class="exam-hero"><div class="exam-hero-title">📝 ${exam.title||(exam.subject+' - '+exam.chapter)}</div><div class="exam-hero-stats"><div class="hero-stat"><div class="hero-stat-val">${questions.length}</div><div class="hero-stat-label">📋 প্রশ্ন</div></div><div class="hero-stat"><div class="hero-stat-val">${exam.duration_minutes||Math.ceil(questions.length/2)}</div><div class="hero-stat-label">⏱️ মিনিট</div></div><div class="hero-stat"><div class="hero-stat-val">${exam.total_marks||questions.length}</div><div class="hero-stat-label">🎯 মার্ক</div></div></div></div><div class="pre-exam-card"><div class="info-row"><span class="info-label">সাবজেক্ট</span><span class="info-value">${exam.subject||'—'}</span></div><div class="info-row"><span class="info-label">চ্যাপ্টার</span><span class="info-value">${exam.chapter||'—'}</span></div>${exam.exam_type?`<div class="info-row"><span class="info-label">টাইপ</span><span class="info-value">${exam.exam_type}</span></div>`:''}${exam.sub_type?`<div class="info-row"><span class="info-label">সাব-টাইপ</span><span class="info-value">${exam.sub_type}</span></div>`:''}${exam.board?`<div class="info-row"><span class="info-label">বোর্ড/ভার্সিটি</span><span class="info-value">${exam.board}</span></div>`:''}${exam.year?`<div class="info-row"><span class="info-label">সাল</span><span class="info-value">${exam.year}</span></div>`:''}${exam.writer?`<div class="info-row"><span class="info-label">রাইটার</span><span class="info-value">${exam.writer}</span></div>`:''}${exam.unit?`<div class="info-row"><span class="info-label">ইউনিট</span><span class="info-value">${exam.unit}</span></div>`:''}</div>`;document.getElementById('preExamContent').innerHTML=html;switchMode('PreExam');}
+
+// F58: BACK NAVIGATION
+function backToList(){switchMode('List');currentCategory=null;}
+function backToCategory(){if(currentCategory)showCategory(currentCategory);else backToList();}
+
+// F59: MOCK TEST
+function startMockTest(){isMockTest=true;let html='<div class="section-header"><div class="section-title">🎯 প্রশ্ন সংখ্যা ও সময়</div></div><div class="mock-options">';[{count:25,time:12},{count:35,time:17},{count:50,time:25},{count:75,time:37},{count:100,time:50}].forEach(n=>{html+=`<button class="mock-option-btn" onclick="selectMockCount(${n.count})">${n.count} টি প্রশ্ন<br><small>⏱️ ${n.time} মিনিট</small></button>`;});html+='</div>';document.getElementById('categoryContent').innerHTML=html;switchMode('Category');}
+function selectMockCount(count){mockQuestionCount=count;examQuestions=[];currentExam={title:'মক টেস্ট',subject:'মক',chapter:'মক',total_marks:count,duration_minutes:Math.ceil(count/2),id:'mock_'+Date.now()};showNoQuestionsForMock();}
+function showNoQuestionsForMock(){const html=`<div class="no-questions"><div class="icon">⚠️</div><div class="title">Database এ প্রশ্ন নেই</div><div class="subtitle">প্রিয় শিক্ষার্থী,</div><div class="subtitle">এডমিনকে ইনফর্ম করুন, দ্রুতই প্রশ্ন এড করার চেষ্টা করবো</div><button class="btn btn-outline" onclick="backToList()" style="margin-top:16px;">🔙 ফিরে যান</button></div>`;document.getElementById('preExamContent').innerHTML=html;document.getElementById('startExamBtn').style.display='none';switchMode('PreExam');}
+
+// F60: LOAD VARISTY SUB-TYPE EXAMS
+async function loadVarsityExams(subType,varsityName,unit,year){try{const data=await API.exams.list(200);let filtered=data.filter(e=>e.exam_type==='varsity'&&e.sub_type===subType);if(varsityName)filtered=filtered.filter(e=>e.board===varsityName);if(unit&&unit!=='all')filtered=filtered.filter(e=>e.unit===unit);if(year)filtered=filtered.filter(e=>e.year===year);if(!filtered.length){document.getElementById('categoryContent').innerHTML='<p style="text-align:center;color:var(--text-secondary);padding:20px;">কোনো এক্সাম নেই</p>';switchMode('Category');return;}if(!varsityName){const byVarsity={};filtered.forEach(e=>{const v=e.board||'সাধারণ';if(!byVarsity[v])byVarsity[v]=[];byVarsity[v].push(e);});let html=`<div class="section-header"><div class="section-title">🟣 ${subType==='varsitywise'?'Varsitywise':subType==='yearwise'?'বিগত (সালওয়াইজ)':'বিগত (চাপ্টারভিত্তিক)'}</div></div>`;Object.keys(byVarsity).forEach(v=>{html+=`<div class="cat-card" onclick="loadVarsityExams('${subType}','${v.replace(/'/g,"\\'")}')" style="margin-bottom:8px;"><span class="cat-name">🏫 ${v}</span><span class="cat-count">${byVarsity[v].length} exams</span></div>`;});document.getElementById('categoryContent').innerHTML=html;}else if(subType!=='chapterwise'&&!unit){const units=[...new Set(filtered.map(e=>e.unit).filter(Boolean))];if(units.length>0){let html=`<div class="section-header"><div class="section-title">🏫 ${varsityName}</div></div><div class="section-subtitle">📋 ইউনিট সিলেক্ট করুন</div>`;html+=`<div class="cat-card" onclick="loadVarsityExams('${subType}','${varsityName.replace(/'/g,"\\'")}','all')" style="margin-bottom:8px;"><span class="cat-name">সব ইউনিট</span><span class="cat-count">${filtered.length} exams</span></div>`;units.forEach(u=>{const count=filtered.filter(e=>e.unit===u).length;html+=`<div class="cat-card" onclick="loadVarsityExams('${subType}','${varsityName.replace(/'/g,"\\'")}','${u}')" style="margin-bottom:8px;"><span class="cat-name">${u}</span><span class="cat-count">${count} exams</span></div>`;});document.getElementById('categoryContent').innerHTML=html;}else{showVarsitySubjects(filtered,subType,varsityName,unit);}}else{showVarsitySubjects(filtered,subType,varsityName,unit);}switchMode('Category');}catch(e){document.getElementById('categoryContent').innerHTML='<p>কোনো এক্সাম নেই</p>';switchMode('Category');}}
+
+// F61: SHOW VARISTY SUBJECTS
+function showVarsitySubjects(filtered,subType,varsityName,unit){const bySubject={};filtered.forEach(e=>{const s=e.subject||'সাধারণ';if(!bySubject[s])bySubject[s]=[];bySubject[s].push(e);});let html=`<div class="section-header"><div class="section-title">${varsityName||''} ${unit||''}</div></div>`;Object.keys(bySubject).forEach(s=>{html+=`<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;">📘 ${s} (${bySubject[s].length})</div>`;bySubject[s].forEach(e=>{html+=`<div class="list-item" onclick="loadExamById(${e.id})"><div><div class="list-item-title">📖 ${e.chapter||e.title}</div><div class="list-item-sub">${e.year||''} | ${e.total_marks||0} প্রশ্ন</div></div><span class="list-item-arrow">→</span></div>`;});});document.getElementById('categoryContent').innerHTML=html||'<p>কোনো এক্সাম নেই</p>';}
+
+// F62: LOAD MODEL TEST EXAMS
+async function loadModelExams(type,subType){try{const data=await API.modelTests.list();const filtered=data.filter(d=>d.type===type&&(!subType||d.sub_type===subType));if(!filtered.length){document.getElementById('categoryContent').innerHTML='<p style="text-align:center;color:var(--text-secondary);padding:20px;">কোনো Model Test নেই</p>';switchMode('Category');return;}let html=`<div class="section-header"><div class="section-title">📖 Model Test - ${type==='medical'?'🏥 Medical':type==='afmc'?'🎖️ AFMC':'🟣 Varsity'}</div></div>`;if(type==='varsity'){const byVarsity={};filtered.forEach(d=>{const v=d.varsity_name||'সাধারণ';if(!byVarsity[v])byVarsity[v]=[];byVarsity[v].push(d);});Object.keys(byVarsity).forEach(v=>{html+=`<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;">🏫 ${v} (${byVarsity[v].length})</div>`;byVarsity[v].forEach(d=>{const count=d.questions_json?JSON.parse(d.questions_json).length:(d.link?'🔗':'0');html+=`<div class="list-item" onclick="startModelExam('${d.id}')"><div><div class="list-item-title">📘 ${d.subject_name||d.paper_name||'Model Test'}</div><div class="list-item-sub">${d.unit||''} | ${typeof count==='number'?count+' প্রশ্ন':count}</div></div><span class="list-item-arrow">→</span></div>`;});});}else{const bySubject={};filtered.forEach(d=>{const s=d.subject_name||d.paper_name||'সাধারণ';if(!bySubject[s])bySubject[s]=[];bySubject[s].push(d);});Object.keys(bySubject).forEach(s=>{html+=`<div style="font-size:11px;color:var(--text-secondary);margin-left:8px;">📗 ${s}</div>`;bySubject[s].forEach(d=>{const count=d.questions_json?JSON.parse(d.questions_json).length:(d.link?'🔗':'0');html+=`<div class="list-item" onclick="startModelExam('${d.id}')"><div><div class="list-item-title">📖 ${d.sub_type||'Model Test'}</div><div class="list-item-sub">${typeof count==='number'?count+' প্রশ্ন':count}</div></div><span class="list-item-arrow">→</span></div>`;});});}document.getElementById('categoryContent').innerHTML=html||'<p>কোনো Model Test নেই</p>';switchMode('Category');}catch(e){document.getElementById('categoryContent').innerHTML='<p>কোনো Model Test নেই</p>';switchMode('Category');}}
+
+// F63: START MODEL EXAM
+async function startModelExam(modelId){try{const data=await API.modelTests.list();const modelTest=data.find(d=>d.id==modelId);if(!modelTest){showToast('❌ Model Test পাওয়া যায়নি');return;}if(modelTest.link){window.open(modelTest.link,'_blank');return;}if(modelTest.questions_json){examQuestions=JSON.parse(modelTest.questions_json);examQuestions=examQuestions.map((q,i)=>({id:i+1,question_text:q.questions||q.question_text||'',option1:q.option1||'',option2:q.option2||'',option3:q.option3||'',option4:q.option4||'',option5:q.option5||null,answer_index:parseInt(q.answer)||1,explanation:q.explanation||''}));currentExam={title:modelTest.subject_name||modelTest.paper_name||'Model Test',subject:modelTest.subject_name||'',chapter:modelTest.paper_name||'',exam_type:'model',sub_type:modelTest.sub_type,total_marks:examQuestions.length,duration_minutes:Math.ceil(examQuestions.length/2),id:'model_'+modelId};if(!examQuestions.length){showNoQuestions();return;}showPreExamFromData(currentExam,examQuestions);}else{showNoQuestions();}}catch(e){showNoQuestions();}}
+
+// F64: SIDEBAR MODEL TEST & MISTAKES
+function openModelTest(){const html=`<div class="modal-title">📖 Model Test</div><button class="btn btn-outline" onclick="closeModelTest();loadModelExams('medical','subject')" style="width:100%;margin-bottom:6px;">🏥 Medical (Subject Final)</button><button class="btn btn-outline" onclick="closeModelTest();loadModelExams('medical','paper')" style="width:100%;margin-bottom:6px;">🏥 Medical (Paper Final)</button><button class="btn btn-primary" onclick="closeModelTest();loadModelExams('medical','full')" style="width:100%;margin-bottom:6px;">📖 Full Model Test</button><p style="font-size:10px;color:var(--text-secondary);text-align:center;">Bio=30, Chem=25, Phy=15, GK=15, Eng=15</p><button class="btn btn-outline" onclick="closeModelTest();loadModelExams('afmc','')" style="width:100%;margin-bottom:6px;">🎖️ AFMC</button><button class="btn btn-outline" onclick="closeModelTest();loadModelExams('varsity','')" style="width:100%;margin-bottom:6px;">🟣 Varsity</button><button class="btn btn-outline" onclick="closeModelTest()" style="width:100%;">✕ বন্ধ</button>`;document.getElementById('guestModalContent').innerHTML=html;document.getElementById('guestModal').classList.add('active');}
 function closeModelTest(){document.getElementById('guestModal').classList.remove('active');}
 function openMistakes(){if(!Storage.isLoggedIn()){showToast('⚠️ লগইন করুন');return;}goTo('dashboard.html');}
 
-// F61: SAFETY
+// F65: PDF / SOLVE SHEET
+function openSolveSheet(){if(!checkGuestAction())return;const w=window.open('','SolveSheet','width=900,height=700');const examName=currentExam?.title||'Exam';const totalPages=Math.ceil(examQuestions.length/10);let html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Solve Sheet - ${examName}</title><style>@page{size:A4;margin:15mm}body{font-family:'Noto Sans Bengali',sans-serif;background:white;color:#1A1D2E;font-size:11px;line-height:1.5}.page{page-break-after:always;padding:0}.page:last-child{page-break-after:auto}.pdf-header{text-align:center;padding:12px 0;border-bottom:2px solid #5A5FE0;margin-bottom:14px}.pdf-header h2{color:#5A5FE0;margin:0;font-size:18px}.pdf-columns{column-count:2;column-gap:14px}.mcq-card{border:1px solid #D4D8EE;border-radius:10px;padding:10px;margin-bottom:10px;break-inside:avoid;background:#FAFBFF}.mcq-status{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;margin-bottom:6px}.status-correct{background:#DCFBEE;color:#0EA867}.status-wrong{background:#FEE8E8;color:#E53E3E}.status-skipped{background:#FEF5DC;color:#D97706}.q-text{font-size:12px;font-weight:700;margin-bottom:6px}.opt{padding:2px 0;font-size:11px}.opt-correct{color:#0EA867;font-weight:700}.opt-wrong{color:#E53E3E;text-decoration:line-through}.exp-box{background:#F4F6FF;border-left:2px solid #5A5FE0;padding:6px 8px;margin-top:5px;font-size:10px;border-radius:4px}.pdf-footer{text-align:center;font-size:10px;color:#7A82A8;padding:10px 0;border-top:1px solid #D4D8EE;margin-top:10px}img{max-width:100%;height:auto}</style></head><body>`;for(let page=0;page<totalPages;page++){const start=page*10;const end=Math.min(start+10,examQuestions.length);const pageQuestions=examQuestions.slice(start,end);html+=`<div class="page"><div class="pdf-header"><h2>📋 ATLAS APP · Solve Sheet</h2><p>📝 ${examName} | 📅 ${new Date().toLocaleDateString('bn-BD')}</p></div><div class="pdf-columns">`;pageQuestions.forEach((q,idx)=>{const qNum=start+idx+1;const ua=userAnswers[q.id];const status=ua===q.answer_index?'correct':(ua?'wrong':'skipped');const statusText=status==='correct'?'✅ সঠিক':status==='wrong'?'❌ ভুল':'⏭️ স্কিপ';const statusClass=status==='correct'?'status-correct':status==='wrong'?'status-wrong':'status-skipped';html+=`<div class="mcq-card"><span class="mcq-status ${statusClass}">${statusText}</span><div class="q-text">${qNum}. ${q.question_text}</div>`;[q.option1,q.option2,q.option3,q.option4,q.option5].forEach((opt,oi)=>{if(opt&&opt!=='—'){let optClass='';if(oi+1===q.answer_index)optClass='opt-correct';else if(oi+1===ua&&ua!==q.answer_index)optClass='opt-wrong';html+=`<div class="opt ${optClass}">${['ক','খ','গ','ঘ','ঙ'][oi]}) ${opt} ${oi+1===q.answer_index?'✅':ua===oi+1&&ua!==q.answer_index?'❌':''}</div>`;}});if(q.explanation){html+=`<div class="exp-box"><strong>💡 ব্যাখ্যা:</strong> ${q.explanation}</div>`;}html+=`</div>`;});html+=`</div><div class="pdf-footer">Page ${page+1}/${totalPages} | ATLAS APP © 2026 | atlasprep.pages.dev</div></div>`;}html+=`<div style="text-align:center;padding:20px"><button onclick="window.print()" style="padding:12px 30px;background:#5A5FE0;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">📥 Download PDF / Print</button></div></body></html>`;w.document.write(html);w.document.close();}
+function downloadPDF(){if(!checkGuestAction())return;openSolveSheet();setTimeout(()=>window.print(),500);}
+
+// F66: SAFETY
 window.addEventListener('beforeunload',e=>{if(!isExamSubmitted&&examSeconds>0){e.preventDefault();e.returnValue='';}});
 window.addEventListener('popstate',e=>{if(!isExamSubmitted&&examSeconds>0){if(!confirm('⚠️ এক্সাম ছেড়ে যাবেন?')){history.pushState(null,'',location.href);}}});
 
-// F62: ERROR HANDLER
+// F67: GLOBAL ERROR HANDLER
 function showError(title,message,details,retryFn){const existing=document.querySelector('.error-popup-overlay');if(existing)existing.remove();const overlay=document.createElement('div');overlay.className='error-popup-overlay';let retryHTML='';if(retryFn)retryHTML=`<button class="error-popup-retry" onclick="this.closest('.error-popup-overlay').remove();(${retryFn.toString()})();">🔄 আবার চেষ্টা</button>`;overlay.innerHTML=`<div class="error-popup" onclick="event.stopPropagation()"><div class="error-popup-icon">⚠️</div><div class="error-popup-title">${title||'কিছু সমস্যা হয়েছে'}</div><div class="error-popup-message">${message||'পরে আবার চেষ্টা করুন'}</div>${details?`<div class="error-popup-details">${details}</div>`:''}<div style="display:flex;justify-content:center;gap:8px;">${retryHTML}<button class="error-popup-btn" onclick="this.closest('.error-popup-overlay').remove()">✕ বন্ধ</button></div></div>`;overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});document.body.appendChild(overlay);}
 window.addEventListener('error',function(e){showError('💥 সমস্যা','পৃষ্ঠাটি রিলোড করুন',e.error?.message,()=>location.reload());});
 window.addEventListener('unhandledrejection',function(e){showError('⚠️ প্রসেসিং সমস্যা','অনুরোধ সম্পূর্ণ করা যায়নি',e.reason?.message,null);});
 
-// F63: INIT
+// F68: INITIALIZATION
 document.addEventListener('DOMContentLoaded',()=>{
     if(Storage.isAdmin()||Storage.isSubAdmin()){document.getElementById('adminSidebarBtn').style.display='flex';}
-    const params=new URLSearchParams(location.search);const examId=params.get('id');const cat=params.get('cat');const mock=params.get('mock');
-    if(examId)loadExamById(examId);else if(mock==='true')startMockTest();else if(cat)showCategory(cat);else{loadCategoryCounts();loadAllExams();}
-});
-async function loadAllExams(){try{const data=await API.exams.list(50);if(!data?.length)return;const grouped={};data.forEach(e=>{const t=e.exam_type||'other';if(!grouped[t])grouped[t]=[];grouped[t].push(e);});let html='';Object.keys(grouped).forEach(t=>{html+=`<div class="section-header" style="margin-top:10px;"><div class="section-title">${t} (${grouped[t].length})</div></div>`;const bySubject={};grouped[t].forEach(e=>{const s=e.subject||'সাধারণ';if(!bySubject[s])bySubject[s]=[];bySubject[s].push(e);});Object.keys(bySubject).forEach(s=>{html+=`<div style="font-size:11px;color:var(--accent);font-weight:700;margin:4px 0;">📘 ${s}</div>`;bySubject[s].forEach(e=>{html+=`<div class="list-item" onclick="loadExamById(${e.id})"><div><div class="list-item-title">📖 ${e.chapter||e.title}</div><div class="list-item-sub">${e.total_marks} প্রশ্ন</div></div><span class="list-item-arrow">→</span></div>`;});});});document.getElementById('savedExamsList').innerHTML=html||'<p style="color:var(--text-secondary);text-align:center;">কোনো এক্সাম নেই</p>';}catch(e){}}
-// F64: LOAD MODEL TEST EXAMS
-async function loadModelExams(type, subType) {
-    try {
-        let query = `type=eq.${type}`;
-        if (subType) query += `&sub_type=eq.${subType}`;
-        const data = await API.modelTests.list();
-        const filtered = data.filter(d => d.type === type && (!subType || d.sub_type === subType));
-        
-        if (!filtered.length) {
-            document.getElementById('categoryContent').innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:20px;">কোনো Model Test নেই</p>';
-            switchMode('Category');
-            return;
-        }
-        
-        let html = `<div class="section-header"><div class="section-title">📖 Model Test - ${type==='medical'?'🏥 Medical':type==='afmc'?'🎖️ AFMC':'🟣 Varsity'}</div></div>`;
-        
-        if (type === 'varsity') {
-            const byVarsity = {};
-            filtered.forEach(d => {
-                const v = d.varsity_name || 'সাধারণ';
-                if (!byVarsity[v]) byVarsity[v] = [];
-                byVarsity[v].push(d);
-            });
-            Object.keys(byVarsity).forEach(v => {
-                html += `<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;">🏫 ${v} (${byVarsity[v].length})</div>`;
-                byVarsity[v].forEach(d => {
-                    const count = d.questions_json ? JSON.parse(d.questions_json).length : (d.link ? '🔗' : '0');
-                    html += `<div class="list-item" onclick="startModelExam('${d.id}')">
-                        <div><div class="list-item-title">📘 ${d.subject_name||d.paper_name||'Model Test'}</div>
-                        <div class="list-item-sub">${d.unit||''} | ${typeof count==='number'?count+' প্রশ্ন':count}</div></div>
-                        <span class="list-item-arrow">→</span></div>`;
-                });
-            });
-        } else {
-            const bySubject = {};
-            filtered.forEach(d => {
-                const s = d.subject_name || d.paper_name || 'সাধারণ';
-                if (!bySubject[s]) bySubject[s] = [];
-                bySubject[s].push(d);
-            });
-            Object.keys(bySubject).forEach(s => {
-                html += `<div style="font-size:11px;color:var(--text-secondary);margin-left:8px;">📗 ${s}</div>`;
-                bySubject[s].forEach(d => {
-                    const count = d.questions_json ? JSON.parse(d.questions_json).length : (d.link ? '🔗' : '0');
-                    html += `<div class="list-item" onclick="startModelExam('${d.id}')">
-                        <div><div class="list-item-title">📖 ${d.sub_type||'Model Test'}</div>
-                        <div class="list-item-sub">${typeof count==='number'?count+' প্রশ্ন':count}</div></div>
-                        <span class="list-item-arrow">→</span></div>`;
-                });
-            });
-        }
-        
-        document.getElementById('categoryContent').innerHTML = html || '<p>কোনো Model Test নেই</p>';
-        switchMode('Category');
-    } catch(e) {
-        document.getElementById('categoryContent').innerHTML = '<p>কোনো Model Test নেই</p>';
-        switchMode('Category');
-    }
-}
-
-// F65: START MODEL EXAM
-async function startModelExam(modelId) {
-    try {
-        const data = await API.modelTests.list();
-        const modelTest = data.find(d => d.id == modelId);
-        if (!modelTest) { showToast('❌ Model Test পাওয়া যায়নি'); return; }
-        
-        if (modelTest.link) {
-            window.open(modelTest.link, '_blank');
-            return;
-        }
-        
-        if (modelTest.questions_json) {
-            examQuestions = JSON.parse(modelTest.questions_json);
-            // Convert to standard format
-            examQuestions = examQuestions.map((q, i) => ({
-                id: i + 1,
-                question_text: q.questions || q.question_text || '',
-                option1: q.option1 || '',
-                option2: q.option2 || '',
-                option3: q.option3 || '',
-                option4: q.option4 || '',
-                option5: q.option5 || null,
-                answer_index: parseInt(q.answer) || 1,
-                explanation: q.explanation || ''
-            }));
-            
-            currentExam = {
-                title: modelTest.subject_name || modelTest.paper_name || 'Model Test',
-                subject: modelTest.subject_name || '',
-                chapter: modelTest.paper_name || '',
-                exam_type: 'model',
-                sub_type: modelTest.sub_type,
-                total_marks: examQuestions.length,
-                duration_minutes: Math.ceil(examQuestions.length / 2),
-                id: 'model_' + modelId
-            };
-            
-            if (!examQuestions.length) {
-                showNoQuestions();
-                return;
-            }
-            
-            showPreExamFromData(currentExam, examQuestions);
-        } else {
-            showNoQuestions();
-        }
-    } catch(e) {
-        showNoQuestions();
-    }
-}
-
-// F66: LOAD ALL SAVED EXAMS (Mode 1)
-async function loadAllExams() {
-    try {
-        const data = await API.exams.list(50);
-        if (!data?.length) return;
-        
-        const grouped = {};
-        const titles = {
-            board: '🔵 বোর্ড',
-            medical: '🏥 Medical',
-            dental: '🦷 Dental',
-            afmc: '🎖️ AFMC',
-            varsity: '🟣 ভার্সিটি',
-            onushiloni: '🟠 অনুশীলনী',
-            model: '📖 Model Test'
-        };
-        
-        data.forEach(e => {
-            const t = e.exam_type || 'other';
-            if (!grouped[t]) grouped[t] = [];
-            grouped[t].push(e);
-        });
-        
-        let html = '';
-        Object.keys(grouped).forEach(t => {
-            html += `<div class="section-header" style="margin-top:10px;"><div class="section-title">${titles[t]||t} (${grouped[t].length})</div></div>`;
-            
-            const bySubject = {};
-            grouped[t].forEach(e => {
-                const s = e.subject || 'সাধারণ';
-                if (!bySubject[s]) bySubject[s] = [];
-                bySubject[s].push(e);
-            });
-            
-            Object.keys(bySubject).forEach(s => {
-                html += `<div style="font-size:11px;color:var(--accent);font-weight:700;margin:4px 0;">📘 ${s} (${bySubject[s].length})</div>`;
-                bySubject[s].forEach(e => {
-                    html += `<div class="list-item" onclick="loadExamById(${e.id})">
-                        <div><div class="list-item-title">📖 ${e.chapter||e.title}</div>
-                        <div class="list-item-sub">${e.board||''} ${e.year||''} | ${e.total_marks} প্রশ্ন</div></div>
-                        <span class="list-item-arrow">→</span></div>`;
-                });
-            });
-        });
-        
-        document.getElementById('savedExamsList').innerHTML = html || '<p style="color:var(--text-secondary);text-align:center;">কোনো এক্সাম নেই</p>';
-    } catch(e) {}
-}
-
-// F67: LOAD CATEGORY COUNTS (Mode 1)
-async function loadCategoryCounts() {
-    try {
-        const data = await API.exams.list(500);
-        const counts = {board: 0, medical: 0, dental: 0, afmc: 0, varsity: 0, onushiloni: 0, model: 0};
-        
-        data.forEach(e => {
-            if (counts[e.exam_type] !== undefined) counts[e.exam_type]++;
-        });
-        
-        document.getElementById('catGrid').innerHTML = `
-            <div class="cat-card" onclick="showCategory('board')">
-                <span class="cat-icon">🔵</span>
-                <span class="cat-name">বোর্ড প্রস্তুতি</span>
-                <span class="cat-count">${counts.board} exams</span>
-            </div>
-            <div class="cat-card" onclick="showCategory('medical')">
-                <span class="cat-icon">🟢</span>
-                <span class="cat-name">মেডিকেল+ডেন্টাল</span>
-                <span class="cat-count">${counts.medical + counts.dental + counts.afmc} exams</span>
-            </div>
-            <div class="cat-card" onclick="showCategory('varsity')">
-                <span class="cat-icon">🟣</span>
-                <span class="cat-name">ভার্সিটি প্রস্তুতি</span>
-                <span class="cat-count">${counts.varsity} exams</span>
-            </div>
-            <div class="cat-card" onclick="showCategory('onushiloni')">
-                <span class="cat-icon">🟠</span>
-                <span class="cat-name">অনুশীলনী এক্সাম</span>
-                <span class="cat-count">${counts.onushiloni} exams</span>
-            </div>`;
-    } catch(e) {}
-}
-
-// F68: LOAD VARISTY SUB-TYPE EXAMS
-async function loadVarsityExams(subType, varsityName, unit, year) {
-    try {
-        let query = `exam_type=eq.varsity&sub_type=eq.${subType}`;
-        const data = await API.exams.list(200);
-        let filtered = data.filter(e => e.exam_type === 'varsity' && e.sub_type === subType);
-        
-        if (varsityName) filtered = filtered.filter(e => e.board === varsityName);
-        if (unit) filtered = filtered.filter(e => e.unit === unit);
-        if (year) filtered = filtered.filter(e => e.year === year);
-        
-        if (!filtered.length) {
-            document.getElementById('categoryContent').innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:20px;">কোনো এক্সাম নেই</p>';
-            switchMode('Category');
-            return;
-        }
-        
-        // Group by next level
-        if (!varsityName) {
-            // Show varsity names
-            const byVarsity = {};
-            filtered.forEach(e => {
-                const v = e.board || 'সাধারণ';
-                if (!byVarsity[v]) byVarsity[v] = [];
-                byVarsity[v].push(e);
-            });
-            let html = `<div class="section-header"><div class="section-title">🟣 ${subType==='varsitywise'?'Varsitywise':subType==='yearwise'?'বিগত (সালওয়াইজ)':'বিগত (চাপ্টারভিত্তিক)'}</div></div>`;
-            Object.keys(byVarsity).forEach(v => {
-                html += `<div class="cat-card" onclick="loadVarsityExams('${subType}','${v.replace(/'/g,"\\'")}')" style="margin-bottom:8px;">
-                    <span class="cat-name">🏫 ${v}</span>
-                    <span class="cat-count">${byVarsity[v].length} exams</span></div>`;
-            });
-            document.getElementById('categoryContent').innerHTML = html;
-        } else if (subType !== 'chapterwise' && !unit) {
-            // Show units or years
-            const units = [...new Set(filtered.map(e => e.unit).filter(Boolean))];
-            if (units.length > 0) {
-                let html = `<div class="section-header"><div class="section-title">🏫 ${varsityName}</div></div>
-                    <div class="section-subtitle">📋 ইউনিট সিলেক্ট করুন</div>`;
-                html += `<div class="cat-card" onclick="loadVarsityExams('${subType}','${varsityName.replace(/'/g,"\\'")}','all')" style="margin-bottom:8px;"><span class="cat-name">সব ইউনিট</span><span class="cat-count">${filtered.length} exams</span></div>`;
-                units.forEach(u => {
-                    const count = filtered.filter(e => e.unit === u).length;
-                    html += `<div class="cat-card" onclick="loadVarsityExams('${subType}','${varsityName.replace(/'/g,"\\'")}','${u}')" style="margin-bottom:8px;"><span class="cat-name">${u}</span><span class="cat-count">${count} exams</span></div>`;
-                });
-                document.getElementById('categoryContent').innerHTML = html;
-            } else {
-                // No units, show subjects
-                showVarsitySubjects(filtered, subType, varsityName, unit);
-            }
-        } else {
-            showVarsitySubjects(filtered, subType, varsityName, unit);
-        }
-        
-        switchMode('Category');
-    } catch(e) {
-        document.getElementById('categoryContent').innerHTML = '<p>কোনো এক্সাম নেই</p>';
-        switchMode('Category');
-    }
-}
-
-// F69: SHOW VARISTY SUBJECTS
-function showVarsitySubjects(filtered, subType, varsityName, unit) {
-    const bySubject = {};
-    filtered.forEach(e => {
-        const s = e.subject || 'সাধারণ';
-        if (!bySubject[s]) bySubject[s] = [];
-        bySubject[s].push(e);
-    });
-    
-    let html = `<div class="section-header"><div class="section-title">${varsityName||''} ${unit||''}</div></div>`;
-    Object.keys(bySubject).forEach(s => {
-        html += `<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;">📘 ${s} (${bySubject[s].length})</div>`;
-        bySubject[s].forEach(e => {
-            html += `<div class="list-item" onclick="loadExamById(${e.id})">
-                <div><div class="list-item-title">📖 ${e.chapter||e.title}</div>
-                <div class="list-item-sub">${e.year||''} | ${e.total_marks||0} প্রশ্ন</div></div>
-                <span class="list-item-arrow">→</span></div>`;
-        });
-    });
-    document.getElementById('categoryContent').innerHTML = html || '<p>কোনো এক্সাম নেই</p>';
-}
-
-// F70: SHOW MEDICAL SUB-TYPES
-function showMedicalSub(type) {
-    let html = `<div class="section-header"><div class="section-title">${type==='medical'?'🏥 Medical':type==='dental'?'🦷 Dental':'🎖️ AFMC'}</div></div>`;
-    html += `<div class="cat-grid">
-        <div class="cat-card" onclick="loadExamsByType('${type}','demo')"><span class="cat-name">Demo</span></div>
-        <div class="cat-card" onclick="loadExamsByType('${type}','chapter')"><span class="cat-name">Chapter</span></div>
-        <div class="cat-card" onclick="loadExamsByType('${type}','year')"><span class="cat-name">Year</span></div>
-    </div>`;
-    document.getElementById('categoryContent').innerHTML = html;
-    switchMode('Category');
-}
-
-// F71: LOAD EXAMS BY TYPE (Medical/Dental/AFMC)
-async function loadExamsByType(type, subType) {
-    try {
-        const data = await API.fetchTable('exams', `?exam_type=eq.${type}&sub_type=eq.${subType}&select=*&order=sort_order.asc&limit=50`);
-        if (!data?.length) {
-            document.getElementById('categoryContent').innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:20px;">কোনো এক্সাম নেই</p>';
-            switchMode('Category');
-            return;
-        }
-        showExamGroupedList(data, type, subType);
-    } catch(e) {}
-}
-
-// F72: SHOW EXAM GROUPED LIST
-function showExamGroupedList(data, cat, sub) {
-    const grouped = {};
-    
-    if (cat === 'board' && (sub === 'board_q_year' || sub === 'college_q')) {
-        // Group by Board/College
-        data.forEach(e => {
-            const board = e.board || 'সাধারণ';
-            if (!grouped[board]) grouped[board] = [];
-            grouped[board].push(e);
-        });
-    } else {
-        // Group by Subject
-        data.forEach(e => {
-            const s = e.subject || 'সাধারণ';
-            if (!grouped[s]) grouped[s] = [];
-            grouped[s].push(e);
-        });
-    }
-    
-    let html = '';
-    Object.keys(grouped).forEach(key => {
-        html += `<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;">📘 ${key} (${grouped[key].length})</div>`;
-        
-        if (cat === 'board' && (sub === 'board_q_year' || sub === 'college_q')) {
-            // Further group by Subject inside Board
-            const bySubject = {};
-            grouped[key].forEach(e => {
-                const s = e.subject || 'সাধারণ';
-                if (!bySubject[s]) bySubject[s] = [];
-                bySubject[s].push(e);
-            });
-            Object.keys(bySubject).forEach(s => {
-                html += `<div style="font-size:11px;color:var(--text-secondary);margin-left:8px;">📗 ${s}</div>`;
-                bySubject[s].forEach(e => {
-                    html += `<div class="list-item" onclick="loadExamById(${e.id})">
-                        <div><div class="list-item-title">📖 ${e.chapter||e.title}</div>
-                        <div class="list-item-sub">${e.year||''} | ${e.total_marks||0} প্রশ্ন</div></div>
-                        <span class="list-item-arrow">→</span></div>`;
-                });
-            });
-        } else {
-            grouped[key].forEach(e => {
-                html += `<div class="list-item" onclick="loadExamById(${e.id})">
-                    <div><div class="list-item-title">📖 ${e.chapter||e.title}</div>
-                    <div class="list-item-sub">${e.total_marks||0} প্রশ্ন</div></div>
-                    <span class="list-item-arrow">→</span></div>`;
-            });
-        }
-    });
-    
-    document.getElementById('categoryContent').innerHTML = html || '<p style="text-align:center;color:var(--text-secondary);padding:20px;">কোনো এক্সাম নেই</p>';
-    switchMode('Category');
-}
-
-// F73: LOAD ক,খ,CQ CONTENT
-async function loadKaKhaContent(type) {
-    try {
-        const data = await API.kaKhaCQ.list();
-        const filtered = data.filter(d => d.cq_type === type || (!d.cq_type && type === 'ka'));
-        
-        if (!filtered.length) {
-            const titles = {ka: 'ক ভান্ডার', kha: 'খ ভান্ডার', cq: 'টাইপ CQ'};
-            document.getElementById('categoryContent').innerHTML = 
-                `<div class="section-header"><div class="section-title">📦 ${titles[type]}</div></div>
-                <p style="text-align:center;color:var(--text-secondary);padding:20px;">কোনো কন্টেন্ট নেই</p>`;
-            switchMode('Category');
-            return;
-        }
-        
-        const grouped = {};
-        filtered.forEach(d => {
-            const s = d.subject || 'সাধারণ';
-            if (!grouped[s]) grouped[s] = [];
-            grouped[s].push(d);
-        });
-        
-        const titles = {ka: 'ক ভান্ডার', kha: 'খ ভান্ডার', cq: 'টাইপ CQ'};
-        let html = `<div class="section-header"><div class="section-title">📦 ${titles[type]}</div></div>`;
-        
-        Object.keys(grouped).forEach(s => {
-            html += `<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;">📘 ${s} (${grouped[s].length})</div>`;
-            grouped[s].forEach(d => {
-                const link = d.link_or_file || '#';
-                const isFile = d.file_type === 'file';
-                html += `<div class="list-item" onclick="window.open('${link}','_blank')">
-                    <div>
-                        <div class="list-item-title">📖 ${d.chapter||'সাধারণ'}</div>
-                        <div class="list-item-sub">${d.year||''} ${d.topic||''} ${isFile?'📄 ফাইল':'🔗 লিংক'}</div>
-                    </div>
-                    <span class="list-item-arrow">→</span>
-                </div>`;
-            });
-        });
-        
-        document.getElementById('categoryContent').innerHTML = html;
-        switchMode('Category');
-    } catch(e) {
-        document.getElementById('categoryContent').innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:20px;">কোনো কন্টেন্ট নেই</p>';
-        switchMode('Category');
-    }
-}
-
-// F74: LOAD EXAM BY ID (From URL or Click)
-async function loadExamById(examId) {
-    try {
-        const [examData] = await API.exams.getById(examId);
-        if (!examData) { showToast('❌ এক্সাম পাওয়া যায়নি'); return; }
-        
-        currentExam = examData;
-        examQuestions = await API.questions.getByExam(examId);
-        
-        if (!examQuestions?.length) {
-            showNoQuestions();
-            return;
-        }
-        
-        showPreExamFromData(currentExam, examQuestions);
-    } catch(e) { 
-        showToast('❌ এক্সাম লোড করতে সমস্যা');
-    }
-}
-
-// F75: NO QUESTIONS MESSAGE
-function showNoQuestions() {
-    const html = `<div class="no-questions">
-        <div class="icon">⚠️</div>
-        <div class="title">Database এ প্রশ্ন নেই</div>
-        <div class="subtitle">প্রিয় শিক্ষার্থী,</div>
-        <div class="subtitle">এডমিনকে ইনফর্ম করুন, দ্রুতই প্রশ্ন এড করার চেষ্টা করবো</div>
-        <button class="btn btn-outline" onclick="backToCategory()" style="margin-top:16px;">🔙 ফিরে যান</button>
-    </div>`;
-    document.getElementById('preExamContent').innerHTML = html;
-    document.getElementById('startExamBtn').style.display = 'none';
-    switchMode('PreExam');
-}
-
-// F76: SHOW PRE-EXAM DATA
-function showPreExamFromData(exam, questions) {
-    document.getElementById('startExamBtn').style.display = 'block';
-    examQuestions = questions || [];
-    
-    let html = `<div class="exam-hero">
-        <div class="exam-hero-title">📝 ${exam.title||(exam.subject+' - '+exam.chapter)}</div>
-        <div class="exam-hero-stats">
-            <div class="hero-stat"><div class="hero-stat-val">${questions.length}</div><div class="hero-stat-label">📋 প্রশ্ন</div></div>
-            <div class="hero-stat"><div class="hero-stat-val">${exam.duration_minutes||Math.ceil(questions.length/2)}</div><div class="hero-stat-label">⏱️ মিনিট</div></div>
-            <div class="hero-stat"><div class="hero-stat-val">${exam.total_marks||questions.length}</div><div class="hero-stat-label">🎯 মার্ক</div></div>
-        </div>
-    </div>
-    <div class="pre-exam-card">
-        <div class="info-row"><span class="info-label">সাবজেক্ট</span><span class="info-value">${exam.subject||'—'}</span></div>
-        <div class="info-row"><span class="info-label">চ্যাপ্টার</span><span class="info-value">${exam.chapter||'—'}</span></div>
-        ${exam.exam_type?`<div class="info-row"><span class="info-label">টাইপ</span><span class="info-value">${exam.exam_type}</span></div>`:''}
-        ${exam.sub_type?`<div class="info-row"><span class="info-label">সাব-টাইপ</span><span class="info-value">${exam.sub_type}</span></div>`:''}
-        ${exam.board?`<div class="info-row"><span class="info-label">বোর্ড/ভার্সিটি</span><span class="info-value">${exam.board}</span></div>`:''}
-        ${exam.year?`<div class="info-row"><span class="info-label">সাল</span><span class="info-value">${exam.year}</span></div>`:''}
-        ${exam.writer?`<div class="info-row"><span class="info-label">রাইটার</span><span class="info-value">${exam.writer}</span></div>`:''}
-        ${exam.unit?`<div class="info-row"><span class="info-label">ইউনিট</span><span class="info-value">${exam.unit}</span></div>`:''}
-    </div>`;
-    
-    document.getElementById('preExamContent').innerHTML = html;
-    switchMode('PreExam');
-}
-
-// F77: BACK NAVIGATION HELPERS
-function backToList() { 
-    switchMode('List'); 
-    currentCategory = null; 
-}
-function backToCategory() { 
-    if (currentCategory) showCategory(currentCategory); 
-    else backToList(); 
-}
-
-// F78: MOCK TEST FUNCTIONS
-function startMockTest() {
-    isMockTest = true;
-    let html = '<div class="section-header"><div class="section-title">🎯 প্রশ্ন সংখ্যা ও সময়</div></div><div class="mock-options">';
-    [
-        {count: 25, time: 12},
-        {count: 35, time: 17},
-        {count: 50, time: 25},
-        {count: 75, time: 37},
-        {count: 100, time: 50}
-    ].forEach(n => {
-        html += `<button class="mock-option-btn" onclick="selectMockCount(${n.count})">
-            ${n.count} টি প্রশ্ন<br><small>⏱️ ${n.time} মিনিট</small>
-        </button>`;
-    });
-    html += '</div>';
-    document.getElementById('categoryContent').innerHTML = html;
-    switchMode('Category');
-}
-
-function selectMockCount(count) {
-    mockQuestionCount = count;
-    examQuestions = [];
-    currentExam = {
-        title: 'মক টেস্ট',
-        subject: 'মক',
-        chapter: 'মক',
-        total_marks: count,
-        duration_minutes: Math.ceil(count/2),
-        id: 'mock_' + Date.now()
-    };
-    showNoQuestionsForMock();
-}
-
-function showNoQuestionsForMock() {
-    const html = `<div class="no-questions">
-        <div class="icon">⚠️</div>
-        <div class="title">Database এ প্রশ্ন নেই</div>
-        <div class="subtitle">প্রিয় শিক্ষার্থী,</div>
-        <div class="subtitle">এডমিনকে ইনফর্ম করুন, দ্রুতই প্রশ্ন এড করার চেষ্টা করবো</div>
-        <button class="btn btn-outline" onclick="backToList()" style="margin-top:16px;">🔙 ফিরে যান</button>
-    </div>`;
-    document.getElementById('preExamContent').innerHTML = html;
-    document.getElementById('startExamBtn').style.display = 'none';
-    switchMode('PreExam');
-}
-
-// F79: SIDEBAR MODEL TEST & MISTAKES
-function openModelTest() {
-    const html = `<div class="modal-title">📖 Model Test</div>
-        <button class="btn btn-outline" onclick="closeModelTest();loadModelExams('medical','subject')" style="width:100%;margin-bottom:6px;">🏥 Medical (Subject Final)</button>
-        <button class="btn btn-outline" onclick="closeModelTest();loadModelExams('medical','paper')" style="width:100%;margin-bottom:6px;">🏥 Medical (Paper Final)</button>
-        <button class="btn btn-primary" onclick="closeModelTest();loadModelExams('medical','full')" style="width:100%;margin-bottom:6px;">📖 Full Model Test</button>
-        <p style="font-size:10px;color:var(--text-secondary);text-align:center;">Bio=30, Chem=25, Phy=15, GK=15, Eng=15</p>
-        <button class="btn btn-outline" onclick="closeModelTest();loadModelExams('afmc','')" style="width:100%;margin-bottom:6px;">🎖️ AFMC</button>
-        <button class="btn btn-outline" onclick="closeModelTest();loadModelExams('varsity','')" style="width:100%;margin-bottom:6px;">🟣 Varsity</button>
-        <button class="btn btn-outline" onclick="closeModelTest()" style="width:100%;">✕ বন্ধ</button>`;
-    document.getElementById('guestModalContent').innerHTML = html;
-    document.getElementById('guestModal').classList.add('active');
-}
-
-function closeModelTest() { 
-    document.getElementById('guestModal').classList.remove('active'); 
-}
-
-function openMistakes() { 
-    if (!Storage.isLoggedIn()) { 
-        showToast('⚠️ লগইন করুন'); 
-        return; 
-    } 
-    goTo('dashboard.html'); 
-}
-
-// F80: PDF / SOLVE SHEET
-function openSolveSheet() {
-    if (!checkGuestAction()) return;
-    
-    const w = window.open('', 'SolveSheet', 'width=900,height=700');
-    const examName = currentExam?.title || 'Exam';
-    const totalPages = Math.ceil(examQuestions.length / 10);
-    
-    let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Solve Sheet - ${examName}</title>
-    <style>
-        @page{size:A4;margin:15mm}
-        body{font-family:'Noto Sans Bengali',sans-serif;background:white;color:#1A1D2E;font-size:11px;line-height:1.5}
-        .page{page-break-after:always;padding:0}
-        .page:last-child{page-break-after:auto}
-        .pdf-header{text-align:center;padding:12px 0;border-bottom:2px solid #5A5FE0;margin-bottom:14px}
-        .pdf-header h2{color:#5A5FE0;margin:0;font-size:18px}
-        .pdf-columns{column-count:2;column-gap:14px}
-        .mcq-card{border:1px solid #D4D8EE;border-radius:10px;padding:10px;margin-bottom:10px;break-inside:avoid;background:#FAFBFF}
-        .mcq-status{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;margin-bottom:6px}
-        .status-correct{background:#DCFBEE;color:#0EA867}
-        .status-wrong{background:#FEE8E8;color:#E53E3E}
-        .status-skipped{background:#FEF5DC;color:#D97706}
-        .q-text{font-size:12px;font-weight:700;margin-bottom:6px}
-        .opt{padding:2px 0;font-size:11px}
-        .opt-correct{color:#0EA867;font-weight:700}
-        .opt-wrong{color:#E53E3E;text-decoration:line-through}
-        .exp-box{background:#F4F6FF;border-left:2px solid #5A5FE0;padding:6px 8px;margin-top:5px;font-size:10px;border-radius:4px}
-        .pdf-footer{text-align:center;font-size:10px;color:#7A82A8;padding:10px 0;border-top:1px solid #D4D8EE;margin-top:10px}
-        img{max-width:100%;height:auto}
-    </style></head><body>`;
-    
-    for (let page = 0; page < totalPages; page++) {
-        const start = page * 10;
-        const end = Math.min(start + 10, examQuestions.length);
-        const pageQuestions = examQuestions.slice(start, end);
-        
-        html += `<div class="page">
-            <div class="pdf-header">
-                <h2>📋 ATLAS APP · Solve Sheet</h2>
-                <p>📝 ${examName} | 📅 ${new Date().toLocaleDateString('bn-BD')}</p>
-            </div>
-            <div class="pdf-columns">`;
-        
-        pageQuestions.forEach((q, idx) => {
-            const qNum = start + idx + 1;
-            const ua = userAnswers[q.id];
-            const status = ua === q.answer_index ? 'correct' : (ua ? 'wrong' : 'skipped');
-            const statusText = status === 'correct' ? '✅ সঠিক' : status === 'wrong' ? '❌ ভুল' : '⏭️ স্কিপ';
-            const statusClass = status === 'correct' ? 'status-correct' : status === 'wrong' ? 'status-wrong' : 'status-skipped';
-            
-            html += `<div class="mcq-card">
-                <span class="mcq-status ${statusClass}">${statusText}</span>
-                <div class="q-text">${qNum}. ${q.question_text}</div>`;
-            
-            [q.option1, q.option2, q.option3, q.option4, q.option5].forEach((opt, oi) => {
-                if (opt && opt !== '—') {
-                    let optClass = '';
-                    if (oi + 1 === q.answer_index) optClass = 'opt-correct';
-                    else if (oi + 1 === ua && ua !== q.answer_index) optClass = 'opt-wrong';
-                    html += `<div class="opt ${optClass}">${['ক','খ','গ','ঘ','ঙ'][oi]}) ${opt} ${oi+1===q.answer_index?'✅':ua===oi+1&&ua!==q.answer_index?'❌':''}</div>`;
-                }
-            });
-            
-            if (q.explanation) {
-                html += `<div class="exp-box"><strong>💡 ব্যাখ্যা:</strong> ${q.explanation}</div>`;
-            }
-            
-            html += `</div>`;
-        });
-        
-        html += `</div>
-            <div class="pdf-footer">Page ${page+1}/${totalPages} | ATLAS APP © 2026 | atlasprep.pages.dev</div>
-        </div>`;
-    }
-    
-    html += `<div style="text-align:center;padding:20px;">
-        <button onclick="window.print()" style="padding:12px 30px;background:#5A5FE0;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">
-            📥 Download PDF / Print
-        </button>
-    </div></body></html>`;
-    
-    w.document.write(html);
-    w.document.close();
-}
-
-function downloadPDF() {
-    if (!checkGuestAction()) return;
-    openSolveSheet();
-    setTimeout(() => window.print(), 500);
-}
-
-// F81: SAFETY (beforeunload + popstate)
-window.addEventListener('beforeunload', e => {
-    if (!isExamSubmitted && examSeconds > 0) {
-        e.preventDefault();
-        e.returnValue = '';
-    }
-});
-
-window.addEventListener('popstate', e => {
-    if (!isExamSubmitted && examSeconds > 0) {
-        if (!confirm('⚠️ এক্সাম ছেড়ে যাবেন?')) {
-            history.pushState(null, '', location.href);
-        }
-    }
-});
-
-// F82: GLOBAL ERROR HANDLER
-function showError(title, message, details, retryFn) {
-    const existing = document.querySelector('.error-popup-overlay');
-    if (existing) existing.remove();
-    const overlay = document.createElement('div');
-    overlay.className = 'error-popup-overlay';
-    let retryHTML = '';
-    if (retryFn) retryHTML = `<button class="error-popup-retry" onclick="this.closest('.error-popup-overlay').remove();(${retryFn.toString()})();">🔄 আবার চেষ্টা</button>`;
-    overlay.innerHTML = `<div class="error-popup" onclick="event.stopPropagation()">
-        <div class="error-popup-icon">⚠️</div>
-        <div class="error-popup-title">${title||'কিছু সমস্যা হয়েছে'}</div>
-        <div class="error-popup-message">${message||'পরে আবার চেষ্টা করুন'}</div>
-        ${details?`<div class="error-popup-details">${details}</div>`:''}
-        <div style="display:flex;justify-content:center;gap:8px;">
-            ${retryHTML}
-            <button class="error-popup-btn" onclick="this.closest('.error-popup-overlay').remove()">✕ বন্ধ</button>
-        </div>
-    </div></div>`;
-    overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
-    document.body.appendChild(overlay);
-}
-
-window.addEventListener('error', function(e) {
-    showError('💥 সমস্যা', 'পৃষ্ঠাটি রিলোড করুন', e.error?.message, () => location.reload());
-});
-
-window.addEventListener('unhandledrejection', function(e) {
-    showError('⚠️ প্রসেসিং সমস্যা', 'অনুরোধ সম্পূর্ণ করা যায়নি', e.reason?.message, null);
-});
-
-// F83: INITIALIZATION
-document.addEventListener('DOMContentLoaded', () => {
-    // Admin Check
-    if (Storage.isAdmin() || Storage.isSubAdmin()) {
-        document.getElementById('adminSidebarBtn').style.display = 'flex';
-    }
-    
-    // URL Params
-    const params = new URLSearchParams(location.search);
-    const examId = params.get('id');
-    const cat = params.get('cat');
-    const mock = params.get('mock');
-    const model = params.get('model');
-    
-    if (examId) {
-        loadExamById(examId);
-    } else if (mock === 'true') {
-        startMockTest();
-    } else if (model) {
-        startModelExam(model);
-    } else if (cat) {
-        if (cat === 'model') {
-            const sub = params.get('sub') || '';
-            loadModelExams('medical', sub);
-        } else {
-            showCategory(cat);
-        }
-    } else {
-        loadCategoryCounts();
-        loadAllExams();
-    }
+    const params=new URLSearchParams(location.search);const examId=params.get('id');const cat=params.get('cat');const mock=params.get('mock');const model=params.get('model');
+    if(examId){loadExamById(examId);}else if(mock==='true'){startMockTest();}else if(model){startModelExam(model);}else if(cat){if(cat==='model'){const sub=params.get('sub')||'';loadModelExams('medical',sub);}else{showCategory(cat);}}else{loadCategoryCounts();loadAllExams();}
 });
 </script>
 </body>
