@@ -352,9 +352,6 @@ const sIdx = cleanHeader.indexOf('section');
         for (let i = 1; i < lines.length; i++) {
             const cols = lines[i];
             if (cols.length < 7) continue;
-            console.log('Row', i, 'cols:', cols);
-    console.log('qIdx:', qIdx, '->', cols[qIdx]);
-    console.log('eIdx:', eIdx, '->', cols[eIdx]);
             data.push({
                 questions: cols[qIdx] || '',
                 option1: cols[o1Idx] || '',
