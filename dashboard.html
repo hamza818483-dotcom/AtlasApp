@@ -5,235 +5,801 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ATLAS EXAM · প্রোফাইল</title>
     <style>
+        /* =============================================
+           FLUTTER-FRIENDLY CSS VARIABLES
+           (Maps to: ThemeData, ColorScheme, TextTheme)
+        ============================================= */
         :root {
-            --bg: #0D1117; --card: #161B22; --hover: #1C2129;
-            --text: #E6EDF3; --text2: #8B949E;
-            --accent: #7C83FF; --accent-hover: #9499FF;
-            --border: #30363D; --shadow: 0 2px 8px rgba(0,0,0,0.3);
+            /* Colors → Flutter: ColorScheme */
+            --bg: #0D1117;
+            --card: #161B22;
+            --hover: #1C2129;
+            --text: #E6EDF3;
+            --text2: #8B949E;
+            --accent: #7C83FF;
+            --accent-hover: #9499FF;
+            --border: #30363D;
+            --shadow: 0 2px 8px rgba(0,0,0,0.3);
             --glow: 0 0 0 2px rgba(124,131,255,0.12);
-            --radius: 14px; --radius-sm: 10px;
-            --red: #F85149; --green: #3FB950; --yellow: #D29922;
+            --radius: 14px;
+            --radius-sm: 10px;
+            --red: #F85149;
+            --green: #3FB950;
+            --yellow: #D29922;
+            --blue: #58A6FF;
+
+            /* Graph Colors */
+            --graph-green: rgba(63,185,80,0.85);
+            --graph-yellow: rgba(210,153,34,0.85);
+            --graph-red: rgba(248,81,73,0.85);
+            --graph-blue: rgba(88,166,255,0.7);
         }
+
+        /* Light mode */
+        body.light-mode {
+            --bg: #F6F8FA;
+            --card: #FFFFFF;
+            --hover: #F0F2F5;
+            --text: #1C2129;
+            --text2: #57606A;
+            --border: #D0D7DE;
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
         * { margin:0; padding:0; box-sizing:border-box; }
+
         body {
             font-family: 'Inter', 'Noto Sans Bengali', system-ui, sans-serif;
-            background: var(--bg); color: var(--text);
-            min-height: 100vh; padding: 70px 0 70px;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 70px 0 70px;
             -webkit-font-smoothing: antialiased;
+            transition: background 0.3s, color 0.3s;
         }
-        .header { position:fixed;top:0;left:0;right:0;height:56px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 14px;z-index:100; }
-        .hamburger{background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:6px;}
-        .logo{font-size:20px;font-weight:800;color:var(--accent);letter-spacing:-1px;}
-        .header-icon{background:var(--card);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:0.2s;}
-        .header-icon:hover{border-color:var(--accent);box-shadow:var(--glow);}
-        
-        .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;opacity:0;visibility:hidden;transition:0.2s;}
-        .sidebar-overlay.active{opacity:1;visibility:visible;}
-        .sidebar{position:fixed;top:0;left:-280px;width:280px;height:100%;background:var(--card);z-index:201;overflow-y:auto;transition:0.2s;border-right:1px solid var(--border);}
-        .sidebar.active{left:0;}
-        .sidebar-header{background:var(--card);padding:20px 16px;text-align:center;border-bottom:1px solid var(--border);}
-        .sidebar-logo{font-size:20px;font-weight:800;color:var(--accent);}
-        .sidebar-item{display:flex;align-items:center;gap:10px;padding:12px 18px;color:var(--text2);border:none;background:none;width:100%;text-align:left;font-size:14px;cursor:pointer;transition:0.2s;font-family:inherit;}
-        .sidebar-item:hover{background:var(--hover);color:var(--text);}
-        .sidebar-divider{height:1px;background:var(--border);margin:8px 0;}
-        
-        .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:60px;background:var(--card);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;z-index:100;}
-        .nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;color:var(--text2);font-size:10px;cursor:pointer;padding:6px 10px;border-radius:8px;transition:0.2s;font-family:inherit;}
-        .nav-item.active{color:var(--accent);}
-        .nav-item .nav-icon{font-size:20px;}
-        
-        .floating-buttons{position:fixed;bottom:80px;right:16px;display:flex;flex-direction:column;gap:8px;z-index:99;}
-        .fab{width:42px;height:42px;border-radius:50%;border:none;font-size:18px;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;transition:0.2s;box-shadow:var(--shadow);}
-        .fab-wa{background:#25D366;}.fab-wa:hover{transform:scale(1.08);}
-        .fab-tg{background:#0088CC;}.fab-tg:hover{transform:scale(1.08);}
-        
-        .toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--card);color:var(--text);border:1px solid var(--accent);padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:0.2s;pointer-events:none;}
-        .toast.show{opacity:1;}
-        
-        .dash-container{max-width:580px;margin:0 auto;padding:12px 14px 20px;}
-        
-        .profile-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:14px;text-align:center;box-shadow:var(--shadow);}
-        .profile-avatar-wrap{position:relative;width:90px;height:90px;margin:0 auto 10px;cursor:pointer;}
-        .profile-avatar{width:90px;height:90px;border-radius:12px;object-fit:cover;border:2px solid var(--border);background:var(--hover);}
-        .profile-avatar-upload{position:absolute;bottom:-2px;right:-2px;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid var(--card);}
-        .profile-name{font-size:18px;font-weight:800;color:var(--text);margin-top:6px;}
-        .profile-meta{font-size:11px;color:var(--text2);margin-top:3px;line-height:1.5;}
-        .profile-meta span{color:var(--accent);font-weight:600;}
-        
-        .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
-        .dash-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:18px 14px;text-align:center;cursor:pointer;transition:0.2s;box-shadow:var(--shadow);}
-        .dash-box:hover{border-color:var(--accent);box-shadow:var(--glow);transform:translateY(-2px);}
-        .dash-box-icon{font-size:30px;display:block;margin-bottom:6px;}
-        .dash-box-title{font-size:13px;font-weight:700;color:var(--text);}
-        .dash-box-count{font-size:10px;color:var(--text2);margin-top:2px;}
-        
-        .tab-content{display:none;animation:fadeIn 0.25s;}
-        .tab-content.active{display:block;}
-        @keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
-        
-        .back-btn{background:none;border:1px solid var(--border);color:var(--text2);padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;margin-bottom:10px;font-family:inherit;transition:0.2s;}
-        .back-btn:hover{border-color:var(--accent);color:var(--text);}
-        .section-header{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:10px;text-align:center;}
-        .section-title{color:var(--accent);font-size:15px;font-weight:700;}
-        
-        .card-item{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow);}
-        .card-item-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;}
-        .card-item-sub{font-size:11px;color:var(--text2);}
-        .card-item-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px;border-bottom:1px solid var(--border);}
-        .card-item-row:last-child{border-bottom:none;}
-        
-        .btn{display:inline-block;padding:8px 14px;border-radius:var(--radius-sm);font-weight:600;cursor:pointer;border:none;font-size:11px;transition:0.2s;font-family:inherit;text-align:center;}
-        .btn-outline{background:transparent;border:1px solid var(--border);color:var(--text2);}
-        .btn-outline:hover{border-color:var(--accent);color:var(--text);}
-        .btn-primary{background:var(--accent);color:#fff;}
-        .btn-success{background:var(--green);color:#fff;}
-        .btn-danger{background:var(--red);color:#fff;}
-        
-        .filter-row{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;}
-        .filter-row select,.filter-row input{padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:11px;font-family:inherit;}
-        
-        .input-group{margin-bottom:8px;}
-        .input-group label{display:block;font-size:10px;font-weight:600;color:var(--text2);margin-bottom:2px;text-transform:uppercase;letter-spacing:0.5px;}
-        .input-group input{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px;font-family:inherit;}
-        .input-group input:focus{outline:none;border-color:var(--accent);box-shadow:var(--glow);}
-        
-        .notification-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block;margin-right:5px;}
-        .notification-read{opacity:0.5;}
-        
-        .score-badge{padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;}
-        .score-high{background:rgba(63,185,80,0.15);color:var(--green);}
-        .score-mid{background:rgba(210,153,34,0.15);color:var(--yellow);}
-        .score-low{background:rgba(248,81,73,0.15);color:var(--red);}
-        
-        .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:300;display:none;align-items:center;justify-content:center;}
-        .modal-overlay.active{display:flex;}
-        .modal{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;max-width:460px;width:94%;max-height:80vh;overflow-y:auto;}
-        .modal-title{font-size:16px;font-weight:700;color:var(--accent);margin-bottom:12px;text-align:center;}
+
+        /* =============================================
+           HEADER  (Flutter: AppBar)
+        ============================================= */
+        .header {
+            position: fixed; top: 0; left: 0; right: 0;
+            height: 56px; background: var(--card);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center;
+            justify-content: space-between;
+            padding: 0 14px; z-index: 100;
+            transition: background 0.3s;
+        }
+        .hamburger { background:none; border:none; color:var(--text); font-size:22px; cursor:pointer; padding:6px; }
+        .logo { font-size:20px; font-weight:800; color:var(--accent); letter-spacing:-1px; }
+        .header-icon {
+            background: var(--card); border: 1px solid var(--border);
+            color: var(--text); width:36px; height:36px; border-radius:50%;
+            font-size:16px; cursor:pointer;
+            display:flex; align-items:center; justify-content:center; transition:0.2s;
+        }
+        .header-icon:hover { border-color:var(--accent); box-shadow:var(--glow); }
+
+        /* =============================================
+           SIDEBAR  (Flutter: Drawer)
+        ============================================= */
+        .sidebar-overlay {
+            position:fixed; inset:0; background:rgba(0,0,0,0.6);
+            z-index:200; opacity:0; visibility:hidden; transition:0.2s;
+        }
+        .sidebar-overlay.active { opacity:1; visibility:visible; }
+        .sidebar {
+            position:fixed; top:0; left:-280px; width:280px; height:100%;
+            background:var(--card); z-index:201; overflow-y:auto;
+            transition:0.25s cubic-bezier(.4,0,.2,1);
+            border-right:1px solid var(--border);
+            display:flex; flex-direction:column;
+        }
+        .sidebar.active { left:0; }
+        .sidebar-header {
+            background: linear-gradient(135deg, rgba(124,131,255,0.15), rgba(88,166,255,0.08));
+            padding:24px 16px; text-align:center;
+            border-bottom:1px solid var(--border);
+        }
+        .sidebar-logo { font-size:20px; font-weight:800; color:var(--accent); }
+        .sidebar-logo-sub { font-size:10px; color:var(--text2); margin-top:2px; }
+        .sidebar-item {
+            display:flex; align-items:center; gap:10px;
+            padding:12px 18px; color:var(--text2);
+            border:none; background:none; width:100%;
+            text-align:left; font-size:14px; cursor:pointer;
+            transition:0.2s; font-family:inherit;
+        }
+        .sidebar-item:hover { background:var(--hover); color:var(--text); }
+        .sidebar-item.danger { color:var(--red); }
+        .sidebar-item.danger:hover { background:rgba(248,81,73,0.08); }
+        .sidebar-divider { height:1px; background:var(--border); margin:8px 0; }
+        .sidebar-spacer { flex:1; }
+        .sidebar-social { display:flex; gap:8px; padding:12px 18px; }
+        .sidebar-social-btn {
+            flex:1; padding:8px; border-radius:8px; border:1px solid var(--border);
+            background:none; color:var(--text2); font-size:11px; cursor:pointer;
+            font-family:inherit; transition:0.2s; display:flex; align-items:center;
+            justify-content:center; gap:4px;
+        }
+        .sidebar-social-btn:hover { border-color:var(--accent); color:var(--text); }
+
+        /* =============================================
+           BOTTOM NAV  (Flutter: BottomNavigationBar)
+        ============================================= */
+        .bottom-nav {
+            position:fixed; bottom:0; left:0; right:0; height:60px;
+            background:var(--card); border-top:1px solid var(--border);
+            display:flex; align-items:center; justify-content:space-around; z-index:100;
+        }
+        .nav-item {
+            display:flex; flex-direction:column; align-items:center; gap:2px;
+            background:none; border:none; color:var(--text2); font-size:10px;
+            cursor:pointer; padding:6px 10px; border-radius:8px;
+            transition:0.2s; font-family:inherit;
+        }
+        .nav-item.active { color:var(--accent); }
+        .nav-item .nav-icon { font-size:20px; }
+
+        /* =============================================
+           FLOATING BUTTONS  (Flutter: FAB)
+        ============================================= */
+        .floating-buttons {
+            position:fixed; bottom:80px; right:16px;
+            display:flex; flex-direction:column; gap:8px; z-index:99;
+        }
+        .fab {
+            width:42px; height:42px; border-radius:50%; border:none;
+            font-size:18px; cursor:pointer; color:#fff;
+            display:flex; align-items:center; justify-content:center;
+            transition:0.2s; box-shadow:var(--shadow);
+        }
+        .fab-wa { background:#25D366; }
+        .fab-wa:hover { transform:scale(1.08); }
+        .fab-tg { background:#0088CC; }
+        .fab-tg:hover { transform:scale(1.08); }
+
+        /* =============================================
+           TOAST  (Flutter: SnackBar)
+        ============================================= */
+        .toast {
+            position:fixed; top:70px; left:50%; transform:translateX(-50%);
+            background:var(--card); color:var(--text);
+            border:1px solid var(--accent);
+            padding:10px 20px; border-radius:20px;
+            font-size:13px; font-weight:600; z-index:999;
+            opacity:0; transition:0.2s; pointer-events:none;
+            white-space:nowrap;
+        }
+        .toast.show { opacity:1; }
+
+        /* =============================================
+           MAIN CONTAINER
+        ============================================= */
+        .dash-container { max-width:580px; margin:0 auto; padding:12px 14px 20px; }
+
+        /* =============================================
+           PROFILE CARD  (Flutter: Card + CircleAvatar)
+        ============================================= */
+        .profile-card {
+            background:var(--card); border:1px solid var(--border);
+            border-radius:var(--radius); padding:20px;
+            margin-bottom:14px; text-align:center; box-shadow:var(--shadow);
+            position:relative; overflow:hidden;
+        }
+        .profile-card::before {
+            content:''; position:absolute; top:0; left:0; right:0; height:3px;
+            background:linear-gradient(90deg, var(--accent), var(--blue));
+        }
+        .profile-avatar-wrap {
+            position:relative; width:90px; height:90px;
+            margin:0 auto 10px; cursor:pointer;
+        }
+        .profile-avatar {
+            width:90px; height:90px; border-radius:12px;
+            object-fit:cover; border:2px solid var(--border); background:var(--hover);
+        }
+        .profile-avatar-upload {
+            position:absolute; bottom:-2px; right:-2px;
+            width:26px; height:26px; border-radius:50%;
+            background:var(--accent); color:#fff; font-size:12px;
+            display:flex; align-items:center; justify-content:center;
+            cursor:pointer; border:2px solid var(--card);
+        }
+        .profile-name { font-size:18px; font-weight:800; color:var(--text); margin-top:6px; }
+        .profile-badge {
+            display:inline-block; padding:2px 8px; border-radius:20px;
+            font-size:10px; font-weight:700; margin:4px 2px;
+            background:rgba(124,131,255,0.15); color:var(--accent); border:1px solid rgba(124,131,255,0.3);
+        }
+        .profile-badge.timer-first { background:rgba(63,185,80,0.12); color:var(--green); border-color:rgba(63,185,80,0.3); }
+        .profile-badge.timer-second { background:rgba(88,166,255,0.12); color:var(--blue); border-color:rgba(88,166,255,0.3); }
+        .profile-meta { font-size:11px; color:var(--text2); margin-top:3px; line-height:1.8; }
+        .profile-meta span { color:var(--accent); font-weight:600; }
+        .profile-stats-row {
+            display:flex; justify-content:center; gap:16px;
+            margin:10px 0 8px; padding-top:10px;
+            border-top:1px solid var(--border);
+        }
+        .profile-stat { text-align:center; }
+        .profile-stat-val { font-size:16px; font-weight:800; color:var(--accent); }
+        .profile-stat-lbl { font-size:9px; color:var(--text2); }
+
+        /* =============================================
+           PERFORMANCE GRAPHS  (Flutter: charts_flutter / fl_chart)
+        ============================================= */
+        .graph-card {
+            background:var(--card); border:1px solid var(--border);
+            border-radius:var(--radius); padding:16px;
+            margin-bottom:14px; box-shadow:var(--shadow);
+        }
+        .graph-title {
+            font-size:14px; font-weight:700; color:var(--text);
+            margin-bottom:12px; display:flex; align-items:center; gap:6px;
+        }
+        .graph-title-badge {
+            font-size:9px; background:rgba(124,131,255,0.15);
+            color:var(--accent); padding:2px 6px; border-radius:10px; font-weight:600;
+        }
+
+        /* Bar Chart  */
+        .bar-chart {
+            display:flex; align-items:flex-end; gap:4px;
+            height:90px; width:100%; padding-bottom:4px;
+        }
+        .bar-wrap {
+            flex:1; display:flex; flex-direction:column;
+            align-items:center; gap:3px; height:100%;
+        }
+        .bar-label { font-size:8px; color:var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:36px; text-align:center; }
+        .bar {
+            width:100%; border-radius:4px 4px 0 0;
+            transition:height 0.8s cubic-bezier(.4,0,.2,1);
+            position:relative; min-height:4px;
+            cursor:pointer;
+        }
+        .bar::after {
+            content:attr(data-score);
+            position:absolute; top:-18px; left:50%; transform:translateX(-50%);
+            font-size:8px; font-weight:700; color:var(--text);
+            background:var(--bg); padding:1px 3px; border-radius:3px;
+            opacity:0; transition:0.2s; white-space:nowrap;
+        }
+        .bar:hover::after { opacity:1; }
+        .bar.high { background:var(--graph-green); }
+        .bar.mid { background:var(--graph-yellow); }
+        .bar.low { background:var(--graph-red); }
+
+        /* Line / Area Chart */
+        .line-chart-wrap { width:100%; height:100px; position:relative; overflow:hidden; }
+        .line-chart-svg { width:100%; height:100%; }
+
+        /* Graph Stats Row */
+        .graph-stats {
+            display:flex; justify-content:space-around;
+            margin-top:12px; padding-top:10px; border-top:1px solid var(--border);
+        }
+        .graph-stat { text-align:center; }
+        .graph-stat-val { font-size:15px; font-weight:800; color:var(--accent); }
+        .graph-stat-lbl { font-size:9px; color:var(--text2); margin-top:1px; }
+        .graph-legend { display:flex; gap:10px; margin-top:8px; flex-wrap:wrap; }
+        .legend-item { display:flex; align-items:center; gap:4px; font-size:9px; color:var(--text2); }
+        .legend-dot { width:8px; height:8px; border-radius:2px; }
+
+        /* =============================================
+           4 DASHBOARD BOXES  (Flutter: GridView + InkWell)
+        ============================================= */
+        .dash-grid {
+            display:grid; grid-template-columns:1fr 1fr;
+            gap:8px; margin-bottom:14px;
+        }
+        .dash-box {
+            background:var(--card); border:1px solid var(--border);
+            border-radius:var(--radius-sm); padding:18px 14px;
+            text-align:center; cursor:pointer; transition:0.2s;
+            box-shadow:var(--shadow); position:relative;
+        }
+        .dash-box:hover { border-color:var(--accent); box-shadow:var(--glow); transform:translateY(-2px); }
+        .dash-box-icon { font-size:30px; display:block; margin-bottom:6px; }
+        .dash-box-title { font-size:13px; font-weight:700; color:var(--text); }
+        .dash-box-count { font-size:10px; color:var(--text2); margin-top:2px; }
+        .dash-box-badge {
+            position:absolute; top:8px; right:8px;
+            width:18px; height:18px; border-radius:50%;
+            background:var(--red); color:#fff;
+            font-size:9px; font-weight:700;
+            display:flex; align-items:center; justify-content:center;
+        }
+
+        /* =============================================
+           TAB CONTENT  (Flutter: TabBarView)
+        ============================================= */
+        .tab-content { display:none; animation:fadeIn 0.25s; }
+        .tab-content.active { display:block; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+
+        /* =============================================
+           COMMON UI ELEMENTS
+        ============================================= */
+        .back-btn {
+            background:none; border:1px solid var(--border);
+            color:var(--text2); padding:7px 14px; border-radius:6px;
+            cursor:pointer; font-size:12px; margin-bottom:10px;
+            font-family:inherit; transition:0.2s;
+        }
+        .back-btn:hover { border-color:var(--accent); color:var(--text); }
+
+        .section-header {
+            background:var(--card); border:1px solid var(--border);
+            border-radius:var(--radius); padding:12px;
+            margin-bottom:10px; text-align:center;
+        }
+        .section-title { color:var(--accent); font-size:15px; font-weight:700; }
+        .section-sub { font-size:10px; color:var(--text2); margin-top:2px; }
+
+        .card-item {
+            background:var(--card); border:1px solid var(--border);
+            border-radius:var(--radius-sm); padding:12px 14px;
+            margin-bottom:8px; box-shadow:var(--shadow);
+        }
+        .card-item-title { font-size:14px; font-weight:700; color:var(--text); margin-bottom:4px; }
+        .card-item-sub { font-size:11px; color:var(--text2); margin-top:3px; }
+        .card-item-row {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:4px 0; font-size:12px; border-bottom:1px solid var(--border);
+        }
+        .card-item-row:last-child { border-bottom:none; }
+
+        /* Buttons */
+        .btn {
+            display:inline-block; padding:8px 14px; border-radius:var(--radius-sm);
+            font-weight:600; cursor:pointer; border:none;
+            font-size:11px; transition:0.2s; font-family:inherit; text-align:center;
+        }
+        .btn-outline { background:transparent; border:1px solid var(--border); color:var(--text2); }
+        .btn-outline:hover { border-color:var(--accent); color:var(--text); }
+        .btn-primary { background:var(--accent); color:#fff; }
+        .btn-primary:hover { background:var(--accent-hover); }
+        .btn-success { background:var(--green); color:#fff; }
+        .btn-danger { background:var(--red); color:#fff; }
+        .btn-blue { background:var(--blue); color:#fff; }
+
+        /* Button group */
+        .btn-row { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+
+        /* Filters */
+        .filter-row { display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap; }
+        .filter-row select, .filter-row input {
+            padding:6px 10px; border:1px solid var(--border);
+            border-radius:6px; background:var(--bg); color:var(--text);
+            font-size:11px; font-family:inherit; flex:1;
+        }
+
+        /* Form Inputs */
+        .input-group { margin-bottom:8px; }
+        .input-group label {
+            display:block; font-size:10px; font-weight:600;
+            color:var(--text2); margin-bottom:2px;
+            text-transform:uppercase; letter-spacing:0.5px;
+        }
+        .input-group input {
+            width:100%; padding:9px 11px; border:1px solid var(--border);
+            border-radius:6px; background:var(--bg); color:var(--text);
+            font-size:13px; font-family:inherit; transition:0.2s;
+        }
+        .input-group input:focus { outline:none; border-color:var(--accent); box-shadow:var(--glow); }
+
+        /* Score Badges */
+        .score-badge { padding:2px 8px; border-radius:12px; font-size:10px; font-weight:700; }
+        .score-high { background:rgba(63,185,80,0.15); color:var(--green); }
+        .score-mid { background:rgba(210,153,34,0.15); color:var(--yellow); }
+        .score-low { background:rgba(248,81,73,0.15); color:var(--red); }
+
+        /* Notification dot  (Flutter: Badge) */
+        .notification-dot {
+            width:7px; height:7px; border-radius:50%;
+            background:var(--accent); display:inline-block;
+            margin-right:5px; animation:pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%,100% { box-shadow:0 0 0 0 rgba(124,131,255,0.5); }
+            50% { box-shadow:0 0 0 4px rgba(124,131,255,0); }
+        }
+        .notification-read { opacity:0.5; }
+
+        /* =============================================
+           QUESTION DISPLAY  (Flutter: QuestionCard widget)
+        ============================================= */
+        .question-card {
+            background:var(--hover); border:1px solid var(--border);
+            border-radius:var(--radius-sm); padding:12px;
+            margin-bottom:10px;
+        }
+        .question-text { font-size:13px; color:var(--text); font-weight:600; line-height:1.5; margin-bottom:8px; }
+        .question-img { width:100%; border-radius:6px; margin-bottom:8px; max-height:180px; object-fit:contain; }
+        .options-list { list-style:none; display:flex; flex-direction:column; gap:5px; }
+        .option-item {
+            padding:8px 10px; border-radius:6px; font-size:12px;
+            border:1px solid var(--border); color:var(--text2);
+            display:flex; align-items:center; gap:6px;
+        }
+        .option-item.correct { background:rgba(63,185,80,0.12); border-color:var(--green); color:var(--green); }
+        .option-item.wrong { background:rgba(248,81,73,0.12); border-color:var(--red); color:var(--red); }
+        .option-key { font-weight:800; min-width:16px; }
+        .explanation-box {
+            background:rgba(88,166,255,0.08); border:1px solid rgba(88,166,255,0.2);
+            border-radius:6px; padding:8px 10px; margin-top:8px;
+            font-size:11px; color:var(--blue); line-height:1.5;
+        }
+        .q-status {
+            display:inline-block; padding:2px 6px; border-radius:10px;
+            font-size:9px; font-weight:700; margin-bottom:6px;
+        }
+        .q-status.correct { background:rgba(63,185,80,0.15); color:var(--green); }
+        .q-status.wrong { background:rgba(248,81,73,0.15); color:var(--red); }
+        .q-status.skipped { background:rgba(210,153,34,0.15); color:var(--yellow); }
+
+        /* Filter tabs for question filter */
+        .q-filter-tabs { display:flex; gap:4px; margin-bottom:10px; }
+        .q-filter-tab {
+            padding:5px 10px; border-radius:6px; font-size:10px; font-weight:600;
+            cursor:pointer; border:1px solid var(--border); background:none; color:var(--text2);
+            font-family:inherit; transition:0.2s;
+        }
+        .q-filter-tab.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+        /* =============================================
+           MODAL  (Flutter: showDialog / showModalBottomSheet)
+        ============================================= */
+        .modal-overlay {
+            position:fixed; inset:0; background:rgba(0,0,0,0.75);
+            z-index:300; display:none; align-items:center; justify-content:center;
+            padding:14px;
+        }
+        .modal-overlay.active { display:flex; }
+        .modal {
+            background:var(--card); border:1px solid var(--border);
+            border-radius:var(--radius); padding:16px;
+            max-width:500px; width:100%; max-height:85vh; overflow-y:auto;
+            animation:modalSlide 0.2s;
+        }
+        @keyframes modalSlide { from { transform:translateY(20px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+        .modal-title {
+            font-size:16px; font-weight:700; color:var(--accent);
+            margin-bottom:12px; text-align:center; padding-bottom:10px;
+            border-bottom:1px solid var(--border);
+        }
+        .modal-close {
+            position:sticky; bottom:0; background:var(--card);
+            padding-top:10px; margin-top:10px; border-top:1px solid var(--border);
+        }
+
+        /* =============================================
+           EMPTY STATE  (Flutter: EmptyState widget)
+        ============================================= */
+        .empty-state {
+            text-align:center; padding:40px 20px; color:var(--text2);
+        }
+        .empty-state-icon { font-size:40px; margin-bottom:8px; display:block; }
+        .empty-state-text { font-size:13px; }
+
+        /* =============================================
+           CONFIRM DIALOG  (Flutter: AlertDialog)
+        ============================================= */
+        .confirm-overlay {
+            position:fixed; inset:0; background:rgba(0,0,0,0.75);
+            z-index:400; display:none; align-items:center; justify-content:center; padding:20px;
+        }
+        .confirm-overlay.active { display:flex; }
+        .confirm-box {
+            background:var(--card); border:1px solid var(--border);
+            border-radius:var(--radius); padding:20px;
+            max-width:320px; width:100%; text-align:center;
+        }
+        .confirm-box h3 { font-size:15px; font-weight:700; margin-bottom:8px; }
+        .confirm-box p { font-size:12px; color:var(--text2); margin-bottom:14px; }
+        .confirm-btns { display:flex; gap:8px; }
+        .confirm-btns .btn { flex:1; padding:10px; }
+
+        /* =============================================
+           BOOKMARK CARD FULL VIEW
+        ============================================= */
+        .bookmark-card { border-left:3px solid var(--accent); }
+        .bookmark-meta { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:6px; }
+        .meta-chip {
+            font-size:9px; padding:2px 6px; border-radius:10px;
+            background:var(--hover); color:var(--text2); border:1px solid var(--border);
+        }
+
+        /* =============================================
+           NOTIFICATION CARD
+        ============================================= */
+        .notif-card { cursor:pointer; transition:0.2s; }
+        .notif-card:hover { border-color:var(--accent); }
+        .notif-status { font-size:11px; font-weight:700; margin-bottom:4px; }
+        .notif-status.approved { color:var(--green); }
+        .notif-status.rejected { color:var(--red); }
+        .admin-response {
+            background:rgba(124,131,255,0.08); border:1px solid rgba(124,131,255,0.2);
+            border-radius:6px; padding:8px; margin-top:8px; font-size:11px; color:var(--accent);
+        }
+        .admin-response-label { font-size:9px; font-weight:700; text-transform:uppercase; margin-bottom:3px; opacity:0.7; }
+
+        /* =============================================
+           LOADING SKELETON  (Flutter: Shimmer)
+        ============================================= */
+        .skeleton {
+            background:linear-gradient(90deg, var(--hover) 25%, var(--card) 50%, var(--hover) 75%);
+            background-size:200% 100%;
+            animation:shimmer 1.2s infinite;
+            border-radius:6px;
+        }
+        @keyframes shimmer { from { background-position:200% 0; } to { background-position:-200% 0; } }
+        .skeleton-line { height:12px; margin-bottom:6px; }
+        .skeleton-block { height:80px; margin-bottom:8px; border-radius:var(--radius-sm); }
+
+        /* =============================================
+           THEME TOGGLE ANIMATION
+        ============================================= */
+        #themeIcon { transition:transform 0.3s; }
+        body.light-mode #themeIcon { transform:rotate(180deg); }
+
+        /* =============================================
+           RESPONSIVE
+        ============================================= */
+        @media (max-width:400px) {
+            .dash-grid { grid-template-columns:1fr 1fr; gap:6px; }
+            .graph-stats { gap:4px; }
+            .graph-stat-val { font-size:13px; }
+        }
     </style>
 </head>
 <body>
 
-<!-- Sidebar -->
+<!-- ============================================
+     SIDEBAR  (Flutter: Drawer)
+============================================ -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header"><div class="sidebar-logo">ATLAS EXAM</div></div>
-    <button class="sidebar-item" onclick="navigateTo('profile');closeSidebar();">👤 প্রোফাইল</button>
+    <div class="sidebar-header">
+        <div class="sidebar-logo">ATLAS EXAM</div>
+        <div class="sidebar-logo-sub">মেডিকেল প্রস্তুতি</div>
+    </div>
+
+    <button class="sidebar-item" onclick="showTab('profile');closeSidebar();">👤 প্রোফাইল</button>
     <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();">🏠 হোম</button>
     <button class="sidebar-item" onclick="goTo('class.html');closeSidebar();">📚 ফ্রি ক্লাস</button>
     <button class="sidebar-item" onclick="goTo('exam.html');closeSidebar();">📝 ফ্রি এক্সাম</button>
     <button class="sidebar-item" onclick="goTo('mock-test.html');closeSidebar();">🎯 মক টেস্ট</button>
     <button class="sidebar-item" onclick="goTo('dashboard.html');closeSidebar();">⚠️ My Mistakes</button>
     <button class="sidebar-item" onclick="goTo('ai.html');closeSidebar();">🤖 ATLAS AI</button>
+
     <div class="sidebar-divider"></div>
-    <button class="sidebar-item" onclick="toggleTheme()">🌙 ডার্ক মোড</button>
-    <button class="sidebar-item" onclick="openWA()">💬 WhatsApp</button>
-    <button class="sidebar-item" onclick="openTG()">✈️ Telegram</button>
-    <button class="sidebar-item" onclick="logout()">🚪 লগআউট</button>
+
+    <button class="sidebar-item" onclick="toggleTheme()">🌙 থিম পরিবর্তন</button>
+    <div class="sidebar-social">
+        <button class="sidebar-social-btn" onclick="openWA()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.556 4.124 1.527 5.854L0 24l6.335-1.652C8.054 23.445 10.001 24 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.885 0-3.656-.502-5.187-1.38L2.186 21.9l1.3-4.559A10 10 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+            WhatsApp
+        </button>
+        <button class="sidebar-social-btn" onclick="openTG()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="#0088CC"><path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zm5.562 8.248l-1.97 9.289c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.932z"/></svg>
+            Telegram
+        </button>
+    </div>
+
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-divider"></div>
+    <button class="sidebar-item danger" onclick="logout()">🚪 লগআউট</button>
 </aside>
 
-<!-- Header -->
+<!-- ============================================
+     HEADER  (Flutter: AppBar)
+============================================ -->
 <header class="header">
-    <div style="display:flex;align-items:center;gap:10px;"><button class="hamburger" onclick="toggleSidebar()">☰</button><span class="logo">ATLAS EXAM</span></div>
-    <div style="display:flex;gap:6px;"><button class="header-icon" onclick="toggleTheme()">🌙</button></div>
+    <div style="display:flex;align-items:center;gap:10px;">
+        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+        <span class="logo">ATLAS EXAM</span>
+    </div>
+    <div style="display:flex;gap:6px;">
+        <button class="header-icon" onclick="toggleTheme()" title="থিম পরিবর্তন">
+            <span id="themeIcon">🌙</span>
+        </button>
+    </div>
 </header>
 
+<!-- ============================================
+     MAIN CONTENT
+============================================ -->
 <main class="dash-container">
 
-<!-- Profile Card -->
-<div class="profile-card">
-    <div class="profile-avatar-wrap" onclick="document.getElementById('avatarInput').click()">
-        <img class="profile-avatar" id="profileAvatar" src="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" alt="Photo">
-        <div class="profile-avatar" id="profileAvatarFallback" style="display:flex;align-items:center;justify-content:center;font-size:32px;">👤</div>
-        <div class="profile-avatar-upload">📷</div>
-        <input type="file" id="avatarInput" accept="image/*" onchange="uploadAvatar(this)" style="display:none;">
-    </div>
-    <div class="profile-name" id="profileName">লোড হচ্ছে...</div>
-    <div class="profile-meta" id="profileMeta"></div>
-    <button class="btn btn-outline" onclick="showTab('edit')" style="margin-top:8px;width:100%;">✏️ এডিট প্রোফাইল</button>
-</div>
-
-<!-- 4 Boxes -->
-<div class="dash-grid" id="mainGrid">
-    <div class="dash-box" onclick="showTab('history')">
-        <span class="dash-box-icon">📚</span>
-        <div class="dash-box-title">Exam History</div>
-        <div class="dash-box-count" id="countExams">০ এক্সাম</div>
-    </div>
-    <div class="dash-box" onclick="showTab('classhistory')">
-        <span class="dash-box-icon">🎥</span>
-        <div class="dash-box-title">Class History</div>
-        <div class="dash-box-count" id="countClasses">০ ক্লাস</div>
-    </div>
-    <div class="dash-box" onclick="showTab('bookmarks')">
-        <span class="dash-box-icon">🔖</span>
-        <div class="dash-box-title">Bookmarks</div>
-        <div class="dash-box-count" id="countBookmarks">০ বুকমার্ক</div>
-    </div>
-    <div class="dash-box" onclick="showTab('notifications')">
-        <span class="dash-box-icon">🔔</span>
-        <div class="dash-box-title">Notifications</div>
-        <div class="dash-box-count" id="countNotifs">০ নতুন</div>
-    </div>
-</div>
-
-<!-- Tab Content -->
-<div id="tabContent">
-    <div class="tab-content active" id="tabMain"></div>
-    
-    <!-- Exam History -->
-    <div class="tab-content" id="tabHistoryContent">
-        <button class="back-btn" onclick="showTab('main')">← ফিরে যান</button>
-        <div class="section-header"><div class="section-title">📚 Exam History</div></div>
-        <div class="filter-row">
-            <select id="filterCat" onchange="loadHistory()"><option value="all">সব ক্যাটাগরি</option></select>
-            <select id="filterSub" onchange="loadHistory()"><option value="all">সব সাবজেক্ট</option></select>
+    <!-- ==================== PROFILE CARD ==================== -->
+    <div class="profile-card" id="profileCard">
+        <div class="profile-avatar-wrap" onclick="document.getElementById('avatarInput').click()" title="ছবি পরিবর্তন করুন">
+            <img class="profile-avatar" id="profileAvatar" src="" onerror="this.style.display='none';document.getElementById('profileAvatarFallback').style.display='flex';" alt="Photo">
+            <div class="profile-avatar" id="profileAvatarFallback" style="display:flex;align-items:center;justify-content:center;font-size:32px;position:absolute;top:0;left:0;">👤</div>
+            <div class="profile-avatar-upload">📷</div>
+            <input type="file" id="avatarInput" accept="image/*" onchange="uploadAvatar(this)" style="display:none;">
         </div>
-        <div id="historyList"></div>
+        <div class="profile-name" id="profileName">লোড হচ্ছে...</div>
+        <div id="profileBadges"></div>
+        <div class="profile-meta" id="profileMeta"></div>
+        <div class="profile-stats-row" id="profileStatsRow" style="display:none;">
+            <div class="profile-stat"><div class="profile-stat-val" id="statExams">—</div><div class="profile-stat-lbl">এক্সাম</div></div>
+            <div class="profile-stat"><div class="profile-stat-val" id="statAvg">—</div><div class="profile-stat-lbl">গড় স্কোর</div></div>
+            <div class="profile-stat"><div class="profile-stat-val" id="statClasses">—</div><div class="profile-stat-lbl">ক্লাস</div></div>
+            <div class="profile-stat"><div class="profile-stat-val" id="statBookmarks">—</div><div class="profile-stat-lbl">বুকমার্ক</div></div>
+        </div>
+        <button class="btn btn-outline" onclick="showTab('edit')" style="margin-top:8px;width:100%;">✏️ এডিট প্রোফাইল</button>
     </div>
-    
-    <!-- Class History -->
-    <div class="tab-content" id="tabClassHistoryContent">
-        <button class="back-btn" onclick="showTab('main')">← ফিরে যান</button>
-        <div class="section-header"><div class="section-title">🎥 Class History</div></div>
-        <div id="classHistoryList"></div>
-    </div>
-    
-    <!-- Bookmarks -->
-    <div class="tab-content" id="tabBookmarksContent">
-        <button class="back-btn" onclick="showTab('main')">← ফিরে যান</button>
-        <div class="section-header"><div class="section-title">🔖 Bookmarks</div></div>
-        <div id="bookmarksList"></div>
-    </div>
-    
-    <!-- Notifications -->
-    <div class="tab-content" id="tabNotificationsContent">
-        <button class="back-btn" onclick="showTab('main')">← ফিরে যান</button>
-        <div class="section-header"><div class="section-title">🔔 Notifications</div></div>
-        <div id="notifList"></div>
-    </div>
-    
-    <!-- Edit Profile -->
-    <div class="tab-content" id="tabEditContent">
-        <button class="back-btn" onclick="showTab('main')">← ফিরে যান</button>
-        <div class="section-header"><div class="section-title">✏️ প্রোফাইল এডিট</div></div>
-        <div class="card-item">
-            <div class="input-group"><label>নাম</label><input type="text" id="editName"></div>
-            <div class="input-group"><label>HSC Batch</label><input type="text" id="editBatch"></div>
-            <div class="input-group"><label>কলেজ</label><input type="text" id="editCollege"></div>
-            <div class="input-group"><label>পিতার নাম</label><input type="text" id="editFather"></div>
-            <div class="input-group"><label>মাতার নাম</label><input type="text" id="editMother"></div>
-            <div class="input-group"><label>পাসওয়ার্ড</label><input type="password" id="editPass" placeholder="নতুন পাসওয়ার্ড (৬+ ক্যারেক্টার)"></div>
-            <button class="btn btn-primary" onclick="updateProfile()" style="width:100%;padding:12px;">💾 সেইভ</button>
+
+    <!-- ==================== EXAM PERFORMANCE GRAPH ==================== -->
+    <!-- (Flutter: fl_chart BarChart) -->
+    <div class="graph-card" id="examGraphCard" style="display:none;">
+        <div class="graph-title">
+            📊 এক্সাম পারফরম্যান্স
+            <span class="graph-title-badge" id="examGraphBadge">শেষ ৫টি</span>
+        </div>
+        <div class="bar-chart" id="examBarChart"></div>
+        <div class="graph-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--graph-green)"></div>৮০%+</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--graph-yellow)"></div>৫০-৭৯%</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--graph-red)"></div>৫০% এর কম</div>
+        </div>
+        <div class="graph-stats">
+            <div class="graph-stat"><div class="graph-stat-val" id="gAvg">—</div><div class="graph-stat-lbl">📈 গড় স্কোর</div></div>
+            <div class="graph-stat"><div class="graph-stat-val" id="gBest">—</div><div class="graph-stat-lbl">🏆 সেরা</div></div>
+            <div class="graph-stat"><div class="graph-stat-val" id="gTotal">—</div><div class="graph-stat-lbl">📝 মোট</div></div>
+            <div class="graph-stat"><div class="graph-stat-val" id="gMonth">—</div><div class="graph-stat-lbl">📅 এ মাসে</div></div>
         </div>
     </div>
-</div>
+
+    <!-- ==================== CLASS PERFORMANCE GRAPH ==================== -->
+    <!-- (Flutter: fl_chart LineChart with area fill) -->
+    <div class="graph-card" id="classGraphCard" style="display:none;">
+        <div class="graph-title">
+            🎥 ক্লাস পারফরম্যান্স
+            <span class="graph-title-badge" id="classGraphBadge">সাবজেক্ট-ভিত্তিক</span>
+        </div>
+        <div class="line-chart-wrap">
+            <svg class="line-chart-svg" id="lineChartSvg" viewBox="0 0 300 100" preserveAspectRatio="none"></svg>
+        </div>
+        <div class="graph-stats">
+            <div class="graph-stat"><div class="graph-stat-val" id="cTotal">—</div><div class="graph-stat-lbl">📚 মোট ক্লাস</div></div>
+            <div class="graph-stat"><div class="graph-stat-val" id="cMonth">—</div><div class="graph-stat-lbl">📅 এ মাসে</div></div>
+            <div class="graph-stat" style="max-width:80px;overflow:hidden;"><div class="graph-stat-val" id="cFav" style="font-size:10px;">—</div><div class="graph-stat-lbl">⭐ প্রিয়</div></div>
+        </div>
+    </div>
+
+    <!-- ==================== 4 DASHBOARD BOXES ==================== -->
+    <!-- (Flutter: GridView.count) -->
+    <div class="dash-grid" id="mainGrid">
+        <div class="dash-box" onclick="showTab('history')">
+            <span class="dash-box-icon">📚</span>
+            <div class="dash-box-title">Exam History</div>
+            <div class="dash-box-count" id="countExams">০ এক্সাম</div>
+        </div>
+        <div class="dash-box" onclick="showTab('classhistory')">
+            <span class="dash-box-icon">🎥</span>
+            <div class="dash-box-title">Class History</div>
+            <div class="dash-box-count" id="countClasses">০ ক্লাস</div>
+        </div>
+        <div class="dash-box" onclick="showTab('bookmarks')">
+            <span class="dash-box-icon">🔖</span>
+            <div class="dash-box-title">Bookmarks</div>
+            <div class="dash-box-count" id="countBookmarks">০ বুকমার্ক</div>
+        </div>
+        <div class="dash-box" onclick="showTab('notifications')" style="position:relative;">
+            <span class="dash-box-icon">🔔</span>
+            <div class="dash-box-title">Notifications</div>
+            <div class="dash-box-count" id="countNotifs">০ নতুন</div>
+            <div class="dash-box-badge" id="unreadBadge" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- ==================== TAB CONTENT AREA ==================== -->
+    <div id="tabContent">
+
+        <!-- Main (empty placeholder for profile view) -->
+        <div class="tab-content active" id="tabMainContent"></div>
+
+        <!-- ===== EXAM HISTORY TAB ===== -->
+        <!-- (Flutter: ExamHistoryScreen) -->
+        <div class="tab-content" id="tabHistoryContent">
+            <button class="back-btn" onclick="showTab('main')">← ফিরে যান</button>
+            <div class="section-header">
+                <div class="section-title">📚 Exam History</div>
+                <div class="section-sub" id="historySubtitle"></div>
+            </div>
+            <div class="filter-row">
+                <select id="filterCat" onchange="loadHistory()">
+                    <option value="all">সব ক্যাটাগরি</option>
+                </select>
+                <select id="filterSub" onchange="loadHistory()">
+                    <option value="all">সব সাবজেক্ট</option>
+                </select>
+            </div>
+            <div id="historyList"></div>
+        </div>
+
+        <!-- ===== CLASS HISTORY TAB ===== -->
+        <!-- (Flutter: ClassHistoryScreen) -->
+        <div class="tab-content" id="tabClasshistoryContent">
+            <button class="back-btn" onclick="showTab('main')">← ফিরে যান</button>
+            <div class="section-header">
+                <div class="section-title">🎥 Class History</div>
+                <div class="section-sub" id="classHistorySubtitle"></div>
+            </div>
+            <div id="classHistoryList"></div>
+        </div>
+
+        <!-- ===== BOOKMARKS TAB ===== -->
+        <!-- (Flutter: BookmarksScreen) -->
+        <div class="tab-content" id="tabBookmarksContent">
+            <button class="back-btn" onclick="showTab('main')">← ফিরে যান</button>
+            <div class="section-header">
+                <div class="section-title">🔖 Bookmarks</div>
+                <div class="section-sub" id="bookmarksSubtitle"></div>
+            </div>
+            <div id="bookmarksList"></div>
+        </div>
+
+        <!-- ===== NOTIFICATIONS TAB ===== -->
+        <!-- (Flutter: NotificationsScreen) -->
+        <div class="tab-content" id="tabNotificationsContent">
+            <button class="back-btn" onclick="showTab('main')">← ফিরে যান</button>
+            <div class="section-header">
+                <div class="section-title">🔔 Notifications</div>
+            </div>
+            <div id="notifList"></div>
+        </div>
+
+        <!-- ===== EDIT PROFILE TAB ===== -->
+        <!-- (Flutter: EditProfileScreen) -->
+        <div class="tab-content" id="tabEditContent">
+            <button class="back-btn" onclick="showTab('main')">← ফিরে যান</button>
+            <div class="section-header">
+                <div class="section-title">✏️ প্রোফাইল এডিট</div>
+            </div>
+            <div class="card-item">
+                <div class="input-group"><label>নাম</label><input type="text" id="editName" placeholder="আপনার নাম লিখুন"></div>
+                <div class="input-group"><label>HSC Batch</label><input type="text" id="editBatch" placeholder="যেমনঃ ২০২৫"></div>
+                <div class="input-group"><label>কলেজ</label><input type="text" id="editCollege" placeholder="কলেজের নাম"></div>
+                <div class="input-group"><label>পিতার নাম</label><input type="text" id="editFather" placeholder="পিতার নাম"></div>
+                <div class="input-group"><label>মাতার নাম</label><input type="text" id="editMother" placeholder="মাতার নাম"></div>
+                <div class="input-group"><label>নতুন পাসওয়ার্ড</label><input type="password" id="editPass" placeholder="নতুন পাসওয়ার্ড (৬+ ক্যারেক্টার, অপশনাল)"></div>
+                <button class="btn btn-primary" onclick="updateProfile()" style="width:100%;padding:12px;">💾 সেইভ করুন</button>
+            </div>
+        </div>
+
+    </div><!-- end tabContent -->
 
 </main>
 
-<!-- Detail Modal -->
-<div class="modal-overlay" id="detailModal" onclick="this.classList.remove('active')"><div class="modal" id="detailModalContent" onclick="event.stopPropagation()"></div></div>
+<!-- ============================================
+     EXAM DETAIL MODAL  (Flutter: showDialog)
+============================================ -->
+<div class="modal-overlay" id="detailModal" onclick="this.classList.remove('active')">
+    <div class="modal" id="detailModalContent" onclick="event.stopPropagation()"></div>
+</div>
 
-<!-- Bottom Nav -->
+<!-- ============================================
+     CONFIRM DIALOG  (Flutter: AlertDialog)
+============================================ -->
+<div class="confirm-overlay" id="confirmDialog">
+    <div class="confirm-box">
+        <h3 id="confirmTitle">নিশ্চিত করুন</h3>
+        <p id="confirmMsg">আপনি কি নিশ্চিত?</p>
+        <div class="confirm-btns">
+            <button class="btn btn-outline" onclick="closeConfirm()">বাতিল</button>
+            <button class="btn btn-danger" id="confirmOkBtn" onclick="confirmOkCb()">হ্যাঁ, ডিলিট</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================
+     BOTTOM NAV  (Flutter: BottomNavigationBar)
+============================================ -->
 <nav class="bottom-nav">
     <button class="nav-item" onclick="goTo('index.html')"><span class="nav-icon">🏠</span>হোম</button>
     <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon">📚</span>ক্লাস</button>
@@ -242,60 +808,194 @@
     <button class="nav-item active" onclick="goTo('dashboard.html')"><span class="nav-icon">👤</span>প্রোফাইল</button>
 </nav>
 
-<div class="floating-buttons"><button class="fab fab-wa" onclick="openWA()">💬</button><button class="fab fab-tg" onclick="openTG()">✈️</button></div>
+<!-- Floating Buttons -->
+<div class="floating-buttons">
+    <button class="fab fab-wa" onclick="openWA()" title="WhatsApp">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.556 4.124 1.527 5.854L0 24l6.335-1.652C8.054 23.445 10.001 24 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.885 0-3.656-.502-5.187-1.38L2.186 21.9l1.3-4.559A10 10 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+    </button>
+    <button class="fab fab-tg" onclick="openTG()" title="Telegram">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zm5.562 8.248l-1.97 9.289c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.932z"/></svg>
+    </button>
+</div>
+
+<!-- Toast -->
 <div class="toast" id="toast"></div>
 
+<!-- ============================================
+     JAVASCRIPT
+     Flutter annotation: Each section maps to a Service/Controller class
+============================================ -->
 <script>
+/* ======================================================
+   CONSTANTS & STATE  (Flutter: AppState / providers)
+====================================================== */
 const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
-let isDarkMode = true, isSidebarOpen = false, currentUser = null;
 
-function showToast(m, d = 2000) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), d); }
-function toggleTheme() { isDarkMode = !isDarkMode; document.body.classList.toggle('dark-mode', isDarkMode); showToast(isDarkMode ? '🌙 ডার্ক' : '☀️ লাইট'); }
-function toggleSidebar() { isSidebarOpen = !isSidebarOpen; document.getElementById('sidebarOverlay').classList.toggle('active', isSidebarOpen); document.getElementById('sidebar').classList.toggle('active', isSidebarOpen); }
-function closeSidebar() { isSidebarOpen = false; document.getElementById('sidebarOverlay').classList.remove('active'); document.getElementById('sidebar').classList.remove('active'); }
-function goTo(u) { location.href = u; }
-function navigateTo(p) { const r = { home:'index.html', profile:'dashboard.html', class:'class.html', exam:'exam.html' }; goTo(r[p]||'index.html'); }
+let isDarkMode = true;
+let isSidebarOpen = false;
+let currentUser = null;
+let confirmCallback = null;
+let examResultsCache = [];
+let currentQFilter = 'all'; // for question filter in detail modal
+
+/* ======================================================
+   UTILITIES  (Flutter: Utils class)
+====================================================== */
+function showToast(msg, duration = 2500) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._t);
+    t._t = setTimeout(() => t.classList.remove('show'), duration);
+}
+
+function toggleTheme() {
+    isDarkMode = !isDarkMode;
+    document.body.classList.toggle('light-mode', !isDarkMode);
+    document.getElementById('themeIcon').textContent = isDarkMode ? '🌙' : '☀️';
+    localStorage.setItem('atlas-theme', isDarkMode ? 'dark' : 'light');
+    // No toast per spec
+}
+
+function toggleSidebar() {
+    isSidebarOpen = !isSidebarOpen;
+    document.getElementById('sidebarOverlay').classList.toggle('active', isSidebarOpen);
+    document.getElementById('sidebar').classList.toggle('active', isSidebarOpen);
+}
+function closeSidebar() {
+    isSidebarOpen = false;
+    document.getElementById('sidebarOverlay').classList.remove('active');
+    document.getElementById('sidebar').classList.remove('active');
+}
+
+function goTo(url) { location.href = url; }
 function openWA() { window.open('https://wa.me/8801999681290', '_blank'); }
 function openTG() { window.open('https://t.me/rafi_somc', '_blank'); }
-function logout() { localStorage.removeItem('atlas-session'); goTo('index.html'); }
 
-async function safeFetch(url, opts = {}) {
-    opts.headers = Object.assign({ apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }, opts.headers || {});
-    if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') opts.headers['Content-Type'] = 'application/json';
-    try { const res = await fetch(url, opts); const text = await res.text(); if (!text?.trim()) return []; const data = JSON.parse(text); if (!res.ok) throw new Error(data.message); return data; }
-    catch(e) { console.error('❌', e.message); return []; }
+function logout() {
+    localStorage.removeItem('atlas-session');
+    goTo('index.html');
 }
 
+function toBanglaDate(dateStr) {
+    try {
+        return new Date(dateStr).toLocaleString('bn-BD', { year:'numeric', month:'long', day:'numeric' });
+    } catch(e) { return dateStr; }
+}
+
+function toBanglaNum(n) {
+    const bn = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
+    return String(n).replace(/[0-9]/g, d => bn[d]);
+}
+
+/* ======================================================
+   CONFIRM DIALOG  (Flutter: showDialog → AlertDialog)
+====================================================== */
+function showConfirm(title, msg, okLabel, cb) {
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMsg').textContent = msg;
+    document.getElementById('confirmOkBtn').textContent = okLabel || 'হ্যাঁ, ডিলিট';
+    confirmCallback = cb;
+    document.getElementById('confirmDialog').classList.add('active');
+}
+function closeConfirm() {
+    confirmCallback = null;
+    document.getElementById('confirmDialog').classList.remove('active');
+}
+function confirmOkCb() {
+    if (confirmCallback) confirmCallback();
+    closeConfirm();
+}
+
+/* ======================================================
+   AUTH CHECK  (Flutter: AuthGuard)
+====================================================== */
 function checkAuth() {
-    try { currentUser = JSON.parse(localStorage.getItem('atlas-session')); if (!currentUser) { goTo('auth.html'); return false; } return true; }
-    catch(e) { goTo('auth.html'); return false; }
+    try {
+        currentUser = JSON.parse(localStorage.getItem('atlas-session'));
+        if (!currentUser) { goTo('auth.html'); return false; }
+        return true;
+    } catch(e) { goTo('auth.html'); return false; }
 }
 
-// ========== AVATAR ==========
+/* ======================================================
+   SUPABASE FETCH HELPER  (Flutter: SupabaseService)
+====================================================== */
+async function safeFetch(url, opts = {}) {
+    opts.headers = Object.assign(
+        { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY },
+        opts.headers || {}
+    );
+    if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') {
+        opts.headers['Content-Type'] = 'application/json';
+    }
+    try {
+        const res = await fetch(url, opts);
+        const text = await res.text();
+        if (!text?.trim()) return [];
+        const data = JSON.parse(text);
+        if (!res.ok) throw new Error(data.message || 'Server error');
+        return data;
+    } catch(e) {
+        console.error('❌ Fetch error:', e.message);
+        return [];
+    }
+}
+
+/* ======================================================
+   AVATAR  (Flutter: ImagePicker + local storage)
+====================================================== */
 function uploadAvatar(input) {
-    const file = input.files[0]; if (!file) return;
+    const file = input.files[0];
+    if (!file) return;
     const reader = new FileReader();
     reader.onload = e => {
-        document.getElementById('profileAvatar').src = e.target.result;
-        document.getElementById('profileAvatar').style.display = 'block';
-        document.getElementById('profileAvatarFallback').style.display = 'none';
-        localStorage.setItem('avatar_'+currentUser.phone, e.target.result);
-        showToast('✅ ছবি আপলোড');
+        const img = document.getElementById('profileAvatar');
+        const fallback = document.getElementById('profileAvatarFallback');
+        img.src = e.target.result;
+        img.style.display = 'block';
+        fallback.style.display = 'none';
+        localStorage.setItem('avatar_' + currentUser.phone, e.target.result);
+        showToast('✅ ছবি আপলোড সফল');
     };
     reader.readAsDataURL(file);
 }
 
-// ========== PROFILE ==========
+/* ======================================================
+   PROFILE  (Flutter: ProfileController)
+====================================================== */
 function loadProfile() {
     if (!currentUser) return;
+
     document.getElementById('profileName').textContent = currentUser.name || 'স্টুডেন্ট';
-    document.getElementById('profileMeta').innerHTML = `
-        📱 <span>${currentUser.phone||'—'}</span> | 🎓 <span>${currentUser.batch||'—'}</span> | 🏫 ${currentUser.college||'—'}<br>
-        📊 SSC: <span>${currentUser.ssc_gpa||'—'}</span> | HSC: <span>${currentUser.hsc_gpa||'—'}</span> | 🔄 <span>${currentUser.timer_type==='first'?'ফার্স্ট টাইমার':'সেকেন্ড টাইমার'}</span>
+
+    // Badges
+    const timerType = currentUser.timer_type === 'first' ? 'ফার্স্ট টাইমার' : 'সেকেন্ড টাইমার';
+    const timerClass = currentUser.timer_type === 'first' ? 'timer-first' : 'timer-second';
+    document.getElementById('profileBadges').innerHTML = `
+        <span class="profile-badge">${currentUser.batch || '—'} ব্যাচ</span>
+        <span class="profile-badge ${timerClass}">🔄 ${timerType}</span>
     `;
-    const avatar = localStorage.getItem('avatar_'+currentUser.phone);
-    if (avatar) { document.getElementById('profileAvatar').src = avatar; document.getElementById('profileAvatar').style.display = 'block'; document.getElementById('profileAvatarFallback').style.display = 'none'; }
+
+    // Meta
+    document.getElementById('profileMeta').innerHTML = `
+        📱 <span>${currentUser.phone || '—'}</span>&nbsp;|&nbsp;
+        🏫 ${currentUser.college || '—'}<br>
+        📊 SSC: <span>${currentUser.ssc_gpa || '—'}</span>&nbsp;|&nbsp;
+        HSC: <span>${currentUser.hsc_gpa || '—'}</span>
+    `;
+
+    // Avatar
+    const avatar = localStorage.getItem('avatar_' + currentUser.phone);
+    if (avatar) {
+        const img = document.getElementById('profileAvatar');
+        img.src = avatar;
+        img.style.display = 'block';
+        document.getElementById('profileAvatarFallback').style.display = 'none';
+    }
+
+    // Edit form
     document.getElementById('editName').value = currentUser.name || '';
     document.getElementById('editBatch').value = currentUser.batch || '';
     document.getElementById('editCollege').value = currentUser.college || '';
@@ -304,133 +1004,661 @@ function loadProfile() {
 }
 
 async function updateProfile() {
-    const data = { name: document.getElementById('editName').value.trim(), batch: document.getElementById('editBatch').value.trim(), college: document.getElementById('editCollege').value.trim(), father_name: document.getElementById('editFather').value.trim(), mother_name: document.getElementById('editMother').value.trim() };
+    const data = {
+        name: document.getElementById('editName').value.trim(),
+        batch: document.getElementById('editBatch').value.trim(),
+        college: document.getElementById('editCollege').value.trim(),
+        father_name: document.getElementById('editFather').value.trim(),
+        mother_name: document.getElementById('editMother').value.trim()
+    };
     const pass = document.getElementById('editPass').value.trim();
+    if (pass && pass.length < 6) { showToast('❌ পাসওয়ার্ড ৬+ ক্যারেক্টার হতে হবে'); return; }
     if (pass.length >= 6) data.password_hash = pass;
+
     try {
-        await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${currentUser.phone}`, { method:'PATCH', body:JSON.stringify(data) });
+        await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${currentUser.phone}`, {
+            method: 'PATCH', body: JSON.stringify(data)
+        });
         Object.assign(currentUser, data);
         localStorage.setItem('atlas-session', JSON.stringify(currentUser));
-        loadProfile(); showToast('✅ প্রোফাইল আপডেট'); showTab('main');
-    } catch(e) { alert('এরর: ' + e.message); }
+        loadProfile();
+        showToast('✅ প্রোফাইল আপডেট হয়েছে');
+        showTab('main');
+    } catch(e) {
+        showToast('❌ এরর: ' + e.message);
+    }
 }
 
-// ========== TABS ==========
+/* ======================================================
+   TAB NAVIGATION  (Flutter: TabController)
+====================================================== */
 function showTab(tab) {
+    // Hide all tab contents
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    if (tab === 'main') { document.getElementById('tabMain').classList.add('active'); return; }
-    document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1) + 'Content')?.classList.add('active');
+
+    if (tab === 'main') {
+        document.getElementById('tabMainContent').classList.add('active');
+        return;
+    }
+
+    // Map tab names to element IDs  (Flutter: route mapping)
+    const tabMap = {
+        history: 'tabHistoryContent',
+        classhistory: 'tabClasshistoryContent',
+        bookmarks: 'tabBookmarksContent',
+        notifications: 'tabNotificationsContent',
+        edit: 'tabEditContent',
+        profile: 'tabMainContent'
+    };
+    const el = document.getElementById(tabMap[tab]);
+    if (el) el.classList.add('active');
+
+    // Load data for tab
     if (tab === 'history') loadHistory();
     else if (tab === 'classhistory') loadClassHistory();
     else if (tab === 'bookmarks') loadBookmarks();
     else if (tab === 'notifications') loadNotifications();
 }
 
-// ========== EXAM HISTORY ==========
+/* ======================================================
+   EXAM HISTORY  (Flutter: ExamHistoryService)
+====================================================== */
 async function loadHistory() {
+    const list = document.getElementById('historyList');
+    list.innerHTML = '<div class="skeleton skeleton-block"></div><div class="skeleton skeleton-block"></div>';
+
     try {
-        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/exam_results?phone=eq.${currentUser.phone}&select=*&order=submitted_at.desc&limit=30`);
-        document.getElementById('countExams').textContent = (data?.length||0) + ' এক্সাম';
-        if (!data?.length) { document.getElementById('historyList').innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">কোনো এক্সাম হিস্টোরি নেই</p>'; return; }
-        let html = '';
-        data.forEach(r => {
-            const score = parseFloat(r.final_score) || 0;
-            const total = r.total_questions || 50;
-            const pct = Math.round((score / total) * 100);
-            const badge = pct >= 80 ? 'score-high' : pct >= 50 ? 'score-mid' : 'score-low';
-            html += `<div class="card-item">
-                <div class="card-item-title">📝 এক্সাম #${r.exam_id} <span class="score-badge ${badge}">${score.toFixed(1)}/${total}</span></div>
-                <div class="card-item-row"><span>✅ সঠিক</span><span style="color:var(--green);">${r.correct||0}</span></div>
-                <div class="card-item-row"><span>❌ ভুল</span><span style="color:var(--red);">${r.wrong||0}</span></div>
-                <div class="card-item-row"><span>⏭️ স্কিপ</span><span style="color:var(--yellow);">${r.skipped||0}</span></div>
-                <div class="card-item-sub">📅 ${new Date(r.submitted_at).toLocaleString('bn-BD')}</div>
-                <button class="btn btn-outline" onclick="viewDetails(${r.exam_id})" style="margin-top:6px;">📋 বিস্তারিত</button>
-            </div>`;
-        });
-        document.getElementById('historyList').innerHTML = html;
+        const data = await safeFetch(
+            `${SUPABASE_URL}/rest/v1/exam_results?phone=eq.${currentUser.phone}&select=*&order=submitted_at.desc&limit=50`
+        );
+
+        examResultsCache = data || [];
+        const count = examResultsCache.length;
+        document.getElementById('countExams').textContent = toBanglaNum(count) + ' এক্সাম';
+        document.getElementById('statExams').textContent = toBanglaNum(count);
+        document.getElementById('historySubtitle').textContent = `মোট ${toBanglaNum(count)}টি এক্সাম`;
+
+        // Populate filters
+        const cats = [...new Set(examResultsCache.map(r => r.category).filter(Boolean))];
+        const subs = [...new Set(examResultsCache.map(r => r.subject).filter(Boolean))];
+        const catSel = document.getElementById('filterCat');
+        const subSel = document.getElementById('filterSub');
+        const catVal = catSel.value, subVal = subSel.value;
+        catSel.innerHTML = '<option value="all">সব ক্যাটাগরি</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
+        subSel.innerHTML = '<option value="all">সব সাবজেক্ট</option>' + subs.map(s => `<option value="${s}">${s}</option>`).join('');
+        catSel.value = catVal; subSel.value = subVal;
+
+        // Filter
+        let filtered = examResultsCache;
+        if (catSel.value !== 'all') filtered = filtered.filter(r => r.category === catSel.value);
+        if (subSel.value !== 'all') filtered = filtered.filter(r => r.subject === subSel.value);
+
+        if (!filtered.length) {
+            list.innerHTML = `<div class="empty-state"><span class="empty-state-icon">📭</span><div class="empty-state-text">কোনো এক্সাম হিস্টোরি নেই</div></div>`;
+            return;
+        }
+
+        list.innerHTML = filtered.map(r => buildHistoryCard(r)).join('');
+
+        // Build graphs
+        buildExamGraph(examResultsCache);
+        buildProfileStats(examResultsCache);
+
+    } catch(e) {
+        list.innerHTML = `<div class="empty-state"><span class="empty-state-icon">⚠️</span><div class="empty-state-text">লোড করতে সমস্যা হয়েছে</div></div>`;
+    }
+}
+
+function buildHistoryCard(r) {
+    const score = parseFloat(r.final_score) || 0;
+    const total = r.total_questions || 50;
+    const pct = Math.round((score / total) * 100);
+    const badge = pct >= 80 ? 'score-high' : pct >= 50 ? 'score-mid' : 'score-low';
+    const examName = r.exam_name || `এক্সাম #${r.exam_id}`;
+
+    return `<div class="card-item">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+            <div class="card-item-title" style="flex:1;margin-bottom:0;">📝 ${escHtml(examName)}</div>
+            <span class="score-badge ${badge}" style="margin-left:6px;">${score.toFixed(1)}/${total}</span>
+        </div>
+        ${r.subject ? `<div class="meta-chip" style="display:inline-block;margin-bottom:6px;">📘 ${escHtml(r.subject)}${r.chapter ? ' › ' + escHtml(r.chapter) : ''}${r.category ? ' › ' + escHtml(r.category) : ''}</div>` : ''}
+        <div class="card-item-row"><span>✅ সঠিক</span><span style="color:var(--green);font-weight:700;">${r.correct || 0}</span></div>
+        <div class="card-item-row"><span>❌ ভুল</span><span style="color:var(--red);font-weight:700;">${r.wrong || 0}</span></div>
+        <div class="card-item-row" style="border-bottom:none;"><span>⏭️ স্কিপ</span><span style="color:var(--yellow);font-weight:700;">${r.skipped || 0}</span></div>
+        <div class="card-item-sub" style="margin-top:4px;">📅 ${toBanglaDate(r.submitted_at)}</div>
+        <div class="btn-row">
+            <button class="btn btn-outline" onclick="viewDetails('${r.id}','${r.exam_id}')">📋 বিস্তারিত</button>
+            <button class="btn btn-primary" onclick="retakeExam('${r.exam_id}')">🔄 আবার দাও</button>
+            <button class="btn btn-danger" onclick="deleteHistory('${r.id}')">🗑️ ডিলিট</button>
+        </div>
+    </div>`;
+}
+
+async function deleteHistory(resultId) {
+    showConfirm('ডিলিট করুন', 'এই এক্সাম ইতিহাস মুছে ফেলবেন?', '🗑️ হ্যাঁ, ডিলিট', async () => {
+        await safeFetch(`${SUPABASE_URL}/rest/v1/exam_results?id=eq.${resultId}`, { method: 'DELETE' });
+        showToast('🗑️ ডিলিট সম্পন্ন');
+        loadHistory();
+    });
+}
+
+function retakeExam(examId) {
+    goTo(`exam.html?exam_id=${examId}`);
+}
+
+/* ======================================================
+   EXAM DETAIL MODAL  (Flutter: ExamDetailModal)
+====================================================== */
+async function viewDetails(resultId, examId) {
+    const modal = document.getElementById('detailModal');
+    const content = document.getElementById('detailModalContent');
+    currentQFilter = 'all';
+
+    // Find cached result
+    const result = examResultsCache.find(r => String(r.id) === String(resultId));
+    if (!result) {
+        content.innerHTML = `<div class="modal-title">📋 এক্সাম বিস্তারিত</div>
+            <p style="text-align:center;color:var(--text2);padding:20px;">তথ্য পাওয়া যাচ্ছে না</p>
+            <div class="modal-close"><button class="btn btn-outline" onclick="document.getElementById('detailModal').classList.remove('active')" style="width:100%;">✕ বন্ধ</button></div>`;
+        modal.classList.add('active');
+        return;
+    }
+
+    const score = parseFloat(result.final_score) || 0;
+    const total = result.total_questions || 50;
+    const examName = result.exam_name || `এক্সাম #${examId}`;
+
+    // Load questions from Supabase
+    content.innerHTML = `<div class="modal-title">📋 ${escHtml(examName)}</div>
+        <div style="text-align:center;padding:20px;color:var(--text2);">লোড হচ্ছে...</div>`;
+    modal.classList.add('active');
+
+    // Fetch questions for this exam
+    let questions = [];
+    try {
+        questions = await safeFetch(`${SUPABASE_URL}/rest/v1/questions?exam_id=eq.${examId}&select=*&order=id.asc`);
     } catch(e) {}
+
+    // Parse answers from result
+    let answers = {};
+    try { answers = typeof result.answers === 'string' ? JSON.parse(result.answers) : (result.answers || {}); } catch(e) {}
+
+    renderDetailModal(result, questions, answers, examName, score, total);
 }
 
-// ========== CLASS HISTORY ==========
+function renderDetailModal(result, questions, answers, examName, score, total) {
+    const content = document.getElementById('detailModalContent');
+    const pct = Math.round((score / total) * 100);
+    const badge = pct >= 80 ? 'score-high' : pct >= 50 ? 'score-mid' : 'score-low';
+
+    // Header info
+    let html = `
+        <div class="modal-title">📋 ${escHtml(examName)}</div>
+        <div style="text-align:center;margin-bottom:10px;">
+            <span class="score-badge ${badge}" style="font-size:16px;padding:4px 14px;">${score.toFixed(1)} / ${total}</span>
+        </div>
+        <div style="display:flex;justify-content:space-around;margin-bottom:10px;padding:8px;background:var(--hover);border-radius:8px;">
+            <div style="text-align:center;"><div style="color:var(--green);font-size:16px;font-weight:800;">✅ ${result.correct||0}</div><div style="font-size:9px;color:var(--text2);">সঠিক</div></div>
+            <div style="text-align:center;"><div style="color:var(--red);font-size:16px;font-weight:800;">❌ ${result.wrong||0}</div><div style="font-size:9px;color:var(--text2);">ভুল</div></div>
+            <div style="text-align:center;"><div style="color:var(--yellow);font-size:16px;font-weight:800;">⏭️ ${result.skipped||0}</div><div style="font-size:9px;color:var(--text2);">স্কিপ</div></div>
+        </div>
+    `;
+
+    if (result.subject || result.chapter || result.category) {
+        html += `<div class="card-item-sub" style="margin-bottom:8px;text-align:center;">
+            ${result.subject ? '📘 ' + escHtml(result.subject) : ''}
+            ${result.chapter ? ' › ' + escHtml(result.chapter) : ''}
+            ${result.category ? ' › ' + escHtml(result.category) : ''}
+        </div>`;
+    }
+
+    // Question filter tabs
+    if (questions.length > 0) {
+        html += `<div class="q-filter-tabs">
+            <button class="q-filter-tab active" id="qf-all" onclick="setQFilter('all', this)">📋 সব</button>
+            <button class="q-filter-tab" id="qf-correct" onclick="setQFilter('correct', this)">✅ সঠিক</button>
+            <button class="q-filter-tab" id="qf-wrong" onclick="setQFilter('wrong', this)">❌ ভুল</button>
+            <button class="q-filter-tab" id="qf-skipped" onclick="setQFilter('skipped', this)">⏭️ স্কিপ</button>
+        </div>`;
+        html += `<div id="questionsList">` + buildQuestionsHtml(questions, answers, 'all') + `</div>`;
+    } else {
+        html += `<p style="text-align:center;color:var(--text2);padding:10px;">প্রশ্নের বিস্তারিত পাওয়া যাচ্ছে না</p>`;
+    }
+
+    html += `<div class="modal-close">
+        <div class="btn-row">
+            <button class="btn btn-primary" onclick="retakeExam('${result.exam_id}')" style="flex:1;">🔄 আবার দাও</button>
+            <button class="btn btn-outline" onclick="document.getElementById('detailModal').classList.remove('active')" style="flex:1;">✕ বন্ধ</button>
+        </div>
+    </div>`;
+
+    content.innerHTML = html;
+
+    // Store for filter use
+    content._questions = questions;
+    content._answers = answers;
+}
+
+function setQFilter(filter, btn) {
+    currentQFilter = filter;
+    document.querySelectorAll('.q-filter-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const content = document.getElementById('detailModalContent');
+    document.getElementById('questionsList').innerHTML = buildQuestionsHtml(content._questions || [], content._answers || {}, filter);
+}
+
+function buildQuestionsHtml(questions, answers, filter) {
+    if (!questions || !questions.length) return '<p style="text-align:center;color:var(--text2);padding:10px;">প্রশ্ন পাওয়া যাচ্ছে না</p>';
+
+    const opts = ['ক', 'খ', 'গ', 'ঘ'];
+
+    let filtered = questions.map((q, idx) => {
+        const userAns = answers[q.id] !== undefined ? answers[q.id] : answers[idx] !== undefined ? answers[idx] : null;
+        const correct = q.correct_option;
+        let status = 'skipped';
+        if (userAns !== null && userAns !== undefined && userAns !== '') {
+            status = String(userAns) === String(correct) ? 'correct' : 'wrong';
+        }
+        return { q, userAns, status };
+    });
+
+    if (filter !== 'all') filtered = filtered.filter(item => item.status === filter);
+
+    if (!filtered.length) {
+        return `<div class="empty-state" style="padding:20px;"><span class="empty-state-icon">${filter === 'correct' ? '✅' : filter === 'wrong' ? '❌' : '⏭️'}</span><div class="empty-state-text">কোনো প্রশ্ন নেই</div></div>`;
+    }
+
+    return filtered.map(({ q, userAns, status }) => {
+        const statusLabel = status === 'correct' ? '✅ সঠিক' : status === 'wrong' ? '❌ ভুল' : '⏭️ স্কিপ';
+        const optionsHtml = [q.option_a, q.option_b, q.option_c, q.option_d].map((opt, i) => {
+            if (!opt) return '';
+            const isCorrect = String(i) === String(q.correct_option) || String(opts[i]) === String(q.correct_option);
+            const isWrong = String(i) === String(userAns) || String(opts[i]) === String(userAns);
+            let cls = '';
+            if (isCorrect) cls = 'correct';
+            else if (isWrong && !isCorrect) cls = 'wrong';
+            return `<li class="option-item ${cls}"><span class="option-key">${opts[i]}</span>${escHtml(opt)}</li>`;
+        }).join('');
+
+        return `<div class="question-card">
+            <span class="q-status ${status}">${statusLabel}</span>
+            ${q.image_url ? `<img class="question-img" src="${escHtml(q.image_url)}" alt="question image" loading="lazy">` : ''}
+            <div class="question-text">${escHtml(q.question || '')}</div>
+            <ul class="options-list">${optionsHtml}</ul>
+            ${q.explanation ? `<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>` : ''}
+        </div>`;
+    }).join('');
+}
+
+/* ======================================================
+   CLASS HISTORY  (Flutter: ClassHistoryService)
+====================================================== */
 function loadClassHistory() {
-    const saved = localStorage.getItem('class_history_'+currentUser.phone);
+    const saved = localStorage.getItem('class_history_' + currentUser.phone);
     const history = saved ? JSON.parse(saved) : [];
-    document.getElementById('countClasses').textContent = history.length + ' ক্লাস';
-    if (!history.length) { document.getElementById('classHistoryList').innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">কোনো ক্লাস হিস্টোরি নেই</p>'; return; }
-    let html = '';
-    history.reverse().forEach(h => {
-        html += `<div class="card-item">
-            <div class="card-item-title">📘 ${h.subject}</div>
-            <div class="card-item-row"><span>📖 চ্যাপ্টার</span><span>${h.chapter}</span></div>
-            <div class="card-item-row"><span>🎥 পার্ট</span><span>${h.part}</span></div>
-            <div class="card-item-sub">📅 ${new Date(h.time).toLocaleString('bn-BD')}</div>
-            <button class="btn btn-outline" onclick="goTo('class.html')" style="margin-top:6px;">▶️ Rewatch</button>
-        </div>`;
-    });
-    document.getElementById('classHistoryList').innerHTML = html;
+    const count = history.length;
+
+    document.getElementById('countClasses').textContent = toBanglaNum(count) + ' ক্লাস';
+    document.getElementById('statClasses').textContent = toBanglaNum(count);
+    document.getElementById('classHistorySubtitle').textContent = `মোট ${toBanglaNum(count)}টি ক্লাস দেখা হয়েছে`;
+
+    if (!count) {
+        document.getElementById('classHistoryList').innerHTML = `<div class="empty-state"><span class="empty-state-icon">🎥</span><div class="empty-state-text">কোনো ক্লাস হিস্টোরি নেই</div></div>`;
+        buildClassGraph([]);
+        return;
+    }
+
+    const sorted = [...history].reverse();
+    document.getElementById('classHistoryList').innerHTML = sorted.map(h => `
+        <div class="card-item">
+            <div class="card-item-title">📘 ${escHtml(h.subject || '—')}</div>
+            <div class="card-item-row"><span>📖 চ্যাপ্টার</span><span>${escHtml(h.chapter || '—')}</span></div>
+            <div class="card-item-row"><span>🎥 পার্ট</span><span>${escHtml(h.part || '—')}</span></div>
+            <div class="card-item-sub">📅 ${toBanglaDate(h.time)}</div>
+            <div class="btn-row">
+                <button class="btn btn-primary" onclick="rewatchClass('${escHtml(JSON.stringify(h))}')">▶️ Rewatch</button>
+            </div>
+        </div>
+    `).join('');
+
+    buildClassGraph(history);
 }
 
-// ========== BOOKMARKS ==========
-function loadBookmarks() {
-    const saved = localStorage.getItem('bookmarks_'+currentUser.phone);
-    const bookmarks = saved ? JSON.parse(saved) : {};
-    const count = Object.keys(bookmarks).length;
-    document.getElementById('countBookmarks').textContent = count + ' বুকমার্ক';
-    if (!count) { document.getElementById('bookmarksList').innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">কোনো বুকমার্ক নেই</p>'; return; }
-    let html = '';
-    Object.keys(bookmarks).forEach(qid => {
-        html += `<div class="card-item">
-            <div class="card-item-title">📝 প্রশ্ন #${qid}</div>
-            <button class="btn btn-danger" onclick="removeBookmark('${qid}')" style="margin-top:4px;">🗑️ রিমুভ</button>
-        </div>`;
-    });
-    document.getElementById('bookmarksList').innerHTML = html;
+function rewatchClass(hJson) {
+    try {
+        const h = JSON.parse(hJson);
+        const params = new URLSearchParams({ subject: h.subject || '', chapter: h.chapter || '', part: h.part || '' });
+        goTo('class.html?' + params.toString());
+    } catch(e) { goTo('class.html'); }
 }
+
+/* ======================================================
+   BOOKMARKS  (Flutter: BookmarksService)
+====================================================== */
+function loadBookmarks() {
+    const saved = localStorage.getItem('bookmarks_' + currentUser.phone);
+    const bookmarks = saved ? JSON.parse(saved) : {};
+    const keys = Object.keys(bookmarks);
+    const count = keys.length;
+
+    document.getElementById('countBookmarks').textContent = toBanglaNum(count) + ' বুকমার্ক';
+    document.getElementById('statBookmarks').textContent = toBanglaNum(count);
+    document.getElementById('bookmarksSubtitle').textContent = `${toBanglaNum(count)}টি প্রশ্ন বুকমার্ক করা হয়েছে`;
+
+    if (!count) {
+        document.getElementById('bookmarksList').innerHTML = `<div class="empty-state"><span class="empty-state-icon">🔖</span><div class="empty-state-text">কোনো বুকমার্ক নেই</div></div>`;
+        return;
+    }
+
+    document.getElementById('bookmarksList').innerHTML = keys.map(qid => {
+        const bm = bookmarks[qid];
+        const q = bm.question || {};
+        const opts = ['ক', 'খ', 'গ', 'ঘ'];
+        const optionsHtml = [q.option_a, q.option_b, q.option_c, q.option_d].map((opt, i) => {
+            if (!opt) return '';
+            const isCorrect = String(i) === String(q.correct_option) || String(opts[i]) === String(q.correct_option);
+            return `<li class="option-item ${isCorrect ? 'correct' : ''}"><span class="option-key">${opts[i]}</span>${escHtml(opt)}</li>`;
+        }).join('');
+
+        return `<div class="card-item bookmark-card">
+            <div class="bookmark-meta">
+                ${bm.exam_name ? `<span class="meta-chip">📝 ${escHtml(bm.exam_name)}</span>` : ''}
+                ${q.subject ? `<span class="meta-chip">📘 ${escHtml(q.subject)}</span>` : ''}
+                ${q.chapter ? `<span class="meta-chip">📖 ${escHtml(q.chapter)}</span>` : ''}
+                ${q.category ? `<span class="meta-chip">🏷️ ${escHtml(q.category)}</span>` : ''}
+            </div>
+            ${q.image_url ? `<img class="question-img" src="${escHtml(q.image_url)}" alt="question" loading="lazy">` : ''}
+            <div class="question-text">${escHtml(q.question || `প্রশ্ন #${qid}`)}</div>
+            ${optionsHtml ? `<ul class="options-list">${optionsHtml}</ul>` : ''}
+            ${q.explanation ? `<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>` : ''}
+            <div class="card-item-sub" style="margin-top:6px;">📅 ${toBanglaDate(bm.bookmarked_at || Date.now())}</div>
+            <div class="btn-row">
+                <button class="btn btn-danger" onclick="removeBookmark('${qid}')">🗑️ রিমুভ</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
 function removeBookmark(qid) {
-    const saved = localStorage.getItem('bookmarks_'+currentUser.phone);
+    const saved = localStorage.getItem('bookmarks_' + currentUser.phone);
     const bookmarks = saved ? JSON.parse(saved) : {};
     delete bookmarks[qid];
-    localStorage.setItem('bookmarks_'+currentUser.phone, JSON.stringify(bookmarks));
-    loadBookmarks(); showToast('🔖 রিমুভ');
+    localStorage.setItem('bookmarks_' + currentUser.phone, JSON.stringify(bookmarks));
+    loadBookmarks();
+    showToast('🔖 বুকমার্ক রিমুভ হয়েছে');
 }
 
-// ========== NOTIFICATIONS ==========
+/* ======================================================
+   NOTIFICATIONS  (Flutter: NotificationsService)
+====================================================== */
 async function loadNotifications() {
+    const list = document.getElementById('notifList');
+    list.innerHTML = '<div class="skeleton skeleton-block"></div><div class="skeleton skeleton-block"></div>';
+
     try {
-        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/notifications?phone=eq.${currentUser.phone}&select=*&order=created_at.desc&limit=20`);
-        const unread = data?.filter(n => !n.is_read).length || 0;
-        document.getElementById('countNotifs').textContent = unread + ' নতুন';
-        if (!data?.length) { document.getElementById('notifList').innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">কোনো নোটিফিকেশন নেই</p>'; return; }
-        let html = '';
-        data.forEach(n => {
-            html += `<div class="card-item ${n.is_read?'notification-read':''}" onclick="markNotifRead('${n.id}')">
-                ${!n.is_read?'<span class="notification-dot"></span>':''}
-                <div class="card-item-title">${n.title||'নোটিফিকেশন'}</div>
-                <div class="card-item-sub">${n.message||''}</div>
-                <div style="font-size:10px;color:var(--text2);margin-top:3px;">📅 ${new Date(n.created_at).toLocaleString('bn-BD')}</div>
-                <button class="btn btn-danger" onclick="event.stopPropagation();deleteNotif('${n.id}')" style="margin-top:4px;font-size:10px;">🗑️</button>
-            </div>`;
+        const data = await safeFetch(
+            `${SUPABASE_URL}/rest/v1/notifications?phone=eq.${currentUser.phone}&select=*&order=created_at.desc&limit=30`
+        );
+
+        const unread = (data || []).filter(n => !n.is_read).length;
+        document.getElementById('countNotifs').textContent = toBanglaNum(unread) + ' নতুন';
+
+        // Update unread badge on dash box
+        const badge = document.getElementById('unreadBadge');
+        if (unread > 0) {
+            badge.style.display = 'flex';
+            badge.textContent = unread > 9 ? '9+' : unread;
+        } else {
+            badge.style.display = 'none';
+        }
+
+        if (!data || !data.length) {
+            list.innerHTML = `<div class="empty-state"><span class="empty-state-icon">🔔</span><div class="empty-state-text">কোনো নোটিফিকেশন নেই</div></div>`;
+            return;
+        }
+
+        list.innerHTML = data.map(n => buildNotifCard(n)).join('');
+    } catch(e) {
+        list.innerHTML = `<div class="empty-state"><span class="empty-state-icon">⚠️</span><div class="empty-state-text">লোড করতে সমস্যা হয়েছে</div></div>`;
+    }
+}
+
+function buildNotifCard(n) {
+    const q = n.question_data ? (typeof n.question_data === 'string' ? JSON.parse(n.question_data) : n.question_data) : null;
+    const opts = ['ক', 'খ', 'গ', 'ঘ'];
+    const statusClass = n.status === 'approved' ? 'approved' : 'rejected';
+    const statusLabel = n.status === 'approved' ? '✅ অ্যাপ্রুভড' : (n.status === 'rejected' ? '❌ রিজেক্টেড' : '⏳ পেন্ডিং');
+
+    let qHtml = '';
+    if (q) {
+        const optionsHtml = [q.option_a, q.option_b, q.option_c, q.option_d].map((opt, i) => {
+            if (!opt) return '';
+            const isCorrect = String(i) === String(q.correct_option) || String(opts[i]) === String(q.correct_option);
+            return `<li class="option-item ${isCorrect ? 'correct' : ''}"><span class="option-key">${opts[i]}</span>${escHtml(opt)}</li>`;
+        }).join('');
+        qHtml = `<div class="question-card" style="margin-top:8px;">
+            <div class="question-text" style="font-size:12px;">${escHtml(q.question || '')}</div>
+            ${optionsHtml ? `<ul class="options-list" style="margin-top:6px;">${optionsHtml}</ul>` : ''}
+            ${q.explanation ? `<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>` : ''}
+        </div>`;
+    }
+
+    const adminResp = n.admin_response ? `<div class="admin-response"><div class="admin-response-label">👑 অ্যাডমিনের রেসপন্স</div>${escHtml(n.admin_response)}</div>` : '';
+
+    return `<div class="card-item notif-card ${n.is_read ? 'notification-read' : ''}" onclick="markNotifRead('${n.id}')">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+                ${!n.is_read ? '<span class="notification-dot"></span>' : ''}
+                <span class="notif-status ${statusClass}">${statusLabel}</span>
+            </div>
+            <button class="btn btn-danger" onclick="event.stopPropagation();deleteNotif('${n.id}')" style="padding:4px 8px;font-size:10px;">🗑️</button>
+        </div>
+        <div class="card-item-title" style="margin-top:4px;">${escHtml(n.title || 'নোটিফিকেশন')}</div>
+        <div class="card-item-sub">${escHtml(n.message || '')}</div>
+        ${qHtml}
+        ${adminResp}
+        <div style="font-size:10px;color:var(--text2);margin-top:6px;">📅 ${toBanglaDate(n.created_at)}</div>
+    </div>`;
+}
+
+async function markNotifRead(id) {
+    try {
+        await safeFetch(`${SUPABASE_URL}/rest/v1/notifications?id=eq.${id}`, {
+            method: 'PATCH', body: JSON.stringify({ is_read: true })
         });
-        document.getElementById('notifList').innerHTML = html;
+        loadNotifications();
     } catch(e) {}
 }
-async function markNotifRead(id) { try { await safeFetch(`${SUPABASE_URL}/rest/v1/notifications?id=eq.${id}`, { method:'PATCH', body:JSON.stringify({ is_read:true }) }); loadNotifications(); } catch(e) {} }
-async function deleteNotif(id) { if (!confirm('ডিলিট করবেন?')) return; try { await safeFetch(`${SUPABASE_URL}/rest/v1/notifications?id=eq.${id}`, { method:'DELETE' }); loadNotifications(); showToast('🗑️ ডিলিট'); } catch(e) {} }
 
-function viewDetails(examId) {
-    const html = `<div class="modal-title">📋 এক্সাম #${examId}</div><p style="text-align:center;color:var(--text2);">বিস্তারিত শীঘ্রই আসছে</p><button class="btn btn-outline" onclick="document.getElementById('detailModal').classList.remove('active')" style="width:100%;margin-top:8px;">✕ বন্ধ</button>`;
-    document.getElementById('detailModalContent').innerHTML = html;
-    document.getElementById('detailModal').classList.add('active');
+async function deleteNotif(id) {
+    showConfirm('নোটিফিকেশন ডিলিট', 'এই নোটিফিকেশন মুছে ফেলবেন?', '🗑️ ডিলিট', async () => {
+        await safeFetch(`${SUPABASE_URL}/rest/v1/notifications?id=eq.${id}`, { method: 'DELETE' });
+        showToast('🗑️ ডিলিট সম্পন্ন');
+        loadNotifications();
+    });
 }
 
-// ========== INIT ==========
-document.addEventListener('DOMContentLoaded', () => {
+/* ======================================================
+   EXAM PERFORMANCE BAR GRAPH  (Flutter: fl_chart BarChart)
+====================================================== */
+function buildExamGraph(results) {
+    const card = document.getElementById('examGraphCard');
+    if (!results || !results.length) { card.style.display = 'none'; return; }
+
+    const last = results.slice(0, 10).reverse();
+    const total = results.length;
+    const now = new Date();
+    const thisMonth = results.filter(r => {
+        const d = new Date(r.submitted_at);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    }).length;
+    const scores = results.map(r => {
+        const s = parseFloat(r.final_score) || 0;
+        const t = r.total_questions || 50;
+        return (s / t) * 100;
+    });
+    const avg = scores.reduce((a,b) => a+b, 0) / scores.length;
+    const best = Math.max(...scores);
+
+    document.getElementById('gAvg').textContent = avg.toFixed(0) + '%';
+    document.getElementById('gBest').textContent = best.toFixed(0) + '%';
+    document.getElementById('gTotal').textContent = toBanglaNum(total);
+    document.getElementById('gMonth').textContent = toBanglaNum(thisMonth);
+    document.getElementById('examGraphBadge').textContent = `শেষ ${toBanglaNum(last.length)}টি`;
+
+    const maxPct = 100;
+    const chartEl = document.getElementById('examBarChart');
+    chartEl.innerHTML = last.map((r, i) => {
+        const s = parseFloat(r.final_score) || 0;
+        const t = r.total_questions || 50;
+        const pct = (s / t) * 100;
+        const h = Math.max(4, (pct / maxPct) * 100);
+        const cls = pct >= 80 ? 'high' : pct >= 50 ? 'mid' : 'low';
+        const label = (r.exam_name || `#${r.exam_id || (i+1)}`).substring(0, 5);
+        return `<div class="bar-wrap">
+            <div style="flex:1;display:flex;align-items:flex-end;width:100%;">
+                <div class="bar ${cls}" style="height:${h}%" data-score="${pct.toFixed(0)}%"></div>
+            </div>
+            <div class="bar-label">${label}</div>
+        </div>`;
+    }).join('');
+
+    card.style.display = 'block';
+}
+
+/* ======================================================
+   CLASS PERFORMANCE LINE/AREA GRAPH  (Flutter: fl_chart LineChart)
+====================================================== */
+function buildClassGraph(history) {
+    const card = document.getElementById('classGraphCard');
+    if (!history || !history.length) { card.style.display = 'none'; return; }
+
+    const now = new Date();
+    const thisMonth = history.filter(h => {
+        const d = new Date(h.time);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    }).length;
+
+    // Subject counts  (Flutter: Map<String, int>)
+    const subjectCount = {};
+    history.forEach(h => {
+        if (h.subject) subjectCount[h.subject] = (subjectCount[h.subject] || 0) + 1;
+    });
+    const subjects = Object.keys(subjectCount);
+    const counts = subjects.map(s => subjectCount[s]);
+    const favSubject = subjects.length ? subjects.reduce((a, b) => subjectCount[a] > subjectCount[b] ? a : b) : '—';
+
+    document.getElementById('cTotal').textContent = toBanglaNum(history.length);
+    document.getElementById('cMonth').textContent = toBanglaNum(thisMonth);
+    document.getElementById('cFav').textContent = favSubject.substring(0, 8);
+
+    // Build SVG line/area chart
+    const svg = document.getElementById('lineChartSvg');
+    if (!counts.length) { card.style.display = 'none'; return; }
+
+    const W = 300, H = 100, PAD = 10;
+    const maxCount = Math.max(...counts, 1);
+    const step = counts.length > 1 ? (W - PAD*2) / (counts.length - 1) : W - PAD*2;
+
+    const points = counts.map((c, i) => ({
+        x: PAD + i * step,
+        y: H - PAD - ((c / maxCount) * (H - PAD*2))
+    }));
+
+    const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
+    const areaD = pathD + ` L${points[points.length-1].x},${H-PAD} L${points[0].x},${H-PAD} Z`;
+
+    svg.innerHTML = `
+        <defs>
+            <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#58A6FF" stop-opacity="0.5"/>
+                <stop offset="100%" stop-color="#58A6FF" stop-opacity="0.02"/>
+            </linearGradient>
+        </defs>
+        <path d="${areaD}" fill="url(#lineGrad)" />
+        <path d="${pathD}" fill="none" stroke="#58A6FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        ${points.map((p, i) => `
+            <circle cx="${p.x}" cy="${p.y}" r="3" fill="#58A6FF"/>
+            <text x="${p.x}" y="${H-1}" text-anchor="middle" font-size="6" fill="#8B949E">${(subjects[i] || '').substring(0,4)}</text>
+        `).join('')}
+    `;
+
+    card.style.display = 'block';
+}
+
+/* ======================================================
+   PROFILE STATS ROW  (Flutter: ProfileStatsRow widget)
+====================================================== */
+function buildProfileStats(examResults) {
+    const scores = (examResults || []).map(r => {
+        const s = parseFloat(r.final_score) || 0;
+        const t = r.total_questions || 50;
+        return (s / t) * 100;
+    });
+    const avg = scores.length ? (scores.reduce((a,b) => a+b, 0) / scores.length).toFixed(0) + '%' : '—';
+    document.getElementById('statAvg').textContent = avg;
+    document.getElementById('profileStatsRow').style.display = 'flex';
+}
+
+/* ======================================================
+   HTML ESCAPE  (Flutter: HtmlEscape)
+====================================================== */
+function escHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+/* ======================================================
+   INIT  (Flutter: initState())
+====================================================== */
+document.addEventListener('DOMContentLoaded', async () => {
+    // Auth guard
     if (!checkAuth()) return;
+
+    // Restore theme
+    const savedTheme = localStorage.getItem('atlas-theme');
+    if (savedTheme === 'light') {
+        isDarkMode = false;
+        document.body.classList.add('light-mode');
+        document.getElementById('themeIcon').textContent = '☀️';
+    }
+
+    // Load profile immediately (local, fast)
     loadProfile();
-    loadHistory();
+
+    // Load all data in parallel  (Flutter: Future.wait)
+    const [examResults] = await Promise.all([
+        safeFetch(`${SUPABASE_URL}/rest/v1/exam_results?phone=eq.${currentUser.phone}&select=*&order=submitted_at.desc&limit=50`)
+    ]);
+
+    examResultsCache = examResults || [];
+
+    // Load counts and graphs
     loadClassHistory();
     loadBookmarks();
-    loadNotifications();
+
+    // Notifications count
+    const notifs = await safeFetch(`${SUPABASE_URL}/rest/v1/notifications?phone=eq.${currentUser.phone}&select=id,is_read&order=created_at.desc&limit=30`);
+    const unread = (notifs || []).filter(n => !n.is_read).length;
+    document.getElementById('countNotifs').textContent = toBanglaNum(unread) + ' নতুন';
+    if (unread > 0) {
+        const badge = document.getElementById('unreadBadge');
+        badge.style.display = 'flex';
+        badge.textContent = unread > 9 ? '9+' : unread;
+    }
+
+    // Exam count display
+    const count = examResultsCache.length;
+    document.getElementById('countExams').textContent = toBanglaNum(count) + ' এক্সাম';
+    document.getElementById('statExams').textContent = toBanglaNum(count);
+
+    // Build graphs from cached data
+    buildExamGraph(examResultsCache);
+    buildProfileStats(examResultsCache);
 });
 </script>
 </body>
