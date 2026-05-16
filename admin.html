@@ -331,6 +331,7 @@ function handleCSV(input, labelId) {
     const reader = new FileReader();
     reader.onload = function(e) {
         let text = e.target.result;
+        text = text.replace(/\t/g, ',');
         const lines = parseCSV(text);
         if (lines.length < 2) { showToast('⚠️ ডাটা নেই'); return; }
         
