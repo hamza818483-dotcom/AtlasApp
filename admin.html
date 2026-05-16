@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ATLAS EXAM · অ্যাডমিন</title>
-    <link rel="stylesheet" href="style.css">
     <style>
         :root {
             --bg: #0D1117; --card: #161B22; --hover: #1C2129;
@@ -30,7 +29,7 @@
         }
         .admin-title { font-size: 22px; font-weight: 800; color: var(--accent); letter-spacing: -0.5px; }
         .admin-sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
-        
+
         .tab-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 16px; }
         @media (max-width: 500px) { .tab-grid { grid-template-columns: repeat(3, 1fr); } }
         .tab-btn {
@@ -40,11 +39,11 @@
         }
         .tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: var(--glow); }
         .tab-btn:hover:not(.active) { border-color: var(--accent); color: var(--text); }
-        
+
         .admin-section { display: none; animation: fadeIn 0.25s; }
         .admin-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-        
+
         .form-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 12px; box-shadow: var(--shadow); }
         .form-card h3 { margin-bottom: 12px; font-size: 15px; font-weight: 700; color: var(--text); }
         .input-group { margin-bottom: 10px; }
@@ -56,7 +55,8 @@
         }
         .input-group input:focus, .input-group select:focus, .input-group textarea:focus { border-color: var(--accent); box-shadow: var(--glow); }
         .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        
+        .input-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
         .btn { padding: 10px 18px; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; border: none; font-size: 13px; transition: all 0.2s; font-family: inherit; }
         .btn-primary { background: var(--accent); color: #fff; width: 100%; }
         .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
@@ -66,673 +66,1481 @@
         .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text2); }
         .btn-outline:hover { border-color: var(--accent); color: var(--text); }
         .btn-copy { background: var(--green); color: #fff; font-size: 11px; }
-        
+        .btn-warning { background: var(--yellow); color: #fff; }
+
         .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
         .data-table th { background: var(--card); color: var(--text2); padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-        .data-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+        .data-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
         .data-table tr:hover td { background: var(--hover); }
-        
+
         .csv-upload { border: 2px dashed var(--border); border-radius: var(--radius-sm); padding: 14px; text-align: center; cursor: pointer; margin-bottom: 10px; transition: all 0.2s; }
         .csv-upload:hover { border-color: var(--accent); background: var(--hover); }
         .csv-upload input { display: none; }
-        
+
         .chip-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
         .chip { padding: 7px 14px; border-radius: 20px; border: 1px solid var(--border); cursor: pointer; font-size: 11px; font-weight: 600; color: var(--text2); background: var(--card); transition: all 0.2s; }
         .chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
         .chip:hover:not(.active) { border-color: var(--accent); }
-        
+
         .owner-preview { width: 100px; height: 100px; border-radius: var(--radius); object-fit: cover; border: 2px solid var(--border); margin: 8px auto; display: block; background: var(--hover); }
-        
+
         .filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
-        .filter-row input { flex: 1; min-width: 100px; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); font-size: 12px; }
-        
+        .filter-row input, .filter-row select { flex: 1; min-width: 100px; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); font-size: 12px; }
+
         .list-item { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; transition: all 0.2s; }
         .list-item:hover { border-color: var(--accent); background: var(--hover); }
-        
+
         .section-header { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; margin-bottom: 10px; text-align: center; }
         .section-title { color: var(--accent); font-size: 14px; font-weight: 700; }
-        
+
         .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid transparent; border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 4px; vertical-align: middle; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        
+
         .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: var(--card); color: var(--text); border: 1px solid var(--accent); padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 600; z-index: 9999; opacity: 0; transition: 0.2s; pointer-events: none; }
         .toast.show { opacity: 1; }
+
+        /* ===== MODAL ===== */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 500; display: none; align-items: center; justify-content: center; padding: 16px; }
+        .modal-overlay.active { display: flex; }
+        .modal-box { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; max-width: 560px; width: 100%; max-height: 85vh; overflow-y: auto; animation: fadeIn 0.2s; }
+        .modal-box h3 { color: var(--accent); font-size: 15px; font-weight: 700; margin-bottom: 14px; text-align: center; }
+        .modal-close { float: right; background: none; border: none; color: var(--text2); font-size: 20px; cursor: pointer; margin-top: -4px; }
+        .modal-close:hover { color: var(--red); }
+
+        /* ===== SERIAL DRAG ===== */
+        .serial-item { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; cursor: grab; user-select: none; transition: all 0.2s; }
+        .serial-item:hover { border-color: var(--accent); }
+        .serial-item.dragging { opacity: 0.4; border-color: var(--accent); }
+        .serial-item.drag-over { border-color: var(--yellow); background: var(--hover); }
+        .drag-handle { font-size: 16px; color: var(--text2); flex-shrink: 0; }
+        .serial-order-num { width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+        /* ===== REPORT MODAL MCQ ===== */
+        .report-q-box { background: var(--hover); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 10px; }
+        .report-option { padding: 8px 12px; border-radius: 6px; margin-bottom: 4px; font-size: 12px; border: 1px solid var(--border); }
+        .report-option.correct { border-color: var(--green); background: rgba(63,185,80,0.1); }
+        .report-option.wrong { border-color: var(--red); background: rgba(248,81,73,0.1); }
+
+        /* ===== NOTIFICATION SEND ===== */
+        .notif-type-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div class="toast" id="toast"></div>
 
+<!-- ===== REPORT DETAIL MODAL ===== -->
+<div class="modal-overlay" id="reportModal">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeReportModal()">✕</button>
+        <h3>🚩 রিপোর্ট বিস্তারিত</h3>
+        <div id="reportModalContent"></div>
+    </div>
+</div>
+
+<!-- ===== SERIAL MANAGEMENT MODAL ===== -->
+<div class="modal-overlay" id="serialModal">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeSerialModal()">✕</button>
+        <h3 id="serialModalTitle">🔢 Serial Management</h3>
+        <div id="serialList"></div>
+        <button class="btn btn-primary" style="margin-top:10px;" onclick="saveSerial()">💾 Order সেইভ</button>
+    </div>
+</div>
+
+<!-- ===== SEND NOTIFICATION MODAL ===== -->
+<div class="modal-overlay" id="notifModal">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeNotifModal()">✕</button>
+        <h3>🔔 নোটিফিকেশন পাঠান</h3>
+        <div class="input-group"><label>টাইটেল</label><input type="text" id="notifTitle" placeholder="নোটিফিকেশন টাইটেল"></div>
+        <div class="input-group"><label>বার্তা</label><textarea id="notifMessage" rows="3" placeholder="বার্তা লিখুন..."></textarea></div>
+        <div class="input-group"><label>পাঠানো হবে</label>
+            <div class="notif-type-row">
+                <span class="chip active" id="notifTypeAll" onclick="selectNotifType('all',this)">📢 সকলকে</span>
+                <span class="chip" id="notifTypePhone" onclick="selectNotifType('phone',this)">📱 নির্দিষ্ট</span>
+            </div>
+        </div>
+        <div class="input-group" id="notifPhoneField" style="display:none;"><label>ফোন নম্বর</label><input type="tel" id="notifPhone" placeholder="01XXXXXXXXX"></div>
+        <button class="btn btn-primary" onclick="sendNotification()">📤 পাঠান</button>
+    </div>
+</div>
+
 <main class="admin-container">
     <div class="admin-header">
         <div class="admin-title">👑 Admin Panel</div>
         <div class="admin-sub" id="adminRole">প্রধান অ্যাডমিন</div>
+        <div style="margin-top:8px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
+            <button class="btn btn-sm btn-outline" onclick="openNotifModal()">🔔 নোটিফিকেশন পাঠান</button>
+            <button class="btn btn-sm btn-outline" onclick="window.location.href='index.html'">🏠 হোম</button>
+        </div>
     </div>
 
+    <!-- ===== TAB GRID — 14 TABS ===== -->
     <div class="tab-grid">
-        <button class="tab-btn active" onclick="switchSection('class')">📚 Class</button>
-        <button class="tab-btn" onclick="switchSection('exam')">📝 Exam</button>
-        <button class="tab-btn" onclick="switchSection('kakha')">📦 ক,খ,CQ</button>
-        <button class="tab-btn" onclick="switchSection('timer')">⏰ Timer</button>
-        <button class="tab-btn" onclick="switchSection('students')">👥 Students</button>
-        <button class="tab-btn" onclick="switchSection('mock')">🎯 Mock</button>
-        <button class="tab-btn" onclick="switchSection('social')">🔗 Social</button>
-        <button class="tab-btn" onclick="switchSection('subadmin')">👮 Sub-Admin</button>
-        <button class="tab-btn" onclick="switchSection('reports')">🚩 Reports</button>
-        <button class="tab-btn" onclick="switchSection('owner')">👤 Owner</button>
-        <button class="tab-btn" onclick="switchSection('mentors')">👨‍🏫 Mentors</button>
-        <button class="tab-btn" onclick="switchSection('special')">🃏 Special Card</button>
+        <button class="tab-btn active" onclick="switchSection('class',this)">📚 Class</button>
+        <button class="tab-btn" onclick="switchSection('exam',this)">📝 Exam</button>
+        <button class="tab-btn" onclick="switchSection('kakha',this)">📦 ক,খ,CQ</button>
+        <button class="tab-btn" onclick="switchSection('timer',this)">⏰ Timer</button>
+        <button class="tab-btn" onclick="switchSection('students',this)">👥 Students</button>
+        <button class="tab-btn" onclick="switchSection('mock',this)">🎯 Mock</button>
+        <button class="tab-btn" onclick="switchSection('modeltest',this)">📖 Model Test</button>
+        <button class="tab-btn" onclick="switchSection('social',this)">🔗 Social</button>
+        <button class="tab-btn" onclick="switchSection('subadmin',this)">👮 Sub-Admin</button>
+        <button class="tab-btn" onclick="switchSection('reports',this)">🚩 Reports</button>
+        <button class="tab-btn" onclick="switchSection('owner',this)">👤 Owner</button>
+        <button class="tab-btn" onclick="switchSection('mentors',this)">👨‍🏫 Mentors</button>
+        <button class="tab-btn" onclick="switchSection('special',this)">🃏 Special Card</button>
+        <button class="tab-btn" onclick="switchSection('serial',this)">🔢 Serial</button>
     </div>
 
-    <!-- CLASS -->
+    <!-- ==================== CLASS ==================== -->
     <div class="admin-section active" id="secClass">
         <div class="form-card"><h3>📚 ক্লাস যোগ/এডিট</h3>
             <input type="hidden" id="classEditId">
-            <div class="input-group"><label>সাবজেক্ট</label><input type="text" id="classSubject" list="subjectList"><datalist id="subjectList"></datalist></div>
-            <div class="input-group"><label>পেপার (ঐচ্ছিক)</label><input type="text" id="classPaper"></div>
-            <div class="input-group"><label>চ্যাপ্টার</label><input type="text" id="classChapter" list="chapterList"><datalist id="chapterList"></datalist></div>
-            <div class="input-group"><label>ক্লাস টাইপ</label><select id="classType"><option value="website">🌐 Website Style</option><option value="youtube">▶️ Direct YouTube</option></select></div>
-            <div class="input-group"><label>YouTube লিংক</label><input type="url" id="classLink"></div>
-            <div class="input-group"><label>ক্লাস নোট (ঐচ্ছিক)</label><input type="text" id="classNote" placeholder="লিংক বা ফাইল"></div>
-            <div class="input-row"><div class="input-group"><label>শুরু</label><input type="datetime-local" id="classStart"></div><div class="input-group"><label>শেষ</label><input type="datetime-local" id="classEnd"></div></div>
-            <button class="btn btn-primary" onclick="saveClass()">✅ সেইভ</button>
+            <div class="input-group"><label>সাবজেক্ট</label><input type="text" id="classSubject" list="subjectList" placeholder="যেমন: জীববিজ্ঞান"><datalist id="subjectList"></datalist></div>
+            <div class="input-row">
+                <div class="input-group"><label>পেপার (ঐচ্ছিক)</label><input type="text" id="classPaper" placeholder="যেমন: ১ম পত্র"></div>
+                <div class="input-group"><label>চ্যাপ্টার</label><input type="text" id="classChapter" list="chapterList" placeholder="চ্যাপ্টার নাম"><datalist id="chapterList"></datalist></div>
+            </div>
+            <div class="input-row">
+                <div class="input-group"><label>ক্লাস টাইপ</label><select id="classType"><option value="website">🌐 Website Style</option><option value="youtube">▶️ Direct YouTube</option></select></div>
+                <div class="input-group"><label>Sort Order (ঐচ্ছিক)</label><input type="number" id="classSortOrder" placeholder="0" min="0"></div>
+            </div>
+            <div class="input-group"><label>YouTube লিংক</label><input type="url" id="classLink" placeholder="https://youtube.com/..."></div>
+            <div class="input-group"><label>ক্লাস নোট (ঐচ্ছিক)</label><input type="text" id="classNote" placeholder="লিংক বা টেক্সট নোট"></div>
+            <div class="input-row">
+                <div class="input-group"><label>শুরু</label><input type="datetime-local" id="classStart"></div>
+                <div class="input-group"><label>শেষ</label><input type="datetime-local" id="classEnd"></div>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-primary" onclick="saveClass()" style="flex:1;">✅ সেইভ</button>
+                <button class="btn btn-outline btn-sm" onclick="clearClassForm()" style="white-space:nowrap;">🔄 ক্লিয়ার</button>
+            </div>
         </div>
-        <div class="form-card"><h3>📋 তালিকা</h3><div id="classList"></div></div>
+        <div class="form-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <h3 style="margin:0;">📋 ক্লাস তালিকা</h3>
+                <button class="btn btn-sm btn-outline" onclick="openSerialModal('class')">🔢 Order</button>
+            </div>
+            <div class="filter-row">
+                <input type="text" id="classFilterSub" placeholder="🔍 সাবজেক্ট" oninput="loadClasses()">
+                <input type="text" id="classFilterChap" placeholder="🔍 চ্যাপ্টার" oninput="loadClasses()">
+            </div>
+            <div id="classList"></div>
+        </div>
     </div>
 
-    <!-- EXAM -->
+    <!-- ==================== EXAM ==================== -->
     <div class="admin-section" id="secExam">
         <div class="form-card"><h3>📝 এক্সাম যোগ/এডিট</h3>
             <input type="hidden" id="examEditId">
-            <div class="input-group"><label>সাবজেক্ট</label><input type="text" id="examSubject" list="subjectList"></div>
-            <div class="input-group"><label>চ্যাপ্টার</label><input type="text" id="examChapter" list="chapterList"></div>
-            <div class="input-group"><label>টাইপ</label><select id="examType" onchange="toggleExamFields()">
-                <option value="">— নির্বাচন —</option><option value="board">🔵 বোর্ড</option><option value="medical">🏥 Medical</option>
-                <option value="dental">🦷 Dental</option><option value="afmc">🎖️ AFMC</option>
-                <option value="varsity">🟣 ভার্সিটি</option><option value="onushiloni">🟠 অনুশীলনী</option><option value="model">📖 Model Test</option>
-            </select></div>
-            <div id="examSubTypeField" style="display:none;"><div class="input-group"><label>সাব-টাইপ</label><select id="examSubType"><option value="">— নির্বাচন —</option></select></div></div>
-            <div class="input-row" id="examBoardYear" style="display:none;"><div class="input-group"><label id="examBoardLabel">বোর্ড/ভার্সিটি</label><input type="text" id="examBoard"></div><div class="input-group"><label>সাল</label><input type="text" id="examYear"></div></div>
-            <div class="input-group" id="examWriterField" style="display:none;"><label>রাইটার</label><input type="text" id="examWriter"></div>
-            <div class="input-row"><div class="input-group"><label>শুরু</label><input type="datetime-local" id="examStart"></div><div class="input-group"><label>শেষ</label><input type="datetime-local" id="examEnd"></div></div>
-            <div class="csv-upload" onclick="document.getElementById('examCSV').click()"><p>📄 CSV আপলোড</p><input type="file" id="examCSV" accept=".csv" onchange="handleCSV(this,'examCSVName')"><p id="examCSVName" style="color:var(--accent);font-size:11px;"></p></div>
-            <button class="btn btn-primary" onclick="saveExam()">✅ সেইভ</button>
+            <div class="input-row">
+                <div class="input-group"><label>সাবজেক্ট</label><input type="text" id="examSubject" list="subjectList" placeholder="সাবজেক্ট"></div>
+                <div class="input-group"><label>চ্যাপ্টার</label><input type="text" id="examChapter" list="chapterList" placeholder="চ্যাপ্টার"></div>
+            </div>
+            <div class="input-group"><label>টাইপ</label>
+                <select id="examType" onchange="toggleExamFields()">
+                    <option value="">— নির্বাচন —</option>
+                    <option value="board">🔵 বোর্ড</option>
+                    <option value="medical">🏥 Medical</option>
+                    <option value="dental">🦷 Dental</option>
+                    <option value="afmc">🎖️ AFMC</option>
+                    <option value="varsity">🟣 ভার্সিটি</option>
+                    <option value="onushiloni">🟠 অনুশীলনী</option>
+                    <option value="model">📖 Model Test</option>
+                </select>
+            </div>
+            <div id="examSubTypeField" style="display:none;">
+                <div class="input-group"><label>সাব-টাইপ</label><select id="examSubType"><option value="">— নির্বাচন —</option></select></div>
+            </div>
+            <div class="input-row" id="examBoardYear" style="display:none;">
+                <div class="input-group"><label id="examBoardLabel">বোর্ড/ভার্সিটি</label><input type="text" id="examBoard" placeholder="নাম"></div>
+                <div class="input-group"><label>সাল</label><input type="text" id="examYear" placeholder="যেমন: ২০২৩"></div>
+            </div>
+            <div class="input-group" id="examUnitField" style="display:none;"><label>Unit (ঐচ্ছিক)</label><input type="text" id="examUnit" placeholder="যেমন: ক ইউনিট"></div>
+            <div class="input-group" id="examWriterField" style="display:none;"><label>রাইটার</label><input type="text" id="examWriter" placeholder="রাইটারের নাম"></div>
+            <div class="input-row">
+                <div class="input-group"><label>শুরু</label><input type="datetime-local" id="examStart"></div>
+                <div class="input-group"><label>শেষ</label><input type="datetime-local" id="examEnd"></div>
+            </div>
+            <div class="csv-upload" onclick="document.getElementById('examCSV').click()">
+                <p>📄 CSV আপলোড করুন</p>
+                <p style="font-size:10px;color:var(--text2);margin-top:2px;">Columns: question, option1-5, answer, explanation, type, section</p>
+                <input type="file" id="examCSV" accept=".csv" onchange="handleCSV(this,'examCSVName')">
+                <p id="examCSVName" style="color:var(--accent);font-size:11px;margin-top:4px;"></p>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-primary" onclick="saveExam()" style="flex:1;">✅ সেইভ</button>
+                <button class="btn btn-outline btn-sm" onclick="clearExamForm()" style="white-space:nowrap;">🔄 ক্লিয়ার</button>
+            </div>
         </div>
-        <div class="form-card"><h3>📋 তালিকা</h3><div id="examList"></div></div>
+        <div class="form-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <h3 style="margin:0;">📋 এক্সাম তালিকা</h3>
+                <button class="btn btn-sm btn-outline" onclick="openSerialModal('exam')">🔢 Order</button>
+            </div>
+            <div id="examList"></div>
+        </div>
     </div>
 
-    <!-- ক,খ,CQ -->
+    <!-- ==================== ক,খ,CQ ==================== -->
     <div class="admin-section" id="secKakha">
         <div class="form-card"><h3>📦 ক,খ,CQ যোগ/এডিট</h3>
             <input type="hidden" id="kaEditId">
-            <div class="input-group"><label>সাবজেক্ট</label><input type="text" id="kaSubject" list="subjectList"></div>
-            <div class="input-group"><label>চ্যাপ্টার</label><input type="text" id="kaChapter" list="chapterList"></div>
-            <div class="input-group"><label>লিংক/ফাইল</label><input type="text" id="kaLink"></div>
-            <button class="btn btn-primary" onclick="saveKaKha()">✅ সেইভ</button>
+            <div class="input-row">
+                <div class="input-group"><label>সাবজেক্ট</label><input type="text" id="kaSubject" list="subjectList" placeholder="সাবজেক্ট"></div>
+                <div class="input-group"><label>চ্যাপ্টার</label><input type="text" id="kaChapter" list="chapterList" placeholder="চ্যাপ্টার"></div>
+            </div>
+            <div class="input-row">
+                <div class="input-group"><label>সাল (ঐচ্ছিক)</label><input type="text" id="kaYear" placeholder="যেমন: ২০২৩"></div>
+                <div class="input-group"><label>টপিক (ঐচ্ছিক)</label><input type="text" id="kaTopic" placeholder="টপিক"></div>
+            </div>
+            <div class="input-group"><label>টাইপ</label>
+                <select id="kaType">
+                    <option value="ka">ক ভান্ডার</option>
+                    <option value="kha">খ ভান্ডার</option>
+                    <option value="cq">CQ টাইপ</option>
+                </select>
+            </div>
+            <div class="input-group"><label>লিংক / ফাইল URL</label><input type="text" id="kaLink" placeholder="URL বা ফাইল লিংক"></div>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-primary" onclick="saveKaKha()" style="flex:1;">✅ সেইভ</button>
+                <button class="btn btn-outline btn-sm" onclick="clearKaKhaForm()" style="white-space:nowrap;">🔄 ক্লিয়ার</button>
+            </div>
         </div>
-        <div class="form-card"><h3>📋 তালিকা</h3><div id="kaList"></div></div>
+        <div class="form-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <h3 style="margin:0;">📋 তালিকা</h3>
+                <button class="btn btn-sm btn-outline" onclick="openSerialModal('kakha')">🔢 Order</button>
+            </div>
+            <div class="filter-row">
+                <select id="kaFilterType" onchange="loadKaKha()">
+                    <option value="">সব টাইপ</option>
+                    <option value="ka">ক</option>
+                    <option value="kha">খ</option>
+                    <option value="cq">CQ</option>
+                </select>
+            </div>
+            <div id="kaList"></div>
+        </div>
     </div>
 
-    <!-- TIMER -->
+    <!-- ==================== TIMER ==================== -->
     <div class="admin-section" id="secTimer">
         <div class="form-card"><h3>⏰ কাউন্টডাউন টাইমার</h3>
+            <p style="font-size:11px;color:var(--text2);margin-bottom:10px;">🔴 Home Page-এ সর্বোচ্চ ৫টি Timer Card দেখাবে</p>
             <input type="hidden" id="cdEditId">
-            <div class="input-group"><label>মূল টপিক</label><input type="text" id="cdTopic"></div>
-            <div class="input-group"><label>সাবটপিক</label><input type="text" id="cdSubtopic"></div>
-            <div class="input-row"><div class="input-group"><label>শুরু</label><input type="datetime-local" id="cdStart"></div><div class="input-group"><label>শেষ</label><input type="datetime-local" id="cdEnd"></div></div>
-            <button class="btn btn-primary" onclick="saveCountdown()">✅ সেইভ</button>
+            <div class="input-group"><label>মূল টপিক</label><input type="text" id="cdTopic" placeholder="যেমন: MBBS Admission 2025"></div>
+            <div class="input-group"><label>সাবটপিক</label><input type="text" id="cdSubtopic" placeholder="যেমন: ঢাকা বিশ্ববিদ্যালয়"></div>
+            <div class="input-row">
+                <div class="input-group"><label>শুরু</label><input type="datetime-local" id="cdStart"></div>
+                <div class="input-group"><label>শেষ</label><input type="datetime-local" id="cdEnd"></div>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-primary" onclick="saveCountdown()" style="flex:1;">✅ সেইভ</button>
+                <button class="btn btn-outline btn-sm" onclick="clearCdForm()" style="white-space:nowrap;">🔄 ক্লিয়ার</button>
+            </div>
         </div>
-        <div class="form-card"><h3>📋 সব টাইমার</h3><div id="cdList"></div></div>
+        <div class="form-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <h3 style="margin:0;">📋 সব টাইমার</h3>
+                <button class="btn btn-sm btn-outline" onclick="openSerialModal('timer')">🔢 Order</button>
+            </div>
+            <div id="cdList"></div>
+        </div>
     </div>
 
-    <!-- STUDENTS -->
+    <!-- ==================== STUDENTS ==================== -->
     <div class="admin-section" id="secStudents">
-        <div class="form-card"><h3>👥 স্টুডেন্ট</h3>
-            <div class="filter-row"><input type="text" id="filterName" placeholder="নাম" oninput="loadStudents()"><input type="text" id="filterBatch" placeholder="ব্যাচ" oninput="loadStudents()"><input type="text" id="filterCollege" placeholder="কলেজ" oninput="loadStudents()"></div>
+        <div class="form-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <h3 style="margin:0;">👥 স্টুডেন্ট তালিকা</h3>
+                <button class="btn btn-sm btn-success" onclick="openNotifModal()">🔔 Notify</button>
+            </div>
+            <div class="filter-row">
+                <input type="text" id="filterName" placeholder="🔍 নাম" oninput="loadStudents()">
+                <input type="text" id="filterBatch" placeholder="🔍 ব্যাচ" oninput="loadStudents()">
+                <input type="text" id="filterCollege" placeholder="🔍 কলেজ" oninput="loadStudents()">
+                <select id="filterRole" onchange="loadStudents()">
+                    <option value="">সব রোল</option>
+                    <option value="student">student</option>
+                    <option value="sub_admin">sub_admin</option>
+                    <option value="admin">admin</option>
+                </select>
+            </div>
             <div id="studentTable"></div>
+            <div id="studentPager" style="display:flex;gap:6px;margin-top:8px;justify-content:center;"></div>
         </div>
     </div>
 
-    <!-- MOCK -->
+    <!-- ==================== MOCK ==================== -->
     <div class="admin-section" id="secMock">
         <div class="form-card"><h3>🎯 মক টেস্ট যোগ/এডিট</h3>
             <input type="hidden" id="mockEditId">
-            <div class="input-group"><label>সাবজেক্ট</label><select id="mockSubject" onchange="loadMockChapters()"><option value="">— নির্বাচন —</option></select></div>
-            <div class="input-group"><label>চ্যাপ্টার</label><select id="mockChapter"><option value="">— প্রথমে সাবজেক্ট —</option></select></div>
-            <div class="input-group"><label>টপিক (ঐচ্ছিক)</label><input type="text" id="mockTopic"></div>
-            <div class="input-group"><label>স্ট্যান্ডার্ড</label><div class="chip-row" id="mockStdChips"><span class="chip active" onclick="selectMockStd('medical',this)">🏥 Medical</span><span class="chip" onclick="selectMockStd('varsity',this)">🎓 Varsity</span><span class="chip" onclick="selectMockStd('onushiloni',this)">🟠 Onushiloni</span></div></div>
-            <div class="input-group"><label>প্রশ্ন সংখ্যা</label><div class="chip-row" id="mockCntChips"><span class="chip" onclick="selectMockCnt(25,this)">২৫</span><span class="chip" onclick="selectMockCnt(35,this)">৩৫</span><span class="chip active" onclick="selectMockCnt(50,this)">৫০</span><span class="chip" onclick="selectMockCnt(75,this)">৭৫</span><span class="chip" onclick="selectMockCnt(100,this)">১০০</span></div></div>
-            <div class="csv-upload" onclick="document.getElementById('mockCSV').click()"><p>📄 CSV আপলোড</p><input type="file" id="mockCSV" accept=".csv" onchange="handleCSV(this,'mockCSVName')"><p id="mockCSVName" style="color:var(--accent);font-size:11px;"></p></div>
-            <button class="btn btn-primary" onclick="saveMock()">✅ সেইভ</button>
+            <div class="input-row">
+                <div class="input-group"><label>সাবজেক্ট</label><input type="text" id="mockSubjectInput" list="subjectList" placeholder="সাবজেক্ট"></div>
+                <div class="input-group"><label>পেপার (ঐচ্ছিক)</label><input type="text" id="mockPaper" placeholder="পেপার"></div>
+            </div>
+            <div class="input-group"><label>চ্যাপ্টার</label><input type="text" id="mockChapterInput" list="chapterList" placeholder="চ্যাপ্টার"></div>
+            <div class="input-group"><label>টপিক (ঐচ্ছিক)</label><input type="text" id="mockTopic" placeholder="টপিক"></div>
+            <div class="input-group"><label>স্ট্যান্ডার্ড</label>
+                <div class="chip-row" id="mockStdChips">
+                    <span class="chip active" onclick="selectMockStd('medical',this)">🏥 Medical</span>
+                    <span class="chip" onclick="selectMockStd('varsity',this)">🎓 Varsity</span>
+                    <span class="chip" onclick="selectMockStd('onushiloni',this)">🟠 Onushiloni</span>
+                </div>
+            </div>
+            <div class="input-group"><label>প্রশ্ন সংখ্যা</label>
+                <div class="chip-row" id="mockCntChips">
+                    <span class="chip" onclick="selectMockCnt(25,this)">২৫</span>
+                    <span class="chip" onclick="selectMockCnt(35,this)">৩৫</span>
+                    <span class="chip active" onclick="selectMockCnt(50,this)">৫০</span>
+                    <span class="chip" onclick="selectMockCnt(75,this)">৭৫</span>
+                    <span class="chip" onclick="selectMockCnt(100,this)">১০০</span>
+                </div>
+            </div>
+            <div class="csv-upload" onclick="document.getElementById('mockCSV').click()">
+                <p>📄 CSV আপলোড করুন</p>
+                <input type="file" id="mockCSV" accept=".csv" onchange="handleCSV(this,'mockCSVName')">
+                <p id="mockCSVName" style="color:var(--accent);font-size:11px;margin-top:4px;"></p>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-primary" onclick="saveMock()" style="flex:1;">✅ সেইভ</button>
+                <button class="btn btn-outline btn-sm" onclick="clearMockForm()" style="white-space:nowrap;">🔄 ক্লিয়ার</button>
+            </div>
         </div>
-        <div class="form-card"><h3>📋 তালিকা</h3><div id="mockList"></div></div>
+        <div class="form-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <h3 style="margin:0;">📋 তালিকা</h3>
+                <button class="btn btn-sm btn-outline" onclick="openSerialModal('mock')">🔢 Order</button>
+            </div>
+            <div id="mockList"></div>
+        </div>
     </div>
 
-    <!-- SOCIAL -->
+    <!-- ==================== MODEL TEST ==================== -->
+    <div class="admin-section" id="secModeltest">
+        <div class="form-card"><h3>📖 Model Test যোগ/এডিট</h3>
+            <input type="hidden" id="mtEditId">
+            <div class="input-group"><label>টাইপ</label>
+                <select id="mtType" onchange="toggleMtFields()">
+                    <option value="">— নির্বাচন —</option>
+                    <option value="medical">🏥 Medical</option>
+                    <option value="afmc">🎖️ AFMC</option>
+                    <option value="varsity">🟣 Varsity</option>
+                </select>
+            </div>
+            <div id="mtMedicalFields">
+                <div class="input-group"><label>সাবজেক্ট/পেপার নাম</label><input type="text" id="mtSubject" list="subjectList" placeholder="যেমন: জীববিজ্ঞান"></div>
+                <div class="input-group"><label>সাব-টাইপ</label>
+                    <select id="mtSubType">
+                        <option value="subject_final">📘 Subject Final</option>
+                        <option value="paper_final">📗 Paper Final</option>
+                        <option value="full">📕 Full Model Test</option>
+                    </select>
+                </div>
+            </div>
+            <div id="mtVarsityFields" style="display:none;">
+                <div class="input-row">
+                    <div class="input-group"><label>ভার্সিটির নাম</label><input type="text" id="mtVarsity" placeholder="যেমন: ঢাকা বিশ্ববিদ্যালয়"></div>
+                    <div class="input-group"><label>Unit (ঐচ্ছিক)</label><input type="text" id="mtUnit" placeholder="যেমন: ক ইউনিট"></div>
+                </div>
+            </div>
+            <div class="csv-upload" onclick="document.getElementById('mtCSV').click()">
+                <p>📄 CSV আপলোড অথবা</p>
+                <input type="file" id="mtCSV" accept=".csv" onchange="handleMtCSV(this)">
+                <p id="mtCSVName" style="color:var(--accent);font-size:11px;margin-top:4px;"></p>
+            </div>
+            <div class="input-group"><label>অথবা লিংক</label><input type="url" id="mtLink" placeholder="https://..."></div>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-primary" onclick="saveModelTest()" style="flex:1;">✅ সেইভ</button>
+                <button class="btn btn-outline btn-sm" onclick="clearMtForm()" style="white-space:nowrap;">🔄 ক্লিয়ার</button>
+            </div>
+        </div>
+        <div class="form-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <h3 style="margin:0;">📋 তালিকা</h3>
+                <button class="btn btn-sm btn-outline" onclick="openSerialModal('modeltest')">🔢 Order</button>
+            </div>
+            <div id="mtList"></div>
+        </div>
+    </div>
+
+    <!-- ==================== SOCIAL ==================== -->
     <div class="admin-section" id="secSocial">
         <div class="form-card"><h3>🔗 সোশ্যাল লিংক</h3>
             <input type="hidden" id="socialEditId">
-            <div class="input-group"><label>নাম</label><input type="text" id="socialName"></div>
-            <div class="input-group"><label>টাইপ</label><select id="socialType"><option value="facebook">📘 Facebook</option><option value="youtube">▶️ YouTube</option><option value="telegram">✈️ Telegram</option><option value="whatsapp">💬 WhatsApp</option><option value="other">🔗 অন্যান্য</option></select></div>
-            <div class="input-group"><label>বর্ণনা</label><input type="text" id="socialDesc"></div>
-            <div class="input-group"><label>লিংক</label><input type="url" id="socialLink"></div>
-            <button class="btn btn-primary" onclick="saveSocial()">✅ সেইভ</button>
+            <div class="input-row">
+                <div class="input-group"><label>নাম</label><input type="text" id="socialName" placeholder="যেমন: ATLAS Facebook Group"></div>
+                <div class="input-group"><label>টাইপ</label>
+                    <select id="socialType">
+                        <option value="facebook">📘 Facebook</option>
+                        <option value="youtube">▶️ YouTube</option>
+                        <option value="telegram">✈️ Telegram</option>
+                        <option value="whatsapp">💬 WhatsApp</option>
+                        <option value="other">🔗 অন্যান্য</option>
+                    </select>
+                </div>
+            </div>
+            <div class="input-group"><label>বর্ণনা</label><input type="text" id="socialDesc" placeholder="সংক্ষিপ্ত বর্ণনা"></div>
+            <div class="input-group"><label>লিংক</label><input type="url" id="socialLink" placeholder="https://..."></div>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-primary" onclick="saveSocial()" style="flex:1;">✅ সেইভ</button>
+                <button class="btn btn-outline btn-sm" onclick="clearSocialForm()" style="white-space:nowrap;">🔄 ক্লিয়ার</button>
+            </div>
         </div>
-        <div class="form-card"><h3>📋 তালিকা</h3><div id="socialList"></div></div>
+        <div class="form-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <h3 style="margin:0;">📋 তালিকা</h3>
+                <button class="btn btn-sm btn-outline" onclick="openSerialModal('social')">🔢 Order</button>
+            </div>
+            <div id="socialList"></div>
+        </div>
     </div>
 
-    <!-- SUB-ADMIN -->
+    <!-- ==================== SUB-ADMIN ==================== -->
     <div class="admin-section" id="secSubadmin">
-        <div class="form-card"><h3>👮 সাব-অ্যাডমিন</h3>
-            <div class="input-group"><label>ফোন নম্বর</label><input type="tel" id="subPhone" maxlength="11"></div>
-            <button class="btn btn-primary" onclick="grantSubAdmin()">✅ গ্র্যান্ট</button>
+        <div class="form-card"><h3>👮 সাব-অ্যাডমিন গ্র্যান্ট</h3>
+            <p style="font-size:11px;color:var(--text2);margin-bottom:10px;">সাব-অ্যাডমিন — Add ✅ | Edit ✅ | Delete ❌ | Grant ❌ | Reports ✅</p>
+            <div class="input-group"><label>ফোন নম্বর (১১ ডিজিট)</label><input type="tel" id="subPhone" maxlength="11" placeholder="01XXXXXXXXX"></div>
+            <button class="btn btn-primary" onclick="grantSubAdmin()">✅ সাব-অ্যাডমিন গ্র্যান্ট</button>
         </div>
-        <div class="form-card"><h3>📋 তালিকা</h3><div id="subList"></div></div>
+        <div class="form-card"><h3>📋 সাব-অ্যাডমিন তালিকা</h3>
+            <div id="subList"></div>
+        </div>
     </div>
 
-    <!-- REPORTS -->
+    <!-- ==================== REPORTS ==================== -->
     <div class="admin-section" id="secReports">
-        <div class="form-card"><h3>🚩 রিপোর্ট</h3><div id="reportList"></div></div>
+        <div class="form-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <h3 style="margin:0;">🚩 রিপোর্ট তালিকা</h3>
+                <div style="display:flex;gap:6px;">
+                    <select id="reportFilter" onchange="loadReports()" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:11px;">
+                        <option value="pending">🔴 পেন্ডিং</option>
+                        <option value="all">সব</option>
+                        <option value="approved">✅ এপ্রুভড</option>
+                        <option value="rejected">❌ রিজেক্ট</option>
+                    </select>
+                </div>
+            </div>
+            <div id="reportList"></div>
+        </div>
     </div>
 
-    <!-- OWNER -->
+    <!-- ==================== OWNER ==================== -->
     <div class="admin-section" id="secOwner">
-        <div class="form-card"><h3>👤 অনার</h3>
-            <div class="input-group"><label>নাম</label><input type="text" id="ownerName"></div>
-            <div class="input-group"><label>বিস্তারিত</label><textarea id="ownerInfo" rows="3"></textarea></div>
-            <div class="input-group"><label>ছবি</label><input type="file" id="ownerPhotoFile" accept="image/*" onchange="previewOwner(this)"></div>
+        <div class="form-card"><h3>👤 অনার ইনফো</h3>
+            <div class="input-group"><label>নাম</label><input type="text" id="ownerName" placeholder="আপনার নাম"></div>
+            <div class="input-group"><label>বিস্তারিত তথ্য</label><textarea id="ownerInfo" rows="4" placeholder="পরিচয়, ডিগ্রি, অভিজ্ঞতা..."></textarea></div>
+            <div class="input-group"><label>ছবি আপলোড</label><input type="file" id="ownerPhotoFile" accept="image/*" onchange="previewOwner(this)"></div>
             <img class="owner-preview" id="ownerPreview" src="" style="display:none;" onerror="this.style.display='none'">
             <button class="btn btn-primary" onclick="saveOwner()">💾 সেইভ</button>
         </div>
     </div>
 
-    <!-- MENTORS -->
+    <!-- ==================== MENTORS ==================== -->
     <div class="admin-section" id="secMentors">
         <div class="form-card"><h3>👨‍🏫 মেন্টর যোগ/এডিট</h3>
             <input type="hidden" id="mentorEditId">
-            <div class="input-group"><label>নাম</label><input type="text" id="mentorName"></div>
-            <div class="input-group"><label>পদবী/রোল</label><input type="text" id="mentorRole"></div>
+            <div class="input-row">
+                <div class="input-group"><label>নাম</label><input type="text" id="mentorName" placeholder="মেন্টরের নাম"></div>
+                <div class="input-group"><label>পদবী/রোল</label><input type="text" id="mentorRole" placeholder="যেমন: শিক্ষক, মেন্টর"></div>
+            </div>
+            <div class="input-group"><label>Sort Order</label><input type="number" id="mentorSortOrder" placeholder="0" min="0"></div>
             <div class="input-group"><label>ছবি</label><input type="file" id="mentorPhotoFile" accept="image/*" onchange="previewMentor(this)"></div>
-            <img id="mentorPreview" src="" style="width:80px;height:80px;border-radius:10px;object-fit:cover;border:2px solid var(--border);display:none;margin:6px auto;">
-            <button class="btn btn-primary" onclick="saveMentor()">✅ সেইভ</button>
+            <img id="mentorPreview" src="" style="width:80px;height:80px;border-radius:10px;object-fit:cover;border:2px solid var(--border);display:none;margin:6px auto;display:none;">
+            <div style="display:flex;gap:8px;margin-top:6px;">
+                <button class="btn btn-primary" onclick="saveMentor()" style="flex:1;">✅ সেইভ</button>
+                <button class="btn btn-outline btn-sm" onclick="clearMentorForm()" style="white-space:nowrap;">🔄 ক্লিয়ার</button>
+            </div>
         </div>
-        <div class="form-card"><h3>📋 তালিকা</h3><div id="mentorList"></div></div>
+        <div class="form-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <h3 style="margin:0;">📋 মেন্টর তালিকা</h3>
+                <button class="btn btn-sm btn-outline" onclick="openSerialModal('mentors')">🔢 Order</button>
+            </div>
+            <div id="mentorList"></div>
+        </div>
     </div>
 
-    <!-- SPECIAL CARD -->
+    <!-- ==================== SPECIAL CARD ==================== -->
     <div class="admin-section" id="secSpecial">
         <div class="form-card"><h3>🃏 স্পেশাল কার্ড</h3>
+            <p style="font-size:11px;color:var(--text2);margin-bottom:10px;">Timer-গুলোর উপরে দেখাবে। Glow border সহ।</p>
             <input type="hidden" id="specialEditId">
-            <div class="input-group"><label>ছবি</label><input type="file" id="specialPhotoFile" accept="image/*" onchange="previewSpecial(this)"></div>
+            <div class="input-group"><label>ছবি (Full Width)</label><input type="file" id="specialPhotoFile" accept="image/*" onchange="previewSpecial(this)"></div>
             <img id="specialPreview" src="" style="width:100%;max-height:180px;border-radius:10px;object-fit:cover;border:2px solid var(--border);display:none;margin:6px 0;">
-            <div class="input-group"><label>বিস্তারিত</label><textarea id="specialDesc" rows="2"></textarea></div>
-            <div class="input-group"><label>স্পেশাল টেক্সট (ক্লিকেবল)</label><input type="text" id="specialText"></div>
-            <div class="input-group"><label>লিংক</label><input type="url" id="specialLink"></div>
-            <button class="btn btn-primary" onclick="saveSpecial()">✅ সেইভ</button>
+            <div class="input-group"><label>বিস্তারিত</label><textarea id="specialDesc" rows="2" placeholder="বর্ণনা লিখুন..."></textarea></div>
+            <div class="input-group"><label>স্পেশাল টেক্সট (ক্লিকেবল বাটন)</label><input type="text" id="specialText" placeholder="যেমন: এখনই ভর্তি হন"></div>
+            <div class="input-group"><label>লিংক</label><input type="url" id="specialLink" placeholder="https://..."></div>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-primary" onclick="saveSpecial()" style="flex:1;">✅ সেইভ</button>
+                <button class="btn btn-outline btn-sm" onclick="clearSpecialForm()" style="white-space:nowrap;">🔄 ক্লিয়ার</button>
+            </div>
         </div>
         <div class="form-card"><h3>📋 তালিকা</h3><div id="specialList"></div></div>
     </div>
+
+    <!-- ==================== SERIAL MANAGEMENT ==================== -->
+    <div class="admin-section" id="secSerial">
+        <div class="form-card"><h3>🔢 Serial Management</h3>
+            <p style="font-size:12px;color:var(--text2);margin-bottom:14px;">যেকোনো সেকশনের Serial ম্যানেজ করুন। নিচের বাটন ক্লিক করে Order ঠিক করুন।</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <button class="btn btn-outline" onclick="openSerialModal('class')">📚 Class Order</button>
+                <button class="btn btn-outline" onclick="openSerialModal('exam')">📝 Exam Order</button>
+                <button class="btn btn-outline" onclick="openSerialModal('kakha')">📦 ক,খ,CQ Order</button>
+                <button class="btn btn-outline" onclick="openSerialModal('timer')">⏰ Timer Order</button>
+                <button class="btn btn-outline" onclick="openSerialModal('mock')">🎯 Mock Order</button>
+                <button class="btn btn-outline" onclick="openSerialModal('social')">🔗 Social Order</button>
+                <button class="btn btn-outline" onclick="openSerialModal('mentors')">👨‍🏫 Mentor Order</button>
+                <button class="btn btn-outline" onclick="openSerialModal('modeltest')">📖 Model Test Order</button>
+            </div>
+        </div>
+    </div>
+
 </main>
 
 <script>
+// ===================================================================
+// ATLAS EXAM — ADMIN PANEL JS
+// All original code preserved + new features added
+// ===================================================================
+
 const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
 const ADMIN_PHONE = '01754365403';
 let currentUser = null, isAdmin = true, isSubAdmin = false;
-let examCSVData = null, mockCSVData = null, currentSection = 'class';
+let examCSVData = null, mockCSVData = null, mtCSVData = null;
+let currentSection = 'class';
 let mockStd = 'medical', mockCnt = 50;
+let notifType = 'all';
+let studentPage = 1, studentPageSize = 20;
+let serialTable = '', serialItems = [];
+let dragSrcIdx = null;
 
-function showToast(m, d) { d = d || 2000; const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), d); }
+// ========== TOAST ==========
+function showToast(m, d) {
+    d = d || 2500;
+    const t = document.getElementById('toast');
+    t.textContent = m; t.classList.add('show');
+    clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), d);
+}
 
+// ========== SAFE FETCH ==========
 async function safeFetch(url, opts = {}) {
     opts.headers = Object.assign({ apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }, opts.headers || {});
     if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') opts.headers['Content-Type'] = 'application/json';
+    if (opts.method === 'POST' || opts.method === 'PATCH') {
+        opts.headers['Prefer'] = opts.method === 'POST' ? 'return=representation' : 'return=minimal';
+    }
     try {
         const res = await fetch(url, opts);
         const text = await res.text();
         if (!text || !text.trim()) return (opts.method === 'DELETE' || opts.method === 'PATCH') ? null : [];
         const data = JSON.parse(text);
-        if (!res.ok) throw new Error(data.message || 'API Error');
+        if (!res.ok) throw new Error(data.message || data.hint || 'API Error');
         return data;
     } catch(e) { console.error('❌', e.message); throw e; }
 }
 
+// ========== GENERIC CRUD ==========
 async function saveItem(table, data, editId, clearFn, loadFn) {
     try {
-        if (editId) { await safeFetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${editId}`, { method: 'PATCH', body: JSON.stringify(data) }); showToast('✅ আপডেট'); }
-        else { await safeFetch(`${SUPABASE_URL}/rest/v1/${table}`, { method: 'POST', body: JSON.stringify(data) }); showToast('✅ সেইভ'); }
-        if (clearFn) clearFn(); if (loadFn) loadFn();
-    } catch(e) { alert('এরর: ' + e.message); }
+        if (editId) {
+            await safeFetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${editId}`, { method: 'PATCH', body: JSON.stringify(data) });
+            showToast('✅ আপডেট হয়েছে');
+        } else {
+            await safeFetch(`${SUPABASE_URL}/rest/v1/${table}`, { method: 'POST', body: JSON.stringify(data) });
+            showToast('✅ সেইভ হয়েছে');
+        }
+        if (clearFn) clearFn();
+        if (loadFn) loadFn();
+    } catch(e) { showToast('❌ এরর: ' + e.message, 4000); console.error(e); }
 }
 
 async function editItem(table, id, fillFn) {
-    try { const data = await safeFetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}&select=*`); if (data?.length && fillFn) fillFn(data[0]); } catch(e) {}
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}&select=*`);
+        if (data?.length && fillFn) fillFn(data[0]);
+    } catch(e) { showToast('❌ লোড এরর'); }
 }
 
 async function deleteItem(table, id, loadFn) {
-    if (!isAdmin) { showToast('⛔ নিষেধ'); return; }
-    if (!confirm('ডিলিট করবেন?')) return;
-    try { await safeFetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, { method: 'DELETE' }); showToast('🗑️ ডিলিট'); if (loadFn) loadFn(); } catch(e) {}
+    if (!isAdmin) { showToast('⛔ শুধু Admin ডিলিট করতে পারবে'); return; }
+    if (!confirm('নিশ্চিতভাবে ডিলিট করবেন?')) return;
+    try {
+        await safeFetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, { method: 'DELETE' });
+        showToast('🗑️ ডিলিট হয়েছে');
+        if (loadFn) loadFn();
+    } catch(e) { showToast('❌ ডিলিট এরর'); }
 }
 
-function switchSection(sec) {
+// ========== SECTION SWITCHER ==========
+function switchSection(sec, el) {
     currentSection = sec;
-    document.querySelectorAll('.tab-btn,.admin-section').forEach(el => el.classList.remove('active'));
-    document.getElementById('sec' + sec.charAt(0).toUpperCase() + sec.slice(1))?.classList.add('active');
-    event.target.classList.add('active');
-    const loaders = { class: loadClasses, exam: loadExams, kakha: loadKaKha, timer: loadCountdowns, students: loadStudents, mock: () => { loadMockSubjects(); loadMocks(); }, social: loadSocial, subadmin: loadSubAdmins, reports: loadReports, owner: loadOwner, mentors: loadMentors, special: loadSpecials };
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+    if (el) el.classList.add('active');
+    const secId = 'sec' + sec.charAt(0).toUpperCase() + sec.slice(1);
+    document.getElementById(secId)?.classList.add('active');
+    const loaders = {
+        class: loadClasses,
+        exam: loadExams,
+        kakha: loadKaKha,
+        timer: loadCountdowns,
+        students: loadStudents,
+        mock: () => { loadMocks(); },
+        modeltest: loadModelTests,
+        social: loadSocial,
+        subadmin: loadSubAdmins,
+        reports: loadReports,
+        owner: loadOwner,
+        mentors: loadMentors,
+        special: loadSpecials,
+        serial: () => {}
+    };
     if (loaders[sec]) loaders[sec]();
 }
 
+// ========== CSV PARSER (robust, handles quotes, commas inside fields) ==========
+function parseCSV(text) {
+    const rows = []; let currentRow = []; let currentField = ''; let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i]; const nextChar = text[i + 1];
+        if (inQuotes) {
+            if (char === '"' && nextChar === '"') { currentField += '"'; i++; }
+            else if (char === '"') { inQuotes = false; }
+            else { currentField += char; }
+        } else {
+            if (char === '"') { inQuotes = true; }
+            else if (char === ',') { currentRow.push(currentField); currentField = ''; }
+            else if (char === '\n' || (char === '\r' && nextChar === '\n')) {
+                currentRow.push(currentField);
+                if (currentRow.some(f => f.trim())) rows.push(currentRow);
+                currentRow = []; currentField = '';
+                if (char === '\r') i++;
+            } else if (char !== '\r') { currentField += char; }
+        }
+    }
+    currentRow.push(currentField);
+    if (currentRow.some(f => f.trim())) rows.push(currentRow);
+    return rows;
+}
+
 function handleCSV(input, labelId) {
-    const file = input.files[0];
-    if (!file) return;
+    const file = input.files[0]; if (!file) return;
     document.getElementById(labelId).textContent = '📄 ' + file.name;
     const reader = new FileReader();
     reader.onload = function(e) {
-        let text = e.target.result;
-        text = text.replace(/\t/g, ',');
+        let text = e.target.result.replace(/\t/g, ',');
         const lines = parseCSV(text);
-        if (lines.length < 2) { showToast('⚠️ ডাটা নেই'); return; }
-        
-// Header - cleaned (BOM + space + case fix)
-const cleanHeader = lines[0].map(h => h.replace(/^\uFEFF/, '').trim().toLowerCase());
-const qIdx = cleanHeader.indexOf('question') >= 0 ? cleanHeader.indexOf('question') : cleanHeader.indexOf('questions');
-const o1Idx = cleanHeader.indexOf('option1') >= 0 ? cleanHeader.indexOf('option1') : cleanHeader.indexOf('option 1');
-const o2Idx = cleanHeader.indexOf('option2') >= 0 ? cleanHeader.indexOf('option2') : cleanHeader.indexOf('option 2');
-const o3Idx = cleanHeader.indexOf('option3') >= 0 ? cleanHeader.indexOf('option3') : cleanHeader.indexOf('option 3');
-const o4Idx = cleanHeader.indexOf('option4') >= 0 ? cleanHeader.indexOf('option4') : cleanHeader.indexOf('option 4');
-const o5Idx = cleanHeader.indexOf('option5') >= 0 ? cleanHeader.indexOf('option5') : cleanHeader.indexOf('option 5');
-const aIdx = cleanHeader.indexOf('answer') >= 0 ? cleanHeader.indexOf('answer') : cleanHeader.indexOf('answers');
-const eIdx = cleanHeader.indexOf('explanation') >= 0 ? cleanHeader.indexOf('explanation') : cleanHeader.indexOf('explanations');
-const tIdx = cleanHeader.indexOf('type');
-const sIdx = cleanHeader.indexOf('section');
-        
+        if (lines.length < 2) { showToast('⚠️ CSV-এ ডাটা নেই'); return; }
+        const cleanHeader = lines[0].map(h => h.replace(/^\uFEFF/, '').trim().toLowerCase());
+        const idx = (names) => { for (const n of names) { const i = cleanHeader.indexOf(n); if (i >= 0) return i; } return -1; };
+        const qIdx = idx(['question','questions']);
+        const o1 = idx(['option1','option 1']); const o2 = idx(['option2','option 2']);
+        const o3 = idx(['option3','option 3']); const o4 = idx(['option4','option 4']);
+        const o5 = idx(['option5','option 5']); const aIdx = idx(['answer','answers']);
+        const eIdx = idx(['explanation','explanations']); const tIdx = idx(['type']); const sIdx = idx(['section']);
         const data = [];
         for (let i = 1; i < lines.length; i++) {
             const cols = lines[i];
-            if (cols.length < 7) continue;
+            if (cols.length < 6) continue;
             data.push({
-                questions: cols[qIdx] || '',
-                option1: cols[o1Idx] || '',
-                option2: cols[o2Idx] || '',
-                option3: cols[o3Idx] || '',
-                option4: cols[o4Idx] || '',
-                option5: cols[o5Idx] || null,
-                answer: parseInt(cols[aIdx]) || 1,
-                explanation: cols[eIdx] || '',
-                type: parseInt(cols[tIdx]) || 1,
-                section: parseInt(cols[sIdx]) || 1
+                questions: cols[qIdx] || '', option1: cols[o1] || '', option2: cols[o2] || '',
+                option3: cols[o3] || '', option4: cols[o4] || '', option5: o5 >= 0 ? (cols[o5] || null) : null,
+                answer: parseInt(cols[aIdx]) || 1, explanation: eIdx >= 0 ? (cols[eIdx] || '') : '',
+                type: tIdx >= 0 ? (parseInt(cols[tIdx]) || 1) : 1,
+                section: sIdx >= 0 ? (parseInt(cols[sIdx]) || 1) : 1
             });
         }
-        
         if (input.id === 'examCSV') examCSVData = data;
         else mockCSVData = data;
-        
-        showToast('✅ ' + data.length + ' প্রশ্ন (Image সহ)');
+        showToast('✅ ' + data.length + ' প্রশ্ন লোড হয়েছে');
     };
     reader.readAsText(file);
 }
 
-// Better CSV Parser - handles quotes and commas inside fields
-function parseCSV(text) {
-    const rows = [];
-    let currentRow = [];
-    let currentField = '';
-    let inQuotes = false;
-    
-    for (let i = 0; i < text.length; i++) {
-        const char = text[i];
-        const nextChar = text[i + 1];
-        
-        if (inQuotes) {
-            if (char === '"' && nextChar === '"') {
-                currentField += '"';
-                i++;
-            } else if (char === '"') {
-                inQuotes = false;
-            } else {
-                currentField += char;
-            }
-        } else {
-            if (char === '"') {
-                inQuotes = true;
-            } else if (char === ',') {
-                currentRow.push(currentField);
-                currentField = '';
-            } else if (char === '\n' || (char === '\r' && nextChar === '\n')) {
-                currentRow.push(currentField);
-                if (currentRow.some(f => f.trim())) {
-                    rows.push(currentRow);
-                }
-                currentRow = [];
-                currentField = '';
-                if (char === '\r') i++;
-            } else if (char === '\r') {
-                // Skip standalone \r
-            } else {
-                currentField += char;
-            }
+function handleMtCSV(input) {
+    const file = input.files[0]; if (!file) return;
+    document.getElementById('mtCSVName').textContent = '📄 ' + file.name;
+    const reader = new FileReader();
+    reader.onload = e => {
+        const lines = parseCSV(e.target.result.replace(/\t/g,','));
+        if (lines.length < 2) { showToast('⚠️ CSV-এ ডাটা নেই'); return; }
+        const cleanHeader = lines[0].map(h => h.replace(/^\uFEFF/,'').trim().toLowerCase());
+        const data = [];
+        for (let i = 1; i < lines.length; i++) {
+            const cols = lines[i]; if (cols.length < 6) continue;
+            const idx = (n) => cleanHeader.indexOf(n);
+            data.push({
+                questions: cols[idx('question')] || cols[0] || '',
+                option1: cols[idx('option1')] || cols[1] || '', option2: cols[idx('option2')] || cols[2] || '',
+                option3: cols[idx('option3')] || cols[3] || '', option4: cols[idx('option4')] || cols[4] || '',
+                option5: cols[idx('option5')] || null,
+                answer: parseInt(cols[idx('answer')] || cols[5]) || 1,
+                explanation: cols[idx('explanation')] || cols[6] || ''
+            });
         }
-    }
-    
-    // Last field
-    currentRow.push(currentField);
-    if (currentRow.some(f => f.trim())) {
-        rows.push(currentRow);
-    }
-    
-    return rows;
+        mtCSVData = data;
+        showToast('✅ ' + data.length + ' প্রশ্ন লোড');
+    };
+    reader.readAsText(file);
 }
 
-// ========== CLASS ==========
+// ============================================================
+// ==================== CLASS ==================================
+// ============================================================
 function saveClass() {
-    const d = { subject: document.getElementById('classSubject').value.trim(), paper: document.getElementById('classPaper').value.trim(), chapter: document.getElementById('classChapter').value.trim(), class_type: document.getElementById('classType').value, youtube_link: document.getElementById('classLink').value.trim(), class_note: document.getElementById('classNote').value.trim() || null, start_time: document.getElementById('classStart').value, end_time: document.getElementById('classEnd').value, created_by: currentUser?.phone };
-    if (!d.subject || !d.chapter || !d.youtube_link) { showToast('⚠️ পূরণ করুন'); return; }
+    const d = {
+        subject: document.getElementById('classSubject').value.trim(),
+        paper: document.getElementById('classPaper').value.trim() || null,
+        chapter: document.getElementById('classChapter').value.trim(),
+        class_type: document.getElementById('classType').value,
+        youtube_link: document.getElementById('classLink').value.trim(),
+        class_note: document.getElementById('classNote').value.trim() || null,
+        start_time: document.getElementById('classStart').value || null,
+        end_time: document.getElementById('classEnd').value || null,
+        sort_order: parseInt(document.getElementById('classSortOrder').value) || 0,
+        created_by: currentUser?.phone
+    };
+    if (!d.subject || !d.chapter || !d.youtube_link) { showToast('⚠️ সাবজেক্ট, চ্যাপ্টার ও লিংক দিন'); return; }
     saveItem('classes', d, document.getElementById('classEditId').value || null, clearClassForm, loadClasses);
 }
-function clearClassForm() { ['classSubject','classPaper','classChapter','classLink','classNote','classStart','classEnd','classEditId'].forEach(id => document.getElementById(id).value = ''); }
-function editClass(id) { editItem('classes', id, d => { document.getElementById('classEditId').value = d.id; document.getElementById('classSubject').value = d.subject||''; document.getElementById('classPaper').value = d.paper||''; document.getElementById('classChapter').value = d.chapter||''; document.getElementById('classType').value = d.class_type||'website'; document.getElementById('classLink').value = d.youtube_link||''; document.getElementById('classNote').value = d.class_note||''; document.getElementById('classStart').value = d.start_time||''; document.getElementById('classEnd').value = d.end_time||''; }); }
-async function loadClasses() {
-    try {
-        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/classes?select=*&order=created_at.desc&limit=50`);
-        let html = '<table class="data-table"><tr><th>সাবজেক্ট</th><th>চ্যাপ্টার</th><th>টাইপ</th><th></th></tr>';
-        if (data) data.forEach(c => { html += `<tr><td>${c.subject}</td><td>${c.chapter}</td><td>${c.class_type||'website'}</td><td><button class="btn btn-sm btn-outline" onclick="editClass('${c.id}')">✏️</button> ${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('classes','${c.id}',loadClasses)">🗑️</button>`:''}</td></tr>`; });
-        html += '</table>';
-        document.getElementById('classList').innerHTML = html || '<p style="color:var(--text2);">কোনো ক্লাস নেই</p>';
-    } catch(e) {}
+
+function clearClassForm() {
+    ['classSubject','classPaper','classChapter','classLink','classNote','classStart','classEnd','classEditId','classSortOrder'].forEach(id => document.getElementById(id).value = '');
 }
 
-// ========== EXAM ==========
+function editClass(id) {
+    editItem('classes', id, d => {
+        document.getElementById('classEditId').value = d.id;
+        document.getElementById('classSubject').value = d.subject || '';
+        document.getElementById('classPaper').value = d.paper || '';
+        document.getElementById('classChapter').value = d.chapter || '';
+        document.getElementById('classType').value = d.class_type || 'website';
+        document.getElementById('classLink').value = d.youtube_link || '';
+        document.getElementById('classNote').value = d.class_note || '';
+        document.getElementById('classStart').value = d.start_time || '';
+        document.getElementById('classEnd').value = d.end_time || '';
+        document.getElementById('classSortOrder').value = d.sort_order || 0;
+        window.scrollTo({top:0, behavior:'smooth'});
+    });
+}
+
+async function loadClasses() {
+    try {
+        const filterSub = document.getElementById('classFilterSub')?.value.toLowerCase() || '';
+        const filterChap = document.getElementById('classFilterChap')?.value.toLowerCase() || '';
+        let url = `${SUPABASE_URL}/rest/v1/classes?select=*&order=sort_order.asc,created_at.desc&limit=100`;
+        const data = await safeFetch(url);
+        const filtered = (data || []).filter(c =>
+            c.subject?.toLowerCase().includes(filterSub) &&
+            c.chapter?.toLowerCase().includes(filterChap)
+        );
+        if (!filtered.length) { document.getElementById('classList').innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">কোনো ক্লাস নেই</p>'; return; }
+        let html = '<table class="data-table"><tr><th>#</th><th>সাবজেক্ট</th><th>চ্যাপ্টার</th><th>টাইপ</th><th>Actions</th></tr>';
+        filtered.forEach((c, i) => {
+            html += `<tr>
+                <td style="color:var(--text2);">${i+1}</td>
+                <td><b>${c.subject}</b>${c.paper?`<br><span style="font-size:10px;color:var(--text2);">${c.paper}</span>`:''}</td>
+                <td>${c.chapter}</td>
+                <td><span style="font-size:10px;padding:2px 6px;border-radius:4px;background:var(--hover);">${c.class_type||'website'}</span></td>
+                <td style="white-space:nowrap;">
+                    <button class="btn btn-sm btn-outline" onclick="editClass('${c.id}')">✏️</button>
+                    ${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('classes','${c.id}',loadClasses)" style="margin-left:3px;">🗑️</button>`:''}
+                </td>
+            </tr>`;
+        });
+        html += '</table>';
+        document.getElementById('classList').innerHTML = html;
+    } catch(e) { document.getElementById('classList').innerHTML = '<p style="color:var(--red);">লোড এরর</p>'; }
+}
+
+// ============================================================
+// ==================== EXAM ===================================
+// ============================================================
 function toggleExamFields() {
     const t = document.getElementById('examType').value;
-    const sf = document.getElementById('examSubTypeField'), by = document.getElementById('examBoardYear'), wf = document.getElementById('examWriterField');
-    const ss = document.getElementById('examSubType'), bl = document.getElementById('examBoardLabel');
-    sf.style.display = by.style.display = wf.style.display = 'none';
-    if (t === 'medical') { sf.style.display = 'block'; ss.innerHTML = '<option value="">— নির্বাচন —</option><option value="demo">🏥 Demo</option><option value="chapter">📖 চাপ্টারভিত্তিক</option><option value="year">📅 সালভিত্তিক</option>'; }
-    else if (t === 'board') { sf.style.display = 'block'; ss.innerHTML = '<option value="">— নির্বাচন —</option><option value="board_q">🔵 বোর্ড প্রশ্ন</option><option value="college_q">🏫 কলেজ প্রশ্ন</option>'; by.style.display = 'grid'; bl.textContent = 'বোর্ড/কলেজের নাম'; ss.onchange = () => { bl.textContent = ss.value === 'college_q' ? 'কলেজের নাম' : 'বোর্ডের নাম'; }; }
-    else if (t === 'varsity') { by.style.display = 'grid'; bl.textContent = 'ভার্সিটির নাম'; }
-    else if (t === 'onushiloni') { wf.style.display = 'block'; }
+    const sf = document.getElementById('examSubTypeField');
+    const by = document.getElementById('examBoardYear');
+    const wf = document.getElementById('examWriterField');
+    const uf = document.getElementById('examUnitField');
+    const ss = document.getElementById('examSubType');
+    const bl = document.getElementById('examBoardLabel');
+    sf.style.display = by.style.display = wf.style.display = uf.style.display = 'none';
+
+    if (t === 'medical' || t === 'dental' || t === 'afmc') {
+        sf.style.display = 'block';
+        ss.innerHTML = `<option value="">— নির্বাচন —</option>
+            <option value="demo">🏥 Demo</option>
+            <option value="chapter">📖 চাপ্টারভিত্তিক</option>
+            <option value="year">📅 সালভিত্তিক</option>`;
+    } else if (t === 'board') {
+        sf.style.display = 'block'; by.style.display = 'grid'; bl.textContent = 'বোর্ড/কলেজের নাম';
+        ss.innerHTML = `<option value="">— নির্বাচন —</option>
+            <option value="board_q_year">🔵 বোর্ড প্রশ্ন (সালভিত্তিক)</option>
+            <option value="board_q_chapter">🔵 বোর্ড প্রশ্ন (চাপ্টারভিত্তিক)</option>
+            <option value="college_q">🏫 কলেজ প্রশ্ন</option>`;
+        ss.onchange = () => { bl.textContent = ss.value === 'college_q' ? 'কলেজের নাম' : 'বোর্ডের নাম'; };
+    } else if (t === 'varsity') {
+        by.style.display = 'grid'; uf.style.display = 'block'; bl.textContent = 'ভার্সিটির নাম';
+        sf.style.display = 'block';
+        ss.innerHTML = `<option value="">— নির্বাচন —</option>
+            <option value="varsitywise">🟣 ভার্সিটিওয়াইজ</option>
+            <option value="year">📅 বিগত (সালওয়াইজ)</option>
+            <option value="chapter">📖 বিগত (চাপ্টারভিত্তিক)</option>`;
+    } else if (t === 'onushiloni') {
+        wf.style.display = 'block';
+    }
 }
+
 async function saveExam() {
     if (!examCSVData?.length) { showToast('⚠️ CSV আপলোড করুন'); return; }
-    
     const d = {
-        title: document.getElementById('examSubject').value.trim() + ' - ' + document.getElementById('examChapter').value.trim(),
+        title: document.getElementById('examSubject').value.trim() + ' — ' + document.getElementById('examChapter').value.trim(),
         subject: document.getElementById('examSubject').value.trim(),
         chapter: document.getElementById('examChapter').value.trim(),
         exam_type: document.getElementById('examType').value,
         sub_type: document.getElementById('examSubType').value || null,
         board: document.getElementById('examBoard').value.trim() || null,
         year: document.getElementById('examYear').value.trim() || null,
+        unit: document.getElementById('examUnit').value.trim() || null,
         writer: document.getElementById('examWriter').value.trim() || null,
-        start_time: document.getElementById('examStart').value,
-        end_time: document.getElementById('examEnd').value,
+        start_time: document.getElementById('examStart').value || null,
+        end_time: document.getElementById('examEnd').value || null,
         total_marks: examCSVData.length,
         duration_minutes: Math.ceil(examCSVData.length / 2),
         created_by: currentUser?.phone
     };
-    
-    if (!d.subject || !d.chapter || !d.exam_type) { showToast('⚠️ পূরণ করুন'); return; }
-    
+    if (!d.subject || !d.chapter || !d.exam_type) { showToast('⚠️ সাবজেক্ট, চ্যাপ্টার ও টাইপ দিন'); return; }
     const eid = document.getElementById('examEditId').value;
-    
     try {
         let examId = eid;
-        
-        // Step 1: Save or Update Exam
         if (eid) {
-            await safeFetch(`${SUPABASE_URL}/rest/v1/exams?id=eq.${eid}`, {
-                method: 'PATCH', body: JSON.stringify(d)
-            });
-            await safeFetch(`${SUPABASE_URL}/rest/v1/questions?exam_id=eq.${eid}`, {
-                method: 'DELETE'
-            });
+            await safeFetch(`${SUPABASE_URL}/rest/v1/exams?id=eq.${eid}`, { method: 'PATCH', body: JSON.stringify(d) });
+            await safeFetch(`${SUPABASE_URL}/rest/v1/questions?exam_id=eq.${eid}`, { method: 'DELETE' });
         } else {
-            const examRes = await fetch(`${SUPABASE_URL}/rest/v1/exams`, {
-                method: 'POST',
-                headers: {
-                    'apikey': SUPABASE_KEY,
-                    'Authorization': 'Bearer ' + SUPABASE_KEY,
-                    'Content-Type': 'application/json',
-                    'Prefer': 'return=representation'
-                },
-                body: JSON.stringify(d)
-            });
-            const examData = await examRes.json();
-            if (Array.isArray(examData) && examData.length > 0) {
-                examId = examData[0].id;
-            }
+            const res = await safeFetch(`${SUPABASE_URL}/rest/v1/exams`, { method: 'POST', body: JSON.stringify(d) });
+            examId = Array.isArray(res) ? res[0]?.id : res?.id;
         }
-        
         if (!examId) { showToast('❌ Exam ID পাওয়া যায়নি'); return; }
-        
-        // Step 2: Save Questions ONE BY ONE
+        showToast('⏳ প্রশ্ন সেইভ হচ্ছে... ' + examCSVData.length + 'টি');
         let saved = 0;
         for (const q of examCSVData) {
-            const qData = {
-                exam_id: examId,
-                question_text: q.questions || q.question_text || '',
-                option1: q.option1 || '',
-                option2: q.option2 || '',
-                option3: q.option3 || '',
-                option4: q.option4 || '',
-                option5: q.option5 || null,
-                answer_index: parseInt(q.answer) || 1,
-                explanation: q.explanation || '',
-                type: parseInt(q.type) || 1,
-                section: parseInt(q.section) || 1
-            };
-            console.log('Saving Q:', qData.question_text.substring(0, 50));
-console.log('Full Q Data:', JSON.stringify(qData).substring(0, 100));
-            
-            await fetch(`${SUPABASE_URL}/rest/v1/questions`, {
+            await safeFetch(`${SUPABASE_URL}/rest/v1/questions`, {
                 method: 'POST',
-                headers: {
-                    'apikey': SUPABASE_KEY,
-                    'Authorization': 'Bearer ' + SUPABASE_KEY,
-                    'Content-Type': 'application/json',
-                    'Prefer': 'return=minimal'
-                },
-                body: JSON.stringify(qData)
+                body: JSON.stringify({
+                    exam_id: examId,
+                    question_text: q.questions || '',
+                    option1: q.option1, option2: q.option2, option3: q.option3, option4: q.option4,
+                    option5: q.option5 || null,
+                    answer_index: parseInt(q.answer) || 1,
+                    explanation: q.explanation || '',
+                    type: parseInt(q.type) || 1,
+                    section: parseInt(q.section) || 1
+                })
             });
             saved++;
         }
-        
-        alert(`✅ এক্সাম সেভ হয়েছে!\n📝 প্রশ্ন: ${saved}/${examCSVData.length}\n📋 লিংক: ${location.origin}/exam.html?id=${examId}`);
-        clearExamForm();
-        loadExams();
-        
-    } catch(e) {
-        showToast('❌ এরর: ' + e.message);
-        console.error(e);
-    }
+        const link = location.origin + '/exam.html?id=' + examId;
+        showToast('✅ ' + saved + ' প্রশ্ন সেইভ | ID: ' + examId, 5000);
+        navigator.clipboard?.writeText(link);
+        clearExamForm(); loadExams();
+    } catch(e) { showToast('❌ এরর: ' + e.message, 5000); console.error(e); }
 }
-function clearExamForm() { ['examSubject','examChapter','examType','examSubType','examBoard','examYear','examWriter','examStart','examEnd','examEditId'].forEach(id => document.getElementById(id).value = ''); examCSVData = null; document.getElementById('examCSVName').textContent = ''; document.getElementById('examSubTypeField').style.display = 'none'; document.getElementById('examBoardYear').style.display = 'none'; document.getElementById('examWriterField').style.display = 'none'; }
+
+function clearExamForm() {
+    ['examSubject','examChapter','examType','examSubType','examBoard','examYear','examUnit','examWriter','examStart','examEnd','examEditId'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+    examCSVData = null;
+    document.getElementById('examCSVName').textContent = '';
+    ['examSubTypeField','examBoardYear','examWriterField','examUnitField'].forEach(id => { const el = document.getElementById(id); if(el) el.style.display = 'none'; });
+}
+
 async function loadExams() {
     try {
-        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/exams?select=*&order=created_at.desc&limit=100`);
-        const groups = { board: { title: '🔵 বোর্ড', items: [] }, medical: { title: '🏥 Medical', items: [] }, dental: { title: '🦷 Dental', items: [] }, afmc: { title: '🎖️ AFMC', items: [] }, varsity: { title: '🟣 ভার্সিটি', items: [] }, onushiloni: { title: '🟠 অনুশীলনী', items: [] }, model: { title: '📖 Model Test', items: [] } };
-        if (data) data.forEach(e => { if (groups[e.exam_type]) groups[e.exam_type].items.push(e); });
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/exams?select=*&order=created_at.desc&limit=200`);
+        const groups = {
+            board: { title: '🔵 বোর্ড', items: [] }, medical: { title: '🏥 Medical', items: [] },
+            dental: { title: '🦷 Dental', items: [] }, afmc: { title: '🎖️ AFMC', items: [] },
+            varsity: { title: '🟣 ভার্সিটি', items: [] }, onushiloni: { title: '🟠 অনুশীলনী', items: [] },
+            model: { title: '📖 Model Test', items: [] }
+        };
+        (data || []).forEach(e => { if (groups[e.exam_type]) groups[e.exam_type].items.push(e); });
         let html = '';
         Object.keys(groups).forEach(key => {
             const g = groups[key]; if (!g.items.length) return;
             html += `<div class="section-header" style="margin-top:8px;"><div class="section-title">${g.title} (${g.items.length})</div></div>`;
             g.items.forEach(e => {
                 const link = location.origin + '/exam.html?id=' + e.id;
-                let info = `${e.subject} › ${e.chapter}`;
-                if (e.sub_type) info += ` › ${e.sub_type}`;
-                if (e.board) info += ` › ${e.board}`;
-                if (e.year) info += ` › ${e.year}`;
-                if (e.writer) info += ` › ${e.writer}`;
-                info += ` (${e.total_marks} প্রশ্ন)`;
-                html += `<div class="list-item"><div><b>${info}</b></div><div style="display:flex;gap:4px;"><button class="btn btn-sm btn-copy" onclick="copyLink('${link}')">📋</button><button class="btn btn-sm btn-outline" onclick="editExam('${e.id}')">✏️</button>${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('exams','${e.id}',loadExams)">🗑️</button>`:''}</div></div>`;
+                let info = `<b>${e.subject}</b> › ${e.chapter}`;
+                if (e.sub_type) info += ` <span style="color:var(--accent);">[${e.sub_type}]</span>`;
+                if (e.board) info += ` · ${e.board}`;
+                if (e.year) info += ` · ${e.year}`;
+                if (e.unit) info += ` · ${e.unit}`;
+                if (e.writer) info += ` · ${e.writer}`;
+                info += ` <span style="color:var(--text2);font-size:10px;">(${e.total_marks||0} প্রশ্ন)</span>`;
+                html += `<div class="list-item">
+                    <div style="flex:1;">${info}</div>
+                    <div style="display:flex;gap:3px;flex-shrink:0;">
+                        <button class="btn btn-sm btn-copy" onclick="copyLink('${link}')">📋</button>
+                        <button class="btn btn-sm btn-outline" onclick="editExam('${e.id}')">✏️</button>
+                        ${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('exams','${e.id}',loadExams)">🗑️</button>`:''}
+                    </div>
+                </div>`;
             });
         });
-        document.getElementById('examList').innerHTML = html || '<p style="color:var(--text2);">কোনো এক্সাম নেই</p>';
-    } catch(e) {}
+        document.getElementById('examList').innerHTML = html || '<p style="color:var(--text2);text-align:center;padding:16px;">কোনো এক্সাম নেই</p>';
+    } catch(e) { document.getElementById('examList').innerHTML = '<p style="color:var(--red);">লোড এরর</p>'; }
 }
-function copyLink(link) { navigator.clipboard.writeText(link); showToast('📋 কপি'); }
 
-// ========== ক,খ,CQ ==========
-function saveKaKha() {
-    const d = { subject: document.getElementById('kaSubject').value.trim(), chapter: document.getElementById('kaChapter').value.trim(), link_or_file: document.getElementById('kaLink').value.trim(), created_by: currentUser?.phone };
-    if (!d.subject || !d.chapter || !d.link_or_file) { showToast('⚠️ পূরণ করুন'); return; }
-    saveItem('ka_kha_cq', d, document.getElementById('kaEditId').value || null, () => { ['kaSubject','kaChapter','kaLink','kaEditId'].forEach(id => document.getElementById(id).value = ''); }, loadKaKha);
+function copyLink(link) { navigator.clipboard?.writeText(link); showToast('📋 লিংক কপি হয়েছে'); }
+
+async function editExam(id) {
+    editItem('exams', id, d => {
+        document.getElementById('examEditId').value = d.id;
+        document.getElementById('examSubject').value = d.subject || '';
+        document.getElementById('examChapter').value = d.chapter || '';
+        document.getElementById('examType').value = d.exam_type || '';
+        toggleExamFields();
+        document.getElementById('examSubType').value = d.sub_type || '';
+        document.getElementById('examBoard').value = d.board || '';
+        document.getElementById('examYear').value = d.year || '';
+        document.getElementById('examUnit').value = d.unit || '';
+        document.getElementById('examWriter').value = d.writer || '';
+        document.getElementById('examStart').value = d.start_time || '';
+        document.getElementById('examEnd').value = d.end_time || '';
+        switchSection('exam', document.querySelector('.tab-btn:nth-child(2)'));
+        window.scrollTo({top:0,behavior:'smooth'});
+    });
 }
+
+// ============================================================
+// ==================== ক,খ,CQ ================================
+// ============================================================
+function saveKaKha() {
+    const d = {
+        subject: document.getElementById('kaSubject').value.trim(),
+        chapter: document.getElementById('kaChapter').value.trim(),
+        year: document.getElementById('kaYear').value.trim() || null,
+        topic: document.getElementById('kaTopic').value.trim() || null,
+        type: document.getElementById('kaType').value,
+        link_or_file: document.getElementById('kaLink').value.trim(),
+        created_by: currentUser?.phone
+    };
+    if (!d.subject || !d.chapter || !d.link_or_file) { showToast('⚠️ সাবজেক্ট, চ্যাপ্টার ও লিংক দিন'); return; }
+    saveItem('ka_kha_cq', d, document.getElementById('kaEditId').value || null, clearKaKhaForm, loadKaKha);
+}
+
+function clearKaKhaForm() {
+    ['kaSubject','kaChapter','kaYear','kaTopic','kaLink','kaEditId'].forEach(id => document.getElementById(id).value = '');
+}
+
+function editKaKha(id) {
+    editItem('ka_kha_cq', id, d => {
+        document.getElementById('kaEditId').value = d.id;
+        document.getElementById('kaSubject').value = d.subject || '';
+        document.getElementById('kaChapter').value = d.chapter || '';
+        document.getElementById('kaYear').value = d.year || '';
+        document.getElementById('kaTopic').value = d.topic || '';
+        document.getElementById('kaType').value = d.type || 'ka';
+        document.getElementById('kaLink').value = d.link_or_file || '';
+        window.scrollTo({top:0,behavior:'smooth'});
+    });
+}
+
 async function loadKaKha() {
     try {
-        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/ka_kha_cq?select=*&order=created_at.desc&limit=50`);
-        let html = '<table class="data-table"><tr><th>সাবজেক্ট</th><th>চ্যাপ্টার</th><th></th></tr>';
-        if (data) data.forEach(k => { html += `<tr><td>${k.subject}</td><td>${k.chapter}</td><td><button class="btn btn-sm btn-outline" onclick="editKaKha('${k.id}')">✏️</button> ${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('ka_kha_cq','${k.id}',loadKaKha)">🗑️</button>`:''}</td></tr>`; });
+        const filterType = document.getElementById('kaFilterType')?.value || '';
+        let url = `${SUPABASE_URL}/rest/v1/ka_kha_cq?select=*&order=created_at.desc&limit=100`;
+        if (filterType) url += `&type=eq.${filterType}`;
+        const data = await safeFetch(url);
+        if (!(data?.length)) { document.getElementById('kaList').innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">কোনো ডাটা নেই</p>'; return; }
+        const typeLabel = { ka: '🔵 ক', kha: '🟠 খ', cq: '🟣 CQ' };
+        let html = '<table class="data-table"><tr><th>সাবজেক্ট</th><th>চ্যাপ্টার</th><th>টাইপ</th><th>সাল</th><th>Actions</th></tr>';
+        data.forEach(k => {
+            html += `<tr>
+                <td><b>${k.subject}</b></td>
+                <td>${k.chapter}${k.topic?`<br><span style="font-size:10px;color:var(--text2);">${k.topic}</span>`:''}</td>
+                <td>${typeLabel[k.type]||k.type||'—'}</td>
+                <td>${k.year||'—'}</td>
+                <td style="white-space:nowrap;">
+                    <button class="btn btn-sm btn-outline" onclick="editKaKha('${k.id}')">✏️</button>
+                    ${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('ka_kha_cq','${k.id}',loadKaKha)" style="margin-left:3px;">🗑️</button>`:''}
+                </td>
+            </tr>`;
+        });
         html += '</table>';
-        document.getElementById('kaList').innerHTML = html || '<p style="color:var(--text2);">কোনো ডাটা নেই</p>';
-    } catch(e) {}
+        document.getElementById('kaList').innerHTML = html;
+    } catch(e) { document.getElementById('kaList').innerHTML = '<p style="color:var(--red);">লোড এরর</p>'; }
 }
-function editKaKha(id) { editItem('ka_kha_cq', id, d => { document.getElementById('kaEditId').value = d.id; document.getElementById('kaSubject').value = d.subject||''; document.getElementById('kaChapter').value = d.chapter||''; document.getElementById('kaLink').value = d.link_or_file||''; }); }
 
-// ========== COUNTDOWN ==========
+// ============================================================
+// ==================== COUNTDOWN ==============================
+// ============================================================
 function saveCountdown() {
-    const d = { main_topic: document.getElementById('cdTopic').value.trim(), subtopic: document.getElementById('cdSubtopic').value.trim(), start_time: document.getElementById('cdStart').value, end_time: document.getElementById('cdEnd').value };
-    if (!d.main_topic || !d.end_time) { showToast('⚠️ পূরণ করুন'); return; }
-    saveItem('countdowns', d, document.getElementById('cdEditId').value || null, () => { ['cdTopic','cdSubtopic','cdStart','cdEnd','cdEditId'].forEach(id => document.getElementById(id).value = ''); }, loadCountdowns);
+    const d = {
+        main_topic: document.getElementById('cdTopic').value.trim(),
+        subtopic: document.getElementById('cdSubtopic').value.trim() || null,
+        start_time: document.getElementById('cdStart').value || null,
+        end_time: document.getElementById('cdEnd').value
+    };
+    if (!d.main_topic || !d.end_time) { showToast('⚠️ টপিক ও শেষ সময় দিন'); return; }
+    saveItem('countdowns', d, document.getElementById('cdEditId').value || null, clearCdForm, loadCountdowns);
 }
+
+function clearCdForm() {
+    ['cdTopic','cdSubtopic','cdStart','cdEnd','cdEditId'].forEach(id => document.getElementById(id).value = '');
+}
+
+function editCountdown(id) {
+    editItem('countdowns', id, d => {
+        document.getElementById('cdEditId').value = d.id;
+        document.getElementById('cdTopic').value = d.main_topic || '';
+        document.getElementById('cdSubtopic').value = d.subtopic || '';
+        document.getElementById('cdStart').value = d.start_time || '';
+        document.getElementById('cdEnd').value = d.end_time || '';
+        window.scrollTo({top:0,behavior:'smooth'});
+    });
+}
+
 async function loadCountdowns() {
     try {
         const data = await safeFetch(`${SUPABASE_URL}/rest/v1/countdowns?select=*&order=created_at.desc&limit=20`);
-        let html = '<table class="data-table"><tr><th>টপিক</th><th>শেষ</th><th></th></tr>';
-        if (data) data.forEach(c => { html += `<tr><td><b>${c.main_topic}</b></td><td>${new Date(c.end_time).toLocaleString('bn-BD')}</td><td><button class="btn btn-sm btn-outline" onclick="editCountdown('${c.id}')">✏️</button> ${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('countdowns','${c.id}',loadCountdowns)">🗑️</button>`:''}</td></tr>`; });
+        if (!(data?.length)) { document.getElementById('cdList').innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">কোনো টাইমার নেই</p>'; return; }
+        let html = '<table class="data-table"><tr><th>টপিক</th><th>শেষ সময়</th><th>Status</th><th>Actions</th></tr>';
+        const now = new Date();
+        data.forEach(c => {
+            const end = new Date(c.end_time);
+            const isExpired = end < now;
+            const diff = Math.max(0, Math.floor((end - now) / 86400000));
+            html += `<tr>
+                <td><b>${c.main_topic}</b>${c.subtopic?`<br><span style="font-size:10px;color:var(--text2);">${c.subtopic}</span>`:''}</td>
+                <td style="font-size:11px;">${end.toLocaleString('bn-BD')}</td>
+                <td><span style="font-size:10px;padding:2px 6px;border-radius:4px;background:${isExpired?'rgba(248,81,73,0.15)':'rgba(63,185,80,0.15)'};color:${isExpired?'var(--red)':'var(--green)'};">${isExpired?'⌛ শেষ':'🟢 '+diff+'দিন বাকি'}</span></td>
+                <td style="white-space:nowrap;">
+                    <button class="btn btn-sm btn-outline" onclick="editCountdown('${c.id}')">✏️</button>
+                    ${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('countdowns','${c.id}',loadCountdowns)" style="margin-left:3px;">🗑️</button>`:''}
+                </td>
+            </tr>`;
+        });
         html += '</table>';
-        document.getElementById('cdList').innerHTML = html || '<p style="color:var(--text2);">কোনো টাইমার নেই</p>';
-    } catch(e) {}
+        document.getElementById('cdList').innerHTML = html;
+    } catch(e) { document.getElementById('cdList').innerHTML = '<p style="color:var(--red);">লোড এরর</p>'; }
 }
-function editCountdown(id) { editItem('countdowns', id, d => { document.getElementById('cdEditId').value = d.id; document.getElementById('cdTopic').value = d.main_topic||''; document.getElementById('cdSubtopic').value = d.subtopic||''; document.getElementById('cdStart').value = d.start_time||''; document.getElementById('cdEnd').value = d.end_time||''; }); }
 
-// ========== STUDENTS ==========
+// ============================================================
+// ==================== STUDENTS ================================
+// ============================================================
 async function loadStudents() {
     try {
-        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/users?select=*&order=created_at.desc&limit=50`);
-        let html = '<table class="data-table"><tr><th>নাম</th><th>ব্যাচ</th><th>কলেজ</th><th>ফোন</th></tr>';
-        if (data) data.forEach(u => { html += `<tr><td>${u.name}</td><td>${u.batch||'—'}</td><td>${u.college||'—'}</td><td>${u.phone}</td></tr>`; });
+        const name = document.getElementById('filterName').value.trim();
+        const batch = document.getElementById('filterBatch').value.trim();
+        const college = document.getElementById('filterCollege').value.trim();
+        const role = document.getElementById('filterRole').value;
+        let url = `${SUPABASE_URL}/rest/v1/users?select=*&order=created_at.desc&limit=200`;
+        if (role) url += `&role=eq.${role}`;
+        const allData = await safeFetch(url);
+        let data = (allData || []).filter(u =>
+            (!name || u.name?.toLowerCase().includes(name.toLowerCase())) &&
+            (!batch || (u.batch||'').toLowerCase().includes(batch.toLowerCase())) &&
+            (!college || (u.college||'').toLowerCase().includes(college.toLowerCase()))
+        );
+        const total = data.length;
+        const start = (studentPage - 1) * studentPageSize;
+        const paged = data.slice(start, start + studentPageSize);
+        if (!paged.length) { document.getElementById('studentTable').innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">কোনো স্টুডেন্ট নেই</p>'; document.getElementById('studentPager').innerHTML = ''; return; }
+        let html = `<p style="font-size:11px;color:var(--text2);margin-bottom:6px;">মোট: ${total} জন</p>`;
+        html += '<table class="data-table"><tr><th>নাম</th><th>ব্যাচ</th><th>কলেজ</th><th>ফোন</th><th>রোল</th><th>Actions</th></tr>';
+        paged.forEach(u => {
+            const roleColor = u.role === 'admin' ? 'var(--red)' : u.role === 'sub_admin' ? 'var(--yellow)' : 'var(--text2)';
+            html += `<tr>
+                <td><b>${u.name||'—'}</b></td>
+                <td>${u.batch||'—'}</td>
+                <td>${u.college||'—'}</td>
+                <td style="font-size:11px;">${u.phone}</td>
+                <td><span style="font-size:10px;color:${roleColor};">${u.role||'student'}</span></td>
+                <td style="white-space:nowrap;">
+                    <button class="btn btn-sm btn-outline" onclick="sendNotifToUser('${u.phone}','${u.name||''}')">🔔</button>
+                    ${isAdmin && u.role !== 'admin' ? `<button class="btn btn-sm btn-danger" onclick="deleteItem('users','${u.id}',loadStudents)" style="margin-left:3px;">🗑️</button>` : ''}
+                </td>
+            </tr>`;
+        });
         html += '</table>';
-        document.getElementById('studentTable').innerHTML = html || '<p style="color:var(--text2);">কোনো স্টুডেন্ট নেই</p>';
-    } catch(e) {}
+        document.getElementById('studentTable').innerHTML = html;
+        // Pager
+        const totalPages = Math.ceil(total / studentPageSize);
+        let pager = '';
+        if (totalPages > 1) {
+            if (studentPage > 1) pager += `<button class="btn btn-sm btn-outline" onclick="studentPage--;loadStudents()">◀</button>`;
+            pager += `<span style="font-size:12px;color:var(--text2);padding:5px 10px;">${studentPage}/${totalPages}</span>`;
+            if (studentPage < totalPages) pager += `<button class="btn btn-sm btn-outline" onclick="studentPage++;loadStudents()">▶</button>`;
+        }
+        document.getElementById('studentPager').innerHTML = pager;
+    } catch(e) { document.getElementById('studentTable').innerHTML = '<p style="color:var(--red);">লোড এরর</p>'; }
 }
 
-// ========== MOCK ==========
+function sendNotifToUser(phone, name) {
+    document.getElementById('notifPhone').value = phone;
+    notifType = 'phone';
+    document.querySelectorAll('#notifTypeAll,#notifTypePhone').forEach(el => el.classList.remove('active'));
+    document.getElementById('notifTypePhone').classList.add('active');
+    document.getElementById('notifPhoneField').style.display = 'block';
+    document.getElementById('notifTitle').value = '';
+    document.getElementById('notifMessage').value = '';
+    document.getElementById('notifModal').classList.add('active');
+}
+
+// ============================================================
+// ==================== MOCK ====================================
+// ============================================================
 function selectMockStd(s, el) { mockStd = s; document.querySelectorAll('#mockStdChips .chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); }
 function selectMockCnt(c, el) { mockCnt = c; document.querySelectorAll('#mockCntChips .chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); }
-async function loadMockSubjects() {
-    try { const data = await safeFetch(`${SUPABASE_URL}/rest/v1/mock_questions?select=subject`); const subjects = [...new Set(data.map(d => d.subject))]; const sel = document.getElementById('mockSubject'); sel.innerHTML = '<option value="">— নির্বাচন —</option>' + subjects.map(s => `<option>${s}</option>`).join(''); } catch(e) {}
-}
-async function loadMockChapters() {
-    const subject = document.getElementById('mockSubject').value; const sel = document.getElementById('mockChapter');
-    if (!subject) { sel.innerHTML = '<option value="">— প্রথমে সাবজেক্ট —</option>'; return; }
-    try { const data = await safeFetch(`${SUPABASE_URL}/rest/v1/mock_questions?subject=eq.${encodeURIComponent(subject)}&select=chapter`); const chapters = [...new Set(data.map(d => d.chapter))]; sel.innerHTML = '<option value="">— নির্বাচন —</option>' + chapters.map(c => `<option>${c}</option>`).join(''); } catch(e) {}
-}
+
 function saveMock() {
     if (!mockCSVData?.length) { showToast('⚠️ CSV আপলোড করুন'); return; }
-    const d = { subject: document.getElementById('mockSubject').value, chapter: document.getElementById('mockChapter').value, topic: document.getElementById('mockTopic').value.trim() || null, standard: mockStd, question_count: mockCnt, questions_json: JSON.stringify(mockCSVData), created_by: currentUser?.phone };
+    const d = {
+        subject: document.getElementById('mockSubjectInput').value.trim(),
+        paper: document.getElementById('mockPaper').value.trim() || null,
+        chapter: document.getElementById('mockChapterInput').value.trim(),
+        topic: document.getElementById('mockTopic').value.trim() || null,
+        standard: mockStd,
+        question_count: mockCnt,
+        questions_json: JSON.stringify(mockCSVData),
+        created_by: currentUser?.phone
+    };
     if (!d.subject || !d.chapter) { showToast('⚠️ সাবজেক্ট ও চ্যাপ্টার দিন'); return; }
-    saveItem('mock_questions', d, document.getElementById('mockEditId').value || null, () => { mockCSVData = null; document.getElementById('mockCSVName').textContent = ''; document.getElementById('mockEditId').value = ''; }, loadMocks);
-}
-async function loadMocks() {
-    try {
-        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/mock_questions?select=*&order=created_at.desc&limit=30`);
-        let html = '<table class="data-table"><tr><th>সাবজেক্ট</th><th>চ্যাপ্টার</th><th>স্ট্যান্ডার্ড</th><th>প্রশ্ন</th><th></th></tr>';
-        if (data) data.forEach(m => { const cnt = JSON.parse(m.questions_json||'[]').length; html += `<tr><td>${m.subject}</td><td>${m.chapter}</td><td>${m.standard||'—'}</td><td>${m.question_count||cnt}</td><td>${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('mock_questions','${m.id}',loadMocks)">🗑️</button>`:''}</td></tr>`; });
-        html += '</table>';
-        document.getElementById('mockList').innerHTML = html || '<p style="color:var(--text2);">কোনো ডাটা নেই</p>';
-    } catch(e) {}
+    saveItem('mock_questions', d, document.getElementById('mockEditId').value || null, clearMockForm, loadMocks);
 }
 
-// ========== SOCIAL ==========
-function saveSocial() {
-    const d = { media_name: document.getElementById('socialName').value.trim(), type: document.getElementById('socialType').value, description: document.getElementById('socialDesc').value.trim(), link: document.getElementById('socialLink').value.trim() };
-    if (!d.media_name || !d.link) { showToast('⚠️ পূরণ করুন'); return; }
-    saveItem('social_links', d, document.getElementById('socialEditId').value || null, () => { ['socialName','socialDesc','socialLink','socialEditId'].forEach(id => document.getElementById(id).value = ''); }, loadSocial);
+function clearMockForm() {
+    ['mockSubjectInput','mockPaper','mockChapterInput','mockTopic','mockEditId'].forEach(id => document.getElementById(id).value = '');
+    mockCSVData = null;
+    document.getElementById('mockCSVName').textContent = '';
 }
+
+async function loadMocks() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/mock_questions?select=*&order=created_at.desc&limit=100`);
+        if (!(data?.length)) { document.getElementById('mockList').innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">কোনো ডাটা নেই</p>'; return; }
+        const stdLabel = { medical: '🏥 Medical', varsity: '🎓 Varsity', onushiloni: '🟠 Onushiloni' };
+        let html = '<table class="data-table"><tr><th>সাবজেক্ট</th><th>চ্যাপ্টার</th><th>স্ট্যান্ডার্ড</th><th>প্রশ্ন</th><th>Actions</th></tr>';
+        data.forEach(m => {
+            const cnt = (() => { try { return JSON.parse(m.questions_json||'[]').length; } catch(e) { return m.question_count||0; } })();
+            html += `<tr>
+                <td><b>${m.subject}</b>${m.paper?`<br><span style="font-size:10px;color:var(--text2);">${m.paper}</span>`:''}</td>
+                <td>${m.chapter}${m.topic?`<br><span style="font-size:10px;color:var(--text2);">${m.topic}</span>`:''}</td>
+                <td style="font-size:11px;">${stdLabel[m.standard]||m.standard||'—'}</td>
+                <td>${m.question_count||cnt}</td>
+                <td style="white-space:nowrap;">
+                    ${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('mock_questions','${m.id}',loadMocks)">🗑️</button>`:'—'}
+                </td>
+            </tr>`;
+        });
+        html += '</table>';
+        document.getElementById('mockList').innerHTML = html;
+    } catch(e) { document.getElementById('mockList').innerHTML = '<p style="color:var(--red);">লোড এরর</p>'; }
+}
+
+// ============================================================
+// ==================== MODEL TEST =============================
+// ============================================================
+function toggleMtFields() {
+    const t = document.getElementById('mtType').value;
+    document.getElementById('mtMedicalFields').style.display = (t === 'medical' || t === 'afmc') ? 'block' : 'none';
+    document.getElementById('mtVarsityFields').style.display = t === 'varsity' ? 'block' : 'none';
+}
+
+function saveModelTest() {
+    const t = document.getElementById('mtType').value;
+    if (!t) { showToast('⚠️ টাইপ নির্বাচন করুন'); return; }
+    const d = {
+        type: t,
+        subject: document.getElementById('mtSubject')?.value.trim() || null,
+        sub_type: document.getElementById('mtSubType')?.value || null,
+        varsity_name: document.getElementById('mtVarsity')?.value.trim() || null,
+        unit: document.getElementById('mtUnit')?.value.trim() || null,
+        link: document.getElementById('mtLink')?.value.trim() || null,
+        questions_json: mtCSVData ? JSON.stringify(mtCSVData) : null,
+        question_count: mtCSVData?.length || 0,
+        created_by: currentUser?.phone
+    };
+    saveItem('model_tests', d, document.getElementById('mtEditId').value || null, clearMtForm, loadModelTests);
+}
+
+function clearMtForm() {
+    ['mtEditId','mtType','mtSubject','mtSubType','mtVarsity','mtUnit','mtLink'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+    mtCSVData = null;
+    document.getElementById('mtCSVName').textContent = '';
+    document.getElementById('mtMedicalFields').style.display = 'block';
+    document.getElementById('mtVarsityFields').style.display = 'none';
+}
+
+async function loadModelTests() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/model_tests?select=*&order=created_at.desc&limit=50`);
+        if (!(data?.length)) { document.getElementById('mtList').innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">কোনো Model Test নেই</p>'; return; }
+        const typeLabel = { medical: '🏥 Medical', afmc: '🎖️ AFMC', varsity: '🟣 Varsity' };
+        const subLabel = { subject_final: '📘 Subject Final', paper_final: '📗 Paper Final', full: '📕 Full' };
+        let html = '<table class="data-table"><tr><th>টাইপ</th><th>নাম/সাব-টাইপ</th><th>প্রশ্ন</th><th>Actions</th></tr>';
+        data.forEach(m => {
+            const name = m.varsity_name ? `${m.varsity_name}${m.unit?' ('+m.unit+')':''}` : (m.subject || '—');
+            html += `<tr>
+                <td>${typeLabel[m.type]||m.type}</td>
+                <td><b>${name}</b>${m.sub_type?`<br><span style="font-size:10px;color:var(--text2);">${subLabel[m.sub_type]||m.sub_type}</span>`:''}</td>
+                <td>${m.question_count||0}</td>
+                <td style="white-space:nowrap;">
+                    <button class="btn btn-sm btn-outline" onclick="editModelTest('${m.id}')">✏️</button>
+                    ${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('model_tests','${m.id}',loadModelTests)" style="margin-left:3px;">🗑️</button>`:''}
+                </td>
+            </tr>`;
+        });
+        html += '</table>';
+        document.getElementById('mtList').innerHTML = html;
+    } catch(e) { document.getElementById('mtList').innerHTML = '<p style="color:var(--red);">লোড এরর — model_tests table check করুন</p>'; }
+}
+
+function editModelTest(id) {
+    editItem('model_tests', id, d => {
+        document.getElementById('mtEditId').value = d.id;
+        document.getElementById('mtType').value = d.type || '';
+        toggleMtFields();
+        if (document.getElementById('mtSubject')) document.getElementById('mtSubject').value = d.subject || '';
+        if (document.getElementById('mtSubType')) document.getElementById('mtSubType').value = d.sub_type || '';
+        if (document.getElementById('mtVarsity')) document.getElementById('mtVarsity').value = d.varsity_name || '';
+        if (document.getElementById('mtUnit')) document.getElementById('mtUnit').value = d.unit || '';
+        if (document.getElementById('mtLink')) document.getElementById('mtLink').value = d.link || '';
+        window.scrollTo({top:0,behavior:'smooth'});
+    });
+}
+
+// ============================================================
+// ==================== SOCIAL =================================
+// ============================================================
+function saveSocial() {
+    const d = {
+        media_name: document.getElementById('socialName').value.trim(),
+        type: document.getElementById('socialType').value,
+        description: document.getElementById('socialDesc').value.trim() || null,
+        link: document.getElementById('socialLink').value.trim()
+    };
+    if (!d.media_name || !d.link) { showToast('⚠️ নাম ও লিংক দিন'); return; }
+    saveItem('social_links', d, document.getElementById('socialEditId').value || null, clearSocialForm, loadSocial);
+}
+
+function clearSocialForm() {
+    ['socialName','socialDesc','socialLink','socialEditId'].forEach(id => document.getElementById(id).value = '');
+}
+
+function editSocial(id) {
+    editItem('social_links', id, d => {
+        document.getElementById('socialEditId').value = d.id;
+        document.getElementById('socialName').value = d.media_name || '';
+        document.getElementById('socialType').value = d.type || 'other';
+        document.getElementById('socialDesc').value = d.description || '';
+        document.getElementById('socialLink').value = d.link || '';
+        window.scrollTo({top:0,behavior:'smooth'});
+    });
+}
+
 async function loadSocial() {
     try {
         const data = await safeFetch(`${SUPABASE_URL}/rest/v1/social_links?select=*&order=created_at.desc&limit=30`);
-        let html = '<table class="data-table"><tr><th>নাম</th><th>টাইপ</th><th>লিংক</th><th></th></tr>';
-        if (data) data.forEach(s => { html += `<tr><td><b>${s.media_name}</b></td><td>${s.type||'—'}</td><td><a href="${s.link}" target="_blank" style="color:var(--accent);">লিংক</a></td><td><button class="btn btn-sm btn-outline" onclick="editSocial('${s.id}')">✏️</button> ${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('social_links','${s.id}',loadSocial)">🗑️</button>`:''}</td></tr>`; });
+        if (!(data?.length)) { document.getElementById('socialList').innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">কোনো লিংক নেই</p>'; return; }
+        const icons = { facebook:'📘', youtube:'▶️', telegram:'✈️', whatsapp:'💬', other:'🔗' };
+        let html = '<table class="data-table"><tr><th>নাম</th><th>টাইপ</th><th>লিংক</th><th>Actions</th></tr>';
+        data.forEach(s => {
+            html += `<tr>
+                <td><b>${icons[s.type]||'🔗'} ${s.media_name}</b>${s.description?`<br><span style="font-size:10px;color:var(--text2);">${s.description}</span>`:''}</td>
+                <td style="font-size:11px;">${s.type||'—'}</td>
+                <td><a href="${s.link}" target="_blank" style="color:var(--accent);font-size:11px;">🔗 লিংক</a></td>
+                <td style="white-space:nowrap;">
+                    <button class="btn btn-sm btn-outline" onclick="editSocial('${s.id}')">✏️</button>
+                    ${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('social_links','${s.id}',loadSocial)" style="margin-left:3px;">🗑️</button>`:''}
+                </td>
+            </tr>`;
+        });
         html += '</table>';
-        document.getElementById('socialList').innerHTML = html || '<p style="color:var(--text2);">কোনো লিংক নেই</p>';
-    } catch(e) {}
+        document.getElementById('socialList').innerHTML = html;
+    } catch(e) { document.getElementById('socialList').innerHTML = '<p style="color:var(--red);">লোড এরর</p>'; }
 }
-function editSocial(id) { editItem('social_links', id, d => { document.getElementById('socialEditId').value = d.id; document.getElementById('socialName').value = d.media_name||''; document.getElementById('socialType').value = d.type||'other'; document.getElementById('socialDesc').value = d.description||''; document.getElementById('socialLink').value = d.link||''; }); }
 
-// ========== SUB-ADMIN ==========
+// ============================================================
+// ==================== SUB-ADMIN ==============================
+// ============================================================
 async function grantSubAdmin() {
     const ph = document.getElementById('subPhone').value.trim();
-    if (!/^\d{11}$/.test(ph)) { showToast('⚠️ ১১ ডিজিট'); return; }
+    if (!/^\d{11}$/.test(ph)) { showToast('⚠️ ১১ ডিজিটের ফোন নম্বর দিন'); return; }
     try {
         await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${ph}`, { method: 'PATCH', body: JSON.stringify({ role: 'sub_admin' }) });
-        await safeFetch(`${SUPABASE_URL}/rest/v1/notifications`, { method: 'POST', body: JSON.stringify({ phone: ADMIN_PHONE, title: '👮 সাব-অ্যাডমিন', message: ph + ' গ্র্যান্ট হয়েছে', type: 'subadmin', is_read: false }) });
-        showToast('✅ গ্র্যান্ট'); document.getElementById('subPhone').value = ''; loadSubAdmins();
-    } catch(e) { alert('এরর: ' + e.message); }
-}
-async function loadSubAdmins() {
-    try {
-        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/users?role=eq.sub_admin&select=phone,name`);
-        let html = '<table class="data-table"><tr><th>নাম</th><th>ফোন</th></tr>';
-        if (data) data.forEach(u => { html += `<tr><td>${u.name}</td><td>${u.phone}</td></tr>`; });
-        html += '</table>';
-        document.getElementById('subList').innerHTML = html || '<p style="color:var(--text2);">কোনো সাব-অ্যাডমিন নেই</p>';
-    } catch(e) {}
+        await safeFetch(`${SUPABASE_URL}/rest/v1/notifications`, { method: 'POST', body: JSON.stringify({ phone: ADMIN_PHONE, title: '👮 সাব-অ্যাডমিন গ্র্যান্ট', message: ph + ' কে সাব-অ্যাডমিন করা হয়েছে', type: 'subadmin', is_read: false }) });
+        showToast('✅ সাব-অ্যাডমিন গ্র্যান্ট হয়েছে');
+        document.getElementById('subPhone').value = '';
+        loadSubAdmins();
+    } catch(e) { showToast('❌ এরর: ' + e.message); }
 }
 
-// ========== REPORTS ==========
+async function revokeSubAdmin(phone) {
+    if (!isAdmin) { showToast('⛔ শুধু Admin রিভোক করতে পারবে'); return; }
+    if (!confirm(phone + ' কে সাব-অ্যাডমিন থেকে সরাবেন?')) return;
+    try {
+        await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}`, { method: 'PATCH', body: JSON.stringify({ role: 'student' }) });
+        showToast('✅ রিভোক হয়েছে');
+        loadSubAdmins();
+    } catch(e) { showToast('❌ এরর: ' + e.message); }
+}
+
+async function loadSubAdmins() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/users?role=eq.sub_admin&select=phone,name,created_at`);
+        if (!(data?.length)) { document.getElementById('subList').innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">কোনো সাব-অ্যাডমিন নেই</p>'; return; }
+        let html = '<table class="data-table"><tr><th>নাম</th><th>ফোন</th><th>যোগ দেওয়া</th><th>Actions</th></tr>';
+        data.forEach(u => {
+            html += `<tr>
+                <td><b>${u.name||'—'}</b></td>
+                <td>${u.phone}</td>
+                <td style="font-size:10px;color:var(--text2);">${new Date(u.created_at).toLocaleDateString('bn-BD')}</td>
+                <td style="white-space:nowrap;">
+                    <button class="btn btn-sm btn-outline" onclick="sendNotifToUser('${u.phone}','${u.name||''}')">🔔</button>
+                    ${isAdmin?`<button class="btn btn-sm btn-danger" onclick="revokeSubAdmin('${u.phone}')" style="margin-left:3px;">❌ রিভোক</button>`:''}
+                </td>
+            </tr>`;
+        });
+        html += '</table>';
+        document.getElementById('subList').innerHTML = html;
+    } catch(e) { document.getElementById('subList').innerHTML = '<p style="color:var(--red);">লোড এরর</p>'; }
+}
+
+// ============================================================
+// ==================== REPORTS ================================
+// ============================================================
 async function loadReports() {
     try {
-        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?select=*&order=created_at.desc&limit=30`);
+        const filter = document.getElementById('reportFilter')?.value || 'pending';
+        let url = `${SUPABASE_URL}/rest/v1/question_reports?select=*&order=created_at.desc&limit=50`;
+        if (filter !== 'all') url += `&status=eq.${filter}`;
+        const data = await safeFetch(url);
         if (!data?.length) { document.getElementById('reportList').innerHTML = '<p style="color:var(--text2);text-align:center;padding:20px;">কোনো রিপোর্ট নেই</p>'; return; }
         let html = '';
         data.forEach(r => {
-            const badge = r.status === 'pending' ? '🔴 পেন্ডিং' : r.status === 'approved' ? '✅ এপ্রুভড' : '❌ রিজেক্ট';
-            html += `<div class="form-card" style="border-left:3px solid ${r.status==='pending'?'var(--yellow)':r.status==='approved'?'var(--green)':'var(--red)'};"><p><b>📝 প্রশ্ন #${r.question_id||'—'}</b></p><p style="font-size:12px;">👤 ${r.reporter_phone||'—'} | ${r.report_type||'—'}</p><p style="font-size:12px;">💬 ${r.suggested_answer||'—'}</p><p><b>${badge}</b></p>${r.status==='pending'?`<div style="display:flex;gap:6px;margin-top:6px;"><button class="btn btn-sm btn-success" onclick="approveReport('${r.id}','${r.question_id}')">✅ Approve</button><button class="btn btn-sm btn-danger" onclick="rejectReport('${r.id}')">❌ Reject</button></div>`:''}${r.admin_response?`<p style="font-size:11px;color:var(--accent);margin-top:4px;">👑 ${r.admin_response}</p>`:''}</div>`;
+            const statusColor = r.status === 'pending' ? 'var(--yellow)' : r.status === 'approved' ? 'var(--green)' : 'var(--red)';
+            const statusText = r.status === 'pending' ? '🔴 পেন্ডিং' : r.status === 'approved' ? '✅ এপ্রুভড' : '❌ রিজেক্ট';
+            html += `<div class="form-card" style="border-left:3px solid ${statusColor};margin-bottom:8px;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;">
+                    <div>
+                        <p><b>📝 প্রশ্ন #${r.question_id||'—'}</b> <span style="font-size:10px;color:var(--text2);">${r.report_type||'—'}</span></p>
+                        <p style="font-size:12px;color:var(--text2);margin-top:2px;">👤 ${r.reporter_phone||'—'}</p>
+                        ${r.suggested_answer ? `<p style="font-size:12px;margin-top:4px;">💬 "${r.suggested_answer}"</p>` : ''}
+                        ${r.admin_response ? `<p style="font-size:11px;color:var(--accent);margin-top:4px;">👑 ${r.admin_response}</p>` : ''}
+                    </div>
+                    <span style="font-size:11px;font-weight:600;color:${statusColor};">${statusText}</span>
+                </div>
+                ${r.status === 'pending' ? `
+                <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+                    <button class="btn btn-sm btn-outline" onclick="openReportModal('${r.id}','${r.question_id||''}','${r.reporter_phone||''}')">📋 বিস্তারিত দেখুন</button>
+                    <button class="btn btn-sm btn-success" onclick="quickApprove('${r.id}','${r.question_id||''}','${r.reporter_phone||''}')">✅ Approve</button>
+                    <button class="btn btn-sm btn-danger" onclick="rejectReport('${r.id}','${r.reporter_phone||''}')">❌ Reject</button>
+                </div>` : ''}
+            </div>`;
         });
         document.getElementById('reportList').innerHTML = html;
-    } catch(e) {}
-}
-async function approveReport(rid, qid) {
-    const correct = prompt('সঠিক উত্তর (1-5):'); if (!correct) return;
-    const explanation = prompt('ব্যাখ্যা:');
-    try {
-        await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}`, { method: 'PATCH', body: JSON.stringify({ status: 'approved', admin_response: explanation||'এপ্রুভ', corrected_answer: correct, admin_phone: ADMIN_PHONE }) });
-        if (correct && qid) await safeFetch(`${SUPABASE_URL}/rest/v1/questions?id=eq.${qid}`, { method: 'PATCH', body: JSON.stringify({ answer_index: parseInt(correct), explanation: explanation||undefined }) });
-        const report = await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}&select=reporter_phone`);
-        if (report?.length && report[0].reporter_phone) {
-            await safeFetch(`${SUPABASE_URL}/rest/v1/notifications`, { method: 'POST', body: JSON.stringify({ phone: report[0].reporter_phone, title: '✅ রিপোর্ট এপ্রুভ', message: `প্রশ্ন #${qid} আপডেট: ${explanation||'সঠিক উত্তর সেট'}`, type: 'report_approved', is_read: false }) });
-        }
-        await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}`, { method: 'DELETE' });
-        showToast('✅ এপ্রুভ'); loadReports();
-    } catch(e) { alert('এরর: ' + e.message); }
-}
-async function rejectReport(rid) {
-    const reason = prompt('কারণ:'); if (!reason) return;
-    try {
-        await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}`, { method: 'PATCH', body: JSON.stringify({ status: 'rejected', admin_response: reason, admin_phone: ADMIN_PHONE }) });
-        const report = await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}&select=reporter_phone`);
-        if (report?.length && report[0].reporter_phone) {
-            await safeFetch(`${SUPABASE_URL}/rest/v1/notifications`, { method: 'POST', body: JSON.stringify({ phone: report[0].reporter_phone, title: '❌ রিপোর্ট রিজেক্ট', message: 'কারণ: ' + reason, type: 'report_rejected', is_read: false }) });
-        }
-        await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}`, { method: 'DELETE' });
-        showToast('❌ রিজেক্ট'); loadReports();
-    } catch(e) { alert('এরর: ' + e.message); }
+    } catch(e) { document.getElementById('reportList').innerHTML = '<p style="color:var(--red);">লোড এরর</p>'; }
 }
 
-// ========== OWNER ==========
-function previewOwner(input) { const f = input.files[0]; if (!f) return; const r = new FileReader(); r.onload = e => { document.getElementById('ownerPreview').src = e.target.result; document.getElementById('ownerPreview').style.display = 'block'; }; r.readAsDataURL(f); }
+async function openReportModal(rid, qid, reporterPhone) {
+    document.getElementById('reportModal').classList.add('active');
+    document.getElementById('reportModalContent').innerHTML = '<p style="text-align:center;padding:20px;color:var(--text2);">⏳ লোড হচ্ছে...</p>';
+    try {
+        let qHtml = '';
+        if (qid) {
+            const qData = await safeFetch(`${SUPABASE_URL}/rest/v1/questions?id=eq.${qid}&select=*`);
+            if (qData?.length) {
+                const q = qData[0];
+                const opts = [q.option1,q.option2,q.option3,q.option4,q.option5].filter(Boolean);
+                qHtml = `<div class="report-q-box">
+                    <p style="font-weight:600;margin-bottom:8px;">${q.question_text||'প্রশ্ন পাওয়া যায়নি'}</p>
+                    ${opts.map((o,i) => `<div class="report-option ${i+1===q.answer_index?'correct':''}">${String.fromCharCode(2453+i)}. ${o} ${i+1===q.answer_index?'✅':''}</div>`).join('')}
+                    ${q.explanation ? `<p style="font-size:11px;color:var(--accent);margin-top:8px;">💡 ${q.explanation}</p>` : ''}
+                </div>`;
+            }
+        }
+        document.getElementById('reportModalContent').innerHTML = `
+            ${qHtml}
+            <div class="input-group" style="margin-top:10px;"><label>সঠিক উত্তর (1-5)</label><input type="number" id="modalCorrectAns" min="1" max="5" placeholder="1"></div>
+            <div class="input-group"><label>Admin Response / Explanation</label><textarea id="modalAdminResp" rows="3" placeholder="ব্যাখ্যা লিখুন..."></textarea></div>
+            <div style="display:flex;gap:6px;margin-top:8px;">
+                <button class="btn btn-success" style="flex:1;" onclick="approveReport('${rid}','${qid}','${reporterPhone}')">✅ Approve</button>
+                <button class="btn btn-danger" style="flex:1;" onclick="rejectReport('${rid}','${reporterPhone}')">❌ Reject</button>
+            </div>`;
+    } catch(e) {
+        document.getElementById('reportModalContent').innerHTML = '<p style="color:var(--red);">লোড এরর</p>';
+    }
+}
+
+function closeReportModal() { document.getElementById('reportModal').classList.remove('active'); }
+
+async function approveReport(rid, qid, reporterPhone) {
+    const correct = document.getElementById('modalCorrectAns')?.value || prompt('সঠিক উত্তর (1-5):');
+    if (!correct) return;
+    const explanation = document.getElementById('modalAdminResp')?.value || prompt('ব্যাখ্যা:') || 'এপ্রুভ';
+    try {
+        await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}`, { method: 'PATCH', body: JSON.stringify({ status: 'approved', admin_response: explanation, corrected_answer: correct, admin_phone: ADMIN_PHONE }) });
+        if (correct && qid) await safeFetch(`${SUPABASE_URL}/rest/v1/questions?id=eq.${qid}`, { method: 'PATCH', body: JSON.stringify({ answer_index: parseInt(correct), explanation }) });
+        if (reporterPhone) await safeFetch(`${SUPABASE_URL}/rest/v1/notifications`, { method: 'POST', body: JSON.stringify({ phone: reporterPhone, title: '✅ রিপোর্ট এপ্রুভ', message: `প্রশ্ন #${qid} আপডেট: ${explanation}`, type: 'report_approved', is_read: false }) });
+        await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}`, { method: 'DELETE' });
+        showToast('✅ এপ্রুভ হয়েছে'); closeReportModal(); loadReports();
+    } catch(e) { showToast('❌ এরর: ' + e.message); }
+}
+
+async function quickApprove(rid, qid, reporterPhone) {
+    const correct = prompt('সঠিক উত্তর নম্বর (1-5):'); if (!correct) return;
+    const explanation = prompt('ব্যাখ্যা (ঐচ্ছিক):') || 'এপ্রুভ';
+    await approveReport_direct(rid, qid, reporterPhone, correct, explanation);
+}
+
+async function approveReport_direct(rid, qid, reporterPhone, correct, explanation) {
+    try {
+        await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}`, { method: 'PATCH', body: JSON.stringify({ status: 'approved', admin_response: explanation, corrected_answer: correct, admin_phone: ADMIN_PHONE }) });
+        if (correct && qid) await safeFetch(`${SUPABASE_URL}/rest/v1/questions?id=eq.${qid}`, { method: 'PATCH', body: JSON.stringify({ answer_index: parseInt(correct), explanation }) });
+        if (reporterPhone) await safeFetch(`${SUPABASE_URL}/rest/v1/notifications`, { method: 'POST', body: JSON.stringify({ phone: reporterPhone, title: '✅ রিপোর্ট এপ্রুভ', message: `প্রশ্ন আপডেট: ${explanation}`, type: 'report_approved', is_read: false }) });
+        await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}`, { method: 'DELETE' });
+        showToast('✅ এপ্রুভ হয়েছে'); loadReports();
+    } catch(e) { showToast('❌ এরর: ' + e.message); }
+}
+
+async function rejectReport(rid, reporterPhone) {
+    const reason = prompt('রিজেক্ট কারণ লিখুন:'); if (!reason) return;
+    try {
+        await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}`, { method: 'PATCH', body: JSON.stringify({ status: 'rejected', admin_response: reason, admin_phone: ADMIN_PHONE }) });
+        if (reporterPhone) await safeFetch(`${SUPABASE_URL}/rest/v1/notifications`, { method: 'POST', body: JSON.stringify({ phone: reporterPhone, title: '❌ রিপোর্ট রিজেক্ট', message: 'কারণ: ' + reason, type: 'report_rejected', is_read: false }) });
+        await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}`, { method: 'DELETE' });
+        showToast('❌ রিজেক্ট হয়েছে'); closeReportModal(); loadReports();
+    } catch(e) { showToast('❌ এরর: ' + e.message); }
+}
+
+// ============================================================
+// ==================== OWNER ==================================
+// ============================================================
+function previewOwner(input) {
+    const f = input.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = e => { document.getElementById('ownerPreview').src = e.target.result; document.getElementById('ownerPreview').style.display = 'block'; };
+    r.readAsDataURL(f);
+}
+
 function saveOwner() {
     const name = document.getElementById('ownerName').value.trim();
     const info = document.getElementById('ownerInfo').value.trim();
     const photo = document.getElementById('ownerPreview').src;
     if (photo?.startsWith('data:')) localStorage.setItem('owner_photo', photo);
-    localStorage.setItem('owner_name', name); localStorage.setItem('owner_info', info);
-    safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${ADMIN_PHONE}`, { method: 'PATCH', body: JSON.stringify({ name, photo_url: photo||null }) }).then(() => showToast('✅ সেইভ'));
+    localStorage.setItem('owner_name', name);
+    localStorage.setItem('owner_info', info);
+    safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${ADMIN_PHONE}`, { method: 'PATCH', body: JSON.stringify({ name, photo_url: photo?.startsWith('data:') ? photo : undefined }) })
+        .then(() => showToast('✅ সেইভ হয়েছে')).catch(e => showToast('✅ LocalStorage সেইভ হয়েছে'));
 }
+
 function loadOwner() {
     document.getElementById('ownerName').value = localStorage.getItem('owner_name') || 'ATLAS EXAM';
     document.getElementById('ownerInfo').value = localStorage.getItem('owner_info') || '';
@@ -740,50 +1548,283 @@ function loadOwner() {
     if (photo) { document.getElementById('ownerPreview').src = photo; document.getElementById('ownerPreview').style.display = 'block'; }
 }
 
-// ========== MENTORS ==========
-function previewMentor(input) { const f = input.files[0]; if (!f) return; const r = new FileReader(); r.onload = e => { document.getElementById('mentorPreview').src = e.target.result; document.getElementById('mentorPreview').style.display = 'block'; }; r.readAsDataURL(f); }
+// ============================================================
+// ==================== MENTORS ================================
+// ============================================================
+function previewMentor(input) {
+    const f = input.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = e => { document.getElementById('mentorPreview').src = e.target.result; document.getElementById('mentorPreview').style.display = 'block'; };
+    r.readAsDataURL(f);
+}
+
 function saveMentor() {
     const file = document.getElementById('mentorPhotoFile').files[0];
-    const d = { name: document.getElementById('mentorName').value.trim(), role: document.getElementById('mentorRole').value.trim(), subject: document.getElementById('mentorRole').value.trim() };
+    const d = {
+        name: document.getElementById('mentorName').value.trim(),
+        role: document.getElementById('mentorRole').value.trim(),
+        subject: document.getElementById('mentorRole').value.trim(),
+        sort_order: parseInt(document.getElementById('mentorSortOrder').value) || 0
+    };
     if (!d.name) { showToast('⚠️ নাম দিন'); return; }
-    if (file) { const r = new FileReader(); r.onload = e => { d.photo_url = e.target.result; saveItem('mentors', d, document.getElementById('mentorEditId').value || null, clearMentorForm, loadMentors); }; r.readAsDataURL(file); }
-    else { saveItem('mentors', d, document.getElementById('mentorEditId').value || null, clearMentorForm, loadMentors); }
+    if (file) {
+        const r = new FileReader();
+        r.onload = e => { d.photo_url = e.target.result; saveItem('mentors', d, document.getElementById('mentorEditId').value || null, clearMentorForm, loadMentors); };
+        r.readAsDataURL(file);
+    } else {
+        saveItem('mentors', d, document.getElementById('mentorEditId').value || null, clearMentorForm, loadMentors);
+    }
 }
-function clearMentorForm() { ['mentorName','mentorRole','mentorEditId'].forEach(id => document.getElementById(id).value = ''); document.getElementById('mentorPhotoFile').value = ''; document.getElementById('mentorPreview').style.display = 'none'; }
+
+function clearMentorForm() {
+    ['mentorName','mentorRole','mentorEditId','mentorSortOrder'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('mentorPhotoFile').value = '';
+    document.getElementById('mentorPreview').style.display = 'none';
+}
+
 async function loadMentors() {
     try {
-        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/mentors?select=*&order=sort_order,created_at`);
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/mentors?select=*&order=sort_order.asc,created_at.asc`);
+        if (!(data?.length)) { document.getElementById('mentorList').innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">কোনো মেন্টর নেই</p>'; return; }
         let html = '<div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;">';
-        if (data) data.forEach(m => { html += `<div style="text-align:center;width:100px;"><img src="${m.photo_url||''}" style="width:80px;height:80px;border-radius:10px;object-fit:cover;border:2px solid var(--border);background:var(--hover);" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22><rect fill=%22%23333%22 width=%2280%22 height=%2280%22 rx=%2210%22/><text fill=%22%23fff%22 x=%2225%22 y=%2248%22 font-size=%2228%22>👤</text></svg>'"><p style="font-size:11px;font-weight:700;margin-top:4px;">${m.name}</p><p style="font-size:10px;color:var(--text2);">${m.role||''}</p><button class="btn btn-sm btn-outline" onclick="editMentor('${m.id}')">✏️</button> ${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('mentors','${m.id}',loadMentors)">🗑️</button>`:''}</div>`; });
+        data.forEach(m => {
+            const fallbackSvg = `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><rect fill='%23333' width='80' height='80' rx='10'/><text fill='%23fff' x='25' y='48' font-size='28'>👤</text></svg>`;
+            html += `<div style="text-align:center;width:100px;">
+                <img src="${m.photo_url||fallbackSvg}" style="width:80px;height:80px;border-radius:10px;object-fit:cover;border:2px solid var(--border);background:var(--hover);" onerror="this.src='${fallbackSvg}'">
+                <p style="font-size:11px;font-weight:700;margin-top:4px;">${m.name}</p>
+                <p style="font-size:10px;color:var(--text2);">${m.role||''}</p>
+                <div style="display:flex;gap:3px;justify-content:center;margin-top:4px;">
+                    <button class="btn btn-sm btn-outline" onclick="editMentor('${m.id}')">✏️</button>
+                    ${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('mentors','${m.id}',loadMentors)">🗑️</button>`:''}
+                </div>
+            </div>`;
+        });
         html += '</div>';
-        document.getElementById('mentorList').innerHTML = html || '<p style="color:var(--text2);">কোনো মেন্টর নেই</p>';
-    } catch(e) {}
+        document.getElementById('mentorList').innerHTML = html;
+    } catch(e) { document.getElementById('mentorList').innerHTML = '<p style="color:var(--red);">লোড এরর</p>'; }
 }
-function editMentor(id) { editItem('mentors', id, m => { document.getElementById('mentorEditId').value = m.id; document.getElementById('mentorName').value = m.name||''; document.getElementById('mentorRole').value = m.role||m.subject||''; if (m.photo_url) { document.getElementById('mentorPreview').src = m.photo_url; document.getElementById('mentorPreview').style.display = 'block'; } }); }
 
-// ========== SPECIAL CARD ==========
-function previewSpecial(input) { const f = input.files[0]; if (!f) return; const r = new FileReader(); r.onload = e => { document.getElementById('specialPreview').src = e.target.result; document.getElementById('specialPreview').style.display = 'block'; }; r.readAsDataURL(f); }
+function editMentor(id) {
+    editItem('mentors', id, m => {
+        document.getElementById('mentorEditId').value = m.id;
+        document.getElementById('mentorName').value = m.name || '';
+        document.getElementById('mentorRole').value = m.role || m.subject || '';
+        document.getElementById('mentorSortOrder').value = m.sort_order || 0;
+        if (m.photo_url) { document.getElementById('mentorPreview').src = m.photo_url; document.getElementById('mentorPreview').style.display = 'block'; }
+        window.scrollTo({top:0,behavior:'smooth'});
+    });
+}
+
+// ============================================================
+// ==================== SPECIAL CARD ===========================
+// ============================================================
+function previewSpecial(input) {
+    const f = input.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = e => { document.getElementById('specialPreview').src = e.target.result; document.getElementById('specialPreview').style.display = 'block'; };
+    r.readAsDataURL(f);
+}
+
 function saveSpecial() {
     const file = document.getElementById('specialPhotoFile').files[0];
-    const d = { description: document.getElementById('specialDesc').value.trim(), special_text: document.getElementById('specialText').value.trim(), link: document.getElementById('specialLink').value.trim() };
-    if (file) { const r = new FileReader(); r.onload = e => { d.image_url = e.target.result; saveItem('special_cards', d, document.getElementById('specialEditId').value || null, clearSpecialForm, loadSpecials); }; r.readAsDataURL(file); }
-    else { saveItem('special_cards', d, document.getElementById('specialEditId').value || null, clearSpecialForm, loadSpecials); }
+    const d = {
+        description: document.getElementById('specialDesc').value.trim() || null,
+        special_text: document.getElementById('specialText').value.trim() || null,
+        link: document.getElementById('specialLink').value.trim() || null
+    };
+    if (file) {
+        const r = new FileReader();
+        r.onload = e => { d.image_url = e.target.result; saveItem('special_cards', d, document.getElementById('specialEditId').value || null, clearSpecialForm, loadSpecials); };
+        r.readAsDataURL(file);
+    } else {
+        saveItem('special_cards', d, document.getElementById('specialEditId').value || null, clearSpecialForm, loadSpecials);
+    }
 }
-function clearSpecialForm() { ['specialDesc','specialText','specialLink','specialEditId'].forEach(id => document.getElementById(id).value = ''); document.getElementById('specialPhotoFile').value = ''; document.getElementById('specialPreview').style.display = 'none'; }
+
+function clearSpecialForm() {
+    ['specialDesc','specialText','specialLink','specialEditId'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('specialPhotoFile').value = '';
+    document.getElementById('specialPreview').style.display = 'none';
+}
+
 async function loadSpecials() {
     try {
         const data = await safeFetch(`${SUPABASE_URL}/rest/v1/special_cards?select=*&order=created_at.desc&limit=10`);
+        if (!(data?.length)) { document.getElementById('specialList').innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">কোনো কার্ড নেই</p>'; return; }
         let html = '';
-        if (data) data.forEach(s => { html += `<div class="list-item"><div><b>${s.special_text||'🃏 কার্ড'}</b><br><span style="font-size:11px;color:var(--text2);">${s.description||''}</span></div><div style="display:flex;gap:4px;"><button class="btn btn-sm btn-outline" onclick="editSpecial('${s.id}')">✏️</button> ${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('special_cards','${s.id}',loadSpecials)">🗑️</button>`:''}</div></div>`; });
-        document.getElementById('specialList').innerHTML = html || '<p style="color:var(--text2);">কোনো কার্ড নেই</p>';
-    } catch(e) {}
+        data.forEach(s => {
+            html += `<div class="list-item">
+                <div style="flex:1;">
+                    ${s.image_url ? `<img src="${s.image_url}" style="width:60px;height:40px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:8px;">` : ''}
+                    <b>${s.special_text||'🃏 কার্ড'}</b>
+                    ${s.description ? `<br><span style="font-size:11px;color:var(--text2);">${s.description}</span>` : ''}
+                </div>
+                <div style="display:flex;gap:3px;flex-shrink:0;">
+                    <button class="btn btn-sm btn-outline" onclick="editSpecial('${s.id}')">✏️</button>
+                    ${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('special_cards','${s.id}',loadSpecials)">🗑️</button>`:''}
+                </div>
+            </div>`;
+        });
+        document.getElementById('specialList').innerHTML = html;
+    } catch(e) { document.getElementById('specialList').innerHTML = '<p style="color:var(--red);">লোড এরর</p>'; }
 }
-function editSpecial(id) { editItem('special_cards', id, s => { document.getElementById('specialEditId').value = s.id; document.getElementById('specialDesc').value = s.description||''; document.getElementById('specialText').value = s.special_text||''; document.getElementById('specialLink').value = s.link||''; if (s.image_url) { document.getElementById('specialPreview').src = s.image_url; document.getElementById('specialPreview').style.display = 'block'; } }); }
 
-// ========== INIT ==========
+function editSpecial(id) {
+    editItem('special_cards', id, s => {
+        document.getElementById('specialEditId').value = s.id;
+        document.getElementById('specialDesc').value = s.description || '';
+        document.getElementById('specialText').value = s.special_text || '';
+        document.getElementById('specialLink').value = s.link || '';
+        if (s.image_url) { document.getElementById('specialPreview').src = s.image_url; document.getElementById('specialPreview').style.display = 'block'; }
+        window.scrollTo({top:0,behavior:'smooth'});
+    });
+}
+
+// ============================================================
+// ==================== SERIAL MANAGEMENT ======================
+// ============================================================
+const serialConfig = {
+    class: { table: 'classes', label: '📚 ক্লাস', nameField: d => `${d.subject} › ${d.chapter}` },
+    exam: { table: 'exams', label: '📝 এক্সাম', nameField: d => `${d.subject} › ${d.chapter}` },
+    kakha: { table: 'ka_kha_cq', label: '📦 ক,খ,CQ', nameField: d => `${d.subject} › ${d.chapter} [${d.type||'—'}]` },
+    timer: { table: 'countdowns', label: '⏰ টাইমার', nameField: d => d.main_topic },
+    mock: { table: 'mock_questions', label: '🎯 Mock', nameField: d => `${d.subject} › ${d.chapter}` },
+    social: { table: 'social_links', label: '🔗 Social', nameField: d => d.media_name },
+    mentors: { table: 'mentors', label: '👨‍🏫 Mentors', nameField: d => d.name },
+    modeltest: { table: 'model_tests', label: '📖 Model Test', nameField: d => `${d.type} › ${d.subject||d.varsity_name||'—'}` }
+};
+
+async function openSerialModal(key) {
+    const cfg = serialConfig[key]; if (!cfg) return;
+    serialTable = cfg.table;
+    document.getElementById('serialModalTitle').textContent = `🔢 Serial — ${cfg.label}`;
+    document.getElementById('serialModal').classList.add('active');
+    document.getElementById('serialList').innerHTML = '<p style="text-align:center;padding:16px;color:var(--text2);">⏳ লোড হচ্ছে...</p>';
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/${cfg.table}?select=*&order=sort_order.asc,created_at.asc&limit=100`);
+        serialItems = data || [];
+        renderSerialList(cfg);
+    } catch(e) {
+        document.getElementById('serialList').innerHTML = '<p style="color:var(--red);">লোড এরর — sort_order column লাগবে</p>';
+    }
+}
+
+function renderSerialList(cfg) {
+    if (!serialItems.length) { document.getElementById('serialList').innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">কোনো ডাটা নেই</p>'; return; }
+    let html = '<p style="font-size:11px;color:var(--text2);margin-bottom:8px;">⬆️⬇️ Drag করে Order ঠিক করুন</p>';
+    serialItems.forEach((item, i) => {
+        html += `<div class="serial-item" draggable="true" data-idx="${i}"
+            ondragstart="serialDragStart(event,${i})"
+            ondragover="serialDragOver(event,${i})"
+            ondrop="serialDrop(event,${i})"
+            ondragend="serialDragEnd()">
+            <span class="drag-handle">⠿</span>
+            <span class="serial-order-num">${i+1}</span>
+            <span style="flex:1;font-size:13px;">${cfg.nameField(item)}</span>
+            <div style="display:flex;gap:3px;">
+                ${i > 0 ? `<button class="btn btn-sm btn-outline" onclick="moveSerial(${i},-1)" style="padding:3px 6px;">⬆️</button>` : ''}
+                ${i < serialItems.length-1 ? `<button class="btn btn-sm btn-outline" onclick="moveSerial(${i},1)" style="padding:3px 6px;">⬇️</button>` : ''}
+            </div>
+        </div>`;
+    });
+    document.getElementById('serialList').innerHTML = html;
+}
+
+function serialDragStart(e, idx) { dragSrcIdx = idx; e.currentTarget.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
+function serialDragOver(e, idx) { e.preventDefault(); document.querySelectorAll('.serial-item').forEach(el => el.classList.remove('drag-over')); e.currentTarget.classList.add('drag-over'); }
+function serialDrop(e, idx) {
+    e.preventDefault();
+    if (dragSrcIdx === null || dragSrcIdx === idx) return;
+    const moved = serialItems.splice(dragSrcIdx, 1)[0];
+    serialItems.splice(idx, 0, moved);
+    const key = Object.keys(serialConfig).find(k => serialConfig[k].table === serialTable);
+    renderSerialList(serialConfig[key]);
+}
+function serialDragEnd() { dragSrcIdx = null; document.querySelectorAll('.serial-item').forEach(el => { el.classList.remove('dragging','drag-over'); }); }
+
+function moveSerial(idx, dir) {
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= serialItems.length) return;
+    [serialItems[idx], serialItems[newIdx]] = [serialItems[newIdx], serialItems[idx]];
+    const key = Object.keys(serialConfig).find(k => serialConfig[k].table === serialTable);
+    renderSerialList(serialConfig[key]);
+}
+
+async function saveSerial() {
+    if (!serialTable || !serialItems.length) return;
+    showToast('⏳ Order সেইভ হচ্ছে...');
+    let errors = 0;
+    for (let i = 0; i < serialItems.length; i++) {
+        try {
+            await safeFetch(`${SUPABASE_URL}/rest/v1/${serialTable}?id=eq.${serialItems[i].id}`, { method: 'PATCH', body: JSON.stringify({ sort_order: i }) });
+        } catch(e) { errors++; }
+    }
+    if (errors === 0) showToast('✅ Order সেইভ হয়েছে');
+    else showToast(`✅ ${serialItems.length - errors}টি সেইভ, ${errors}টি এরর`);
+}
+
+function closeSerialModal() { document.getElementById('serialModal').classList.remove('active'); serialTable = ''; serialItems = []; }
+
+// ============================================================
+// ==================== NOTIFICATIONS ==========================
+// ============================================================
+function selectNotifType(type, el) {
+    notifType = type;
+    document.querySelectorAll('.notif-type-row .chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('notifPhoneField').style.display = type === 'phone' ? 'block' : 'none';
+}
+
+function openNotifModal() {
+    notifType = 'all';
+    document.getElementById('notifTypeAll').classList.add('active');
+    document.getElementById('notifTypePhone').classList.remove('active');
+    document.getElementById('notifPhoneField').style.display = 'none';
+    document.getElementById('notifTitle').value = '';
+    document.getElementById('notifMessage').value = '';
+    document.getElementById('notifPhone').value = '';
+    document.getElementById('notifModal').classList.add('active');
+}
+
+function closeNotifModal() { document.getElementById('notifModal').classList.remove('active'); }
+
+async function sendNotification() {
+    const title = document.getElementById('notifTitle').value.trim();
+    const message = document.getElementById('notifMessage').value.trim();
+    if (!title || !message) { showToast('⚠️ টাইটেল ও বার্তা দিন'); return; }
+    try {
+        if (notifType === 'phone') {
+            const phone = document.getElementById('notifPhone').value.trim();
+            if (!phone) { showToast('⚠️ ফোন নম্বর দিন'); return; }
+            await safeFetch(`${SUPABASE_URL}/rest/v1/notifications`, { method: 'POST', body: JSON.stringify({ phone, title, message, type: 'admin', is_read: false }) });
+            showToast('✅ নোটিফিকেশন পাঠানো হয়েছে');
+        } else {
+            // Broadcast — send to all users
+            const users = await safeFetch(`${SUPABASE_URL}/rest/v1/users?select=phone&limit=500`);
+            let sent = 0;
+            for (const u of (users || [])) {
+                try {
+                    await safeFetch(`${SUPABASE_URL}/rest/v1/notifications`, { method: 'POST', body: JSON.stringify({ phone: u.phone, title, message, type: 'broadcast', is_read: false }) });
+                    sent++;
+                } catch(e) {}
+            }
+            showToast(`✅ ${sent} জনকে পাঠানো হয়েছে`);
+        }
+        closeNotifModal();
+    } catch(e) { showToast('❌ এরর: ' + e.message); }
+}
+
+// ============================================================
+// ==================== INIT ===================================
+// ============================================================
 document.addEventListener('DOMContentLoaded', () => {
     currentUser = { phone: ADMIN_PHONE, role: 'admin' };
-    loadClasses(); loadOwner();
+    loadClasses();
+    loadOwner();
+    // Close modals on overlay click
+    document.getElementById('reportModal').addEventListener('click', function(e) { if(e.target===this) closeReportModal(); });
+    document.getElementById('serialModal').addEventListener('click', function(e) { if(e.target===this) closeSerialModal(); });
+    document.getElementById('notifModal').addEventListener('click', function(e) { if(e.target===this) closeNotifModal(); });
 });
 </script>
 </body>
