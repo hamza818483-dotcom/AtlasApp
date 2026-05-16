@@ -997,10 +997,24 @@ async function sendMessage() {
     setStatus('busy');
     showTyping();
 
-    const result = await askAI(question, imageData);
+  const result = await askAI(question, imageData);
 
-    hideTyping();
-    addAIMessage(result.answer);
+// ✅ Greeting for first AI reply
+let finalAnswer = result.answer;
+const session = localStorage.getItem('atlas-session');
+if (session) {
+    try {
+        const user = JSON.parse(session);
+        const userName = user.name || 'শিক্ষার্থী';
+        const aiReplies = chatHistory.filter(m => m.type === 'ai');
+        if (aiReplies.length === 0) {
+            finalAnswer = `Welcome to ATLAS Ai, প্রিয় ${userName}! 😊\n\n${finalAnswer}`;
+        }
+    } catch(e) {}
+}
+
+hideTyping();
+addAIMessage(finalAnswer);
     isAIBusy = false;
     document.getElementById('sendBtn').disabled = false;
     setStatus('ready');
