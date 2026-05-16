@@ -330,7 +330,7 @@ function handleCSV(input, labelId) {
     document.getElementById(labelId).textContent = '📄 ' + file.name;
     const reader = new FileReader();
     reader.onload = function(e) {
-        const text = e.target.result;
+        let text = e.target.result;
         const lines = parseCSV(text);
         if (lines.length < 2) { showToast('⚠️ ডাটা নেই'); return; }
         
