@@ -509,37 +509,7 @@ async function saveExam() {
         
         // Step 2: Save Questions ONE BY ONE
         let saved = 0;
-        for (const q of examCSVData) {
-    const qData = {
-        exam_id: examId,
-        question_text: q.questions || q.question_text || '',
-        option1: q.option1 || '',
-        option2: q.option2 || '',
-        option3: q.option3 || '',
-        option4: q.option4 || '',
-        option5: q.option5 || null,
-        answer_index: parseInt(q.answer) || 1,
-        explanation: q.explanation || '',
-        type: parseInt(q.type) || 1,
-        section: parseInt(q.section) || 1
-    };
-    
-    // 🔥 এই console add করো
-    console.log('Saving Q:', qData.question_text.substring(0, 50));
-    console.log('Full Q Data:', JSON.stringify(qData).substring(0, 100));
-    
-    await fetch(`${SUPABASE_URL}/rest/v1/questions`, {
-        method: 'POST',
-        headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': 'Bearer ' + SUPABASE_KEY,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify(qData)
-    });
-    saved++;
-}
+        
         for (const q of examCSVData) {
             const qData = {
                 exam_id: examId,
