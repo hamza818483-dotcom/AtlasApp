@@ -334,18 +334,18 @@ function handleCSV(input, labelId) {
         const lines = parseCSV(text);
         if (lines.length < 2) { showToast('⚠️ ডাটা নেই'); return; }
         
-        // Find header row
-        const header = lines[0];
-        const qIdx = header.indexOf('question');
-        const o1Idx = header.indexOf('option1');
-        const o2Idx = header.indexOf('option2');
-        const o3Idx = header.indexOf('option3');
-        const o4Idx = header.indexOf('option4');
-        const o5Idx = header.indexOf('option5');
-        const aIdx = header.indexOf('answer');
-        const eIdx = header.indexOf('explanation');
-        const tIdx = header.indexOf('type');
-        const sIdx = header.indexOf('section');
+// Header - cleaned (BOM + space + case fix)
+const cleanHeader = lines[0].map(h => h.replace(/^\uFEFF/, '').trim().toLowerCase());
+const qIdx = cleanHeader.indexOf('question');
+const o1Idx = cleanHeader.indexOf('option1');
+const o2Idx = cleanHeader.indexOf('option2');
+const o3Idx = cleanHeader.indexOf('option3');
+const o4Idx = cleanHeader.indexOf('option4');
+const o5Idx = cleanHeader.indexOf('option5');
+const aIdx = cleanHeader.indexOf('answer');
+const eIdx = cleanHeader.indexOf('explanation');
+const tIdx = cleanHeader.indexOf('type');
+const sIdx = cleanHeader.indexOf('section');
         
         const data = [];
         for (let i = 1; i < lines.length; i++) {
