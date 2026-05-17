@@ -1946,6 +1946,124 @@ async function retakeExam(examId) {
         goTo(`exam.html?exam_id=${examId}`);
     }
 }
+// ============================================================
+// 🔥 FINAL FIX — OVERRIDE ALL OLD FUNCTIONS
+// ============================================================
+
+// Override startMistakePractice
+window.startMistakePractice = function(mode) {
+    const saved = localStorage.getItem('mistakes_' + currentUser.phone);
+    const mistakes = saved ? JSON.parse(saved) : [];
+    
+    let filteredMistakes = mistakes.filter(m => {
+        const q = m.question || m;
+        return q && (q.question_text || q.question || q.option1);
+    });
+    
+    if (mode === 'wrong') {
+        filteredMistakes = filteredMistakes.filter(m => {
+            const userAns = m.user_answer || m.userAns;
+            const correctAns = (m.question || m).answer_index || (m.question || m).correct_option;
+            return userAns !== undefined && userAns !== null && String(userAns) !== String(correctAns);
+        });
+    }
+    
+    if (!filteredMistakes.length) { showToast('⚠️ কোনো প্রশ্ন নেই!'); return; }
+    
+    const questions = filteredMistakes.map(m => {
+        const q = m.question || m;
+        return {
+            id: q.id || m.question_id || Math.random(),
+            question_text: q.question_text || q.question || 'প্রশ্ন',
+            option1: q.option1 || '', option2: q.option2 || '', option3: q.option3 || '',
+            option4: q.option4 || '', option5: q.option5 || null,
+            answer_index: q.answer_index || q.correct_option || 1,
+            explanation: q.explanation || ''
+        };
+    });
+    
+    const title = mode === 'wrong' ? '⚡ P-01 (শুধু ভুল)' : '📚 P-02 (ভুল+স্কিপ)';
+    startPracticeExam(questions, title, () => window.startMistakePractice(mode));
+};
+
+// Override submitPracticeExam
+window.submitPracticeExam = function() {
+    clearInterval(practiceTimer);
+    document.getElementById('examOverlay').classList.remove('active');
+    
+    let correct = 0, wrong = 0, skipped = 0;
+    const reviewData = [];
+    practiceQuestions.forEach((q, i) => {
+        const userAns = practiceAnswers[i];
+        const correctAns = q.answer_index || q.correct_option;
+        let status = 'skipped';
+        if (userAns !== undefined && userAns !== null) status = String(userAns) === String(correctAns) ? 'correct' : 'wrong';
+        if (status === 'correct') correct++; else if (status === 'wrong') wrong++; else skipped++;
+        reviewData.push({ q, userAns, status, correctAns });
+    });
+    
+    const total = practiceQuestions.length;
+    const negMark = wrong * 0.25;
+    let baseScore = correct - negMark, finalScore = baseScore, timerDeduction = 0, isSecondTimer = false;
+    const sess = currentUser;
+    const sscGpa = parseFloat(sess?.ssc_gpa) || 0, hscGpa = parseFloat(sess?.hsc_gpa) || 0;
+    const gpaScore = (sscGpa * 8) + (hscGpa * 12);
+    if (sess?.timer_type === 'second') { isSecondTimer = true; timerDeduction = total <= 50 ? 1.50 : 3.00; finalScore = baseScore - timerDeduction; }
+    const withoutGpa = finalScore, withGpa = finalScore + gpaScore, pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+    
+    const wrongQs = reviewData.filter(r => r.status === 'wrong');
+    if (wrongQs.length) {
+        const savedM = localStorage.getItem('mistakes_' + currentUser.phone);
+        const mistakes = savedM ? JSON.parse(savedM) : [];
+        wrongQs.forEach(r => {
+            if (!mistakes.find(m => String(m.question_id || m.question?.id) === String(r.q.id))) {
+                mistakes.push({ question_id: r.q.id, question: r.q, user_answer: r.userAns, subject: practiceTitle, timestamp: new Date().toISOString() });
+            }
+        });
+        localStorage.setItem('mistakes_' + currentUser.phone, JSON.stringify(mistakes));
+    }
+    
+    if (typeof showResultScreenNew === 'function') {
+        showResultScreenNew(withoutGpa, total, correct, wrong, skipped, pct, practiceTitle, reviewData, negMark, gpaScore, withGpa, isSecondTimer, timerDeduction);
+    } else {
+        document.getElementById('resultScore').textContent = withoutGpa.toFixed(2) + '/' + total;
+        document.getElementById('resultTitle').textContent = practiceTitle;
+        document.getElementById('resultOverlay').classList.add('active');
+    }
+};
+
+// Override viewMistakeDetail
+window.viewMistakeDetail = function(qId) {
+    const saved = localStorage.getItem('mistakes_' + currentUser.phone);
+    const mistakes = saved ? JSON.parse(saved) : [];
+    const mistake = mistakes.find(m => String(m.question_id || m.question?.id) === String(qId));
+    if (!mistake) { showToast('❌ পাওয়া যায়নি'); return; }
+    
+    const q = (mistake.question && (mistake.question.question_text || mistake.question.option1)) ? mistake.question : mistake;
+    const optBn = ['ক','খ','গ','ঘ','ঙ'];
+    const opts = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(o => o && o !== '—');
+    const correctAns = q.answer_index || q.correct_option || 1;
+    const userAns = mistake.user_answer || mistake.userAns;
+    
+    let html = `<div class="modal-title">⚠️ ভুল প্রশ্ন বিস্তারিত</div>
+        <span class="q-status wrong">❌ ভুল ${userAns ? '(আপনি: ' + optBn[userAns-1] + ')' : ''}</span>
+        <div class="question-text" style="margin-top:8px;">${escHtml(q.question_text || q.question || 'প্রশ্ন পাওয়া যায়নি')}</div>`;
+    if (opts.length > 0) {
+        html += `<ul class="options-list" style="margin-top:8px;">`;
+        opts.forEach((opt, i) => {
+            const isCorrect = (i+1) === parseInt(correctAns), isUserWrong = String(userAns) === String(i+1) && !isCorrect;
+            html += `<li class="option-item ${isCorrect?'correct':isUserWrong?'wrong':''}"><span class="option-key">${optBn[i]}</span>${escHtml(opt)} ${isCorrect?'✅':''} ${isUserWrong?'❌':''}</li>`;
+        });
+        html += `</ul>`;
+    }
+    html += `${q.explanation?`<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>`:''}
+        <div class="modal-close-strip"><button class="btn btn-outline" onclick="document.getElementById('detailModal').classList.remove('active')" style="width:100%;">✕ বন্ধ</button></div>`;
+    
+    document.getElementById('detailModalContent').innerHTML = html;
+    document.getElementById('detailModal').classList.add('active');
+};
+
+showToast('✅ Dashboard fixes loaded!', 2000);
 </script>
 </body>
 </html>
