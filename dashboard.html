@@ -1369,37 +1369,6 @@ function exitPracticeExam() {
 }
 
 
-function showResultScreen(score, total, correct, wrong, skipped, pct, title, reviewData) {
-    const badge = pct >= 80 ? 'score-high' : pct >= 50 ? 'score-mid' : 'score-low';
-    document.getElementById('resultScore').textContent = score.toFixed(1) + '/' + total;
-    document.getElementById('resultTitle').textContent = title;
-    document.getElementById('resultSubtitle').textContent = `${pct}% সঠিক`;
-    document.getElementById('resCorrect').textContent = correct;
-    document.getElementById('resWrong').textContent = wrong;
-    document.getElementById('resSkipped').textContent = skipped;
-    document.getElementById('resPct').textContent = pct + '%';
-    const optBn = ['ক','খ','গ','ঘ','ঙ'];
-    const reviewHtml = reviewData.map(({ q, userAns, status, correctAns }) => {
-        const opts = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(Boolean);
-        const optsHtml = opts.map((opt, i) => {
-            const isCorrect = (i + 1) === parseInt(correctAns);
-            const isUserWrong = String(userAns) === String(i + 1) && !isCorrect;
-            return `<li class="option-item ${isCorrect?'correct':isUserWrong?'wrong':''}"><span class="option-key">${optBn[i]}</span>${escHtml(opt)}</li>`;
-        }).join('');
-        return `<div class="question-card">
-            <span class="q-status ${status}">${status==='correct'?'✅ সঠিক':status==='wrong'?'❌ ভুল':'⏭️ স্কিপ'}</span>
-            <div class="question-text" style="font-size:12px;">${escHtml(q.question_text||q.question||'')}</div>
-            <ul class="options-list">${optsHtml}</ul>
-            ${q.explanation?`<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>`:''}
-        </div>`;
-    }).join('');
-    document.getElementById('resultReviewList').innerHTML = reviewHtml;
-    document.getElementById('resultOverlay').classList.add('active');
-}
-
-function closeResultOverlay() {
-    document.getElementById('resultOverlay').classList.remove('active');
-}
 
 function retryFromResult() {
     closeResultOverlay();
