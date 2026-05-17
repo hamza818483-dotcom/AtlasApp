@@ -1252,6 +1252,7 @@ function loadMistakes() {
                 ${optsHtml?`<ul class="options-list" style="margin-top:6px;">${optsHtml}</ul>`:''}
                 ${q.explanation?`<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>`:''}
                 <div class="btn-row">
+                      <button class="btn btn-outline" onclick="viewMistakeDetail('${m.question_id || q.id || idx}')">📋 বিস্তারিত</button>
                     <button class="ai-explain-btn" onclick="loadAiExplain(this,'${q.id||''}','${escHtml(q.question_text||q.question||'')}')">🤖 AI ব্যাখ্যা</button>
                     <button class="btn btn-danger" onclick="removeMistake('${m.question_id||q.id||idx}')" style="padding:5px 8px;font-size:10px;">🗑️</button>
                 </div>
