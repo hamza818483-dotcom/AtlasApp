@@ -2027,7 +2027,7 @@ function startMistakePractice(mode) {
             return userAns !== undefined && userAns !== null && String(userAns) !== String(correctAns);
         });
     }
-    if (!filtered.length) { showToast('⚠️ কোনো প্রশ্ন নেই এই মোডে!'); return; }
+    if (!filtered.length) { showToast('⚠️ কোনো প্রশ্ন নেই!'); return; }
     const questions = filtered.map(m => {
         const q = m.question || m;
         return {
@@ -2036,11 +2036,17 @@ function startMistakePractice(mode) {
             option1: q.option1||'', option2: q.option2||'', option3: q.option3||'',
             option4: q.option4||'', option5: q.option5||null,
             answer_index: q.answer_index || q.correct_option || 1,
-            explanation: q.explanation || ''
+            explanation: q.explanation || '',
+            image_url: q.image_url || null
         };
     });
-    const title = mode==='wrong' ? '⚡ Practice-01 (শুধু ভুল)' : '📚 Practice-02 (ভুল + স্কিপ)';
-    startPracticeExam(questions, title, () => startMistakePractice(mode));
+    const title = mode==='wrong' ? '⚡ Practice-01 (শুধু ভুল)' : '📚 Practice-02 (ভুল+স্কিপ)';
+    
+    // ✅ exam.html-এ পাঠাও
+    sessionStorage.setItem('practiceQuestions', JSON.stringify(questions));
+    sessionStorage.setItem('practiceTitle', title);
+    sessionStorage.setItem('practiceSource', 'mistakes');
+    goTo('exam.html?practice=mistakes');
 }
 
 /* ======================================================
