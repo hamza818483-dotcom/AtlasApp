@@ -1333,12 +1333,20 @@ function submitExam(isAutoSubmit=false){
         }
     }catch(e){}
 
-    showResult(correct,wrong,skipped,negMark,finalScore,withGpa,gpaScore,deduction,isSecondTimer,totalQ);
+       showResult(correct,wrong,skipped,negMark,finalScore,withGpa,gpaScore,deduction,isSecondTimer,totalQ);
+    
     if(isLoggedIn()&&!isMockTest&&!String(currentExam?.id).startsWith('model_')){
-   if(isLoggedIn()&&!isMockTest&&!String(currentExam?.id).startsWith('model_')){
         saveResultToDB(correct,wrong,skipped,negMark,finalScore,gpaScore,withGpa,totalQ);
         saveLeaderboardEntry(correct,wrong,skipped,finalScore,totalQ);
     }
+    
+    if(isLoggedIn()&&String(currentExam?.id).startsWith('model_')){
+    // exam_id = 0 দিয়ে সেভ (bigint error এড়াতে)
+    const origId = currentExam.id;
+    currentExam.id = 0;
+    saveResultToDB(correct,wrong,skipped,negMark,finalScore,gpaScore,withGpa,totalQ);
+    currentExam.id = origId;
+}
 }
 
 async function saveResultToDB(c,w,s,n,f,g,wg,t){
@@ -1764,3 +1772,4 @@ history.pushState(null,'',location.href);
 </script>
 </body>
                                                                          </html>
+
