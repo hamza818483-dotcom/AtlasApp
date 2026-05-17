@@ -463,6 +463,7 @@
             <div class="main-cat-card" onclick="openMistakes()"><span class="cat-icon">⚠️</span><span class="cat-name">My Mistakes</span><span class="cat-count">প্র্যাকটিস করুন</span></div>
         </div>
         <div class="section-header" style="margin-top:10px;"><div class="section-title">🎯 আনলিমিটেড মক টেস্ট</div></div>
+        <button class="btn btn-primary" onclick="startMockTest()" style="width:100%;margin-bottom:12px;">🎯 মক টেস্ট শুরু করুন</button>
     </div>
 </div>
 
@@ -1148,7 +1149,7 @@ function startExamHall(){
                 <span class="q-number">প্রশ্ন ${i+1}/${examQuestions.length}</span>
                 <div class="q-actions">
                     <!-- Req #1: ATLAS AI Chat icon per MCQ -->
-                  
+                    <button class="icon-btn ai-chat-btn" title="ATLAS AI Chat" onclick="openAIChat(${q.id})">🤖 AI</button>
                     <button class="icon-btn bookmark${bmClass}" id="bmBtn${q.id}" title="বুকমার্ক" onclick="toggleBookmark(${q.id})">🔖</button>
                     <button class="icon-btn" title="রিপোর্ট" onclick="openReportModal(${q.id})">🚩</button>
                 </div>
@@ -1420,7 +1421,6 @@ function showResult(correct,wrong,skipped,negMark,finalScore,withGpa,gpaScore,de
             <div class="q-header" style="margin-top:4px;">
                 <span class="q-number">প্রশ্ন ${i+1}/${examQuestions.length}</span>
                 <div class="q-actions">
-                <button class="icon-btn bookmark ${bookmarkedQuestions[q.id] ? 'active' : ''}" id="bmBtn${q.id}" title="বুকমার্ক" onclick="toggleBookmark(${q.id})">🔖</button>
                     <!-- Req #1: AI Chat in result too -->
                     <button class="icon-btn ai-chat-btn" title="ATLAS AI" onclick="openAIChat(${q.id})">🤖 AI</button>
                     <button class="icon-btn" title="রিপোর্ট" onclick="openReportModal(${q.id})">🚩</button>
@@ -1712,28 +1712,6 @@ document.addEventListener('DOMContentLoaded',()=>{
     // URL params (→ Flutter: GoRouter)
     const params=new URLSearchParams(location.search);
     const practice=params.get('practice');
-    // Mock Test Practice Mode — from mock-test.html
-if(practice==='mock'){
-    const qData=sessionStorage.getItem('practiceQuestions');
-    const title=sessionStorage.getItem('practiceTitle')||'Mock Test';
-    const time=parseInt(sessionStorage.getItem('practiceTime'))||0;
-    if(qData){
-        try{
-            examQuestions=JSON.parse(qData);
-            currentExam={
-                title,subject:'Mock',chapter:'Mock',
-                exam_type:'mock',total_marks:examQuestions.length,
-                duration_minutes:time||Math.ceil(examQuestions.length/1.5),
-                id:'mock_'+Date.now(),allow_preview:false,allow_solve_sheet:true
-            };
-            showPreExamFromData(currentExam,examQuestions);
-        }catch(e){showToast('❌ প্রশ্ন লোড করতে সমস্যা');}
-    }else{showToast('❌ কোনো প্রশ্ন পাওয়া যায়নি');}
-    return;
-}
-
-// Req #22: Practice mode — load from sessionStorage (from dashboard/mistakes)
-if(practice==='mistakes'||practice==='history'){
     const examId=params.get('id');
     const cat=params.get('cat');
     const mock=params.get('mock');
@@ -1764,4 +1742,4 @@ if(practice==='mistakes'||practice==='history'){
 history.pushState(null,'',location.href);
 </script>
 </body>
-</html>
+                                                                         </html>
