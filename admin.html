@@ -5,133 +5,409 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ATLAS EXAM · অ্যাডমিন</title>
     <style>
+        /* ══════════════════════════════════════════════
+           FLUTTER-READY CSS VARIABLES
+           → Flutter: ThemeData.colorScheme
+        ══════════════════════════════════════════════ */
         :root {
-            --bg: #0D1117; --card: #161B22; --hover: #1C2129;
-            --text: #E6EDF3; --text2: #8B949E;
-            --accent: #7C83FF; --accent-hover: #9499FF;
-            --border: #30363D; --shadow: 0 2px 8px rgba(0,0,0,0.3);
+            --bg: #0D1117;
+            --card: #161B22;
+            --hover: #1C2129;
+            --text: #E6EDF3;
+            --text2: #8B949E;
+            --accent: #7C83FF;
+            --accent-hover: #9499FF;
+            --border: #30363D;
+            --shadow: 0 2px 8px rgba(0,0,0,0.3);
             --glow: 0 0 0 2px rgba(124,131,255,0.12);
-            --radius: 12px; --radius-sm: 8px;
-            --red: #F85149; --green: #3FB950; --yellow: #D29922;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --red: #F85149;
+            --green: #3FB950;
+            --yellow: #D29922;
+            --blue: #58A6FF;
+            --orange: #F97316;
+            --pink: #EC4899;
         }
-        * { margin:0; padding:0; box-sizing:border-box; }
+
+        /* Light mode  (Flutter: ThemeMode.light) */
+        body.light-mode {
+            --bg: #F6F8FA;
+            --card: #FFFFFF;
+            --hover: #F0F2F5;
+            --text: #1C2129;
+            --text2: #57606A;
+            --border: #D0D7DE;
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        /* ── Reset  (Flutter: default box model) ── */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
             font-family: 'Inter', 'Noto Sans Bengali', system-ui, sans-serif;
             background: var(--bg); color: var(--text);
             min-height: 100vh; padding: 16px 16px 80px;
             line-height: 1.5; -webkit-font-smoothing: antialiased;
+            transition: background .3s, color .3s;
         }
-        .admin-container { max-width: 840px; margin: 0 auto; }
-        .admin-header {
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
-            text-align: center; box-shadow: var(--shadow);
-        }
-        .admin-title { font-size: 22px; font-weight: 800; color: var(--accent); letter-spacing: -0.5px; }
-        .admin-sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
 
-        .tab-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 16px; }
-        @media (max-width: 500px) { .tab-grid { grid-template-columns: repeat(3, 1fr); } }
-        .tab-btn {
-            padding: 10px 6px; background: var(--card); border: 1px solid var(--border);
-            border-radius: var(--radius-sm); color: var(--text2); font-size: 11px; font-weight: 600;
-            cursor: pointer; transition: all 0.2s; text-align: center;
+        /* ── Animations  (Flutter: AnimationController) ── */
+        @keyframes fadeIn   { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+        @keyframes spin     { to { transform:rotate(360deg); } }
+        @keyframes slideIn  { from { transform:translateX(-8px); opacity:0; } to { transform:none; opacity:1; } }
+        @keyframes pulseGlow{
+            0%,100% { box-shadow: 0 0 6px rgba(124,131,255,.2); }
+            50%      { box-shadow: 0 0 16px rgba(124,131,255,.5); }
         }
-        .tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: var(--glow); }
+
+        /* ══════════════════════════════════════════════
+           LAYOUT  (Flutter: Scaffold / SingleChildScrollView)
+        ══════════════════════════════════════════════ */
+        .admin-container { max-width: 860px; margin: 0 auto; }
+
+        /* ── Admin Header  (Flutter: AppBar) ── */
+        .admin-header {
+            background: linear-gradient(135deg, var(--card), rgba(124,131,255,.06));
+            border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 20px;
+            margin-bottom: 16px; text-align: center;
+            box-shadow: var(--shadow); position: relative; overflow: hidden;
+        }
+        .admin-header::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--blue), var(--pink));
+        }
+        .admin-title {
+            font-size: 22px; font-weight: 800; color: var(--accent);
+            letter-spacing: -.5px;
+        }
+        .admin-sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
+        .admin-header-actions {
+            display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        /* ── Tab Grid  (Flutter: TabBar) ── */
+        .tab-grid {
+            display: grid; grid-template-columns: repeat(4,1fr);
+            gap: 6px; margin-bottom: 16px;
+        }
+        @media (max-width:500px) { .tab-grid { grid-template-columns: repeat(3,1fr); } }
+
+        .tab-btn {
+            padding: 10px 6px;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); color: var(--text2);
+            font-size: 11px; font-weight: 600; cursor: pointer;
+            transition: all .2s; text-align: center; font-family: inherit;
+        }
+        .tab-btn.active {
+            background: var(--accent); color: #fff;
+            border-color: var(--accent); box-shadow: var(--glow);
+        }
         .tab-btn:hover:not(.active) { border-color: var(--accent); color: var(--text); }
 
-        .admin-section { display: none; animation: fadeIn 0.25s; }
+        /* ── Admin Sections  (Flutter: TabBarView) ── */
+        .admin-section { display: none; animation: fadeIn .25s; }
         .admin-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
-        .form-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 12px; box-shadow: var(--shadow); }
-        .form-card h3 { margin-bottom: 12px; font-size: 15px; font-weight: 700; color: var(--text); }
-        .input-group { margin-bottom: 10px; }
-        .input-group label { display: block; font-size: 11px; font-weight: 600; color: var(--text2); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .input-group input, .input-group select, .input-group textarea {
-            width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);
-            background: var(--bg); color: var(--text); font-size: 13px; font-family: inherit;
-            transition: all 0.2s; outline: none;
+        /* ══════════════════════════════════════════════
+           CARDS & FORMS  (Flutter: Card / Form)
+        ══════════════════════════════════════════════ */
+        .form-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 18px;
+            margin-bottom: 12px; box-shadow: var(--shadow);
         }
-        .input-group input:focus, .input-group select:focus, .input-group textarea:focus { border-color: var(--accent); box-shadow: var(--glow); }
-        .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .form-card h3 {
+            margin-bottom: 12px; font-size: 15px;
+            font-weight: 700; color: var(--text);
+            display: flex; align-items: center; gap: 6px;
+        }
+
+        /* ── Input Group  (Flutter: TextFormField) ── */
+        .input-group { margin-bottom: 10px; }
+        .input-group label {
+            display: block; font-size: 11px; font-weight: 600;
+            color: var(--text2); margin-bottom: 3px;
+            text-transform: uppercase; letter-spacing: .5px;
+        }
+        .input-group input,
+        .input-group select,
+        .input-group textarea {
+            width: 100%; padding: 10px 12px;
+            border: 1px solid var(--border); border-radius: var(--radius-sm);
+            background: var(--bg); color: var(--text);
+            font-size: 13px; font-family: inherit;
+            transition: all .2s; outline: none;
+        }
+        .input-group input:focus,
+        .input-group select:focus,
+        .input-group textarea:focus {
+            border-color: var(--accent); box-shadow: var(--glow);
+        }
+
+        /* Grid rows  (Flutter: Row) */
+        .input-row   { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .input-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
 
-        .btn { padding: 10px 18px; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; border: none; font-size: 13px; transition: all 0.2s; font-family: inherit; }
-        .btn-primary { background: var(--accent); color: #fff; width: 100%; }
-        .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
-        .btn-sm { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
-        .btn-danger { background: var(--red); color: #fff; }
-        .btn-success { background: var(--green); color: #fff; }
-        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text2); }
+        /* ══════════════════════════════════════════════
+           BUTTONS  (Flutter: ElevatedButton / OutlinedButton)
+        ══════════════════════════════════════════════ */
+        .btn {
+            padding: 10px 18px; border-radius: var(--radius-sm);
+            font-weight: 600; cursor: pointer; border: none;
+            font-size: 13px; transition: all .2s; font-family: inherit;
+            display: inline-flex; align-items: center; gap: 5px;
+        }
+        .btn-primary  { background: var(--accent); color: #fff; width: 100%; justify-content: center; }
+        .btn-primary:hover  { background: var(--accent-hover); transform: translateY(-1px); }
+        .btn-sm       { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
+        .btn-danger   { background: var(--red); color: #fff; }
+        .btn-success  { background: var(--green); color: #fff; }
+        .btn-warning  { background: var(--yellow); color: #fff; }
+        .btn-blue     { background: var(--blue); color: #fff; }
+        .btn-outline  { background: transparent; border: 1px solid var(--border); color: var(--text2); }
         .btn-outline:hover { border-color: var(--accent); color: var(--text); }
-        .btn-copy { background: var(--green); color: #fff; font-size: 11px; }
-        .btn-warning { background: var(--yellow); color: #fff; }
+        .btn-copy     { background: var(--green); color: #fff; font-size: 11px; }
 
+        /* ── NEW: Toggle Switch  (Flutter: Switch widget) ── */
+        .toggle-group {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 0; flex-wrap: wrap;
+        }
+        .toggle-item {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 12px; color: var(--text2); cursor: pointer;
+        }
+        .toggle-switch {
+            position: relative; width: 38px; height: 20px;
+            background: var(--border); border-radius: 10px;
+            cursor: pointer; transition: .25s; flex-shrink: 0;
+        }
+        .toggle-switch.on { background: var(--accent); }
+        .toggle-switch.danger.on { background: var(--red); }
+        .toggle-switch.success.on { background: var(--green); }
+        .toggle-switch::after {
+            content: ''; position: absolute; top: 2px; left: 2px;
+            width: 16px; height: 16px; border-radius: 50%;
+            background: #fff; transition: .25s;
+        }
+        .toggle-switch.on::after { left: 20px; }
+
+        /* ══════════════════════════════════════════════
+           DATA TABLE  (Flutter: DataTable)
+        ══════════════════════════════════════════════ */
         .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        .data-table th { background: var(--card); color: var(--text2); padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .data-table th {
+            background: var(--card); color: var(--text2);
+            padding: 8px 10px; text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600; text-transform: uppercase; letter-spacing: .5px;
+            white-space: nowrap;
+        }
         .data-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
         .data-table tr:hover td { background: var(--hover); }
 
-        .csv-upload { border: 2px dashed var(--border); border-radius: var(--radius-sm); padding: 14px; text-align: center; cursor: pointer; margin-bottom: 10px; transition: all 0.2s; }
+        /* ── Status Badges  (Flutter: Chip) ── */
+        .badge {
+            display: inline-block; padding: 2px 8px; border-radius: 10px;
+            font-size: 9px; font-weight: 700; white-space: nowrap;
+        }
+        .badge-green   { background: rgba(63,185,80,.15); color: var(--green); border: 1px solid rgba(63,185,80,.3); }
+        .badge-red     { background: rgba(248,81,73,.15); color: var(--red); border: 1px solid rgba(248,81,73,.3); }
+        .badge-yellow  { background: rgba(210,153,34,.15); color: var(--yellow); border: 1px solid rgba(210,153,34,.3); }
+        .badge-blue    { background: rgba(88,166,255,.15); color: var(--blue); border: 1px solid rgba(88,166,255,.3); }
+        .badge-accent  { background: rgba(124,131,255,.15); color: var(--accent); border: 1px solid rgba(124,131,255,.3); }
+
+        /* ══════════════════════════════════════════════
+           CSV UPLOAD  (Flutter: FilePicker + DottedBorder)
+        ══════════════════════════════════════════════ */
+        .csv-upload {
+            border: 2px dashed var(--border); border-radius: var(--radius-sm);
+            padding: 14px; text-align: center; cursor: pointer;
+            margin-bottom: 10px; transition: all .2s;
+        }
         .csv-upload:hover { border-color: var(--accent); background: var(--hover); }
         .csv-upload input { display: none; }
+        .csv-upload p:first-child { font-size: 13px; font-weight: 600; color: var(--text2); }
 
+        /* ── Chip Row  (Flutter: Wrap + ChoiceChip) ── */
         .chip-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
-        .chip { padding: 7px 14px; border-radius: 20px; border: 1px solid var(--border); cursor: pointer; font-size: 11px; font-weight: 600; color: var(--text2); background: var(--card); transition: all 0.2s; }
-        .chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .chip {
+            padding: 7px 14px; border-radius: 20px; border: 1px solid var(--border);
+            cursor: pointer; font-size: 11px; font-weight: 600;
+            color: var(--text2); background: var(--card); transition: all .2s;
+            font-family: inherit;
+        }
+        .chip.active  { background: var(--accent); color: #fff; border-color: var(--accent); }
         .chip:hover:not(.active) { border-color: var(--accent); }
 
-        .owner-preview { width: 100px; height: 100px; border-radius: var(--radius); object-fit: cover; border: 2px solid var(--border); margin: 8px auto; display: block; background: var(--hover); }
+        /* Owner preview */
+        .owner-preview {
+            width: 100px; height: 100px; border-radius: var(--radius);
+            object-fit: cover; border: 2px solid var(--border);
+            margin: 8px auto; display: block; background: var(--hover);
+        }
 
+        /* ── Filter Row  (Flutter: SearchBar + DropdownButton) ── */
         .filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
-        .filter-row input, .filter-row select { flex: 1; min-width: 100px; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); font-size: 12px; }
+        .filter-row input, .filter-row select {
+            flex: 1; min-width: 100px; padding: 8px 10px;
+            border: 1px solid var(--border); border-radius: var(--radius-sm);
+            background: var(--bg); color: var(--text); font-size: 12px;
+            font-family: inherit;
+        }
 
-        .list-item { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; transition: all 0.2s; }
+        /* ── List Item  (Flutter: ListTile) ── */
+        .list-item {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 10px 14px;
+            margin-bottom: 6px;
+            display: flex; justify-content: space-between;
+            align-items: center; flex-wrap: wrap; gap: 8px;
+            transition: all .2s;
+        }
         .list-item:hover { border-color: var(--accent); background: var(--hover); }
 
-        .section-header { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; margin-bottom: 10px; text-align: center; }
+        /* ── Section Header ── */
+        .section-header {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 12px;
+            margin-bottom: 10px; text-align: center;
+        }
         .section-title { color: var(--accent); font-size: 14px; font-weight: 700; }
 
-        .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid transparent; border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 4px; vertical-align: middle; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        /* ── Spinner  (Flutter: CircularProgressIndicator) ── */
+        .spinner {
+            display: inline-block; width: 14px; height: 14px;
+            border: 2px solid transparent; border-top-color: #fff;
+            border-radius: 50%; animation: spin .6s linear infinite;
+            margin-right: 4px; vertical-align: middle;
+        }
 
-        .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: var(--card); color: var(--text); border: 1px solid var(--accent); padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 600; z-index: 9999; opacity: 0; transition: 0.2s; pointer-events: none; }
+        /* ══════════════════════════════════════════════
+           TOAST  (Flutter: SnackBar)
+        ══════════════════════════════════════════════ */
+        .toast {
+            position: fixed; top: 16px; left: 50%;
+            transform: translateX(-50%);
+            background: var(--card); color: var(--text);
+            border: 1px solid var(--accent);
+            padding: 10px 20px; border-radius: 20px;
+            font-size: 13px; font-weight: 600;
+            z-index: 9999; opacity: 0; transition: .2s; pointer-events: none;
+            white-space: nowrap;
+        }
         .toast.show { opacity: 1; }
 
-        /* ===== MODAL ===== */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 500; display: none; align-items: center; justify-content: center; padding: 16px; }
+        /* ══════════════════════════════════════════════
+           MODALS  (Flutter: showDialog / AlertDialog)
+        ══════════════════════════════════════════════ */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,.78); z-index: 500;
+            display: none; align-items: center;
+            justify-content: center; padding: 16px;
+        }
         .modal-overlay.active { display: flex; }
-        .modal-box { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; max-width: 560px; width: 100%; max-height: 85vh; overflow-y: auto; animation: fadeIn 0.2s; }
-        .modal-box h3 { color: var(--accent); font-size: 15px; font-weight: 700; margin-bottom: 14px; text-align: center; }
-        .modal-close { float: right; background: none; border: none; color: var(--text2); font-size: 20px; cursor: pointer; margin-top: -4px; }
+        .modal-box {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 20px;
+            max-width: 560px; width: 100%; max-height: 88vh;
+            overflow-y: auto; animation: fadeIn .2s;
+        }
+        .modal-box h3 {
+            color: var(--accent); font-size: 15px; font-weight: 700;
+            margin-bottom: 14px; text-align: center;
+            padding-bottom: 10px; border-bottom: 1px solid var(--border);
+        }
+        .modal-close {
+            float: right; background: none; border: none;
+            color: var(--text2); font-size: 20px; cursor: pointer; margin-top: -4px;
+        }
         .modal-close:hover { color: var(--red); }
 
-        /* ===== SERIAL DRAG ===== */
-        .serial-item { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; cursor: grab; user-select: none; transition: all 0.2s; }
+        /* ══════════════════════════════════════════════
+           SERIAL DRAG & DROP  (Flutter: ReorderableListView)
+        ══════════════════════════════════════════════ */
+        .serial-item {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 10px 14px;
+            margin-bottom: 6px;
+            display: flex; align-items: center; gap: 10px;
+            cursor: grab; user-select: none; transition: all .2s;
+        }
         .serial-item:hover { border-color: var(--accent); }
-        .serial-item.dragging { opacity: 0.4; border-color: var(--accent); }
+        .serial-item.dragging { opacity: .4; border-color: var(--accent); }
         .serial-item.drag-over { border-color: var(--yellow); background: var(--hover); }
         .drag-handle { font-size: 16px; color: var(--text2); flex-shrink: 0; }
-        .serial-order-num { width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .serial-order-num {
+            width: 24px; height: 24px; border-radius: 50%;
+            background: var(--accent); color: #fff;
+            font-size: 11px; font-weight: 700;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
 
-        /* ===== REPORT MODAL MCQ ===== */
-        .report-q-box { background: var(--hover); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 10px; }
-        .report-option { padding: 8px 12px; border-radius: 6px; margin-bottom: 4px; font-size: 12px; border: 1px solid var(--border); }
-        .report-option.correct { border-color: var(--green); background: rgba(63,185,80,0.1); }
-        .report-option.wrong { border-color: var(--red); background: rgba(248,81,73,0.1); }
+        /* ══════════════════════════════════════════════
+           REPORT MCQ VIEWER  (Flutter: QuestionCard widget)
+        ══════════════════════════════════════════════ */
+        .report-q-box {
+            background: var(--hover); border-radius: var(--radius-sm);
+            padding: 12px; margin-bottom: 10px; border: 1px solid var(--border);
+        }
+        .report-option {
+            padding: 8px 12px; border-radius: 6px; margin-bottom: 4px;
+            font-size: 12px; border: 1px solid var(--border);
+        }
+        .report-option.correct { border-color: var(--green); background: rgba(63,185,80,.1); }
+        .report-option.wrong   { border-color: var(--red);   background: rgba(248,81,73,.1); }
 
-        /* ===== NOTIFICATION SEND ===== */
+        /* ── Notification Type Row ── */
         .notif-type-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
 
-        /* ===== CLASS CATEGORY FIELDS ===== */
-        .cat-fields { display: none; }
+        /* ══════════════════════════════════════════════
+           CLASS CATEGORY FIELDS  (Flutter: AnimatedSwitcher)
+        ══════════════════════════════════════════════ */
+        .cat-fields { display: none; animation: fadeIn .2s; }
         .cat-fields.show { display: block; }
         .cat-divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
         .cat-badge {
             display: inline-block; padding: 3px 10px; border-radius: 20px;
-            font-size: 10px; font-weight: 700; background: rgba(124,131,255,0.15);
-            color: var(--accent); border: 1px solid rgba(124,131,255,0.3); margin-bottom: 10px;
+            font-size: 10px; font-weight: 700;
+            background: rgba(124,131,255,.15); color: var(--accent);
+            border: 1px solid rgba(124,131,255,.3); margin-bottom: 10px;
+        }
+
+        /* ══════════════════════════════════════════════
+           STATS CARDS  (Flutter: StatCard widget)
+        ══════════════════════════════════════════════ */
+        .stat-grid {
+            display: grid; grid-template-columns: repeat(4,1fr);
+            gap: 8px; margin-bottom: 14px;
+        }
+        @media(max-width:500px) { .stat-grid { grid-template-columns: repeat(2,1fr); } }
+        .stat-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 12px;
+            text-align: center; box-shadow: var(--shadow);
+        }
+        .stat-val { font-size: 20px; font-weight: 800; color: var(--accent); }
+        .stat-lbl { font-size: 10px; color: var(--text2); margin-top: 2px; }
+
+        /* ── Model Test Sub-type fields (NEW)  (Flutter: AnimatedVisibility) ── */
+        .mt-subtype-fields { display: none; animation: fadeIn .2s; }
+        .mt-subtype-fields.show { display: block; }
+
+        /* ── Exam lock/preview badges ── */
+        .exam-flags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 3px; }
+
+        /* ── Admin permission note ── */
+        .perm-note {
+            font-size: 10px; color: var(--text2); background: var(--hover);
+            border-radius: 6px; padding: 6px 10px; margin-bottom: 10px;
+            border-left: 3px solid var(--accent);
         }
     </style>
 </head>
@@ -139,7 +415,9 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- ===== REPORT DETAIL MODAL ===== -->
+<!-- ══════════════════════════════════════════════
+     REPORT DETAIL MODAL  (Flutter: showDialog → QuestionDetailDialog)
+══════════════════════════════════════════════ -->
 <div class="modal-overlay" id="reportModal">
     <div class="modal-box">
         <button class="modal-close" onclick="closeReportModal()">✕</button>
@@ -148,7 +426,9 @@
     </div>
 </div>
 
-<!-- ===== SERIAL MANAGEMENT MODAL ===== -->
+<!-- ══════════════════════════════════════════════
+     SERIAL MANAGEMENT MODAL  (Flutter: ReorderableListView dialog)
+══════════════════════════════════════════════ -->
 <div class="modal-overlay" id="serialModal">
     <div class="modal-box">
         <button class="modal-close" onclick="closeSerialModal()">✕</button>
@@ -158,35 +438,61 @@
     </div>
 </div>
 
-<!-- ===== SEND NOTIFICATION MODAL ===== -->
+<!-- ══════════════════════════════════════════════
+     SEND NOTIFICATION MODAL  (Flutter: NotificationSendDialog)
+══════════════════════════════════════════════ -->
 <div class="modal-overlay" id="notifModal">
     <div class="modal-box">
         <button class="modal-close" onclick="closeNotifModal()">✕</button>
         <h3>🔔 নোটিফিকেশন পাঠান</h3>
-        <div class="input-group"><label>টাইটেল</label><input type="text" id="notifTitle" placeholder="নোটিফিকেশন টাইটেল"></div>
-        <div class="input-group"><label>বার্তা</label><textarea id="notifMessage" rows="3" placeholder="বার্তা লিখুন..."></textarea></div>
-        <div class="input-group"><label>পাঠানো হবে</label>
+        <div class="input-group">
+            <label>টাইটেল</label>
+            <input type="text" id="notifTitle" placeholder="নোটিফিকেশন টাইটেল">
+        </div>
+        <div class="input-group">
+            <label>বার্তা</label>
+            <textarea id="notifMessage" rows="3" placeholder="বার্তা লিখুন..."></textarea>
+        </div>
+        <div class="input-group">
+            <label>পাঠানো হবে</label>
             <div class="notif-type-row">
                 <span class="chip active" id="notifTypeAll" onclick="selectNotifType('all',this)">📢 সকলকে</span>
                 <span class="chip" id="notifTypePhone" onclick="selectNotifType('phone',this)">📱 নির্দিষ্ট</span>
             </div>
         </div>
-        <div class="input-group" id="notifPhoneField" style="display:none;"><label>ফোন নম্বর</label><input type="tel" id="notifPhone" placeholder="01XXXXXXXXX"></div>
+        <div class="input-group" id="notifPhoneField" style="display:none;">
+            <label>ফোন নম্বর</label>
+            <input type="tel" id="notifPhone" placeholder="01XXXXXXXXX">
+        </div>
         <button class="btn btn-primary" onclick="sendNotification()">📤 পাঠান</button>
     </div>
 </div>
 
+<!-- ══════════════════════════════════════════════
+     MAIN ADMIN PANEL
+══════════════════════════════════════════════ -->
 <main class="admin-container">
+
+    <!-- Admin Header  (Flutter: SliverAppBar) -->
     <div class="admin-header">
         <div class="admin-title">👑 Admin Panel</div>
-        <div class="admin-sub" id="adminRole">প্রধান অ্যাডমিন</div>
-        <div style="margin-top:8px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
+        <div class="admin-sub" id="adminRole">প্রধান অ্যাডমিন · ATLAS EXAM</div>
+        <div class="admin-header-actions">
             <button class="btn btn-sm btn-outline" onclick="openNotifModal()">🔔 নোটিফিকেশন পাঠান</button>
+            <button class="btn btn-sm btn-outline" onclick="toggleTheme()">🌙 থিম</button>
             <button class="btn btn-sm btn-outline" onclick="window.location.href='index.html'">🏠 হোম</button>
         </div>
     </div>
 
-    <!-- ===== TAB GRID — 14 TABS ===== -->
+    <!-- Stats Row  (Flutter: GridView stats) -->
+    <div class="stat-grid" id="statsGrid">
+        <div class="stat-card"><div class="stat-val" id="statStudents">—</div><div class="stat-lbl">👥 স্টুডেন্ট</div></div>
+        <div class="stat-card"><div class="stat-val" id="statExams">—</div><div class="stat-lbl">📝 এক্সাম</div></div>
+        <div class="stat-card"><div class="stat-val" id="statReports">—</div><div class="stat-lbl">🚩 রিপোর্ট</div></div>
+        <div class="stat-card"><div class="stat-val" id="statClasses">—</div><div class="stat-lbl">📚 ক্লাস</div></div>
+    </div>
+
+    <!-- 14 Tab Buttons  (Flutter: TabBar with 14 tabs) -->
     <div class="tab-grid">
         <button class="tab-btn active" onclick="switchSection('class',this)">📚 Class</button>
         <button class="tab-btn" onclick="switchSection('exam',this)">📝 Exam</button>
@@ -204,13 +510,14 @@
         <button class="tab-btn" onclick="switchSection('serial',this)">🔢 Serial</button>
     </div>
 
-    <!-- ==================== CLASS (UPDATED) ==================== -->
+    <!-- ══════════════ TAB 1: CLASS ══════════════ -->
+    <!-- (Flutter: ClassAdminScreen) -->
     <div class="admin-section active" id="secClass">
         <div class="form-card">
             <h3>📚 ক্লাস যোগ/এডিট</h3>
             <input type="hidden" id="classEditId">
 
-            <!-- ── STEP 1: Category Select ── -->
+            <!-- Step 1: Category  (Flutter: DropdownButtonFormField) -->
             <div class="input-group">
                 <label>📂 ক্যাটাগরি (অবশ্যই নির্বাচন করুন)</label>
                 <select id="classCategory" onchange="onCategoryChange()">
@@ -223,7 +530,7 @@
                 </select>
             </div>
 
-            <!-- ── MEDICAL ADMISSION CLASS FIELDS ── -->
+            <!-- Medical Class Fields -->
             <div class="cat-fields" id="fields_medical_class">
                 <div class="cat-badge">🧬 Medical Admission Class</div>
                 <div class="input-group">
@@ -245,7 +552,7 @@
                 </div>
             </div>
 
-            <!-- ── MEDICAL GUIDELINES FIELDS ── -->
+            <!-- Medical Guidelines Fields -->
             <div class="cat-fields" id="fields_medical_guide">
                 <div class="cat-badge">📋 Medical Admission Guidelines</div>
                 <div class="input-group">
@@ -255,88 +562,50 @@
                         <option value="2nd Timer">🔄 2nd Timer (দ্বিতীয়বার)</option>
                     </select>
                 </div>
-                <div class="input-group">
-                    <label>টপিক/টাইটেল (ঐচ্ছিক)</label>
-                    <input type="text" id="classMedTopic" placeholder="যেমন: কিভাবে শুরু করবে">
-                </div>
-                <div class="input-group">
-                    <label>বিবরণ (ঐচ্ছিক)</label>
-                    <input type="text" id="classMedDesc" placeholder="সংক্ষিপ্ত বিবরণ">
-                </div>
+                <div class="input-group"><label>টপিক/টাইটেল (ঐচ্ছিক)</label><input type="text" id="classMedTopic" placeholder="যেমন: কিভাবে শুরু করবে"></div>
+                <div class="input-group"><label>বিবরণ (ঐচ্ছিক)</label><input type="text" id="classMedDesc" placeholder="সংক্ষিপ্ত বিবরণ"></div>
             </div>
 
-            <!-- ── VARSITY GUIDELINES FIELDS ── -->
+            <!-- Varsity Guidelines Fields -->
             <div class="cat-fields" id="fields_varsity_guide">
                 <div class="cat-badge">🎓 Varsity Admission Guidelines</div>
-                <div class="input-group">
-                    <label>টপিক নাম</label>
-                    <input type="text" id="classVarsityTopic" placeholder="যেমন: ভার্সিটি প্রস্তুতির রোডম্যাপ">
-                </div>
-                <div class="input-group">
-                    <label>বিবরণ (ঐচ্ছিক)</label>
-                    <input type="text" id="classVarsityDesc" placeholder="সংক্ষিপ্ত বিবরণ">
-                </div>
+                <div class="input-group"><label>টপিক নাম</label><input type="text" id="classVarsityTopic" placeholder="যেমন: ভার্সিটি প্রস্তুতির রোডম্যাপ"></div>
+                <div class="input-group"><label>বিবরণ (ঐচ্ছিক)</label><input type="text" id="classVarsityDesc" placeholder="সংক্ষিপ্ত বিবরণ"></div>
             </div>
 
-            <!-- ── SHORT TRICK FIELDS ── -->
+            <!-- Short Trick Fields -->
             <div class="cat-fields" id="fields_short_trick">
                 <div class="cat-badge">⚡ Short Trick Video</div>
-                <div class="input-group">
-                    <label>সাবজেক্ট নাম</label>
-                    <input type="text" id="classTrickSubject" list="subjectList" placeholder="যেমন: জীববিজ্ঞান, রসায়ন">
-                </div>
-                <div class="input-group">
-                    <label>টপিক/ট্রিকের নাম (ঐচ্ছিক)</label>
-                    <input type="text" id="classTrickTopic" placeholder="যেমন: DNA মনে রাখার ট্রিক">
-                </div>
-                <div class="input-group">
-                    <label>বিবরণ (ঐচ্ছিক)</label>
-                    <input type="text" id="classTrickDesc" placeholder="সংক্ষিপ্ত বিবরণ">
-                </div>
+                <div class="input-group"><label>সাবজেক্ট নাম</label><input type="text" id="classTrickSubject" list="subjectList" placeholder="যেমন: জীববিজ্ঞান, রসায়ন"></div>
+                <div class="input-group"><label>টপিক/ট্রিকের নাম (ঐচ্ছিক)</label><input type="text" id="classTrickTopic" placeholder="যেমন: DNA মনে রাখার ট্রিক"></div>
+                <div class="input-group"><label>বিবরণ (ঐচ্ছিক)</label><input type="text" id="classTrickDesc" placeholder="সংক্ষিপ্ত বিবরণ"></div>
             </div>
 
-            <!-- ── COURSE FEATURE FIELDS ── -->
+            <!-- Course Feature Fields -->
             <div class="cat-fields" id="fields_course_feature">
                 <div class="cat-badge">🎯 Course Feature Video</div>
                 <div class="input-row">
-                    <div class="input-group">
-                        <label>কোর্সের নাম</label>
-                        <input type="text" id="classCourseName" placeholder="যেমন: Medical Batch 2025">
-                    </div>
-                    <div class="input-group">
-                        <label>ফিচারের নাম</label>
-                        <input type="text" id="classFeatureName" placeholder="যেমন: Live Class সুবিধা">
-                    </div>
+                    <div class="input-group"><label>কোর্সের নাম</label><input type="text" id="classCourseName" placeholder="যেমন: Medical Batch 2025"></div>
+                    <div class="input-group"><label>ফিচারের নাম</label><input type="text" id="classFeatureName" placeholder="যেমন: Live Class সুবিধা"></div>
                 </div>
-                <div class="input-group">
-                    <label>বিবরণ (ঐচ্ছিক)</label>
-                    <input type="text" id="classCourseDesc" placeholder="সংক্ষিপ্ত বিবরণ">
-                </div>
+                <div class="input-group"><label>বিবরণ (ঐচ্ছিক)</label><input type="text" id="classCourseDesc" placeholder="সংক্ষিপ্ত বিবরণ"></div>
             </div>
 
-            <!-- ── COMMON FIELDS (সব category-তে) ── -->
             <hr class="cat-divider">
+
+            <!-- Common Fields -->
             <div class="input-row">
                 <div class="input-group">
                     <label>ক্লাস টাইপ</label>
                     <select id="classType">
-                        <option value="website">🌐 Website এ দেখাবে (Embed)</option>
+                        <option value="website">🌐 Website-এ দেখাবে (Embed)</option>
                         <option value="youtube">▶️ YouTube-এ যাবে (Direct)</option>
                     </select>
                 </div>
-                <div class="input-group">
-                    <label>Serial Order (ঐচ্ছিক)</label>
-                    <input type="number" id="classSortOrder" placeholder="0" min="0">
-                </div>
+                <div class="input-group"><label>Serial Order (ঐচ্ছিক)</label><input type="number" id="classSortOrder" placeholder="0" min="0"></div>
             </div>
-            <div class="input-group">
-                <label>YouTube লিংক ★</label>
-                <input type="url" id="classLink" placeholder="https://youtube.com/watch?v=...">
-            </div>
-            <div class="input-group">
-                <label>ক্লাস নোট (ঐচ্ছিক)</label>
-                <input type="text" id="classNote" placeholder="লিংক বা টেক্সট নোট">
-            </div>
+            <div class="input-group"><label>YouTube লিংক ★</label><input type="url" id="classLink" placeholder="https://youtube.com/watch?v=..."></div>
+            <div class="input-group"><label>ক্লাস নোট (ঐচ্ছিক)</label><input type="text" id="classNote" placeholder="লিংক বা টেক্সট নোট"></div>
             <div class="input-row">
                 <div class="input-group"><label>শুরু (ঐচ্ছিক)</label><input type="datetime-local" id="classStart"></div>
                 <div class="input-group"><label>শেষ (ঐচ্ছিক)</label><input type="datetime-local" id="classEnd"></div>
@@ -347,14 +616,14 @@
             </div>
         </div>
 
-        <!-- CLASS LIST -->
+        <!-- Class List -->
         <div class="form-card">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
                 <h3 style="margin:0;">📋 ক্লাস তালিকা</h3>
                 <button class="btn btn-sm btn-outline" onclick="openSerialModal('class')">🔢 Order</button>
             </div>
             <div class="filter-row">
-                <select id="classFilterCat" onchange="loadClasses()" style="flex:1;min-width:120px;">
+                <select id="classFilterCat" onchange="loadClasses()">
                     <option value="">সব ক্যাটাগরি</option>
                     <option value="medical_class">🧬 Medical Class</option>
                     <option value="medical_guide">📋 Medical Guide</option>
@@ -367,17 +636,20 @@
             </div>
             <div id="classList"></div>
         </div>
-    </div>
+    </div><!-- end secClass -->
 
-    <!-- ==================== EXAM ==================== -->
+    <!-- ══════════════ TAB 2: EXAM ══════════════ -->
+    <!-- (Flutter: ExamAdminScreen) -->
     <div class="admin-section" id="secExam">
-        <div class="form-card"><h3>📝 এক্সাম যোগ/এডিট</h3>
+        <div class="form-card">
+            <h3>📝 এক্সাম যোগ/এডিট</h3>
             <input type="hidden" id="examEditId">
             <div class="input-row">
                 <div class="input-group"><label>সাবজেক্ট</label><input type="text" id="examSubject" list="subjectList" placeholder="সাবজেক্ট"></div>
                 <div class="input-group"><label>চ্যাপ্টার</label><input type="text" id="examChapter" list="chapterList" placeholder="চ্যাপ্টার"></div>
             </div>
-            <div class="input-group"><label>টাইপ</label>
+            <div class="input-group">
+                <label>টাইপ</label>
                 <select id="examType" onchange="toggleExamFields()">
                     <option value="">— নির্বাচন —</option>
                     <option value="board">🔵 বোর্ড</option>
@@ -402,6 +674,24 @@
                 <div class="input-group"><label>শুরু</label><input type="datetime-local" id="examStart"></div>
                 <div class="input-group"><label>শেষ</label><input type="datetime-local" id="examEnd"></div>
             </div>
+
+            <!-- ── NEW: allow_preview + is_locked toggles ──
+                 (Flutter: SwitchListTile)
+            ── -->
+            <div class="input-group">
+                <label>🔧 এক্সাম অপশন</label>
+                <div class="toggle-group">
+                    <div class="toggle-item" onclick="toggleSwitch('examAllowPreview')">
+                        <div class="toggle-switch on success" id="examAllowPreview" data-val="true"></div>
+                        <span>👁️ Preview অনুমতি (প্রশ্ন দেখো বাটন)</span>
+                    </div>
+                    <div class="toggle-item" onclick="toggleSwitch('examIsLocked')">
+                        <div class="toggle-switch danger" id="examIsLocked" data-val="false"></div>
+                        <span>🔒 Locked (paid access লাগবে)</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="csv-upload" onclick="document.getElementById('examCSV').click()">
                 <p>📄 CSV আপলোড করুন</p>
                 <p style="font-size:10px;color:var(--text2);margin-top:2px;">Columns: question, option1-5, answer, explanation, type, section</p>
@@ -420,11 +710,13 @@
             </div>
             <div id="examList"></div>
         </div>
-    </div>
+    </div><!-- end secExam -->
 
-    <!-- ==================== ক,খ,CQ ==================== -->
+    <!-- ══════════════ TAB 3: ক,খ,CQ ══════════════ -->
+    <!-- (Flutter: KaKhaCQScreen) -->
     <div class="admin-section" id="secKakha">
-        <div class="form-card"><h3>📦 ক,খ,CQ যোগ/এডিট</h3>
+        <div class="form-card">
+            <h3>📦 ক,খ,CQ যোগ/এডিট</h3>
             <input type="hidden" id="kaEditId">
             <div class="input-row">
                 <div class="input-group"><label>সাবজেক্ট</label><input type="text" id="kaSubject" list="subjectList" placeholder="সাবজেক্ট"></div>
@@ -434,7 +726,8 @@
                 <div class="input-group"><label>সাল (ঐচ্ছিক)</label><input type="text" id="kaYear" placeholder="যেমন: ২০২৩"></div>
                 <div class="input-group"><label>টপিক (ঐচ্ছিক)</label><input type="text" id="kaTopic" placeholder="টপিক"></div>
             </div>
-            <div class="input-group"><label>টাইপ</label>
+            <div class="input-group">
+                <label>টাইপ</label>
                 <select id="kaType">
                     <option value="ka">ক ভান্ডার</option>
                     <option value="kha">খ ভান্ডার</option>
@@ -464,10 +757,12 @@
         </div>
     </div>
 
-    <!-- ==================== TIMER ==================== -->
+    <!-- ══════════════ TAB 4: TIMER ══════════════ -->
+    <!-- (Flutter: TimerAdminScreen) -->
     <div class="admin-section" id="secTimer">
-        <div class="form-card"><h3>⏰ কাউন্টডাউন টাইমার</h3>
-            <p style="font-size:11px;color:var(--text2);margin-bottom:10px;">🔴 Home Page-এ সর্বোচ্চ ৫টি Timer Card দেখাবে</p>
+        <div class="form-card">
+            <h3>⏰ কাউন্টডাউন টাইমার</h3>
+            <div class="perm-note">🔴 Home Page-এ সর্বোচ্চ ৫টি Timer Card দেখাবে। Sort order অনুযায়ী প্রথম ৫টি।</div>
             <input type="hidden" id="cdEditId">
             <div class="input-group"><label>মূল টপিক</label><input type="text" id="cdTopic" placeholder="যেমন: MBBS Admission 2025"></div>
             <div class="input-group"><label>সাবটপিক</label><input type="text" id="cdSubtopic" placeholder="যেমন: ঢাকা বিশ্ববিদ্যালয়"></div>
@@ -489,12 +784,13 @@
         </div>
     </div>
 
-    <!-- ==================== STUDENTS ==================== -->
+    <!-- ══════════════ TAB 5: STUDENTS ══════════════ -->
+    <!-- (Flutter: StudentsScreen) -->
     <div class="admin-section" id="secStudents">
         <div class="form-card">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
                 <h3 style="margin:0;">👥 স্টুডেন্ট তালিকা</h3>
-                <button class="btn btn-sm btn-success" onclick="openNotifModal()">🔔 Notify</button>
+                <button class="btn btn-sm btn-success" onclick="openNotifModal()">🔔 Notify All</button>
             </div>
             <div class="filter-row">
                 <input type="text" id="filterName" placeholder="🔍 নাম" oninput="loadStudents()">
@@ -512,9 +808,11 @@
         </div>
     </div>
 
-    <!-- ==================== MOCK ==================== -->
+    <!-- ══════════════ TAB 6: MOCK ══════════════ -->
+    <!-- (Flutter: MockAdminScreen) -->
     <div class="admin-section" id="secMock">
-        <div class="form-card"><h3>🎯 মক টেস্ট যোগ/এডিট</h3>
+        <div class="form-card">
+            <h3>🎯 মক টেস্ট যোগ/এডিট</h3>
             <input type="hidden" id="mockEditId">
             <div class="input-row">
                 <div class="input-group"><label>সাবজেক্ট</label><input type="text" id="mockSubjectInput" list="subjectList" placeholder="সাবজেক্ট"></div>
@@ -522,14 +820,16 @@
             </div>
             <div class="input-group"><label>চ্যাপ্টার</label><input type="text" id="mockChapterInput" list="chapterList" placeholder="চ্যাপ্টার"></div>
             <div class="input-group"><label>টপিক (ঐচ্ছিক)</label><input type="text" id="mockTopic" placeholder="টপিক"></div>
-            <div class="input-group"><label>স্ট্যান্ডার্ড</label>
+            <div class="input-group">
+                <label>স্ট্যান্ডার্ড</label>
                 <div class="chip-row" id="mockStdChips">
                     <span class="chip active" onclick="selectMockStd('medical',this)">🏥 Medical</span>
                     <span class="chip" onclick="selectMockStd('varsity',this)">🎓 Varsity</span>
                     <span class="chip" onclick="selectMockStd('onushiloni',this)">🟠 Onushiloni</span>
                 </div>
             </div>
-            <div class="input-group"><label>প্রশ্ন সংখ্যা</label>
+            <div class="input-group">
+                <label>প্রশ্ন সংখ্যা</label>
                 <div class="chip-row" id="mockCntChips">
                     <span class="chip" onclick="selectMockCnt(25,this)">২৫</span>
                     <span class="chip" onclick="selectMockCnt(35,this)">৩৫</span>
@@ -557,11 +857,14 @@
         </div>
     </div>
 
-    <!-- ==================== MODEL TEST ==================== -->
+    <!-- ══════════════ TAB 7: MODEL TEST (ENHANCED) ══════════════ -->
+    <!-- (Flutter: ModelTestAdminScreen) -->
     <div class="admin-section" id="secModeltest">
-        <div class="form-card"><h3>📖 Model Test যোগ/এডিট</h3>
+        <div class="form-card">
+            <h3>📖 Model Test যোগ/এডিট</h3>
             <input type="hidden" id="mtEditId">
-            <div class="input-group"><label>টাইপ</label>
+            <div class="input-group">
+                <label>টাইপ</label>
                 <select id="mtType" onchange="toggleMtFields()">
                     <option value="">— নির্বাচন —</option>
                     <option value="medical">🏥 Medical</option>
@@ -569,9 +872,12 @@
                     <option value="varsity">🟣 Varsity</option>
                 </select>
             </div>
+
+            <!-- Medical / AFMC Fields -->
             <div id="mtMedicalFields">
                 <div class="input-group"><label>সাবজেক্ট/পেপার নাম</label><input type="text" id="mtSubject" list="subjectList" placeholder="যেমন: জীববিজ্ঞান"></div>
-                <div class="input-group"><label>সাব-টাইপ</label>
+                <div class="input-group">
+                    <label>সাব-টাইপ</label>
                     <select id="mtSubType">
                         <option value="subject_final">📘 Subject Final</option>
                         <option value="paper_final">📗 Paper Final</option>
@@ -579,18 +885,54 @@
                     </select>
                 </div>
             </div>
+
+            <!-- ── NEW: Varsity Fields — Varsitywise + Chapterwise ──
+                 (Flutter: AnimatedSwitcher between VarsityWiseFields and ChapterwiseFields)
+            ── -->
             <div id="mtVarsityFields" style="display:none;">
-                <div class="input-row">
-                    <div class="input-group"><label>ভার্সিটির নাম</label><input type="text" id="mtVarsity" placeholder="যেমন: ঢাকা বিশ্ববিদ্যালয়"></div>
-                    <div class="input-group"><label>Unit (ঐচ্ছিক)</label><input type="text" id="mtUnit" placeholder="যেমন: ক ইউনিট"></div>
+                <div class="input-group">
+                    <label>Varsity সাব-টাইপ</label>
+                    <select id="mtVarsitySubType" onchange="toggleMtVarsitySubFields()">
+                        <option value="varsitywise">🎓 Varsity-wise</option>
+                        <option value="chapterwise">📖 Chapter-wise</option>
+                    </select>
+                </div>
+
+                <!-- Varsitywise fields -->
+                <div class="mt-subtype-fields show" id="mtVarsitywiseFields">
+                    <div class="input-row">
+                        <div class="input-group"><label>ভার্সিটির নাম ★</label><input type="text" id="mtVarsity" placeholder="যেমন: ঢাকা বিশ্ববিদ্যালয়"></div>
+                        <div class="input-group"><label>Unit (ঐচ্ছিক)</label><input type="text" id="mtUnit" placeholder="যেমন: ক ইউনিট"></div>
+                    </div>
+                    <div class="input-group"><label>সাল (ঐচ্ছিক)</label><input type="text" id="mtVarsityYear" placeholder="যেমন: ২০২৪"></div>
+                </div>
+
+                <!-- Chapterwise fields  (NEW) -->
+                <div class="mt-subtype-fields" id="mtChapterwiseFields">
+                    <div class="input-row">
+                        <div class="input-group"><label>ভার্সিটির নাম ★</label><input type="text" id="mtChapterVarsity" placeholder="যেমন: ঢাকা বিশ্ববিদ্যালয়"></div>
+                        <div class="input-group"><label>Unit (ঐচ্ছিক)</label><input type="text" id="mtChapterUnit" placeholder="যেমন: ক ইউনিট"></div>
+                    </div>
+                    <div class="input-group"><label>চ্যাপ্টার ★</label><input type="text" id="mtChapter" list="chapterList" placeholder="চ্যাপ্টারের নাম"></div>
+                    <div class="input-group"><label>সাবজেক্ট (ঐচ্ছিক)</label><input type="text" id="mtChapterSubject" list="subjectList" placeholder="যেমন: পদার্থবিজ্ঞান"></div>
+                </div>
+
+                <!-- CSV upload for Varsity (always shown) -->
+                <div class="csv-upload" onclick="document.getElementById('mtCSVVarsity').click()">
+                    <p>📄 Varsity CSV আপলোড করুন</p>
+                    <input type="file" id="mtCSVVarsity" accept=".csv" onchange="handleMtCSV(this,'mtCSVVarsityName')">
+                    <p id="mtCSVVarsityName" style="color:var(--accent);font-size:11px;margin-top:4px;"></p>
                 </div>
             </div>
-            <div class="csv-upload" onclick="document.getElementById('mtCSV').click()">
+
+            <!-- Main CSV / Link (for medical/afmc) -->
+            <div class="csv-upload" id="mtMainCSVWrap" onclick="document.getElementById('mtCSV').click()">
                 <p>📄 CSV আপলোড অথবা</p>
-                <input type="file" id="mtCSV" accept=".csv" onchange="handleMtCSV(this)">
+                <input type="file" id="mtCSV" accept=".csv" onchange="handleMtCSV(this,'mtCSVName')">
                 <p id="mtCSVName" style="color:var(--accent);font-size:11px;margin-top:4px;"></p>
             </div>
-            <div class="input-group"><label>অথবা লিংক</label><input type="url" id="mtLink" placeholder="https://..."></div>
+            <div class="input-group" id="mtLinkWrap"><label>অথবা লিংক</label><input type="url" id="mtLink" placeholder="https://..."></div>
+
             <div style="display:flex;gap:8px;">
                 <button class="btn btn-primary" onclick="saveModelTest()" style="flex:1;">✅ সেইভ</button>
                 <button class="btn btn-outline btn-sm" onclick="clearMtForm()" style="white-space:nowrap;">🔄 ক্লিয়ার</button>
@@ -605,13 +947,15 @@
         </div>
     </div>
 
-    <!-- ==================== SOCIAL ==================== -->
+    <!-- ══════════════ TAB 8: SOCIAL ══════════════ -->
     <div class="admin-section" id="secSocial">
-        <div class="form-card"><h3>🔗 সোশ্যাল লিংক</h3>
+        <div class="form-card">
+            <h3>🔗 সোশ্যাল লিংক</h3>
             <input type="hidden" id="socialEditId">
             <div class="input-row">
                 <div class="input-group"><label>নাম</label><input type="text" id="socialName" placeholder="যেমন: ATLAS Facebook Group"></div>
-                <div class="input-group"><label>টাইপ</label>
+                <div class="input-group">
+                    <label>টাইপ</label>
                     <select id="socialType">
                         <option value="facebook">📘 Facebook</option>
                         <option value="youtube">▶️ YouTube</option>
@@ -637,39 +981,41 @@
         </div>
     </div>
 
-    <!-- ==================== SUB-ADMIN ==================== -->
+    <!-- ══════════════ TAB 9: SUB-ADMIN ══════════════ -->
     <div class="admin-section" id="secSubadmin">
-        <div class="form-card"><h3>👮 সাব-অ্যাডমিন গ্র্যান্ট</h3>
-            <p style="font-size:11px;color:var(--text2);margin-bottom:10px;">সাব-অ্যাডমিন — Add ✅ | Edit ✅ | Delete ❌ | Grant ❌ | Reports ✅</p>
+        <div class="form-card">
+            <h3>👮 সাব-অ্যাডমিন গ্র্যান্ট</h3>
+            <div class="perm-note">সাব-অ্যাডমিন — Add ✅ | Edit ✅ | Delete ❌ | Grant ❌ | Reports ✅</div>
             <div class="input-group"><label>ফোন নম্বর (১১ ডিজিট)</label><input type="tel" id="subPhone" maxlength="11" placeholder="01XXXXXXXXX"></div>
             <button class="btn btn-primary" onclick="grantSubAdmin()">✅ সাব-অ্যাডমিন গ্র্যান্ট</button>
         </div>
-        <div class="form-card"><h3>📋 সাব-অ্যাডমিন তালিকা</h3>
+        <div class="form-card">
+            <h3>📋 সাব-অ্যাডমিন তালিকা</h3>
             <div id="subList"></div>
         </div>
     </div>
 
-    <!-- ==================== REPORTS ==================== -->
+    <!-- ══════════════ TAB 10: REPORTS ══════════════ -->
     <div class="admin-section" id="secReports">
         <div class="form-card">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
                 <h3 style="margin:0;">🚩 রিপোর্ট তালিকা</h3>
-                <div style="display:flex;gap:6px;">
-                    <select id="reportFilter" onchange="loadReports()" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:11px;">
-                        <option value="pending">🔴 পেন্ডিং</option>
-                        <option value="all">সব</option>
-                        <option value="approved">✅ এপ্রুভড</option>
-                        <option value="rejected">❌ রিজেক্ট</option>
-                    </select>
-                </div>
+                <select id="reportFilter" onchange="loadReports()"
+                    style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:11px;">
+                    <option value="pending">🔴 পেন্ডিং</option>
+                    <option value="all">সব</option>
+                    <option value="approved">✅ এপ্রুভড</option>
+                    <option value="rejected">❌ রিজেক্ট</option>
+                </select>
             </div>
             <div id="reportList"></div>
         </div>
     </div>
 
-    <!-- ==================== OWNER ==================== -->
+    <!-- ══════════════ TAB 11: OWNER ══════════════ -->
     <div class="admin-section" id="secOwner">
-        <div class="form-card"><h3>👤 অনার ইনফো</h3>
+        <div class="form-card">
+            <h3>👤 অনার ইনফো</h3>
             <div class="input-group"><label>নাম</label><input type="text" id="ownerName" placeholder="আপনার নাম"></div>
             <div class="input-group"><label>বিস্তারিত তথ্য</label><textarea id="ownerInfo" rows="4" placeholder="পরিচয়, ডিগ্রি, অভিজ্ঞতা..."></textarea></div>
             <div class="input-group"><label>ছবি আপলোড</label><input type="file" id="ownerPhotoFile" accept="image/*" onchange="previewOwner(this)"></div>
@@ -678,9 +1024,10 @@
         </div>
     </div>
 
-    <!-- ==================== MENTORS ==================== -->
+    <!-- ══════════════ TAB 12: MENTORS ══════════════ -->
     <div class="admin-section" id="secMentors">
-        <div class="form-card"><h3>👨‍🏫 মেন্টর যোগ/এডিট</h3>
+        <div class="form-card">
+            <h3>👨‍🏫 মেন্টর যোগ/এডিট</h3>
             <input type="hidden" id="mentorEditId">
             <div class="input-row">
                 <div class="input-group"><label>নাম</label><input type="text" id="mentorName" placeholder="মেন্টরের নাম"></div>
@@ -688,7 +1035,7 @@
             </div>
             <div class="input-group"><label>Sort Order</label><input type="number" id="mentorSortOrder" placeholder="0" min="0"></div>
             <div class="input-group"><label>ছবি</label><input type="file" id="mentorPhotoFile" accept="image/*" onchange="previewMentor(this)"></div>
-            <img id="mentorPreview" src="" style="width:80px;height:80px;border-radius:10px;object-fit:cover;border:2px solid var(--border);display:none;margin:6px auto;display:none;">
+            <img id="mentorPreview" src="" style="width:80px;height:80px;border-radius:10px;object-fit:cover;border:2px solid var(--border);display:none;margin:6px auto;">
             <div style="display:flex;gap:8px;margin-top:6px;">
                 <button class="btn btn-primary" onclick="saveMentor()" style="flex:1;">✅ সেইভ</button>
                 <button class="btn btn-outline btn-sm" onclick="clearMentorForm()" style="white-space:nowrap;">🔄 ক্লিয়ার</button>
@@ -703,28 +1050,33 @@
         </div>
     </div>
 
-    <!-- ==================== SPECIAL CARD ==================== -->
+    <!-- ══════════════ TAB 13: SPECIAL CARD ══════════════ -->
     <div class="admin-section" id="secSpecial">
-        <div class="form-card"><h3>🃏 স্পেশাল কার্ড</h3>
-            <p style="font-size:11px;color:var(--text2);margin-bottom:10px;">Timer-গুলোর উপরে দেখাবে। Glow border সহ।</p>
+        <div class="form-card">
+            <h3>🃏 স্পেশাল কার্ড</h3>
+            <div class="perm-note">Header-এর নিচে, Timer-গুলোর উপরে দেখাবে। সর্বোচ্চ ২টি। Glow border সহ।</div>
             <input type="hidden" id="specialEditId">
-            <div class="input-group"><label>ছবি (Full Width)</label><input type="file" id="specialPhotoFile" accept="image/*" onchange="previewSpecial(this)"></div>
-            <img id="specialPreview" src="" style="width:100%;max-height:180px;border-radius:10px;object-fit:cover;border:2px solid var(--border);display:none;margin:6px 0;">
-            <div class="input-group"><label>বিস্তারিত</label><textarea id="specialDesc" rows="2" placeholder="বর্ণনা লিখুন..."></textarea></div>
-            <div class="input-group"><label>স্পেশাল টেক্সট (ক্লিকেবল বাটন)</label><input type="text" id="specialText" placeholder="যেমন: এখনই ভর্তি হন"></div>
-            <div class="input-group"><label>লিংক</label><input type="url" id="specialLink" placeholder="https://..."></div>
+            <div class="input-group"><label>ছবি (Full Width — যেকোনো সাইজ)</label><input type="file" id="specialPhotoFile" accept="image/*" onchange="previewSpecial(this)"></div>
+            <img id="specialPreview" src="" style="width:100%;max-height:200px;border-radius:10px;object-fit:contain;border:2px solid var(--border);display:none;margin:6px 0;">
+            <div class="input-group"><label>বিস্তারিত (• বুলেট মার্কডাউন হবে)</label><textarea id="specialDesc" rows="3" placeholder="• প্রতিটি লাইন একটি বুলেট পয়েন্ট&#10;• ভর্তি ২০২৫ চলছে&#10;• আজই যোগ দিন"></textarea></div>
+            <div class="input-group"><label>ক্লিকেবল বাটন টেক্সট</label><input type="text" id="specialText" placeholder="যেমন: এখনই ভর্তি হন"></div>
+            <div class="input-group"><label>লিংক (https:// না থাকলে অটো যোগ)</label><input type="url" id="specialLink" placeholder="https://..."></div>
             <div style="display:flex;gap:8px;">
                 <button class="btn btn-primary" onclick="saveSpecial()" style="flex:1;">✅ সেইভ</button>
                 <button class="btn btn-outline btn-sm" onclick="clearSpecialForm()" style="white-space:nowrap;">🔄 ক্লিয়ার</button>
             </div>
         </div>
-        <div class="form-card"><h3>📋 তালিকা</h3><div id="specialList"></div></div>
+        <div class="form-card">
+            <h3>📋 তালিকা (সর্বোচ্চ ২টি)</h3>
+            <div id="specialList"></div>
+        </div>
     </div>
 
-    <!-- ==================== SERIAL MANAGEMENT ==================== -->
+    <!-- ══════════════ TAB 14: SERIAL ══════════════ -->
     <div class="admin-section" id="secSerial">
-        <div class="form-card"><h3>🔢 Serial Management</h3>
-            <p style="font-size:12px;color:var(--text2);margin-bottom:14px;">যেকোনো সেকশনের Serial ম্যানেজ করুন।</p>
+        <div class="form-card">
+            <h3>🔢 Serial Management</h3>
+            <p style="font-size:12px;color:var(--text2);margin-bottom:14px;">যেকোনো সেকশনের Serial ম্যানেজ করুন। Drag & Drop বা ⬆️⬇️ বাটন দিয়ে Order ঠিক করুন।</p>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
                 <button class="btn btn-outline" onclick="openSerialModal('class')">📚 Class Order</button>
                 <button class="btn btn-outline" onclick="openSerialModal('exam')">📝 Exam Order</button>
@@ -738,22 +1090,40 @@
         </div>
     </div>
 
-</main>
+</main><!-- end admin-container -->
 
+<!-- ══════════════════════════════════════════════
+     JAVASCRIPT
+     Flutter annotation: Each block = a Service/Controller class
+══════════════════════════════════════════════ -->
 <script>
-const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
-const ADMIN_PHONE = '01754365403';
-let currentUser = null, isAdmin = true, isSubAdmin = false;
-let examCSVData = null, mockCSVData = null, mtCSVData = null;
-let currentSection = 'class';
-let mockStd = 'medical', mockCnt = 50;
-let notifType = 'all';
-let studentPage = 1, studentPageSize = 20;
-let serialTable = '', serialItems = [];
-let dragSrcIdx = null;
+/* ═══════════════════════════════════════════════
+   CONSTANTS & STATE  (Flutter: AppState / Provider)
+═══════════════════════════════════════════════ */
+const SUPABASE_URL  = 'https://btezborkuiqfogykrjrn.supabase.co';
+const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
+const ADMIN_PHONE   = '01754365403';
 
-// ===== TOAST =====
+let currentUser   = null;
+let isAdmin       = true;
+let isSubAdmin    = false;
+let examCSVData   = null;
+let mockCSVData   = null;
+let mtCSVData     = null;
+let currentSection= 'class';
+let mockStd       = 'medical';
+let mockCnt       = 50;
+let notifType     = 'all';
+let studentPage   = 1;
+const studentPageSize = 20;
+let serialTable   = '';
+let serialItems   = [];
+let dragSrcIdx    = null;
+let isDarkMode    = true;
+
+/* ═══════════════════════════════════════════════
+   TOAST  (Flutter: ScaffoldMessenger.showSnackBar)
+═══════════════════════════════════════════════ */
 function showToast(m, d) {
     d = d || 2500;
     const t = document.getElementById('toast');
@@ -761,35 +1131,76 @@ function showToast(m, d) {
     clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), d);
 }
 
-// ===== SAFE FETCH =====
+/* ═══════════════════════════════════════════════
+   THEME  (Flutter: ThemeMode)
+═══════════════════════════════════════════════ */
+function toggleTheme() {
+    isDarkMode = !isDarkMode;
+    document.body.classList.toggle('light-mode', !isDarkMode);
+    localStorage.setItem('atlas-theme', isDarkMode ? 'dark' : 'light');
+}
+
+/* ═══════════════════════════════════════════════
+   TOGGLE SWITCH  (Flutter: Switch widget)
+   data-val stores 'true'/'false' as string
+═══════════════════════════════════════════════ */
+function toggleSwitch(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const isOn = el.dataset.val === 'true';
+    el.dataset.val = (!isOn).toString();
+    el.classList.toggle('on', !isOn);
+}
+function getSwitchVal(id) {
+    const el = document.getElementById(id);
+    return el ? el.dataset.val === 'true' : false;
+}
+function setSwitchVal(id, val) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.dataset.val = val ? 'true' : 'false';
+    el.classList.toggle('on', !!val);
+}
+
+/* ═══════════════════════════════════════════════
+   SAFE FETCH  (Flutter: SupabaseService)
+═══════════════════════════════════════════════ */
 async function safeFetch(url, opts = {}) {
-    opts.headers = Object.assign({ apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }, opts.headers || {});
-    if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') opts.headers['Content-Type'] = 'application/json';
-    if (opts.method === 'POST' || opts.method === 'PATCH') {
+    opts.headers = Object.assign(
+        { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY },
+        opts.headers || {}
+    );
+    if (!opts.headers['Content-Type'] && opts.method !== 'DELETE')
+        opts.headers['Content-Type'] = 'application/json';
+    if (opts.method === 'POST' || opts.method === 'PATCH')
         opts.headers['Prefer'] = opts.method === 'POST' ? 'return=representation' : 'return=minimal';
-    }
     try {
-        const res = await fetch(url, opts);
+        const res  = await fetch(url, opts);
         const text = await res.text();
-        if (!text || !text.trim()) return (opts.method === 'DELETE' || opts.method === 'PATCH') ? null : [];
+        if (!text || !text.trim())
+            return (opts.method === 'DELETE' || opts.method === 'PATCH') ? null : [];
         const data = JSON.parse(text);
         if (!res.ok) throw new Error(data.message || data.hint || 'API Error');
         return data;
     } catch(e) { console.error('❌', e.message); throw e; }
 }
 
-// ===== GENERIC CRUD =====
+/* ═══════════════════════════════════════════════
+   GENERIC CRUD  (Flutter: BaseRepository)
+═══════════════════════════════════════════════ */
 async function saveItem(table, data, editId, clearFn, loadFn) {
     try {
         if (editId) {
-            await safeFetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${editId}`, { method: 'PATCH', body: JSON.stringify(data) });
+            await safeFetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${editId}`,
+                { method: 'PATCH', body: JSON.stringify(data) });
             showToast('✅ আপডেট হয়েছে');
         } else {
-            await safeFetch(`${SUPABASE_URL}/rest/v1/${table}`, { method: 'POST', body: JSON.stringify(data) });
+            await safeFetch(`${SUPABASE_URL}/rest/v1/${table}`,
+                { method: 'POST', body: JSON.stringify(data) });
             showToast('✅ সেইভ হয়েছে');
         }
         if (clearFn) clearFn();
-        if (loadFn) loadFn();
+        if (loadFn)  loadFn();
     } catch(e) { showToast('❌ এরর: ' + e.message, 4000); console.error(e); }
 }
 
@@ -810,7 +1221,9 @@ async function deleteItem(table, id, loadFn) {
     } catch(e) { showToast('❌ ডিলিট এরর'); }
 }
 
-// ===== SECTION SWITCHER =====
+/* ═══════════════════════════════════════════════
+   SECTION SWITCHER  (Flutter: TabController.animateTo)
+═══════════════════════════════════════════════ */
 function switchSection(sec, el) {
     currentSection = sec;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -819,15 +1232,27 @@ function switchSection(sec, el) {
     const secId = 'sec' + sec.charAt(0).toUpperCase() + sec.slice(1);
     document.getElementById(secId)?.classList.add('active');
     const loaders = {
-        class: loadClasses, exam: loadExams, kakha: loadKaKha, timer: loadCountdowns,
-        students: loadStudents, mock: () => { loadMocks(); }, modeltest: loadModelTests,
-        social: loadSocial, subadmin: loadSubAdmins, reports: loadReports,
-        owner: loadOwner, mentors: loadMentors, special: loadSpecials, serial: () => {}
+        class:     loadClasses,
+        exam:      loadExams,
+        kakha:     loadKaKha,
+        timer:     loadCountdowns,
+        students:  loadStudents,
+        mock:      loadMocks,
+        modeltest: loadModelTests,
+        social:    loadSocial,
+        subadmin:  loadSubAdmins,
+        reports:   loadReports,
+        owner:     loadOwner,
+        mentors:   loadMentors,
+        special:   loadSpecials,
+        serial:    () => {}
     };
     if (loaders[sec]) loaders[sec]();
 }
 
-// ===== CSV PARSER =====
+/* ═══════════════════════════════════════════════
+   CSV PARSER  (Flutter: CSV package)
+═══════════════════════════════════════════════ */
 function parseCSV(text) {
     const rows = []; let currentRow = []; let currentField = ''; let inQuotes = false;
     for (let i = 0; i < text.length; i++) {
@@ -873,8 +1298,10 @@ function handleCSV(input, labelId) {
             if (cols.length < 6) continue;
             data.push({
                 questions: cols[qIdx] || '', option1: cols[o1] || '', option2: cols[o2] || '',
-                option3: cols[o3] || '', option4: cols[o4] || '', option5: o5 >= 0 ? (cols[o5] || null) : null,
-                answer: parseInt(cols[aIdx]) || 1, explanation: eIdx >= 0 ? (cols[eIdx] || '') : '',
+                option3: cols[o3] || '', option4: cols[o4] || '',
+                option5: o5 >= 0 ? (cols[o5] || null) : null,
+                answer: parseInt(cols[aIdx]) || 1,
+                explanation: eIdx >= 0 ? (cols[eIdx] || '') : '',
                 type: tIdx >= 0 ? (parseInt(cols[tIdx]) || 1) : 1,
                 section: sIdx >= 0 ? (parseInt(cols[sIdx]) || 1) : 1
             });
@@ -886,9 +1313,13 @@ function handleCSV(input, labelId) {
     reader.readAsText(file);
 }
 
-function handleMtCSV(input) {
+function handleMtCSV(input, labelId) {
     const file = input.files[0]; if (!file) return;
-    document.getElementById('mtCSVName').textContent = '📄 ' + file.name;
+    if (labelId) document.getElementById(labelId).textContent = '📄 ' + file.name;
+    // backward compat: old single-arg call
+    const lId = labelId || 'mtCSVName';
+    const el = document.getElementById(lId);
+    if (el) el.textContent = '📄 ' + file.name;
     const reader = new FileReader();
     reader.onload = e => {
         const lines = parseCSV(e.target.result.replace(/\t/g,','));
@@ -900,8 +1331,10 @@ function handleMtCSV(input) {
             const idx = (n) => cleanHeader.indexOf(n);
             data.push({
                 questions: cols[idx('question')] || cols[0] || '',
-                option1: cols[idx('option1')] || cols[1] || '', option2: cols[idx('option2')] || cols[2] || '',
-                option3: cols[idx('option3')] || cols[3] || '', option4: cols[idx('option4')] || cols[4] || '',
+                option1: cols[idx('option1')] || cols[1] || '',
+                option2: cols[idx('option2')] || cols[2] || '',
+                option3: cols[idx('option3')] || cols[3] || '',
+                option4: cols[idx('option4')] || cols[4] || '',
                 option5: cols[idx('option5')] || null,
                 answer: parseInt(cols[idx('answer')] || cols[5]) || 1,
                 explanation: cols[idx('explanation')] || cols[6] || ''
@@ -913,35 +1346,31 @@ function handleMtCSV(input) {
     reader.readAsText(file);
 }
 
-// ============================================================
-// ==================== CLASS (UPDATED LOGIC) ==================
-// ============================================================
-
-// Category change — show/hide relevant fields
+/* ═══════════════════════════════════════════════
+   CLASS  (Flutter: ClassAdminController)
+═══════════════════════════════════════════════ */
 function onCategoryChange() {
     const cat = document.getElementById('classCategory').value;
     document.querySelectorAll('.cat-fields').forEach(el => el.classList.remove('show'));
     if (cat) document.getElementById('fields_' + cat)?.classList.add('show');
 }
 
-// Build data object based on selected category
 function buildClassData() {
-    const cat = document.getElementById('classCategory').value;
-    if (!cat) { showToast('⚠️ ক্যাটাগরি নির্বাচন করুন'); return null; }
-
+    const cat  = document.getElementById('classCategory').value;
+    if (!cat)  { showToast('⚠️ ক্যাটাগরি নির্বাচন করুন'); return null; }
     const link = document.getElementById('classLink').value.trim();
     if (!link) { showToast('⚠️ YouTube লিংক দিন'); return null; }
 
     const base = {
-        category: cat,
-        class_type: document.getElementById('classType').value,
+        category:    cat,
+        class_type:  document.getElementById('classType').value,
         youtube_link: link,
-        class_note: document.getElementById('classNote').value.trim() || null,
-        start_time: document.getElementById('classStart').value || null,
-        end_time: document.getElementById('classEnd').value || null,
-        sort_order: parseInt(document.getElementById('classSortOrder').value) || 0,
+        class_note:  document.getElementById('classNote').value.trim() || null,
+        start_time:  document.getElementById('classStart').value || null,
+        end_time:    document.getElementById('classEnd').value || null,
+        sort_order:  parseInt(document.getElementById('classSortOrder').value) || 0,
         serial_order: parseInt(document.getElementById('classSortOrder').value) || 0,
-        created_by: currentUser?.phone
+        created_by:  currentUser?.phone
     };
 
     if (cat === 'medical_class') {
@@ -950,49 +1379,35 @@ function buildClassData() {
         if (!subj || !chap) { showToast('⚠️ সাবজেক্ট ও চ্যাপ্টার দিন'); return null; }
         return { ...base, subject: subj, paper: document.getElementById('classPaper').value.trim() || null, chapter: chap };
     }
-
     if (cat === 'medical_guide') {
-        return {
-            ...base,
-            timer_type: document.getElementById('classTimerType').value,
+        return { ...base, timer_type: document.getElementById('classTimerType').value,
             topic: document.getElementById('classMedTopic').value.trim() || null,
-            description: document.getElementById('classMedDesc').value.trim() || null
-        };
+            description: document.getElementById('classMedDesc').value.trim() || null };
     }
-
     if (cat === 'varsity_guide') {
         const topic = document.getElementById('classVarsityTopic').value.trim();
         if (!topic) { showToast('⚠️ টপিক নাম দিন'); return null; }
         return { ...base, topic, description: document.getElementById('classVarsityDesc').value.trim() || null };
     }
-
     if (cat === 'short_trick') {
         const subj = document.getElementById('classTrickSubject').value.trim();
         if (!subj) { showToast('⚠️ সাবজেক্ট নাম দিন'); return null; }
-        return {
-            ...base, subject: subj,
+        return { ...base, subject: subj,
             topic: document.getElementById('classTrickTopic').value.trim() || null,
-            description: document.getElementById('classTrickDesc').value.trim() || null
-        };
+            description: document.getElementById('classTrickDesc').value.trim() || null };
     }
-
     if (cat === 'course_feature') {
         const course = document.getElementById('classCourseName').value.trim();
-        const feature = document.getElementById('classFeatureName').value.trim();
         if (!course) { showToast('⚠️ কোর্সের নাম দিন'); return null; }
-        return {
-            ...base, course_name: course,
-            feature_name: feature || null,
-            description: document.getElementById('classCourseDesc').value.trim() || null
-        };
+        return { ...base, course_name: course,
+            feature_name: document.getElementById('classFeatureName').value.trim() || null,
+            description: document.getElementById('classCourseDesc').value.trim() || null };
     }
-
     return null;
 }
 
 function saveClass() {
-    const d = buildClassData();
-    if (!d) return;
+    const d = buildClassData(); if (!d) return;
     saveItem('classes', d, document.getElementById('classEditId').value || null, clearClassForm, loadClasses);
 }
 
@@ -1000,8 +1415,7 @@ function clearClassForm() {
     document.getElementById('classCategory').value = '';
     document.querySelectorAll('.cat-fields').forEach(el => el.classList.remove('show'));
     ['classSubject','classPaper','classChapter',
-     'classMedTopic','classMedDesc',
-     'classVarsityTopic','classVarsityDesc',
+     'classMedTopic','classMedDesc','classVarsityTopic','classVarsityDesc',
      'classTrickSubject','classTrickTopic','classTrickDesc',
      'classCourseName','classFeatureName','classCourseDesc',
      'classLink','classNote','classStart','classEnd','classEditId','classSortOrder'
@@ -1014,37 +1428,32 @@ function editClass(id) {
         document.getElementById('classEditId').value = d.id;
         document.getElementById('classCategory').value = d.category || 'medical_class';
         onCategoryChange();
-
-        // Fill category-specific fields
         if (d.category === 'medical_class' || !d.category) {
             document.getElementById('classSubject').value = d.subject || '';
-            document.getElementById('classPaper').value = d.paper || '';
+            document.getElementById('classPaper').value   = d.paper   || '';
             document.getElementById('classChapter').value = d.chapter || '';
         } else if (d.category === 'medical_guide') {
             document.getElementById('classTimerType').value = d.timer_type || '1st Timer';
-            document.getElementById('classMedTopic').value = d.topic || '';
-            document.getElementById('classMedDesc').value = d.description || '';
+            document.getElementById('classMedTopic').value  = d.topic       || '';
+            document.getElementById('classMedDesc').value   = d.description || '';
         } else if (d.category === 'varsity_guide') {
-            document.getElementById('classVarsityTopic').value = d.topic || '';
-            document.getElementById('classVarsityDesc').value = d.description || '';
+            document.getElementById('classVarsityTopic').value = d.topic       || '';
+            document.getElementById('classVarsityDesc').value  = d.description || '';
         } else if (d.category === 'short_trick') {
-            document.getElementById('classTrickSubject').value = d.subject || '';
-            document.getElementById('classTrickTopic').value = d.topic || '';
-            document.getElementById('classTrickDesc').value = d.description || '';
+            document.getElementById('classTrickSubject').value = d.subject     || '';
+            document.getElementById('classTrickTopic').value   = d.topic       || '';
+            document.getElementById('classTrickDesc').value    = d.description || '';
         } else if (d.category === 'course_feature') {
-            document.getElementById('classCourseName').value = d.course_name || '';
-            document.getElementById('classFeatureName').value = d.feature_name || '';
-            document.getElementById('classCourseDesc').value = d.description || '';
+            document.getElementById('classCourseName').value   = d.course_name  || '';
+            document.getElementById('classFeatureName').value  = d.feature_name || '';
+            document.getElementById('classCourseDesc').value   = d.description  || '';
         }
-
-        // Common fields
-        document.getElementById('classType').value = d.class_type || 'website';
-        document.getElementById('classLink').value = d.youtube_link || '';
-        document.getElementById('classNote').value = d.class_note || '';
-        document.getElementById('classStart').value = d.start_time || '';
-        document.getElementById('classEnd').value = d.end_time || '';
-        document.getElementById('classSortOrder').value = d.sort_order || d.serial_order || 0;
-
+        document.getElementById('classType').value       = d.class_type  || 'website';
+        document.getElementById('classLink').value       = d.youtube_link || '';
+        document.getElementById('classNote').value       = d.class_note  || '';
+        document.getElementById('classStart').value      = d.start_time  || '';
+        document.getElementById('classEnd').value        = d.end_time    || '';
+        document.getElementById('classSortOrder').value  = d.sort_order  || d.serial_order || 0;
         window.scrollTo({ top: 0, behavior: 'smooth' });
         showToast('✏️ এডিট মোড — ওপরে স্ক্রল করুন');
     });
@@ -1052,81 +1461,49 @@ function editClass(id) {
 
 async function loadClasses() {
     try {
-        const filterCat = document.getElementById('classFilterCat')?.value || '';
-        const filterSub = document.getElementById('classFilterSub')?.value.toLowerCase() || '';
+        const filterCat  = document.getElementById('classFilterCat')?.value || '';
+        const filterSub  = document.getElementById('classFilterSub')?.value.toLowerCase() || '';
         const filterChap = document.getElementById('classFilterChap')?.value.toLowerCase() || '';
-
         let url = `${SUPABASE_URL}/rest/v1/classes?select=*&order=sort_order.asc,serial_order.asc,created_at.desc&limit=200`;
         if (filterCat) url += `&category=eq.${filterCat}`;
-
         const data = await safeFetch(url);
-
         const filtered = (data || []).filter(c => {
-            const searchText = [c.subject, c.chapter, c.topic, c.course_name, c.feature_name, c.timer_type].filter(Boolean).join(' ').toLowerCase();
-            const chapText = [c.chapter, c.topic, c.feature_name].filter(Boolean).join(' ').toLowerCase();
-            return searchText.includes(filterSub) && chapText.includes(filterChap);
+            const st = [c.subject, c.chapter, c.topic, c.course_name, c.feature_name, c.timer_type].filter(Boolean).join(' ').toLowerCase();
+            const ct = [c.chapter, c.topic, c.feature_name].filter(Boolean).join(' ').toLowerCase();
+            return st.includes(filterSub) && ct.includes(filterChap);
         });
-
         if (!filtered.length) {
-            document.getElementById('classList').innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">কোনো ক্লাস নেই</p>';
-            return;
+            document.getElementById('classList').innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">কোনো ক্লাস নেই</p>'; return;
         }
-
-        const catLabel = {
-            medical_class: '🧬', medical_guide: '📋', varsity_guide: '🎓',
-            short_trick: '⚡', course_feature: '🎯'
-        };
-
+        const catLabel = { medical_class:'🧬', medical_guide:'📋', varsity_guide:'🎓', short_trick:'⚡', course_feature:'🎯' };
         let html = '<table class="data-table"><tr><th>#</th><th>ক্যাট</th><th>তথ্য</th><th>টাইপ</th><th>Actions</th></tr>';
         filtered.forEach((c, i) => {
             let info = '';
-            if (c.category === 'medical_class' || !c.category) {
-                info = `<b>${c.subject||'—'}</b>${c.paper?` › ${c.paper}`:''}<br><span style="font-size:10px;color:var(--text2);">${c.chapter||'—'}</span>`;
-            } else if (c.category === 'medical_guide') {
-                info = `<b>${c.timer_type||'—'}</b>${c.topic?`<br><span style="font-size:10px;color:var(--text2);">${c.topic}</span>`:''}`;
-            } else if (c.category === 'varsity_guide') {
-                info = `<b>${c.topic||'—'}</b>`;
-            } else if (c.category === 'short_trick') {
-                info = `<b>${c.subject||'—'}</b>${c.topic?`<br><span style="font-size:10px;color:var(--text2);">${c.topic}</span>`:''}`;
-            } else if (c.category === 'course_feature') {
-                info = `<b>${c.course_name||'—'}</b>${c.feature_name?`<br><span style="font-size:10px;color:var(--text2);">${c.feature_name}</span>`:''}`;
-            }
-
-            html += `<tr>
-                <td style="color:var(--text2);">${i+1}</td>
-                <td style="font-size:16px;">${catLabel[c.category]||'📚'}</td>
-                <td>${info}</td>
-                <td><span style="font-size:10px;padding:2px 6px;border-radius:4px;background:var(--hover);">${c.class_type||'website'}</span></td>
-                <td style="white-space:nowrap;">
-                    <button class="btn btn-sm btn-outline" onclick="editClass('${c.id}')">✏️</button>
-                    ${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('classes','${c.id}',loadClasses)" style="margin-left:3px;">🗑️</button>`:''}
-                </td>
-            </tr>`;
+            if (c.category === 'medical_class' || !c.category) info = `<b>${c.subject||'—'}</b>${c.paper?` › ${c.paper}`:''}<br><span style="font-size:10px;color:var(--text2);">${c.chapter||'—'}</span>`;
+            else if (c.category === 'medical_guide') info = `<b>${c.timer_type||'—'}</b>${c.topic?`<br><span style="font-size:10px;color:var(--text2);">${c.topic}</span>`:''}`;
+            else if (c.category === 'varsity_guide') info = `<b>${c.topic||'—'}</b>`;
+            else if (c.category === 'short_trick')  info = `<b>${c.subject||'—'}</b>${c.topic?`<br><span style="font-size:10px;color:var(--text2);">${c.topic}</span>`:''}`;
+            else if (c.category === 'course_feature') info = `<b>${c.course_name||'—'}</b>${c.feature_name?`<br><span style="font-size:10px;color:var(--text2);">${c.feature_name}</span>`:''}`;
+            html += `<tr><td style="color:var(--text2);">${i+1}</td><td style="font-size:16px;">${catLabel[c.category]||'📚'}</td><td>${info}</td><td><span style="font-size:10px;padding:2px 6px;border-radius:4px;background:var(--hover);">${c.class_type||'website'}</span></td><td style="white-space:nowrap;"><button class="btn btn-sm btn-outline" onclick="editClass('${c.id}')">✏️</button>${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('classes','${c.id}',loadClasses)" style="margin-left:3px;">🗑️</button>`:''}</td></tr>`;
         });
         html += '</table>';
         document.getElementById('classList').innerHTML = html;
-
-        // Populate datalists
         populateDatalist('subjectList', [...new Set(data.filter(c=>c.subject).map(c=>c.subject))]);
-        populateDatalist('paperList', [...new Set(data.filter(c=>c.paper).map(c=>c.paper))]);
+        populateDatalist('paperList',   [...new Set(data.filter(c=>c.paper).map(c=>c.paper))]);
         populateDatalist('chapterList', [...new Set(data.filter(c=>c.chapter).map(c=>c.chapter))]);
-
-    } catch(e) {
-        document.getElementById('classList').innerHTML = `<p style="color:var(--red);">লোড এরর: ${e.message}</p>`;
-    }
+    } catch(e) { document.getElementById('classList').innerHTML = `<p style="color:var(--red);">লোড এরর: ${e.message}</p>`; }
 }
 
 function populateDatalist(id, items) {
-    const dl = document.getElementById(id);
-    if (!dl) return;
+    const dl = document.getElementById(id); if (!dl) return;
     dl.innerHTML = items.map(i => `<option value="${i}">`).join('');
 }
 
-// ============================================================
-// ==================== EXAM ===================================
-// ============================================================
+/* ═══════════════════════════════════════════════
+   EXAM  (Flutter: ExamAdminController)
+═══════════════════════════════════════════════ */
 function toggleExamFields() {
-    const t = document.getElementById('examType').value;
+    const t  = document.getElementById('examType').value;
     const sf = document.getElementById('examSubTypeField');
     const by = document.getElementById('examBoardYear');
     const wf = document.getElementById('examWriterField');
@@ -1150,20 +1527,26 @@ function toggleExamFields() {
 
 async function saveExam() {
     if (!examCSVData?.length) { showToast('⚠️ CSV আপলোড করুন'); return; }
+    // ── NEW: read allow_preview + is_locked  (Flutter: ExamModel.allowPreview, isLocked)
+    const allowPreview = getSwitchVal('examAllowPreview');
+    const isLocked     = getSwitchVal('examIsLocked');
+
     const d = {
-        title: document.getElementById('examSubject').value.trim() + ' — ' + document.getElementById('examChapter').value.trim(),
+        title:   document.getElementById('examSubject').value.trim() + ' — ' + document.getElementById('examChapter').value.trim(),
         subject: document.getElementById('examSubject').value.trim(),
         chapter: document.getElementById('examChapter').value.trim(),
         exam_type: document.getElementById('examType').value,
         sub_type: document.getElementById('examSubType').value || null,
-        board: document.getElementById('examBoard').value.trim() || null,
-        year: document.getElementById('examYear').value.trim() || null,
-        unit: document.getElementById('examUnit').value.trim() || null,
-        writer: document.getElementById('examWriter').value.trim() || null,
+        board:   document.getElementById('examBoard').value.trim() || null,
+        year:    document.getElementById('examYear').value.trim()  || null,
+        unit:    document.getElementById('examUnit').value.trim()  || null,
+        writer:  document.getElementById('examWriter').value.trim()|| null,
         start_time: document.getElementById('examStart').value || null,
-        end_time: document.getElementById('examEnd').value || null,
+        end_time:   document.getElementById('examEnd').value   || null,
         total_marks: examCSVData.length,
         duration_minutes: Math.ceil(examCSVData.length / 2),
+        allow_preview: allowPreview,   // ← NEW
+        is_locked:     isLocked,       // ← NEW
         created_by: currentUser?.phone
     };
     if (!d.subject || !d.chapter || !d.exam_type) { showToast('⚠️ সাবজেক্ট, চ্যাপ্টার ও টাইপ দিন'); return; }
@@ -1181,7 +1564,12 @@ async function saveExam() {
         showToast('⏳ প্রশ্ন সেইভ হচ্ছে... ' + examCSVData.length + 'টি');
         let saved = 0;
         for (const q of examCSVData) {
-            await safeFetch(`${SUPABASE_URL}/rest/v1/questions`, { method: 'POST', body: JSON.stringify({ exam_id: examId, question_text: q.questions || '', option1: q.option1, option2: q.option2, option3: q.option3, option4: q.option4, option5: q.option5 || null, answer_index: parseInt(q.answer) || 1, explanation: q.explanation || '', type: parseInt(q.type) || 1, section: parseInt(q.section) || 1 }) });
+            await safeFetch(`${SUPABASE_URL}/rest/v1/questions`, { method: 'POST', body: JSON.stringify({
+                exam_id: examId, question_text: q.questions || '',
+                option1: q.option1, option2: q.option2, option3: q.option3, option4: q.option4,
+                option5: q.option5 || null, answer_index: parseInt(q.answer) || 1,
+                explanation: q.explanation || '', type: parseInt(q.type) || 1, section: parseInt(q.section) || 1
+            })});
             saved++;
         }
         showToast('✅ ' + saved + ' প্রশ্ন সেইভ | ID: ' + examId, 5000);
@@ -1191,16 +1579,25 @@ async function saveExam() {
 }
 
 function clearExamForm() {
-    ['examSubject','examChapter','examType','examSubType','examBoard','examYear','examUnit','examWriter','examStart','examEnd','examEditId'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+    ['examSubject','examChapter','examType','examSubType','examBoard','examYear','examUnit','examWriter','examStart','examEnd','examEditId'
+    ].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
     examCSVData = null;
     document.getElementById('examCSVName').textContent = '';
     ['examSubTypeField','examBoardYear','examWriterField','examUnitField'].forEach(id => { const el = document.getElementById(id); if(el) el.style.display = 'none'; });
+    // Reset toggles to defaults: allow_preview=true, is_locked=false
+    setSwitchVal('examAllowPreview', true);
+    setSwitchVal('examIsLocked', false);
 }
 
 async function loadExams() {
     try {
         const data = await safeFetch(`${SUPABASE_URL}/rest/v1/exams?select=*&order=created_at.desc&limit=200`);
-        const groups = { board:{title:'🔵 বোর্ড',items:[]}, medical:{title:'🏥 Medical',items:[]}, dental:{title:'🦷 Dental',items:[]}, afmc:{title:'🎖️ AFMC',items:[]}, varsity:{title:'🟣 ভার্সিটি',items:[]}, onushiloni:{title:'🟠 অনুশীলনী',items:[]}, model:{title:'📖 Model Test',items:[]} };
+        const groups = {
+            board:{title:'🔵 বোর্ড',items:[]}, medical:{title:'🏥 Medical',items:[]},
+            dental:{title:'🦷 Dental',items:[]}, afmc:{title:'🎖️ AFMC',items:[]},
+            varsity:{title:'🟣 ভার্সিটি',items:[]}, onushiloni:{title:'🟠 অনুশীলনী',items:[]},
+            model:{title:'📖 Model Test',items:[]}
+        };
         (data||[]).forEach(e => { if(groups[e.exam_type]) groups[e.exam_type].items.push(e); });
         let html = '';
         Object.keys(groups).forEach(key => {
@@ -1210,9 +1607,19 @@ async function loadExams() {
                 const link = location.origin + '/exam.html?id=' + e.id;
                 let info = `<b>${e.subject}</b> › ${e.chapter}`;
                 if(e.sub_type) info += ` <span style="color:var(--accent);">[${e.sub_type}]</span>`;
-                if(e.board) info += ` · ${e.board}`; if(e.year) info += ` · ${e.year}`; if(e.unit) info += ` · ${e.unit}`; if(e.writer) info += ` · ${e.writer}`;
+                if(e.board)   info += ` · ${e.board}`;
+                if(e.year)    info += ` · ${e.year}`;
+                if(e.unit)    info += ` · ${e.unit}`;
+                if(e.writer)  info += ` · ${e.writer}`;
                 info += ` <span style="color:var(--text2);font-size:10px;">(${e.total_marks||0} প্রশ্ন)</span>`;
-                html += `<div class="list-item"><div style="flex:1;">${info}</div><div style="display:flex;gap:3px;flex-shrink:0;"><button class="btn btn-sm btn-copy" onclick="copyLink('${link}')">📋</button><button class="btn btn-sm btn-outline" onclick="editExam('${e.id}')">✏️</button>${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('exams','${e.id}',loadExams)">🗑️</button>`:''}</div></div>`;
+                // ── NEW: preview + lock badges  (Flutter: ExamStatusBadges widget)
+                const previewBadge = e.allow_preview !== false
+                    ? `<span class="badge badge-blue">👁️ Preview</span>`
+                    : `<span class="badge badge-red">🚫 No Preview</span>`;
+                const lockBadge = e.is_locked
+                    ? `<span class="badge badge-yellow">🔒 Locked</span>`
+                    : `<span class="badge badge-green">🔓 Open</span>`;
+                html += `<div class="list-item"><div style="flex:1;">${info}<div class="exam-flags">${previewBadge}${lockBadge}</div></div><div style="display:flex;gap:3px;flex-shrink:0;"><button class="btn btn-sm btn-copy" onclick="copyLink('${link}')">📋</button><button class="btn btn-sm btn-outline" onclick="editExam('${e.id}')">✏️</button>${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('exams','${e.id}',loadExams)">🗑️</button>`:''}</div></div>`;
             });
         });
         document.getElementById('examList').innerHTML = html || '<p style="color:var(--text2);text-align:center;padding:16px;">কোনো এক্সাম নেই</p>';
@@ -1223,29 +1630,44 @@ function copyLink(link) { navigator.clipboard?.writeText(link); showToast('📋 
 
 async function editExam(id) {
     editItem('exams', id, d => {
-        document.getElementById('examEditId').value = d.id; document.getElementById('examSubject').value = d.subject||''; document.getElementById('examChapter').value = d.chapter||''; document.getElementById('examType').value = d.exam_type||''; toggleExamFields(); document.getElementById('examSubType').value = d.sub_type||''; document.getElementById('examBoard').value = d.board||''; document.getElementById('examYear').value = d.year||''; document.getElementById('examUnit').value = d.unit||''; document.getElementById('examWriter').value = d.writer||''; document.getElementById('examStart').value = d.start_time||''; document.getElementById('examEnd').value = d.end_time||'';
-        switchSection('exam', document.querySelector('.tab-btn:nth-child(2)')); window.scrollTo({top:0,behavior:'smooth'});
+        document.getElementById('examEditId').value  = d.id;
+        document.getElementById('examSubject').value = d.subject  || '';
+        document.getElementById('examChapter').value = d.chapter  || '';
+        document.getElementById('examType').value    = d.exam_type|| '';
+        toggleExamFields();
+        document.getElementById('examSubType').value = d.sub_type || '';
+        document.getElementById('examBoard').value   = d.board    || '';
+        document.getElementById('examYear').value    = d.year     || '';
+        document.getElementById('examUnit').value    = d.unit     || '';
+        document.getElementById('examWriter').value  = d.writer   || '';
+        document.getElementById('examStart').value   = d.start_time || '';
+        document.getElementById('examEnd').value     = d.end_time   || '';
+        // ── NEW: restore toggles  (Flutter: SwitchListTile.value)
+        setSwitchVal('examAllowPreview', d.allow_preview !== false);
+        setSwitchVal('examIsLocked', !!d.is_locked);
+        switchSection('exam', document.querySelector('.tab-btn:nth-child(2)'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 }
 
-// ============================================================
-// ==================== ক,খ,CQ ================================
-// ============================================================
+/* ═══════════════════════════════════════════════
+   ক,খ,CQ  (Flutter: KaKhaCQController)
+═══════════════════════════════════════════════ */
 function saveKaKha() {
-    const d = { subject:document.getElementById('kaSubject').value.trim(), chapter:document.getElementById('kaChapter').value.trim(), year:document.getElementById('kaYear').value.trim()||null, topic:document.getElementById('kaTopic').value.trim()||null, type:document.getElementById('kaType').value, link_or_file:document.getElementById('kaLink').value.trim(), created_by:currentUser?.phone };
+    const d = { subject: document.getElementById('kaSubject').value.trim(), chapter: document.getElementById('kaChapter').value.trim(), year: document.getElementById('kaYear').value.trim()||null, topic: document.getElementById('kaTopic').value.trim()||null, type: document.getElementById('kaType').value, link_or_file: document.getElementById('kaLink').value.trim(), created_by: currentUser?.phone };
     if(!d.subject||!d.chapter||!d.link_or_file){showToast('⚠️ সাবজেক্ট, চ্যাপ্টার ও লিংক দিন');return;}
-    saveItem('ka_kha_cq',d,document.getElementById('kaEditId').value||null,clearKaKhaForm,loadKaKha);
+    saveItem('ka_kha_cq', d, document.getElementById('kaEditId').value||null, clearKaKhaForm, loadKaKha);
 }
 function clearKaKhaForm(){['kaSubject','kaChapter','kaYear','kaTopic','kaLink','kaEditId'].forEach(id=>document.getElementById(id).value='');}
 function editKaKha(id){editItem('ka_kha_cq',id,d=>{document.getElementById('kaEditId').value=d.id;document.getElementById('kaSubject').value=d.subject||'';document.getElementById('kaChapter').value=d.chapter||'';document.getElementById('kaYear').value=d.year||'';document.getElementById('kaTopic').value=d.topic||'';document.getElementById('kaType').value=d.type||'ka';document.getElementById('kaLink').value=d.link_or_file||'';window.scrollTo({top:0,behavior:'smooth'});});}
 async function loadKaKha(){
     try{
-        const filterType=document.getElementById('kaFilterType')?.value||'';
-        let url=`${SUPABASE_URL}/rest/v1/ka_kha_cq?select=*&order=created_at.desc&limit=100`;
-        if(filterType)url+=`&type=eq.${filterType}`;
-        const data=await safeFetch(url);
+        const filterType = document.getElementById('kaFilterType')?.value||'';
+        let url = `${SUPABASE_URL}/rest/v1/ka_kha_cq?select=*&order=created_at.desc&limit=100`;
+        if(filterType) url += `&type=eq.${filterType}`;
+        const data = await safeFetch(url);
         if(!data?.length){document.getElementById('kaList').innerHTML='<p style="color:var(--text2);text-align:center;padding:16px;">কোনো ডাটা নেই</p>';return;}
-        const typeLabel={ka:'🔵 ক',kha:'🟠 খ',cq:'🟣 CQ'};
+        const typeLabel = {ka:'🔵 ক',kha:'🟠 খ',cq:'🟣 CQ'};
         let html='<table class="data-table"><tr><th>সাবজেক্ট</th><th>চ্যাপ্টার</th><th>টাইপ</th><th>সাল</th><th>Actions</th></tr>';
         data.forEach(k=>{html+=`<tr><td><b>${k.subject}</b></td><td>${k.chapter}${k.topic?`<br><span style="font-size:10px;color:var(--text2);">${k.topic}</span>`:''}</td><td>${typeLabel[k.type]||k.type||'—'}</td><td>${k.year||'—'}</td><td style="white-space:nowrap;"><button class="btn btn-sm btn-outline" onclick="editKaKha('${k.id}')">✏️</button>${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('ka_kha_cq','${k.id}',loadKaKha)" style="margin-left:3px;">🗑️</button>`:''}</td></tr>`;});
         html+='</table>';
@@ -1253,27 +1675,27 @@ async function loadKaKha(){
     }catch(e){document.getElementById('kaList').innerHTML='<p style="color:var(--red);">লোড এরর</p>';}
 }
 
-// ============================================================
-// ==================== COUNTDOWN ==============================
-// ============================================================
+/* ═══════════════════════════════════════════════
+   COUNTDOWN  (Flutter: TimerAdminController)
+═══════════════════════════════════════════════ */
 function saveCountdown(){const d={main_topic:document.getElementById('cdTopic').value.trim(),subtopic:document.getElementById('cdSubtopic').value.trim()||null,start_time:document.getElementById('cdStart').value||null,end_time:document.getElementById('cdEnd').value};if(!d.main_topic||!d.end_time){showToast('⚠️ টপিক ও শেষ সময় দিন');return;}saveItem('countdowns',d,document.getElementById('cdEditId').value||null,clearCdForm,loadCountdowns);}
 function clearCdForm(){['cdTopic','cdSubtopic','cdStart','cdEnd','cdEditId'].forEach(id=>document.getElementById(id).value='');}
 function editCountdown(id){editItem('countdowns',id,d=>{document.getElementById('cdEditId').value=d.id;document.getElementById('cdTopic').value=d.main_topic||'';document.getElementById('cdSubtopic').value=d.subtopic||'';document.getElementById('cdStart').value=d.start_time||'';document.getElementById('cdEnd').value=d.end_time||'';window.scrollTo({top:0,behavior:'smooth'});});}
 async function loadCountdowns(){
     try{
-        const data=await safeFetch(`${SUPABASE_URL}/rest/v1/countdowns?select=*&order=created_at.desc&limit=20`);
+        const data=await safeFetch(`${SUPABASE_URL}/rest/v1/countdowns?select=*&order=sort_order.asc,created_at.desc&limit=20`);
         if(!data?.length){document.getElementById('cdList').innerHTML='<p style="color:var(--text2);text-align:center;padding:16px;">কোনো টাইমার নেই</p>';return;}
-        let html='<table class="data-table"><tr><th>টপিক</th><th>শেষ সময়</th><th>Status</th><th>Actions</th></tr>';
         const now=new Date();
-        data.forEach(c=>{const end=new Date(c.end_time);const isExpired=end<now;const diff=Math.max(0,Math.floor((end-now)/86400000));html+=`<tr><td><b>${c.main_topic}</b>${c.subtopic?`<br><span style="font-size:10px;color:var(--text2);">${c.subtopic}</span>`:''}</td><td style="font-size:11px;">${end.toLocaleString('bn-BD')}</td><td><span style="font-size:10px;padding:2px 6px;border-radius:4px;background:${isExpired?'rgba(248,81,73,0.15)':'rgba(63,185,80,0.15)'};color:${isExpired?'var(--red)':'var(--green)'};">${isExpired?'⌛ শেষ':'🟢 '+diff+'দিন বাকি'}</span></td><td style="white-space:nowrap;"><button class="btn btn-sm btn-outline" onclick="editCountdown('${c.id}')">✏️</button>${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('countdowns','${c.id}',loadCountdowns)" style="margin-left:3px;">🗑️</button>`:''}</td></tr>`;});
+        let html='<table class="data-table"><tr><th>টপিক</th><th>শেষ সময়</th><th>Status</th><th>Actions</th></tr>';
+        data.forEach(c=>{const end=new Date(c.end_time);const isExpired=end<now;const diff=Math.max(0,Math.floor((end-now)/86400000));html+=`<tr><td><b>${c.main_topic}</b>${c.subtopic?`<br><span style="font-size:10px;color:var(--text2);">${c.subtopic}</span>`:''}</td><td style="font-size:11px;">${end.toLocaleString('bn-BD')}</td><td><span class="badge ${isExpired?'badge-red':'badge-green'}">${isExpired?'⌛ শেষ':'🟢 '+diff+'দিন'}</span></td><td style="white-space:nowrap;"><button class="btn btn-sm btn-outline" onclick="editCountdown('${c.id}')">✏️</button>${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('countdowns','${c.id}',loadCountdowns)" style="margin-left:3px;">🗑️</button>`:''}</td></tr>`;});
         html+='</table>';
         document.getElementById('cdList').innerHTML=html;
     }catch(e){document.getElementById('cdList').innerHTML='<p style="color:var(--red);">লোড এরর</p>';}
 }
 
-// ============================================================
-// ==================== STUDENTS ================================
-// ============================================================
+/* ═══════════════════════════════════════════════
+   STUDENTS  (Flutter: StudentsController)
+═══════════════════════════════════════════════ */
 async function loadStudents(){
     try{
         const name=document.getElementById('filterName').value.trim();const batch=document.getElementById('filterBatch').value.trim();const college=document.getElementById('filterCollege').value.trim();const role=document.getElementById('filterRole').value;
@@ -1284,18 +1706,20 @@ async function loadStudents(){
         if(!paged.length){document.getElementById('studentTable').innerHTML='<p style="color:var(--text2);text-align:center;padding:16px;">কোনো স্টুডেন্ট নেই</p>';document.getElementById('studentPager').innerHTML='';return;}
         let html=`<p style="font-size:11px;color:var(--text2);margin-bottom:6px;">মোট: ${total} জন</p>`;
         html+='<table class="data-table"><tr><th>নাম</th><th>ব্যাচ</th><th>কলেজ</th><th>ফোন</th><th>রোল</th><th>Actions</th></tr>';
-        paged.forEach(u=>{const roleColor=u.role==='admin'?'var(--red)':u.role==='sub_admin'?'var(--yellow)':'var(--text2)';html+=`<tr><td><b>${u.name||'—'}</b></td><td>${u.batch||'—'}</td><td>${u.college||'—'}</td><td style="font-size:11px;">${u.phone}</td><td><span style="font-size:10px;color:${roleColor};">${u.role||'student'}</span></td><td style="white-space:nowrap;"><button class="btn btn-sm btn-outline" onclick="sendNotifToUser('${u.phone}','${u.name||''}')">🔔</button>${isAdmin&&u.role!=='admin'?`<button class="btn btn-sm btn-danger" onclick="deleteItem('users','${u.id}',loadStudents)" style="margin-left:3px;">🗑️</button>`:''}</td></tr>`;});
+        paged.forEach(u=>{const roleColor=u.role==='admin'?'var(--red)':u.role==='sub_admin'?'var(--yellow)':'var(--text2)';html+=`<tr><td><b>${u.name||'—'}</b></td><td>${u.batch||'—'}</td><td>${u.college||'—'}</td><td style="font-size:11px;">${u.phone}</td><td><span style="font-size:10px;color:${roleColor};font-weight:700;">${u.role||'student'}</span></td><td style="white-space:nowrap;"><button class="btn btn-sm btn-outline" onclick="sendNotifToUser('${u.phone}','${u.name||''}')">🔔</button>${isAdmin&&u.role!=='admin'?`<button class="btn btn-sm btn-danger" onclick="deleteItem('users','${u.id}',loadStudents)" style="margin-left:3px;">🗑️</button>`:''}</td></tr>`;});
         html+='</table>';document.getElementById('studentTable').innerHTML=html;
         const totalPages=Math.ceil(total/studentPageSize);let pager='';
         if(totalPages>1){if(studentPage>1)pager+=`<button class="btn btn-sm btn-outline" onclick="studentPage--;loadStudents()">◀</button>`;pager+=`<span style="font-size:12px;color:var(--text2);padding:5px 10px;">${studentPage}/${totalPages}</span>`;if(studentPage<totalPages)pager+=`<button class="btn btn-sm btn-outline" onclick="studentPage++;loadStudents()">▶</button>`;}
         document.getElementById('studentPager').innerHTML=pager;
+        // Update stats
+        document.getElementById('statStudents').textContent = total;
     }catch(e){document.getElementById('studentTable').innerHTML='<p style="color:var(--red);">লোড এরর</p>';}
 }
 function sendNotifToUser(phone,name){document.getElementById('notifPhone').value=phone;notifType='phone';document.querySelectorAll('#notifTypeAll,#notifTypePhone').forEach(el=>el.classList.remove('active'));document.getElementById('notifTypePhone').classList.add('active');document.getElementById('notifPhoneField').style.display='block';document.getElementById('notifTitle').value='';document.getElementById('notifMessage').value='';document.getElementById('notifModal').classList.add('active');}
 
-// ============================================================
-// ==================== MOCK ====================================
-// ============================================================
+/* ═══════════════════════════════════════════════
+   MOCK  (Flutter: MockAdminController)
+═══════════════════════════════════════════════ */
 function selectMockStd(s,el){mockStd=s;document.querySelectorAll('#mockStdChips .chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');}
 function selectMockCnt(c,el){mockCnt=c;document.querySelectorAll('#mockCntChips .chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');}
 function saveMock(){if(!mockCSVData?.length){showToast('⚠️ CSV আপলোড করুন');return;}const d={subject:document.getElementById('mockSubjectInput').value.trim(),paper:document.getElementById('mockPaper').value.trim()||null,chapter:document.getElementById('mockChapterInput').value.trim(),topic:document.getElementById('mockTopic').value.trim()||null,standard:mockStd,question_count:mockCnt,questions_json:JSON.stringify(mockCSVData),created_by:currentUser?.phone};if(!d.subject||!d.chapter){showToast('⚠️ সাবজেক্ট ও চ্যাপ্টার দিন');return;}saveItem('mock_questions',d,document.getElementById('mockEditId').value||null,clearMockForm,loadMocks);}
@@ -1311,33 +1735,145 @@ async function loadMocks(){
     }catch(e){document.getElementById('mockList').innerHTML='<p style="color:var(--red);">লোড এরর</p>';}
 }
 
-// ============================================================
-// ==================== MODEL TEST =============================
-// ============================================================
-function toggleMtFields(){const t=document.getElementById('mtType').value;document.getElementById('mtMedicalFields').style.display=(t==='medical'||t==='afmc')?'block':'none';document.getElementById('mtVarsityFields').style.display=t==='varsity'?'block':'none';}
-function saveModelTest(){const t=document.getElementById('mtType').value;if(!t){showToast('⚠️ টাইপ নির্বাচন করুন');return;}const d={type:t,subject:document.getElementById('mtSubject')?.value.trim()||null,sub_type:document.getElementById('mtSubType')?.value||null,varsity_name:document.getElementById('mtVarsity')?.value.trim()||null,unit:document.getElementById('mtUnit')?.value.trim()||null,link:document.getElementById('mtLink')?.value.trim()||null,questions_json:mtCSVData?JSON.stringify(mtCSVData):null,question_count:mtCSVData?.length||0,created_by:currentUser?.phone};saveItem('model_tests',d,document.getElementById('mtEditId').value||null,clearMtForm,loadModelTests);}
-function clearMtForm(){['mtEditId','mtType','mtSubject','mtSubType','mtVarsity','mtUnit','mtLink'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});mtCSVData=null;document.getElementById('mtCSVName').textContent='';document.getElementById('mtMedicalFields').style.display='block';document.getElementById('mtVarsityFields').style.display='none';}
-async function loadModelTests(){
-    try{
-        const data=await safeFetch(`${SUPABASE_URL}/rest/v1/model_tests?select=*&order=created_at.desc&limit=50`);
-        if(!data?.length){document.getElementById('mtList').innerHTML='<p style="color:var(--text2);text-align:center;padding:16px;">কোনো Model Test নেই</p>';return;}
-        const typeLabel={medical:'🏥 Medical',afmc:'🎖️ AFMC',varsity:'🟣 Varsity'};const subLabel={subject_final:'📘 Subject Final',paper_final:'📗 Paper Final',full:'📕 Full'};
-        let html='<table class="data-table"><tr><th>টাইপ</th><th>নাম/সাব-টাইপ</th><th>প্রশ্ন</th><th>Actions</th></tr>';
-        data.forEach(m=>{const name=m.varsity_name?`${m.varsity_name}${m.unit?' ('+m.unit+')':''}`:(m.subject||'—');html+=`<tr><td>${typeLabel[m.type]||m.type}</td><td><b>${name}</b>${m.sub_type?`<br><span style="font-size:10px;color:var(--text2);">${subLabel[m.sub_type]||m.sub_type}</span>`:''}</td><td>${m.question_count||0}</td><td style="white-space:nowrap;"><button class="btn btn-sm btn-outline" onclick="editModelTest('${m.id}')">✏️</button>${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('model_tests','${m.id}',loadModelTests)" style="margin-left:3px;">🗑️</button>`:''}</td></tr>`;});
-        html+='</table>';document.getElementById('mtList').innerHTML=html;
-    }catch(e){document.getElementById('mtList').innerHTML='<p style="color:var(--red);">লোড এরর — model_tests table check করুন</p>';}
+/* ═══════════════════════════════════════════════
+   MODEL TEST  (Flutter: ModelTestAdminController)
+   ENHANCED: Varsitywise + Chapterwise sub-fields
+═══════════════════════════════════════════════ */
+function toggleMtFields() {
+    const t = document.getElementById('mtType').value;
+    document.getElementById('mtMedicalFields').style.display = (t === 'medical' || t === 'afmc') ? 'block' : 'none';
+    document.getElementById('mtVarsityFields').style.display  = t === 'varsity' ? 'block' : 'none';
+    document.getElementById('mtMainCSVWrap').style.display    = t !== 'varsity' ? 'block' : 'none';
+    document.getElementById('mtLinkWrap').style.display       = t !== 'varsity' ? 'block' : 'none';
+    if (t === 'varsity') toggleMtVarsitySubFields();
 }
-function editModelTest(id){editItem('model_tests',id,d=>{document.getElementById('mtEditId').value=d.id;document.getElementById('mtType').value=d.type||'';toggleMtFields();if(document.getElementById('mtSubject'))document.getElementById('mtSubject').value=d.subject||'';if(document.getElementById('mtSubType'))document.getElementById('mtSubType').value=d.sub_type||'';if(document.getElementById('mtVarsity'))document.getElementById('mtVarsity').value=d.varsity_name||'';if(document.getElementById('mtUnit'))document.getElementById('mtUnit').value=d.unit||'';if(document.getElementById('mtLink'))document.getElementById('mtLink').value=d.link||'';window.scrollTo({top:0,behavior:'smooth'});});}
 
-// ============================================================
-// ==================== SOCIAL =================================
-// ============================================================
+// NEW: Toggle between varsitywise and chapterwise sub-fields
+function toggleMtVarsitySubFields() {
+    const sub = document.getElementById('mtVarsitySubType').value;
+    document.querySelectorAll('.mt-subtype-fields').forEach(el => el.classList.remove('show'));
+    if (sub === 'varsitywise') document.getElementById('mtVarsitywiseFields').classList.add('show');
+    else document.getElementById('mtChapterwiseFields').classList.add('show');
+}
+
+function saveModelTest() {
+    const t = document.getElementById('mtType').value;
+    if (!t) { showToast('⚠️ টাইপ নির্বাচন করুন'); return; }
+
+    // ── Build data based on type & sub-type  (Flutter: ModelTestModel)
+    let d = {
+        type: t, created_by: currentUser?.phone,
+        link: document.getElementById('mtLink')?.value.trim() || null,
+        questions_json: mtCSVData ? JSON.stringify(mtCSVData) : null,
+        question_count: mtCSVData?.length || 0
+    };
+
+    if (t === 'medical' || t === 'afmc') {
+        d.subject  = document.getElementById('mtSubject')?.value.trim() || null;
+        d.sub_type = document.getElementById('mtSubType')?.value || null;
+    } else if (t === 'varsity') {
+        const sub = document.getElementById('mtVarsitySubType').value;
+        d.varsity_sub_type = sub; // 'varsitywise' | 'chapterwise'
+        if (sub === 'varsitywise') {
+            d.varsity_name = document.getElementById('mtVarsity')?.value.trim() || null;
+            d.unit         = document.getElementById('mtUnit')?.value.trim()    || null;
+            d.year         = document.getElementById('mtVarsityYear')?.value.trim() || null;
+        } else {
+            // chapterwise  (NEW)
+            d.varsity_name = document.getElementById('mtChapterVarsity')?.value.trim() || null;
+            d.unit         = document.getElementById('mtChapterUnit')?.value.trim()    || null;
+            d.chapter      = document.getElementById('mtChapter')?.value.trim()        || null;
+            d.subject      = document.getElementById('mtChapterSubject')?.value.trim() || null;
+        }
+    }
+    saveItem('model_tests', d, document.getElementById('mtEditId').value || null, clearMtForm, loadModelTests);
+}
+
+function clearMtForm() {
+    ['mtEditId','mtType','mtSubject','mtSubType','mtVarsity','mtUnit','mtVarsityYear',
+     'mtChapterVarsity','mtChapterUnit','mtChapter','mtChapterSubject','mtLink'
+    ].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+    mtCSVData = null;
+    document.getElementById('mtCSVName').textContent     = '';
+    document.getElementById('mtCSVVarsityName').textContent = '';
+    document.getElementById('mtMedicalFields').style.display = 'block';
+    document.getElementById('mtVarsityFields').style.display = 'none';
+    document.getElementById('mtMainCSVWrap').style.display   = 'block';
+    document.getElementById('mtLinkWrap').style.display      = 'block';
+    document.querySelectorAll('.mt-subtype-fields').forEach(el => el.classList.remove('show'));
+    document.getElementById('mtVarsitywiseFields').classList.add('show');
+}
+
+async function loadModelTests() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/model_tests?select=*&order=created_at.desc&limit=50`);
+        if (!data?.length) { document.getElementById('mtList').innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">কোনো Model Test নেই</p>'; return; }
+        const typeLabel = { medical:'🏥 Medical', afmc:'🎖️ AFMC', varsity:'🟣 Varsity' };
+        const subLabel  = { subject_final:'📘 Subject Final', paper_final:'📗 Paper Final', full:'📕 Full' };
+        const vsubLabel = { varsitywise:'🎓 Varsity-wise', chapterwise:'📖 Chapter-wise' };
+        let html = '<table class="data-table"><tr><th>টাইপ</th><th>নাম/সাব-টাইপ</th><th>Unit</th><th>প্রশ্ন</th><th>Actions</th></tr>';
+        data.forEach(m => {
+            const name = m.varsity_name
+                ? `${m.varsity_name}${m.chapter ? ' › ' + m.chapter : ''}`
+                : (m.subject || '—');
+            const subInfo = m.varsity_sub_type
+                ? vsubLabel[m.varsity_sub_type] || m.varsity_sub_type
+                : (m.sub_type ? subLabel[m.sub_type] || m.sub_type : '');
+            // ── NEW: unit column in list  (Flutter: DataColumn)
+            html += `<tr>
+                <td>${typeLabel[m.type]||m.type}</td>
+                <td><b>${name}</b>${subInfo?`<br><span style="font-size:10px;color:var(--accent);">${subInfo}</span>`:''}</td>
+                <td style="font-size:11px;color:var(--text2);">${m.unit||'—'}</td>
+                <td>${m.question_count||0}</td>
+                <td style="white-space:nowrap;">
+                    <button class="btn btn-sm btn-outline" onclick="editModelTest('${m.id}')">✏️</button>
+                    ${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('model_tests','${m.id}',loadModelTests)" style="margin-left:3px;">🗑️</button>`:''}
+                </td>
+            </tr>`;
+        });
+        html += '</table>';
+        document.getElementById('mtList').innerHTML = html;
+        document.getElementById('statExams').textContent = data.length;
+    } catch(e) { document.getElementById('mtList').innerHTML = '<p style="color:var(--red);">লোড এরর</p>'; }
+}
+
+function editModelTest(id) {
+    editItem('model_tests', id, d => {
+        document.getElementById('mtEditId').value = d.id;
+        document.getElementById('mtType').value   = d.type || '';
+        toggleMtFields();
+        if (d.type === 'medical' || d.type === 'afmc') {
+            if (document.getElementById('mtSubject')) document.getElementById('mtSubject').value = d.subject || '';
+            if (document.getElementById('mtSubType')) document.getElementById('mtSubType').value = d.sub_type || '';
+        } else if (d.type === 'varsity') {
+            const vst = d.varsity_sub_type || 'varsitywise';
+            document.getElementById('mtVarsitySubType').value = vst;
+            toggleMtVarsitySubFields();
+            if (vst === 'varsitywise') {
+                if (document.getElementById('mtVarsity'))     document.getElementById('mtVarsity').value     = d.varsity_name || '';
+                if (document.getElementById('mtUnit'))        document.getElementById('mtUnit').value        = d.unit || '';
+                if (document.getElementById('mtVarsityYear')) document.getElementById('mtVarsityYear').value = d.year || '';
+            } else {
+                if (document.getElementById('mtChapterVarsity')) document.getElementById('mtChapterVarsity').value = d.varsity_name || '';
+                if (document.getElementById('mtChapterUnit'))    document.getElementById('mtChapterUnit').value    = d.unit || '';
+                if (document.getElementById('mtChapter'))        document.getElementById('mtChapter').value        = d.chapter || '';
+                if (document.getElementById('mtChapterSubject')) document.getElementById('mtChapterSubject').value = d.subject || '';
+            }
+        }
+        if (document.getElementById('mtLink')) document.getElementById('mtLink').value = d.link || '';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+}
+
+/* ═══════════════════════════════════════════════
+   SOCIAL  (Flutter: SocialAdminController)
+═══════════════════════════════════════════════ */
 function saveSocial(){const d={media_name:document.getElementById('socialName').value.trim(),type:document.getElementById('socialType').value,description:document.getElementById('socialDesc').value.trim()||null,link:document.getElementById('socialLink').value.trim()};if(!d.media_name||!d.link){showToast('⚠️ নাম ও লিংক দিন');return;}saveItem('social_links',d,document.getElementById('socialEditId').value||null,clearSocialForm,loadSocial);}
 function clearSocialForm(){['socialName','socialDesc','socialLink','socialEditId'].forEach(id=>document.getElementById(id).value='');}
 function editSocial(id){editItem('social_links',id,d=>{document.getElementById('socialEditId').value=d.id;document.getElementById('socialName').value=d.media_name||'';document.getElementById('socialType').value=d.type||'other';document.getElementById('socialDesc').value=d.description||'';document.getElementById('socialLink').value=d.link||'';window.scrollTo({top:0,behavior:'smooth'});});}
 async function loadSocial(){
     try{
-        const data=await safeFetch(`${SUPABASE_URL}/rest/v1/social_links?select=*&order=created_at.desc&limit=30`);
+        const data=await safeFetch(`${SUPABASE_URL}/rest/v1/social_links?select=*&order=sort_order.asc,created_at.desc&limit=30`);
         if(!data?.length){document.getElementById('socialList').innerHTML='<p style="color:var(--text2);text-align:center;padding:16px;">কোনো লিংক নেই</p>';return;}
         const icons={facebook:'📘',youtube:'▶️',telegram:'✈️',whatsapp:'💬',other:'🔗'};
         let html='<table class="data-table"><tr><th>নাম</th><th>টাইপ</th><th>লিংক</th><th>Actions</th></tr>';
@@ -1346,9 +1882,9 @@ async function loadSocial(){
     }catch(e){document.getElementById('socialList').innerHTML='<p style="color:var(--red);">লোড এরর</p>';}
 }
 
-// ============================================================
-// ==================== SUB-ADMIN ==============================
-// ============================================================
+/* ═══════════════════════════════════════════════
+   SUB-ADMIN  (Flutter: SubAdminController)
+═══════════════════════════════════════════════ */
 async function grantSubAdmin(){const ph=document.getElementById('subPhone').value.trim();if(!/^\d{11}$/.test(ph)){showToast('⚠️ ১১ ডিজিটের ফোন নম্বর দিন');return;}try{await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${ph}`,{method:'PATCH',body:JSON.stringify({role:'sub_admin'})});await safeFetch(`${SUPABASE_URL}/rest/v1/notifications`,{method:'POST',body:JSON.stringify({phone:ADMIN_PHONE,title:'👮 সাব-অ্যাডমিন গ্র্যান্ট',message:ph+' কে সাব-অ্যাডমিন করা হয়েছে',type:'subadmin',is_read:false})});showToast('✅ সাব-অ্যাডমিন গ্র্যান্ট হয়েছে');document.getElementById('subPhone').value='';loadSubAdmins();}catch(e){showToast('❌ এরর: '+e.message);}}
 async function revokeSubAdmin(phone){if(!isAdmin){showToast('⛔ শুধু Admin রিভোক করতে পারবে');return;}if(!confirm(phone+' কে সাব-অ্যাডমিন থেকে সরাবেন?'))return;try{await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}`,{method:'PATCH',body:JSON.stringify({role:'student'})});showToast('✅ রিভোক হয়েছে');loadSubAdmins();}catch(e){showToast('❌ এরর: '+e.message);}}
 async function loadSubAdmins(){
@@ -1361,14 +1897,16 @@ async function loadSubAdmins(){
     }catch(e){document.getElementById('subList').innerHTML='<p style="color:var(--red);">লোড এরর</p>';}
 }
 
-// ============================================================
-// ==================== REPORTS ================================
-// ============================================================
+/* ═══════════════════════════════════════════════
+   REPORTS  (Flutter: ReportsController)
+═══════════════════════════════════════════════ */
 async function loadReports(){
     try{
         const filter=document.getElementById('reportFilter')?.value||'pending';
         let url=`${SUPABASE_URL}/rest/v1/question_reports?select=*&order=created_at.desc&limit=50`;if(filter!=='all')url+=`&status=eq.${filter}`;
         const data=await safeFetch(url);
+        const pendingCount=(data||[]).filter(r=>r.status==='pending').length;
+        document.getElementById('statReports').textContent=pendingCount||'0';
         if(!data?.length){document.getElementById('reportList').innerHTML='<p style="color:var(--text2);text-align:center;padding:20px;">কোনো রিপোর্ট নেই</p>';return;}
         let html='';
         data.forEach(r=>{const statusColor=r.status==='pending'?'var(--yellow)':r.status==='approved'?'var(--green)':'var(--red)';const statusText=r.status==='pending'?'🔴 পেন্ডিং':r.status==='approved'?'✅ এপ্রুভড':'❌ রিজেক্ট';html+=`<div class="form-card" style="border-left:3px solid ${statusColor};margin-bottom:8px;"><div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;"><div><p><b>📝 প্রশ্ন #${r.question_id||'—'}</b> <span style="font-size:10px;color:var(--text2);">${r.report_type||'—'}</span></p><p style="font-size:12px;color:var(--text2);margin-top:2px;">👤 ${r.reporter_phone||'—'}</p>${r.suggested_answer?`<p style="font-size:12px;margin-top:4px;">💬 "${r.suggested_answer}"</p>`:''} ${r.admin_response?`<p style="font-size:11px;color:var(--accent);margin-top:4px;">👑 ${r.admin_response}</p>`:''}</div><span style="font-size:11px;font-weight:600;color:${statusColor};">${statusText}</span></div>${r.status==='pending'?`<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;"><button class="btn btn-sm btn-outline" onclick="openReportModal('${r.id}','${r.question_id||''}','${r.reporter_phone||''}')">📋 বিস্তারিত</button><button class="btn btn-sm btn-success" onclick="quickApprove('${r.id}','${r.question_id||''}','${r.reporter_phone||''}')">✅ Approve</button><button class="btn btn-sm btn-danger" onclick="rejectReport('${r.id}','${r.reporter_phone||''}')">❌ Reject</button></div>`:''}</div>`;});
@@ -1381,16 +1919,16 @@ async function approveReport(rid,qid,reporterPhone){const correct=document.getEl
 async function quickApprove(rid,qid,reporterPhone){const correct=prompt('সঠিক উত্তর নম্বর (1-5):');if(!correct)return;const explanation=prompt('ব্যাখ্যা (ঐচ্ছিক):')||'এপ্রুভ';try{await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}`,{method:'PATCH',body:JSON.stringify({status:'approved',admin_response:explanation,corrected_answer:correct,admin_phone:ADMIN_PHONE})});if(correct&&qid)await safeFetch(`${SUPABASE_URL}/rest/v1/questions?id=eq.${qid}`,{method:'PATCH',body:JSON.stringify({answer_index:parseInt(correct),explanation})});if(reporterPhone)await safeFetch(`${SUPABASE_URL}/rest/v1/notifications`,{method:'POST',body:JSON.stringify({phone:reporterPhone,title:'✅ রিপোর্ট এপ্রুভ',message:`প্রশ্ন আপডেট: ${explanation}`,type:'report_approved',is_read:false})});await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}`,{method:'DELETE'});showToast('✅ এপ্রুভ হয়েছে');loadReports();}catch(e){showToast('❌ এরর: '+e.message);}}
 async function rejectReport(rid,reporterPhone){const reason=prompt('রিজেক্ট কারণ লিখুন:');if(!reason)return;try{await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}`,{method:'PATCH',body:JSON.stringify({status:'rejected',admin_response:reason,admin_phone:ADMIN_PHONE})});if(reporterPhone)await safeFetch(`${SUPABASE_URL}/rest/v1/notifications`,{method:'POST',body:JSON.stringify({phone:reporterPhone,title:'❌ রিপোর্ট রিজেক্ট',message:'কারণ: '+reason,type:'report_rejected',is_read:false})});await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}`,{method:'DELETE'});showToast('❌ রিজেক্ট হয়েছে');closeReportModal();loadReports();}catch(e){showToast('❌ এরর: '+e.message);}}
 
-// ============================================================
-// ==================== OWNER ==================================
-// ============================================================
+/* ═══════════════════════════════════════════════
+   OWNER  (Flutter: OwnerController)
+═══════════════════════════════════════════════ */
 function previewOwner(input){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{document.getElementById('ownerPreview').src=e.target.result;document.getElementById('ownerPreview').style.display='block';};r.readAsDataURL(f);}
-function saveOwner(){const name=document.getElementById('ownerName').value.trim();const info=document.getElementById('ownerInfo').value.trim();const photo=document.getElementById('ownerPreview').src;if(photo?.startsWith('data:'))localStorage.setItem('owner_photo',photo);localStorage.setItem('owner_name',name);localStorage.setItem('owner_info',info);safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${ADMIN_PHONE}`,{method:'PATCH',body:JSON.stringify({name,photo_url:photo?.startsWith('data:')?photo:undefined})}).then(()=>showToast('✅ সেইভ হয়েছে')).catch(e=>showToast('✅ LocalStorage সেইভ হয়েছে'));}
+function saveOwner(){const name=document.getElementById('ownerName').value.trim();const info=document.getElementById('ownerInfo').value.trim();const photo=document.getElementById('ownerPreview').src;if(photo?.startsWith('data:'))localStorage.setItem('owner_photo',photo);localStorage.setItem('owner_name',name);localStorage.setItem('owner_info',info);safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${ADMIN_PHONE}`,{method:'PATCH',body:JSON.stringify({name,photo_url:photo?.startsWith('data:')?photo:undefined})}).then(()=>showToast('✅ সেইভ হয়েছে')).catch(()=>showToast('✅ LocalStorage সেইভ হয়েছে'));}
 function loadOwner(){document.getElementById('ownerName').value=localStorage.getItem('owner_name')||'ATLAS EXAM';document.getElementById('ownerInfo').value=localStorage.getItem('owner_info')||'';const photo=localStorage.getItem('owner_photo');if(photo){document.getElementById('ownerPreview').src=photo;document.getElementById('ownerPreview').style.display='block';}}
 
-// ============================================================
-// ==================== MENTORS ================================
-// ============================================================
+/* ═══════════════════════════════════════════════
+   MENTORS  (Flutter: MentorsController)
+═══════════════════════════════════════════════ */
 function previewMentor(input){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{document.getElementById('mentorPreview').src=e.target.result;document.getElementById('mentorPreview').style.display='block';};r.readAsDataURL(f);}
 function saveMentor(){const file=document.getElementById('mentorPhotoFile').files[0];const d={name:document.getElementById('mentorName').value.trim(),role:document.getElementById('mentorRole').value.trim(),subject:document.getElementById('mentorRole').value.trim(),sort_order:parseInt(document.getElementById('mentorSortOrder').value)||0};if(!d.name){showToast('⚠️ নাম দিন');return;}if(file){const r=new FileReader();r.onload=e=>{d.photo_url=e.target.result;saveItem('mentors',d,document.getElementById('mentorEditId').value||null,clearMentorForm,loadMentors);};r.readAsDataURL(file);}else{saveItem('mentors',d,document.getElementById('mentorEditId').value||null,clearMentorForm,loadMentors);}}
 function clearMentorForm(){['mentorName','mentorRole','mentorEditId','mentorSortOrder'].forEach(id=>document.getElementById(id).value='');document.getElementById('mentorPhotoFile').value='';document.getElementById('mentorPreview').style.display='none';}
@@ -1406,9 +1944,9 @@ async function loadMentors(){
 }
 function editMentor(id){editItem('mentors',id,m=>{document.getElementById('mentorEditId').value=m.id;document.getElementById('mentorName').value=m.name||'';document.getElementById('mentorRole').value=m.role||m.subject||'';document.getElementById('mentorSortOrder').value=m.sort_order||0;if(m.photo_url){document.getElementById('mentorPreview').src=m.photo_url;document.getElementById('mentorPreview').style.display='block';}window.scrollTo({top:0,behavior:'smooth'});});}
 
-// ============================================================
-// ==================== SPECIAL CARD ===========================
-// ============================================================
+/* ═══════════════════════════════════════════════
+   SPECIAL CARD  (Flutter: SpecialCardController)
+═══════════════════════════════════════════════ */
 function previewSpecial(input){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{document.getElementById('specialPreview').src=e.target.result;document.getElementById('specialPreview').style.display='block';};r.readAsDataURL(f);}
 function saveSpecial(){const file=document.getElementById('specialPhotoFile').files[0];const d={description:document.getElementById('specialDesc').value.trim()||null,special_text:document.getElementById('specialText').value.trim()||null,link:document.getElementById('specialLink').value.trim()||null};if(file){const r=new FileReader();r.onload=e=>{d.image_url=e.target.result;saveItem('special_cards',d,document.getElementById('specialEditId').value||null,clearSpecialForm,loadSpecials);};r.readAsDataURL(file);}else{saveItem('special_cards',d,document.getElementById('specialEditId').value||null,clearSpecialForm,loadSpecials);}}
 function clearSpecialForm(){['specialDesc','specialText','specialLink','specialEditId'].forEach(id=>document.getElementById(id).value='');document.getElementById('specialPhotoFile').value='';document.getElementById('specialPreview').style.display='none';}
@@ -1417,86 +1955,143 @@ async function loadSpecials(){
         const data=await safeFetch(`${SUPABASE_URL}/rest/v1/special_cards?select=*&order=created_at.desc&limit=10`);
         if(!data?.length){document.getElementById('specialList').innerHTML='<p style="color:var(--text2);text-align:center;padding:16px;">কোনো কার্ড নেই</p>';return;}
         let html='';
-        data.forEach(s=>{html+=`<div class="list-item"><div style="flex:1;">${s.image_url?`<img src="${s.image_url}" style="width:60px;height:40px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:8px;">`:''}  <b>${s.special_text||'🃏 কার্ড'}</b>${s.description?`<br><span style="font-size:11px;color:var(--text2);">${s.description}</span>`:''}</div><div style="display:flex;gap:3px;flex-shrink:0;"><button class="btn btn-sm btn-outline" onclick="editSpecial('${s.id}')">✏️</button>${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('special_cards','${s.id}',loadSpecials)">🗑️</button>`:''}</div></div>`;});
+        data.forEach(s=>{html+=`<div class="list-item"><div style="flex:1;">${s.image_url?`<img src="${s.image_url}" style="width:60px;height:40px;border-radius:4px;object-fit:contain;vertical-align:middle;margin-right:8px;">`:''}  <b>${s.special_text||'🃏 কার্ড'}</b>${s.description?`<br><span style="font-size:11px;color:var(--text2);">${(s.description||'').substring(0,60)}</span>`:''}</div><div style="display:flex;gap:3px;flex-shrink:0;"><button class="btn btn-sm btn-outline" onclick="editSpecial('${s.id}')">✏️</button>${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('special_cards','${s.id}',loadSpecials)">🗑️</button>`:''}</div></div>`;});
         document.getElementById('specialList').innerHTML=html;
     }catch(e){document.getElementById('specialList').innerHTML='<p style="color:var(--red);">লোড এরর</p>';}
 }
 function editSpecial(id){editItem('special_cards',id,s=>{document.getElementById('specialEditId').value=s.id;document.getElementById('specialDesc').value=s.description||'';document.getElementById('specialText').value=s.special_text||'';document.getElementById('specialLink').value=s.link||'';if(s.image_url){document.getElementById('specialPreview').src=s.image_url;document.getElementById('specialPreview').style.display='block';}window.scrollTo({top:0,behavior:'smooth'});});}
 
-// ============================================================
-// ==================== SERIAL MANAGEMENT ======================
-// ============================================================
+/* ═══════════════════════════════════════════════
+   SERIAL MANAGEMENT  (Flutter: ReorderableListView)
+═══════════════════════════════════════════════ */
 const serialConfig = {
-    class:{table:'classes',label:'📚 ক্লাস',nameField:d=>`${d.category||'—'} › ${d.subject||d.topic||d.course_name||'—'}`},
-    exam:{table:'exams',label:'📝 এক্সাম',nameField:d=>`${d.subject} › ${d.chapter}`},
-    kakha:{table:'ka_kha_cq',label:'📦 ক,খ,CQ',nameField:d=>`${d.subject} › ${d.chapter} [${d.type||'—'}]`},
-    timer:{table:'countdowns',label:'⏰ টাইমার',nameField:d=>d.main_topic},
-    mock:{table:'mock_questions',label:'🎯 Mock',nameField:d=>`${d.subject} › ${d.chapter}`},
-    social:{table:'social_links',label:'🔗 Social',nameField:d=>d.media_name},
-    mentors:{table:'mentors',label:'👨‍🏫 Mentors',nameField:d=>d.name},
-    modeltest:{table:'model_tests',label:'📖 Model Test',nameField:d=>`${d.type} › ${d.subject||d.varsity_name||'—'}`}
+    class:     { table:'classes',         label:'📚 ক্লাস',      nameField: d => `${d.category||'—'} › ${d.subject||d.topic||d.course_name||'—'}` },
+    exam:      { table:'exams',           label:'📝 এক্সাম',     nameField: d => `${d.subject} › ${d.chapter}` },
+    kakha:     { table:'ka_kha_cq',       label:'📦 ক,খ,CQ',    nameField: d => `${d.subject} › ${d.chapter} [${d.type||'—'}]` },
+    timer:     { table:'countdowns',      label:'⏰ টাইমার',     nameField: d => d.main_topic },
+    mock:      { table:'mock_questions',  label:'🎯 Mock',        nameField: d => `${d.subject} › ${d.chapter}` },
+    social:    { table:'social_links',    label:'🔗 Social',      nameField: d => d.media_name },
+    mentors:   { table:'mentors',         label:'👨‍🏫 Mentors',   nameField: d => d.name },
+    modeltest: { table:'model_tests',     label:'📖 Model Test',  nameField: d => `${d.type} › ${d.subject||d.varsity_name||'—'}` }
 };
 
-async function openSerialModal(key){
-    const cfg=serialConfig[key];if(!cfg)return;
-    serialTable=cfg.table;
-    document.getElementById('serialModalTitle').textContent=`🔢 Serial — ${cfg.label}`;
+async function openSerialModal(key) {
+    const cfg = serialConfig[key]; if (!cfg) return;
+    serialTable = cfg.table;
+    document.getElementById('serialModalTitle').textContent = `🔢 Serial — ${cfg.label}`;
     document.getElementById('serialModal').classList.add('active');
-    document.getElementById('serialList').innerHTML='<p style="text-align:center;padding:16px;color:var(--text2);">⏳ লোড হচ্ছে...</p>';
-    try{
-        const data=await safeFetch(`${SUPABASE_URL}/rest/v1/${cfg.table}?select=*&order=sort_order.asc,serial_order.asc,created_at.asc&limit=100`);
-        serialItems=data||[];renderSerialList(cfg);
-    }catch(e){document.getElementById('serialList').innerHTML='<p style="color:var(--red);">লোড এরর — sort_order column লাগবে</p>';}
+    document.getElementById('serialList').innerHTML = '<p style="text-align:center;padding:16px;color:var(--text2);">⏳ লোড হচ্ছে...</p>';
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/${cfg.table}?select=*&order=sort_order.asc,serial_order.asc,created_at.asc&limit=100`);
+        serialItems = data || [];
+        renderSerialList(cfg);
+    } catch(e) { document.getElementById('serialList').innerHTML = '<p style="color:var(--red);">লোড এরর — sort_order column লাগবে</p>'; }
 }
-function renderSerialList(cfg){
-    if(!serialItems.length){document.getElementById('serialList').innerHTML='<p style="color:var(--text2);text-align:center;padding:16px;">কোনো ডাটা নেই</p>';return;}
-    let html='<p style="font-size:11px;color:var(--text2);margin-bottom:8px;">⬆️⬇️ Drag করে Order ঠিক করুন</p>';
-    serialItems.forEach((item,i)=>{html+=`<div class="serial-item" draggable="true" data-idx="${i}" ondragstart="serialDragStart(event,${i})" ondragover="serialDragOver(event,${i})" ondrop="serialDrop(event,${i})" ondragend="serialDragEnd()"><span class="drag-handle">⠿</span><span class="serial-order-num">${i+1}</span><span style="flex:1;font-size:13px;">${cfg.nameField(item)}</span><div style="display:flex;gap:3px;">${i>0?`<button class="btn btn-sm btn-outline" onclick="moveSerial(${i},-1)" style="padding:3px 6px;">⬆️</button>`:''}${i<serialItems.length-1?`<button class="btn btn-sm btn-outline" onclick="moveSerial(${i},1)" style="padding:3px 6px;">⬇️</button>`:''}</div></div>`;});
-    document.getElementById('serialList').innerHTML=html;
+
+function renderSerialList(cfg) {
+    if (!serialItems.length) { document.getElementById('serialList').innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">কোনো ডাটা নেই</p>'; return; }
+    let html = '<p style="font-size:11px;color:var(--text2);margin-bottom:8px;">⬆️⬇️ Drag করে বা বাটন দিয়ে Order ঠিক করুন</p>';
+    serialItems.forEach((item, i) => {
+        html += `<div class="serial-item" draggable="true" data-idx="${i}" ondragstart="serialDragStart(event,${i})" ondragover="serialDragOver(event,${i})" ondrop="serialDrop(event,${i})" ondragend="serialDragEnd()">
+            <span class="drag-handle">⠿</span>
+            <span class="serial-order-num">${i+1}</span>
+            <span style="flex:1;font-size:13px;">${cfg.nameField(item)}</span>
+            <div style="display:flex;gap:3px;">
+                ${i>0?`<button class="btn btn-sm btn-outline" onclick="moveSerial(${i},-1)" style="padding:3px 6px;">⬆️</button>`:''}
+                ${i<serialItems.length-1?`<button class="btn btn-sm btn-outline" onclick="moveSerial(${i},1)" style="padding:3px 6px;">⬇️</button>`:''}
+            </div>
+        </div>`;
+    });
+    document.getElementById('serialList').innerHTML = html;
 }
+
 function serialDragStart(e,idx){dragSrcIdx=idx;e.currentTarget.classList.add('dragging');e.dataTransfer.effectAllowed='move';}
 function serialDragOver(e,idx){e.preventDefault();document.querySelectorAll('.serial-item').forEach(el=>el.classList.remove('drag-over'));e.currentTarget.classList.add('drag-over');}
 function serialDrop(e,idx){e.preventDefault();if(dragSrcIdx===null||dragSrcIdx===idx)return;const moved=serialItems.splice(dragSrcIdx,1)[0];serialItems.splice(idx,0,moved);const key=Object.keys(serialConfig).find(k=>serialConfig[k].table===serialTable);renderSerialList(serialConfig[key]);}
 function serialDragEnd(){dragSrcIdx=null;document.querySelectorAll('.serial-item').forEach(el=>{el.classList.remove('dragging','drag-over');});}
 function moveSerial(idx,dir){const newIdx=idx+dir;if(newIdx<0||newIdx>=serialItems.length)return;[serialItems[idx],serialItems[newIdx]]=[serialItems[newIdx],serialItems[idx]];const key=Object.keys(serialConfig).find(k=>serialConfig[k].table===serialTable);renderSerialList(serialConfig[key]);}
-async function saveSerial(){
-    if(!serialTable||!serialItems.length)return;
+
+async function saveSerial() {
+    if (!serialTable || !serialItems.length) return;
     showToast('⏳ Order সেইভ হচ্ছে...');
-    let errors=0;
-    for(let i=0;i<serialItems.length;i++){
-        try{await safeFetch(`${SUPABASE_URL}/rest/v1/${serialTable}?id=eq.${serialItems[i].id}`,{method:'PATCH',body:JSON.stringify({sort_order:i,serial_order:i})});}catch(e){errors++;}
+    let errors = 0;
+    for (let i = 0; i < serialItems.length; i++) {
+        try { await safeFetch(`${SUPABASE_URL}/rest/v1/${serialTable}?id=eq.${serialItems[i].id}`, { method:'PATCH', body:JSON.stringify({ sort_order:i, serial_order:i }) }); }
+        catch(e) { errors++; }
     }
-    if(errors===0)showToast('✅ Order সেইভ হয়েছে');
-    else showToast(`✅ ${serialItems.length-errors}টি সেইভ, ${errors}টি এরর`);
+    showToast(errors === 0 ? '✅ Order সেইভ হয়েছে' : `✅ ${serialItems.length-errors}টি সেইভ, ${errors}টি এরর`);
 }
 function closeSerialModal(){document.getElementById('serialModal').classList.remove('active');serialTable='';serialItems=[];}
 
-// ============================================================
-// ==================== NOTIFICATIONS ==========================
-// ============================================================
+/* ═══════════════════════════════════════════════
+   NOTIFICATIONS  (Flutter: NotificationsController)
+═══════════════════════════════════════════════ */
 function selectNotifType(type,el){notifType=type;document.querySelectorAll('.notif-type-row .chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');document.getElementById('notifPhoneField').style.display=type==='phone'?'block':'none';}
 function openNotifModal(){notifType='all';document.getElementById('notifTypeAll').classList.add('active');document.getElementById('notifTypePhone').classList.remove('active');document.getElementById('notifPhoneField').style.display='none';document.getElementById('notifTitle').value='';document.getElementById('notifMessage').value='';document.getElementById('notifPhone').value='';document.getElementById('notifModal').classList.add('active');}
 function closeNotifModal(){document.getElementById('notifModal').classList.remove('active');}
 async function sendNotification(){
-    const title=document.getElementById('notifTitle').value.trim();const message=document.getElementById('notifMessage').value.trim();if(!title||!message){showToast('⚠️ টাইটেল ও বার্তা দিন');return;}
+    const title=document.getElementById('notifTitle').value.trim();const message=document.getElementById('notifMessage').value.trim();
+    if(!title||!message){showToast('⚠️ টাইটেল ও বার্তা দিন');return;}
     try{
-        if(notifType==='phone'){const phone=document.getElementById('notifPhone').value.trim();if(!phone){showToast('⚠️ ফোন নম্বর দিন');return;}await safeFetch(`${SUPABASE_URL}/rest/v1/notifications`,{method:'POST',body:JSON.stringify({phone,title,message,type:'admin',is_read:false})});showToast('✅ নোটিফিকেশন পাঠানো হয়েছে');}
-        else{const users=await safeFetch(`${SUPABASE_URL}/rest/v1/users?select=phone&limit=500`);let sent=0;for(const u of(users||[])){try{await safeFetch(`${SUPABASE_URL}/rest/v1/notifications`,{method:'POST',body:JSON.stringify({phone:u.phone,title,message,type:'broadcast',is_read:false})});sent++;}catch(e){}}showToast(`✅ ${sent} জনকে পাঠানো হয়েছে`);}
+        if(notifType==='phone'){
+            const phone=document.getElementById('notifPhone').value.trim();if(!phone){showToast('⚠️ ফোন নম্বর দিন');return;}
+            await safeFetch(`${SUPABASE_URL}/rest/v1/notifications`,{method:'POST',body:JSON.stringify({phone,title,message,type:'admin',is_read:false})});
+            showToast('✅ নোটিফিকেশন পাঠানো হয়েছে');
+        } else {
+            const users=await safeFetch(`${SUPABASE_URL}/rest/v1/users?select=phone&limit=500`);
+            let sent=0;
+            for(const u of(users||[])){try{await safeFetch(`${SUPABASE_URL}/rest/v1/notifications`,{method:'POST',body:JSON.stringify({phone:u.phone,title,message,type:'broadcast',is_read:false})});sent++;}catch(e){}}
+            showToast(`✅ ${sent} জনকে পাঠানো হয়েছে`);
+        }
         closeNotifModal();
     }catch(e){showToast('❌ এরর: '+e.message);}
 }
 
-// ============================================================
-// ==================== INIT ===================================
-// ============================================================
+/* ═══════════════════════════════════════════════
+   DASHBOARD STATS  (Flutter: StatCardsRow)
+═══════════════════════════════════════════════ */
+async function loadDashboardStats() {
+    try {
+        const [students, exams, classes] = await Promise.all([
+            safeFetch(`${SUPABASE_URL}/rest/v1/users?select=id&limit=1000`),
+            safeFetch(`${SUPABASE_URL}/rest/v1/exams?select=id&limit=1000`),
+            safeFetch(`${SUPABASE_URL}/rest/v1/classes?select=id&limit=1000`)
+        ]);
+        document.getElementById('statStudents').textContent = students?.length || 0;
+        document.getElementById('statExams').textContent    = exams?.length    || 0;
+        document.getElementById('statClasses').textContent  = classes?.length  || 0;
+    } catch(e) {}
+}
+
+/* ═══════════════════════════════════════════════
+   INIT  (Flutter: initState())
+═══════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
+    // Restore theme
+    const savedTheme = localStorage.getItem('atlas-theme');
+    if (savedTheme === 'light') { isDarkMode = false; document.body.classList.add('light-mode'); }
+
     currentUser = { phone: ADMIN_PHONE, role: 'admin' };
+
+    // Set default toggle states for exam form
+    setSwitchVal('examAllowPreview', true);
+    setSwitchVal('examIsLocked', false);
+
+    // Load first tab + stats
     loadClasses();
     loadOwner();
-    document.getElementById('reportModal').addEventListener('click', function(e){if(e.target===this)closeReportModal();});
-    document.getElementById('serialModal').addEventListener('click', function(e){if(e.target===this)closeSerialModal();});
-    document.getElementById('notifModal').addEventListener('click', function(e){if(e.target===this)closeNotifModal();});
+    loadDashboardStats();
+
+    // Modal close on overlay click
+    ['reportModal','serialModal','notifModal'].forEach(id => {
+        document.getElementById(id).addEventListener('click', function(e) {
+            if (e.target === this) this.classList.remove('active');
+        });
+    });
+
+    // Close report modal function
+    closeReportModal = () => document.getElementById('reportModal').classList.remove('active');
 });
 </script>
 </body>
-</html>
+    </html>
