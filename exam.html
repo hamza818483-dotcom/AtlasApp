@@ -1717,6 +1717,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     const model=params.get('model');
     // Mock Test Practice Mode
 if(practice==='mock'){
+   isMockTest = true;
     const qData=sessionStorage.getItem('practiceQuestions');
     const title=sessionStorage.getItem('practiceTitle')||'Mock Test';
     const time=parseInt(sessionStorage.getItem('practiceTime'))||0;
@@ -1737,6 +1738,7 @@ if(practice==='mock'){
 
     // Req #22: Practice mode — load from sessionStorage (from dashboard/mistakes)
     if(practice==='mistakes'||practice==='history'){
+       isMockTest = true;  // ← এটা দাও
         const qData=sessionStorage.getItem('practiceQuestions');
         const title=sessionStorage.getItem('practiceTitle')||'Practice Exam';
         if(qData){
