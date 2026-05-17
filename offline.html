@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATLAS - অফলাইন</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', 'Noto Sans Bengali', system-ui, sans-serif;
+            background: #0D1117;
+            color: #E6EDF3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            -webkit-font-smoothing: antialiased;
+        }
+        .offline-card {
+            text-align: center;
+            background: #161B22;
+            border: 1px solid #30363D;
+            border-radius: 16px;
+            padding: 40px 28px;
+            max-width: 380px;
+            width: 100%;
+        }
+        .offline-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            display: block;
+            animation: float 2s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .offline-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: #7C83FF;
+            margin-bottom: 8px;
+        }
+        .offline-sub {
+            font-size: 13px;
+            color: #8B949E;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+        .offline-btn {
+            display: block;
+            width: 100%;
+            padding: 12px 20px;
+            background: #7C83FF;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.2s;
+            margin-bottom: 8px;
+        }
+        .offline-btn:hover { background: #9499FF; }
+        .offline-btn:active { transform: scale(0.98); }
+        .offline-btn.outline {
+            background: transparent;
+            border: 1px solid #30363D;
+            color: #8B949E;
+        }
+        .offline-btn.outline:hover {
+            border-color: #7C83FF;
+            color: #7C83FF;
+        }
+        .offline-footer {
+            margin-top: 16px;
+            font-size: 10px;
+            color: #5D6570;
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-card">
+        <span class="offline-icon">📡</span>
+        <div class="offline-title">আপনি অফলাইনে আছেন</div>
+        <div class="offline-sub">
+            ইন্টারনেট সংযোগ নেই। তবে আপনি আগে দেখা কিছু পেজ অফলাইনেও দেখতে পারবেন।
+        </div>
+        <button class="offline-btn" onclick="location.reload()">
+            🔄 আবার চেষ্টা করুন
+        </button>
+        <button class="offline-btn outline" onclick="goToHome()">
+            🏠 হোম পেজে যান
+        </button>
+        <div class="offline-footer">ATLAS APP · v1.0</div>
+    </div>
+
+    <script>
+        function goToHome() {
+            location.href = '/index.html';
+        }
+        // Auto-refresh when online
+        window.addEventListener('online', () => {
+            location.reload();
+        });
+    </script>
+</body>
+</html>
