@@ -1965,7 +1965,7 @@ async function retakeExam(examId) {
 // ============================================================
 
 // Override startMistakePractice
- window.startMistakePractice = function(mode) {
+window.startMistakePractice = function(mode) {
     const saved = localStorage.getItem('mistakes_' + currentUser.phone);
     const mistakes = saved ? JSON.parse(saved) : [];
     
@@ -2002,7 +2002,7 @@ async function retakeExam(examId) {
     sessionStorage.setItem('practiceSource', 'mistakes');
     
     goTo('exam.html?practice=mistakes&mode=' + mode);
-};  
+};   
 
 // Override submitPracticeExam
 window.submitPracticeExam = function() {
