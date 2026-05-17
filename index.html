@@ -1,0 +1,1715 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>ATLAS APP</title>
+
+    <!-- PWA Support (Flutter: flutter_pwa / manifest) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0D1117">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ATLAS APP">
+
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* =============================================
+           FLUTTER-FRIENDLY CSS ARCHITECTURE
+           Every section maps to a Flutter Widget/Screen
+        ============================================= */
+
+        /* ── Theme Variables (Flutter: ThemeData / ColorScheme) ── */
+        :root {
+            --bg: #0D1117;
+            --card-bg: #161B22;
+            --card-hover: #1C2129;
+            --text: #E6EDF3;
+            --text-secondary: #8B949E;
+            --accent: #7C83FF;
+            --accent-hover: #9499FF;
+            --border: #30363D;
+            --shadow: 0 2px 8px rgba(0,0,0,0.3);
+            --shadow-sm: 0 1px 4px rgba(0,0,0,0.2);
+            --shadow-glow: 0 0 0 2px rgba(124,131,255,0.15);
+            --radius: 14px;
+            --radius-md: 10px;
+            --radius-sm: 8px;
+            --radius-full: 999px;
+            --error: #F85149;
+            --error-light: rgba(248,81,73,0.08);
+            --error-glow: 0 0 0 2px rgba(248,81,73,0.2);
+            --success: #3FB950;
+            --yellow: #D29922;
+            --blue: #58A6FF;
+            /* Timer palette */
+            --t1: #F85149; --t2: #3B82F6; --t3: #22C55E; --t4: #EC4899; --t5: #F97316;
+        }
+
+        body.light-mode {
+            --bg: #F6F8FA;
+            --card-bg: #FFFFFF;
+            --card-hover: #F0F2F5;
+            --text: #1C2129;
+            --text-secondary: #57606A;
+            --border: #D0D7DE;
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Noto Sans Bengali', 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 56px 0 64px;
+            -webkit-font-smoothing: antialiased;
+            transition: background 0.3s, color 0.3s;
+        }
+        body.dark-mode { /* kept for existing compatibility */ }
+
+        /* ── Animations ── */
+        @keyframes pulseGlow {
+            0%,100% { box-shadow: 0 0 10px var(--timer-glow, rgba(124,131,255,.25)); }
+            50%      { box-shadow: 0 0 22px var(--timer-glow, rgba(124,131,255,.5)); }
+        }
+        @keyframes specialGlow {
+            0%,100% { box-shadow: 0 0 8px rgba(248,81,73,.3),0 0 16px rgba(248,81,73,.15); border-color: rgba(248,81,73,.6); }
+            50%      { box-shadow: 0 0 18px rgba(248,81,73,.5),0 0 32px rgba(248,81,73,.25); border-color: rgba(248,81,73,1); }
+        }
+        @keyframes rotateGlowBox { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes brandPulse {
+            0%,100% { filter: drop-shadow(0 0 4px rgba(124,131,255,.4)); }
+            50%      { filter: drop-shadow(0 0 10px rgba(124,131,255,.75)); }
+        }
+        @keyframes notifPulse {
+            0%,100% { box-shadow: 0 0 0 0 rgba(248,81,73,.5); }
+            50%      { box-shadow: 0 0 0 5px rgba(248,81,73,0); }
+        }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+        @keyframes shimmer { from { background-position:200% 0; } to { background-position:-200% 0; } }
+
+        /* ─────────────────────────────────────────────
+           HEADER  (Flutter: AppBar)
+        ───────────────────────────────────────────── */
+        .header {
+            position: fixed; top: 0; left: 0; right: 0; height: 56px;
+            background: var(--card-bg); border-bottom: 1px solid var(--border);
+            display: flex; align-items: center;
+            justify-content: space-between; padding: 0 12px; z-index: 100;
+            transition: background .3s;
+        }
+        .header-left  { display:flex; align-items:center; gap:8px; }
+        .header-right { display:flex; align-items:center; gap:6px; }
+
+        .hamburger {
+            background: none; border: none; color: var(--text);
+            font-size: 22px; cursor: pointer; padding: 6px; line-height:1;
+        }
+
+        /* Brand box  (Flutter: AnimatedLogo widget) */
+        .atlas-brand-box {
+            display: flex; align-items: center; gap: 7px;
+            background: linear-gradient(135deg,rgba(124,131,255,.12),rgba(88,166,255,.06));
+            border: 1px solid rgba(124,131,255,.2);
+            border-radius: 8px; padding: 4px 10px;
+            animation: brandPulse 3s ease-in-out infinite;
+        }
+        .atlas-logo-img { height: 22px; width: auto; }
+        .atlas-brand-text { font-size: 15px; font-weight: 800; color: var(--accent); letter-spacing: -.5px; }
+
+        /* Header icon buttons */
+        .header-icon {
+            background: var(--card-bg); border: 1px solid var(--border);
+            color: var(--text); width: 34px; height: 34px; border-radius: 50%;
+            font-size: 15px; cursor: pointer; display: flex;
+            align-items: center; justify-content: center; transition: .2s;
+            position: relative;
+        }
+        .header-icon:hover { border-color: var(--accent); box-shadow: var(--shadow-glow); }
+
+        /* Notification badge on header  (Flutter: Badge widget) */
+        .notif-header-badge {
+            position: absolute; top: -3px; right: -3px;
+            min-width: 16px; height: 16px; border-radius: 8px;
+            background: var(--error); color: #fff;
+            font-size: 8px; font-weight: 800;
+            display: none; align-items: center; justify-content: center;
+            border: 2px solid var(--card-bg); padding: 0 3px;
+            animation: notifPulse 1.5s infinite;
+        }
+        .notif-header-badge.show { display: flex; }
+
+        /* Notification dropdown  (Flutter: OverlayEntry / PopupMenu) */
+        .notif-dropdown {
+            position: absolute; top: 50px; right: 10px; width: 300px;
+            background: var(--card-bg); border: 1px solid var(--border);
+            border-radius: var(--radius); box-shadow: 0 8px 32px rgba(0,0,0,.4);
+            z-index: 500; display: none; max-height: 360px; overflow-y: auto;
+            animation: fadeUp .2s;
+        }
+        .notif-dropdown.open { display: block; }
+        .notif-dropdown-header {
+            padding: 10px 14px; font-size: 12px; font-weight: 700;
+            color: var(--accent); border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .notif-dropdown-item {
+            padding: 10px 14px; border-bottom: 1px solid var(--border);
+            cursor: pointer; transition: .15s;
+        }
+        .notif-dropdown-item:hover { background: var(--card-hover); }
+        .notif-dropdown-item.unread { background: rgba(124,131,255,.04); }
+        .notif-dropdown-item-title { font-size: 12px; font-weight: 700; color: var(--text); }
+        .notif-dropdown-item-msg { font-size: 10px; color: var(--text-secondary); margin-top: 2px; }
+        .notif-dropdown-item-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--accent); display: inline-block; margin-right: 4px;
+        }
+        .notif-dropdown-footer {
+            padding: 8px 14px; text-align: center; font-size: 11px;
+            color: var(--accent); cursor: pointer; font-weight: 600;
+        }
+        .notif-dropdown-footer:hover { opacity: .75; }
+        .notif-dropdown-empty { padding: 20px; text-align: center; font-size: 12px; color: var(--text-secondary); }
+
+        /* ─────────────────────────────────────────────
+           SIDEBAR  (Flutter: Drawer)
+        ───────────────────────────────────────────── */
+        .sidebar-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,.6); backdrop-filter: blur(2px);
+            z-index: 200; opacity: 0; visibility: hidden; transition: .25s;
+        }
+        .sidebar-overlay.active { opacity: 1; visibility: visible; }
+
+        .sidebar {
+            position: fixed; top: 0; left: -288px; width: 288px; height: 100%;
+            background: var(--card-bg); z-index: 201; overflow-y: auto;
+            transition: .25s cubic-bezier(.4,0,.2,1);
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+        }
+        .sidebar.active { left: 0; }
+        .sidebar::-webkit-scrollbar { width: 4px; }
+        .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+        .sidebar-header {
+            background: linear-gradient(135deg,rgba(124,131,255,.15),rgba(88,166,255,.06));
+            padding: 20px 16px; border-bottom: 1px solid var(--border);
+            text-align: center; flex-shrink: 0;
+        }
+        .sidebar-logo { font-size: 18px; font-weight: 800; color: var(--accent); }
+        .sidebar-logo-sub { font-size: 9px; color: var(--text-secondary); margin-top: 2px; letter-spacing: .5px; }
+
+        .sidebar-menu { flex: 1; padding: 6px 0; }
+
+        .sidebar-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 11px 18px; color: var(--text-secondary);
+            border: none; background: none; width: 100%;
+            text-align: left; font-size: 13px; cursor: pointer;
+            transition: .18s; font-family: inherit;
+            border-left: 3px solid transparent;
+        }
+        .sidebar-item:hover { background: var(--card-hover); color: var(--text); border-left-color: var(--accent); }
+        .sidebar-item .si-icon { font-size: 16px; min-width: 20px; }
+        .sidebar-divider { height: 1px; background: var(--border); margin: 6px 0; }
+
+        /* Social items with platform SVG logos */
+        .sidebar-item.social-fb:hover { color: #1877F2; border-left-color: #1877F2; }
+        .sidebar-item.social-yt:hover { color: #FF0000; border-left-color: #FF0000; }
+        .sidebar-item.social-tg:hover { color: #0088CC; border-left-color: #0088CC; }
+        .sidebar-item.social-wa:hover { color: #25D366; border-left-color: #25D366; }
+
+        .sidebar-footer { flex-shrink: 0; padding: 8px 0; border-top: 1px solid var(--border); }
+        .sidebar-item.logout-btn { color: var(--error); }
+        .sidebar-item.logout-btn:hover { background: rgba(248,81,73,.08); border-left-color: var(--error); }
+        .sidebar-item.admin-sidebar { color: #FFD700; }
+        .sidebar-item.admin-sidebar:hover { background: rgba(255,215,0,.06); border-left-color: #FFD700; }
+
+        /* ─────────────────────────────────────────────
+           MAIN CONTAINER
+        ───────────────────────────────────────────── */
+        .main-container { max-width: 580px; margin: 0 auto; padding: 12px 14px 10px; }
+
+        /* ─────────────────────────────────────────────
+           SPECIAL CARD  (Flutter: SpecialCard widget)
+        ───────────────────────────────────────────── */
+        .special-card {
+            background: var(--card-bg); border: 2px solid #F85149;
+            border-radius: var(--radius); padding: 0 0 14px;
+            margin-bottom: 14px; text-align: center;
+            box-shadow: var(--shadow-sm);
+            animation: specialGlow 2s ease-in-out infinite;
+            overflow: hidden;
+        }
+        .special-card img {
+            /* 100% width, auto height, no crop per spec */
+            width: 100%; height: auto; display: block;
+            object-fit: contain; margin-bottom: 10px;
+        }
+        .special-text {
+            font-size: 12px; color: var(--text-secondary);
+            margin: 0 14px 10px; font-family: 'Noto Sans Bengali','Inter',sans-serif;
+            line-height: 1.7; text-align: left; white-space: pre-line;
+        }
+        /* Markdown / bullet style text */
+        .special-text-body { padding: 0 14px; text-align: left; }
+        .special-text-body p { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; line-height: 1.7; }
+
+        /* Clickable link — center, animated  (Flutter: AnimatedButton) */
+        .special-link-wrap { display: flex; justify-content: center; margin-top: 6px; }
+        .special-link {
+            display: inline-block; padding: 9px 24px;
+            background: linear-gradient(135deg,var(--accent),var(--blue));
+            color: #fff; border-radius: var(--radius-full);
+            font-size: 12px; font-weight: 700; text-decoration: none;
+            transition: all .25s; box-shadow: 0 2px 10px rgba(124,131,255,.3);
+            animation: brandPulse 2.5s ease-in-out infinite;
+        }
+        .special-link:hover { transform: scale(1.05); box-shadow: 0 4px 18px rgba(124,131,255,.5); }
+
+        /* ─────────────────────────────────────────────
+           TIMER CARDS  (Flutter: CountdownTimerCard widget)
+        ───────────────────────────────────────────── */
+        .countdown-card {
+            background: linear-gradient(140deg,var(--bg) 0%,var(--card-bg) 100%);
+            border: 1.5px solid var(--atlas-border, var(--border));
+            border-radius: var(--radius); padding: 20px 16px;
+            margin-bottom: 14px; text-align: center;
+            position: relative; animation: pulseGlow 3s ease-in-out infinite;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+        /* Color themes for each timer */
+        .timer-1 { border-color: var(--t1) !important; --timer-glow: rgba(248,81,73,.35); }
+        .timer-2 { border-color: var(--t2) !important; --timer-glow: rgba(59,130,246,.35); }
+        .timer-3 { border-color: var(--t3) !important; --timer-glow: rgba(34,197,94,.35); }
+        .timer-4 { border-color: var(--t4) !important; --timer-glow: rgba(236,72,153,.35); }
+        .timer-5 { border-color: var(--t5) !important; --timer-glow: rgba(249,115,22,.35); }
+
+        /* Serial box — per spec: thin box inside card, left corner */
+        .timer-serial-box {
+            position: absolute; top: 0; left: 0;
+            padding: 3px 10px;
+            border-radius: 0 0 8px 0;
+            font-size: 9px; font-weight: 700; color: #fff; letter-spacing: .5px;
+        }
+        .timer-1 .timer-serial-box { background: var(--t1); }
+        .timer-2 .timer-serial-box { background: var(--t2); }
+        .timer-3 .timer-serial-box { background: var(--t3); }
+        .timer-4 .timer-serial-box { background: var(--t4); }
+        .timer-5 .timer-serial-box { background: var(--t5); }
+
+        .timer-main-topic { font-size: 35px; font-weight: 900; color: var(--text); margin-bottom: 4px; }
+        .timer-subtopic { font-size: 25px; color: var(--text-secondary); margin-bottom: 15px; }
+
+        .timer-row { display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .timer-clock-icon { font-size: 50px; }
+        .timer-values { display: flex; align-items: center; gap: 4px; }
+        .timer-block { display: flex; flex-direction: column; align-items: center; }
+        .timer-number { font-size: 40px; font-weight: 700; color: var(--text); letter-spacing: 1px; font-variant-numeric: tabular-nums; }
+        .timer-separator { font-size: 18px; font-weight: 700; color: var(--text-secondary); margin-top: -8px; }
+        .timer-label { font-size: 9px; color: var(--text-secondary); opacity: .7; margin-top: 2px; }
+
+        /* ─────────────────────────────────────────────
+           HOME BUTTONS  (Flutter: GridView + InkWell)
+        ───────────────────────────────────────────── */
+        .home-buttons {
+            display: grid; grid-template-columns: repeat(2,1fr);
+            gap: 10px; margin-bottom: 14px;
+        }
+        @media(min-width:600px) { .home-buttons { grid-template-columns: repeat(3,1fr); } }
+
+        .home-btn {
+            background-color: var(--card-bg); color: var(--text);
+            border: 1px solid var(--border); border-radius: var(--radius-md);
+            padding: 16px 10px; font-family: 'Noto Sans Bengali','Inter',sans-serif;
+            font-size: 12px; font-weight: 600; text-align: center; cursor: pointer;
+            transition: all .2s ease; box-shadow: var(--shadow-sm);
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+        }
+        .home-btn:hover {
+            border-color: var(--accent);
+            box-shadow: var(--shadow-glow), var(--shadow);
+            transform: translateY(-2px);
+        }
+        .home-btn .btn-icon { font-size: 24px; }
+        .home-btn .btn-text { font-size: 11px; line-height: 1.3; }
+        .home-btn-full { grid-column: 1 / -1; }
+        .home-btn.admin-btn {
+            border-color: #FFD700; color: #FFD700; display: none;
+            background: rgba(255,215,0,.04);
+        }
+        .home-btn.admin-btn:hover { background: rgba(255,215,0,.08); box-shadow: 0 0 0 2px rgba(255,215,0,.2); }
+
+        /* Button icons — proper semantic icons not color circles */
+        .icon-class::before    { content: '📚'; }
+        .icon-board::before    { content: '🎯'; }
+        .icon-medical::before  { content: '🏥'; }
+        .icon-varsity::before  { content: '🎓'; }
+        .icon-practice::before { content: '✏️'; }
+        .icon-model::before    { content: '📋'; }
+        .icon-mock::before     { content: '🔁'; }
+        .icon-mistakes::before { content: '⚠️'; }
+        .icon-ai::before       { content: '🤖'; }
+        .icon-admin::before    { content: '👑'; }
+
+        /* ─────────────────────────────────────────────
+           SOCIAL CHIPS  (Flutter: SocialChipRow widget)
+        ───────────────────────────────────────────── */
+        .social-row {
+            display: flex; justify-content: center; gap: 8px;
+            flex-wrap: wrap; margin-bottom: 16px;
+        }
+        .social-chip {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 7px 14px; border-radius: var(--radius-full);
+            font-size: 11px; font-weight: 600;
+            background: var(--card-bg); border: 1px solid var(--border);
+            color: var(--text-secondary); text-decoration: none;
+            cursor: pointer; transition: all .2s ease;
+        }
+        .social-chip:hover {
+            border-color: var(--accent); color: var(--accent);
+            box-shadow: var(--shadow-glow); transform: translateY(-1px);
+        }
+        .social-chip svg { flex-shrink: 0; }
+        /* Platform-specific hover colors */
+        .social-chip.plat-facebook:hover  { border-color:#1877F2; color:#1877F2; }
+        .social-chip.plat-youtube:hover   { border-color:#FF0000; color:#FF0000; }
+        .social-chip.plat-telegram:hover  { border-color:#0088CC; color:#0088CC; }
+        .social-chip.plat-whatsapp:hover  { border-color:#25D366; color:#25D366; }
+
+        /* ─────────────────────────────────────────────
+           OWNER SECTION  (Flutter: OwnerCard widget)
+        ───────────────────────────────────────────── */
+        .owner-section { display:flex; flex-direction:column; align-items:center; margin:18px 0 14px; }
+        .owner-name-top { font-size:14px; font-weight:700; color:var(--accent); margin-bottom:10px; }
+
+        .flip-card-owner { width:140px; height:140px; perspective:800px; cursor:pointer; }
+        .flip-card-owner.flipped .flip-card-inner-owner { transform: rotateY(180deg); }
+        .flip-card-inner-owner {
+            position:relative; width:100%; height:100%;
+            transition: transform .5s ease; transform-style: preserve-3d;
+        }
+        .flip-front-owner, .flip-back-owner {
+            position:absolute; width:100%; height:100%; backface-visibility:hidden;
+            border-radius: var(--radius-sm);
+        }
+        .flip-front-owner {
+            background: var(--card-bg); border:1px solid var(--border);
+            display:flex; align-items:center; justify-content:center;
+        }
+        .flip-back-owner {
+            background: var(--card-bg); border:1px solid var(--accent);
+            transform: rotateY(180deg); padding:12px; text-align:center;
+            font-size:10px; color:var(--text-secondary);
+            display:flex; align-items:center; justify-content:center;
+            line-height: 1.6;
+        }
+
+        /* Conic glow ring per spec — at image margin boundary */
+        .owner-photo-wrapper { position:relative; width:140px; height:140px; }
+        .owner-photo-box {
+            width:140px; height:140px; border-radius:var(--radius-sm);
+            object-fit:cover; border:2px solid var(--border); position:relative; z-index:2;
+        }
+        .owner-glow-box {
+            position:absolute; top:-6px; left:-6px;
+            width:calc(140px + 12px); height:calc(140px + 12px);
+            border-radius:calc(var(--radius-sm) + 6px);
+            animation: rotateGlowBox 3s linear infinite; z-index:1; pointer-events:none;
+        }
+        .owner-glow-box::before {
+            content:''; position:absolute; inset:-3px;
+            border-radius:inherit;
+            background: conic-gradient(from 0deg,transparent 0deg,var(--accent) 90deg,transparent 180deg,transparent 270deg,var(--accent) 360deg);
+            animation: rotateGlowBox 1.8s linear infinite;
+            opacity:.35; filter:blur(5px);
+        }
+
+        /* ─────────────────────────────────────────────
+           MENTORS SECTION  (Flutter: MentorsGrid widget)
+        ───────────────────────────────────────────── */
+        .mentors-section { margin: 6px 0 14px; }
+        .mentors-title {
+            text-align:center; font-size:13px; font-weight:700;
+            color:var(--accent); margin-bottom:10px;
+        }
+        .mentors-grid {
+            display:flex; flex-wrap:wrap; gap:10px; justify-content:center;
+        }
+        .mentor-item { text-align:center; width:72px; }
+        .mentor-photo {
+            width:60px; height:60px; border-radius:10px;
+            object-fit:cover; border:2px solid var(--border);
+            display:block; margin:0 auto 4px;
+        }
+        .mentor-photo-fallback {
+            width:60px; height:60px; border-radius:10px;
+            background: var(--card-hover); border:2px solid var(--border);
+            display:flex; align-items:center; justify-content:center;
+            font-size:22px; margin:0 auto 4px;
+        }
+        .mentor-name { font-size:10px; font-weight:600; color:var(--text); line-height:1.3; }
+        .mentor-role { font-size:9px; color:var(--text-secondary); }
+
+        /* ─────────────────────────────────────────────
+           BOTTOM NAV  (Flutter: BottomNavigationBar)
+        ───────────────────────────────────────────── */
+        .bottom-nav {
+            position:fixed; bottom:0; left:0; right:0; height:60px;
+            background:var(--card-bg); border-top:1px solid var(--border);
+            display:flex; align-items:center; justify-content:space-around; z-index:100;
+        }
+        .nav-item {
+            display:flex; flex-direction:column; align-items:center; gap:2px;
+            background:none; border:none; color:var(--text-secondary);
+            font-size:10px; cursor:pointer; padding:6px 10px;
+            border-radius:8px; transition:.2s; font-family:inherit;
+        }
+        .nav-item.active { color:var(--accent); }
+        .nav-icon { font-size:20px; }
+
+        /* ─────────────────────────────────────────────
+           FLOATING BUTTONS  (Flutter: SpeedDial FAB)
+           Hidden on AI / Class / Exam pages via body class
+        ───────────────────────────────────────────── */
+        .floating-buttons {
+            position:fixed; bottom:76px; right:16px;
+            display:flex; flex-direction:column; gap:8px; z-index:99;
+        }
+        .fab {
+            width:44px; height:44px; border-radius:50%; border:none;
+            cursor:pointer; color:#fff;
+            display:flex; align-items:center; justify-content:center;
+            transition:.2s; box-shadow:0 2px 10px rgba(0,0,0,.3);
+        }
+        .fab-wa { background:#25D366; }
+        .fab-tg { background:#0088CC; }
+        .fab:hover { transform:scale(1.1); }
+
+        /* ─────────────────────────────────────────────
+           TOAST  (Flutter: SnackBar)
+        ───────────────────────────────────────────── */
+        .toast {
+            position:fixed; top:68px; left:50%; transform:translateX(-50%);
+            background:var(--card-bg); color:var(--text);
+            border:1px solid var(--accent); padding:9px 20px;
+            border-radius:var(--radius-full); font-size:12px; font-weight:600;
+            z-index:999; opacity:0; transition:.2s; pointer-events:none; white-space:nowrap;
+        }
+        .toast.show { opacity:1; }
+
+        /* ─────────────────────────────────────────────
+           MODAL  (Flutter: showDialog / showModalBottomSheet)
+        ───────────────────────────────────────────── */
+        .modal-overlay {
+            position:fixed; inset:0; background:rgba(0,0,0,.75);
+            z-index:300; display:none; align-items:center; justify-content:center; padding:14px;
+        }
+        .modal-overlay.active { display:flex; }
+        .modal {
+            background:var(--card-bg); border:1px solid var(--border);
+            border-radius:var(--radius); padding:16px;
+            max-width:500px; width:100%; max-height:88vh; overflow-y:auto;
+            animation:fadeUp .2s;
+        }
+        .modal-title {
+            font-size:16px; font-weight:800; color:var(--accent);
+            margin-bottom:14px; text-align:center; padding-bottom:10px;
+            border-bottom:1px solid var(--border);
+        }
+        .modal-close {
+            position:sticky; bottom:0; background:var(--card-bg);
+            padding-top:10px; margin-top:10px; border-top:1px solid var(--border);
+        }
+
+        /* ─────────────────────────────────────────────
+           MY MISTAKES MODAL  (Flutter: MistakesScreen)
+        ───────────────────────────────────────────── */
+        .filter-row { display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; }
+        .filter-row select {
+            padding:6px 10px; border:1px solid var(--border);
+            border-radius:6px; background:var(--bg);
+            color:var(--text); font-size:11px; font-family:inherit; flex:1;
+        }
+        .mistake-item {
+            background:var(--card-hover); border:1px solid var(--border);
+            border-radius:var(--radius-sm); padding:12px; margin-bottom:8px;
+            animation:fadeUp .2s;
+        }
+        .mistake-item-header {
+            display:flex; justify-content:space-between; align-items:flex-start;
+            margin-bottom:6px;
+        }
+        .mistake-item-title { font-weight:700; font-size:13px; color:var(--text); flex:1; }
+        .mistake-item-sub { font-size:10px; color:var(--text-secondary); margin-top:2px; }
+        .mistake-item-stats { display:flex; gap:8px; margin:6px 0; flex-wrap:wrap; }
+        .mistake-stat-chip {
+            font-size:10px; padding:2px 8px; border-radius:10px; font-weight:600;
+        }
+        .chip-wrong { background:rgba(248,81,73,.12); color:var(--error); }
+        .chip-skip  { background:rgba(210,153,34,.12); color:var(--yellow); }
+        .mistake-item-date { font-size:10px; color:var(--text-secondary); }
+        .mistake-btns { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+
+        /* Buttons */
+        .btn {
+            display:inline-block; padding:8px 14px; border-radius:var(--radius-md);
+            font-weight:600; cursor:pointer; border:none;
+            font-size:11px; transition:.2s; font-family:inherit; text-align:center;
+        }
+        .btn-outline { background:transparent; border:1px solid var(--border); color:var(--text-secondary); }
+        .btn-outline:hover { border-color:var(--accent); color:var(--text); }
+        .btn-primary { background:var(--accent); color:#fff; }
+        .btn-primary:hover { opacity:.9; }
+        .btn-success { background:var(--success); color:#fff; }
+        .btn-warning { background:var(--yellow); color:#fff; }
+        .btn-danger  { background:var(--error); color:#fff; }
+
+        /* ─────────────────────────────────────────────
+           MODEL TEST MODAL  (Flutter: ModelTestModal)
+        ───────────────────────────────────────────── */
+        .model-segment-label {
+            font-size:11px; font-weight:800; color:var(--error);
+            padding:4px 0 2px; margin-bottom:4px; letter-spacing:.5px;
+        }
+        .model-segment-label.varsity { color:var(--accent); }
+        .model-btn {
+            width:100%; padding:11px 14px; border-radius:var(--radius-sm);
+            border:1px solid var(--border); background:none; color:var(--text);
+            font-size:13px; font-weight:600; cursor:pointer; text-align:left;
+            font-family:inherit; transition:.2s; margin-bottom:6px;
+            display:flex; align-items:center; gap:8px;
+        }
+        .model-btn:hover { border-color:var(--accent); background:rgba(124,131,255,.05); }
+        .model-sub-note {
+            font-size:10px; color:var(--text-secondary); text-align:center;
+            padding:4px 0 8px; margin-bottom:6px;
+        }
+
+        /* ─────────────────────────────────────────────
+           QUESTION VIEWER  (Flutter: QuestionCard widget)
+           (Used inside Mistakes detail modal)
+        ───────────────────────────────────────────── */
+        .q-filter-tabs { display:flex; gap:4px; margin-bottom:10px; }
+        .q-filter-tab {
+            padding:5px 10px; border-radius:6px; font-size:10px; font-weight:600;
+            cursor:pointer; border:1px solid var(--border); background:none;
+            color:var(--text-secondary); font-family:inherit; transition:.2s;
+        }
+        .q-filter-tab.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+        .question-card {
+            background:var(--card-hover); border:1px solid var(--border);
+            border-radius:var(--radius-sm); padding:12px; margin-bottom:10px;
+        }
+        .question-text { font-size:13px; color:var(--text); font-weight:600; line-height:1.6; margin-bottom:8px; }
+        .question-img { width:100%; border-radius:6px; margin-bottom:8px; max-height:180px; object-fit:contain; }
+        .options-list { list-style:none; display:flex; flex-direction:column; gap:5px; }
+        .option-item {
+            padding:8px 10px; border-radius:6px; font-size:12px;
+            border:1px solid var(--border); color:var(--text-secondary);
+            display:flex; align-items:flex-start; gap:6px;
+        }
+        .option-item.correct { background:rgba(63,185,80,.12); border-color:var(--success); color:var(--success); }
+        .option-item.wrong   { background:rgba(248,81,73,.12); border-color:var(--error); color:var(--error); }
+        .option-key { font-weight:800; min-width:16px; flex-shrink:0; }
+        .explanation-box {
+            background:rgba(88,166,255,.08); border:1px solid rgba(88,166,255,.2);
+            border-radius:6px; padding:8px 10px; margin-top:8px;
+            font-size:11px; color:var(--blue); line-height:1.6;
+        }
+        .q-status {
+            display:inline-block; padding:2px 7px; border-radius:10px;
+            font-size:9px; font-weight:700; margin-bottom:6px;
+        }
+        .q-status.correct { background:rgba(63,185,80,.15); color:var(--success); }
+        .q-status.wrong   { background:rgba(248,81,73,.15); color:var(--error); }
+        .q-status.skipped { background:rgba(210,153,34,.15); color:var(--yellow); }
+
+        /* ─────────────────────────────────────────────
+           SKELETON / LOADING  (Flutter: Shimmer package)
+        ───────────────────────────────────────────── */
+        .skeleton {
+            background: linear-gradient(90deg,var(--card-hover) 25%,var(--card-bg) 50%,var(--card-hover) 75%);
+            background-size:200% 100%;
+            animation:shimmer 1.2s infinite;
+            border-radius:6px;
+        }
+        .skeleton-block { height:80px; margin-bottom:8px; border-radius:var(--radius-sm); }
+        .skeleton-line  { height:12px; margin-bottom:6px; }
+
+        /* ─────────────────────────────────────────────
+           ERROR POPUP  (Flutter: ErrorDialog widget)
+        ───────────────────────────────────────────── */
+        .error-popup-overlay {
+            position:fixed; inset:0; background:rgba(0,0,0,.75);
+            z-index:600; display:flex; align-items:center; justify-content:center; padding:20px;
+        }
+        .error-popup {
+            background:var(--card-bg); border:1px solid var(--error);
+            border-radius:var(--radius); padding:20px;
+            max-width:320px; width:100%; text-align:center;
+        }
+        .error-popup-icon { font-size:36px; margin-bottom:8px; }
+        .error-popup-title { font-size:15px; font-weight:800; color:var(--error); margin-bottom:6px; }
+        .error-popup-message { font-size:12px; color:var(--text-secondary); margin-bottom:12px; line-height:1.6; }
+        .error-popup-details { font-size:9px; color:var(--text-secondary); background:var(--card-hover); border-radius:6px; padding:6px 8px; margin-bottom:10px; word-break:break-all; }
+        .error-popup-btn, .error-popup-retry {
+            padding:8px 16px; border-radius:8px; font-size:12px; font-weight:700;
+            cursor:pointer; border:none; font-family:inherit; margin:2px;
+        }
+        .error-popup-btn   { background:var(--card-hover); color:var(--text); border:1px solid var(--border); }
+        .error-popup-retry { background:var(--accent); color:#fff; }
+
+        /* ─────────────────────────────────────────────
+           EMPTY STATE  (Flutter: EmptyState widget)
+        ───────────────────────────────────────────── */
+        .empty-state { text-align:center; padding:30px 20px; color:var(--text-secondary); }
+        .empty-icon  { font-size:36px; margin-bottom:8px; display:block; }
+    </style>
+</head>
+<body class="dark-mode">
+
+<!-- ════════════════════════════════════════════
+     SIDEBAR  (Flutter: Drawer)
+════════════════════════════════════════════ -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<aside class="sidebar" id="sidebar">
+
+    <div class="sidebar-header">
+        <div class="sidebar-logo">ATLAS APP</div>
+        <div class="sidebar-logo-sub">মেডিকেল প্রস্তুতি প্ল্যাটফর্ম</div>
+    </div>
+
+    <div class="sidebar-menu">
+        <!-- Navigation links -->
+        <button class="sidebar-item" onclick="navigateTo('profile');closeSidebar();">
+            <span class="si-icon">👤</span> প্রোফাইল
+        </button>
+        <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();">
+            <span class="si-icon">🏠</span> হোম
+        </button>
+        <button class="sidebar-item" onclick="goTo('class.html');closeSidebar();">
+            <span class="si-icon">📚</span> ফ্রি ক্লাস
+        </button>
+        <button class="sidebar-item" onclick="goTo('exam.html');closeSidebar();">
+            <span class="si-icon">📝</span> ফ্রি এক্সাম
+        </button>
+        <button class="sidebar-item" onclick="goTo('mock-test.html');closeSidebar();">
+            <span class="si-icon">🎯</span> মক টেস্ট
+        </button>
+        <button class="sidebar-item" onclick="openModelTestModal();closeSidebar();">
+            <span class="si-icon">📖</span> Model Test
+        </button>
+        <button class="sidebar-item" onclick="openMistakesModal();closeSidebar();">
+            <span class="si-icon">⚠️</span> My Mistakes
+        </button>
+        <button class="sidebar-item" onclick="goTo('ai.html');closeSidebar();">
+            <span class="si-icon">🤖</span> ATLAS AI
+        </button>
+        <button class="sidebar-item admin-sidebar" id="adminSidebarBtn" onclick="goTo('admin.html');closeSidebar();" style="display:none;">
+            <span class="si-icon">👑</span> Admin Control
+        </button>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- Social links — proper platform logos -->
+        <button class="sidebar-item social-fb" onclick="openSocial('facebook')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            Facebook
+        </button>
+        <button class="sidebar-item social-yt" onclick="openSocial('youtube')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+            YouTube
+        </button>
+        <button class="sidebar-item social-tg" onclick="openSocial('telegram')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#0088CC"><path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zm5.562 8.248l-1.97 9.289c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.932z"/></svg>
+            Telegram
+        </button>
+        <button class="sidebar-item social-wa" onclick="openSocial('whatsapp')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zm-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884zm8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            WhatsApp
+        </button>
+
+        <div class="sidebar-divider"></div>
+        <button class="sidebar-item" onclick="toggleTheme()">
+            <span class="si-icon" id="sidebarThemeIcon">🌙</span> থিম পরিবর্তন
+        </button>
+    </div>
+
+    <div class="sidebar-footer">
+        <button class="sidebar-item logout-btn" onclick="logout()">
+            <span class="si-icon">🚪</span> লগআউট
+        </button>
+    </div>
+</aside>
+
+<!-- ════════════════════════════════════════════
+     HEADER  (Flutter: AppBar)
+════════════════════════════════════════════ -->
+<header class="header">
+    <div class="header-left">
+        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+        <div class="atlas-brand-box">
+            <img src="https://cdn.phototourl.com/free/2026-05-15-b45df560-6dc8-4cb7-9040-238612c8a161.png"
+                 class="atlas-logo-img" alt="ATLAS"
+                 onerror="this.style.display='none'">
+            <span class="atlas-brand-text">ATLAS APP</span>
+        </div>
+    </div>
+    <div class="header-right">
+        <!-- Theme toggle — no toast per spec -->
+        <button class="header-icon" onclick="toggleTheme()" id="themeToggle" title="থিম পরিবর্তন">🌙</button>
+
+        <!-- Notification bell — shows unread count, opens dropdown -->
+        <!-- (Flutter: IconButton + Badge + OverlayEntry) -->
+        <button class="header-icon" id="notifHeaderBtn" onclick="toggleNotifDropdown()" title="নোটিফিকেশন">
+            🔔
+            <span class="notif-header-badge" id="notifHeaderBadge"></span>
+        </button>
+
+        <!-- Profile icon -->
+        <button class="header-icon" onclick="navigateTo('profile')" title="প্রোফাইল">👤</button>
+    </div>
+</header>
+
+<!-- Notification Dropdown  (Flutter: OverlayEntry with PopupMenu style) -->
+<div class="notif-dropdown" id="notifDropdown">
+    <div class="notif-dropdown-header">
+        <span>🔔 নোটিফিকেশন</span>
+        <span style="font-size:10px;cursor:pointer;color:var(--text-secondary);" onclick="markAllNotifsRead()">সব পড়া হয়েছে</span>
+    </div>
+    <div id="notifDropdownBody">
+        <div class="notif-dropdown-empty">লোড হচ্ছে...</div>
+    </div>
+    <div class="notif-dropdown-footer" onclick="navigateTo('profile');toggleNotifDropdown();">
+        সব নোটিফিকেশন দেখুন →
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     MAIN CONTENT
+════════════════════════════════════════════ -->
+<main class="main-container">
+
+    <!-- Special Cards container (max 2 per spec) -->
+    <!-- (Flutter: SpecialCardList widget) -->
+    <div id="specialCardContainer"></div>
+
+    <!-- Timer Cards container (max 5 per spec) -->
+    <!-- (Flutter: CountdownTimerList widget) -->
+    <div id="timerContainer"></div>
+
+    <!-- ── Home Buttons Grid ── -->
+    <!-- (Flutter: GridView.count with InkWell cards) -->
+    <div class="home-buttons">
+        <button class="home-btn" onclick="goTo('class.html')">
+            <span class="btn-icon">📚</span>
+            <span class="btn-text">ফ্রি ক্লাস</span>
+        </button>
+        <button class="home-btn" onclick="goTo('exam.html?cat=board')">
+            <span class="btn-icon">📋</span>
+            <span class="btn-text">বোর্ড প্রস্তুতি</span>
+        </button>
+        <button class="home-btn" onclick="goTo('exam.html?cat=medical')">
+            <span class="btn-icon">🏥</span>
+            <span class="btn-text">মেডিকেল+ডেন্টাল</span>
+        </button>
+        <button class="home-btn" onclick="goTo('exam.html?cat=varsity')">
+            <span class="btn-icon">🎓</span>
+            <span class="btn-text">ভার্সিটি প্রস্তুতি</span>
+        </button>
+        <button class="home-btn" onclick="goTo('exam.html?cat=onushiloni')">
+            <span class="btn-icon">✏️</span>
+            <span class="btn-text">অনুশীলনী এক্সাম</span>
+        </button>
+        <button class="home-btn" onclick="openModelTestModal()">
+            <span class="btn-icon">📖</span>
+            <span class="btn-text">Model Test</span>
+        </button>
+        <button class="home-btn home-btn-full" onclick="goTo('mock-test.html')">
+            <span class="btn-icon">🔁</span>
+            <span class="btn-text">Unlimited Mock Test</span>
+        </button>
+        <button class="home-btn" onclick="openMistakesModal()">
+            <span class="btn-icon">⚠️</span>
+            <span class="btn-text">My Mistakes</span>
+        </button>
+        <button class="home-btn" onclick="goTo('ai.html')">
+            <span class="btn-icon">🤖</span>
+            <span class="btn-text">ATLAS AI</span>
+        </button>
+        <!-- Admin button — hidden for non-admins (Flutter: Visibility widget) -->
+        <button class="home-btn home-btn-full admin-btn" id="adminBtn" onclick="goTo('admin.html')">
+            <span class="btn-icon">👑</span>
+            <span class="btn-text">Admin Control</span>
+        </button>
+    </div>
+
+    <!-- Social Chips Row  (Flutter: SocialChipsRow widget) -->
+    <div class="social-row" id="socialRow"></div>
+
+    <!-- Owner Section  (Flutter: OwnerFlipCard widget) -->
+    <div class="owner-section">
+        <div class="owner-name-top" id="ownerNameTop">ATLAS APP</div>
+        <div class="flip-card-owner" id="flipCardOwner" onclick="this.classList.toggle('flipped')">
+            <div class="flip-card-inner-owner">
+                <div class="flip-front-owner">
+                    <div class="owner-photo-wrapper">
+                        <div class="owner-glow-box"></div>
+                        <img src="" class="owner-photo-box" id="ownerPhoto"
+                             onerror="this.style.display='none';document.getElementById('ownerPhotoFallback').style.display='flex';"
+                             alt="Owner">
+                        <div id="ownerPhotoFallback"
+                             style="display:flex;width:140px;height:140px;border-radius:8px;background:var(--card-hover);color:var(--text);align-items:center;justify-content:center;font-size:36px;border:2px solid var(--border);position:relative;z-index:2;">
+                            👤
+                        </div>
+                    </div>
+                </div>
+                <div class="flip-back-owner" id="ownerInfoBack">
+                    <span style="color:var(--text-secondary);">ক্লিক করুন</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mentors Section  (Flutter: MentorsGrid widget) -->
+    <div id="mentorsContainer"></div>
+
+</main><!-- end main-container -->
+
+<!-- ════════════════════════════════════════════
+     MODALS
+════════════════════════════════════════════ -->
+<!-- Main modal — used for Model Test, My Mistakes, detail views -->
+<div class="modal-overlay" id="mainModal" onclick="closeModal()">
+    <div class="modal" id="modalContent" onclick="event.stopPropagation()"></div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     BOTTOM NAV  (Flutter: BottomNavigationBar)
+════════════════════════════════════════════ -->
+<nav class="bottom-nav">
+    <button class="nav-item active" onclick="goTo('index.html')"><span class="nav-icon">🏠</span>হোম</button>
+    <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon">📚</span>ক্লাস</button>
+    <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon">📝</span>এক্সাম</button>
+    <button class="nav-item" onclick="goTo('mock-test.html')"><span class="nav-icon">🎯</span>মক</button>
+    <button class="nav-item" onclick="navigateTo('profile')"><span class="nav-icon">👤</span>প্রোফাইল</button>
+</nav>
+
+<!-- Floating Buttons  (Flutter: SpeedDial FAB) -->
+<div class="floating-buttons">
+    <button class="fab fab-wa" onclick="openWA()" title="WhatsApp">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/>
+        </svg>
+    </button>
+    <button class="fab fab-tg" onclick="openTG()" title="Telegram">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+            <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.223-.548.082l.183-2.852 5.19-4.688c.226-.198-.05-.308-.348-.11l-6.415 4.04-2.762-.862c-.6-.186-.61-.6.127-.892l10.79-4.155c.497-.185.93.12.773.862z"/>
+        </svg>
+    </button>
+</div>
+
+<!-- Toast  (Flutter: SnackBar) -->
+<div class="toast" id="toast"></div>
+
+<!-- ════════════════════════════════════════════
+     JAVASCRIPT
+     Flutter annotation: Each block = Service/Controller/Provider
+════════════════════════════════════════════ -->
+<script>
+/* ══════════════════════════════════════════════
+   CONSTANTS & STATE  (Flutter: AppState)
+══════════════════════════════════════════════ */
+const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
+
+let isDarkMode = true;
+let isSidebarOpen = false;
+let isNotifDropdownOpen = false;
+let mistakesData = [];          // cached exam results for mistakes modal
+let currentMistakeFilter = 'all'; // category filter
+let currentSubjectFilter = 'all'; // subject filter
+let currentQFilter = 'all';     // question filter inside detail modal
+let detailModalResult = null;   // current result being viewed
+let detailModalQuestions = [];  // questions for current result
+let detailModalAnswers = {};    // answers for current result
+
+/* ══════════════════════════════════════════════
+   UTILITIES  (Flutter: Utils class)
+══════════════════════════════════════════════ */
+function showToast(msg, dur = 2000) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), dur);
+}
+
+function escHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toBanglaDate(d) {
+    try { return new Date(d).toLocaleDateString('bn-BD',{year:'numeric',month:'long',day:'numeric'}); }
+    catch(e) { return d || ''; }
+}
+
+function autoHttps(url) {
+    if (!url) return '#';
+    return url.startsWith('http') ? url : 'https://' + url;
+}
+
+/* ══════════════════════════════════════════════
+   THEME  (Flutter: ThemeMode)
+   No toast per spec
+══════════════════════════════════════════════ */
+function toggleTheme() {
+    isDarkMode = !isDarkMode;
+    document.body.classList.toggle('dark-mode', isDarkMode);
+    document.body.classList.toggle('light-mode', !isDarkMode);
+    const icon = isDarkMode ? '🌙' : '☀️';
+    document.getElementById('themeToggle').textContent = icon;
+    document.getElementById('sidebarThemeIcon').textContent = icon;
+    localStorage.setItem('atlas-theme', isDarkMode ? 'dark' : 'light');
+}
+
+/* ══════════════════════════════════════════════
+   SIDEBAR  (Flutter: Drawer)
+══════════════════════════════════════════════ */
+function toggleSidebar() {
+    isSidebarOpen = !isSidebarOpen;
+    document.getElementById('sidebarOverlay').classList.toggle('active', isSidebarOpen);
+    document.getElementById('sidebar').classList.toggle('active', isSidebarOpen);
+}
+function closeSidebar() {
+    isSidebarOpen = false;
+    document.getElementById('sidebarOverlay').classList.remove('active');
+    document.getElementById('sidebar').classList.remove('active');
+}
+
+/* ══════════════════════════════════════════════
+   NAVIGATION  (Flutter: Navigator / GoRouter)
+══════════════════════════════════════════════ */
+function goTo(url) { location.replace(url); }
+function navigateTo(page) {
+    const map = { home:'index.html', profile:'dashboard.html', class:'class.html', exam:'exam.html' };
+    goTo(map[page] || 'index.html');
+}
+
+/* ══════════════════════════════════════════════
+   SOCIAL  (Flutter: url_launcher)
+══════════════════════════════════════════════ */
+function openWA()  { window.open('https://wa.me/8801999681290', '_blank'); }
+function openTG()  { window.open('https://t.me/rafi_somc', '_blank'); }
+function openSocial(p) {
+    const map = {
+        facebook:  'https://facebook.com/AtlasMedicalPreparation',
+        youtube:   'https://youtube.com/@Atlasprep',
+        telegram:  'https://t.me/rafi_somc',
+        whatsapp:  'https://wa.me/8801999681290'
+    };
+    window.open(map[p] || '#', '_blank');
+}
+
+/* ══════════════════════════════════════════════
+   AUTH  (Flutter: AuthService)
+══════════════════════════════════════════════ */
+function logout() {
+    localStorage.removeItem('atlas-session');
+    goTo('index.html');
+}
+function getSession() {
+    try { return JSON.parse(localStorage.getItem('atlas-session')); }
+    catch(e) { return null; }
+}
+
+/* ══════════════════════════════════════════════
+   ADMIN CHECK  (Flutter: AdminGuard)
+══════════════════════════════════════════════ */
+function checkAdmin() {
+    try {
+        const sess = getSession();
+        if (sess?.phone === '01754365403' || sess?.role === 'admin' || sess?.role === 'sub_admin') {
+            document.getElementById('adminBtn').style.display = 'flex';
+            document.getElementById('adminSidebarBtn').style.display = 'flex';
+        }
+    } catch(e) {}
+}
+
+/* ══════════════════════════════════════════════
+   SUPABASE FETCH  (Flutter: SupabaseService)
+══════════════════════════════════════════════ */
+async function safeFetch(url, opts = {}) {
+    opts.headers = Object.assign(
+        { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY },
+        opts.headers || {}
+    );
+    if (!opts.headers['Content-Type'] && opts.method !== 'DELETE')
+        opts.headers['Content-Type'] = 'application/json';
+    try {
+        const res = await fetch(url, opts);
+        const text = await res.text();
+        if (!text?.trim()) return [];
+        const data = JSON.parse(text);
+        if (!res.ok) throw new Error(data.message || 'Error');
+        return data;
+    } catch(e) {
+        console.error('❌ Fetch:', e.message);
+        return [];
+    }
+}
+
+/* ══════════════════════════════════════════════
+   TIMERS  (Flutter: CountdownTimerService)
+══════════════════════════════════════════════ */
+async function loadTimers() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/countdowns?select=*&order=sort_order.asc&limit=5`);
+        if (!data?.length) return;
+
+        const container = document.getElementById('timerContainer');
+        let html = '';
+        data.forEach((cd, i) => {
+            const n = i + 1;
+            html += `<div class="countdown-card timer-${n}">
+                <div class="timer-serial-box">ATLAS Special Timer-${String(n).padStart(2,'0')}</div>
+                <div class="timer-main-topic">${escHtml(cd.main_topic)}</div>
+                ${cd.subtopic ? `<div class="timer-subtopic">${escHtml(cd.subtopic)}</div>` : ''}
+                <div class="timer-row">
+                    <span class="timer-clock-icon">🕐</span>
+                    <div class="timer-values">
+                        <div class="timer-block">
+                            <span class="timer-number countdown-d-${i}">--</span>
+                            <span class="timer-label">দিন</span>
+                        </div>
+                        <span class="timer-separator">:</span>
+                        <div class="timer-block">
+                            <span class="timer-number countdown-h-${i}">--</span>
+                            <span class="timer-label">ঘণ্টা</span>
+                        </div>
+                        <span class="timer-separator">:</span>
+                        <div class="timer-block">
+                            <span class="timer-number countdown-m-${i}">--</span>
+                            <span class="timer-label">মিনিট</span>
+                        </div>
+                        <span class="timer-separator">:</span>
+                        <div class="timer-block">
+                            <span class="timer-number countdown-s-${i}">--</span>
+                            <span class="timer-label">সেকেন্ড</span>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+            setTimeout(() => startCountdown(cd.end_time, i), i * 100);
+        });
+        container.innerHTML = html;
+    } catch(e) {}
+}
+
+function startCountdown(endTime, i) {
+    const target = new Date(endTime);
+    const dEl = document.querySelector(`.countdown-d-${i}`);
+    const hEl = document.querySelector(`.countdown-h-${i}`);
+    const mEl = document.querySelector(`.countdown-m-${i}`);
+    const sEl = document.querySelector(`.countdown-s-${i}`);
+    if (!dEl) return;
+    function update() {
+        const diff = target - new Date();
+        if (diff <= 0) {
+            dEl.textContent = hEl.textContent = mEl.textContent = sEl.textContent = '০০'; return;
+        }
+        dEl.textContent = String(Math.floor(diff/(1000*60*60*24))).padStart(2,'0');
+        hEl.textContent = String(Math.floor((diff%(1000*60*60*24))/(1000*60*60))).padStart(2,'0');
+        mEl.textContent = String(Math.floor((diff%(1000*60*60))/(1000*60))).padStart(2,'0');
+        sEl.textContent = String(Math.floor((diff%(1000*60))/1000)).padStart(2,'0');
+    }
+    update(); setInterval(update, 1000);
+}
+
+/* ══════════════════════════════════════════════
+   SPECIAL CARDS  (Flutter: SpecialCardService)
+   Max 2, 100% width image, no crop, auto https
+══════════════════════════════════════════════ */
+async function loadSpecialCards() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/special_cards?select=*&order=sort_order.asc&limit=2`);
+        if (!data?.length) return;
+
+        const container = document.getElementById('specialCardContainer');
+        let html = '';
+        data.forEach(s => {
+            const link = autoHttps(s.link);
+            html += `<div class="special-card">`;
+            if (s.image_url) html += `<img src="${escHtml(s.image_url)}" alt="Special Card" loading="lazy">`;
+            if (s.description) {
+                // Render description as markdown-style bullets
+                const lines = s.description.split('\n').filter(l => l.trim());
+                html += `<div class="special-text-body">`;
+                lines.forEach(line => {
+                    html += `<p>${escHtml(line)}</p>`;
+                });
+                html += `</div>`;
+            }
+            if (s.special_text) {
+                if (s.link) {
+                    html += `<div class="special-link-wrap">
+                        <a href="${link}" target="_blank" class="special-link">${escHtml(s.special_text)}</a>
+                    </div>`;
+                } else {
+                    html += `<div class="special-link-wrap">
+                        <span class="special-link" style="cursor:default;">${escHtml(s.special_text)}</span>
+                    </div>`;
+                }
+            }
+            html += `</div>`;
+        });
+        container.innerHTML = html;
+    } catch(e) {}
+}
+
+/* ══════════════════════════════════════════════
+   SOCIAL LINKS  (Flutter: SocialLinksService)
+   Platform SVG logos auto-assigned
+══════════════════════════════════════════════ */
+const PLATFORM_SVGS = {
+    facebook: `<svg width="14" height="14" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>`,
+    youtube:  `<svg width="14" height="14" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>`,
+    telegram: `<svg width="14" height="14" viewBox="0 0 24 24" fill="#0088CC"><path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zm5.562 8.248l-1.97 9.289c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.932z"/></svg>`,
+    whatsapp: `<svg width="14" height="14" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zm-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884zm8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`,
+    other:    `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>`
+};
+
+async function loadSocialLinks() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/social_links?select=*&order=sort_order.asc&limit=20`);
+        if (!data?.length) return;
+
+        const platClass = { facebook:'plat-facebook', youtube:'plat-youtube', telegram:'plat-telegram', whatsapp:'plat-whatsapp' };
+
+        document.getElementById('socialRow').innerHTML = data.map(s => {
+            const svg = PLATFORM_SVGS[s.type] || PLATFORM_SVGS.other;
+            const cls = platClass[s.type] || '';
+            return `<a href="${escHtml(autoHttps(s.link))}" target="_blank" rel="noopener" class="social-chip ${cls}">
+                ${svg} ${escHtml(s.media_name)}
+            </a>`;
+        }).join('');
+    } catch(e) {}
+}
+
+/* ══════════════════════════════════════════════
+   OWNER INFO  (Flutter: OwnerService — localStorage)
+══════════════════════════════════════════════ */
+function loadOwnerInfo() {
+    const photo = localStorage.getItem('owner_photo');
+    const name  = localStorage.getItem('owner_name');
+    const info  = localStorage.getItem('owner_info');
+
+    if (name) document.getElementById('ownerNameTop').textContent = name;
+    if (info) document.getElementById('ownerInfoBack').innerHTML = escHtml(info).replace(/\n/g,'<br>');
+    if (photo) {
+        const img = document.getElementById('ownerPhoto');
+        img.src = photo; img.style.display = 'block';
+        document.getElementById('ownerPhotoFallback').style.display = 'none';
+    }
+}
+
+/* ══════════════════════════════════════════════
+   MENTORS  (Flutter: MentorsService)
+   Max 10, left-to-right grid per spec
+══════════════════════════════════════════════ */
+async function loadMentors() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/mentors?select=*&order=sort_order.asc&limit=10`);
+        if (!data?.length) return;
+
+        let html = `<div class="mentors-section">
+            <div class="mentors-title">👨‍🏫 আমাদের মেন্টর</div>
+            <div class="mentors-grid">`;
+
+        data.forEach(m => {
+            if (m.photo_url) {
+                html += `<div class="mentor-item">
+                    <img src="${escHtml(m.photo_url)}" class="mentor-photo" alt="${escHtml(m.name)}"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" loading="lazy">
+                    <div class="mentor-photo-fallback" style="display:none;">👤</div>
+                    <div class="mentor-name">${escHtml(m.name)}</div>
+                    <div class="mentor-role">${escHtml(m.role||'')}</div>
+                </div>`;
+            } else {
+                html += `<div class="mentor-item">
+                    <div class="mentor-photo-fallback">👤</div>
+                    <div class="mentor-name">${escHtml(m.name)}</div>
+                    <div class="mentor-role">${escHtml(m.role||'')}</div>
+                </div>`;
+            }
+        });
+
+        html += `</div></div>`;
+        document.getElementById('mentorsContainer').innerHTML = html;
+    } catch(e) {}
+}
+
+/* ══════════════════════════════════════════════
+   MODEL TEST MODAL  (Flutter: ModelTestModal)
+   Full screen per spec
+══════════════════════════════════════════════ */
+function openModelTestModal() {
+    const mc = document.getElementById('modalContent');
+    mc.innerHTML = `
+        <div class="modal-title">📖 Model Test</div>
+
+        <div class="model-segment-label">🟥 Medical Segment</div>
+        <button class="model-btn" onclick="closeModal();goTo('exam.html?cat=model&sub=medical_subject')">
+            🏥 Medical (Subject Final)
+        </button>
+        <button class="model-btn" onclick="closeModal();goTo('exam.html?cat=model&sub=medical_paper')">
+            🏥 Medical (Paper Final)
+        </button>
+        <button class="model-btn" onclick="closeModal();goTo('exam.html?cat=model&sub=full')">
+            📖 Full Model Test
+        </button>
+        <div class="model-sub-note">জীববিজ্ঞান=৩০ | রসায়ন=২৫ | পদার্থ=১৫ | সাধারণ জ্ঞান + নৈতিকতা=১৫ | ইংরেজি=১৫</div>
+
+        <div class="model-segment-label varsity" style="margin-top:8px;">🟦 Varsity Segment</div>
+        <button class="model-btn" onclick="closeModal();goTo('exam.html?cat=varsity&sub=varsitywise')">
+            🎓 Varsity-wise মডেল
+        </button>
+        <button class="model-btn" onclick="closeModal();goTo('exam.html?cat=varsity&sub=chapter')">
+            📖 চ্যাপ্টারভিত্তিক
+        </button>
+
+        <div class="modal-close">
+            <button class="btn btn-outline" onclick="closeModal()" style="width:100%;">✕ বন্ধ</button>
+        </div>`;
+    document.getElementById('mainModal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('mainModal').classList.remove('active');
+}
+
+/* ══════════════════════════════════════════════
+   MY MISTAKES MODAL  (Flutter: MistakesModal)
+══════════════════════════════════════════════ */
+async function openMistakesModal() {
+    const sess = getSession();
+    const mc = document.getElementById('modalContent');
+
+    if (!sess) {
+        mc.innerHTML = `<div class="modal-title">⚠️ My Mistakes</div>
+            <div class="empty-state">
+                <span class="empty-icon">🔒</span>
+                <div>এই ফিচার ব্যবহার করতে লগইন করুন</div>
+            </div>
+            <div class="modal-close">
+                <button class="btn btn-primary" onclick="closeModal();goTo('auth.html')" style="width:100%;">🔑 লগইন করুন</button>
+                <button class="btn btn-outline" onclick="closeModal()" style="width:100%;margin-top:6px;">✕ বন্ধ</button>
+            </div>`;
+        document.getElementById('mainModal').classList.add('active');
+        return;
+    }
+
+    // Show loading state
+    mc.innerHTML = `<div class="modal-title">⚠️ My Mistakes</div>
+        <div class="skeleton skeleton-block"></div>
+        <div class="skeleton skeleton-block"></div>`;
+    document.getElementById('mainModal').classList.add('active');
+
+    // Load exam results  (Flutter: MistakesService.loadResults())
+    mistakesData = await safeFetch(
+        `${SUPABASE_URL}/rest/v1/exam_results?phone=eq.${sess.phone}&select=*&order=submitted_at.desc&limit=30`
+    ) || [];
+
+    renderMistakesModal();
+}
+
+function renderMistakesModal() {
+    const mc = document.getElementById('modalContent');
+
+    // Check if any wrong/skip
+    const hasMistakes = mistakesData.some(r => (r.wrong||0) > 0 || (r.skipped||0) > 0);
+    if (!mistakesData.length || !hasMistakes) {
+        mc.innerHTML = `<div class="modal-title">⚠️ My Mistakes</div>
+            <div class="empty-state">
+                <span class="empty-icon">🎉</span>
+                <div>সব সঠিক! কোনো ভুল নেই</div>
+            </div>
+            <div class="modal-close">
+                <button class="btn btn-outline" onclick="closeModal()" style="width:100%;">✕ বন্ধ</button>
+            </div>`;
+        return;
+    }
+
+    // Build filter options
+    const cats = [...new Set(mistakesData.map(r => r.category).filter(Boolean))];
+    const subs = [...new Set(mistakesData.map(r => r.subject).filter(Boolean))];
+
+    // Filter data
+    let filtered = mistakesData.filter(r => (r.wrong||0) > 0 || (r.skipped||0) > 0);
+    if (currentMistakeFilter !== 'all') filtered = filtered.filter(r => r.category === currentMistakeFilter);
+    if (currentSubjectFilter !== 'all') filtered = filtered.filter(r => r.subject === currentSubjectFilter);
+
+    let html = `<div class="modal-title">⚠️ My Mistakes</div>
+        <div class="filter-row">
+            <select onchange="currentMistakeFilter=this.value;renderMistakesModal();">
+                <option value="all">সব ক্যাটাগরি</option>
+                ${cats.map(c=>`<option value="${escHtml(c)}" ${currentMistakeFilter===c?'selected':''}>${escHtml(c)}</option>`).join('')}
+            </select>
+            <select onchange="currentSubjectFilter=this.value;renderMistakesModal();">
+                <option value="all">সব সাবজেক্ট</option>
+                ${subs.map(s=>`<option value="${escHtml(s)}" ${currentSubjectFilter===s?'selected':''}>${escHtml(s)}</option>`).join('')}
+            </select>
+        </div>`;
+
+    if (!filtered.length) {
+        html += `<div class="empty-state"><span class="empty-icon">🔍</span><div>এই ফিল্টারে কোনো ভুল নেই</div></div>`;
+    } else {
+        filtered.forEach(r => { html += buildMistakeCard(r); });
+    }
+
+    html += `<div class="modal-close">
+        <button class="btn btn-outline" onclick="closeModal()" style="width:100%;">✕ বন্ধ</button>
+    </div>`;
+
+    mc.innerHTML = html;
+}
+
+function buildMistakeCard(r) {
+    const examName = r.exam_name || `এক্সাম #${r.exam_id}`;
+    return `<div class="mistake-item">
+        <div class="mistake-item-header">
+            <div>
+                <div class="mistake-item-title">📝 ${escHtml(examName)}</div>
+                <div class="mistake-item-sub">
+                    ${r.subject ? '📘 ' + escHtml(r.subject) : ''}
+                    ${r.category ? ' 🏷️ ' + escHtml(r.category) : ''}
+                </div>
+            </div>
+        </div>
+        <div class="mistake-item-stats">
+            <span class="mistake-stat-chip chip-wrong">❌ ভুল: ${r.wrong||0}</span>
+            <span class="mistake-stat-chip chip-skip">⏭️ স্কিপ: ${r.skipped||0}</span>
+        </div>
+        <div class="mistake-item-date">📅 ${toBanglaDate(r.submitted_at)}</div>
+        <div class="mistake-btns">
+            <button class="btn btn-outline" style="flex:1;" onclick="viewMistakeDetail('${r.id}','${r.exam_id}')">📋 বিস্তারিত</button>
+            <button class="btn btn-warning" style="flex:1;" onclick="startPractice('${r.id}','${r.exam_id}','skipped')">🔁 Practice-01</button>
+            <button class="btn btn-danger"  style="flex:1;" onclick="startPractice('${r.id}','${r.exam_id}','both')">🔁 Practice-02</button>
+        </div>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════════
+   MISTAKE DETAIL MODAL  (Flutter: MistakeDetailScreen)
+   Full screen with question filter
+══════════════════════════════════════════════ */
+async function viewMistakeDetail(resultId, examId) {
+    const mc = document.getElementById('modalContent');
+    mc.innerHTML = `<div class="modal-title">📋 বিস্তারিত লোড হচ্ছে...</div>
+        <div class="skeleton skeleton-block"></div>`;
+
+    const result = mistakesData.find(r => String(r.id) === String(resultId));
+    if (!result) { mc.innerHTML = `<div class="modal-title">এরর</div><button class="btn btn-outline" onclick="renderMistakesModal()">← ফিরে যান</button>`; return; }
+
+    detailModalResult = result;
+    detailModalAnswers = {};
+    try { detailModalAnswers = typeof result.answers === 'string' ? JSON.parse(result.answers) : (result.answers||{}); } catch(e) {}
+
+    // Load questions
+    detailModalQuestions = await safeFetch(
+        `${SUPABASE_URL}/rest/v1/questions?exam_id=eq.${examId}&select=*&order=id.asc`
+    ) || [];
+
+    currentQFilter = 'all';
+    renderMistakeDetailModal();
+}
+
+function renderMistakeDetailModal() {
+    const r = detailModalResult;
+    const mc = document.getElementById('modalContent');
+    const examName = r.exam_name || `এক্সাম #${r.exam_id}`;
+    const score = parseFloat(r.final_score)||0;
+    const total = r.total_questions||50;
+    const pct = Math.round((score/total)*100);
+    const badgeCls = pct>=80?'score-high':pct>=50?'score-mid':'score-low';
+
+    let html = `<div class="modal-title">📋 ${escHtml(examName)}</div>
+        <div style="text-align:center;margin-bottom:8px;">
+            <span style="font-size:13px;padding:3px 12px;border-radius:12px;font-weight:700;"
+                  class="${badgeCls}">${score.toFixed(1)}/${total}</span>
+        </div>
+        <div style="display:flex;justify-content:space-around;padding:8px;background:var(--card-hover);border-radius:8px;margin-bottom:10px;">
+            <div style="text-align:center;"><div style="color:var(--success);font-size:15px;font-weight:800;">✅ ${r.correct||0}</div><div style="font-size:9px;color:var(--text-secondary);">সঠিক</div></div>
+            <div style="text-align:center;"><div style="color:var(--error);font-size:15px;font-weight:800;">❌ ${r.wrong||0}</div><div style="font-size:9px;color:var(--text-secondary);">ভুল</div></div>
+            <div style="text-align:center;"><div style="color:var(--yellow);font-size:15px;font-weight:800;">⏭️ ${r.skipped||0}</div><div style="font-size:9px;color:var(--text-secondary);">স্কিপ</div></div>
+        </div>`;
+
+    if (detailModalQuestions.length) {
+        html += `<div class="q-filter-tabs">
+            <button class="q-filter-tab ${currentQFilter==='all'?'active':''}" onclick="currentQFilter='all';renderMistakeDetailModal();">📋 সব</button>
+            <button class="q-filter-tab ${currentQFilter==='correct'?'active':''}" onclick="currentQFilter='correct';renderMistakeDetailModal();">✅ সঠিক</button>
+            <button class="q-filter-tab ${currentQFilter==='wrong'?'active':''}" onclick="currentQFilter='wrong';renderMistakeDetailModal();">❌ ভুল</button>
+            <button class="q-filter-tab ${currentQFilter==='skipped'?'active':''}" onclick="currentQFilter='skipped';renderMistakeDetailModal();">⏭️ স্কিপ</button>
+        </div>`;
+        html += buildDetailQuestionsHtml(detailModalQuestions, detailModalAnswers, currentQFilter);
+    } else {
+        html += `<p style="text-align:center;color:var(--text-secondary);padding:16px;">প্রশ্ন পাওয়া যায়নি</p>`;
+    }
+
+    html += `<div class="modal-close">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn btn-warning" style="flex:1;" onclick="startPractice('${r.id}','${r.exam_id}','skipped')">🔁 Practice-01 (স্কিপ)</button>
+            <button class="btn btn-danger"  style="flex:1;" onclick="startPractice('${r.id}','${r.exam_id}','both')">🔁 Practice-02 (ভুল+স্কিপ)</button>
+        </div>
+        <button class="btn btn-outline" onclick="renderMistakesModal()" style="width:100%;margin-top:6px;">← ফিরে যান</button>
+    </div>`;
+
+    mc.innerHTML = html;
+}
+
+function buildDetailQuestionsHtml(questions, answers, filter) {
+    const opts = ['ক','খ','গ','ঘ','ঙ'];
+    let items = questions.map((q, idx) => {
+        const userAns = answers[q.id] !== undefined ? answers[q.id] : (answers[idx] !== undefined ? answers[idx] : null);
+        const correct = q.correct_option;
+        let status = 'skipped';
+        if (userAns !== null && userAns !== undefined && userAns !== '') {
+            status = String(userAns) === String(correct) ? 'correct' : 'wrong';
+        }
+        return { q, userAns, status };
+    });
+
+    if (filter !== 'all') items = items.filter(i => i.status === filter);
+    if (!items.length) return `<div class="empty-state" style="padding:20px;">
+        <span class="empty-icon">${filter==='correct'?'✅':filter==='wrong'?'❌':'⏭️'}</span>
+        <div>কোনো প্রশ্ন নেই</div></div>`;
+
+    return items.map(({ q, userAns, status }) => {
+        const statusLabel = status==='correct'?'✅ সঠিক':status==='wrong'?'❌ ভুল':'⏭️ স্কিপ';
+        const allOpts = [q.option_a, q.option_b, q.option_c, q.option_d, q.option_e].filter(Boolean);
+        const optHtml = allOpts.map((opt, i) => {
+            const isC = String(i)===String(q.correct_option)||String(opts[i])===String(q.correct_option);
+            const isW = !isC && (String(i)===String(userAns)||String(opts[i])===String(userAns));
+            return `<li class="option-item ${isC?'correct':isW?'wrong':''}">
+                <span class="option-key">${opts[i]}</span>${escHtml(opt)}
+            </li>`;
+        }).join('');
+
+        return `<div class="question-card">
+            <span class="q-status ${status}">${statusLabel}</span>
+            ${q.image_url?`<img class="question-img" src="${escHtml(q.image_url)}" alt="" loading="lazy">`:''}
+            <div class="question-text">${escHtml(q.question||'')}</div>
+            <ul class="options-list">${optHtml}</ul>
+            ${q.explanation?`<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>`:''}
+        </div>`;
+    }).join('');
+}
+
+/* ══════════════════════════════════════════════
+   PRACTICE MODES  (Flutter: PracticeExamScreen)
+   Practice-01: skipped only
+   Practice-02: wrong + skipped
+   NOT saved to exam history
+══════════════════════════════════════════════ */
+function startPractice(resultId, examId, mode) {
+    // Collect question IDs based on mode
+    const r = detailModalResult || mistakesData.find(x => String(x.id)===String(resultId));
+    if (!r) { showToast('❌ ডাটা পাওয়া যায়নি'); return; }
+
+    let answers = {};
+    try { answers = typeof r.answers==='string' ? JSON.parse(r.answers) : (r.answers||{}); } catch(e) {}
+
+    // Filter question indices based on mode
+    const qs = detailModalQuestions.length ? detailModalQuestions : [];
+    let practiceQIds = [];
+
+    qs.forEach((q, idx) => {
+        const userAns = answers[q.id] !== undefined ? answers[q.id] : answers[idx];
+        const correct = q.correct_option;
+        const isSkipped = userAns === null || userAns === undefined || userAns === '';
+        const isWrong = !isSkipped && String(userAns) !== String(correct);
+
+        if (mode === 'skipped' && isSkipped) practiceQIds.push(q.id);
+        if (mode === 'both' && (isSkipped || isWrong)) practiceQIds.push(q.id);
+    });
+
+    if (!practiceQIds.length) {
+        showToast('✅ কোনো প্রশ্ন নেই এই মোডে');
+        return;
+    }
+
+    const label = mode==='skipped' ? 'Practice-01' : 'Practice-02';
+    // Pass to exam.html in practice mode (no save)
+    const params = new URLSearchParams({
+        practice: '1',
+        mode: mode,
+        source_exam: examId,
+        q_ids: practiceQIds.join(','),
+        label: label
+    });
+    closeModal();
+    goTo('exam.html?' + params.toString());
+}
+
+/* ══════════════════════════════════════════════
+   NOTIFICATION DROPDOWN  (Flutter: NotificationBell widget)
+══════════════════════════════════════════════ */
+function toggleNotifDropdown() {
+    isNotifDropdownOpen = !isNotifDropdownOpen;
+    const dd = document.getElementById('notifDropdown');
+    dd.classList.toggle('open', isNotifDropdownOpen);
+    if (isNotifDropdownOpen) loadNotifDropdown();
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', e => {
+    if (!document.getElementById('notifHeaderBtn').contains(e.target) &&
+        !document.getElementById('notifDropdown').contains(e.target)) {
+        document.getElementById('notifDropdown').classList.remove('open');
+        isNotifDropdownOpen = false;
+    }
+});
+
+async function loadNotifDropdown() {
+    const sess = getSession();
+    const body = document.getElementById('notifDropdownBody');
+    if (!sess) {
+        body.innerHTML = `<div class="notif-dropdown-empty">লগইন করুন</div>`;
+        return;
+    }
+
+    body.innerHTML = `<div class="notif-dropdown-empty">লোড হচ্ছে...</div>`;
+    const data = await safeFetch(
+        `${SUPABASE_URL}/rest/v1/notifications?phone=eq.${sess.phone}&select=*&order=created_at.desc&limit=10`
+    ) || [];
+
+    if (!data.length) {
+        body.innerHTML = `<div class="notif-dropdown-empty">কোনো নোটিফিকেশন নেই</div>`;
+        return;
+    }
+
+    body.innerHTML = data.map(n => `
+        <div class="notif-dropdown-item ${n.is_read?'':'unread'}" onclick="markNotifRead('${n.id}')">
+            <div class="notif-dropdown-item-title">
+                ${!n.is_read?'<span class="notif-dropdown-item-dot"></span>':''}
+                ${escHtml(n.title||'নোটিফিকেশন')}
+            </div>
+            <div class="notif-dropdown-item-msg">${escHtml((n.message||'').substring(0,60))}${(n.message||'').length>60?'...':''}</div>
+        </div>
+    `).join('');
+}
+
+async function markNotifRead(id) {
+    const sess = getSession(); if (!sess) return;
+    await safeFetch(`${SUPABASE_URL}/rest/v1/notifications?id=eq.${id}`, {
+        method:'PATCH', body:JSON.stringify({ is_read:true })
+    });
+    loadNotifDropdown();
+    loadNotifBadge();
+}
+
+async function markAllNotifsRead() {
+    const sess = getSession(); if (!sess) return;
+    await safeFetch(`${SUPABASE_URL}/rest/v1/notifications?phone=eq.${sess.phone}&is_read=eq.false`, {
+        method:'PATCH', body:JSON.stringify({ is_read:true })
+    });
+    document.getElementById('notifHeaderBadge').classList.remove('show');
+    loadNotifDropdown();
+}
+
+async function loadNotifBadge() {
+    const sess = getSession(); if (!sess) return;
+    const data = await safeFetch(
+        `${SUPABASE_URL}/rest/v1/notifications?phone=eq.${sess.phone}&is_read=eq.false&select=id&limit=20`
+    ) || [];
+    const badge = document.getElementById('notifHeaderBadge');
+    const count = data.length;
+    if (count > 0) {
+        badge.textContent = count > 9 ? '9+' : count;
+        badge.classList.add('show');
+    } else {
+        badge.classList.remove('show');
+    }
+}
+
+/* ══════════════════════════════════════════════
+   ERROR HANDLER  (Flutter: ErrorBoundary / FlutterError)
+══════════════════════════════════════════════ */
+function showError(title, message, details, retryFn) {
+    const existing = document.querySelector('.error-popup-overlay');
+    if (existing) existing.remove();
+    const overlay = document.createElement('div');
+    overlay.className = 'error-popup-overlay';
+    let retryHTML = '';
+    if (retryFn) {
+        retryHTML = `<button class="error-popup-retry"
+            onclick="this.closest('.error-popup-overlay').remove();(${retryFn.toString()})();">
+            🔄 আবার চেষ্টা</button>`;
+    }
+    overlay.innerHTML = `<div class="error-popup" onclick="event.stopPropagation()">
+        <div class="error-popup-icon">⚠️</div>
+        <div class="error-popup-title">${escHtml(title||'কিছু সমস্যা হয়েছে')}</div>
+        <div class="error-popup-message">${escHtml(message||'পরে আবার চেষ্টা করুন')}</div>
+        ${details?`<div class="error-popup-details">${escHtml(details)}</div>`:''}
+        <div style="display:flex;justify-content:center;gap:8px;">
+            ${retryHTML}
+            <button class="error-popup-btn" onclick="this.closest('.error-popup-overlay').remove()">✕ বন্ধ</button>
+        </div>
+    </div>`;
+    overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+}
+
+window.addEventListener('error', e => {
+    showError('💥 জাভাস্ক্রিপ্ট এরর', 'পৃষ্ঠাটি রিলোড করুন', e.error?.message, () => location.reload());
+});
+window.addEventListener('unhandledrejection', e => {
+    showError('⚠️ প্রসেসিং সমস্যা', 'অনুরোধ সম্পূর্ণ করা যায়নি', e.reason?.message, null);
+});
+
+// Network detection
+window.addEventListener('offline', () => showError('📡 নেটওয়ার্ক নেই', 'ইন্টারনেট সংযোগ চেক করুন', null, () => location.reload()));
+
+/* ══════════════════════════════════════════════
+   SCORE BADGE HELPER  (Flutter: ScoreBadge widget)
+══════════════════════════════════════════════ */
+const badgeCls = pct => pct>=80?'score-high':pct>=50?'score-mid':'score-low';
+
+/* ══════════════════════════════════════════════
+   INIT  (Flutter: initState() + FutureBuilder)
+══════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+    // Restore theme
+    const savedTheme = localStorage.getItem('atlas-theme');
+    if (savedTheme === 'light') {
+        isDarkMode = false;
+        document.body.classList.remove('dark-mode');
+        document.body.classList.add('light-mode');
+        document.getElementById('themeToggle').textContent = '☀️';
+        document.getElementById('sidebarThemeIcon').textContent = '☀️';
+    }
+
+    // Load all sections  (Flutter: Future.wait([...]))
+    loadTimers();
+    loadSpecialCards();
+    loadSocialLinks();
+    loadOwnerInfo();
+    loadMentors();
+    checkAdmin();
+    loadNotifBadge();
+});
+history.pushState(null, '', location.href);
+window.addEventListener('popstate', () => history.back());
+</script>
+</body>
+</html>
