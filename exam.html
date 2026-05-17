@@ -1437,7 +1437,7 @@ function submitExam(isAutoSubmit = false) {
             if (user.timer_type === 'second') {
                 isSecondTimer = true;
                 deduction = totalQ <= 50 ? 1.5 : 3;
-                finalScore = Math.max(0, finalScore - deduction);
+                finalScore = finalScore - deduction;
             }
             withGpa = finalScore + gpaScore;
         }
