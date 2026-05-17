@@ -1939,6 +1939,8 @@ document.addEventListener('DOMContentLoaded', () => {
     else if (cat)         { showCategory(cat); }
     else                  { loadCategoryCounts();}
 });
+history.pushState(null, '', location.href);
+window.addEventListener('popstate', () => history.back());
 </script>
 </body>
 </html>
