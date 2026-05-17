@@ -1334,7 +1334,8 @@ function submitExam(isAutoSubmit=false){
     }catch(e){}
 
     showResult(correct,wrong,skipped,negMark,finalScore,withGpa,gpaScore,deduction,isSecondTimer,totalQ);
-    if(isLoggedIn()&&!isMockTest){
+    if(isLoggedIn()&&!isMockTest&&!String(currentExam?.id).startsWith('model_')){
+   if(isLoggedIn()&&!isMockTest&&!String(currentExam?.id).startsWith('model_')){
         saveResultToDB(correct,wrong,skipped,negMark,finalScore,gpaScore,withGpa,totalQ);
         saveLeaderboardEntry(correct,wrong,skipped,finalScore,totalQ);
     }
