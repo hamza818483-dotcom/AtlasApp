@@ -463,7 +463,6 @@
             <div class="main-cat-card" onclick="openMistakes()"><span class="cat-icon">⚠️</span><span class="cat-name">My Mistakes</span><span class="cat-count">প্র্যাকটিস করুন</span></div>
         </div>
         <div class="section-header" style="margin-top:10px;"><div class="section-title">🎯 আনলিমিটেড মক টেস্ট</div></div>
-        <button class="btn btn-primary" onclick="startMockTest()" style="width:100%;margin-bottom:12px;">🎯 মক টেস্ট শুরু করুন</button>
     </div>
 </div>
 
@@ -1716,6 +1715,25 @@ document.addEventListener('DOMContentLoaded',()=>{
     const cat=params.get('cat');
     const mock=params.get('mock');
     const model=params.get('model');
+    // Mock Test Practice Mode
+if(practice==='mock'){
+    const qData=sessionStorage.getItem('practiceQuestions');
+    const title=sessionStorage.getItem('practiceTitle')||'Mock Test';
+    const time=parseInt(sessionStorage.getItem('practiceTime'))||0;
+    if(qData){
+        try{
+            examQuestions=JSON.parse(qData);
+            currentExam={
+                title,subject:'Mock',chapter:'Mock',
+                exam_type:'mock',total_marks:examQuestions.length,
+                duration_minutes:time||Math.ceil(examQuestions.length/1.5),
+                id:'mock_'+Date.now(),allow_preview:false,allow_solve_sheet:true
+            };
+            showPreExamFromData(currentExam,examQuestions);
+        }catch(e){showToast('❌ প্রশ্ন লোড করতে সমস্যা');}
+    }else{showToast('❌ কোনো প্রশ্ন পাওয়া যায়নি');}
+    return;
+}
 
     // Req #22: Practice mode — load from sessionStorage (from dashboard/mistakes)
     if(practice==='mistakes'||practice==='history'){
