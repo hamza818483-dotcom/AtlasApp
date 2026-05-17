@@ -1744,44 +1744,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // 🔥 DASHBOARD FIXES — ALL IN ONE
 // ============================================================
 
-  function viewMistakeDetail(qId) {
-    const saved = localStorage.getItem('mistakes_' + currentUser.phone);
-    const mistakes = saved ? JSON.parse(saved) : [];
-    const mistake = mistakes.find(m => String(m.question_id || m.question?.id) === String(qId));
-    if (!mistake) { showToast('❌ বিস্তারিত পাওয়া যায়নি'); return; }
-    
-    // q হতে পারে mistake.question অথবা mistake নিজেই
-    const q = (mistake.question && (mistake.question.question_text || mistake.question.option1)) 
-        ? mistake.question 
-        : mistake;
-    
-    const optBn = ['ক','খ','গ','ঘ','ঙ'];
-    const opts = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(o => o && o !== '—' && o !== 'null' && o !== 'undefined');
-    const correctAns = q.answer_index || q.correct_option || 1;
-    const userAns = mistake.user_answer || mistake.userAns;
-    
-    // যদি কোনো option না থাকে, fake options দেখাবেন না
-    if (!opts.length && !q.question_text && !q.question) {
-        showToast('❌ এই প্রশ্নের বিস্তারিত ডাটা নেই');
-        return;
-    }
-    
-    let html = `<div class="modal-title">⚠️ ভুল প্রশ্ন বিস্তারিত</div>
-        <span class="q-status wrong">❌ ভুল ${userAns ? '(আপনি: ' + optBn[userAns-1] + ')' : ''}</span>
-        <div class="question-text" style="margin-top:8px;">${escHtml(q.question_text || q.question || 'প্রশ্ন পাওয়া যায়নি')}</div>`;
-    
-    if (opts.length > 0) {
-        html += `<ul class="options-list" style="margin-top:8px;">`;
-        opts.forEach((opt, i) => {
-            const isCorrect = (i+1) === parseInt(correctAns);
-            const isUserWrong = String(userAns) === String(i+1) && !isCorrect;
-            html += `<li class="option-item ${isCorrect?'correct':isUserWrong?'wrong':''}">
-                <span class="option-key">${optBn[i]}</span>${escHtml(opt)}
-                ${isCorrect?' ✅':''} ${isUserWrong?' ❌ (আপনার উত্তর)':''}
-            </li>`;
-        });
-        html += `</ul>`;
-    }
+  
     
     html += `
         ${q.explanation ? `<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>` : ''}
@@ -1798,7 +1761,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ============================================================
 // 🔥 DASHBOARD FIXES — ALL IN ONE (FINAL)
 // ============================================================
-
 // 1️⃣ My Mistakes Detail Modal
 function viewMistakeDetail(qId) {
     const saved = localStorage.getItem('mistakes_' + currentUser.phone);
