@@ -1795,32 +1795,71 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('detailModal').classList.add('active');
 }
 
-// 2️⃣ Fixed Mistake Practice
- // 2️⃣ Fixed Mistake Practice
+// ============================================================
+// 🔥 DASHBOARD FIXES — ALL IN ONE (FINAL)
+// ============================================================
+
+// 1️⃣ My Mistakes Detail Modal
+function viewMistakeDetail(qId) {
+    const saved = localStorage.getItem('mistakes_' + currentUser.phone);
+    const mistakes = saved ? JSON.parse(saved) : [];
+    const mistake = mistakes.find(m => String(m.question_id || m.question?.id) === String(qId));
+    if (!mistake) { showToast('❌ বিস্তারিত পাওয়া যায়নি'); return; }
+    
+    const q = (mistake.question && (mistake.question.question_text || mistake.question.option1)) 
+        ? mistake.question : mistake;
+    
+    const optBn = ['ক','খ','গ','ঘ','ঙ'];
+    const opts = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(o => o && o !== '—');
+    const correctAns = q.answer_index || q.correct_option || 1;
+    const userAns = mistake.user_answer || mistake.userAns;
+    
+    if (!opts.length && !q.question_text && !q.question) {
+        showToast('❌ এই প্রশ্নের বিস্তারিত ডাটা নেই'); return;
+    }
+    
+    let html = `<div class="modal-title">⚠️ ভুল প্রশ্ন বিস্তারিত</div>
+        <span class="q-status wrong">❌ ভুল ${userAns ? '(আপনি: ' + optBn[userAns-1] + ')' : ''}</span>
+        <div class="question-text" style="margin-top:8px;">${escHtml(q.question_text || q.question || 'প্রশ্ন পাওয়া যায়নি')}</div>`;
+    
+    if (opts.length > 0) {
+        html += `<ul class="options-list" style="margin-top:8px;">`;
+        opts.forEach((opt, i) => {
+            const isCorrect = (i+1) === parseInt(correctAns);
+            const isUserWrong = String(userAns) === String(i+1) && !isCorrect;
+            html += `<li class="option-item ${isCorrect?'correct':isUserWrong?'wrong':''}"><span class="option-key">${optBn[i]}</span>${escHtml(opt)} ${isCorrect?'✅':''} ${isUserWrong?'❌':''}</li>`;
+        });
+        html += `</ul>`;
+    }
+    
+    html += `${q.explanation ? `<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>` : ''}
+        <button class="ai-explain-btn" onclick="loadAiExplain(this,'${qId}','${escHtml(q.question_text||q.question||'')}')">🤖 AI ব্যাখ্যা দেখুন</button>
+        <div class="ai-explain-result" style="display:none;"></div>
+        <div class="modal-close-strip"><button class="btn btn-outline" onclick="document.getElementById('detailModal').classList.remove('active')" style="width:100%;">✕ বন্ধ</button></div>`;
+    
+    document.getElementById('detailModalContent').innerHTML = html;
+    document.getElementById('detailModal').classList.add('active');
+}
+
+// 2️⃣ Fixed Mistake Practice (P-01: wrong only, P-02: wrong+skip)
 function startMistakePractice(mode) {
     const saved = localStorage.getItem('mistakes_' + currentUser.phone);
     const mistakes = saved ? JSON.parse(saved) : [];
     
-    // Filter based on mode
     let filteredMistakes = mistakes.filter(m => {
         const q = m.question || m;
         return q && (q.question_text || q.question || q.option1);
     });
     
     if (mode === 'wrong') {
-        // P-01: শুধু ভুল উত্তর
         filteredMistakes = filteredMistakes.filter(m => {
             const userAns = m.user_answer || m.userAns;
             const correctAns = (m.question || m).answer_index || (m.question || m).correct_option;
             return userAns !== undefined && userAns !== null && String(userAns) !== String(correctAns);
         });
     }
-    // P-02 (mode='all'): সব mistake — wrong + skipped
     
-    if (!filteredMistakes.length) { 
-        showToast('⚠️ কোনো প্রশ্ন নেই এই মোডে!'); 
-        return; 
-    }
+    if (!filteredMistakes.length) { showToast('⚠️ কোনো প্রশ্ন নেই এই মোডে!'); return; }
     
     const questions = filteredMistakes.map(m => {
         const q = m.question || m;
@@ -1834,8 +1873,6 @@ function startMistakePractice(mode) {
         };
     });
     
-    if (!questions.length) { showToast('⚠️ প্রশ্নের ডাটা পাওয়া যাচ্ছে না'); return; }
-    
     const title = mode === 'wrong' ? '⚡ Practice-01 (শুধু ভুল)' : '📚 Practice-02 (ভুল + স্কিপ)';
     startPracticeExam(questions, title, () => startMistakePractice(mode));
 }
@@ -1846,10 +1883,8 @@ async function retakeExam(examId) {
     try {
         const [examData] = await safeFetch(`${SUPABASE_URL}/rest/v1/exams?id=eq.${examId}&select=*`);
         if (!examData) { showToast('❌ এক্সাম পাওয়া যায়নি'); return; }
-        
         const questions = await safeFetch(`${SUPABASE_URL}/rest/v1/questions?exam_id=eq.${examId}&select=*&order=id.asc`);
         if (!questions?.length) { showToast('❌ প্রশ্ন পাওয়া যায়নি'); return; }
-        
         const title = examData.title || (examData.subject + ' - ' + examData.chapter) || 'এক্সাম';
         startPracticeExam(questions, title, () => retakeExam(examId));
     } catch(e) { 
@@ -1865,93 +1900,46 @@ function submitPracticeExam() {
     
     let correct = 0, wrong = 0, skipped = 0;
     const reviewData = [];
-    
     practiceQuestions.forEach((q, i) => {
         const userAns = practiceAnswers[i];
         const correctAns = q.answer_index || q.correct_option;
         let status = 'skipped';
-        if (userAns !== undefined && userAns !== null) {
-            status = String(userAns) === String(correctAns) ? 'correct' : 'wrong';
-        }
-        if (status === 'correct') correct++;
-        else if (status === 'wrong') wrong++;
-        else skipped++;
+        if (userAns !== undefined && userAns !== null) status = String(userAns) === String(correctAns) ? 'correct' : 'wrong';
+        if (status === 'correct') correct++; else if (status === 'wrong') wrong++; else skipped++;
         reviewData.push({ q, userAns, status, correctAns });
     });
     
     const total = practiceQuestions.length;
-    const totalQ = total;
     const negMark = wrong * 0.25;
-    let baseScore = correct - negMark;
-    let finalScore = baseScore;
-    let timerDeduction = 0;
-    let isSecondTimer = false;
-    
+    let baseScore = correct - negMark, finalScore = baseScore, timerDeduction = 0, isSecondTimer = false;
     const sess = currentUser;
-    const sscGpa = parseFloat(sess?.ssc_gpa) || 0;
-    const hscGpa = parseFloat(sess?.hsc_gpa) || 0;
+    const sscGpa = parseFloat(sess?.ssc_gpa) || 0, hscGpa = parseFloat(sess?.hsc_gpa) || 0;
     const gpaScore = (sscGpa * 8) + (hscGpa * 12);
+    if (sess?.timer_type === 'second') { isSecondTimer = true; timerDeduction = total <= 50 ? 1.50 : 3.00; finalScore = baseScore - timerDeduction; }
+    const withoutGpa = finalScore, withGpa = finalScore + gpaScore, pct = total > 0 ? Math.round((correct / total) * 100) : 0;
     
-    if (sess?.timer_type === 'second') {
-        isSecondTimer = true;
-        timerDeduction = totalQ <= 50 ? 1.50 : 3.00;
-        finalScore = baseScore - timerDeduction;
-    }
-    
-    const withoutGpa = finalScore;
-    const withGpa = finalScore + gpaScore;
-    const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
-    
-    // Save mistakes
     const wrongQs = reviewData.filter(r => r.status === 'wrong');
     if (wrongQs.length) {
         const saved = localStorage.getItem('mistakes_' + currentUser.phone);
         const mistakes = saved ? JSON.parse(saved) : [];
         wrongQs.forEach(r => {
-            const exists = mistakes.find(m => String(m.question_id || m.question?.id) === String(r.q.id));
-            if (!exists) {
-                mistakes.push({
-                    question_id: r.q.id, question: r.q,
-                    user_answer: r.userAns, subject: practiceTitle,
-                    timestamp: new Date().toISOString()
-                });
+            if (!mistakes.find(m => String(m.question_id || m.question?.id) === String(r.q.id))) {
+                mistakes.push({ question_id: r.q.id, question: r.q, user_answer: r.userAns, subject: practiceTitle, timestamp: new Date().toISOString() });
             }
         });
         localStorage.setItem('mistakes_' + currentUser.phone, JSON.stringify(mistakes));
     }
     
-    // Save result
-    const resultEntry = {
-        id: Date.now(), exam_name: practiceTitle, exam_id: 'practice_' + Date.now(),
-        phone: currentUser?.phone, final_score: withoutGpa.toFixed(2),
-        total_questions: total, correct, wrong, skipped,
-        submitted_at: new Date().toISOString(), answers: practiceAnswers
-    };
+    const resultEntry = { id: Date.now(), exam_name: practiceTitle, exam_id: 'practice_' + Date.now(), phone: currentUser?.phone, final_score: withoutGpa.toFixed(2), total_questions: total, correct, wrong, skipped, submitted_at: new Date().toISOString(), answers: practiceAnswers };
     const saved = localStorage.getItem('practice_results_' + currentUser.phone);
     const results = saved ? JSON.parse(saved) : [];
     results.unshift(resultEntry);
     localStorage.setItem('practice_results_' + currentUser.phone, JSON.stringify(results.slice(0, 50)));
     
-    // Show result
     showResultScreenNew(withoutGpa, total, correct, wrong, skipped, pct, practiceTitle, reviewData, negMark, gpaScore, withGpa, isSecondTimer, timerDeduction);
 }
 
-// 5️⃣ Class History Filter
-function filterClassHistory() {
-    const sub = (document.getElementById('classFilterSub')?.value || '').toLowerCase();
-    const chap = (document.getElementById('classFilterChap')?.value || '').toLowerCase();
-    const saved = localStorage.getItem('class_history_' + currentUser.phone);
-    const history = saved ? JSON.parse(saved) : [];
-    const filtered = [...history].reverse().filter(h => 
-        (h.subject||'').toLowerCase().includes(sub) && 
-        (h.chapter||'').toLowerCase().includes(chap)
-    );
-    const list = document.getElementById('classHistoryList');
-    if (!filtered.length) {
-        list.innerHTML = `<div class="empty-state"><span class="empty-state-icon">🎥</span><div class="empty-state-text">কোনো ক্লাস নেই</div></div>`;
-        return;
-    }
-    function showResultScreenNew(score, total, correct, wrong, skipped, pct, title, reviewData, negMark, gpaScore, withGpa, isSecondTimer, timerDeduction) {
+function showResultScreenNew(score, total, correct, wrong, skipped, pct, title, reviewData, negMark, gpaScore, withGpa, isSecondTimer, timerDeduction) {
     document.getElementById('resultScore').textContent = score.toFixed(2) + '/' + total;
     document.getElementById('resultTitle').textContent = title;
     document.getElementById('resultSubtitle').textContent = pct + '% সঠিক';
@@ -1961,9 +1949,7 @@ function filterClassHistory() {
     document.getElementById('resPct').textContent = pct + '%';
     
     const optBn = ['ক','খ','গ','ঘ','ঙ'];
-    let reviewHtml = '';
-    
-    reviewHtml += `<div class="card-item" style="padding:14px;margin-bottom:10px;">
+    let reviewHtml = `<div class="card-item" style="padding:14px;margin-bottom:10px;">
         <div class="card-item-row"><span>📋 মোট প্রশ্ন</span><span style="font-weight:700;">${total}</span></div>
         <div class="card-item-row"><span>✅ সঠিক</span><span style="color:var(--green);font-weight:700;">+${correct}</span></div>
         <div class="card-item-row"><span>❌ ভুল (Negative: -${negMark.toFixed(2)})</span><span style="color:var(--red);font-weight:700;">-${negMark.toFixed(2)}</span></div>
@@ -1975,33 +1961,20 @@ function filterClassHistory() {
     reviewHtml += reviewData.map(({ q, userAns, status, correctAns }) => {
         const opts = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(Boolean);
         const optsHtml = opts.map((opt, i) => {
-            const isCorrect = (i + 1) === parseInt(correctAns);
-            const isUserWrong = String(userAns) === String(i + 1) && !isCorrect;
-            return `<li class="option-item ${isCorrect?'correct':isUserWrong?'wrong':''}">
-                <span class="option-key">${optBn[i]}</span>${escHtml(opt)} ${isCorrect?'✅':''} ${isUserWrong?'❌':''}</li>`;
+            const isCorrect = (i + 1) === parseInt(correctAns), isUserWrong = String(userAns) === String(i + 1) && !isCorrect;
+            return `<li class="option-item ${isCorrect?'correct':isUserWrong?'wrong':''}"><span class="option-key">${optBn[i]}</span>${escHtml(opt)} ${isCorrect?'✅':''} ${isUserWrong?'❌':''}</li>`;
         }).join('');
-        return `<div class="question-card">
-            <span class="q-status ${status}">${status==='correct'?'✅ সঠিক':status==='wrong'?'❌ ভুল':'⏭️ স্কিপ'}</span>
-            <div class="question-text" style="font-size:12px;">${escHtml(q.question_text||q.question||'')}</div>
-            <ul class="options-list">${optsHtml}</ul>
-            ${q.explanation?`<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>`:''}
-        </div>`;
+        return `<div class="question-card"><span class="q-status ${status}">${status==='correct'?'✅ সঠিক':status==='wrong'?'❌ ভুল':'⏭️ স্কিপ'}</span><div class="question-text" style="font-size:12px;">${escHtml(q.question_text||q.question||'')}</div><ul class="options-list">${optsHtml}</ul>${q.explanation?`<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>`:''}</div>`;
     }).join('');
     
     document.getElementById('resultReviewList').innerHTML = reviewHtml;
     document.getElementById('resultOverlay').classList.add('active');
 }
-    list.innerHTML = filtered.map(h => `
-        <div class="card-item">
-            <div class="card-item-title">📘 ${escHtml(h.subject||'—')}</div>
-            <div class="card-item-row"><span>📖 চ্যাপ্টার</span><span>${escHtml(h.chapter||'—')}</span></div>
-            <div class="card-item-row"><span>🎥 পার্ট</span><span>${escHtml(h.part||'—')}</span></div>
-            <div class="card-item-sub">📅 ${toBanglaDate(h.time)}</div>
-            <div class="btn-row">
-                <button class="btn btn-primary" onclick="rewatchClass('${encodeURIComponent(h.subject||'')}','${encodeURIComponent(h.chapter||'')}','${encodeURIComponent(h.part||'')}')">▶️ Rewatch</button>
-            </div>
-        </div>`).join('');
-}
+
+function closeResultOverlay() { document.getElementById('resultOverlay').classList.remove('active'); }
+
+history.pushState(null, '', location.href);
+window.addEventListener('popstate', () => history.back());
 history.pushState(null, '', location.href);
 window.addEventListener('popstate', () => history.back());
 </script>
