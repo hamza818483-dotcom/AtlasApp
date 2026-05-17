@@ -1318,19 +1318,8 @@ async function openMistakesModal() {
         document.getElementById('mainModal').classList.add('active');
         return;
     }
-
-    // Show loading state
-    mc.innerHTML = `<div class="modal-title">⚠️ My Mistakes</div>
-        <div class="skeleton skeleton-block"></div>
-        <div class="skeleton skeleton-block"></div>`;
-    document.getElementById('mainModal').classList.add('active');
-
-    // Load exam results  (Flutter: MistakesService.loadResults())
-    mistakesData = await safeFetch(
-        `${SUPABASE_URL}/rest/v1/exam_results?phone=eq.${sess.phone}&select=*&order=submitted_at.desc&limit=30`
-    ) || [];
-
-    renderMistakesModal();
+    
+    goTo('dashboard.html#mistakes');
 }
 
 function renderMistakesModal() {
