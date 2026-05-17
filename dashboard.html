@@ -1358,44 +1358,6 @@ function exitPracticeExam() {
     document.getElementById('examOverlay').classList.remove('active');
 }
 
-function submitPracticeExam() {
-    clearInterval(practiceTimer);
-    document.getElementById('examOverlay').classList.remove('active');
-    let correct = 0, wrong = 0, skipped = 0;
-    const reviewData = [];
-    practiceQuestions.forEach((q, i) => {
-        const userAns = practiceAnswers[i];
-        const correctAns = q.answer_index || q.correct_option;
-        let status = 'skipped';
-        if (userAns !== undefined && userAns !== null) {
-            status = String(userAns) === String(correctAns) ? 'correct' : 'wrong';
-        }
-        if (status === 'correct') correct++;
-        else if (status === 'wrong') wrong++;
-        else skipped++;
-        reviewData.push({ q, userAns, status, correctAns });
-    });
-    const total = practiceQuestions.length;
-    const pct = Math.round((correct / total) * 100);
-    const score = correct - (wrong * 0.25);
-    // Save to localStorage exam history
-    const resultEntry = {
-        id: Date.now(),
-        exam_name: practiceTitle,
-        exam_id: 'practice_' + Date.now(),
-        phone: currentUser.phone,
-        final_score: score.toFixed(2),
-        total_questions: total,
-        correct, wrong, skipped,
-        submitted_at: new Date().toISOString(),
-        answers: practiceAnswers
-    };
-    const saved = localStorage.getItem('practice_results_' + currentUser.phone);
-    const results = saved ? JSON.parse(saved) : [];
-    results.unshift(resultEntry);
-    localStorage.setItem('practice_results_' + currentUser.phone, JSON.stringify(results.slice(0, 50)));
-    showResultScreen(score, total, correct, wrong, skipped, pct, practiceTitle, reviewData);
-}
 
 function showResultScreen(score, total, correct, wrong, skipped, pct, title, reviewData) {
     const badge = pct >= 80 ? 'score-high' : pct >= 50 ? 'score-mid' : 'score-low';
