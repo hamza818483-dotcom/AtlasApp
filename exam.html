@@ -848,7 +848,9 @@ function backToPreExam() { previewRevealed = false; switchMode('PreExam'); }
 // ============================================================
 async function loadExamsByType(type, subType) {
     try {
-        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/exams?exam_type=eq.${type}&sub_type=eq.${subType}&select=*&order=sort_order.asc,created_at.desc&limit=50`);
+        let url = `${SUPABASE_URL}/rest/v1/exams?exam_type=eq.${type}&select=*&order=sort_order.asc,created_at.desc&limit=50`;
+        if (subType) url += `&sub_type=eq.${subType}`;
+        const data = await safeFetch(url);
         if (!data?.length) { document.getElementById('categoryContent').innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:20px;">কোনো এক্সাম নেই</p>'; switchMode('Category'); return; }
         showExamList(data);
     } catch(e) {}
