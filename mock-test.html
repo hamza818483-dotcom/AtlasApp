@@ -163,7 +163,15 @@ async function startMock(customMins){
         if(!data?.length){showToast('⚠️ প্রশ্ন পাওয়া যায়নি');return;}
         let all=[];data.forEach(d=>{all=all.concat(JSON.parse(d.questions_json||'[]'));});
         all.sort(()=>Math.random()-0.5);
-        const questions=all.slice(0,selectedCnt);
+        const questions = all.slice(0, selectedCnt).map(q => ({
+    id: q.id || Math.random(),
+    question_text: q.questions || q.question_text || '',
+    option1: q.option1 || '', option2: q.option2 || '', option3: q.option3 || '',
+    option4: q.option4 || '', option5: q.option5 || null,
+    answer_index: q.answer || q.answer_index || 1,
+    explanation: q.explanation || '',
+    image_url: q.image_url || null
+}));
         const time = customMins || Math.ceil(selectedCnt/1.5);
         sessionStorage.setItem('practiceQuestions',JSON.stringify(questions));
         sessionStorage.setItem('practiceTitle',s+' - '+c+' (Mock Test)');
