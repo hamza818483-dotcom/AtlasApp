@@ -815,7 +815,11 @@ function showCategory(cat) {
             <div class="cat-card" onclick="loadExamsBySubType('varsity','yearwise')"><span class="cat-name">বিগত (সালওয়াইজ)</span></div>
             <div class="cat-card" onclick="loadExamsBySubType('varsity','chapterwise')"><span class="cat-name">বিগত (চাপ্টারভিত্তিক)</span></div>
         </div>`;
-    } else {
+    }
+    else if (cat === 'onushiloni') {   // 🔥 এই ব্লকটা যোগ করুন
+    loadExamsByType('onushiloni', '');
+}
+    else {
         html += `<p style="text-align:center;color:var(--text-secondary);padding:20px;">শীঘ্রই আসছে...</p>`;
     }
     document.getElementById('categoryContent').innerHTML = html;
