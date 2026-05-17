@@ -1103,12 +1103,20 @@ function loadBookmarks() {
     const optBn = ['ক','খ','গ','ঘ','ঙ'];
     document.getElementById('bookmarksList').innerHTML = keys.map(qid => {
         const bm = bookmarks[qid];
-        const q = bm.question || {};
+        // bm.question থাকলে সেটা, নাহলে bm নিজেই
+        const q = (bm.question && bm.question.question_text) ? bm.question : bm;
         const opts = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(Boolean);
         const optsHtml = opts.map((opt, i) => {
             const isCorrect = (i + 1) === parseInt(q.answer_index || q.correct_option);
-            return `<li class="option-item ${isCorrect?'correct':''}"><span class="option-key">${optBn[i]}</span>${escHtml(opt)}</li>`;
+            return `<li class="option-item ${isCorrect?'correct':''}">
+                <span class="option-key">${optBn[i]}</span>${escHtml(opt)}
+                ${isCorrect?' ✅':''}
+            </li>`;
         }).join('');
+        
+        const qId = qid;
+        const qText = escHtml(q.question_text || q.question || `প্রশ্ন #${qid}`);
+        
         return `<div class="card-item bookmark-card">
             <div style="margin-bottom:6px;">
                 ${bm.exam_name?`<span class="meta-chip">📝 ${escHtml(bm.exam_name)}</span>`:''}
@@ -1116,12 +1124,14 @@ function loadBookmarks() {
                 ${q.chapter?`<span class="meta-chip">📖 ${escHtml(q.chapter)}</span>`:''}
             </div>
             ${q.image_url?`<img class="question-img" src="${escHtml(q.image_url)}" loading="lazy">`:''}
-            <div class="question-text">${escHtml(q.question_text || q.question || `প্রশ্ন #${qid}`)}</div>
+            <div class="question-text">${qText}</div>
             ${optsHtml?`<ul class="options-list">${optsHtml}</ul>`:''}
             ${q.explanation?`<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>`:''}
+            <button class="ai-explain-btn" onclick="loadAiExplain(this,'${qId}','${qText.replace(/'/g,"\\'")}')">🤖 AI ব্যাখ্যা দেখুন</button>
+            <div class="ai-explain-result" style="display:none;"></div>
             <div class="card-item-sub" style="margin-top:6px;">📅 ${toBanglaDate(bm.bookmarked_at || Date.now())}</div>
             <div class="btn-row">
-                <button class="btn btn-danger" onclick="removeBookmark('${qid}')">🗑️ রিমুভ</button>
+                <button class="btn btn-danger" onclick="removeBookmark('${qId}')">🗑️ রিমুভ</button>
             </div>
         </div>`;
     }).join('');
