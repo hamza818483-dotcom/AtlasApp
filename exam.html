@@ -510,7 +510,6 @@
         </div>
         <div class="section-header"><div class="section-title">🎯 আনলিমিটেড মক টেস্ট</div></div>
         <button class="btn btn-primary" onclick="startMockTest()" style="width:100%;">🎯 মক টেস্ট শুরু করুন</button>
-        <div id="savedExamsList" style="margin-top:12px;"></div>
     </div>
 </div>
 
@@ -1932,7 +1931,7 @@ document.addEventListener('DOMContentLoaded', () => {
     else if (model)       { startModelExam(model); }
     else if (cat==='model') { const sub = params.get('sub') || ''; loadModelExams('medical', sub); }
     else if (cat)         { showCategory(cat); }
-    else                  { loadCategoryCounts(); loadAllExams(); }
+    else                  { loadCategoryCounts();}
 });
 </script>
 </body>
