@@ -1710,34 +1710,46 @@ document.addEventListener('DOMContentLoaded', async () => {
 // 🔥 DASHBOARD FIXES — ALL IN ONE
 // ============================================================
 
-// 1️⃣ My Mistakes Detail Modal
-function viewMistakeDetail(qId) {
+  function viewMistakeDetail(qId) {
     const saved = localStorage.getItem('mistakes_' + currentUser.phone);
     const mistakes = saved ? JSON.parse(saved) : [];
     const mistake = mistakes.find(m => String(m.question_id || m.question?.id) === String(qId));
     if (!mistake) { showToast('❌ বিস্তারিত পাওয়া যায়নি'); return; }
     
-    const q = mistake.question || {};
+    // q হতে পারে mistake.question অথবা mistake নিজেই
+    const q = (mistake.question && (mistake.question.question_text || mistake.question.option1)) 
+        ? mistake.question 
+        : mistake;
+    
     const optBn = ['ক','খ','গ','ঘ','ঙ'];
-    const opts = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(Boolean);
-    const correctAns = q.answer_index || q.correct_option;
-    const userAns = mistake.user_answer;
+    const opts = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(o => o && o !== '—' && o !== 'null' && o !== 'undefined');
+    const correctAns = q.answer_index || q.correct_option || 1;
+    const userAns = mistake.user_answer || mistake.userAns;
+    
+    // যদি কোনো option না থাকে, fake options দেখাবেন না
+    if (!opts.length && !q.question_text && !q.question) {
+        showToast('❌ এই প্রশ্নের বিস্তারিত ডাটা নেই');
+        return;
+    }
     
     let html = `<div class="modal-title">⚠️ ভুল প্রশ্ন বিস্তারিত</div>
-        <span class="q-status wrong">❌ ভুল (আপনি: ${optBn[userAns-1] || '—'})</span>
-        <div class="question-text" style="margin-top:8px;">${escHtml(q.question_text || q.question || '')}</div>
-        <ul class="options-list" style="margin-top:8px;">`;
+        <span class="q-status wrong">❌ ভুল ${userAns ? '(আপনি: ' + optBn[userAns-1] + ')' : ''}</span>
+        <div class="question-text" style="margin-top:8px;">${escHtml(q.question_text || q.question || 'প্রশ্ন পাওয়া যায়নি')}</div>`;
     
-    opts.forEach((opt, i) => {
-        const isCorrect = (i+1) === parseInt(correctAns);
-        const isUserWrong = String(userAns) === String(i+1) && !isCorrect;
-        html += `<li class="option-item ${isCorrect?'correct':isUserWrong?'wrong':''}">
-            <span class="option-key">${optBn[i]}</span>${escHtml(opt)}
-            ${isCorrect?' ✅':''} ${isUserWrong?' ❌ (আপনার উত্তর)':''}
-        </li>`;
-    });
+    if (opts.length > 0) {
+        html += `<ul class="options-list" style="margin-top:8px;">`;
+        opts.forEach((opt, i) => {
+            const isCorrect = (i+1) === parseInt(correctAns);
+            const isUserWrong = String(userAns) === String(i+1) && !isCorrect;
+            html += `<li class="option-item ${isCorrect?'correct':isUserWrong?'wrong':''}">
+                <span class="option-key">${optBn[i]}</span>${escHtml(opt)}
+                ${isCorrect?' ✅':''} ${isUserWrong?' ❌ (আপনার উত্তর)':''}
+            </li>`;
+        });
+        html += `</ul>`;
+    }
     
-    html += `</ul>
+    html += `
         ${q.explanation ? `<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>` : ''}
         <button class="ai-explain-btn" onclick="loadAiExplain(this,'${qId}','${escHtml(q.question_text||q.question||'')}')">🤖 AI ব্যাখ্যা দেখুন</button>
         <div class="ai-explain-result" style="display:none;"></div>
@@ -1876,49 +1888,6 @@ function submitPracticeExam() {
     
     // Show result
     showResultScreenNew(withoutGpa, total, correct, wrong, skipped, pct, practiceTitle, reviewData, negMark, gpaScore, withGpa, isSecondTimer, timerDeduction);
-}
-
-function showResultScreenNew(score, total, correct, wrong, skipped, pct, title, reviewData, negMark, gpaScore, withGpa, isSecondTimer, timerDeduction) {
-    document.getElementById('resultScore').textContent = score.toFixed(2) + '/' + total;
-    document.getElementById('resultTitle').textContent = title;
-    document.getElementById('resultSubtitle').textContent = pct + '% সঠিক';
-    document.getElementById('resCorrect').textContent = correct;
-    document.getElementById('resWrong').textContent = wrong;
-    document.getElementById('resSkipped').textContent = skipped;
-    document.getElementById('resPct').textContent = pct + '%';
-    
-    const optBn = ['ক','খ','গ','ঘ','ঙ'];
-    let reviewHtml = '';
-    
-    reviewHtml += `<div class="result-score-card" style="padding:14px;margin-bottom:10px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);">
-        <div class="card-item-row"><span>📋 মোট প্রশ্ন</span><span style="font-weight:700;">${total}</span></div>
-        <div class="card-item-row"><span>✅ সঠিক</span><span style="color:var(--green);font-weight:700;">+${correct}</span></div>
-        <div class="card-item-row"><span>❌ ভুল (Negative: -${negMark.toFixed(2)})</span><span style="color:var(--red);font-weight:700;">-${negMark.toFixed(2)}</span></div>
-        ${isSecondTimer ? `<div class="card-item-row"><span>⏱️ সেকেন্ড টাইমার ডিডাকশন</span><span style="color:var(--red);font-weight:700;">-${timerDeduction.toFixed(2)}</span></div>` : ''}
-        <div class="card-item-row" style="border-top:1px solid var(--border);padding-top:6px;"><span>📊 Without GPA (Main Mark)</span><span style="font-weight:800;color:var(--accent);">${score.toFixed(2)}</span></div>
-        <div class="card-item-row"><span>🎓 With GPA (+${gpaScore.toFixed(2)})</span><span style="font-weight:800;color:var(--accent);">${withGpa.toFixed(2)}</span></div>
-    </div>`;
-    
-    reviewHtml += reviewData.map(({ q, userAns, status, correctAns }) => {
-        const opts = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(Boolean);
-        const optsHtml = opts.map((opt, i) => {
-            const isCorrect = (i + 1) === parseInt(correctAns);
-            const isUserWrong = String(userAns) === String(i + 1) && !isCorrect;
-            return `<li class="option-item ${isCorrect?'correct':isUserWrong?'wrong':''}">
-                <span class="option-key">${optBn[i]}</span>${escHtml(opt)}
-                ${isCorrect?' ✅':''} ${isUserWrong?' ❌':''}
-            </li>`;
-        }).join('');
-        return `<div class="question-card">
-            <span class="q-status ${status}">${status==='correct'?'✅ সঠিক':status==='wrong'?'❌ ভুল':'⏭️ স্কিপ'}</span>
-            <div class="question-text" style="font-size:12px;">${escHtml(q.question_text||q.question||'')}</div>
-            <ul class="options-list">${optsHtml}</ul>
-            ${q.explanation?`<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>`:''}
-        </div>`;
-    }).join('');
-    
-    document.getElementById('resultReviewList').innerHTML = reviewHtml;
-    document.getElementById('resultOverlay').classList.add('active');
 }
 
 // 5️⃣ Class History Filter
