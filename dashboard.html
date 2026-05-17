@@ -2370,6 +2370,22 @@ function pomoReset() {
     updatePomoDisplay();
     renderPomoInProfile();
 }
+function togglePomodoro() {
+    if (pomoRunning) {
+        pomoPause();
+    } else {
+        pomoStart();
+    }
+}
+
+function stopPomodoro() {
+    clearInterval(pomoInterval);
+    pomoRunning = false;
+    pomoTimeLeft = pomoTotalTime;
+    updatePomoDisplay();
+    renderPomoInProfile();
+    showToast('⏹ টাইমার বন্ধ করা হয়েছে');
+}
 
 function renderPomoHistory() {
     const sessions = pomoSessions.slice(0, 10);
