@@ -219,14 +219,71 @@ function stopTimer(){if(examTimer){clearInterval(examTimer);examTimer=null;}}
 function updateTimerDisplay(){const m=Math.floor(examSeconds/60),s=examSeconds%60;document.getElementById('timerText').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;if(examSeconds<=60)document.getElementById('timerText').classList.add('timer-warning');}
 function updateProgress(){const t=mockQuestions.length,a=Object.keys(userAnswers).length;document.getElementById('progressText').textContent=`📈 ${Math.round(a/t*100)}%`;}
 
-function submitMock(){if(isExamSubmitted)return;isExamSubmitted=true;stopTimer();let c=0,w=0,s=0;mockQuestions.forEach(q=>{const ua=userAnswers[q.id||q.question_id];if(!ua)s++;else if(ua===q.answer_index||ua===q.answer)c++;else w++;});showResult(c,w,s);switchMode('Result');}
-function showResult(c,w,s){
-    const t=mockQuestions.length,neg=w*0.25,fs=Math.max(0,c-neg);
-    let html=`<div class="result-card"><div style="font-size:14px;color:var(--atlas-text);opacity:0.75;">ফাইনাল স্কোর</div><div class="result-big">${fs.toFixed(2)}</div><div style="color:var(--atlas-text);opacity:0.75;">/ ${t}</div></div>`;
-    html+=`<div class="result-grid"><div class="result-stat"><div class="result-stat-val correct-val">✅ ${c}</div><div class="result-stat-label">সঠিক</div></div><div class="result-stat"><div class="result-stat-val wrong-val">❌ ${w}</div><div class="result-stat-label">ভুল</div></div><div class="result-stat"><div class="result-stat-val skipped-val">⏭️ ${s}</div><div class="result-stat-label">স্কিপ</div></div></div>`;
-    html+=`<button class="btn btn-primary" onclick="retakeMock()">🔄 আবার দিন</button><button class="btn btn-success" onclick="goTo('index.html')" style="margin-top:6px;">🏠 হোম</button>`;
-    document.getElementById('resultContent').innerHTML=html;
+function submitMock(){
+    if(isExamSubmitted)return;
+    isExamSubmitted=true;stopTimer();
+    
+    let c=0,w=0,s=0;
+    mockQuestions.forEach(q=>{
+        const ua=userAnswers[q.id||q.question_id];
+        if(!ua)s++;
+        else if(ua===q.answer_index||ua===q.answer)c++;
+        else w++;
+    });
+    
+    const t=mockQuestions.length;
+    const negMark = w * 0.25;
+    let baseScore = c - negMark;
+    let finalScore = Math.max(0, baseScore);
+    let deduction = 0;
+    let isSecondTimer = false;
+    let gpaScore = 0;
+    
+    // User GPA + Timer info
+    try {
+        const user = JSON.parse(localStorage.getItem('atlas-session'));
+        if (user) {
+            const ssc = parseFloat(user.ssc_gpa) || 0;
+            const hsc = parseFloat(user.hsc_gpa) || 0;
+            gpaScore = (ssc * 8) + (hsc * 12);
+            
+            if (user.timer_type === 'second') {
+                isSecondTimer = true;
+                deduction = t <= 50 ? 1.5 : 3;
+                finalScore = Math.max(0, finalScore - deduction);
+            }
+        }
+    } catch(e) {}
+    
+    const withGpa = finalScore + gpaScore;
+    
+    let html = `<div class="result-card">
+        <div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:8px;">📝 মক টেস্ট</div>
+        <div class="result-big">${finalScore.toFixed(2)}</div>
+        <div style="color:var(--atlas-text);opacity:0.75;">/ ${t}</div>
+    </div>`;
+    
+    html += `<div class="result-grid">
+        <div class="result-stat"><div class="result-stat-val correct-val">✅ ${c}</div><div class="result-stat-label">সঠিক</div></div>
+        <div class="result-stat"><div class="result-stat-val wrong-val">❌ ${w}</div><div class="result-stat-label">ভুল</div></div>
+        <div class="result-stat"><div class="result-stat-val skipped-val">⏭️ ${s}</div><div class="result-stat-label">স্কিপ</div></div>
+    </div>`;
+    
+    // Negative Marking Details
+    html += `<div class="result-card" style="padding:12px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>নেগেটিভ মার্ক (${w} × 0.25)</span><span style="color:var(--error);">-${negMark.toFixed(2)}</span></div>
+        ${isSecondTimer ? `<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>⏱️ সেকেন্ড টাইমার ডিডাকশন</span><span style="color:var(--error);">-${deduction.toFixed(2)}</span></div>` : ''}
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;border-top:1px solid var(--border);padding-top:6px;margin-top:4px;"><span>📊 Without GPA</span><span style="color:var(--accent);">${finalScore.toFixed(2)}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;"><span>🎓 With GPA (+${gpaScore.toFixed(2)})</span><span style="color:var(--accent);">${withGpa.toFixed(2)}</span></div>
+    </div>`;
+    
+    html += `<button class="btn btn-primary" onclick="retakeMock()">🔄 আবার দিন</button>
+        <button class="btn btn-success" onclick="goTo('index.html')" style="margin-top:6px;">🏠 হোম</button>`;
+    
+    document.getElementById('resultContent').innerHTML = html;
+    switchMode('Result');
 }
+
 function retakeMock(){switchMode('Select');userAnswers={};isExamSubmitted=false;}
 
 function switchMode(mode){
