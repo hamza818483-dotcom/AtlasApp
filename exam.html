@@ -1430,6 +1430,7 @@ function submitExam(isAutoSubmit = false) {
     let gpaScore = 0, withGpa = finalScore, deduction = 0, isSecondTimer = false;
     try {
         const user = getSession();
+        showToast('SSC:' + (user?.ssc_gpa||'না') + ' HSC:' + (user?.hsc_gpa||'না') + ' Timer:' + (user?.timer_type||'না'), 5000);
         if (user) {
             const ssc = parseFloat(user.ssc_gpa)||0, hsc = parseFloat(user.hsc_gpa)||0;
             gpaScore = (ssc*8) + (hsc*12);
