@@ -426,13 +426,13 @@
             border-radius:calc(var(--radius-sm) + 6px);
             animation: rotateGlowBox 3s linear infinite; z-index:1; pointer-events:none;
         }
-        .owner-glow-box::before {
-            content:''; position:absolute; inset:-3px;
-            border-radius:inherit;
-            background: conic-gradient(from 0deg,transparent 0deg,var(--accent) 90deg,transparent 180deg,transparent 270deg,var(--accent) 360deg);
-            animation: rotateGlowBox 1.8s linear infinite;
-            opacity:.35; filter:blur(5px);
-        }
+         .owner-glow-box::before {
+    content: ''; position: absolute; inset: -3px;
+    border-radius: calc(var(--radius-sm) + 8px);  ← inherit না দিয়ে ফিক্সড
+    background: conic-gradient(from 0deg, transparent 0deg, var(--accent) 90deg, transparent 180deg, transparent 270deg, var(--accent) 360deg);
+    animation: rotateGlowBox 1.8s linear infinite;
+    opacity: .35; filter: blur(6px);
+}
 
         /* ─────────────────────────────────────────────
            MENTORS SECTION  (Flutter: MentorsGrid widget)
