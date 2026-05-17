@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="bn">
 <head>
@@ -2062,7 +2063,10 @@ async function retakeExam(examId) {
             image_url: q.image_url || null
         }));
         const title = examData.title || (examData.subject + ' - ' + examData.chapter) || 'এক্সাম';
-        startPracticeExam(formattedQ, '🔄 ' + title, () => retakeExam(examId));
+        sessionStorage.setItem('practiceQuestions', JSON.stringify(formattedQ));
+sessionStorage.setItem('practiceTitle', '🔄 ' + title);
+sessionStorage.setItem('practiceSource', 'history');
+goTo('exam.html?practice=history');
         // Close detail modal if open
         document.getElementById('detailModal').classList.remove('active');
     } catch(e) { showToast('❌ লোড করতে সমস্যা'); }
@@ -2414,4 +2418,4 @@ window.addEventListener('popstate', () => {
 });
 </script>
 </body>
-                </html>
+</html>
