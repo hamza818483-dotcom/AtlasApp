@@ -1368,6 +1368,71 @@ function exitPracticeExam() {
     document.getElementById('examOverlay').classList.remove('active');
 }
 
+// 5️⃣ Class History Filter
+function filterClassHistory() {
+    const sub = (document.getElementById('classFilterSub')?.value || '').toLowerCase();
+    const chap = (document.getElementById('classFilterChap')?.value || '').toLowerCase();
+    const saved = localStorage.getItem('class_history_' + currentUser.phone);
+    const history = saved ? JSON.parse(saved) : [];
+    const filtered = [...history].reverse().filter(h => 
+        (h.subject||'').toLowerCase().includes(sub) && 
+        (h.chapter||'').toLowerCase().includes(chap)
+    );
+    const list = document.getElementById('classHistoryList');
+    if (!filtered.length) {
+        list.innerHTML = `<div class="empty-state"><span class="empty-state-icon">🎥</span><div class="empty-state-text">কোনো ক্লাস নেই</div></div>`;
+        return;
+    }
+    list.innerHTML = filtered.map(h => `
+        <div class="card-item">
+            <div class="card-item-title">📘 ${escHtml(h.subject||'—')}</div>
+            <div class="card-item-row"><span>📖 চ্যাপ্টার</span><span>${escHtml(h.chapter||'—')}</span></div>
+            <div class="card-item-row"><span>🎥 পার্ট</span><span>${escHtml(h.part||'—')}</span></div>
+            <div class="card-item-sub">📅 ${toBanglaDate(h.time)}</div>
+            <div class="btn-row">
+                <button class="btn btn-primary" onclick="rewatchClass('${encodeURIComponent(h.subject||'')}','${encodeURIComponent(h.chapter||'')}','${encodeURIComponent(h.part||'')}')">▶️ Rewatch</button>
+            </div>
+        </div>`).join('');
+}
+
+function showResultScreenNew(score, total, correct, wrong, skipped, pct, title, reviewData, negMark, gpaScore, withGpa, isSecondTimer, timerDeduction) {
+    document.getElementById('resultScore').textContent = score.toFixed(2) + '/' + total;
+    document.getElementById('resultTitle').textContent = title;
+    document.getElementById('resultSubtitle').textContent = pct + '% সঠিক';
+    document.getElementById('resCorrect').textContent = correct;
+    document.getElementById('resWrong').textContent = wrong;
+    document.getElementById('resSkipped').textContent = skipped;
+    document.getElementById('resPct').textContent = pct + '%';
+    
+    const optBn = ['ক','খ','গ','ঘ','ঙ'];
+    let reviewHtml = '';
+    
+    reviewHtml += `<div class="card-item" style="padding:14px;margin-bottom:10px;">
+        <div class="card-item-row"><span>📋 মোট প্রশ্ন</span><span style="font-weight:700;">${total}</span></div>
+        <div class="card-item-row"><span>✅ সঠিক</span><span style="color:var(--green);font-weight:700;">+${correct}</span></div>
+        <div class="card-item-row"><span>❌ ভুল (Negative: -${negMark.toFixed(2)})</span><span style="color:var(--red);font-weight:700;">-${negMark.toFixed(2)}</span></div>
+        ${isSecondTimer ? `<div class="card-item-row"><span>⏱️ সেকেন্ড টাইমার</span><span style="color:var(--red);font-weight:700;">-${timerDeduction.toFixed(2)}</span></div>` : ''}
+        <div class="card-item-row" style="border-top:1px solid var(--border);padding-top:6px;"><span>📊 Without GPA</span><span style="font-weight:800;color:var(--accent);">${score.toFixed(2)}</span></div>
+        <div class="card-item-row"><span>🎓 With GPA (+${gpaScore.toFixed(2)})</span><span style="font-weight:800;color:var(--accent);">${withGpa.toFixed(2)}</span></div>
+    </div>`;
+    
+    reviewHtml += reviewData.map(({ q, userAns, status, correctAns }) => {
+        const opts = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(Boolean);
+        const optsHtml = opts.map((opt, i) => {
+            const isCorrect = (i + 1) === parseInt(correctAns);
+            const isUserWrong = String(userAns) === String(i + 1) && !isCorrect;
+            return `<li class="option-item ${isCorrect?'correct':isUserWrong?'wrong':''}"><span class="option-key">${optBn[i]}</span>${escHtml(opt)} ${isCorrect?'✅':''} ${isUserWrong?'❌':''}</li>`;
+        }).join('');
+        return `<div class="question-card"><span class="q-status ${status}">${status==='correct'?'✅ সঠিক':status==='wrong'?'❌ ভুল':'⏭️ স্কিপ'}</span><div class="question-text" style="font-size:12px;">${escHtml(q.question_text||q.question||'')}</div><ul class="options-list">${optsHtml}</ul>${q.explanation?`<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>`:''}</div>`;
+    }).join('');
+    
+    document.getElementById('resultReviewList').innerHTML = reviewHtml;
+    document.getElementById('resultOverlay').classList.add('active');
+}
+
+function closeResultOverlay() {
+    document.getElementById('resultOverlay').classList.remove('active');
+}
 
 
 function retryFromResult() {
