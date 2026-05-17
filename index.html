@@ -1708,6 +1708,8 @@ document.addEventListener('DOMContentLoaded', () => {
     checkAdmin();
     loadNotifBadge();
 });
+history.pushState(null, '', location.href);
+window.addEventListener('popstate', () => history.back());
 </script>
 </body>
 </html>
