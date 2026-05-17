@@ -1000,7 +1000,7 @@ function closeSidebar() {
 /* ══════════════════════════════════════════════
    NAVIGATION  (Flutter: Navigator / GoRouter)
 ══════════════════════════════════════════════ */
-function goTo(url) { location.href = url; }
+function goTo(url) { location.replace(url); }
 function navigateTo(page) {
     const map = { home:'index.html', profile:'dashboard.html', class:'class.html', exam:'exam.html' };
     goTo(map[page] || 'index.html');
