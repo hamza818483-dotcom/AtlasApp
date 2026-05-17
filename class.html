@@ -1103,6 +1103,8 @@ window.addEventListener('unhandledrejection', e => {
 // ===== INIT =====
 loadClasses();
 detectAdBlocker();
+history.pushState(null, '', location.href);
+window.addEventListener('popstate', () => history.back());
 </script>
 </body>
 </html>
