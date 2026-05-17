@@ -1272,15 +1272,6 @@ function removeMistake(qId) {
     showToast('🗑️ রিমুভ হয়েছে');
 }
 
-function startMistakePractice(mode) {
-    const saved = localStorage.getItem('mistakes_' + currentUser.phone);
-    const mistakes = saved ? JSON.parse(saved) : [];
-    if (!mistakes.length) { showToast('⚠️ কোনো Mistake নেই'); return; }
-    const questions = mistakes.map(m => m.question).filter(Boolean);
-    if (!questions.length) { showToast('⚠️ প্রশ্নের ডাটা পাওয়া যাচ্ছে না'); return; }
-    const title = mode === 'wrong' ? '⚡ Practice-01 (ভুল প্রশ্ন)' : '📚 Practice-02 (সব Mistake)';
-    startPracticeExam(questions, title, () => startMistakePractice(mode));
-}
 
 /* ======================================================
    PRACTICE EXAM ENGINE (Flutter: ExamScreen + ExamController)
