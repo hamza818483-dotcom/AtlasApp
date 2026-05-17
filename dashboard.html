@@ -1965,7 +1965,7 @@ async function retakeExam(examId) {
 // ============================================================
 
 // Override startMistakePractice
-window.startMistakePractice = function(mode) {
+ window.startMistakePractice = function(mode) {
     const saved = localStorage.getItem('mistakes_' + currentUser.phone);
     const mistakes = saved ? JSON.parse(saved) : [];
     
@@ -1996,9 +1996,13 @@ window.startMistakePractice = function(mode) {
         };
     });
     
-    const title = mode === 'wrong' ? '⚡ P-01 (শুধু ভুল)' : '📚 P-02 (ভুল+স্কিপ)';
-    startPracticeExam(questions, title, () => window.startMistakePractice(mode));
-};
+    // 🔥 exam.html-এ পাঠান
+    sessionStorage.setItem('practiceQuestions', JSON.stringify(questions));
+    sessionStorage.setItem('practiceTitle', mode === 'wrong' ? '⚡ Practice-01 (শুধু ভুল)' : '📚 Practice-02 (ভুল+স্কিপ)');
+    sessionStorage.setItem('practiceSource', 'mistakes');
+    
+    goTo('exam.html?practice=mistakes&mode=' + mode);
+};  
 
 // Override submitPracticeExam
 window.submitPracticeExam = function() {
