@@ -7,8 +7,6 @@
     <link rel="stylesheet" href="style.css">
     <style>
         .mock-container{max-width:560px;margin:0 auto;padding:12px 14px 20px;}
-        .mode-container{display:none;animation:fadeIn 0.25s;}
-        .mode-container.active{display:block;}
         .input-group{margin-bottom:10px;}
         .input-group label{display:block;font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px;}
         .input-group select,.input-group input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--input-bg);color:var(--text);font-size:13px;font-family:inherit;transition:0.2s;outline:none;}
@@ -20,41 +18,10 @@
         .btn{display:block;width:100%;padding:12px;border-radius:var(--radius-sm);font-weight:700;cursor:pointer;border:none;font-size:14px;transition:0.2s;font-family:inherit;text-align:center;}
         .btn-primary{background:var(--accent);color:#fff;}
         .btn-primary:hover{background:var(--accent-hover);transform:translateY(-1px);}
-        .btn-success{background:var(--success);color:#fff;}
-        .timer-sticky{position:sticky;top:56px;background:var(--atlas-bg);border:1px solid var(--atlas-border);border-radius:var(--radius-sm);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;z-index:50;box-shadow:0 2px 10px var(--atlas-glow);}
-        .timer-text{font-size:18px;font-weight:800;color:var(--atlas-text);letter-spacing:2px;font-variant-numeric:tabular-nums;}
-        .timer-warning{color:var(--error)!important;animation:pulse 0.5s infinite;}
-        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
-        .progress-text{font-size:12px;font-weight:600;color:var(--atlas-text);opacity:0.75;}
-        .questions-area{width:100%;padding:14px;}
-        .mcq-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow-sm);width:100%;}
-        .q-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
-        .q-number{font-size:11px;color:var(--accent);font-weight:700;background:var(--accent-light);padding:3px 9px;border-radius:var(--radius-full);}
-        .q-text{font-size:14px;font-weight:600;margin-bottom:12px;line-height:1.7;color:var(--text);font-family:'Noto Sans Bengali','Inter',sans-serif;}
-        .q-text img{max-width:100%;border-radius:8px;margin:6px 0;}
-        .option-item{display:flex;align-items:center;gap:10px;padding:11px 13px;margin-bottom:7px;background-color:var(--option-bg);border:1.5px solid var(--option-border);border-radius:var(--radius-sm);cursor:pointer;transition:all 0.18s ease;font-size:13px;font-family:'Noto Sans Bengali','Inter',sans-serif;color:var(--text);}
-        .option-item:hover:not(.dimmed){border-color:var(--accent);background:var(--option-selected-bg);}
-        .option-item.selected{background-color:var(--option-selected-bg);border-color:var(--option-selected-border);cursor:default;}
-        .option-item.dimmed{opacity:0.35;cursor:not-allowed;pointer-events:none;}
-        .option-radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--text-tertiary);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:700;color:var(--text-tertiary);transition:all 0.18s ease;}
-        .option-item.selected .option-radio{border-color:var(--option-selected-border);background:var(--option-selected-border);color:#fff;}
-        .option-text{flex:1;line-height:1.5;}
-        .option-text img{max-width:100%;border-radius:8px;margin:4px 0;}
-        .lock-icon{margin-left:auto;font-size:13px;color:var(--text-tertiary);}
-        .submit-fixed{position:fixed;bottom:0;left:0;right:0;background:var(--success);color:#fff;border:none;padding:14px;font-size:16px;font-weight:700;cursor:pointer;z-index:100;box-shadow:0 -2px 16px var(--success-glow);transition:0.2s;font-family:'Noto Sans Bengali','Inter',sans-serif;text-align:center;}
-        .submit-fixed:hover{filter:brightness(0.9);}
-        .result-wrap{padding:14px 14px 90px;}
-        .result-card{background:linear-gradient(140deg,var(--atlas-bg)0%,var(--atlas-card)100%);border:1.5px solid var(--atlas-border);border-radius:var(--radius);padding:24px 18px;text-align:center;margin-bottom:14px;box-shadow:var(--shadow-md),0 0 24px var(--atlas-glow);}
-        .result-big{font-size:42px;font-weight:900;color:var(--atlas-text);text-shadow:0 0 20px var(--atlas-glow-strong);}
-        .result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0;}
-        .result-stat{background:var(--card-bg);border-radius:var(--radius-sm);padding:12px 8px;text-align:center;border:1px solid var(--border);width:100%;}
-        .result-stat-val{font-size:18px;font-weight:800;}
-        .result-stat-label{font-size:10px;color:var(--text-secondary);margin-top:2px;font-family:'Noto Sans Bengali','Inter',sans-serif;}
-        .correct-val{color:var(--success);}.wrong-val{color:var(--error);}.skipped-val{color:var(--warning);}
-        .no-questions{text-align:center;padding:40px 20px;}
-        .no-questions .icon{font-size:48px;margin-bottom:16px;}
-        .no-questions .title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px;font-family:'Noto Sans Bengali','Inter',sans-serif;}
-        .no-questions .subtitle{font-size:13px;color:var(--text-secondary);margin-bottom:4px;font-family:'Noto Sans Bengali','Inter',sans-serif;}
+        .mock-custom-row{display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap;}
+        .mock-custom-input{flex:1;min-width:100px;padding:10px 12px;background:var(--option-bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:'Noto Sans Bengali','Inter',sans-serif;outline:none;}
+        .mock-custom-input:focus{border-color:var(--accent);}
+        .mock-custom-btn{padding:10px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
     </style>
 </head>
 <body class="dark-mode">
@@ -94,34 +61,34 @@
 
 <main class="mock-container">
 
-<!-- MODE 1: Select -->
-<div class="mode-container active" id="modeSelect">
-    <div class="section-header"><div class="section-title">🎯 আনলিমিটেড মক টেস্ট</div></div>
-    <div class="input-group"><label>📘 সাবজেক্ট</label><select id="mockSubject" onchange="loadChapters()"><option value="">— নির্বাচন —</option></select></div>
-    <div class="input-group"><label>📖 চ্যাপ্টার</label><select id="mockChapter" onchange="loadTopics()"><option value="">— প্রথমে সাবজেক্ট —</option></select></div>
-    <div class="input-group"><label>📋 টপিক (ঐচ্ছিক)</label><select id="mockTopic"><option value="">— ঐচ্ছিক —</option></select></div>
-    <label style="font-size:11px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">🏷️ স্ট্যান্ডার্ড</label>
-    <div class="chip-row" id="stdChips"><span class="chip active" onclick="selectStd('medical',this)">🏥 Medical</span><span class="chip" onclick="selectStd('varsity',this)">🎓 Varsity</span><span class="chip" onclick="selectStd('onushiloni',this)">🟠 Onushiloni</span></div>
-    <label style="font-size:11px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">❓ প্রশ্ন সংখ্যা ও সময়</label>
-    <div class="chip-row" id="cntChips">
-        <span class="chip" onclick="selectCnt(25,this)">২৫ (⏱️১২মি)</span>
-        <span class="chip" onclick="selectCnt(35,this)">৩৫ (⏱️১৭মি)</span>
-        <span class="chip active" onclick="selectCnt(50,this)">৫০ (⏱️২৫মি)</span>
-        <span class="chip" onclick="selectCnt(75,this)">৭৫ (⏱️৩৭মি)</span>
-        <span class="chip" onclick="selectCnt(100,this)">১০০ (⏱️৫০মি)</span>
+<div class="section-header"><div class="section-title">🎯 আনলিমিটেড মক টেস্ট</div></div>
+<div class="input-group"><label>📘 সাবজেক্ট</label><select id="mockSubject" onchange="loadChapters()"><option value="">— নির্বাচন —</option></select></div>
+<div class="input-group"><label>📖 চ্যাপ্টার</label><select id="mockChapter" onchange="loadTopics()"><option value="">— প্রথমে সাবজেক্ট —</option></select></div>
+<div class="input-group"><label>📋 টপিক (ঐচ্ছিক)</label><select id="mockTopic"><option value="">— ঐচ্ছিক —</option></select></div>
+<label style="font-size:11px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">🏷️ স্ট্যান্ডার্ড</label>
+<div class="chip-row" id="stdChips">
+    <span class="chip active" onclick="selectStd('medical',this)">🏥 Medical</span>
+    <span class="chip" onclick="selectStd('varsity',this)">🎓 Varsity</span>
+    <span class="chip" onclick="selectStd('onushiloni',this)">🟠 Onushiloni</span>
+</div>
+<label style="font-size:11px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">❓ প্রশ্ন সংখ্যা</label>
+<div class="chip-row" id="cntChips">
+    <span class="chip" onclick="selectCnt(25,this)">২৫</span>
+    <span class="chip" onclick="selectCnt(35,this)">৩৫</span>
+    <span class="chip active" onclick="selectCnt(50,this)">৫০</span>
+    <span class="chip" onclick="selectCnt(75,this)">৭৫</span>
+    <span class="chip" onclick="selectCnt(100,this)">১০০</span>
+</div>
+<div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;">
+    <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:6px;">✏️ কাস্টম সেটিং</div>
+    <div class="mock-custom-row">
+        <input class="mock-custom-input" id="customQCount" type="number" min="5" max="200" placeholder="প্রশ্ন সংখ্যা">
+        <input class="mock-custom-input" id="customMinutes" type="number" min="1" max="300" placeholder="মিনিট (ফাঁকা=auto)">
+        <button class="mock-custom-btn" onclick="startCustomMock()">শুরু</button>
     </div>
-    <button class="btn btn-primary" onclick="startMock()">▶️ এক্সাম শুরু করুন</button>
+    <div style="font-size:10px;color:var(--text-secondary);margin-top:4px;">মিনিট ফাঁকা রাখলে: প্রশ্ন÷1.5 = সময়</div>
 </div>
-
-<!-- MODE 2: Hall -->
-<div class="mode-container" id="modeHall">
-    <div class="timer-sticky"><span class="timer-text" id="timerText">২৫:০০</span><span class="progress-text" id="progressText">📈 ০%</span></div>
-    <div class="questions-area" id="questionsArea"></div>
-    <button class="submit-fixed" id="submitBtn" onclick="submitMock()">📤 Submit</button>
-</div>
-
-<!-- MODE 3: Result -->
-<div class="mode-container" id="modeResult"><div class="result-wrap" id="resultContent"></div></div>
+<button class="btn btn-primary" onclick="startMock()">▶️ এক্সাম শুরু করুন</button>
 
 </main>
 
@@ -142,7 +109,7 @@
 <script>
 const SUPABASE_URL='https://btezborkuiqfogykrjrn.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
-let isDarkMode=true,isSidebarOpen=false,mockQuestions=[],userAnswers={},examTimer=null,examSeconds=0,isExamSubmitted=false,selectedStd='medical',selectedCnt=50;
+let isDarkMode=true,isSidebarOpen=false,selectedStd='medical',selectedCnt=50;
 
 function showToast(m,d=2000){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
 function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'☀️':'🌙';}
@@ -178,120 +145,32 @@ async function loadTopics(){
     try{const data=await safeFetch(`${SUPABASE_URL}/rest/v1/mock_questions?subject=eq.${encodeURIComponent(s)}&chapter=eq.${encodeURIComponent(c)}&select=topic`);const topics=[...new Set(data.map(d=>d.topic).filter(Boolean))];sel.innerHTML='<option value="">— ঐচ্ছিক —</option>'+topics.map(t=>`<option>${t}</option>`).join('');}catch(e){}
 }
 
-async function startMock(){
+function startCustomMock(){
+    const count=parseInt(document.getElementById('customQCount').value);
+    if(!count||count<1){showToast('⚠️ প্রশ্ন সংখ্যা দিন');return;}
+    const mins=parseInt(document.getElementById('customMinutes').value)||Math.ceil(count/1.5);
+    selectedCnt=count;
+    startMock(mins);
+}
+
+async function startMock(customMins){
     const s=document.getElementById('mockSubject').value,c=document.getElementById('mockChapter').value,t=document.getElementById('mockTopic').value;
     if(!s||!c){showToast('⚠️ সাবজেক্ট ও চ্যাপ্টার নির্বাচন করুন');return;}
     let query=`subject=eq.${encodeURIComponent(s)}&chapter=eq.${encodeURIComponent(c)}&standard=eq.${selectedStd}`;
     if(t)query+=`&topic=eq.${encodeURIComponent(t)}`;
     try{
         const data=await safeFetch(`${SUPABASE_URL}/rest/v1/mock_questions?${query}&select=*`);
-        if(!data?.length){
-            document.getElementById('modeSelect').classList.remove('active');
-            document.getElementById('modeHall').classList.add('active');
-            document.getElementById('questionsArea').innerHTML=`<div class="no-questions"><div class="icon">⚠️</div><div class="title">Database এ প্রশ্ন নেই</div><div class="subtitle">প্রিয় শিক্ষার্থী,</div><div class="subtitle">এডমিনকে ইনফর্ম করুন, দ্রুতই প্রশ্ন এড করার চেষ্টা করবো</div><button class="btn btn-outline" onclick="switchMode('Select')" style="margin-top:16px;">🔙 ফিরে যান</button></div>`;
-            document.getElementById('submitBtn').style.display='none';
-            return;
-        }
-        let all=[];data.forEach(d=>{all=all.concat(JSON.parse(d.questions_json||'[]'));});all.sort(()=>Math.random()-0.5);mockQuestions=all.slice(0,selectedCnt);
-        startHall();
-    }catch(e){
-        document.getElementById('questionsArea').innerHTML=`<div class="no-questions"><div class="icon">⚠️</div><div class="title">Database এ প্রশ্ন নেই</div><div class="subtitle">প্রিয় শিক্ষার্থী,</div><div class="subtitle">এডমিনকে ইনফর্ম করুন, দ্রুতই প্রশ্ন এড করার চেষ্টা করবো</div><button class="btn btn-outline" onclick="switchMode('Select')" style="margin-top:16px;">🔙 ফিরে যান</button></div>`;
-    }
-}
-
-function startHall(){
-    userAnswers={};isExamSubmitted=false;examSeconds=Math.ceil(selectedCnt/2)*60;
-    let html='';mockQuestions.forEach((q,i)=>{
-        html+=`<div class="mcq-card"><div class="q-header"><span class="q-number">প্রশ্ন ${i+1}/${mockQuestions.length}</span></div><div class="q-text">${q.questions||q.question_text||''}</div>`;
-        [q.option1,q.option2,q.option3,q.option4,q.option5].forEach((opt,oi)=>{
-            if(opt&&opt!=='—'){const labels=['ক','খ','গ','ঘ','ঙ'];html+=`<div class="option-item" onclick="selectOption(${q.id||i+1},${oi+1},this)" data-qid="${q.id||i+1}"><span class="option-radio">${labels[oi]}</span><span class="option-text">${opt}</span><span class="lock-icon" style="display:none;">🔒</span></div>`;}
-        });
-        html+=`</div>`;
-    });
-    document.getElementById('questionsArea').innerHTML=html;
-    document.getElementById('submitBtn').style.display='block';
-    switchMode('Hall');startTimer();updateProgress();
-}
-
-function selectOption(qid,oid,el){if(isExamSubmitted||userAnswers[qid])return;userAnswers[qid]=oid;document.querySelectorAll(`[data-qid="${qid}"]`).forEach(o=>{o.classList.remove('selected');o.classList.add('dimmed');});el.classList.add('selected');el.classList.remove('dimmed');el.querySelector('.lock-icon').style.display='inline';updateProgress();}
-function startTimer(){stopTimer();updateTimerDisplay();examTimer=setInterval(()=>{examSeconds--;updateTimerDisplay();if(examSeconds<=0)submitMock();},1000);}
-function stopTimer(){if(examTimer){clearInterval(examTimer);examTimer=null;}}
-function updateTimerDisplay(){const m=Math.floor(examSeconds/60),s=examSeconds%60;document.getElementById('timerText').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;if(examSeconds<=60)document.getElementById('timerText').classList.add('timer-warning');}
-function updateProgress(){const t=mockQuestions.length,a=Object.keys(userAnswers).length;document.getElementById('progressText').textContent=`📈 ${Math.round(a/t*100)}%`;}
-
-function submitMock(){
-    if(isExamSubmitted)return;
-    isExamSubmitted=true;stopTimer();
-    
-    let c=0,w=0,s=0;
-    mockQuestions.forEach(q=>{
-        const ua=userAnswers[q.id||q.question_id];
-        if(!ua)s++;
-        else if(ua===q.answer_index||ua===q.answer)c++;
-        else w++;
-    });
-    
-    const t=mockQuestions.length;
-    const negMark = w * 0.25;
-    let baseScore = c - negMark;
-    let finalScore = Math.max(0, baseScore);
-    let deduction = 0;
-    let isSecondTimer = false;
-    let gpaScore = 0;
-    
-    // User GPA + Timer info
-    try {
-        const user = JSON.parse(localStorage.getItem('atlas-session'));
-        if (user) {
-            const ssc = parseFloat(user.ssc_gpa) || 0;
-            const hsc = parseFloat(user.hsc_gpa) || 0;
-            gpaScore = (ssc * 8) + (hsc * 12);
-            
-            if (user.timer_type === 'second') {
-                isSecondTimer = true;
-                deduction = t <= 50 ? 1.5 : 3;
-                finalScore = Math.max(0, finalScore - deduction);
-            }
-        }
-    } catch(e) {}
-    
-    const withGpa = finalScore + gpaScore;
-    
-    let html = `<div class="result-card">
-        <div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:8px;">📝 মক টেস্ট</div>
-        <div class="result-big">${finalScore.toFixed(2)}</div>
-        <div style="color:var(--atlas-text);opacity:0.75;">/ ${t}</div>
-    </div>`;
-    
-    html += `<div class="result-grid">
-        <div class="result-stat"><div class="result-stat-val correct-val">✅ ${c}</div><div class="result-stat-label">সঠিক</div></div>
-        <div class="result-stat"><div class="result-stat-val wrong-val">❌ ${w}</div><div class="result-stat-label">ভুল</div></div>
-        <div class="result-stat"><div class="result-stat-val skipped-val">⏭️ ${s}</div><div class="result-stat-label">স্কিপ</div></div>
-    </div>`;
-    
-    // Negative Marking Details
-    html += `<div class="result-card" style="padding:12px;">
-        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>নেগেটিভ মার্ক (${w} × 0.25)</span><span style="color:var(--error);">-${negMark.toFixed(2)}</span></div>
-        ${isSecondTimer ? `<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>⏱️ সেকেন্ড টাইমার ডিডাকশন</span><span style="color:var(--error);">-${deduction.toFixed(2)}</span></div>` : ''}
-        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;border-top:1px solid var(--border);padding-top:6px;margin-top:4px;"><span>📊 Without GPA</span><span style="color:var(--accent);">${finalScore.toFixed(2)}</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;"><span>🎓 With GPA (+${gpaScore.toFixed(2)})</span><span style="color:var(--accent);">${withGpa.toFixed(2)}</span></div>
-    </div>`;
-    
-    html += `<button class="btn btn-primary" onclick="retakeMock()">🔄 আবার দিন</button>
-        <button class="btn btn-success" onclick="goTo('index.html')" style="margin-top:6px;">🏠 হোম</button>`;
-    
-    document.getElementById('resultContent').innerHTML = html;
-    switchMode('Result');
-}
-
-function retakeMock(){switchMode('Select');userAnswers={};isExamSubmitted=false;}
-
-function switchMode(mode){
-    document.querySelectorAll('.mode-container').forEach(m=>m.classList.remove('active'));
-    document.getElementById('mode'+mode.charAt(0).toUpperCase()+mode.slice(1))?.classList.add('active');
-    if(mode==='Hall'){document.querySelector('.floating-buttons').style.display='none';document.querySelector('.bottom-nav').style.display='none';}
-    else{stopTimer();document.querySelector('.floating-buttons').style.display='flex';document.querySelector('.bottom-nav').style.display='flex';}
-    window.scrollTo(0,0);
+        if(!data?.length){showToast('⚠️ প্রশ্ন পাওয়া যায়নি');return;}
+        let all=[];data.forEach(d=>{all=all.concat(JSON.parse(d.questions_json||'[]'));});
+        all.sort(()=>Math.random()-0.5);
+        const questions=all.slice(0,selectedCnt);
+        const time = customMins || Math.ceil(selectedCnt/1.5);
+        sessionStorage.setItem('practiceQuestions',JSON.stringify(questions));
+        sessionStorage.setItem('practiceTitle',s+' - '+c+' (Mock Test)');
+        sessionStorage.setItem('practiceSource','mock');
+        sessionStorage.setItem('practiceTime',time);
+        goTo('exam.html?practice=mock');
+    }catch(e){showToast('❌ লোড করতে সমস্যা');}
 }
 
 function showError(title,message,details,retryFn){
