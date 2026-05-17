@@ -420,13 +420,13 @@
             width:140px; height:140px; border-radius:var(--radius-sm);
             object-fit:cover; border:2px solid var(--border); position:relative; z-index:2;
         }
-        .owner-glow-box {
+        .-box {
             position:absolute; top:-6px; left:-6px;
             width:calc(140px + 12px); height:calc(140px + 12px);
             border-radius:calc(var(--radius-sm) + 6px);
             animation: rotateGlowBox 3s linear infinite; z-index:1; pointer-events:none;
         }
-         .owner-glow-box::before {
+         .-box::before {
     content: ''; position: absolute; inset: -3px;
     border-radius: calc(var(--radius-sm) + 8px);  ← inherit না দিয়ে ফিক্সড
     background: conic-gradient(from 0deg, transparent 0deg, var(--accent) 90deg, transparent 180deg, transparent 270deg, var(--accent) 360deg);
@@ -865,7 +865,7 @@
             <div class="flip-card-inner-owner">
                 <div class="flip-front-owner">
                     <div class="owner-photo-wrapper">
-                        <div class="owner-glow-box"></div>
+                        <div class="-box"></div>
                         <img src="" class="owner-photo-box" id="ownerPhoto"
                              onerror="this.style.display='none';document.getElementById('ownerPhotoFallback').style.display='flex';"
                              alt="Owner">
