@@ -716,7 +716,7 @@ function showToast(m, d = 2000) { const t = document.getElementById('toast'); t.
 function toggleTheme() { isDarkMode = !isDarkMode; document.body.classList.toggle('dark-mode', isDarkMode); document.body.classList.toggle('light-mode', !isDarkMode); document.getElementById('themeToggle').textContent = isDarkMode ? '☀️' : '🌙'; localStorage.setItem('atlas-theme', isDarkMode ? 'dark' : 'light'); }
 function toggleSidebar() { isSidebarOpen = !isSidebarOpen; document.getElementById('sidebarOverlay').classList.toggle('active', isSidebarOpen); document.getElementById('sidebar').classList.toggle('active', isSidebarOpen); }
 function closeSidebar() { isSidebarOpen = false; document.getElementById('sidebarOverlay').classList.remove('active'); document.getElementById('sidebar').classList.remove('active'); }
-function goTo(u) { location.hrefh; }
+function goTo(u) { location.replace(u); }
 function navigateTo(p) { const r = { home:'index.html', profile:'dashboard.html', class:'class.html', exam:'exam.html' }; goTo(r[p]||'index.html'); }
 function openWA() { window.open('https://wa.me/8801999681290', '_blank'); }
 function openTG() { window.open('https://t.me/rafi_somc', '_blank'); }
