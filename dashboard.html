@@ -2286,24 +2286,10 @@ function closePomoScreen() {
 }
 
 function updatePomoDisplay() {
-    // Update SVG digits
-    const digitsEl = document.getElementById('pomoDigits');
-    if (digitsEl) digitsEl.textContent = formatSeconds(pomoTimeLeft);
-    
-    // Update task name on SVG watch
-    const taskEl = document.getElementById('pomoWatchTask');
-    if (taskEl) taskEl.textContent = pomoCurrentTask || 'টাস্ক নাম';
-    
-    // Update profile card time
-    const profileTime = document.getElementById('pomoProfileTime');
-    if (profileTime) profileTime.textContent = formatSeconds(pomoTimeLeft);
-    
-    // Update SVG arc progress
-    const pct = pomoTotalTime > 0 ? (pomoTotalTime - pomoTimeLeft) / pomoTotalTime : 0;
-    const circumference = 2 * Math.PI * 80;
-    const offset = circumference * (1 - pct);
-    const arc = document.getElementById('pomoArc');
-    if (arc) arc.style.strokeDashoffset = offset;
+    const el = document.getElementById('pomoBigTime');
+    if (el) el.textContent = formatSeconds(pomoTimeLeft);
+    const taskEl = document.getElementById('pomoTaskDisplay');
+    if (taskEl) taskEl.textContent = pomoCurrentTask || 'কোনো টাস্ক সেট নেই';
 }
 
 function pomoSetQuick(secs) {
@@ -2384,25 +2370,8 @@ function pomoReset() {
     updatePomoDisplay();
     renderPomoInProfile();
 }
-  
-function togglePomodoro() {
-    if (pomoRunning) {
-        pomoPause();
-    } else {
-        pomoStart();
-    }
 
-
-function stopPomodoro() {
-    clearInterval(pomoInterval);
-    pomoRunning = false;
-    pomoTimeLeft = pomoTotalTime;
-    updatePomoDisplay();
-    renderPomoInProfile();
-    showToast('⏹ টাইমার বন্ধ করা হয়েছে');
-}
-
-  function renderPomoHistory() {
+function renderPomoHistory() {
     const sessions = pomoSessions.slice(0, 10);
     const el = document.getElementById('pomoHistoryList');
     if (!el) return;
