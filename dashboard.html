@@ -1796,21 +1796,33 @@ document.addEventListener('DOMContentLoaded', async () => {
 }
 
 // 2️⃣ Fixed Mistake Practice
+ // 2️⃣ Fixed Mistake Practice
 function startMistakePractice(mode) {
     const saved = localStorage.getItem('mistakes_' + currentUser.phone);
     const mistakes = saved ? JSON.parse(saved) : [];
     
-    const validMistakes = mistakes.filter(m => {
+    // Filter based on mode
+    let filteredMistakes = mistakes.filter(m => {
         const q = m.question || m;
         return q && (q.question_text || q.question || q.option1);
     });
     
-    if (!validMistakes.length) { 
-        showToast('⚠️ কোনো ভুল প্রশ্ন নেই। আগে এক্সাম দিন!'); 
+    if (mode === 'wrong') {
+        // P-01: শুধু ভুল উত্তর
+        filteredMistakes = filteredMistakes.filter(m => {
+            const userAns = m.user_answer || m.userAns;
+            const correctAns = (m.question || m).answer_index || (m.question || m).correct_option;
+            return userAns !== undefined && userAns !== null && String(userAns) !== String(correctAns);
+        });
+    }
+    // P-02 (mode='all'): সব mistake — wrong + skipped
+    
+    if (!filteredMistakes.length) { 
+        showToast('⚠️ কোনো প্রশ্ন নেই এই মোডে!'); 
         return; 
     }
     
-    const questions = validMistakes.map(m => {
+    const questions = filteredMistakes.map(m => {
         const q = m.question || m;
         return {
             id: q.id || m.question_id || Math.random(),
@@ -1824,7 +1836,7 @@ function startMistakePractice(mode) {
     
     if (!questions.length) { showToast('⚠️ প্রশ্নের ডাটা পাওয়া যাচ্ছে না'); return; }
     
-    const title = mode === 'wrong' ? '⚡ Practice-01 (ভুল প্রশ্ন)' : '📚 Practice-02 (সব Mistake)';
+    const title = mode === 'wrong' ? '⚡ Practice-01 (শুধু ভুল)' : '📚 Practice-02 (ভুল + স্কিপ)';
     startPracticeExam(questions, title, () => startMistakePractice(mode));
 }
 
