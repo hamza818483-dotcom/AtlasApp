@@ -2385,6 +2385,13 @@ function pomoReset() {
     renderPomoInProfile();
 }
   
+function togglePomodoro() {
+    if (pomoRunning) {
+        pomoPause();
+    } else {
+        pomoStart();
+    }
+
 
 function stopPomodoro() {
     clearInterval(pomoInterval);
