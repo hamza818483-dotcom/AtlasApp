@@ -1742,6 +1742,46 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Check for My Mistakes from sidebar redirect
     if (location.hash === '#mistakes') showTab('mistakes');
 });
+// ============================================================
+// MY MISTAKES DETAIL MODAL
+// ============================================================
+function viewMistakeDetail(qId) {
+    const saved = localStorage.getItem('mistakes_' + currentUser.phone);
+    const mistakes = saved ? JSON.parse(saved) : [];
+    const mistake = mistakes.find(m => String(m.question_id || m.question?.id) === String(qId));
+    if (!mistake) { showToast('❌ বিস্তারিত পাওয়া যায়নি'); return; }
+    
+    const q = mistake.question || {};
+    const optBn = ['ক','খ','গ','ঘ','ঙ'];
+    const opts = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(Boolean);
+    const correctAns = q.answer_index || q.correct_option;
+    const userAns = mistake.user_answer;
+    
+    let html = `<div class="modal-title">⚠️ ভুল প্রশ্ন বিস্তারিত</div>
+        <span class="q-status wrong">❌ ভুল (আপনি: ${optBn[userAns-1] || '—'})</span>
+        <div class="question-text" style="margin-top:8px;">${escHtml(q.question_text || q.question || '')}</div>
+        <ul class="options-list" style="margin-top:8px;">`;
+    
+    opts.forEach((opt, i) => {
+        const isCorrect = (i+1) === parseInt(correctAns);
+        const isUserWrong = String(userAns) === String(i+1) && !isCorrect;
+        html += `<li class="option-item ${isCorrect?'correct':isUserWrong?'wrong':''}">
+            <span class="option-key">${optBn[i]}</span>${escHtml(opt)}
+            ${isCorrect?' ✅':''} ${isUserWrong?' ❌ (আপনার উত্তর)':''}
+        </li>`;
+    });
+    
+    html += `</ul>
+        ${q.explanation ? `<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>` : ''}
+        <button class="ai-explain-btn" onclick="loadAiExplain(this,'${qId}','${escHtml(q.question_text||q.question||'')}')">🤖 AI ব্যাখ্যা দেখুন</button>
+        <div class="ai-explain-result" style="display:none;"></div>
+        <div class="modal-close-strip">
+            <button class="btn btn-outline" onclick="document.getElementById('detailModal').classList.remove('active')" style="width:100%;">✕ বন্ধ</button>
+        </div>`;
+    
+    document.getElementById('detailModalContent').innerHTML = html;
+    document.getElementById('detailModal').classList.add('active');
+}
 </script>
 </body>
 </html>
