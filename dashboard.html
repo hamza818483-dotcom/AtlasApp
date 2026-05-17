@@ -1937,13 +1937,27 @@ async function retakeExam(examId) {
     try {
         const [examData] = await safeFetch(`${SUPABASE_URL}/rest/v1/exams?id=eq.${examId}&select=*`);
         if (!examData) { showToast('❌ এক্সাম পাওয়া যায়নি'); return; }
+        
         const questions = await safeFetch(`${SUPABASE_URL}/rest/v1/questions?exam_id=eq.${examId}&select=*&order=id.asc`);
         if (!questions?.length) { showToast('❌ প্রশ্ন পাওয়া যায়নি'); return; }
-        const title = examData.title || (examData.subject + ' - ' + examData.chapter) || 'এক্সাম';
-        startPracticeExam(questions, title, () => retakeExam(examId));
+        
+        // 🔥 exam.html-এ পাঠান
+        const formattedQuestions = questions.map(q => ({
+            id: q.id,
+            question_text: q.question_text || q.question || '',
+            option1: q.option1 || '', option2: q.option2 || '', option3: q.option3 || '',
+            option4: q.option4 || '', option5: q.option5 || null,
+            answer_index: q.answer_index || 1,
+            explanation: q.explanation || ''
+        }));
+        
+        sessionStorage.setItem('practiceQuestions', JSON.stringify(formattedQuestions));
+        sessionStorage.setItem('practiceTitle', examData.title || (examData.subject + ' - ' + examData.chapter));
+        sessionStorage.setItem('practiceSource', 'history');
+        
+        goTo('exam.html?practice=history&exam_id=' + examId);
     } catch(e) { 
         showToast('❌ লোড করতে সমস্যা');
-        goTo(`exam.html?exam_id=${examId}`);
     }
 }
 // ============================================================
@@ -2033,21 +2047,33 @@ window.submitPracticeExam = function() {
 };
 
 // Override viewMistakeDetail
+// Override viewMistakeDetail — FIXED
 window.viewMistakeDetail = function(qId) {
     const saved = localStorage.getItem('mistakes_' + currentUser.phone);
     const mistakes = saved ? JSON.parse(saved) : [];
-    const mistake = mistakes.find(m => String(m.question_id || m.question?.id) === String(qId));
-    if (!mistake) { showToast('❌ পাওয়া যায়নি'); return; }
+    const mistake = mistakes.find(m => String(m.question_id || m.question?.id || m.id) === String(qId));
+    if (!mistake) { showToast('❌ পাওয়া যায়নি: ' + qId); return; }
     
-    const q = (mistake.question && (mistake.question.question_text || mistake.question.option1)) ? mistake.question : mistake;
+    // সরাসরি mistake-এ question_text থাকলে সেটাই নিন
+    let q;
+    if (mistake.question_text || mistake.option1) {
+        q = mistake;
+    } else if (mistake.question && (mistake.question.question_text || mistake.question.option1)) {
+        q = mistake.question;
+    } else {
+        showToast('❌ প্রশ্নের ডাটা পাওয়া যায়নি');
+        return;
+    }
+    
     const optBn = ['ক','খ','গ','ঘ','ঙ'];
-    const opts = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(o => o && o !== '—');
+    const opts = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(o => o && o !== '—' && o !== 'null' && o !== 'undefined');
     const correctAns = q.answer_index || q.correct_option || 1;
     const userAns = mistake.user_answer || mistake.userAns;
     
     let html = `<div class="modal-title">⚠️ ভুল প্রশ্ন বিস্তারিত</div>
         <span class="q-status wrong">❌ ভুল ${userAns ? '(আপনি: ' + optBn[userAns-1] + ')' : ''}</span>
         <div class="question-text" style="margin-top:8px;">${escHtml(q.question_text || q.question || 'প্রশ্ন পাওয়া যায়নি')}</div>`;
+    
     if (opts.length > 0) {
         html += `<ul class="options-list" style="margin-top:8px;">`;
         opts.forEach((opt, i) => {
@@ -2055,15 +2081,16 @@ window.viewMistakeDetail = function(qId) {
             html += `<li class="option-item ${isCorrect?'correct':isUserWrong?'wrong':''}"><span class="option-key">${optBn[i]}</span>${escHtml(opt)} ${isCorrect?'✅':''} ${isUserWrong?'❌':''}</li>`;
         });
         html += `</ul>`;
+    } else {
+        html += `<p style="color:var(--text2);padding:8px;">⚠️ অপশন পাওয়া যায়নি</p>`;
     }
-    html += `${q.explanation?`<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>`:''}
+    
+    html += `${q.explanation ? `<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>` : ''}
         <div class="modal-close-strip"><button class="btn btn-outline" onclick="document.getElementById('detailModal').classList.remove('active')" style="width:100%;">✕ বন্ধ</button></div>`;
     
     document.getElementById('detailModalContent').innerHTML = html;
     document.getElementById('detailModal').classList.add('active');
 };
-
-showToast('✅ Dashboard fixes loaded!', 2000);
 </script>
 </body>
 </html>
