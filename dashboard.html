@@ -2,20 +2,9 @@
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ATLAS APP · প্রোফাইল</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+Bengali:wght@400;600;700;800&family=Rajdhani:wght@500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-    
-    <!-- ============================================
-         PWA META TAGS (NEW - ADDED)
-         ============================================ -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="ATLAS">
-    <meta name="theme-color" content="#7C83FF">
-    <link rel="apple-touch-icon" href="icons/icon-192.png">
-    
     <style>
         /* =============================================
            CSS VARIABLES — Flutter: ThemeData / ColorScheme
@@ -330,6 +319,7 @@
         .confirm-btns .btn { flex:1;padding:10px; }
 
         /* ===== FULLSCREEN SCREENS (Flutter: Scaffold) ===== */
+        /* FIX #1/#2/#3/#5: All fullscreen screens use position:fixed, z-index stacking, isolated back navigation */
         .fs-screen {
             position:fixed;inset:0;background:var(--bg);
             display:none;flex-direction:column;overflow:hidden;
@@ -349,7 +339,8 @@
         .fs-title { font-size:16px;font-weight:800;color:var(--text);flex:1; }
         .fs-body { flex:1;overflow-y:auto;padding:12px 14px 20px; }
 
-        /* Z-INDEX STACK */
+        /* ===== Z-INDEX STACK (Flutter: Navigator stack) ===== */
+        /* mistakes=450, mistakes-detail=550, todo=460, pomo=470, exam=500, result=600 */
         #mistakesScreen { z-index:450; }
         #mdScreen { z-index:550; }
         #todoScreen { z-index:460; }
@@ -373,7 +364,7 @@
         .mtype-tab { padding:5px 10px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:none;color:var(--text2);font-family:inherit;transition:0.2s;white-space:nowrap; }
         .mtype-tab.active { background:var(--accent);color:#fff;border-color:var(--accent); }
 
-        /* Category Summary */
+        /* FIX #7: My Mistakes — Category Summary at top */
         .mistakes-summary-bar {
             background:var(--card);border-bottom:1px solid var(--border);
             padding:10px 14px;flex-shrink:0;
@@ -384,67 +375,6 @@
         .mcat-name { font-size:9px;font-weight:700;color:var(--text);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
         .mcat-stats { display:flex;gap:4px;justify-content:center;flex-wrap:wrap; }
         .mcat-stat-chip { font-size:8px;padding:1px 5px;border-radius:8px;font-weight:700; }
-
-        /* NEW: Subject Box Grid (ADDED) */
-        .subject-box-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 12px;
-            margin: 16px 0;
-        }
-        .subject-box {
-            background: linear-gradient(135deg, var(--card), var(--hover));
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 16px 12px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .subject-box:hover {
-            border-color: var(--accent);
-            transform: translateY(-3px);
-            box-shadow: var(--shadow-md);
-        }
-        .subject-box-icon { font-size: 28px; margin-bottom: 8px; }
-        .subject-box-name { font-size: 14px; font-weight: 700; color: var(--text); }
-        .subject-box-stats { font-size: 10px; color: var(--text2); margin-top: 4px; }
-        .subject-box .wrong-count { color: var(--red); }
-        .subject-box .skip-count { color: var(--yellow); }
-
-        /* NEW: Selection Bar (ADDED) */
-        .selection-bar {
-            position: sticky;
-            bottom: 70px;
-            background: var(--card);
-            border: 1px solid var(--accent);
-            border-radius: var(--radius);
-            padding: 12px 16px;
-            margin-top: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            z-index: 100;
-            box-shadow: var(--shadow-md);
-        }
-        .selection-info {
-            font-size: 12px;
-            color: var(--text2);
-        }
-        .selection-info strong {
-            color: var(--accent);
-            font-size: 14px;
-        }
-        .selection-buttons {
-            display: flex;
-            gap: 8px;
-        }
-        .selection-buttons .btn-p1, .selection-buttons .btn-p2 {
-            padding: 8px 16px;
-            font-size: 12px;
-        }
 
         /* Exam Group Card */
         .exam-group-card { background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;box-shadow:var(--shadow);overflow:hidden; }
@@ -488,11 +418,11 @@
         .mq-btn-p2 { background:rgba(251,146,60,0.15);color:#fb923c; }
         .mq-btn-del { background:rgba(248,81,73,0.12);color:var(--red); }
 
-        /* MD SCREEN */
+        /* ===== MD SCREEN (Mistakes Detail) ===== */
         .md-filter-bar { background:var(--card);border-bottom:1px solid var(--border);padding:8px 14px;display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap; }
         .md-footer { background:var(--card);border-top:1px solid var(--border);padding:10px 14px;display:flex;gap:6px;flex-shrink:0; }
 
-        /* TO-DO SCREEN */
+        /* ===== TO-DO SCREEN ===== */
         .todo-add-card { background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px; }
         .todo-add-title { font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px; }
         .todo-form-grid { display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px; }
@@ -518,7 +448,8 @@
         .todo-del-btn { background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;padding:2px 4px;border-radius:4px;transition:0.2s;flex-shrink:0; }
         .todo-del-btn:hover { color:var(--red); }
 
-        /* POMODORO SCREEN */
+        /* ===== POMODORO SCREEN ===== */
+        /* FIX #6: Full Pomodoro with SVG ring working */
         .pomo-body-inner { flex:1;overflow-y:auto;padding:16px 14px 20px;display:flex;flex-direction:column;gap:14px;max-width:480px;margin:0 auto;width:100%; }
         .pomo-watch-card {
             background:linear-gradient(145deg,#0F1117,#1A1F2E);
@@ -569,7 +500,7 @@
         .pomo-history-item { display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px; }
         .pomo-history-item:last-child { border-bottom:none; }
 
-        /* WEAK LIST */
+        /* ===== WEAK LIST ===== */
         .weak-list-card { background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px;box-shadow:var(--shadow); }
         .weak-subject-row { display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border); }
         .weak-subject-row:last-child { border-bottom:none; }
@@ -577,7 +508,8 @@
         .weak-bar-fill { height:100%;border-radius:3px;transition:width 0.8s cubic-bezier(.4,0,.2,1); }
         .weak-bar-fill.good { background:var(--green); } .weak-bar-fill.mid { background:var(--yellow); } .weak-bar-fill.bad { background:var(--red); }
 
-        /* LEADERBOARD */
+        /* ===== LEADERBOARD ===== */
+        /* FIX #7: Leaderboard — only exams user has taken, with "দেখো" button */
         .lb-card { background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px;box-shadow:var(--shadow); }
         .lb-row { display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border); }
         .lb-row:last-child { border-bottom:none; }
@@ -591,6 +523,7 @@
         .lb-tabs { display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap; }
         .lb-tab { padding:5px 10px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:none;color:var(--text2);font-family:inherit;transition:0.2s; }
         .lb-tab.active { background:var(--accent);color:#fff;border-color:var(--accent); }
+        /* Exam info card for LB list — FIX #7 */
         .lb-exam-card { background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden; }
         .lb-exam-info { padding:12px 14px; }
         .lb-exam-name { font-size:14px;font-weight:800;color:var(--text);margin-bottom:6px; }
@@ -601,12 +534,12 @@
         .lb-detail-panel { border-top:1px solid var(--border);padding:12px 14px;display:none; }
         .lb-detail-panel.open { display:block; }
 
-        /* NOTIFICATION CARD */
+        /* ===== NOTIFICATION CARD ===== */
         .notif-card { cursor:pointer;transition:0.2s; }
         .notif-card:hover { border-color:var(--accent); }
         .admin-response { background:rgba(124,131,255,0.08);border:1px solid rgba(124,131,255,0.2);border-radius:6px;padding:8px;margin-top:8px;font-size:11px;color:var(--accent); }
 
-        /* EXAM OVERLAY */
+        /* ===== EXAM OVERLAY ===== */
         .exam-overlay { position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;overflow:hidden; }
         .exam-overlay.active { display:flex; }
         .exam-header { background:var(--card);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0; }
@@ -626,7 +559,7 @@
         .exam-nav-num.answered { background:var(--accent);color:#fff;border-color:var(--accent); }
         .exam-nav-num.current { border-color:var(--yellow);box-shadow:0 0 0 2px rgba(210,153,34,0.3); }
 
-        /* RESULT OVERLAY */
+        /* ===== RESULT OVERLAY ===== */
         .result-overlay { position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;overflow-y:auto; }
         .result-overlay.active { display:flex; }
         .result-body { max-width:600px;margin:0 auto;padding:20px 14px 80px;width:100%; }
@@ -634,70 +567,18 @@
         .result-score { font-size:22px;font-weight:800;color:var(--text); }
         .result-label { font-size:9px;color:var(--text2);margin-top:1px; }
 
-        /* CLASS HISTORY FILTER */
+        /* ===== CLASS HISTORY FILTER ===== */
+        /* FIX #9: Class history filter buttons */
         .class-filter-bar { display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px; }
         .class-filter-btn { padding:5px 10px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:none;color:var(--text2);font-family:inherit;transition:0.2s; }
         .class-filter-btn.active { background:var(--accent);color:#fff;border-color:var(--accent); }
 
-        /* ============================================
-           NEW: DESKTOP RESPONSIVE (ADDED)
-           ============================================ */
-        @media (min-width: 768px) {
-            .dash-container {
-                max-width: 1200px;
-                margin: 0 auto;
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 20px;
-            }
-            .profile-card { grid-column: span 2; }
-            .graph-card { grid-column: span 2; }
-            .quick-strip { grid-column: span 2; }
-            .dash-grid { grid-column: span 2; }
-            .tab-content { grid-column: span 2; }
-            
-            /* Better spacing for desktop */
-            .profile-actions-row1, .profile-actions-row2 {
-                justify-content: center;
-            }
-            .profile-action-btn {
-                max-width: 120px;
-            }
-        }
-
-        @media (min-width: 1024px) {
-            .mistakes-cat-grid { grid-template-columns: repeat(4, 1fr); }
-            .exam-group-actions { flex-direction: row; }
-            .subject-box-grid {
-                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            }
-        }
-
-        /* Offline status indicator */
-        .offline-status {
-            position: fixed;
-            top: 56px;
-            left: 0;
-            right: 0;
-            background: var(--yellow);
-            color: #000;
-            text-align: center;
-            padding: 4px;
-            font-size: 11px;
-            z-index: 1000;
-            display: none;
-        }
-        .offline-status.show {
-            display: block;
-        }
-
+        /* ===== RESPONSIVE ===== */
         @media(max-width:400px) {
             .mistakes-stats-grid { grid-template-columns:repeat(3,1fr); }
             .exam-action-btn .btn-sub-label { display:none; }
             .pomo-digits { font-size:28px; }
             .mistakes-cat-grid { grid-template-columns:repeat(2,1fr); }
-            .selection-bar { flex-direction: column; text-align: center; }
-            .selection-buttons { width: 100%; justify-content: center; }
         }
         @media(max-width:360px) {
             .mistakes-stats-grid { grid-template-columns:repeat(3,1fr); }
@@ -706,9 +587,6 @@
 </head>
 <body>
 
-<!-- OFFLINE STATUS INDICATOR (NEW - ADDED) -->
-<div class="offline-status" id="offlineStatus">📡 আপনি অফলাইনে আছেন। সংযোগ পুনরুদ্ধার হলে ডাটা সিঙ্ক হবে।</div>
-
 <!-- ========== SIDEBAR ========== -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <aside class="sidebar" id="sidebar">
@@ -716,6 +594,7 @@
         <div class="sidebar-logo">ATLAS APP</div>
         <div class="sidebar-logo-sub">মেডিকেল প্রস্তুতি</div>
     </div>
+    <!-- FIX #1: All sidebar buttons work independently, no page redirect for profile options -->
     <button class="sidebar-item" onclick="closeSidebar();showTab('main');">👤 প্রোফাইল</button>
     <button class="sidebar-item" onclick="goTo('index.html')">🏠 হোম</button>
     <button class="sidebar-item" onclick="goTo('class.html')">📚 ফ্রি ক্লাস</button>
@@ -733,6 +612,7 @@
     <button class="sidebar-item" onclick="openTG()">✈️ Telegram</button>
     <div class="sidebar-spacer"></div>
     <div class="sidebar-divider"></div>
+    <!-- FIX #4: Logout instant -->
     <button class="sidebar-item danger" onclick="closeSidebar();confirmLogout();">🚪 লগআউট</button>
 </aside>
 
@@ -795,6 +675,7 @@
             <button class="profile-action-btn" onclick="showTab('edit')">
                 <span class="btn-icon">✏️</span><span class="btn-label">এডিট</span>
             </button>
+            <!-- FIX #4: logout button instant -->
             <button class="profile-action-btn logout-btn" onclick="confirmLogout()">
                 <span class="btn-icon">🚪</span><span class="btn-label">লগআউট</span>
             </button>
@@ -868,6 +749,7 @@
 
         <!-- EXAM HISTORY -->
         <div class="tab-content" id="tabHistoryContent">
+            <!-- FIX #5: back goes to main only -->
             <button class="back-btn" onclick="showTab('main')">← ফিরে যান</button>
             <div class="section-header">
                 <div class="section-title">📚 Exam History</div>
@@ -887,6 +769,7 @@
                 <div class="section-title">🎥 Class History</div>
                 <div class="section-sub" id="classHistorySubtitle"></div>
             </div>
+            <!-- FIX #9: Class filter buttons -->
             <div class="class-filter-bar" id="classFilterBar">
                 <button class="class-filter-btn active" onclick="setClassFilter('all',this)">📋 সব</button>
             </div>
@@ -958,6 +841,7 @@
             <button class="back-btn" onclick="showTab('main')">← ফিরে যান</button>
             <div class="section-header">
                 <div class="section-title">🏆 Leaderboard</div>
+                <!-- FIX #7: user sees only their attempted exams -->
                 <div class="section-sub">আপনার দেওয়া এক্সামের Leaderboard</div>
             </div>
             <div class="lb-tabs" id="lbTabs">
@@ -972,26 +856,19 @@
     </div>
 </main>
 
-<!-- ========== MY MISTAKES SCREEN ========== -->
+<!-- ========== MY MISTAKES SCREEN (Flutter: MistakesScreen) ========== -->
 <div class="fs-screen" id="mistakesScreen" style="z-index:450;">
     <div class="fs-header">
+        <!-- FIX #5: back goes only to previous page -->
         <button class="fs-back-btn" onclick="closeScreen('mistakesScreen')">← ফিরে যান</button>
         <div class="fs-title">⚠️ My Mistakes</div>
         <button class="header-icon" onclick="clearAllMistakes()" style="font-size:12px;width:auto;padding:0 8px;border-radius:6px;">🗑️ সব</button>
     </div>
-    
-    <!-- NEW: Exam Category Summary (ADDED) -->
+    <!-- FIX #7: Category-wise overall summary at top -->
     <div class="mistakes-summary-bar" id="mistakesSummaryBar" style="display:none;">
         <div class="mistakes-cat-summary-title">📊 Exam Category Summary</div>
         <div class="mistakes-cat-grid" id="mistakesCatGrid"></div>
     </div>
-    
-    <!-- NEW: Overall Analysis Graph (ADDED) -->
-    <div class="graph-card" id="overallGraphCard" style="display:none; margin:10px 14px;">
-        <div class="graph-title">📈 Overall Mistake Analysis</div>
-        <div class="bar-chart" id="overallBarChart" style="height:100px;"></div>
-    </div>
-    
     <!-- Stats -->
     <div class="mistakes-stats-bar">
         <div class="mistakes-stats-grid">
@@ -1003,16 +880,6 @@
         </div>
         <div class="mstat-mini-graph" id="mistakesMiniGraph" onclick="showToast('📊 এক্সাম অনুযায়ী ভুলের গ্রাফ')"></div>
     </div>
-    
-    <!-- NEW: 3 Filter Buttons (ADDED) -->
-    <div class="mistakes-filter-bar" style="border-bottom: none; padding-bottom: 0;">
-        <div style="display:flex; gap: 8px; justify-content: center;">
-            <button class="mtype-tab" id="filterBtnAllWrong" onclick="setMistakeFilterType('wrong')" style="background:rgba(248,81,73,0.15); color:var(--red);">❌ সকল ভুল</button>
-            <button class="mtype-tab" id="filterBtnAllSkip" onclick="setMistakeFilterType('skipped')" style="background:rgba(210,153,34,0.15); color:var(--yellow);">⏭️ সকল স্কিপ</button>
-            <button class="mtype-tab active" id="filterBtnBoth" onclick="setMistakeFilterType('both')" style="background:rgba(124,131,255,0.15); color:var(--accent);">📋 সকল ভুল+স্কিপ</button>
-        </div>
-    </div>
-    
     <!-- Filters -->
     <div class="mistakes-filter-bar">
         <div style="display:flex;gap:6px;">
@@ -1028,33 +895,10 @@
             <input class="mfilter-input" id="mfSearch" placeholder="🔍 প্রশ্ন খুঁজুন..." oninput="renderMistakesGroups()">
         </div>
     </div>
-    
-    <!-- Subject Box Container (NEW) -->
-    <div id="subjectBoxContainer" style="display:none;"></div>
-    
-    <!-- Exam Groups Container (existing) -->
     <div class="fs-body" id="mistakesBody"></div>
-    
-    <!-- NEW: Selection Bar for Bulk Practice (ADDED) -->
-    <div class="selection-bar" id="selectionBar" style="display:none;">
-        <div class="selection-info">
-            📋 Selected: <strong id="selectedCount">0</strong> exams |
-            📝 Total Questions: <strong id="totalSelectedQuestions">0</strong>
-        </div>
-        <div class="selection-buttons">
-            <button class="exam-action-btn btn-p1" id="bulkPracticeWrongBtn" onclick="startBulkPractice('wrong')" style="padding:6px 12px;">
-                <span class="btn-main-label">⚡ P-01</span>
-                <span class="btn-sub-label">শুধু ভুল</span>
-            </button>
-            <button class="exam-action-btn btn-p2" id="bulkPracticeBothBtn" onclick="startBulkPractice('both')" style="padding:6px 12px;">
-                <span class="btn-main-label">📚 P-02</span>
-                <span class="btn-sub-label">ভুল+স্কিপ</span>
-            </button>
-        </div>
-    </div>
 </div>
 
-<!-- ========== MISTAKES DETAIL SCREEN ========== -->
+<!-- ========== MISTAKES DETAIL SCREEN (Flutter: MistakesDetailScreen) ========== -->
 <div class="fs-screen" id="mdScreen" style="z-index:550;">
     <div class="fs-header">
         <button class="fs-back-btn" onclick="closeScreen('mdScreen')">← ফিরে যান</button>
@@ -1079,7 +923,7 @@
     </div>
 </div>
 
-<!-- ========== TO-DO SCREEN ========== -->
+<!-- ========== TO-DO SCREEN (Flutter: TodoScreen) ========== -->
 <div class="fs-screen" id="todoScreen" style="z-index:460;">
     <div class="fs-header">
         <button class="fs-back-btn" onclick="closeScreen('todoScreen')">← ফিরে যান</button>
@@ -1121,13 +965,15 @@
     </div>
 </div>
 
-<!-- ========== POMODORO SCREEN ========== -->
+<!-- ========== POMODORO SCREEN (Flutter: PomodoroScreen) ========== -->
+<!-- FIX #6: Full Pomodoro working with SVG ring, all controls, session history, profile live card -->
 <div class="fs-screen" id="pomoScreen" style="z-index:470;">
     <div class="fs-header">
         <button class="fs-back-btn" onclick="closeScreen('pomoScreen')">← ফিরে যান</button>
         <div class="fs-title">⏱️ Pomodoro Clock</div>
     </div>
     <div class="pomo-body-inner">
+        <!-- SVG Ring Watch -->
         <div class="pomo-watch-card">
             <div class="pomo-watch-inner">
                 <div class="pomo-watch-brand">ATLAS Pomodoro Watch</div>
@@ -1148,6 +994,7 @@
                         <div class="pomo-task-name-watch" id="pomoWatchTask">টাস্ক নাম</div>
                     </div>
                 </div>
+                <!-- Controls inside watch card -->
                 <div class="pomo-ctrl-wrap">
                     <button class="pomo-ctrl-btn" onclick="pomoReset()" title="Reset">↺</button>
                     <button class="pomo-ctrl-btn play" onclick="togglePomodoro()" id="pomoPlayBtn">▶</button>
@@ -1155,6 +1002,8 @@
                 </div>
             </div>
         </div>
+
+        <!-- Setup Card -->
         <div class="pomo-setup-card">
             <div class="pomo-setup-title">⚙️ সেটআপ</div>
             <div class="input-group" style="margin-bottom:8px;">
@@ -1180,14 +1029,11 @@
             </div>
             <button class="pomo-set-btn" onclick="pomoApplySetup()">⏱ Set করুন</button>
         </div>
+
+        <!-- Session History -->
         <div class="pomo-setup-card">
             <div class="pomo-setup-title">📊 সেশন ইতিহাস</div>
             <div id="pomoLogList" style="font-size:12px;color:var(--text2);">কোনো সেশন নেই।</div>
-        </div>
-        <!-- NEW: 3-Day Success Graph (ADDED) -->
-        <div class="pomo-setup-card" id="pomoGraphCard" style="display:none;">
-            <div class="pomo-setup-title">📈 গত ৩ দিনের সাফল্যের হার</div>
-            <div class="bar-chart" id="pomoSuccessChart" style="height:80px;"></div>
         </div>
     </div>
 </div>
@@ -1283,8 +1129,8 @@
 <div class="toast" id="toast"></div>
 
 <!-- ====================================================
-     JAVASCRIPT — Full original JS + NEW additions
-     ==================================================== -->
+     JAVASCRIPT — Flutter-style: Providers, BLoCs, Widgets
+==================================================== -->
 <script>
 /* ======================================================
    CONSTANTS & STATE — Flutter: AppState
@@ -1301,7 +1147,7 @@ let currentQFilter = 'all';
 let currentLbTab = 'all';
 let resultOverlayAllData = [];
 
-// Screen navigation stack
+// Screen navigation stack — Flutter: Navigator
 let screenStack = [];
 
 // Practice exam state
@@ -1313,39 +1159,36 @@ let practiceTimeLeft = 0;
 let practiceTitle = '';
 let practiceRetryFn = null;
 
-// My Mistakes state
+// My Mistakes state — Flutter: MistakesBloc
 let mistakesAllData = [];
 let mistakesCurrentFilter = 'all';
 let mistakesCurrentGroup = null;
 let mdCurrentFilter = 'all';
 
-// NEW: My Mistakes filter type (wrong/skipped/both)
-let mistakesFilterType = 'both';
-let selectedExamsSet = new Set();
-
-// Pomodoro state
+// Pomodoro state — Flutter: PomodoroBloc
 let pomoInterval = null;
 let pomoTimeLeft = 25 * 60;
 let pomoTotalTime = 25 * 60;
 let pomoRunning = false;
 let pomoSessions = [];
 let pomoCurrentTask = '';
-let pomoYesNoListener = null;
 
-// To-Do state
+// To-Do state — Flutter: TodoProvider
 let todoTimerInterval = null;
 
 // Class history filter state
 let classActiveFilterType = 'all';
 
 /* ======================================================
-   SCREEN NAVIGATION
+   SCREEN NAVIGATION — Flutter: Navigator.push/pop
+   FIX #1 #2 #3 #5: Independent screens, correct back behavior
 ====================================================== */
 function openScreen(screenId) {
     const el = document.getElementById(screenId);
     if (!el) return;
     el.classList.add('active');
     screenStack.push(screenId);
+    // Push browser history state
     history.pushState({ screenStack: [...screenStack] }, '', '#' + screenId);
 }
 
@@ -1353,13 +1196,18 @@ function closeScreen(screenId) {
     const el = document.getElementById(screenId);
     if (!el) return;
     el.classList.remove('active');
+    // Remove from stack
     const idx = screenStack.lastIndexOf(screenId);
     if (idx !== -1) screenStack.splice(idx, 1);
+    // If stack still has items, don't do history.back() to avoid double-pop
+    // Just update URL
     const prev = screenStack[screenStack.length - 1];
     history.replaceState({ screenStack: [...screenStack] }, '', prev ? '#' + prev : location.pathname);
 }
 
+// Android back button handler — Flutter: WillPopScope
 window.addEventListener('popstate', (e) => {
+    // Find topmost visible screen
     const screens = ['resultOverlay','examOverlay','mdScreen','mistakesScreen','todoScreen','pomoScreen'];
     for (const sid of screens) {
         const el = document.getElementById(sid);
@@ -1371,6 +1219,7 @@ window.addEventListener('popstate', (e) => {
             return;
         }
     }
+    // Normal tab hash restore
     const hash = (location.hash || '').replace('#','');
     if (hash && hash !== 'main' && !hash.startsWith('Screen')) showTab(hash);
     else showTab('main');
@@ -1385,66 +1234,45 @@ function showToast(msg, duration = 2500) {
     clearTimeout(t._t);
     t._t = setTimeout(() => t.classList.remove('show'), duration);
 }
-
 function toggleTheme() {
     isDarkMode = !isDarkMode;
     document.body.classList.toggle('light-mode', !isDarkMode);
     document.getElementById('themeBtn').textContent = isDarkMode ? '🌙' : '☀️';
     localStorage.setItem('atlas-theme', isDarkMode ? 'dark' : 'light');
 }
-
 function toggleSidebar() {
     isSidebarOpen = !isSidebarOpen;
     document.getElementById('sidebarOverlay').classList.toggle('active', isSidebarOpen);
     document.getElementById('sidebar').classList.toggle('active', isSidebarOpen);
 }
-
 function closeSidebar() {
     isSidebarOpen = false;
     document.getElementById('sidebarOverlay').classList.remove('active');
     document.getElementById('sidebar').classList.remove('active');
 }
-
 function goTo(u) { location.replace(u); }
 function openWA() { window.open('https://wa.me/8801999681290', '_blank'); }
 function openTG() { window.open('https://t.me/rafi_somc', '_blank'); }
 
+// FIX #4: Logout instant — no delay
 function confirmLogout() {
     showConfirm('লগআউট', 'আপনি কি সত্যিই লগআউট করতে চান?', '🚪 লগআউট', () => {
         localStorage.removeItem('atlas-session');
         location.replace('index.html');
     });
 }
-
 function toBanglaNum(n) {
     const bn = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
     return String(n).replace(/[0-9]/g, d => bn[d]);
 }
-
-// NEW: Date with time formatting
-function toBanglaDateTime(dateStr) {
-    try {
-        const date = new Date(dateStr);
-        return date.toLocaleString('bn-BD', { 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    } catch(e) { return dateStr || '—'; }
-}
-
 function toBanglaDate(dateStr) {
     try { return new Date(dateStr).toLocaleString('bn-BD', { year:'numeric', month:'short', day:'numeric' }); }
     catch(e) { return dateStr || '—'; }
 }
-
 function escHtml(str) {
     if (!str) return '';
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-
 function formatSeconds(s) {
     const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
     if (h > 0) return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
@@ -1461,12 +1289,10 @@ function showConfirm(title, msg, okLabel, cb) {
     confirmCallback = cb;
     document.getElementById('confirmDialog').classList.add('active');
 }
-
 function closeConfirm() {
     confirmCallback = null;
     document.getElementById('confirmDialog').classList.remove('active');
 }
-
 document.getElementById('confirmOkBtn').onclick = () => {
     if (confirmCallback) confirmCallback();
     closeConfirm();
@@ -1571,7 +1397,8 @@ async function updateProfile() {
 }
 
 /* ======================================================
-   TAB NAVIGATION
+   TAB NAVIGATION — Flutter: IndexedStack
+   FIX #1 #2: Each tab works independently
 ====================================================== */
 function showTab(tab) {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -1596,14 +1423,14 @@ function showTab(tab) {
 }
 
 /* ======================================================
-   MY MISTAKES — FULL SCREEN (Original + NEW features)
+   MY MISTAKES — FULL SCREEN
+   FIX #7: Category-wise overall summary + filtering
 ====================================================== */
 function getMistakesData() {
     if (!currentUser) return [];
     try { return JSON.parse(localStorage.getItem('mistakes_' + currentUser.phone) || '[]'); }
     catch(e) { return []; }
 }
-
 function getMistakeStatus(m) {
     const q = m.question || m;
     const userAns = m.user_answer !== undefined ? m.user_answer : m.userAns;
@@ -1612,316 +1439,13 @@ function getMistakeStatus(m) {
     return String(userAns) === String(correctAns) ? 'correct' : 'wrong';
 }
 
-// NEW: Set filter type for My Mistakes
-function setMistakeFilterType(type) {
-    mistakesFilterType = type;
-    // Update button styles
-    const btnAll = document.getElementById('filterBtnAllWrong');
-    const btnSkip = document.getElementById('filterBtnAllSkip');
-    const btnBoth = document.getElementById('filterBtnBoth');
-    
-    if (btnAll && btnSkip && btnBoth) {
-        btnAll.style.opacity = type === 'wrong' ? '1' : '0.5';
-        btnSkip.style.opacity = type === 'skipped' ? '1' : '0.5';
-        btnBoth.style.opacity = type === 'both' ? '1' : '0.5';
-    }
-    
-    // Show subject boxes instead of exam groups
-    showSubjectBoxes();
-}
-
-// NEW: Show subject boxes based on current filter
-function showSubjectBoxes() {
-    if (mistakesFilterType === 'both') {
-        document.getElementById('subjectBoxContainer').style.display = 'none';
-        document.getElementById('mistakesBody').style.display = 'block';
-        renderMistakesGroups();
-        return;
-    }
-    
-    // Filter mistakes based on type
-    let filteredMistakes = mistakesAllData.filter(m => {
-        const status = getMistakeStatus(m);
-        if (mistakesFilterType === 'wrong') return status === 'wrong';
-        if (mistakesFilterType === 'skipped') return status === 'skipped';
-        return true;
-    });
-    
-    // Group by subject
-    const subjectMap = new Map();
-    filteredMistakes.forEach(m => {
-        const q = m.question || m;
-        const subject = m.subject || q.subject || 'অন্যান্য';
-        if (!subjectMap.has(subject)) {
-            subjectMap.set(subject, { wrong: 0, skip: 0, questions: [] });
-        }
-        const data = subjectMap.get(subject);
-        const status = getMistakeStatus(m);
-        if (status === 'wrong') data.wrong++;
-        else if (status === 'skipped') data.skip++;
-        data.questions.push(m);
-    });
-    
-    // Render subject boxes
-    let html = '<div class="subject-box-grid">';
-    for (const [subject, data] of subjectMap) {
-            html += `
-    <div class="subject-box" onclick='showExamsBySubject("${escHtml(subject)}", ${JSON.stringify(data.questions).replace(/\\/g, '\\\\')})'>
-                <div class="subject-box-icon">📘</div>
-                <div class="subject-box-name">${escHtml(subject)}</div>
-                <div class="subject-box-stats">
-                    ${mistakesFilterType === 'wrong' ? `<span class="wrong-count">❌ ${data.wrong} ভুল</span>` : ''}
-                    ${mistakesFilterType === 'skipped' ? `<span class="skip-count">⏭️ ${data.skip} স্কিপ</span>` : ''}
-                </div>
-            </div>
-        `;
-    }
-    html += '</div>';
-    
-    document.getElementById('subjectBoxContainer').innerHTML = html;
-    document.getElementById('subjectBoxContainer').style.display = 'block';
-    document.getElementById('mistakesBody').style.display = 'none';
-}
-
-// NEW: Show exams by subject
-function showExamsBySubject(subject, questions) {
-    // Filter exams that contain questions from this subject
-    const examMap = new Map();
-    questions.forEach(m => {
-        const q = m.question || m;
-        const examName = m.exam_name || q.exam_name || 'অন্যান্য';
-        if (!examMap.has(examName)) {
-            examMap.set(examName, []);
-        }
-        examMap.get(examName).push(m);
-    });
-    
-    let html = `<div class="fs-body" style="display:block;">`;
-    html += `<button class="back-btn" onclick="showSubjectBoxes()" style="margin-bottom:12px;">← সকল সাবজেক্ট</button>`;
-    html += `<div style="font-size:14px;font-weight:800;color:var(--accent);margin-bottom:12px;">📘 ${escHtml(subject)} - Exams</div>`;
-    
-    for (const [examName, items] of examMap) {
-        const wrongCount = items.filter(m => getMistakeStatus(m) === 'wrong').length;
-        const skipCount = items.filter(m => getMistakeStatus(m) === 'skipped').length;
-        const examId = examName.replace(/'/g, "\\'");
-        
-        html += `
-            <div class="exam-group-card">
-                <div class="exam-group-header" onclick="toggleExamGroup('${examId}')">
-                    <div class="exam-group-info">
-                        <div class="exam-group-name">📝 ${escHtml(examName)}</div>
-                        <div class="exam-group-meta">
-                            ${wrongCount ? `<span class="exam-group-badge badge-wrong">❌ ${wrongCount} ভুল</span>` : ''}
-                            ${skipCount ? `<span class="exam-group-badge badge-skip">⏭️ ${skipCount} স্কিপ</span>` : ''}
-                            <span class="exam-group-badge badge-total">📋 ${items.length}টি</span>
-                        </div>
-                    </div>
-                    <span class="exam-group-chevron" id="chev_exam_${examId}">▼</span>
-                </div>
-                <div class="exam-group-actions" style="padding:0 14px 12px;">
-                    <button class="exam-action-btn btn-detail" onclick="openMdScreen('${examId}');event.stopPropagation();">
-                        <span class="btn-main-label">📋 বিস্তারিত</span>
-                    </button>
-                    <button class="exam-action-btn btn-p1" onclick="startGroupPractice('${examId}','wrong');event.stopPropagation();">
-                        <span class="btn-main-label">⚡ Practice-01</span>
-                    </button>
-                    <button class="exam-action-btn btn-p2" onclick="startGroupPractice('${examId}','all');event.stopPropagation();">
-                        <span class="btn-main-label">📚 Practice-02</span>
-                    </button>
-                </div>
-                <div class="exam-group-body" id="exam_${examId}" style="display:none;">
-                    ${buildGroupPreviews(items)}
-                </div>
-            </div>
-        `;
-    }
-    
-    html += `<div class="selection-bar" style="margin-top:12px;">
-        <div class="selection-info">
-            <input type="checkbox" id="selectAllExams" onchange="toggleSelectAllExams()"> 
-            <label for="selectAllExams">সব এক্সাম সিলেক্ট করুন</label>
-        </div>
-        <div class="selection-buttons">
-            <button class="exam-action-btn btn-p1" onclick="startBulkPracticeBySubject('${escHtml(subject)}', 'wrong')">
-                <span class="btn-main-label">⚡ P-01</span>
-            </button>
-            <button class="exam-action-btn btn-p2" onclick="startBulkPracticeBySubject('${escHtml(subject)}', 'both')">
-                <span class="btn-main-label">📚 P-02</span>
-            </button>
-        </div>
-    </div>`;
-    html += `</div>`;
-    
-    document.getElementById('mistakesBody').innerHTML = html;
-    document.getElementById('subjectBoxContainer').style.display = 'none';
-    document.getElementById('mistakesBody').style.display = 'block';
-}
-
-function toggleExamGroup(groupId) {
-    const body = document.getElementById(groupId);
-    const chev = document.getElementById('chev_' + groupId);
-    if (!body) return;
-    const isOpen = body.style.display !== 'none';
-    body.style.display = isOpen ? 'none' : 'block';
-    if (chev) chev.classList.toggle('open', !isOpen);
-}
-
-// NEW: Toggle select all exams
-// toggleSelectAllExams ফাংশনটি replace করুন
-function toggleSelectAllExams() {
-    const selectAll = document.getElementById('selectAllExams');
-    if (!selectAll) return;
-    
-    const isChecked = selectAll.checked;
-    const allCheckboxes = document.querySelectorAll('.exam-select-checkbox');
-    
-    allCheckboxes.forEach(cb => {
-        cb.checked = isChecked;
-        const examId = cb.getAttribute('data-exam-id');
-        if (examId) {
-            if (isChecked) {
-                selectedExamsSet.add(examId);
-            } else {
-                selectedExamsSet.delete(examId);
-            }
-        }
-    });
-    updateSelectionBar();
-}
-
-// NEW: Toggle single exam selection
-function toggleExamSelect(examId, isChecked) {
-    if (isChecked) selectedExamsSet.add(examId);
-    else selectedExamsSet.delete(examId);
-    updateSelectionBar();
-}
-
-// NEW: Update selection bar
-function updateSelectionBar() {
-    const bar = document.getElementById('selectionBar');
-    const countSpan = document.getElementById('selectedCount');
-    const totalSpan = document.getElementById('totalSelectedQuestions');
-    
-    if (selectedExamsSet.size === 0) {
-        bar.style.display = 'none';
-        return;
-    }
-    
-    bar.style.display = 'flex';
-    countSpan.textContent = selectedExamsSet.size;
-    
-    let totalQuestions = 0;
-    for (const examId of selectedExamsSet) {
-        const examMistakes = mistakesAllData.filter(m => {
-            const q = m.question || m;
-            return (m.exam_name || q.exam_name || 'অন্যান্য') === examId;
-        });
-        totalQuestions += examMistakes.length;
-    }
-    totalSpan.textContent = totalQuestions;
-}
-
-// NEW: Start bulk practice with selected exams
-function startBulkPractice(mode) {
-    if (selectedExamsSet.size === 0) {
-        showToast('⚠️ দয়া করে অন্তত একটি এক্সাম সিলেক্ট করুন');
-        return;
-    }
-    
-    let allQuestions = [];
-    for (const examId of selectedExamsSet) {
-        const examMistakes = mistakesAllData.filter(m => {
-            const q = m.question || m;
-            return (m.exam_name || q.exam_name || 'অন্যান্য') === examId;
-        });
-        
-        examMistakes.forEach(m => {
-            const status = getMistakeStatus(m);
-            if (mode === 'wrong' && status === 'wrong') {
-                allQuestions.push(m);
-            } else if (mode === 'both' && (status === 'wrong' || status === 'skipped')) {
-                allQuestions.push(m);
-            }
-        });
-    }
-    
-    if (allQuestions.length === 0) {
-        showToast('⚠️ কোনো প্রশ্ন পাওয়া যায়নি');
-        return;
-    }
-    
-    const questions = allQuestions.map(m => {
-        const q = m.question || m;
-        return {
-            id: q.id || m.question_id || Math.random(),
-            question_text: q.question_text || q.question || 'প্রশ্ন',
-            option1: q.option1 || '',
-            option2: q.option2 || '',
-            option3: q.option3 || '',
-            option4: q.option4 || '',
-            option5: q.option5 || null,
-            answer_index: q.answer_index || q.correct_option || 1,
-            explanation: q.explanation || '',
-            image_url: q.image_url || null
-        };
-    });
-    
-    const title = mode === 'wrong' ? '⚡ Practice-01 (সব Selected Exam এর ভুল)' : '📚 Practice-02 (সব Selected Exam এর ভুল+স্কিপ)';
-    sessionStorage.setItem('practiceQuestions', JSON.stringify(questions));
-    sessionStorage.setItem('practiceTitle', title);
-    window.location.href = 'exam.html?practice=mistakes';
-}
-
-function startBulkPracticeBySubject(subject, mode) {
-    const subjectMistakes = mistakesAllData.filter(m => {
-        const q = m.question || m;
-        return (m.subject || q.subject || '') === subject;
-    });
-    
-    let filtered = [];
-    subjectMistakes.forEach(m => {
-        const status = getMistakeStatus(m);
-        if (mode === 'wrong' && status === 'wrong') {
-            filtered.push(m);
-        } else if (mode === 'both' && (status === 'wrong' || status === 'skipped')) {
-            filtered.push(m);
-        }
-    });
-    
-    if (filtered.length === 0) {
-        showToast('⚠️ কোনো প্রশ্ন পাওয়া যায়নি');
-        return;
-    }
-    
-    const questions = filtered.map(m => {
-        const q = m.question || m;
-        return {
-            id: q.id || m.question_id || Math.random(),
-            question_text: q.question_text || q.question || 'প্রশ্ন',
-            option1: q.option1 || '',
-            option2: q.option2 || '',
-            option3: q.option3 || '',
-            option4: q.option4 || '',
-            option5: q.option5 || null,
-            answer_index: q.answer_index || q.correct_option || 1,
-            explanation: q.explanation || '',
-            image_url: q.image_url || null
-        };
-    });
-    
-    const title = mode === 'wrong' ? `⚡ Practice-01: ${subject} (শুধু ভুল)` : `📚 Practice-02: ${subject} (ভুল+স্কিপ)`;
-    sessionStorage.setItem('practiceQuestions', JSON.stringify(questions));
-    sessionStorage.setItem('practiceTitle', title);
-    window.location.href = 'exam.html?practice=mistakes';
-}
-
 function loadMistakesFullscreen() {
     const mistakes = getMistakesData();
     mistakesAllData = mistakes;
     let totalWrong = 0, totalSkip = 0;
     const examSet = new Set(), subjectSet = new Set();
+    // Category-wise summary
     const catSummary = {};
-    
     mistakes.forEach(m => {
         const status = getMistakeStatus(m);
         if (status === 'wrong') totalWrong++;
@@ -1943,23 +1467,13 @@ function loadMistakesFullscreen() {
     document.getElementById('mstat-exams').textContent = examSet.size;
     document.getElementById('mstat-subjects').textContent = subjectSet.size;
 
-    // Category summary UI
+    // FIX #7: Category-wise summary UI
     const catKeys = Object.keys(catSummary);
     if (catKeys.length > 0) {
         document.getElementById('mistakesSummaryBar').style.display = 'block';
         document.getElementById('mistakesCatGrid').innerHTML = catKeys.map(cat => `
-    <div class="mcat-box" onclick="filterByCategory('${escHtml(cat)}')">
-        <div class="mcat-name">${escHtml(cat)}</div>
-        <div class="mcat-stats">
-            <span class="mcat-stat-chip" style="background:rgba(88,166,255,0.15);color:var(--blue);">📝 ${catSummary[cat].exams.size}</span>
-            <span class="mcat-stat-chip" style="background:rgba(248,81,73,0.15);color:var(--red);">❌ ${catSummary[cat].wrong}</span>
-            <span class="mcat-stat-chip" style="background:rgba(210,153,34,0.15);color:var(--yellow);">⏭️ ${catSummary[cat].skip}</span>
-        </div>
-    </div>
-`).join('');
-    <div class="mcat-name">${escHtml(cat)}</div>
-    ...
-</div>
+            <div class="mcat-box">
+                <div class="mcat-name">${escHtml(cat)}</div>
                 <div class="mcat-stats">
                     <span class="mcat-stat-chip" style="background:rgba(88,166,255,0.15);color:var(--blue);">📝 ${catSummary[cat].exams.size}</span>
                     <span class="mcat-stat-chip" style="background:rgba(248,81,73,0.15);color:var(--red);">❌ ${catSummary[cat].wrong}</span>
@@ -1968,32 +1482,8 @@ function loadMistakesFullscreen() {
             </div>`).join('');
     }
 
-    // Overall graph
-    if (mistakes.length > 0) {
-        const overallCard = document.getElementById('overallGraphCard');
-        if (overallCard) overallCard.style.display = 'block';
-        const examGroups = {};
-        mistakes.forEach(m => {
-            const q = m.question || m;
-            const key = m.exam_name || q.exam_name || 'অন্যান্য';
-            if (!examGroups[key]) examGroups[key] = { wrong: 0, skipped: 0 };
-            const status = getMistakeStatus(m);
-            if (status === 'wrong') examGroups[key].wrong++;
-            else if (status === 'skipped') examGroups[key].skipped++;
-        });
-        const examNames = Object.keys(examGroups).slice(0, 12);
-        const maxVal = Math.max(...examNames.map(k => examGroups[k].wrong + examGroups[k].skipped), 1);
-        const chartHtml = examNames.map(k => {
-            const total = examGroups[k].wrong + examGroups[k].skipped;
-            const h = Math.max(8, (total / maxVal) * 80);
-            const clr = examGroups[k].wrong > examGroups[k].skipped ? 'var(--graph-red)' : 'var(--graph-yellow)';
-            return `<div class="bar-wrap"><div style="flex:1;display:flex;align-items:flex-end;"><div style="height:${h}px;background:${clr};width:100%;border-radius:4px 4px 0 0;" title="${k}: ${total}টি"></div></div><div class="bar-label">${k.substring(0,6)}</div></div>`;
-        }).join('');
-        document.getElementById('overallBarChart').innerHTML = chartHtml || '<div style="text-align:center;color:var(--text2);">কোনো ডাটা নেই</div>';
-    }
-
     buildMiniGraph(mistakes, examSet);
-    
+    // Filters
     const cats = [...new Set(mistakes.map(m=>(m.category||(m.question||m).category||'')).filter(Boolean))];
     const subs = [...new Set(mistakes.map(m=>(m.subject||(m.question||m).subject||'')).filter(Boolean))];
     const catSel = document.getElementById('mfCat'), subSel = document.getElementById('mfSub');
@@ -2002,21 +1492,9 @@ function loadMistakesFullscreen() {
     subSel.innerHTML = '<option value="all">সব সাবজেক্ট</option>' + subs.map(s=>`<option value="${escHtml(s)}">${escHtml(s)}</option>`).join('');
     if (cats.includes(prevCat)) catSel.value = prevCat;
     if (subs.includes(prevSub)) subSel.value = prevSub;
-    
-    // Reset selection
-    selectedExamsSet.clear();
-    updateSelectionBar();
-    
     renderMistakesGroups();
 }
-function filterByCategory(category) {
-    const catSelect = document.getElementById('mfCat');
-    if (catSelect) {
-        catSelect.value = category;
-        renderMistakesGroups();
-        showToast(`📁 ${category} ক্যাটাগরি ফিল্টার করা হয়েছে`);
-    }
-}
+
 function buildMiniGraph(mistakes, examSet) {
     const graphEl = document.getElementById('mistakesMiniGraph');
     const examGroups = {};
@@ -2068,7 +1546,7 @@ function renderMistakesGroups() {
         body.innerHTML = `<div class="empty-state"><span class="empty-state-icon">${mistakesAllData.length ? '🔍' : '🎉'}</span><div class="empty-state-text">${mistakesAllData.length ? 'এই ফিল্টারে কোনো প্রশ্ন নেই' : 'কোনো ভুল নেই! অসাধারণ! 💪'}</div></div>`;
         return;
     }
-    
+    // Group by exam name + category
     const groups = {};
     filtered.forEach(m => {
         const q = m.question || m;
@@ -2086,6 +1564,7 @@ function renderMistakesGroups() {
         </button>
     </div>`;
 
+    // FIX #7: category/exam type name-wise list with big font name + info chips
     Object.keys(groups).forEach((examName, gi) => {
         const items = groups[examName];
         const wrongCount = items.filter(m => getMistakeStatus(m) === 'wrong').length;
@@ -2097,17 +1576,14 @@ function renderMistakesGroups() {
 
         html += `<div class="exam-group-card">
             <div class="exam-group-header" onclick="toggleGroup('${gId}')">
-                <div style="display:flex;align-items:center;gap:10px;flex:1;">
-                    <input type="checkbox" class="exam-select-checkbox" data-exam-id="${safeExamName}" onchange="toggleExamSelect('${safeExamName}', this.checked)" onclick="event.stopPropagation()">
-                    <div class="exam-group-info">
-                        <div class="exam-group-name">📝 ${escHtml(examName)}</div>
-                        <div class="exam-group-meta">
-                            ${cat?`<span class="meta-chip">🏷️ ${escHtml(cat)}</span>`:''}
-                            ${subjects.map(s=>`<span class="meta-chip">📘 ${escHtml(s)}</span>`).join('')}
-                            ${wrongCount?`<span class="exam-group-badge badge-wrong">❌ ${wrongCount} ভুল</span>`:''}
-                            ${skipCount?`<span class="exam-group-badge badge-skip">⏭️ ${skipCount} স্কিপ</span>`:''}
-                            <span class="exam-group-badge badge-total">📋 ${items.length}টি</span>
-                        </div>
+                <div class="exam-group-info">
+                    <div class="exam-group-name">📝 ${escHtml(examName)}</div>
+                    <div class="exam-group-meta">
+                        ${cat?`<span class="meta-chip">🏷️ ${escHtml(cat)}</span>`:''}
+                        ${subjects.map(s=>`<span class="meta-chip">📘 ${escHtml(s)}</span>`).join('')}
+                        ${wrongCount?`<span class="exam-group-badge badge-wrong">❌ ${wrongCount} ভুল</span>`:''}
+                        ${skipCount?`<span class="exam-group-badge badge-skip">⏭️ ${skipCount} স্কিপ</span>`:''}
+                        <span class="exam-group-badge badge-total">📋 ${items.length}টি</span>
                     </div>
                 </div>
                 <span class="exam-group-chevron" id="chev_${gId}">▼</span>
@@ -2131,29 +1607,7 @@ function renderMistakesGroups() {
             </div>
         </div>`;
     });
-    
-    // Add selection bar
-    html += `
-        <div class="selection-bar" id="selectionBar" style="display:${selectedExamsSet.size > 0 ? 'flex' : 'none'}; position:relative; bottom:auto; margin-top:16px;">
-            <div class="selection-info">
-                📋 Selected: <strong id="selectedCount">${selectedExamsSet.size}</strong> exams |
-                📝 Total Questions: <strong id="totalSelectedQuestions">0</strong>
-            </div>
-            <div class="selection-buttons">
-                <button class="exam-action-btn btn-p1" onclick="startBulkPractice('wrong')">
-                    <span class="btn-main-label">⚡ P-01</span>
-                    <span class="btn-sub-label">শুধু ভুল</span>
-                </button>
-                <button class="exam-action-btn btn-p2" onclick="startBulkPractice('both')">
-                    <span class="btn-main-label">📚 P-02</span>
-                    <span class="btn-sub-label">ভুল+স্কিপ</span>
-                </button>
-            </div>
-        </div>
-    `;
-    
     body.innerHTML = html;
-    updateSelectionBar();
 }
 
 function buildGroupPreviews(items) {
@@ -2164,15 +1618,14 @@ function buildGroupPreviews(items) {
         const qText = q.question_text || q.question || 'প্রশ্ন';
         const preview = qText.length > 80 ? qText.substring(0,80) + '...' : qText;
         const sub = m.subject || q.subject || '';
-        // Use new datetime format
-        const dateTime = m.timestamp ? toBanglaDateTime(m.timestamp) : '';
+        const date = m.timestamp ? toBanglaDate(m.timestamp) : '';
         const qId = String(m.question_id || q.id || idx);
         return `<div class="mistake-q-preview">
             <div class="mq-content">
                 <div class="mq-chips">
                     <span class="q-status ${status}" style="margin-bottom:0;">${status==='wrong'?'❌ ভুল':'⏭️ স্কিপ'}</span>
                     ${sub?`<span class="meta-chip">📘 ${escHtml(sub)}</span>`:''}
-                    ${dateTime?`<span class="meta-chip">📅 ${dateTime}</span>`:''}
+                    ${date?`<span class="meta-chip">📅 ${date}</span>`:''}
                 </div>
                 <div class="mq-text-preview">${escHtml(preview)}</div>
                 <div class="mq-btns">
@@ -2197,6 +1650,7 @@ function toggleGroup(gId) {
 
 /* ======================================================
    MISTAKES DETAIL SCREEN
+   FIX #4: back goes only to mistakesScreen
 ====================================================== */
 function openMdScreen(examName) {
     const items = mistakesAllData.filter(m => {
@@ -2206,6 +1660,7 @@ function openMdScreen(examName) {
     mistakesCurrentGroup = { examName, items };
     mdCurrentFilter = 'all';
     document.getElementById('mdTitle').textContent = examName;
+    // Reset filter tabs
     document.querySelectorAll('#mdScreen .q-filter-tab').forEach(b => b.classList.remove('active'));
     document.querySelector('#mdScreen .q-filter-tab').classList.add('active');
     openScreen('mdScreen');
@@ -2244,8 +1699,6 @@ function renderMdBody(filter) {
             </li>`;
         }).join('');
         const qId = String(m.question_id || q.id || idx);
-        // Add image support
-        const imageHtml = q.image_url ? `<img class="question-img" src="${escHtml(q.image_url)}" loading="lazy" onerror="this.style.display='none'">` : '';
         return `<div class="question-card">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
                 <span class="q-status ${status}">${status==='wrong'?'❌ ভুল':status==='skipped'?'⏭️ স্কিপ':'✅ সঠিক'}</span>
@@ -2255,7 +1708,7 @@ function renderMdBody(filter) {
                     <button class="report-btn" onclick="removeMistakeById('${qId}');renderMdBody(mdCurrentFilter);">🗑️</button>
                 </div>
             </div>
-            ${imageHtml}
+            ${q.image_url?`<img class="question-img" src="${escHtml(q.image_url)}" loading="lazy">`:''}
             <div class="question-text">${escHtml(qText)}</div>
             <ul class="options-list">${optsHtml}</ul>
             ${q.explanation?`<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>`:''}
@@ -2374,7 +1827,7 @@ async function reportQuestion(qId) {
 }
 
 /* ======================================================
-   TO-DO LIST (unchanged)
+   TO-DO LIST
 ====================================================== */
 function getTodoData() {
     if (!currentUser) return [];
@@ -2485,40 +1938,58 @@ function startTodoCountdowns() {
     }, 1000);
 }
 
+// 6 ঘণ্টা পর পর টার্গেট রিমাইন্ডার নোটিফিকেশন
 function scheduleTodoNotifications() {
+    // ব্রাউজার নোটিফিকেশন সাপোর্ট করে কিনা চেক করুন
     if (!('Notification' in window)) return;
+    
+    // ইউজার নোটিফিকেশন পারমিশন দিয়েছে কিনা চেক করুন
     if (Notification.permission === 'granted') {
+        // অসম্পন্ন টার্গেট গুলো বের করুন
         const todos = getTodoData().filter(t => !t.done);
+        
+        // যদি ১টির বেশি অসম্পন্ন টার্গেট থাকে, নোটিফিকেশন পাঠান
         if (todos.length > 0) {
             new Notification('📚 ATLAS — টার্গেট রিমাইন্ডার', {
                 body: `${todos.length}টি টার্গেট বাকি আছে! পড়া শুরু করুন।`,
                 icon: 'https://cdn.phototourl.com/free/2026-05-15-b45df560-6dc8-4cb7-9040-238612c8a161.png'
             });
         }
-    } else if (Notification.permission !== 'denied') {
+    } 
+    // ইউজার এখনো পারমিশন দেয়নি, অনুরোধ করুন
+    else if (Notification.permission !== 'denied') {
         Notification.requestPermission();
     }
 }
-setInterval(scheduleTodoNotifications, 21600000);
+
+// ✅ 6 ঘণ্টা পর পর নোটিফিকেশন চেক করুন
+setInterval(scheduleTodoNotifications, 21600000);  // 6 hours = 21600000 ms
 
 /* ======================================================
-   POMODORO CLOCK — ENHANCED with Yes/No & Graph
+   POMODORO CLOCK — FIX #6: Full working Pomodoro
+   SVG ring, play/pause/stop/reset, presets, custom time,
+   session history, profile live card, browser notification
 ====================================================== */
-const POMO_CIRCUMFERENCE = 502.65;
+const POMO_CIRCUMFERENCE = 502.65; // 2 * π * 80
 
 function updatePomoDisplay() {
+    // Digits
     const digitsEl = document.getElementById('pomoDigits');
     if (digitsEl) digitsEl.textContent = formatSeconds(pomoTimeLeft);
+    // Task name
     const taskEl = document.getElementById('pomoWatchTask');
     if (taskEl) taskEl.textContent = pomoCurrentTask || 'টাস্ক সেট করুন';
+    // SVG Arc
     const arc = document.getElementById('pomoArc');
     if (arc) {
         const progress = pomoTotalTime > 0 ? pomoTimeLeft / pomoTotalTime : 1;
         const offset = POMO_CIRCUMFERENCE * (1 - progress);
         arc.style.strokeDashoffset = offset;
     }
+    // Play button icon
     const playBtn = document.getElementById('pomoPlayBtn');
     if (playBtn) playBtn.textContent = pomoRunning ? '⏸' : '▶';
+    // Profile card
     renderPomoInProfile();
 }
 
@@ -2532,6 +2003,7 @@ function togglePomodoro() {
 
 function pomoStart() {
     if (pomoTimeLeft <= 0 || pomoTimeLeft === pomoTotalTime) {
+        // Read custom time if set
         const h = parseInt(document.getElementById('pomoHours')?.value) || 0;
         const m = parseInt(document.getElementById('pomoMins')?.value) || 0;
         const total = h * 3600 + m * 60;
@@ -2548,26 +2020,13 @@ function pomoStart() {
         if (pomoTimeLeft <= 0) {
             clearInterval(pomoInterval);
             pomoRunning = false;
-            
-            // Ask Yes/No question
-            if (Notification.permission === 'granted' && pomoCurrentTask) {
-                askTaskCompletionQuestion();
-            }
-            
             // Save session
-            pomoSessions.unshift({ 
-                task: pomoCurrentTask, 
-                duration: pomoTotalTime, 
-                completedAt: new Date().toISOString(),
-                completed: false,
-                userResponse: null
-            });
+            pomoSessions.unshift({ task: pomoCurrentTask, duration: pomoTotalTime, completedAt: new Date().toISOString() });
             if (pomoSessions.length > 20) pomoSessions.pop();
             localStorage.setItem('pomo_sessions_' + currentUser?.phone, JSON.stringify(pomoSessions));
             renderPomoHistory();
             updatePomoDisplay();
-            renderPomoSuccessGraph();
-            
+            // Notification
             if (Notification.permission === 'granted') {
                 new Notification('⏱️ ATLAS Pomodoro সম্পন্ন!', {
                     body: `"${pomoCurrentTask}" — টাইম শেষ! বিরতি নিন।`,
@@ -2582,69 +2041,6 @@ function pomoStart() {
     }, 1000);
 }
 
-function askTaskCompletionQuestion() {
-    // Use existing confirm dialog as custom modal
-    const modal = document.getElementById('confirmDialog');
-    if (modal) {
-        document.getElementById('confirmTitle').textContent = '⏱️ Pomodoro Complete';
-        document.getElementById('confirmMsg').textContent = `"${pomoCurrentTask || 'টাস্ক'}" কাজটি কি সম্পন্ন করেছেন?`;
-        document.getElementById('confirmOkBtn').textContent = '✅ হ্যাঁ, সম্পন্ন';
-        
-        const okBtn = document.getElementById('confirmOkBtn');
-        const cancelBtn = modal.querySelector('.btn-outline');
-        
-        const originalOkClick = okBtn.onclick;
-        const originalCancelClick = cancelBtn?.onclick;
-        
-        okBtn.onclick = () => {
-            if (pomoSessions && pomoSessions.length > 0) {
-                pomoSessions[0].completed = true;
-                pomoSessions[0].userResponse = 'yes';
-                localStorage.setItem('pomo_sessions_' + (currentUser?.phone || ''), JSON.stringify(pomoSessions));
-                if (typeof renderPomoHistory === 'function') renderPomoHistory();
-                if (typeof renderPomoSuccessGraph === 'function') renderPomoSuccessGraph();
-                showToast('✅ অসাধারণ! কাজটি সম্পন্ন হয়েছে! 🎉');
-            }
-            modal.classList.remove('active');
-            okBtn.onclick = originalOkClick;
-            if (cancelBtn) cancelBtn.onclick = originalCancelClick;
-        };
-        
-        if (cancelBtn) {
-            cancelBtn.onclick = () => {
-                if (pomoSessions && pomoSessions.length > 0) {
-                    pomoSessions[0].completed = false;
-                    pomoSessions[0].userResponse = 'no';
-                    localStorage.setItem('pomo_sessions_' + (currentUser?.phone || ''), JSON.stringify(pomoSessions));
-                    if (typeof renderPomoHistory === 'function') renderPomoHistory();
-                    if (typeof renderPomoSuccessGraph === 'function') renderPomoSuccessGraph();
-                    showToast('⏳ পরবর্তী সেশনে আবার চেষ্টা করুন! 💪');
-                }
-                modal.classList.remove('active');
-                cancelBtn.onclick = originalCancelClick;
-                okBtn.onclick = originalOkClick;
-            };
-        }
-        
-        modal.classList.add('active');
-    } else {
-        // Fallback to confirm
-        const answer = confirm(`"${pomoCurrentTask}" কাজটি কি সম্পন্ন করেছেন?`);
-        if (answer && pomoSessions && pomoSessions.length > 0) {
-            pomoSessions[0].completed = true;
-            pomoSessions[0].userResponse = 'yes';
-            localStorage.setItem('pomo_sessions_' + (currentUser?.phone || ''), JSON.stringify(pomoSessions));
-            showToast('✅ অসাধারণ! কাজটি সম্পন্ন হয়েছে! 🎉');
-        } else if (pomoSessions && pomoSessions.length > 0) {
-            pomoSessions[0].completed = false;
-            pomoSessions[0].userResponse = 'no';
-            localStorage.setItem('pomo_sessions_' + (currentUser?.phone || ''), JSON.stringify(pomoSessions));
-            showToast('⏳ পরবর্তী সেশনে আবার চেষ্টা করুন! 💪');
-        }
-        if (typeof renderPomoHistory === 'function') renderPomoHistory();
-        if (typeof renderPomoSuccessGraph === 'function') renderPomoSuccessGraph();
-    }
-}
 function pomoPause() {
     clearInterval(pomoInterval);
     pomoRunning = false;
@@ -2672,6 +2068,7 @@ function pomoSetPreset(mins, btn) {
     pomoTotalTime = mins * 60;
     if (document.getElementById('pomoMins')) document.getElementById('pomoMins').value = mins;
     if (document.getElementById('pomoHours')) document.getElementById('pomoHours').value = 0;
+    // Active preset styling
     document.querySelectorAll('.pomo-preset').forEach(b => b.classList.remove('active-preset'));
     if (btn) btn.classList.add('active-preset');
     updatePomoDisplay();
@@ -2690,12 +2087,6 @@ function pomoApplySetup() {
     if (task) pomoCurrentTask = task;
     document.querySelectorAll('.pomo-preset').forEach(b => b.classList.remove('active-preset'));
     updatePomoDisplay();
-    // Make task name bold in the watch
-    const taskNameEl = document.getElementById('pomoWatchTask');
-    if (taskNameEl && task) {
-        taskNameEl.style.fontWeight = 'bold';
-        taskNameEl.style.fontSize = '12px';
-    }
     showToast('✅ Pomodoro সেট হয়েছে');
 }
 
@@ -2708,46 +2099,15 @@ function renderPomoHistory() {
     }
     el.innerHTML = pomoSessions.slice(0,10).map(s => `
         <div class="pomo-history-item">
-            <span>${escHtml(s.task)||'টাস্ক'} ${s.completed ? '✅' : s.userResponse === 'no' ? '❌' : '⏳'}</span>
+            <span>${escHtml(s.task)||'টাস্ক'}</span>
             <div style="text-align:right;">
                 <div style="font-size:10px;color:var(--accent);">${formatSeconds(s.duration)}</div>
-                <div style="font-size:9px;color:var(--text2);">${toBanglaDateTime(s.completedAt)}</div>
+                <div style="font-size:9px;color:var(--text2);">${toBanglaDate(s.completedAt)}</div>
             </div>
         </div>`).join('');
 }
 
-function renderPomoSuccessGraph() {
-    const graphCard = document.getElementById('pomoGraphCard');
-    if (!graphCard) return;
-    
-    // Get last 3 days data
-    const last3Days = [];
-    for (let i = 0; i < 3; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        date.setHours(0, 0, 0, 0);
-        const sessions = pomoSessions.filter(s => {
-            const sessionDate = new Date(s.completedAt);
-            sessionDate.setHours(0, 0, 0, 0);
-            return sessionDate.getTime() === date.getTime();
-        });
-        const completed = sessions.filter(s => s.completed === true).length;
-        const total = sessions.length;
-        const rate = total > 0 ? (completed / total) * 100 : 0;
-        last3Days.unshift({ date, rate, completed, total });
-    }
-    
-    const maxRate = Math.max(...last3Days.map(d => d.rate), 1);
-    const chartHtml = last3Days.map(d => {
-        const h = Math.max(5, (d.rate / maxRate) * 60);
-        const dayLabel = d.date.toLocaleDateString('bn-BD', { weekday: 'short' });
-        return `<div class="bar-wrap"><div style="flex:1;display:flex;align-items:flex-end;"><div style="height:${h}px;background:var(--graph-green);width:100%;border-radius:4px 4px 0 0;" title="${d.rate.toFixed(0)}% (${d.completed}/${d.total})"></div></div><div class="bar-label">${dayLabel}</div></div>`;
-    }).join('');
-    
-    graphCard.style.display = 'block';
-    document.getElementById('pomoSuccessChart').innerHTML = chartHtml || '<div style="text-align:center;">কোনো ডাটা নেই</div>';
-}
-
+// Profile live card — shows when pomo is running
 function renderPomoInProfile() {
     const el = document.getElementById('pomoActiveInProfile');
     if (!el) return;
@@ -2756,7 +2116,7 @@ function renderPomoInProfile() {
         <div class="pomo-watch-face">
             <div class="pomo-watch-label">ATLAS Pomodoro Watch</div>
             <div class="pomo-watch-time">${formatSeconds(pomoTimeLeft)}</div>
-            <div class="pomo-task-name-profile" style="font-weight:bold;">${escHtml(pomoCurrentTask) || 'পড়াশোনা চলছে...'}</div>
+            <div class="pomo-task-name-profile">${escHtml(pomoCurrentTask) || 'পড়াশোনা চলছে...'}</div>
         </div>
         <div style="display:flex;gap:6px;margin-top:10px;justify-content:center;">
             ${pomoRunning
@@ -2769,7 +2129,7 @@ function renderPomoInProfile() {
 }
 
 /* ======================================================
-   EXAM HISTORY
+   EXAM HISTORY — FIX #5: বিস্তারিত, আবার দাও, প্রশ্ন দেখো all work
 ====================================================== */
 async function loadHistory() {
     const list = document.getElementById('historyList');
@@ -2817,10 +2177,11 @@ function buildHistoryCard(r) {
         <div class="card-item-row"><span>✅ সঠিক</span><span style="color:var(--green);font-weight:700;">${r.correct||0}</span></div>
         <div class="card-item-row"><span>❌ ভুল</span><span style="color:var(--red);font-weight:700;">${r.wrong||0}</span></div>
         <div class="card-item-row" style="border-bottom:none;"><span>⏭️ স্কিপ</span><span style="color:var(--yellow);font-weight:700;">${r.skipped||0}</span></div>
-        <div class="card-item-sub" style="margin-top:4px;">📅 ${toBanglaDateTime(r.submitted_at)}</div>
+        <div class="card-item-sub" style="margin-top:4px;">📅 ${toBanglaDate(r.submitted_at)}</div>
         <div class="btn-row">
+            <!-- FIX #5: all 3 buttons work instantly -->
             <button class="btn btn-outline" onclick="viewDetails('${r.id}','${r.exam_id}')">📋 বিস্তারিত</button>
-            <button class="btn btn-primary" onclick="retakeExam('${r.exam_id}')">🔄 আবার এক্সাম দাও</button>
+            <button class="btn btn-primary" onclick="retakeExam('${r.exam_id}')">🔄 আবার দাও</button>
             <button class="btn btn-outline" onclick="viewQuestions('${r.exam_id}')">📝 প্রশ্ন দেখো</button>
             <button class="btn btn-danger" onclick="deleteHistory('${r.id}')">🗑️</button>
         </div>
@@ -2842,9 +2203,8 @@ async function viewQuestions(examId) {
                 const isCorrect = (j+1) === parseInt(q.answer_index||1);
                 return `<li class="option-item ${isCorrect?'correct':''}"><span class="option-key">${optBn[j]}</span>${escHtml(opt)}${isCorrect?' ✅':''}</li>`;
             }).join('');
-            const imageHtml = q.image_url ? `<img class="question-img" src="${escHtml(q.image_url)}" loading="lazy" onerror="this.style.display='none'">` : '';
             return `<div class="question-card"><div class="question-text">${i+1}. ${escHtml(q.question_text||q.question||'')}</div>
-                ${imageHtml}
+                ${q.image_url?`<img class="question-img" src="${escHtml(q.image_url)}" loading="lazy">`:''}
                 <ul class="options-list">${optsHtml}</ul>
                 ${q.explanation?`<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>`:''}
             </div>`;
@@ -2860,6 +2220,9 @@ async function deleteHistory(resultId) {
     });
 }
 
+/* ======================================================
+   EXAM DETAIL MODAL — FIX #5: Instant
+====================================================== */
 async function viewDetails(resultId, examId) {
     const modal = document.getElementById('detailModal');
     const content = document.getElementById('detailModalContent');
@@ -2902,7 +2265,7 @@ function renderDetailModal(result, questions, answers, examName, score, total) {
         html += `<p style="text-align:center;color:var(--text2);padding:10px;">প্রশ্ন পাওয়া যাচ্ছে না</p>`;
     }
     html += `<div class="modal-close-strip"><div class="btn-row">
-        <button class="btn btn-primary" onclick="retakeExam('${result.exam_id}')" style="flex:1;">🔄 আবার এক্সাম দাও</button>
+        <button class="btn btn-primary" onclick="retakeExam('${result.exam_id}')" style="flex:1;">🔄 আবার দাও</button>
         <button class="btn btn-outline" onclick="document.getElementById('detailModal').classList.remove('active')" style="flex:1;">✕ বন্ধ</button>
     </div></div>`;
     content.innerHTML = html;
@@ -2941,13 +2304,12 @@ function buildQuestionsHtml(questions, answers, filter) {
             return `<li class="option-item ${isCorrect?'correct':isUserWrong?'wrong':''}"><span class="option-key">${optBn[i]}</span>${escHtml(opt)} ${isCorrect?'✅':''} ${isUserWrong?'❌':''}</li>`;
         }).join('');
         const qId = q.id||'';
-        const imageHtml = q.image_url ? `<img class="question-img" src="${escHtml(q.image_url)}" loading="lazy" onerror="this.style.display='none'">` : '';
         return `<div class="question-card">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
                 <span class="q-status ${status}">${statusLabel}</span>
                 <button class="report-btn" onclick="reportQuestion('${qId}')">🚩 রিপোর্ট</button>
             </div>
-            ${imageHtml}
+            ${q.image_url?`<img class="question-img" src="${escHtml(q.image_url)}" loading="lazy">`:''}
             <div class="question-text">${escHtml(q.question_text||q.question||'')}</div>
             <ul class="options-list">${optsHtml}</ul>
             ${q.explanation?`<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>`:''}
@@ -2958,7 +2320,7 @@ function buildQuestionsHtml(questions, answers, filter) {
 }
 
 /* ======================================================
-   CLASS HISTORY
+   CLASS HISTORY — FIX #9: Filter buttons as type/subject
 ====================================================== */
 function loadClassHistory() {
     const saved = localStorage.getItem('class_history_' + currentUser.phone);
@@ -2967,6 +2329,7 @@ function loadClassHistory() {
     document.getElementById('countClasses').textContent = toBanglaNum(count) + ' ক্লাস';
     document.getElementById('statClasses').textContent = toBanglaNum(count);
     document.getElementById('classHistorySubtitle').textContent = `মোট ${toBanglaNum(count)}টি ক্লাস`;
+    // Build filter buttons from subjects
     const subjects = [...new Set(history.map(h=>h.subject||'').filter(Boolean))];
     const filterBar = document.getElementById('classFilterBar');
     filterBar.innerHTML = `<button class="class-filter-btn ${classActiveFilterType==='all'?'active':''}" onclick="setClassFilter('all',this)">📋 সব</button>`
@@ -3004,7 +2367,7 @@ function filterClassHistory() {
             <div class="card-item-title">📘 ${escHtml(h.subject||'—')}</div>
             <div class="card-item-row"><span>📖 চ্যাপ্টার</span><span>${escHtml(h.chapter||'—')}</span></div>
             <div class="card-item-row"><span>🎥 পার্ট</span><span>${escHtml(h.part||'—')}</span></div>
-            <div class="card-item-sub">📅 ${toBanglaDateTime(h.time)}</div>
+            <div class="card-item-sub">📅 ${toBanglaDate(h.time)}</div>
             <div class="btn-row"><button class="btn btn-primary" onclick="rewatchClass('${encodeURIComponent(h.subject||'')}','${encodeURIComponent(h.chapter||'')}','${encodeURIComponent(h.part||'')}')">▶️ Rewatch</button></div>
         </div>`).join('');
 }
@@ -3033,21 +2396,19 @@ function loadBookmarks() {
             return `<li class="option-item ${isCorrect?'correct':''}"><span class="option-key">${optBn[i]}</span>${escHtml(opt)} ${isCorrect?'✅':''}</li>`;
         }).join('');
         const qText = escHtml(q.question_text||q.question||`প্রশ্ন #${qid}`);
-        const imageHtml = q.image_url ? `<img class="question-img" src="${escHtml(q.image_url)}" loading="lazy" onerror="this.style.display='none'">` : '';
         return `<div class="card-item bookmark-card">
             <div style="margin-bottom:6px;">${bm.exam_name?`<span class="meta-chip">📝 ${escHtml(bm.exam_name)}</span>`:''} ${q.subject?`<span class="meta-chip">📘 ${escHtml(q.subject)}</span>`:''}</div>
-            ${imageHtml}
+            ${q.image_url?`<img class="question-img" src="${escHtml(q.image_url)}" loading="lazy">`:''}
             <div class="question-text">${qText}</div>
             ${optsHtml?`<ul class="options-list">${optsHtml}</ul>`:''}
             ${q.explanation?`<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>`:''}
             <button class="ai-explain-btn" onclick="loadAiExplain(this,'${qid}','${qText.replace(/'/g,"\\'").replace(/"/g,'\\"').slice(0,120)}')">🤖 ATLAS AI ব্যাখ্যা দেখুন</button>
             <div class="ai-explain-result" style="display:none;"></div>
-            <div class="card-item-sub" style="margin-top:6px;">📅 ${toBanglaDateTime(bm.bookmarked_at)}</div>
+            <div class="card-item-sub" style="margin-top:6px;">📅 ${toBanglaDate(bm.bookmarked_at)}</div>
             <div class="btn-row"><button class="btn btn-danger" onclick="removeBookmark('${qid}')">🗑️ রিমুভ</button></div>
         </div>`;
     }).join('');
 }
-
 function removeBookmark(qid) {
     const saved = localStorage.getItem('bookmarks_' + currentUser.phone);
     const bookmarks = saved ? JSON.parse(saved) : {};
@@ -3077,16 +2438,14 @@ async function loadNotifications() {
                 </div>
                 <div class="card-item-sub" style="margin-top:3px;">${escHtml(n.message||'')}</div>
                 ${n.admin_response?`<div class="admin-response">👑 ${escHtml(n.admin_response)}</div>`:''}
-                <div style="font-size:10px;color:var(--text2);margin-top:6px;">📅 ${toBanglaDateTime(n.created_at)}</div>
+                <div style="font-size:10px;color:var(--text2);margin-top:6px;">📅 ${toBanglaDate(n.created_at)}</div>
             </div>`;
         }).join('');
     } catch(e) { list.innerHTML = `<div class="empty-state"><span class="empty-state-icon">⚠️</span><div class="empty-state-text">লোড করতে সমস্যা</div></div>`; }
 }
-
 async function markNotifRead(id) {
     try { await safeFetch(`${SUPABASE_URL}/rest/v1/notifications?id=eq.${id}`, { method:'PATCH', body:JSON.stringify({is_read:true}) }); loadNotifications(); } catch(e){}
 }
-
 async function deleteNotif(id) {
     showConfirm('ডিলিট','নোটিফিকেশন মুছে ফেলবেন?','🗑️ ডিলিট', async () => {
         await safeFetch(`${SUPABASE_URL}/rest/v1/notifications?id=eq.${id}`, { method:'DELETE' }); loadNotifications();
@@ -3094,7 +2453,7 @@ async function deleteNotif(id) {
 }
 
 /* ======================================================
-   PRACTICE EXAM ENGINE
+   PRACTICE EXAM ENGINE — FIX #6 exam.html style
 ====================================================== */
 function startPracticeExam(questions, title, retryFn) {
     practiceQuestions=questions; practiceAnswers={}; practiceCurrentIdx=0;
@@ -3105,7 +2464,6 @@ function startPracticeExam(questions, title, retryFn) {
     el.classList.add('active');
     renderExamQuestion(); renderExamNavGrid(); startExamTimer();
 }
-
 function renderExamQuestion() {
     const q = practiceQuestions[practiceCurrentIdx]; if (!q) return;
     const optBn=['ক','খ','গ','ঘ','ঙ'];
@@ -3114,16 +2472,14 @@ function renderExamQuestion() {
     const total = practiceQuestions.length;
     document.getElementById('examOverlayProgress').textContent = `${practiceCurrentIdx+1} / ${total}`;
     document.getElementById('examProgressFill').style.width = ((practiceCurrentIdx+1)/total*100)+'%';
-    const imageHtml = q.image_url ? `<img class="question-img" src="${escHtml(q.image_url)}" loading="lazy" style="max-width:100%;border-radius:8px;margin-bottom:8px;">` : '';
     document.getElementById('examBody').innerHTML = `
         <div class="exam-q-card">
             <div style="font-size:10px;color:var(--text2);margin-bottom:6px;">প্রশ্ন ${practiceCurrentIdx+1} / ${total}</div>
-            ${imageHtml}
+            ${q.image_url?`<img class="question-img" src="${escHtml(q.image_url)}" loading="lazy">`:''}
             <div class="exam-q-text">${escHtml(q.question_text||q.question||'')}</div>
             ${opts.map((opt,i)=>`<div class="exam-option ${userAns===(i+1)?'selected':''}" onclick="selectExamOption(${i+1})"><span class="exam-option-key">${optBn[i]}</span><span>${escHtml(opt)}</span></div>`).join('')}
         </div>`;
 }
-
 function selectExamOption(idx) { practiceAnswers[practiceCurrentIdx]=idx; renderExamQuestion(); renderExamNavGrid(); }
 function examNav(dir) { const n=practiceCurrentIdx+dir; if(n<0||n>=practiceQuestions.length) return; practiceCurrentIdx=n; renderExamQuestion(); }
 function renderExamNavGrid() {
@@ -3169,8 +2525,7 @@ function submitPracticeExam() {
     const timerDeduction=isSecondTimer?(total<=50?1.50:3.00):0;
     const finalScore=correct-negMark-timerDeduction, withGpa=finalScore+gpaScore;
     const pct=total>0?Math.round((correct/total)*100):0;
-    
-    // Save mistakes instantly
+    // Save mistakes
     const wrongQs=reviewData.filter(r=>r.status==='wrong'||r.status==='skipped');
     if (wrongQs.length&&currentUser) {
         const savedM=localStorage.getItem('mistakes_'+currentUser.phone);
@@ -3180,10 +2535,6 @@ function submitPracticeExam() {
                 mistakes.push({question_id:r.q.id,question:r.q,user_answer:r.status==='skipped'?null:r.userAns,exam_name:practiceTitle,subject:r.q.subject||'',timestamp:new Date().toISOString()});
         });
         localStorage.setItem('mistakes_'+currentUser.phone,JSON.stringify(mistakes));
-        // Refresh mistakes if screen is open
-        if (document.getElementById('mistakesScreen').classList.contains('active')) {
-            loadMistakesFullscreen();
-        }
     }
     showResultScreen(finalScore,total,correct,wrong,skipped,pct,practiceTitle,reviewData,negMark,gpaScore,withGpa,isSecondTimer,timerDeduction);
 }
@@ -3219,9 +2570,7 @@ function buildResultReviewHtml(reviewData, filter) {
     return items.map(({q,userAns,status,correctAns})=>{
         const opts=[q.option1,q.option2,q.option3,q.option4,q.option5].filter(o=>o&&o!=='—');
         const optsHtml=opts.map((opt,i)=>{const isC=(i+1)===parseInt(correctAns);const isUW=String(userAns)===String(i+1)&&!isC;return `<li class="option-item ${isC?'correct':isUW?'wrong':''}"><span class="option-key">${optBn[i]}</span>${escHtml(opt)} ${isC?'✅':''} ${isUW?'❌':''}</li>`;}).join('');
-        const imageHtml = q.image_url ? `<img class="question-img" src="${escHtml(q.image_url)}" loading="lazy" style="max-width:100%;border-radius:8px;margin:4px 0;">` : '';
         return `<div class="question-card"><span class="q-status ${status}">${status==='correct'?'✅ সঠিক':status==='wrong'?'❌ ভুল':'⏭️ স্কিপ'}</span>
-            ${imageHtml}
             <div class="question-text" style="font-size:12px;">${escHtml(q.question_text||q.question||'')}</div>
             <ul class="options-list">${optsHtml}</ul>
             ${q.explanation?`<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>`:''}
@@ -3301,7 +2650,8 @@ async function loadWeakList() {
 }
 
 /* ======================================================
-   LEADERBOARD
+   LEADERBOARD — FIX #7 #8: user's exams only, exam-wise list,
+   "Leaderboard দেখো" button, auto update, no edit
 ====================================================== */
 function switchLbTab(tab, btn) {
     currentLbTab=tab;
@@ -3314,6 +2664,7 @@ async function loadLeaderboard(type) {
     const list=document.getElementById('leaderboardList');
     list.innerHTML='<div class="skeleton skeleton-block"></div><div class="skeleton skeleton-block"></div>';
     try {
+        // FIX #7: Only get exams this user has taken
         let userResults = examResultsCache;
         if (!userResults.length) {
             userResults = await safeFetch(`${SUPABASE_URL}/rest/v1/exam_results?phone=eq.${currentUser.phone}&select=*&order=submitted_at.desc&limit=100`);
@@ -3325,6 +2676,7 @@ async function loadLeaderboard(type) {
             return;
         }
 
+        // Get unique exam IDs
         const examIds = [...new Set(userResults.map(r=>r.exam_id).filter(Boolean))];
         let html = '';
 
@@ -3334,7 +2686,7 @@ async function loadLeaderboard(type) {
             const subject = examResult?.subject || '';
             const chapter = examResult?.chapter || '';
             const category = examResult?.category || '';
-            const examDate = examResult?.submitted_at ? toBanglaDateTime(examResult.submitted_at) : '';
+            const examDate = examResult?.submitted_at ? toBanglaDate(examResult.submitted_at) : '';
             const panelId = 'lb_panel_' + examId;
 
             html += `<div class="lb-exam-card">
@@ -3367,7 +2719,9 @@ async function toggleLbDetail(panelId, examId, btn) {
     panel.classList.add('open');
     btn.textContent = '▲ বন্ধ করুন';
     panel.innerHTML = '<div style="text-align:center;color:var(--text2);font-size:12px;padding:10px;">লোড হচ্ছে...</div>';
+    // FIX #8: Auto-fetch real-time leaderboard for this exam, no edit
     const data = await safeFetch(`${SUPABASE_URL}/rest/v1/exam_results?exam_id=eq.${examId}&select=phone,final_score,total_questions,submitted_at&order=final_score.desc&limit=20`);
+    // Get user names
     const rankEmoji=['🥇','🥈','🥉'];
     const rankClass=['gold','silver','bronze'];
     if (!data?.length) { panel.innerHTML='<div style="text-align:center;padding:10px;color:var(--text2);">কোনো ডাটা নেই</div>'; return; }
@@ -3380,7 +2734,7 @@ async function toggleLbDetail(panelId, examId, btn) {
                 <div class="lb-avatar">${isCurrent?'😊':'👤'}</div>
                 <div class="lb-info">
                     <div class="lb-name">${isCurrent?`${currentUser.name||'আপনি'} (আপনি)`:'📚 স্টুডেন্ট'}</div>
-                    <div class="lb-meta">${toBanglaDateTime(r.submitted_at)}</div>
+                    <div class="lb-meta">${toBanglaDate(r.submitted_at)}</div>
                 </div>
                 <div class="lb-score">${pct}%</div>
             </div>`;
@@ -3449,48 +2803,23 @@ function buildProfileStats(examResults) {
     document.getElementById('profileStatsRow').style.display='flex';
 }
 
-// NEW: Service Worker Registration (PWA + Offline)
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').then(reg => {
-        console.log('✅ Service Worker registered:', reg);
-    }).catch(err => {
-        console.log('❌ Service Worker registration failed:', err);
-    });
-}
-
-// NEW: Online/Offline detection
-window.addEventListener('online', () => {
-    document.getElementById('offlineStatus').classList.remove('show');
-    showToast('🌐 ইন্টারনেট সংযোগ পুনরুদ্ধার হয়েছে');
-    syncOfflineData();
-});
-
-window.addEventListener('offline', () => {
-    document.getElementById('offlineStatus').classList.add('show');
-    showToast('📡 আপনি অফলাইনে চলে গেছেন');
-});
-
-async function syncOfflineData() {
-    // Sync pending exam results from IndexedDB
-    if (window.idb && window.idb.syncPendingExams) {
-        await window.idb.syncPendingExams();
-    }
-}
-
 /* ======================================================
-   INIT
+   INIT — Flutter: main() + initState()
 ====================================================== */
 document.addEventListener('DOMContentLoaded', async () => {
     if (!checkAuth()) return;
 
+    // Theme restore
     const savedTheme=localStorage.getItem('atlas-theme');
     if (savedTheme==='light') { isDarkMode=false; document.body.classList.add('light-mode'); document.getElementById('themeBtn').textContent='☀️'; }
 
+    // Restore pomodoro sessions
     const savedSessions=localStorage.getItem('pomo_sessions_'+currentUser.phone);
-    if (savedSessions) { try { pomoSessions=JSON.parse(savedSessions); renderPomoSuccessGraph(); } catch(e){} }
+    if (savedSessions) { try { pomoSessions=JSON.parse(savedSessions); } catch(e){} }
 
     loadProfile();
 
+    // Parallel data load
     const [examResults, notifs]=await Promise.all([
         safeFetch(`${SUPABASE_URL}/rest/v1/exam_results?phone=eq.${currentUser.phone}&select=*&order=submitted_at.desc&limit=100`),
         safeFetch(`${SUPABASE_URL}/rest/v1/notifications?phone=eq.${currentUser.phone}&select=id,is_read&limit=30`)
@@ -3511,21 +2840,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         badge.style.display='flex'; badge.textContent=unread>9?'9+':unread;
     }
 
+    // Hash routing — FIX #5
     const hash=(location.hash||'').replace('#','');
     if (hash==='mistakesScreen') { openScreen('mistakesScreen'); loadMistakesFullscreen(); }
     else if (hash==='todoScreen') { openScreen('todoScreen'); renderTodoList(); startTodoCountdowns(); }
-    else if (hash==='pomoScreen') { openScreen('pomoScreen'); updatePomoDisplay(); renderPomoHistory(); renderPomoSuccessGraph(); }
+    else if (hash==='pomoScreen') { openScreen('pomoScreen'); updatePomoDisplay(); renderPomoHistory(); }
     else if (hash && ['history','classhistory','bookmarks','notifications','edit','weaklist','leaderboard'].includes(hash)) showTab(hash);
     else showTab('main');
 
+    // Notification permission
     if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
-    
-    // Check online status initially
-    if (!navigator.onLine) {
-        document.getElementById('offlineStatus').classList.add('show');
-    }
 });
 </script>
-<script src="offline-db.js"></script>
 </body>
 </html>
