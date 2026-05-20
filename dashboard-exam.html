@@ -407,7 +407,6 @@ let isDarkMode=true,isSidebarOpen=false,currentUser=null,confirmCallback=null,ex
 
 let todoTimerInterval=null;
 let mistakesAllData=[],mistakesSelectedExams=new Set(),mistakesActiveFilter='all',mistakesActiveSubject='all';
-const POMO_CIRCUMFERENCE=502.65;
 
 function showToast(m,d=2500){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
 function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeBtn').textContent=isDarkMode?'🌙':'☀️';localStorage.setItem('atlas-theme',isDarkMode?'dark':'light');}
