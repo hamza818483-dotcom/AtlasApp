@@ -910,6 +910,8 @@
             <input class="mfilter-input" id="mfSearch" placeholder="🔍 প্রশ্ন খুঁজুন..." oninput="renderMistakesGroups()">
         </div>
     </div>
+    <!-- Summary Bar -->
+    <div id="mistakesSummaryBar" style="display:none;background:var(--hover);border:1px solid var(--border);border-radius:10px;padding:10px;margin:0 12px 12px;"></div>
     <div class="fs-body" id="mistakesBody"></div>
 </div>
 
@@ -1143,18 +1145,6 @@
 </div>
 <div class="toast" id="toast"></div>
 
-<!-- Pomodoro Completion Modal -->
-<div id="pomoCompletionModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;">
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;max-width:400px;width:100%;box-shadow:var(--shadow-lg);">
-        <h3 style="font-size:18px;font-weight:800;margin-bottom:12px;text-align:center;">🎉 Pomodoro Complete!</h3>
-        <p style="font-size:14px;color:var(--text2);margin-bottom:20px;text-align:center;">আপনি কি কাজটি সফলভাবে complete করেছেন?</p>
-        <div style="display:flex;gap:12px;">
-            <button onclick="completePomoSession(true)" style="flex:1;background:var(--green);color:#fff;border:none;padding:12px;border-radius:var(--radius-sm);font-size:14px;font-weight:700;cursor:pointer;transition:0.2s;">✅ হ্যাঁ</button>
-            <button onclick="completePomoSession(false)" style="flex:1;background:var(--red);color:#fff;border:none;padding:12px;border-radius:var(--radius-sm);font-size:14px;font-weight:700;cursor:pointer;transition:0.2s;">❌ না</button>
-        </div>
-    </div>
-</div>
-
 <!-- ====================================================
      JAVASCRIPT — Flutter-style: Providers, BLoCs, Widgets
 ==================================================== -->
@@ -1297,16 +1287,8 @@ function toBanglaDate(dateStr) {
     catch(e) { return dateStr || '—'; }
 }
 function toBanglaDateTime(dateStr) {
-    try {
-        return new Date(dateStr).toLocaleString('bn-BD', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true
-        });
-    } catch(e) { return dateStr || '—'; }
+    try { return new Date(dateStr).toLocaleString('bn-BD', { year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:true }); }
+    catch(e) { return dateStr || '—'; }
 }
 function escHtml(str) {
     if (!str) return '';
@@ -1566,24 +1548,45 @@ function toggleSelectAllMistakesExams() {
 function updateMistakesSummaryBar() {
     const checkboxes = document.querySelectorAll('.mistake-exam-checkbox:checked');
     const bar = document.getElementById('mistakesSummaryBar');
-    
-    if (checkboxes.length === 0) {
-        if (bar) bar.style.display = 'none';
-        return;
-    }
-    
-    if (bar) {
-        bar.style.display = 'flex';
-        bar.innerHTML = `
-            <div style="flex:1;display:flex;align-items:center;gap:8px;">
-                <span style="font-size:13px;font-weight:600;">${checkboxes.length}টি এক্সাম সিলেক্ট করা হয়েছে</span>
-            </div>
-            <div style="display:flex;gap:6px;">
-                <button onclick="bulkPracticeMistakes()" style="background:var(--accent);color:#fff;border:none;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">📝 Practice শুরু করুন</button>
-                <button onclick="document.querySelectorAll('.mistake-exam-checkbox').forEach(cb=>cb.checked=false);updateMistakesSummaryBar();" style="background:var(--hover);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;">✖️ বাতিল</button>
-            </div>
-        `;
-    }
+    if (!bar) return;
+    if (checkboxes.length === 0) { bar.style.display = 'none'; return; }
+    bar.style.display = 'flex';
+    bar.style.justifyContent = 'space-between';
+    bar.style.alignItems = 'center';
+    bar.innerHTML = `<span style="font-size:13px;font-weight:600;">${checkboxes.length}টি এক্সাম সিলেক্ট</span>
+        <div style="display:flex;gap:6px;">
+            <button onclick="bulkPracticeMistakes()" style="background:var(--accent);color:#fff;border:none;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">📝 Practice</button>
+            <button onclick="document.querySelectorAll('.mistake-exam-checkbox').forEach(cb=>cb.checked=false);updateMistakesSummaryBar();" style="background:var(--hover);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;">✖️</button>
+        </div>`;
+}
+
+function bulkPracticeMistakes() {
+    const checkboxes = document.querySelectorAll('.mistake-exam-checkbox:checked');
+    if (checkboxes.length === 0) { showToast('❌ কোনো এক্সাম সিলেক্ট করা হয়নি',2000); return; }
+    const selectedExamIds = Array.from(checkboxes).map(cb => cb.value);
+    const allMistakes = getMistakesData();
+    const filtered = allMistakes.filter(m => selectedExamIds.includes(String(m.exam_id || (m.question && m.question.exam_id))));
+    if (filtered.length === 0) { showToast('❌ সিলেক্টেড এক্সামে কোনো ভুল নেই',2000); return; }
+    const formatted = filtered.map(m => {
+        const q = m.question || m;
+        return {
+            id: q.id || Math.random().toString(36).substr(2,9),
+            question_text: q.question_text || q.question || '',
+            question: q.question_text || q.question || '',
+            option1: q.option1 || q.options?.[0] || '',
+            option2: q.option2 || q.options?.[1] || '',
+            option3: q.option3 || q.options?.[2] || '',
+            option4: q.option4 || q.options?.[3] || '',
+            option5: q.option5 || q.options?.[4] || '—',
+            answer_index: q.answer_index || q.correct_option || q.answer,
+            correct_option: q.answer_index || q.correct_option || q.answer,
+            explanation: q.explanation || '',
+            subject: q.subject || m.subject || 'General',
+            chapter: q.chapter || m.chapter || ''
+        };
+    });
+    closeScreen('mistakesScreen');
+    startPracticeExam(formatted, `Bulk Practice (${checkboxes.length} এক্সাম)`, () => { openScreen('mistakesScreen'); loadMistakesFullscreen(); });
 }
 
 function setMType(type, btn) {
@@ -1645,7 +1648,7 @@ function renderMistakesGroups() {
 
         html += `<div class="exam-group-card">
             <div class="exam-group-header" onclick="toggleGroup('${gId}')">
-                <label onclick="event.stopPropagation();" style="display:flex;align-items:center;margin-right:8px;">
+                <label onclick="event.stopPropagation();" style="margin-right:8px;">
                     <input type="checkbox" class="mistake-exam-checkbox" value="${items[0]?.exam_id || examName}" onchange="updateMistakesSummaryBar()" style="cursor:pointer;width:16px;height:16px;">
                 </label>
                 <div class="exam-group-info">
@@ -2049,12 +2052,8 @@ function updatePomoDisplay() {
     const digitsEl = document.getElementById('pomoDigits');
     if (digitsEl) {
         digitsEl.textContent = formatSeconds(pomoTimeLeft);
-        // Warning at 60 seconds
-        if (pomoTimeLeft <= 60 && pomoRunning) {
-            digitsEl.style.color = 'var(--red)';
-        } else {
-            digitsEl.style.color = '';
-        }
+        // 60s warning
+        digitsEl.style.color = (pomoTimeLeft <= 60 && pomoRunning) ? 'var(--red)' : '';
     }
     // Task name
     const taskEl = document.getElementById('pomoWatchTask');
@@ -2065,12 +2064,8 @@ function updatePomoDisplay() {
         const progress = pomoTotalTime > 0 ? pomoTimeLeft / pomoTotalTime : 1;
         const offset = POMO_CIRCUMFERENCE * (1 - progress);
         arc.style.strokeDashoffset = offset;
-        // Warning glow at 60 seconds
-        if (pomoTimeLeft <= 60 && pomoRunning) {
-            arc.style.filter = 'drop-shadow(0 0 8px var(--red))';
-        } else {
-            arc.style.filter = '';
-        }
+        // 60s warning glow
+        arc.style.filter = (pomoTimeLeft <= 60 && pomoRunning) ? 'drop-shadow(0 0 8px var(--red))' : '';
     }
     // Play button icon
     const playBtn = document.getElementById('pomoPlayBtn');
@@ -2107,7 +2102,7 @@ function pomoStart() {
             clearInterval(pomoInterval);
             pomoRunning = false;
             updatePomoDisplay();
-            // Show completion modal instead of auto-save
+            // Show completion modal
             document.getElementById('pomoCompletionModal').style.display = 'flex';
             // Notification
             if (Notification.permission === 'granted') {
@@ -2119,52 +2114,6 @@ function pomoStart() {
             return;
         }
         pomoTimeLeft--;
-        updatePomoDisplay();
-    }, 1000);
-}
-
-function completePomoSession(success) {
-    // Close modal
-    document.getElementById('pomoCompletionModal').style.display = 'none';
-    
-    // Save session with success flag
-    const session = {
-        task: pomoCurrentTask,
-        duration: pomoTotalTime,
-        completedAt: new Date().toISOString(),
-        success: success
-    };
-    
-    pomoSessions.unshift(session);
-    if (pomoSessions.length > 20) pomoSessions.pop();
-    localStorage.setItem('pomo_sessions_' + currentUser?.phone, JSON.stringify(pomoSessions));
-    
-    // Update streak
-    const today = new Date().toISOString().split('T')[0];
-    let pomoStats = {};
-    try {
-        pomoStats = JSON.parse(localStorage.getItem('pomo_stats_' + currentUser?.phone)) || { streak: 0, dailyStats: {} };
-    } catch(e) {}
-    
-    if (!pomoStats.dailyStats) pomoStats.dailyStats = {};
-    if (!pomoStats.dailyStats[today]) pomoStats.dailyStats[today] = { total: 0, completed: 0 };
-    
-    pomoStats.dailyStats[today].total++;
-    
-    if (success) {
-        pomoStats.dailyStats[today].completed++;
-        pomoStats.streak = (pomoStats.streak || 0) + 1;
-        showToast('✅ সফল সেশন! স্ট্রিক: ' + pomoStats.streak, 3000);
-    } else {
-        pomoStats.streak = 0;
-        showToast('❌ সেশন সম্পূর্ণ হয়নি', 3000);
-    }
-    
-    localStorage.setItem('pomo_stats_' + currentUser?.phone, JSON.stringify(pomoStats));
-    
-    renderPomoHistory();
-    renderPomoSuccessGraph();
-}
         updatePomoDisplay();
     }, 1000);
 }
@@ -2227,7 +2176,7 @@ function renderPomoHistory() {
     }
     el.innerHTML = pomoSessions.slice(0,10).map(s => `
         <div class="pomo-history-item">
-            <span>${s.success ? '✅' : '❌'} ${escHtml(s.task)||'টাস্ক'}</span>
+            <span>${s.success ? '✅' : s.success === false ? '❌' : '⏱️'} ${escHtml(s.task)||'টাস্ক'}</span>
             <div style="text-align:right;">
                 <div style="font-size:10px;color:var(--accent);">${formatSeconds(s.duration)}</div>
                 <div style="font-size:9px;color:var(--text2);">${toBanglaDate(s.completedAt)}</div>
@@ -2235,66 +2184,57 @@ function renderPomoHistory() {
         </div>`).join('');
 }
 
-function renderPomoSuccessGraph() {
-    // Get last 3 days stats
-    const today = new Date();
-    const last3Days = [];
-    
+function completePomoSession(success) {
+    document.getElementById('pomoCompletionModal').style.display = 'none';
+    const session = { task: pomoCurrentTask, duration: pomoTotalTime, completedAt: new Date().toISOString(), success: success };
+    pomoSessions.unshift(session);
+    if (pomoSessions.length > 20) pomoSessions.pop();
+    localStorage.setItem('pomo_sessions_' + currentUser?.phone, JSON.stringify(pomoSessions));
+    const today = new Date().toISOString().split('T')[0];
     let pomoStats = {};
-    try {
-        pomoStats = JSON.parse(localStorage.getItem('pomo_stats_' + currentUser?.phone)) || { dailyStats: {} };
-    } catch(e) {}
-    
+    try { pomoStats = JSON.parse(localStorage.getItem('pomo_stats_' + currentUser?.phone)) || { streak: 0, dailyStats: {} }; } catch(e) {}
     if (!pomoStats.dailyStats) pomoStats.dailyStats = {};
-    
+    if (!pomoStats.dailyStats[today]) pomoStats.dailyStats[today] = { total: 0, completed: 0 };
+    pomoStats.dailyStats[today].total++;
+    if (success) { pomoStats.dailyStats[today].completed++; pomoStats.streak = (pomoStats.streak || 0) + 1; showToast('✅ সফল! স্ট্রিক: ' + pomoStats.streak, 3000); }
+    else { pomoStats.streak = 0; showToast('❌ সম্পূর্ণ হয়নি', 2000); }
+    localStorage.setItem('pomo_stats_' + currentUser?.phone, JSON.stringify(pomoStats));
+    renderPomoHistory();
+    renderPomoSuccessGraph();
+}
+
+function renderPomoSuccessGraph() {
+    const today = new Date(); const last3Days = [];
+    let pomoStats = {}; try { pomoStats = JSON.parse(localStorage.getItem('pomo_stats_' + currentUser?.phone)) || { dailyStats: {} }; } catch(e) {}
+    if (!pomoStats.dailyStats) pomoStats.dailyStats = {};
     for (let i = 2; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
+        const date = new Date(today); date.setDate(date.getDate() - i);
         const key = date.toISOString().split('T')[0];
         const stats = pomoStats.dailyStats[key] || { total: 0, completed: 0 };
         const rate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
         last3Days.push({ date: key, rate: rate, label: i === 0 ? 'আজ' : i === 1 ? 'গতকাল' : '২ দিন আগে' });
     }
-    
-    // If no data, don't show
     const hasData = last3Days.some(d => d.rate > 0);
     const graphEl = document.getElementById('pomoSuccessGraphCard');
-    if (graphEl) {
-        if (!hasData) {
-            graphEl.style.display = 'none';
-            return;
-        }
-        graphEl.style.display = 'block';
-    }
-    
-    // Build chart if element exists
+    if (graphEl) graphEl.style.display = hasData ? 'block' : 'none';
     const chartEl = document.getElementById('pomoSuccessChartBars');
-    if (chartEl) {
+    if (chartEl && hasData) {
         chartEl.innerHTML = last3Days.map(d => {
             const color = d.rate >= 80 ? 'var(--green)' : d.rate >= 50 ? 'var(--yellow)' : 'var(--red)';
-            return `
-                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;">
-                    <div style="width:100%;background:${color};height:${d.rate}%;min-height:4px;border-radius:4px;"></div>
-                    <div style="font-size:10px;color:var(--text2);">${d.label}</div>
-                    <div style="font-size:12px;font-weight:700;color:${color};">${d.rate}%</div>
-                </div>
-            `;
+            return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;">
+                <div style="width:100%;background:${color};height:${d.rate}%;min-height:4px;border-radius:4px;"></div>
+                <div style="font-size:10px;color:var(--text2);">${d.label}</div>
+                <div style="font-size:12px;font-weight:700;color:${color};">${d.rate}%</div>
+            </div>`;
         }).join('');
     }
-    
-    // Stats
     const rates = last3Days.map(d => d.rate);
     const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
     const bestRate = Math.max(...rates);
     const streak = pomoStats.streak || 0;
-    
-    const avgEl = document.getElementById('pomoAvgRate');
-    const bestEl = document.getElementById('pomoBestRate');
-    const streakEl = document.getElementById('pomoStreak');
-    
-    if (avgEl) avgEl.textContent = avgRate.toFixed(0) + '%';
-    if (bestEl) bestEl.textContent = bestRate + '%';
-    if (streakEl) streakEl.textContent = streak;
+    const avgEl = document.getElementById('pomoAvgRate'); if (avgEl) avgEl.textContent = avgRate.toFixed(0) + '%';
+    const bestEl = document.getElementById('pomoBestRate'); if (bestEl) bestEl.textContent = bestRate + '%';
+    const streakEl = document.getElementById('pomoStreak'); if (streakEl) streakEl.textContent = streak;
 }
 
 // Profile live card — shows when pomo is running
@@ -2778,51 +2718,6 @@ function filterResultOverlay(filter, btn) {
 function closeResultOverlay() { document.getElementById('resultOverlay').classList.remove('active'); }
 function retryFromResult() { closeResultOverlay(); if(practiceRetryFn) practiceRetryFn(); }
 
-function bulkPracticeMistakes() {
-    const checkboxes = document.querySelectorAll('.mistake-exam-checkbox:checked');
-    if (checkboxes.length === 0) {
-        showToast('❌ কোনো এক্সাম সিলেক্ট করা হয়নি', 2000);
-        return;
-    }
-    
-    const selectedExamIds = Array.from(checkboxes).map(cb => cb.value);
-    const allMistakes = getMistakesData();
-    const filtered = allMistakes.filter(m => {
-        const examId = m.exam_id || (m.question && m.question.exam_id);
-        return selectedExamIds.includes(String(examId));
-    });
-    
-    if (filtered.length === 0) {
-        showToast('❌ সিলেক্টেড এক্সামে কোনো ভুল নেই', 2000);
-        return;
-    }
-    
-    const formatted = filtered.map(m => {
-        const q = m.question || m;
-        return {
-            id: q.id || Math.random().toString(36).substr(2, 9),
-            question_text: q.question_text || q.question || '',
-            question: q.question_text || q.question || '',
-            option1: q.option1 || q.options?.[0] || '',
-            option2: q.option2 || q.options?.[1] || '',
-            option3: q.option3 || q.options?.[2] || '',
-            option4: q.option4 || q.options?.[3] || '',
-            option5: q.option5 || q.options?.[4] || '—',
-            answer_index: q.answer_index || q.correct_option || q.answer,
-            correct_option: q.answer_index || q.correct_option || q.answer,
-            explanation: q.explanation || '',
-            subject: q.subject || m.subject || 'General',
-            chapter: q.chapter || m.chapter || ''
-        };
-    });
-    
-    closeScreen('mistakesScreen');
-    startPracticeExam(formatted, `Bulk Practice (${checkboxes.length} এক্সাম)`, () => {
-        openScreen('mistakesScreen');
-        loadMistakesFullscreen();
-    });
-}
-
 function startMistakePractice(mode) {
     const mistakes = getMistakesData().filter(m=>{const q=m.question||m;return q&&(q.question_text||q.question||q.option1);});
     let filtered = mode==='wrong' ? mistakes.filter(m=>getMistakeStatus(m)==='wrong') : mistakes.filter(m=>['wrong','skipped'].includes(getMistakeStatus(m)));
@@ -3079,13 +2974,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     const hash=(location.hash||'').replace('#','');
     if (hash==='mistakesScreen') { openScreen('mistakesScreen'); loadMistakesFullscreen(); }
     else if (hash==='todoScreen') { openScreen('todoScreen'); renderTodoList(); startTodoCountdowns(); }
-    else if (hash==='pomoScreen') { openScreen('pomoScreen'); updatePomoDisplay(); renderPomoHistory(); }
+    else if (hash==='pomoScreen') { openScreen('pomoScreen'); updatePomoDisplay(); renderPomoHistory(); renderPomoSuccessGraph(); }
     else if (hash && ['history','classhistory','bookmarks','notifications','edit','weaklist','leaderboard'].includes(hash)) showTab(hash);
     else showTab('main');
+    
+    // Initialize success graph on main tab
+    renderPomoSuccessGraph();
 
     // Notification permission
     if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
 });
 </script>
+
+<!-- Pomodoro Completion Modal -->
+<div id="pomoCompletionModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;max-width:400px;width:100%;box-shadow:var(--shadow-lg);">
+        <h3 style="font-size:18px;font-weight:800;margin-bottom:12px;text-align:center;">🎉 Pomodoro Complete!</h3>
+        <p style="font-size:14px;color:var(--text2);margin-bottom:20px;text-align:center;">আপনি কি কাজটি সফলভাবে complete করেছেন?</p>
+        <div style="display:flex;gap:12px;">
+            <button onclick="completePomoSession(true)" style="flex:1;background:var(--green);color:#fff;border:none;padding:12px;border-radius:var(--radius-sm);font-size:14px;font-weight:700;cursor:pointer;">✅ হ্যাঁ</button>
+            <button onclick="completePomoSession(false)" style="flex:1;background:var(--red);color:#fff;border:none;padding:12px;border-radius:var(--radius-sm);font-size:14px;font-weight:700;cursor:pointer;">❌ না</button>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>
