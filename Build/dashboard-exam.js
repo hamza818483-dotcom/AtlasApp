@@ -317,5 +317,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else if (hash.startsWith('mistakeDetail&data=')) {
         try { const d = JSON.parse(decodeURIComponent(hash.replace('mistakeDetail&data=', ''))); startPracticeExam(d.questions, d.title, () => { }); } catch (e) { showToast('❌ মিস্টেক ডাটা লোড করা যায়নি'); }
     }
-    if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+    if ('Notification' in window && Notification.permission === 'default') 
+   // ✅ ফাইলের শেষ লাইন হবে:
+if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
 });
+
+// ❌ এরপর আর কিছু থাকবে না!
