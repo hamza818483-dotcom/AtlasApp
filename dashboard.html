@@ -444,16 +444,27 @@ let currentSubjectFilter = null;
    AUTH
 ====================================================== */
 function checkAuth() {
-    const phone = localStorage.getItem('atlas-phone');
-    const name = localStorage.getItem('atlas-name');
-    if (!phone) { window.location.href = 'index.html'; return false; }
-    currentUser = { phone, name: name || 'User' };
-    return true;
+    try {
+        const sess = JSON.parse(localStorage.getItem('atlas-session'));
+        if (!sess || !sess.phone) { window.location.href = 'index.html'; return false; }
+        currentUser = {
+            phone: sess.phone,
+            name: sess.name || 'User',
+            batch: sess.batch || '',
+            college: sess.college || '',
+            role: sess.role || '',
+            timer_type: sess.timer_type || ''
+        };
+        return true;
+    } catch(e) {
+        window.location.href = 'index.html';
+        return false;
+    }
 }
 
 function logout() {
     if (confirm('লগ আউট করতে চান?')) {
-        localStorage.clear();
+        localStorage.removeItem('atlas-session');
         window.location.href = 'index.html';
     }
 }
@@ -530,31 +541,31 @@ function closeModal(id) {
 function loadProfile() {
     document.getElementById('profileName').textContent = currentUser.name || 'User';
     document.getElementById('profilePhone').textContent = currentUser.phone || '—';
-    document.getElementById('profileAvatar').textContent = (currentUser.name || 'U')[0].toUpperCase();
-    
-    const board = localStorage.getItem('atlas-board') || '';
-    const target = localStorage.getItem('atlas-target') || '';
-    
-    if (board || target) {
-        document.getElementById('editBoard').value = board;
-        document.getElementById('editTarget').value = target;
-    }
+    const initial = (currentUser.name || 'U')[0].toUpperCase();
+    document.getElementById('profileAvatar').textContent = initial;
+
+    try {
+        const sess = JSON.parse(localStorage.getItem('atlas-session')) || {};
+        if (document.getElementById('editName')) document.getElementById('editName').value = sess.name || '';
+        if (document.getElementById('editBoard')) document.getElementById('editBoard').value = sess.board || sess.batch || '';
+        if (document.getElementById('editTarget')) document.getElementById('editTarget').value = sess.target || sess.college || '';
+    } catch(e) {}
 }
 
 async function saveProfile() {
     const name = document.getElementById('editName').value.trim();
     const board = document.getElementById('editBoard').value;
     const target = document.getElementById('editTarget').value.trim();
-    
-    if (name) {
-        localStorage.setItem('atlas-name', name);
-        currentUser.name = name;
-        loadProfile();
-    }
-    
-    if (board) localStorage.setItem('atlas-board', board);
-    if (target) localStorage.setItem('atlas-target', target);
-    
+
+    try {
+        const sess = JSON.parse(localStorage.getItem('atlas-session')) || {};
+        if (name) { sess.name = name; currentUser.name = name; }
+        if (board) sess.board = board;
+        if (target) sess.target = target;
+        localStorage.setItem('atlas-session', JSON.stringify(sess));
+    } catch(e) {}
+
+    loadProfile();
     showToast('✅ সেভ হয়েছে!');
     showTab('main');
 }
@@ -868,44 +879,44 @@ async function loadLeaderboard() {
 ====================================================== */
 async function loadMistakesFullscreen() {
     mistakesData = [];
-    
-    if (!examResultsCache.length) {
+
+    // Fetch fresh from Supabase with correct fields
+    const results = await safeFetch(`${SUPABASE_URL}/rest/v1/exam_results?phone=eq.${currentUser.phone}&select=*&order=submitted_at.desc&limit=100`);
+    const data = results || examResultsCache;
+
+    if (!data.length) {
         document.getElementById('mistakeEmptyState').style.display = 'block';
         document.getElementById('mistakeExamList').innerHTML = '';
         document.getElementById('mistakeSubjectBoxes').innerHTML = '';
         return;
     }
-    
-    // Build mistakes data from exam results
-    for (const result of examResultsCache) {
-        if (result.answers) {
-            try {
-                const answers = JSON.parse(result.answers);
-                const mistakes = answers.filter(a => a.status === 'wrong' || a.status === 'skipped');
-                if (mistakes.length > 0) {
-                    mistakesData.push({
-                        exam_id: result.exam_id,
-                        exam_name: result.exam_name,
-                        category: result.exam_category || 'MEDICAL',
-                        subject: result.exam_subject || 'General',
-                        mistakes: mistakes,
-                        total_mistakes: mistakes.filter(a => a.status === 'wrong').length,
-                        total_skipped: mistakes.filter(a => a.status === 'skipped').length
-                    });
-                }
-            } catch (e) {}
+
+    data.forEach(result => {
+        // exam.html saves: correct, wrong, skipped (numbers), not full answers array
+        const wrongCount = parseInt(result.wrong) || 0;
+        const skippedCount = parseInt(result.skipped) || 0;
+
+        if (wrongCount > 0 || skippedCount > 0) {
+            mistakesData.push({
+                exam_id: result.exam_id,
+                exam_name: result.exam_name || 'Unknown Exam',
+                category: result.category || result.exam_type || 'MEDICAL',
+                subject: result.subject || 'General',
+                total_mistakes: wrongCount,
+                total_skipped: skippedCount,
+                mistakes: Array(wrongCount + skippedCount).fill({})
+            });
         }
-    }
-    
+    });
+
     if (!mistakesData.length) {
         document.getElementById('mistakeEmptyState').style.display = 'block';
         document.getElementById('mistakeExamList').innerHTML = '';
         document.getElementById('mistakeSubjectBoxes').innerHTML = '';
         return;
     }
-    
+
     document.getElementById('mistakeEmptyState').style.display = 'none';
-    
     renderSubjectBoxes();
     renderMistakeExams();
 }
