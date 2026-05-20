@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATLAS APP · এক্সাম ড্যাশবোর্ড</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+Bengali:wght@400;600;700;800&family=Rajdhani:wght@500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0D1117; --card: #161B22; --hover: #1C2129; --text: #E6EDF3;
+            --text2: #8B949E; --accent: #7C83FF; --accent-hover: #9499FF;
+            --accent-light: rgba(124,131,255,0.12); --border: #30363D;
+            --shadow: 0 2px 8px rgba(0,0,0,0.3); --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.5); --glow: 0 0 0 2px rgba(124,131,255,0.18);
+            --radius: 14px; --radius-sm: 10px;
+            --red: #F85149; --green: #3FB950; --yellow: #D29922; --blue: #58A6FF;
+            --gold: #FFD700; --silver: #C0C0C0; --bronze: #CD7F32;
+            --graph-green: rgba(63,185,80,0.85); --graph-yellow: rgba(210,153,34,0.85);
+            --graph-red: rgba(248,81,73,0.85); --graph-blue: rgba(88,166,255,0.7);
+        }
+        body.light-mode {
+            --bg: #F6F8FA; --card: #FFFFFF; --hover: #F0F2F5; --text: #1C2129;
+            --text2: #57606A; --border: #D0D7DE;
+            --shadow: 0 2px 8px rgba(0,0,0,0.08); --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family:'Noto Sans Bengali','Rajdhani',system-ui,sans-serif;
+            background:var(--bg); color:var(--text);
+            min-height:100vh; padding:70px 0 70px;
+            -webkit-font-smoothing:antialiased; transition:background 0.3s,color 0.3s;
+        }
+        .header { position:fixed;top:0;left:0;right:0;height:56px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 14px;z-index:100;backdrop-filter:blur(10px); }
+        .header-left { display:flex;align-items:center;gap:10px; }
+        .hamburger { background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:6px;border-radius:8px;transition:background 0.2s; }
+        .hamburger:hover { background:var(--hover); }
+        .atlas-brand-box { display:flex;align-items:center;gap:8px; }
+        .atlas-logo-img { width:28px;height:28px;border-radius:6px; }
+        .atlas-brand-text { font-size:18px;font-weight:800;letter-spacing:-0.5px;background:linear-gradient(135deg,#7C83FF 0%,#58A6FF 50%,#7C83FF 100%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:brandShift 4s linear infinite; }
+        @keyframes brandShift { 0%{background-position:0%}100%{background-position:200%} }
+        .header-right { display:flex;gap:6px; }
+        .header-icon { background:var(--card);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:0.2s; }
+        .header-icon:hover { border-color:var(--accent);box-shadow:var(--glow); }
+        .dash-container { max-width:580px;margin:0 auto;padding:12px 14px 20px; }
+        .graph-card { background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px;box-shadow:var(--shadow); }
+        .graph-title { font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:6px; }
+        .graph-title-badge { font-size:9px;background:rgba(124,131,255,0.15);color:var(--accent);padding:2px 6px;border-radius:10px;font-weight:600; }
+        .bar-chart { display:flex;align-items:flex-end;gap:3px;height:90px;width:100%;padding-bottom:4px; }
+        .bar-wrap { flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%; }
+        .bar-label { font-size:7px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:32px;text-align:center; }
+        .bar { width:100%;border-radius:4px 4px 0 0;transition:height 0.8s cubic-bezier(.4,0,.2,1);position:relative;min-height:4px;cursor:pointer; }
+        .bar::after { content:attr(data-score);position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:8px;font-weight:700;color:var(--text);background:var(--bg);padding:1px 3px;border-radius:3px;opacity:0;transition:0.2s;white-space:nowrap; }
+        .bar:hover::after { opacity:1; }
+        .bar.high { background:var(--graph-green); } .bar.mid { background:var(--graph-yellow); } .bar.low { background:var(--graph-red); }
+        .graph-stats { display:flex;justify-content:space-around;margin-top:12px;padding-top:10px;border-top:1px solid var(--border); }
+        .graph-stat { text-align:center; }
+        .graph-stat-val { font-size:15px;font-weight:800;color:var(--accent); }
+        .graph-stat-lbl { font-size:9px;color:var(--text2);margin-top:1px; }
+        .graph-legend { display:flex;gap:10px;margin-top:8px;flex-wrap:wrap; }
+        .legend-item { display:flex;align-items:center;gap:4px;font-size:9px;color:var(--text2); }
+        .legend-dot { width:8px;height:8px;border-radius:2px; }
+        .back-btn { background:none;border:1px solid var(--border);color:var(--text2);padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;margin-bottom:10px;font-family:inherit;transition:0.2s; }
+        .back-btn:hover { border-color:var(--accent);color:var(--text); }
+        .section-header { background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:10px;text-align:center; }
+        .section-title { color:var(--accent);font-size:15px;font-weight:700; }
+        .section-sub { font-size:10px;color:var(--text2);margin-top:2px; }
+        .card-item { background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow); }
+        .card-item-title { font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px; }
+        .card-item-sub { font-size:11px;color:var(--text2);margin-top:3px; }
+        .card-item-row { display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px;border-bottom:1px solid var(--border); }
+        .card-item-row:last-child { border-bottom:none; }
+        .btn { display:inline-block;padding:8px 14px;border-radius:var(--radius-sm);font-weight:600;cursor:pointer;border:none;font-size:11px;transition:0.2s;font-family:inherit;text-align:center; }
+        .btn-outline { background:transparent;border:1px solid var(--border);color:var(--text2); }
+        .btn-outline:hover { border-color:var(--accent);color:var(--text); }
+        .btn-primary { background:var(--accent);color:#fff; }
+        .btn-primary:hover { background:var(--accent-hover); }
+        .btn-danger { background:var(--red);color:#fff; }
+        .btn-row { display:flex;gap:6px;margin-top:8px;flex-wrap:wrap; }
+        .filter-row { display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap; }
+        .filter-row select, .filter-row input { padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:11px;font-family:inherit;flex:1; }
+        .score-badge { padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700; }
+        .score-high { background:rgba(63,185,80,0.15);color:var(--green); }
+        .score-mid { background:rgba(210,153,34,0.15);color:var(--yellow); }
+        .score-low { background:rgba(248,81,73,0.15);color:var(--red); }
+        .empty-state { text-align:center;padding:40px 20px;color:var(--text2); }
+        .empty-state-icon { font-size:40px;margin-bottom:8px;display:block; }
+        .empty-state-text { font-size:13px; }
+        .skeleton { background:linear-gradient(90deg,var(--hover) 25%,var(--card) 50%,var(--hover) 75%);background-size:200% 100%;animation:shimmer 1.2s infinite;border-radius:6px; }
+        @keyframes shimmer { from{background-position:200% 0;}to{background-position:-200% 0;} }
+        .skeleton-block { height:80px;margin-bottom:8px;border-radius:var(--radius-sm); }
+        .question-card { background:var(--hover);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px; }
+        .question-text { font-size:13px;color:var(--text);font-weight:600;line-height:1.5;margin-bottom:8px; }
+        .question-img { width:100%;border-radius:6px;margin-bottom:8px;max-height:180px;object-fit:contain; }
+        .options-list { list-style:none;display:flex;flex-direction:column;gap:5px; }
+        .option-item { padding:8px 10px;border-radius:6px;font-size:12px;border:1px solid var(--border);color:var(--text2);display:flex;align-items:center;gap:6px; }
+        .option-item.correct { background:rgba(63,185,80,0.12);border-color:var(--green);color:var(--green); }
+        .option-item.wrong { background:rgba(248,81,73,0.12);border-color:var(--red);color:var(--red); }
+        .option-key { font-weight:800;min-width:16px; }
+        .explanation-box { background:rgba(88,166,255,0.08);border:1px solid rgba(88,166,255,0.2);border-radius:6px;padding:8px 10px;margin-top:8px;font-size:11px;color:var(--blue);line-height:1.5; }
+        .q-status { display:inline-block;padding:2px 6px;border-radius:10px;font-size:9px;font-weight:700;margin-bottom:6px; }
+        .q-status.correct { background:rgba(63,185,80,0.15);color:var(--green); }
+        .q-status.wrong { background:rgba(248,81,73,0.15);color:var(--red); }
+        .q-status.skipped { background:rgba(210,153,34,0.15);color:var(--yellow); }
+        .q-filter-tabs { display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap; }
+        .q-filter-tab { padding:5px 10px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:none;color:var(--text2);font-family:inherit;transition:0.2s; }
+        .q-filter-tab.active { background:var(--accent);color:#fff;border-color:var(--accent); }
+        .ai-explain-btn { background:none;border:1px dashed var(--accent);color:var(--accent);padding:5px 10px;border-radius:6px;font-size:10px;cursor:pointer;font-family:inherit;margin-top:6px;width:100%;transition:0.2s; }
+        .ai-explain-btn:hover { background:rgba(124,131,255,0.1); }
+        .report-btn { background:none;border:none;color:var(--text2);font-size:11px;cursor:pointer;padding:3px 6px;border-radius:4px;transition:0.2s;font-family:inherit; }
+        .report-btn:hover { color:var(--red); }
+        .meta-chip { font-size:9px;padding:2px 6px;border-radius:10px;background:var(--hover);color:var(--text2);border:1px solid var(--border);display:inline-block;margin:1px; }
+        .modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:300;display:none;align-items:center;justify-content:center;padding:14px; }
+        .modal-overlay.active { display:flex; }
+        .modal { background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;max-width:500px;width:100%;max-height:88vh;overflow-y:auto;animation:modalSlide 0.2s; }
+        @keyframes modalSlide { from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;} }
+        .modal-title { font-size:16px;font-weight:700;color:var(--accent);margin-bottom:12px;text-align:center;padding-bottom:10px;border-bottom:1px solid var(--border); }
+        .modal-close-strip { position:sticky;bottom:0;background:var(--card);padding-top:10px;margin-top:10px;border-top:1px solid var(--border); }
+        .confirm-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:400;display:none;align-items:center;justify-content:center;padding:20px; }
+        .confirm-overlay.active { display:flex; }
+        .confirm-box { background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;max-width:320px;width:100%;text-align:center; }
+        .confirm-box h3 { font-size:15px;font-weight:700;margin-bottom:8px; }
+        .confirm-box p { font-size:12px;color:var(--text2);margin-bottom:14px; }
+        .confirm-btns { display:flex;gap:8px; }
+        .confirm-btns .btn { flex:1;padding:10px; }
+        .exam-overlay { position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;overflow:hidden;z-index:500; }
+        .exam-overlay.active { display:flex; }
+        .exam-header { background:var(--card);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0; }
+        .exam-timer { font-size:18px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums; }
+        .exam-timer.warning { color:var(--red); animation: timerBlink 0.5s infinite; }
+        @keyframes timerBlink { 50% { opacity: 0.5; } }
+        .exam-progress-bar { height:3px;background:var(--border); }
+        .exam-progress-fill { height:100%;background:var(--accent);transition:width 0.3s; }
+        .exam-body { flex:1;overflow-y:auto;padding:14px;max-width:600px;margin:0 auto;width:100%; }
+        .exam-q-card { background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px; }
+        .exam-q-text { font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px;line-height:1.6; }
+        .exam-option { display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid var(--border);margin-bottom:6px;cursor:pointer;transition:0.2s; }
+        .exam-option:hover { border-color:var(--accent);background:rgba(124,131,255,0.06); }
+        .exam-option.selected { background:rgba(124,131,255,0.15);border-color:var(--accent); }
+        .exam-option-key { font-weight:800;min-width:20px;color:var(--accent); }
+        .exam-footer { background:var(--card);border-top:1px solid var(--border);padding:12px 14px;flex-shrink:0;display:flex;gap:8px; }
+        .exam-nav-grid { display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px; }
+        .exam-nav-num { width:32px;height:32px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:0.2s; }
+        .exam-nav-num.answered { background:var(--accent);color:#fff;border-color:var(--accent); }
+        .exam-nav-num.current { border-color:var(--yellow);box-shadow:0 0 0 2px rgba(210,153,34,0.3); }
+        .result-overlay { position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;overflow-y:auto;z-index:600; }
+        .result-overlay.active { display:flex; }
+        .result-body { max-width:600px;margin:0 auto;padding:20px 14px 80px;width:100%; }
+        .result-ring { width:100px;height:100px;border-radius:50%;border:6px solid var(--border);display:flex;align-items:center;justify-content:center;flex-direction:column;margin:0 auto 16px;position:relative; }
+        .result-score { font-size:22px;font-weight:800;color:var(--text); }
+        .result-label { font-size:9px;color:var(--text2);margin-top:1px; }
+        .toast { position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--card);color:var(--text);border:1px solid var(--accent);padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:0.2s;pointer-events:none;white-space:nowrap; }
+        .toast.show { opacity:1; }
+        @media(min-width:768px){.dash-container{max-width:720px;}.exam-body{max-width:700px;}.result-body{max-width:700px;}.modal{max-width:600px;}}
+        @media(min-width:1024px){.dash-container{max-width:900px;}.exam-body{max-width:800px;}.result-body{max-width:800px;}}
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <div class="header-left">
+        <button class="hamburger" onclick="goBack()">←</button>
+        <div class="atlas-brand-box">
+            <img src="https://cdn.phototourl.com/free/2026-05-15-b45df560-6dc8-4cb7-9040-238612c8a161.png" class="atlas-logo-img" alt="ATLAS" onerror="this.style.display='none'">
+            <span class="atlas-brand-text">ATLAS APP</span>
+        </div>
+    </div>
+    <div class="header-right">
+        <button class="header-icon" onclick="toggleTheme()" id="themeBtn">🌙</button>
+    </div>
+</header>
+
+<main class="dash-container">
+    <div class="graph-card" id="examGraphCard" style="display:none;">
+        <div class="graph-title">📊 এক্সাম পারফরম্যান্স <span class="graph-title-badge" id="examGraphBadge">শেষ ১৫ দিন</span></div>
+        <div class="bar-chart" id="examBarChart"></div>
+        <div class="graph-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--graph-green)"></div>৮০%+</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--graph-yellow)"></div>৫০-৭৯%</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--graph-red)"></div>৫০% নিচে</div>
+        </div>
+        <div class="graph-stats">
+            <div class="graph-stat"><div class="graph-stat-val" id="gAvg">—</div><div class="graph-stat-lbl">📈 গড়</div></div>
+            <div class="graph-stat"><div class="graph-stat-val" id="gBest">—</div><div class="graph-stat-lbl">🏆 সেরা</div></div>
+            <div class="graph-stat"><div class="graph-stat-val" id="gTotal">—</div><div class="graph-stat-lbl">📝 মোট</div></div>
+            <div class="graph-stat"><div class="graph-stat-val" id="gWeek">—</div><div class="graph-stat-lbl">📅 এ সপ্তাহে</div></div>
+        </div>
+    </div>
+    <div>
+        <button class="back-btn" onclick="goBack()">← ফিরে যান</button>
+        <div class="section-header"><div class="section-title">📚 Exam History</div><div class="section-sub" id="historySubtitle"></div></div>
+        <div class="filter-row"><select id="filterCat" onchange="loadHistory()"><option value="all">সব ক্যাটাগরি</option></select><select id="filterSub" onchange="loadHistory()"><option value="all">সব সাবজেক্ট</option></select></div>
+        <div id="historyList"></div>
+    </div>
+</main>
+
+<div class="modal-overlay" id="detailModal" onclick="this.classList.remove('active')"><div class="modal" id="detailModalContent" onclick="event.stopPropagation()"></div></div>
+<div class="confirm-overlay" id="confirmDialog"><div class="confirm-box"><h3 id="confirmTitle">নিশ্চিত করুন</h3><p id="confirmMsg">আপনি কি নিশ্চিত?</p><div class="confirm-btns"><button class="btn btn-outline" onclick="closeConfirm()">বাতিল</button><button class="btn btn-danger" id="confirmOkBtn">হ্যাঁ</button></div></div></div>
+
+<div class="exam-overlay" id="examOverlay">
+    <div class="exam-header">
+        <div><div style="font-size:12px;color:var(--text2);" id="examOverlayTitle">Practice Exam</div><div style="font-size:10px;color:var(--text2);" id="examOverlayProgress"></div></div>
+        <div class="exam-timer" id="examOverlayTimer">00:00</div>
+        <button onclick="exitPracticeExam()" style="background:none;border:1px solid var(--border);color:var(--text2);padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;">✕ বের হন</button>
+    </div>
+    <div class="exam-progress-bar"><div class="exam-progress-fill" id="examProgressFill"></div></div>
+    <div class="exam-body" id="examBody"></div>
+    <div class="exam-footer">
+        <button class="btn btn-outline" id="examPrevBtn" onclick="examNav(-1)" style="flex:1;">◀ আগে</button>
+        <button class="btn btn-outline" onclick="toggleExamNav()" style="flex:1;">📋 Nav</button>
+        <button class="btn btn-primary" id="examNextBtn" onclick="examNav(1)" style="flex:1;">পরে ▶</button>
+        <button class="btn btn-danger" onclick="submitPracticeExam()" style="flex:1;">✅ Submit</button>
+    </div>
+    <div id="examNavPanel" style="display:none;padding:12px;background:var(--card);border-top:1px solid var(--border);"><div class="exam-nav-grid" id="examNavGrid"></div></div>
+</div>
+
+<div class="result-overlay" id="resultOverlay">
+    <div class="result-body">
+        <div style="text-align:center;margin-bottom:20px;">
+            <div class="result-ring"><div class="result-score" id="resultScore">—</div><div class="result-label">স্কোর</div></div>
+            <div id="resultTitle" style="font-size:18px;font-weight:700;color:var(--accent);margin-bottom:4px;"></div>
+            <div id="resultSubtitle" style="font-size:11px;color:var(--text2);"></div>
+        </div>
+        <div style="display:flex;justify-content:space-around;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-bottom:16px;">
+            <div style="text-align:center;"><div style="color:var(--green);font-size:20px;font-weight:800;" id="resCorrect">0</div><div style="font-size:9px;color:var(--text2);">✅ সঠিক</div></div>
+            <div style="text-align:center;"><div style="color:var(--red);font-size:20px;font-weight:800;" id="resWrong">0</div><div style="font-size:9px;color:var(--text2);">❌ ভুল</div></div>
+            <div style="text-align:center;"><div style="color:var(--yellow);font-size:20px;font-weight:800;" id="resSkipped">0</div><div style="font-size:9px;color:var(--text2);">⏭️ স্কিপ</div></div>
+            <div style="text-align:center;"><div style="color:var(--accent);font-size:20px;font-weight:800;" id="resPct">0%</div><div style="font-size:9px;color:var(--text2);">📊 শতাংশ</div></div>
+        </div>
+        <div class="q-filter-tabs" id="resultFilterTabs">
+            <button class="q-filter-tab active" onclick="filterResultOverlay('all',this)">📋 সব</button>
+            <button class="q-filter-tab" onclick="filterResultOverlay('correct',this)">✅ সঠিক</button>
+            <button class="q-filter-tab" onclick="filterResultOverlay('wrong',this)">❌ ভুল</button>
+            <button class="q-filter-tab" onclick="filterResultOverlay('skipped',this)">⏭️ স্কিপ</button>
+        </div>
+        <div id="resultReviewList"></div>
+        <div style="display:flex;gap:8px;margin-top:16px;">
+            <button class="btn btn-outline" onclick="closeResultOverlay()" style="flex:1;">✕ বন্ধ</button>
+            <button class="btn btn-primary" onclick="retryFromResult()" style="flex:1;">🔄 আবার এক্সাম দাও</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="dashboard-exam.js"></script>
+</body>
+</html>
