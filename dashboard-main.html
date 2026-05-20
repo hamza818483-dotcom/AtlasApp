@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATLAS APP · প্রোফাইল</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+Bengali:wght@400;600;700;800&family=Rajdhani:wght@500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="dashboard-styles.css">
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- HEADER -->
+<div class="header">
+    <div class="header-left">
+        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+        <div class="atlas-brand-box">
+            <img class="atlas-logo-img" src="data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%237C83FF'/%3E%3Cstop offset='100%25' stop-color='%2358A6FF'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='48' fill='url(%23g)'/%3E%3Ctext x='50' y='70' text-anchor='middle' fill='white' font-size='60' font-weight='800'%3EA%3C/text%3E%3C/svg%3E" alt="ATLAS">
+            <span class="atlas-brand-text">ATLAS</span>
+        </div>
+    </div>
+    <div class="header-right">
+        <button class="header-icon" id="themeBtn" onclick="toggleTheme()">🌙</button>
+        <button class="header-icon" style="position:relative;" onclick="showTab('notifications')">
+            🔔<span id="unreadBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:#F85149;color:#fff;font-size:9px;font-weight:bold;border-radius:8px;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 4px;"></span>
+        </button>
+    </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-logo">ATLAS</div>
+        <div class="sidebar-logo-sub">আপনার শিক্ষার সঙ্গী</div>
+    </div>
+    <button class="sidebar-item" onclick="showTab('main');toggleSidebar()">🏠 মূল পাতা</button>
+    <button class="sidebar-item" onclick="showTab('edit');toggleSidebar()">✏️ প্রোফাইল এডিট</button>
+    <button class="sidebar-item" onclick="showTab('weaklist');toggleSidebar()">📊 দুর্বল তালিকা</button>
+    <button class="sidebar-item" onclick="openScreen('mistakesScreen');toggleSidebar()">⚠️ আমার ভুল</button>
+    <button class="sidebar-item" onclick="openScreen('todoScreen');toggleSidebar()">📝 টু-ডু তালিকা</button>
+    <button class="sidebar-item" onclick="openScreen('pomoScreen');toggleSidebar()">🍅 পোমোডোরো</button>
+    <div class="sidebar-divider"></div>
+    <button class="sidebar-item" onclick="showTab('leaderboard');toggleSidebar()">🏆 লিডারবোর্ড</button>
+    <button class="sidebar-item" onclick="toggleSidebar()">⚙️ সেটিংস</button>
+    <div class="sidebar-spacer"></div>
+    <button class="sidebar-item danger" onclick="logout()">🔓 লগ আউট</button>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+    <button class="nav-item active" onclick="showTab('main')"><span class="nav-icon">🏠</span> হোম</button>
+    <button class="nav-item" onclick="showTab('history')"><span class="nav-icon">📜</span> হিস্টরি</button>
+    <button class="nav-item" onclick="showTab('classhistory')"><span class="nav-icon">🎓</span> ক্লাস</button>
+    <button class="nav-item" onclick="showTab('bookmarks')"><span class="nav-icon">🔖</span> বুকমার্ক</button>
+</div>
+
+<!-- FLOATING BUTTONS -->
+<div class="floating-buttons">
+    <button class="fab fab-wa" onclick="window.open('https://wa.me/+8801234567890','_blank')">💬</button>
+    <button class="fab fab-tg" onclick="window.open('https://t.me/atlas_support','_blank')">✈️</button>
+</div>
+
+<!-- MAIN CONTAINER -->
+<div class="dash-container">
+    
+    <!-- MAIN TAB -->
+    <div id="mainTab" class="tab-content" style="display:none;">
+        <!-- Profile Card -->
+        <div class="profile-card">
+            <div style="position:absolute;top:0;left:0;right:0;height:100%;background:linear-gradient(135deg,rgba(124,131,255,0.05),rgba(88,166,255,0.03));pointer-events:none;"></div>
+            <div class="profile-avatar" id="profileAvatar">👤</div>
+            <h2 class="profile-name" id="profileName">Loading...</h2>
+            <p class="profile-phone" id="profilePhone">—</p>
+            <div class="profile-stats-row" id="profileStatsRow" style="display:none;">
+                <div class="profile-stat-item"><div class="profile-stat-value" id="statAvg">—</div><div class="profile-stat-label">গড়</div></div>
+                <div class="profile-stat-item"><div class="profile-stat-value" id="statExams">—</div><div class="profile-stat-label">এক্সাম</div></div>
+            </div>
+        </div>
+
+        <!-- Pomodoro Live Card -->
+        <div class="pomo-live-card" id="pomoLiveCard" style="display:none;">
+            <div class="pomo-live-header">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div class="pomo-pulse"></div>
+                    <span style="font-size:13px;font-weight:600;">চলছে...</span>
+                </div>
+                <div id="pomoLiveTask" style="font-size:12px;color:var(--text2);"></div>
+            </div>
+            <div class="pomo-live-time" id="pomoLiveTime">25:00</div>
+            <div class="pomo-live-actions">
+                <button class="pomo-live-btn" onclick="pausePomoTimer()">⏸️ Pause</button>
+                <button class="pomo-live-btn" onclick="resetPomoTimer()">🔄 Reset</button>
+                <button class="pomo-live-btn" onclick="stopPomoTimer()">⏹️ Stop</button>
+                <button class="pomo-live-btn" onclick="openScreen('pomoScreen')">📂 Open</button>
+            </div>
+        </div>
+
+        <!-- Pomodoro 3-Day Success Graph -->
+        <div class="pomo-success-graph" id="pomoSuccessGraph" style="display:none;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                <h3 style="font-size:14px;font-weight:700;">🎯 সফলতার পরিসংখ্যান</h3>
+                <span style="font-size:11px;color:var(--text2);">শেষ ৩ দিন</span>
+            </div>
+            <div id="pomoSuccessChart" style="display:flex;align-items:flex-end;gap:12px;height:80px;"></div>
+            <div style="display:flex;gap:12px;margin-top:12px;">
+                <div style="flex:1;text-align:center;">
+                    <div style="font-size:18px;font-weight:700;color:var(--accent);" id="pomoAvgRate">—</div>
+                    <div style="font-size:10px;color:var(--text2);">গড়</div>
+                </div>
+                <div style="flex:1;text-align:center;">
+                    <div style="font-size:18px;font-weight:700;color:var(--green);" id="pomoBestRate">—</div>
+                    <div style="font-size:10px;color:var(--text2);">সেরা</div>
+                </div>
+                <div style="flex:1;text-align:center;">
+                    <div style="font-size:18px;font-weight:700;color:var(--gold);" id="pomoStreak">—</div>
+                    <div style="font-size:10px;color:var(--text2);">স্ট্রিক</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="dash-grid">
+            <div class="dash-card" onclick="showTab('history')">
+                <div class="dash-icon">📜</div>
+                <div class="dash-title">এক্সাম হিস্টরি</div>
+                <div class="dash-count" id="countExams">০ এক্সাম</div>
+            </div>
+            <div class="dash-card" onclick="showTab('classhistory')">
+                <div class="dash-icon">🎓</div>
+                <div class="dash-title">ক্লাস হিস্টরি</div>
+                <div class="dash-count" id="countClass">০ ক্লাস</div>
+            </div>
+            <div class="dash-card" onclick="showTab('bookmarks')">
+                <div class="dash-icon">🔖</div>
+                <div class="dash-title">বুকমার্ক</div>
+                <div class="dash-count" id="countBookmarks">০টি</div>
+            </div>
+            <div class="dash-card" onclick="showTab('notifications')">
+                <div class="dash-icon">🔔</div>
+                <div class="dash-title">নোটিফিকেশন</div>
+                <div class="dash-count" id="countNotifs">০ নতুন</div>
+            </div>
+        </div>
+
+        <!-- Exam Graph Card -->
+        <div class="graph-card" id="examGraphCard" style="display:none;">
+            <div class="graph-header">
+                <h3 class="graph-title">📊 এক্সাম পারফরম্যান্স</h3>
+                <span class="graph-badge" id="examGraphBadge">শেষ ০ দিন</span>
+            </div>
+            <div class="graph-stats-row">
+                <div class="graph-stat-item"><div class="graph-stat-value" id="gAvg">—</div><div class="graph-stat-label">গড়</div></div>
+                <div class="graph-stat-item"><div class="graph-stat-value" id="gBest">—</div><div class="graph-stat-label">সেরা</div></div>
+                <div class="graph-stat-item"><div class="graph-stat-value" id="gTotal">—</div><div class="graph-stat-label">মোট</div></div>
+                <div class="graph-stat-item"><div class="graph-stat-value" id="gWeek">—</div><div class="graph-stat-label">সপ্তাহ</div></div>
+            </div>
+            <div id="examBarChart" class="bar-chart"></div>
+        </div>
+
+        <!-- Class Graph Card -->
+        <div class="graph-card" id="classGraphCard" style="display:none;">
+            <div class="graph-header">
+                <h3 class="graph-title">📈 ক্লাস ট্রেন্ড</h3>
+                <span class="graph-badge" id="classGraphBadge">শেষ ০টি</span>
+            </div>
+            <div class="graph-stats-row">
+                <div class="graph-stat-item"><div class="graph-stat-value" id="cTotal">—</div><div class="graph-stat-label">মোট</div></div>
+                <div class="graph-stat-item"><div class="graph-stat-value" id="cWeek">—</div><div class="graph-stat-label">সপ্তাহ</div></div>
+                <div class="graph-stat-item"><div class="graph-stat-value" id="cFav">—</div><div class="graph-stat-label">প্রিয়</div></div>
+            </div>
+            <svg id="lineChartSvg" class="line-chart" viewBox="0 0 300 100"></svg>
+        </div>
+    </div>
+
+    <!-- EXAM HISTORY TAB -->
+    <div id="historyTab" class="tab-content" style="display:none;">
+        <div class="tab-header">
+            <h2 class="tab-title">📜 এক্সাম হিস্টরি</h2>
+        </div>
+        <div id="historyList"></div>
+    </div>
+
+    <!-- CLASS HISTORY TAB -->
+    <div id="classhistoryTab" class="tab-content" style="display:none;">
+        <div class="tab-header">
+            <h2 class="tab-title">🎓 ক্লাস হিস্টরি</h2>
+        </div>
+        <div id="classList"></div>
+    </div>
+
+    <!-- BOOKMARKS TAB -->
+    <div id="bookmarksTab" class="tab-content" style="display:none;">
+        <div class="tab-header">
+            <h2 class="tab-title">🔖 বুকমার্ক করা প্রশ্ন</h2>
+        </div>
+        <div id="bookmarksList"></div>
+    </div>
+
+    <!-- NOTIFICATIONS TAB -->
+    <div id="notificationsTab" class="tab-content" style="display:none;">
+        <div class="tab-header">
+            <h2 class="tab-title">🔔 নোটিফিকেশন</h2>
+        </div>
+        <div id="notifsList"></div>
+    </div>
+
+    <!-- EDIT PROFILE TAB -->
+    <div id="editTab" class="tab-content" style="display:none;">
+        <div class="tab-header">
+            <h2 class="tab-title">✏️ প্রোফাইল এডিট</h2>
+        </div>
+        <div class="form-card">
+            <div class="form-group">
+                <label class="form-label">নাম</label>
+                <input type="text" class="form-input" id="editName" placeholder="আপনার নাম">
+            </div>
+            <div class="form-group">
+                <label class="form-label">বোর্ড</label>
+                <select class="form-input" id="editBoard">
+                    <option value="">নির্বাচন করুন</option>
+                    <option value="MEDICAL">মেডিকেল</option>
+                    <option value="VERSITY">ভার্সিটি</option>
+                    <option value="BOARD">বোর্ড</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">টার্গেট</label>
+                <input type="text" class="form-input" id="editTarget" placeholder="যেমন: ঢাকা মেডিকেল">
+            </div>
+            <button class="btn-primary" onclick="saveProfile()" style="width:100%;">💾 সেভ করুন</button>
+        </div>
+    </div>
+
+    <!-- WEAK LIST TAB -->
+    <div id="weaklistTab" class="tab-content" style="display:none;">
+        <div class="tab-header">
+            <h2 class="tab-title">📊 দুর্বল সাবজেক্ট তালিকা</h2>
+        </div>
+        <div id="weakSubjectList"></div>
+    </div>
+
+    <!-- LEADERBOARD TAB -->
+    <div id="leaderboardTab" class="tab-content" style="display:none;">
+        <div class="tab-header">
+            <h2 class="tab-title">🏆 লিডারবোর্ড</h2>
+        </div>
+        <div id="leaderboardContent"></div>
+    </div>
+
+</div>
+
+<!-- MISTAKES FULLSCREEN -->
+<div class="fullscreen-panel" id="mistakesScreen" style="display:none;">
+    <div class="fullscreen-header">
+        <button class="fullscreen-back" onclick="closeScreen('mistakesScreen')">←</button>
+        <h2 class="fullscreen-title">⚠️ আমার ভুল</h2>
+    </div>
+    <div class="fullscreen-body">
+        <!-- Category Meta-chips -->
+        <div class="meta-chip-row" id="mistakeMetaChips">
+            <button class="meta-chip active" data-category="ALL" onclick="filterMistakesByCategory('ALL')">সব</button>
+            <button class="meta-chip" data-category="MEDICAL" onclick="filterMistakesByCategory('MEDICAL')">Medical</button>
+            <button class="meta-chip" data-category="VERSITY" onclick="filterMistakesByCategory('VERSITY')">Varsity</button>
+            <button class="meta-chip" data-category="BOARD" onclick="filterMistakesByCategory('BOARD')">Board</button>
+        </div>
+
+        <!-- Subject Box Grid -->
+        <div class="subject-box-grid" id="mistakeSubjectBoxes"></div>
+
+        <!-- Select All Checkbox -->
+        <div class="select-all-row">
+            <label class="select-all-label">
+                <input type="checkbox" id="selectAllExamsCheckbox" onchange="toggleSelectAllExams()">
+                <span>Select All Exams</span>
+            </label>
+        </div>
+
+        <!-- Exam Cards with Checkboxes -->
+        <div id="mistakeExamList"></div>
+
+        <!-- Empty State -->
+        <div id="mistakeEmptyState" style="display:none;text-align:center;padding:40px 20px;color:var(--text2);">
+            <div style="font-size:48px;margin-bottom:12px;">✅</div>
+            <div style="font-size:16px;font-weight:600;color:var(--green);">কোনো ভুল নেই! চমৎকার!</div>
+        </div>
+    </div>
+
+    <!-- Summary Bar -->
+    <div class="summary-bar" id="mistakesSummaryBar" style="display:none;">
+        <div class="summary-bar-text">
+            <span id="summarySelectedCount">0</span> exams | 
+            <span id="summaryTotalQuestions">0</span> questions
+        </div>
+        <div class="summary-bar-actions">
+            <button class="summary-btn" onclick="startBulkPractice('01')">Practice-01</button>
+            <button class="summary-btn" onclick="startBulkPractice('02')">Practice-02</button>
+        </div>
+    </div>
+</div>
+
+<!-- TODO FULLSCREEN -->
+<div class="fullscreen-panel" id="todoScreen" style="display:none;">
+    <div class="fullscreen-header">
+        <button class="fullscreen-back" onclick="closeScreen('todoScreen')">←</button>
+        <h2 class="fullscreen-title">📝 টু-ডু তালিকা</h2>
+    </div>
+    <div class="fullscreen-body">
+        <div class="todo-add-box">
+            <input type="text" class="todo-input" id="todoInput" placeholder="নতুন টাস্ক যোগ করুন...">
+            <button class="todo-add-btn" onclick="addTodo()">➕</button>
+        </div>
+        <div id="todoList"></div>
+    </div>
+</div>
+
+<!-- POMODORO FULLSCREEN -->
+<div class="fullscreen-panel" id="pomoScreen" style="display:none;">
+    <div class="fullscreen-header">
+        <button class="fullscreen-back" onclick="closeScreen('pomoScreen')">←</button>
+        <h2 class="fullscreen-title">🍅 পোমোডোরো টাইমার</h2>
+    </div>
+    <div class="fullscreen-body">
+        <!-- Pomodoro Watch -->
+        <div class="pomo-watch-card">
+            <div class="pomo-watch-face">
+                <svg class="pomo-ring" viewBox="0 0 200 200">
+                    <circle class="pomo-ring-bg" cx="100" cy="100" r="85" fill="none" stroke="var(--border)" stroke-width="8"/>
+                    <circle id="pomoRingProgress" class="pomo-ring-progress" cx="100" cy="100" r="85" fill="none" stroke="var(--accent)" stroke-width="8" stroke-linecap="round" stroke-dasharray="534.07" stroke-dashoffset="534.07" transform="rotate(-90 100 100)"/>
+                </svg>
+                <div class="pomo-center-content">
+                    <div class="pomo-task-name" id="pomoTaskName">No Task</div>
+                    <div class="pomo-time-display" id="pomoTimeDisplay">25:00</div>
+                    <div class="pomo-session-count" id="pomoSessionCount">Session #0</div>
+                </div>
+            </div>
+            <div class="pomo-controls">
+                <button class="pomo-btn" id="pomoPlayBtn" onclick="togglePomoTimer()">▶️ Play</button>
+                <button class="pomo-btn" onclick="resetPomoTimer()">🔄 Reset</button>
+            </div>
+        </div>
+
+        <!-- Pomodoro Settings -->
+        <div class="pomo-settings-card">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;">⚙️ সেটিংস</h3>
+            <div class="pomo-setting-row">
+                <label class="pomo-setting-label">Task Name</label>
+                <input type="text" class="pomo-setting-input" id="pomoTaskInput" placeholder="Task name...">
+            </div>
+            <div class="pomo-setting-row">
+                <label class="pomo-setting-label">Duration (min)</label>
+                <input type="number" class="pomo-setting-input" id="pomoDurationInput" value="25" min="1" max="90">
+            </div>
+            <button class="pomo-btn" onclick="setPomoTask()" style="width:100%;">✔️ Set</button>
+        </div>
+
+        <!-- Pomodoro History -->
+        <div class="pomo-history-card">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;">📜 হিস্টরি</h3>
+            <div id="pomoHistoryList"></div>
+        </div>
+    </div>
+</div>
+
+<!-- COMPLETION MODAL -->
+<div class="modal-overlay" id="pomoCompletionModal" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 class="modal-title">🎉 Pomodoro Complete!</h3>
+        </div>
+        <div class="modal-body">
+            <p style="margin-bottom:20px;font-size:14px;color:var(--text2);">আপনি কি কাজটি সফলভাবে complete করেছেন?</p>
+            <div style="display:flex;gap:12px;">
+                <button class="modal-btn modal-btn-success" onclick="completePomoSession(true)">✅ হ্যাঁ</button>
+                <button class="modal-btn modal-btn-danger" onclick="completePomoSession(false)">❌ না</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- EXIT EXAM CONFIRM MODAL -->
+<div class="modal-overlay" id="exitExamModal" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 class="modal-title">⚠️ নিশ্চিত করুন</h3>
+        </div>
+        <div class="modal-body">
+            <p style="margin-bottom:20px;font-size:14px;color:var(--text2);">পরীক্ষা বাতিল করবেন? সব progress হারিয়ে যাবে।</p>
+            <div style="display:flex;gap:12px;">
+                <button class="modal-btn modal-btn-danger" onclick="confirmExitExam()">✔️ হ্যাঁ, বাতিল করুন</button>
+                <button class="modal-btn" onclick="closeModal('exitExamModal')">❌ না</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="dashboard-utils.js"></script>
+<script>
+/* ======================================================
+   GLOBAL CONFIG & STATE
+====================================================== */
+const SUPABASE_URL = 'https://xxxx.supabase.co';
+const SUPABASE_KEY = 'your-anon-key';
+const GROQ_API_KEY = 'your-groq-key';
+
+let currentUser = null;
+let isDarkMode = true;
+let examResultsCache = [];
+let classHistoryCache = [];
+let bookmarksCache = [];
+
+// Pomodoro State
+let pomoState = {
+    isRunning: false,
+    isPaused: false,
+    duration: 25 * 60,
+    remaining: 25 * 60,
+    taskName: 'No Task',
+    startTime: null,
+    pausedTime: null,
+    sessionCount: 0,
+    timerInterval: null
+};
+
+let pomoSessions = [];
+let pomoStats = {
+    streak: 0,
+    dailyStats: {} // { 'YYYY-MM-DD': { total: 0, completed: 0 } }
+};
+
+// Mistakes State
+let mistakesData = [];
+let selectedExams = new Set();
+let currentCategoryFilter = 'ALL';
+let currentSubjectFilter = null;
+
+/* ======================================================
+   AUTH
+====================================================== */
+function checkAuth() {
+    const phone = localStorage.getItem('atlas-phone');
+    const name = localStorage.getItem('atlas-name');
+    if (!phone) { window.location.href = 'index.html'; return false; }
+    currentUser = { phone, name: name || 'User' };
+    return true;
+}
+
+function logout() {
+    if (confirm('লগ আউট করতে চান?')) {
+        localStorage.clear();
+        window.location.href = 'index.html';
+    }
+}
+
+/* ======================================================
+   THEME
+====================================================== */
+function toggleTheme() {
+    isDarkMode = !isDarkMode;
+    document.body.classList.toggle('light-mode');
+    document.getElementById('themeBtn').textContent = isDarkMode ? '🌙' : '☀️';
+    localStorage.setItem('atlas-theme', isDarkMode ? 'dark' : 'light');
+}
+
+/* ======================================================
+   UI CONTROLS
+====================================================== */
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('active');
+    document.getElementById('sidebarOverlay').classList.toggle('active');
+}
+
+function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+function showTab(tab) {
+    const tabs = ['main','history','classhistory','bookmarks','notifications','edit','weaklist','leaderboard'];
+    tabs.forEach(t => {
+        const el = document.getElementById(t+'Tab');
+        if (el) el.style.display = t === tab ? 'block' : 'none';
+    });
+    
+    document.querySelectorAll('.nav-item').forEach((btn, i) => {
+        btn.classList.toggle('active', ['main','history','classhistory','bookmarks'][i] === tab);
+    });
+
+    if (tab === 'main') window.scrollTo(0, 0);
+    
+    // Load data on demand
+    if (tab === 'history' && !document.getElementById('historyList').innerHTML) loadExamHistory();
+    else if (tab === 'classhistory' && !document.getElementById('classList').innerHTML) loadClassHistory();
+    else if (tab === 'bookmarks' && !document.getElementById('bookmarksList').innerHTML) loadBookmarks();
+    else if (tab === 'notifications' && !document.getElementById('notifsList').innerHTML) loadNotifications();
+    else if (tab === 'weaklist' && !document.getElementById('weakSubjectList').innerHTML) loadWeakList();
+    else if (tab === 'leaderboard' && !document.getElementById('leaderboardContent').innerHTML) loadLeaderboard();
+}
+
+function openScreen(id) {
+    document.getElementById(id).style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeScreen(id) {
+    document.getElementById(id).style.display = 'none';
+    document.body.style.overflow = 'auto';
+    
+    if (id === 'mistakesScreen') {
+        selectedExams.clear();
+        updateMistakesSummaryBar();
+    }
+}
+
+function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
+}
+
+/* ======================================================
+   PROFILE
+====================================================== */
+function loadProfile() {
+    document.getElementById('profileName').textContent = currentUser.name || 'User';
+    document.getElementById('profilePhone').textContent = currentUser.phone || '—';
+    document.getElementById('profileAvatar').textContent = (currentUser.name || 'U')[0].toUpperCase();
+    
+    const board = localStorage.getItem('atlas-board') || '';
+    const target = localStorage.getItem('atlas-target') || '';
+    
+    if (board || target) {
+        document.getElementById('editBoard').value = board;
+        document.getElementById('editTarget').value = target;
+    }
+}
+
+async function saveProfile() {
+    const name = document.getElementById('editName').value.trim();
+    const board = document.getElementById('editBoard').value;
+    const target = document.getElementById('editTarget').value.trim();
+    
+    if (name) {
+        localStorage.setItem('atlas-name', name);
+        currentUser.name = name;
+        loadProfile();
+    }
+    
+    if (board) localStorage.setItem('atlas-board', board);
+    if (target) localStorage.setItem('atlas-target', target);
+    
+    showToast('✅ সেভ হয়েছে!');
+    showTab('main');
+}
+
+/* ======================================================
+   FETCH HELPER
+====================================================== */
+async function safeFetch(url, options = {}) {
+    try {
+        const res = await fetch(url, {
+            ...options,
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+        if (!res.ok) return null;
+        return await res.json();
+    } catch (e) {
+        console.error('Fetch error:', e);
+        return null;
+    }
+}
+
+/* ======================================================
+   EXAM HISTORY
+====================================================== */
+async function loadExamHistory() {
+    const list = document.getElementById('historyList');
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2);">লোড হচ্ছে...</div>';
+    
+    if (!examResultsCache.length) {
+        list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2);">কোনো ডাটা নেই</div>';
+        return;
+    }
+    
+    list.innerHTML = examResultsCache.map(r => {
+        const pct = Math.round((parseFloat(r.final_score) || 0) / (r.total_questions || 50) * 100);
+        const cls = pct >= 80 ? 'high' : pct >= 50 ? 'mid' : 'low';
+        return `
+            <div class="history-card" onclick="showExamResult('${r.exam_id}', '${r.id}')">
+                <div class="history-header">
+                    <div class="history-title">${r.exam_name || 'Exam'}</div>
+                    <div class="history-score score-${cls}">${pct}%</div>
+                </div>
+                <div class="history-meta">
+                    <span>📅 ${toBanglaDateTime(r.submitted_at)}</span>
+                    <span>📝 ${toBanglaNum(r.total_questions)} প্রশ্ন</span>
+                </div>
+                <div class="history-actions">
+                    <button class="history-btn" onclick="event.stopPropagation();retakeExam('${r.exam_id}')">🔄 আবার এক্সাম দাও</button>
+                    <button class="history-btn" onclick="event.stopPropagation();toggleLeaderboard(this, '${r.exam_id}')">🏆 Leaderboard</button>
+                </div>
+                <div class="leaderboard-panel" style="display:none;margin-top:12px;"></div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function showExamResult(examId, resultId) {
+    window.location.href = `exam-result.html?id=${resultId}`;
+}
+
+function retakeExam(examId) {
+    window.location.href = `exam.html?id=${examId}`;
+}
+
+async function toggleLeaderboard(btn, examId) {
+    const panel = btn.parentElement.nextElementSibling;
+    if (panel.style.display === 'block') {
+        panel.style.display = 'none';
+        btn.textContent = '🏆 Leaderboard';
+        return;
+    }
+    
+    panel.style.display = 'block';
+    btn.textContent = '▲ বন্ধ করুন';
+    panel.innerHTML = '<div style="text-align:center;color:var(--text2);font-size:12px;padding:10px;">লোড হচ্ছে...</div>';
+    
+    const data = await safeFetch(`${SUPABASE_URL}/rest/v1/exam_results?exam_id=eq.${examId}&select=phone,final_score,total_questions,submitted_at&order=final_score.desc&limit=20`);
+    
+    const rankEmoji = ['🥇','🥈','🥉'];
+    const rankClass = ['gold','silver','bronze'];
+    
+    if (!data?.length) {
+        panel.innerHTML = '<div style="text-align:center;padding:10px;color:var(--text2);">কোনো ডাটা নেই</div>';
+        return;
+    }
+    
+    panel.innerHTML = `
+        <div style="font-size:10px;color:var(--text2);text-align:right;margin-bottom:8px;">🔄 রিয়েল-টাইম | এডিট করা যাবে না</div>
+        ${data.map((r, i) => {
+            const pct = Math.round((parseFloat(r.final_score) || 0) / (r.total_questions || 50) * 100);
+            const isCurrent = r.phone === currentUser?.phone;
+            return `
+                <div class="lb-row" ${isCurrent ? 'style="background:rgba(124,131,255,0.08);border-radius:8px;"' : ''}>
+                    <div class="lb-rank ${rankClass[i] || ''}">${rankEmoji[i] || `#${i+1}`}</div>
+                    <div class="lb-avatar">${isCurrent ? '😊' : '👤'}</div>
+                    <div class="lb-info">
+                        <div class="lb-name">${isCurrent ? `${currentUser.name || 'আপনি'} (আপনি)` : '📚 স্টুডেন্ট'}</div>
+                        <div class="lb-meta">${toBanglaDateTime(r.submitted_at)}</div>
+                    </div>
+                    <div class="lb-score">${pct}%</div>
+                </div>
+            `;
+        }).join('')}
+    `;
+}
+
+/* ======================================================
+   CLASS HISTORY
+====================================================== */
+async function loadClassHistory() {
+    const saved = localStorage.getItem('class_history_' + currentUser.phone);
+    classHistoryCache = saved ? JSON.parse(saved) : [];
+    
+    document.getElementById('countClass').textContent = toBanglaNum(classHistoryCache.length) + ' ক্লাস';
+    
+    const list = document.getElementById('classList');
+    
+    if (!classHistoryCache.length) {
+        list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2);">কোনো ডাটা নেই</div>';
+        return;
+    }
+    
+    list.innerHTML = classHistoryCache.map(c => `
+        <div class="class-card">
+            <div class="class-header">
+                <div class="class-subject">${c.subject || 'Subject'}</div>
+                <div class="class-chapter">${c.chapter || 'Chapter'}</div>
+            </div>
+            <div class="class-meta">
+                📅 ${toBanglaDateTime(c.time)}
+            </div>
+        </div>
+    `).join('');
+    
+    buildClassGraph(classHistoryCache);
+}
+
+/* ======================================================
+   BOOKMARKS
+====================================================== */
+async function loadBookmarks() {
+    const saved = localStorage.getItem('bookmarks_' + currentUser.phone);
+    bookmarksCache = saved ? JSON.parse(saved) : [];
+    
+    document.getElementById('countBookmarks').textContent = toBanglaNum(bookmarksCache.length) + 'টি';
+    
+    const list = document.getElementById('bookmarksList');
+    
+    if (!bookmarksCache.length) {
+        list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2);">কোনো বুকমার্ক নেই</div>';
+        return;
+    }
+    
+    list.innerHTML = bookmarksCache.map((b, i) => `
+        <div class="bookmark-card">
+            <div style="display:flex;align-items:flex-start;gap:12px;">
+                <div style="flex:1;">
+                    <div class="bookmark-question">${b.question || 'Question'}</div>
+                    <div class="bookmark-meta">
+                        📅 ${toBanglaDateTime(b.time)}
+                    </div>
+                </div>
+                <button class="bookmark-remove" onclick="removeBookmark(${i})">🗑️</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function removeBookmark(index) {
+    bookmarksCache.splice(index, 1);
+    localStorage.setItem('bookmarks_' + currentUser.phone, JSON.stringify(bookmarksCache));
+    loadBookmarks();
+    showToast('🗑️ বুকমার্ক মুছে ফেলা হয়েছে');
+}
+
+/* ======================================================
+   NOTIFICATIONS
+====================================================== */
+async function loadNotifications() {
+    const list = document.getElementById('notifsList');
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2);">লোড হচ্ছে...</div>';
+    
+    const data = await safeFetch(`${SUPABASE_URL}/rest/v1/notifications?phone=eq.${currentUser.phone}&select=*&order=created_at.desc&limit=30`);
+    
+    if (!data?.length) {
+        list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2);">কোনো নোটিফিকেশন নেই</div>';
+        return;
+    }
+    
+    list.innerHTML = data.map(n => `
+        <div class="notif-card ${n.is_read ? '' : 'notif-unread'}">
+            <div class="notif-title">${n.title || 'Notification'}</div>
+            <div class="notif-message">${n.message || ''}</div>
+            <div class="notif-time">📅 ${toBanglaDateTime(n.created_at)}</div>
+        </div>
+    `).join('');
+    
+    // Mark all as read
+    await safeFetch(`${SUPABASE_URL}/rest/v1/notifications?phone=eq.${currentUser.phone}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ is_read: true })
+    });
+    
+    document.getElementById('unreadBadge').style.display = 'none';
+}
+
+/* ======================================================
+   WEAK LIST
+====================================================== */
+async function loadWeakList() {
+    const list = document.getElementById('weakSubjectList');
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2);">লোড হচ্ছে...</div>';
+    
+    if (!examResultsCache.length) {
+        list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2);">কোনো ডাটা নেই</div>';
+        return;
+    }
+    
+    const subjectScores = {};
+    
+    examResultsCache.forEach(r => {
+        if (r.subject_wise_scores) {
+            try {
+                const scores = JSON.parse(r.subject_wise_scores);
+                Object.keys(scores).forEach(subj => {
+                    if (!subjectScores[subj]) subjectScores[subj] = [];
+                    subjectScores[subj].push(scores[subj]);
+                });
+            } catch (e) {}
+        }
+    });
+    
+    const subjects = Object.keys(subjectScores).map(subj => {
+        const scores = subjectScores[subj];
+        const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+        return { name: subj, avg, count: scores.length };
+    }).sort((a, b) => a.avg - b.avg);
+    
+    if (!subjects.length) {
+        list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2);">কোনো ডাটা নেই</div>';
+        return;
+    }
+    
+    list.innerHTML = subjects.map((s, i) => {
+        const cls = s.avg >= 70 ? 'high' : s.avg >= 50 ? 'mid' : 'low';
+        return `
+            <div class="weak-card">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <div class="weak-rank">#${i+1}</div>
+                    <div style="flex:1;">
+                        <div class="weak-subject">${s.name}</div>
+                        <div class="weak-meta">${toBanglaNum(s.count)} এক্সাম</div>
+                    </div>
+                    <div class="weak-score score-${cls}">${s.avg.toFixed(0)}%</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+/* ======================================================
+   LEADERBOARD
+====================================================== */
+async function loadLeaderboard() {
+    const content = document.getElementById('leaderboardContent');
+    content.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2);">লোড হচ্ছে...</div>';
+    
+    const data = await safeFetch(`${SUPABASE_URL}/rest/v1/exam_results?select=phone,final_score,total_questions,submitted_at,exam_name&order=final_score.desc&limit=50`);
+    
+    if (!data?.length) {
+        content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2);">কোনো ডাটা নেই</div>';
+        return;
+    }
+    
+    // Group by phone and calculate total score
+    const userScores = {};
+    data.forEach(r => {
+        if (!userScores[r.phone]) userScores[r.phone] = { phone: r.phone, totalScore: 0, exams: 0 };
+        userScores[r.phone].totalScore += parseFloat(r.final_score) || 0;
+        userScores[r.phone].exams++;
+    });
+    
+    const leaderboard = Object.values(userScores).sort((a, b) => b.totalScore - a.totalScore).slice(0, 20);
+    
+    const rankEmoji = ['🥇','🥈','🥉'];
+    const rankClass = ['gold','silver','bronze'];
+    
+    content.innerHTML = leaderboard.map((u, i) => {
+        const isCurrent = u.phone === currentUser?.phone;
+        return `
+            <div class="lb-row" ${isCurrent ? 'style="background:rgba(124,131,255,0.08);border-radius:8px;"' : ''}>
+                <div class="lb-rank ${rankClass[i] || ''}">${rankEmoji[i] || `#${i+1}`}</div>
+                <div class="lb-avatar">${isCurrent ? '😊' : '👤'}</div>
+                <div class="lb-info">
+                    <div class="lb-name">${isCurrent ? `${currentUser.name || 'আপনি'} (আপনি)` : '📚 স্টুডেন্ট'}</div>
+                    <div class="lb-meta">${toBanglaNum(u.exams)} এক্সাম</div>
+                </div>
+                <div class="lb-score">${toBanglaNum(u.totalScore.toFixed(0))}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+/* ======================================================
+   MY MISTAKES FULLSCREEN
+====================================================== */
+async function loadMistakesFullscreen() {
+    mistakesData = [];
+    
+    if (!examResultsCache.length) {
+        document.getElementById('mistakeEmptyState').style.display = 'block';
+        document.getElementById('mistakeExamList').innerHTML = '';
+        document.getElementById('mistakeSubjectBoxes').innerHTML = '';
+        return;
+    }
+    
+    // Build mistakes data from exam results
+    for (const result of examResultsCache) {
+        if (result.answers) {
+            try {
+                const answers = JSON.parse(result.answers);
+                const mistakes = answers.filter(a => a.status === 'wrong' || a.status === 'skipped');
+                if (mistakes.length > 0) {
+                    mistakesData.push({
+                        exam_id: result.exam_id,
+                        exam_name: result.exam_name,
+                        category: result.exam_category || 'MEDICAL',
+                        subject: result.exam_subject || 'General',
+                        mistakes: mistakes,
+                        total_mistakes: mistakes.filter(a => a.status === 'wrong').length,
+                        total_skipped: mistakes.filter(a => a.status === 'skipped').length
+                    });
+                }
+            } catch (e) {}
+        }
+    }
+    
+    if (!mistakesData.length) {
+        document.getElementById('mistakeEmptyState').style.display = 'block';
+        document.getElementById('mistakeExamList').innerHTML = '';
+        document.getElementById('mistakeSubjectBoxes').innerHTML = '';
+        return;
+    }
+    
+    document.getElementById('mistakeEmptyState').style.display = 'none';
+    
+    renderSubjectBoxes();
+    renderMistakeExams();
+}
+
+function renderSubjectBoxes() {
+    const subjectCounts = {};
+    
+    mistakesData.forEach(m => {
+        if (!subjectCounts[m.subject]) subjectCounts[m.subject] = { wrong: 0, skipped: 0 };
+        subjectCounts[m.subject].wrong += m.total_mistakes;
+        subjectCounts[m.subject].skipped += m.total_skipped;
+    });
+    
+    const boxesHtml = Object.keys(subjectCounts).map(subj => `
+        <button class="subject-box" onclick="filterMistakesBySubject('${subj}')">
+            <div class="subject-box-name">${subj}</div>
+            <div class="subject-box-count">❌ ${subjectCounts[subj].wrong} • ⏭️ ${subjectCounts[subj].skipped}</div>
+        </button>
+    `).join('');
+    
+    document.getElementById('mistakeSubjectBoxes').innerHTML = boxesHtml;
+}
+
+function filterMistakesByCategory(category) {
+    currentCategoryFilter = category;
+    currentSubjectFilter = null;
+    
+    document.querySelectorAll('.meta-chip').forEach(chip => {
+        chip.classList.toggle('active', chip.dataset.category === category);
+    });
+    
+    document.querySelectorAll('.subject-box').forEach(box => box.classList.remove('active'));
+    
+    renderMistakeExams();
+}
+
+function filterMistakesBySubject(subject) {
+    currentSubjectFilter = currentSubjectFilter === subject ? null : subject;
+    
+    document.querySelectorAll('.subject-box').forEach(box => {
+        box.classList.toggle('active', box.querySelector('.subject-box-name').textContent === subject && currentSubjectFilter);
+    });
+    
+    renderMistakeExams();
+}
+
+function renderMistakeExams() {
+    let filtered = mistakesData;
+    
+    if (currentCategoryFilter !== 'ALL') {
+        filtered = filtered.filter(m => m.category === currentCategoryFilter);
+    }
+    
+    if (currentSubjectFilter) {
+        filtered = filtered.filter(m => m.subject === currentSubjectFilter);
+    }
+    
+    if (!filtered.length) {
+        document.getElementById('mistakeExamList').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2);">কোনো ডাটা নেই</div>';
+        return;
+    }
+    
+    const examsHtml = filtered.map(m => `
+        <div class="mistake-exam-card">
+            <label class="exam-checkbox-label">
+                <input type="checkbox" class="exam-checkbox" data-exam-id="${m.exam_id}" onchange="toggleExamSelection('${m.exam_id}', ${m.mistakes.length})">
+                <div style="flex:1;">
+                    <div class="mistake-exam-name">${m.exam_name}</div>
+                    <div class="mistake-exam-meta">
+                        <span>📚 ${m.subject}</span>
+                        <span>❌ ${m.total_mistakes}</span>
+                        <span>⏭️ ${m.total_skipped}</span>
+                    </div>
+                </div>
+            </label>
+            <div class="mistake-exam-actions">
+                <button class="mistake-btn" onclick="startSinglePractice('${m.exam_id}', '01')">Practice-01</button>
+                <button class="mistake-btn" onclick="startSinglePractice('${m.exam_id}', '02')">Practice-02</button>
+            </div>
+        </div>
+    `).join('');
+    
+    document.getElementById('mistakeExamList').innerHTML = examsHtml;
+}
+
+function toggleSelectAllExams() {
+    const checkbox = document.getElementById('selectAllExamsCheckbox');
+    const examCheckboxes = document.querySelectorAll('.exam-checkbox');
+    
+    examCheckboxes.forEach(cb => {
+        cb.checked = checkbox.checked;
+        const examId = cb.dataset.examId;
+        const mistake = mistakesData.find(m => m.exam_id === examId);
+        
+        if (checkbox.checked) {
+            selectedExams.add(examId);
+        } else {
+            selectedExams.delete(examId);
+        }
+    });
+    
+    updateMistakesSummaryBar();
+}
+
+function toggleExamSelection(examId, questionCount) {
+    if (selectedExams.has(examId)) {
+        selectedExams.delete(examId);
+    } else {
+        selectedExams.add(examId);
+    }
+    
+    updateMistakesSummaryBar();
+}
+
+function updateMistakesSummaryBar() {
+    const bar = document.getElementById('mistakesSummaryBar');
+    
+    if (selectedExams.size === 0) {
+        bar.style.display = 'none';
+        return;
+    }
+    
+    let totalQuestions = 0;
+    selectedExams.forEach(examId => {
+        const mistake = mistakesData.find(m => m.exam_id === examId);
+        if (mistake) totalQuestions += mistake.mistakes.length;
+    });
+    
+    document.getElementById('summarySelectedCount').textContent = selectedExams.size;
+    document.getElementById('summaryTotalQuestions').textContent = totalQuestions;
+    
+    bar.style.display = 'flex';
+}
+
+function startSinglePractice(examId, mode) {
+    window.location.href = `exam-practice.html?exam=${examId}&mode=${mode}`;
+}
+
+function startBulkPractice(mode) {
+    if (selectedExams.size === 0) {
+        showToast('⚠️ অন্তত একটি এক্সাম সিলেক্ট করুন');
+        return;
+    }
+    
+    const examIds = Array.from(selectedExams).join(',');
+    window.location.href = `exam-practice.html?exams=${examIds}&mode=${mode}`;
+}
+
+/* ======================================================
+   TODO LIST
+====================================================== */
+let todoList = [];
+
+function renderTodoList() {
+    const saved = localStorage.getItem('todo_list_' + currentUser.phone);
+    todoList = saved ? JSON.parse(saved) : [];
+    
+    const list = document.getElementById('todoList');
+    
+    if (!todoList.length) {
+        list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2);">কোনো টাস্ক নেই</div>';
+        return;
+    }
+    
+    list.innerHTML = todoList.map((t, i) => `
+        <div class="todo-item ${t.done ? 'todo-done' : ''}">
+            <label class="todo-check-label">
+                <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodo(${i})">
+                <span class="todo-text">${t.text}</span>
+            </label>
+            <button class="todo-delete" onclick="deleteTodo(${i})">🗑️</button>
+        </div>
+    `).join('');
+}
+
+function addTodo() {
+    const input = document.getElementById('todoInput');
+    const text = input.value.trim();
+    
+    if (!text) return;
+    
+    todoList.push({ text, done: false, time: new Date().toISOString() });
+    localStorage.setItem('todo_list_' + currentUser.phone, JSON.stringify(todoList));
+    
+    input.value = '';
+    renderTodoList();
+}
+
+function toggleTodo(index) {
+    todoList[index].done = !todoList[index].done;
+    localStorage.setItem('todo_list_' + currentUser.phone, JSON.stringify(todoList));
+    renderTodoList();
+}
+
+function deleteTodo(index) {
+    todoList.splice(index, 1);
+    localStorage.setItem('todo_list_' + currentUser.phone, JSON.stringify(todoList));
+    renderTodoList();
+}
+
+function startTodoCountdowns() {
+    // Placeholder for deadline countdowns
+}
+
+/* ======================================================
+   POMODORO TIMER
+====================================================== */
+function loadPomoState() {
+    const savedState = localStorage.getItem('pomo_state_' + currentUser.phone);
+    if (savedState) {
+        try {
+            const saved = JSON.parse(savedState);
+            pomoState = { ...pomoState, ...saved };
+            
+            // Restore timer if was running
+            if (pomoState.isRunning && !pomoState.isPaused) {
+                const elapsed = Math.floor((Date.now() - pomoState.startTime) / 1000);
+                pomoState.remaining = Math.max(0, pomoState.duration - elapsed);
+                
+                if (pomoState.remaining > 0) {
+                    startPomoInterval();
+                } else {
+                    pomoState.isRunning = false;
+                    pomoState.remaining = pomoState.duration;
+                }
+            }
+        } catch (e) {}
+    }
+    
+    const savedSessions = localStorage.getItem('pomo_sessions_' + currentUser.phone);
+    if (savedSessions) {
+        try {
+            pomoSessions = JSON.parse(savedSessions);
+        } catch (e) {}
+    }
+    
+    const savedStats = localStorage.getItem('pomo_stats_' + currentUser.phone);
+    if (savedStats) {
+        try {
+            pomoStats = JSON.parse(savedStats);
+        } catch (e) {}
+    }
+    
+    updatePomoDisplay();
+    renderPomoHistory();
+    updatePomoSuccessGraph();
+}
+
+function savePomoState() {
+    localStorage.setItem('pomo_state_' + currentUser.phone, JSON.stringify(pomoState));
+    localStorage.setItem('pomo_sessions_' + currentUser.phone, JSON.stringify(pomoSessions));
+    localStorage.setItem('pomo_stats_' + currentUser.phone, JSON.stringify(pomoStats));
+}
+
+function updatePomoDisplay() {
+    const mins = Math.floor(pomoState.remaining / 60);
+    const secs = pomoState.remaining % 60;
+    const timeStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    
+    document.getElementById('pomoTimeDisplay').textContent = timeStr;
+    document.getElementById('pomoTaskName').textContent = pomoState.taskName;
+    document.getElementById('pomoSessionCount').textContent = `Session #${pomoState.sessionCount}`;
+    
+    // Update ring progress
+    const progress = (pomoState.duration - pomoState.remaining) / pomoState.duration;
+    const circumference = 534.07;
+    const offset = circumference * (1 - progress);
+    document.getElementById('pomoRingProgress').style.strokeDashoffset = offset;
+    
+    // Play button state
+    const playBtn = document.getElementById('pomoPlayBtn');
+    playBtn.textContent = pomoState.isRunning && !pomoState.isPaused ? '⏸️ Pause' : '▶️ Play';
+    
+    // Live card
+    if (pomoState.isRunning && !pomoState.isPaused) {
+        document.getElementById('pomoLiveCard').style.display = 'block';
+        document.getElementById('pomoLiveTime').textContent = timeStr;
+        document.getElementById('pomoLiveTask').textContent = pomoState.taskName;
+    } else {
+        document.getElementById('pomoLiveCard').style.display = 'none';
+    }
+    
+    // Warning style (last 60 seconds)
+    const watchFace = document.querySelector('.pomo-watch-face');
+    if (pomoState.remaining <= 60 && pomoState.isRunning) {
+        watchFace.classList.add('pomo-warning');
+    } else {
+        watchFace.classList.remove('pomo-warning');
+    }
+}
+
+function setPomoTask() {
+    const taskInput = document.getElementById('pomoTaskInput');
+    const durationInput = document.getElementById('pomoDurationInput');
+    
+    const taskName = taskInput.value.trim() || 'No Task';
+    const duration = parseInt(durationInput.value) || 25;
+    
+    pomoState.taskName = taskName;
+    pomoState.duration = duration * 60;
+    pomoState.remaining = duration * 60;
+    pomoState.isRunning = false;
+    pomoState.isPaused = false;
+    
+    clearInterval(pomoState.timerInterval);
+    
+    savePomoState();
+    updatePomoDisplay();
+    
+    showToast('✅ টাস্ক সেট হয়েছে!');
+}
+
+function togglePomoTimer() {
+    if (!pomoState.isRunning) {
+        // Start
+        pomoState.isRunning = true;
+        pomoState.isPaused = false;
+        pomoState.startTime = Date.now() - (pomoState.duration - pomoState.remaining) * 1000;
+        pomoState.sessionCount++;
+        
+        startPomoInterval();
+        savePomoState();
+        updatePomoDisplay();
+    } else if (!pomoState.isPaused) {
+        // Pause
+        pausePomoTimer();
+    } else {
+        // Resume
+        pomoState.isPaused = false;
+        pomoState.startTime = Date.now() - (pomoState.duration - pomoState.remaining) * 1000;
+        
+        startPomoInterval();
+        savePomoState();
+        updatePomoDisplay();
+    }
+}
+
+function pausePomoTimer() {
+    pomoState.isPaused = true;
+    pomoState.pausedTime = Date.now();
+    
+    clearInterval(pomoState.timerInterval);
+    
+    savePomoState();
+    updatePomoDisplay();
+}
+
+function resetPomoTimer() {
+    pomoState.isRunning = false;
+    pomoState.isPaused = false;
+    pomoState.remaining = pomoState.duration;
+    
+    clearInterval(pomoState.timerInterval);
+    
+    savePomoState();
+    updatePomoDisplay();
+}
+
+function stopPomoTimer() {
+    resetPomoTimer();
+    closeScreen('pomoScreen');
+}
+
+function startPomoInterval() {
+    clearInterval(pomoState.timerInterval);
+    
+    pomoState.timerInterval = setInterval(() => {
+        if (pomoState.remaining > 0) {
+            pomoState.remaining--;
+            updatePomoDisplay();
+            
+            if (pomoState.remaining === 0) {
+                clearInterval(pomoState.timerInterval);
+                onPomoComplete();
+            }
+        }
+    }, 1000);
+}
+
+function onPomoComplete() {
+    // Show completion modal
+    document.getElementById('pomoCompletionModal').style.display = 'flex';
+    
+    // Notification
+    if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('🎉 Pomodoro Complete!', {
+            body: `${pomoState.taskName} - সম্পন্ন হয়েছে!`,
+            icon: '/icon.png'
+        });
+    }
+}
+
+function completePomoSession(success) {
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Initialize daily stats
+    if (!pomoStats.dailyStats[today]) {
+        pomoStats.dailyStats[today] = { total: 0, completed: 0 };
+    }
+    
+    pomoStats.dailyStats[today].total++;
+    
+    if (success) {
+        pomoStats.dailyStats[today].completed++;
+        pomoStats.streak++;
+    } else {
+        pomoStats.streak = 0;
+    }
+    
+    // Save session
+    pomoSessions.push({
+        taskName: pomoState.taskName,
+        duration: pomoState.duration,
+        completed: success,
+        time: new Date().toISOString()
+    });
+    
+    // Reset timer
+    pomoState.isRunning = false;
+    pomoState.isPaused = false;
+    pomoState.remaining = pomoState.duration;
+    
+    clearInterval(pomoState.timerInterval);
+    
+    savePomoState();
+    updatePomoDisplay();
+    renderPomoHistory();
+    updatePomoSuccessGraph();
+    
+    closeModal('pomoCompletionModal');
+    
+    showToast(success ? '✅ সফল সেশন!' : '❌ সেশন সম্পূর্ণ হয়নি');
+}
+
+function renderPomoHistory() {
+    const list = document.getElementById('pomoHistoryList');
+    
+    if (!pomoSessions.length) {
+        list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2);">কোনো হিস্টরি নেই</div>';
+        return;
+    }
+    
+    const recent = pomoSessions.slice(-10).reverse();
+    
+    list.innerHTML = recent.map(s => `
+        <div class="pomo-history-item">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <div style="font-size:20px;">${s.completed ? '✅' : '❌'}</div>
+                <div style="flex:1;">
+                    <div style="font-size:13px;font-weight:600;">${s.taskName}</div>
+                    <div style="font-size:11px;color:var(--text2);">${Math.floor(s.duration / 60)} min • ${toBanglaDateTime(s.time)}</div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function updatePomoSuccessGraph() {
+    const graphCard = document.getElementById('pomoSuccessGraph');
+    
+    if (!pomoSessions.length) {
+        graphCard.style.display = 'none';
+        return;
+    }
+    
+    // Get last 3 days
+    const today = new Date();
+    const last3Days = [];
+    
+    for (let i = 2; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const key = date.toISOString().split('T')[0];
+        last3Days.push({
+            date: key,
+            label: ['আজ', 'গতকাল', '২ দিন আগে'][2-i],
+            stats: pomoStats.dailyStats[key] || { total: 0, completed: 0 }
+        });
+    }
+    
+    const rates = last3Days.map(d => {
+        if (d.stats.total === 0) return 0;
+        return Math.round((d.stats.completed / d.stats.total) * 100);
+    });
+    
+    const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+    const bestRate = Math.max(...rates);
+    
+    // Build chart
+    const chartHtml = last3Days.map((d, i) => {
+        const height = rates[i];
+        const color = height >= 80 ? 'var(--green)' : height >= 50 ? 'var(--yellow)' : 'var(--red)';
+        return `
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;">
+                <div style="width:100%;background:${color};height:${height}%;min-height:4px;border-radius:4px;transition:0.3s;"></div>
+                <div style="font-size:10px;color:var(--text2);">${d.label}</div>
+                <div style="font-size:12px;font-weight:700;color:${color};">${rates[i]}%</div>
+            </div>
+        `;
+    }).join('');
+    
+    document.getElementById('pomoSuccessChart').innerHTML = chartHtml;
+    document.getElementById('pomoAvgRate').textContent = avgRate.toFixed(0) + '%';
+    document.getElementById('pomoBestRate').textContent = bestRate + '%';
+    document.getElementById('pomoStreak').textContent = pomoStats.streak;
+    
+    graphCard.style.display = 'block';
+}
+
+/* ======================================================
+   GRAPHS
+====================================================== */
+function buildExamGraph(results) {
+    const card = document.getElementById('examGraphCard');
+    if (!results?.length) { card.style.display = 'none'; return; }
+    
+    const fifteenDaysAgo = new Date(Date.now() - 15*24*60*60*1000);
+    const oneWeekAgo = new Date(Date.now() - 7*24*60*60*1000);
+    
+    const last15 = results.filter(r => new Date(r.submitted_at) >= fifteenDaysAgo).slice(0, 15).reverse();
+    const thisWeek = results.filter(r => new Date(r.submitted_at) >= oneWeekAgo).length;
+    
+    const scores = results.map(r => (parseFloat(r.final_score) || 0) / (r.total_questions || 50) * 100);
+    const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+    const best = Math.max(...scores);
+    
+    document.getElementById('gAvg').textContent = avg.toFixed(0) + '%';
+    document.getElementById('gBest').textContent = best.toFixed(0) + '%';
+    document.getElementById('gTotal').textContent = toBanglaNum(results.length);
+    document.getElementById('gWeek').textContent = toBanglaNum(thisWeek);
+    document.getElementById('examGraphBadge').textContent = `শেষ ${toBanglaNum(last15.length)} দিন`;
+    
+    document.getElementById('examBarChart').innerHTML = last15.map(r => {
+        const pct = (parseFloat(r.final_score) || 0) / (r.total_questions || 50) * 100;
+        const h = Math.max(4, (pct / 100) * 100);
+        const cls = pct >= 80 ? 'high' : pct >= 50 ? 'mid' : 'low';
+        const d = new Date(r.submitted_at);
+        const label = (d.getMonth() + 1) + '/' + d.getDate();
+        return `
+            <div class="bar-wrap">
+                <div style="flex:1;display:flex;align-items:flex-end;width:100%;">
+                    <div class="bar ${cls}" style="height:${h}%" data-score="${pct.toFixed(0)}%"></div>
+                </div>
+                <div class="bar-label">${label}</div>
+            </div>
+        `;
+    }).join('');
+    
+    card.style.display = 'block';
+}
+
+function buildClassGraph(history) {
+    const card = document.getElementById('classGraphCard');
+    if (!history?.length) { card.style.display = 'none'; return; }
+    
+    const fifteenDaysAgo = new Date(Date.now() - 15*24*60*60*1000);
+    const oneWeekAgo = new Date(Date.now() - 7*24*60*60*1000);
+    
+    const last15 = history.filter(h => new Date(h.time) >= fifteenDaysAgo).slice(-15);
+    const thisWeek = history.filter(h => new Date(h.time) >= oneWeekAgo).length;
+    
+    const subjectCount = {};
+    history.forEach(h => {
+        if (h.subject) subjectCount[h.subject] = (subjectCount[h.subject] || 0) + 1;
+    });
+    
+    const subjects = Object.keys(subjectCount);
+    const favSubject = subjects.length ? subjects.reduce((a, b) => subjectCount[a] > subjectCount[b] ? a : b) : '—';
+    
+    document.getElementById('cTotal').textContent = toBanglaNum(history.length);
+    document.getElementById('cWeek').textContent = toBanglaNum(thisWeek);
+    document.getElementById('cFav').textContent = favSubject.substring(0, 8);
+    document.getElementById('classGraphBadge').textContent = `শেষ ${toBanglaNum(last15.length)}টি`;
+    
+    if (!last15.length) { card.style.display = 'none'; return; }
+    
+    const dateMap = {};
+    last15.forEach(h => {
+        const d = new Date(h.time).toLocaleDateString();
+        dateMap[d] = (dateMap[d] || 0) + 1;
+    });
+    
+    const dateKeys = Object.keys(dateMap);
+    const counts = dateKeys.map(d => dateMap[d]);
+    
+    const W = 300, H = 100, PAD = 12;
+    const maxCount = Math.max(...counts, 1);
+    const step = counts.length > 1 ? (W - PAD*2) / (counts.length - 1) : W - PAD*2;
+    
+    const points = counts.map((c, i) => ({
+        x: PAD + i * step,
+        y: H - PAD - ((c / maxCount) * (H - PAD*2))
+    }));
+    
+    const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
+    const areaD = pathD + ` L${points[points.length-1].x},${H-PAD} L${points[0].x},${H-PAD} Z`;
+    
+    document.getElementById('lineChartSvg').innerHTML = `
+        <defs>
+            <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#58A6FF" stop-opacity="0.4"/>
+                <stop offset="100%" stop-color="#58A6FF" stop-opacity="0.02"/>
+            </linearGradient>
+        </defs>
+        <path d="${areaD}" fill="url(#lineGrad)"/>
+        <path d="${pathD}" fill="none" stroke="#58A6FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        ${points.map((p, i) => `
+            <circle cx="${p.x}" cy="${p.y}" r="3" fill="#58A6FF"/>
+            <text x="${p.x}" y="${H-1}" text-anchor="middle" font-size="6" fill="#8B949E">${dateKeys[i].split('/')[1] || ''}</text>
+        `).join('')}
+    `;
+    
+    card.style.display = 'block';
+}
+
+function buildProfileStats(examResults) {
+    const scores = (examResults || []).map(r => (parseFloat(r.final_score) || 0) / (r.total_questions || 50) * 100);
+    const avg = scores.length ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(0) + '%' : '—';
+    
+    document.getElementById('statAvg').textContent = avg;
+    document.getElementById('profileStatsRow').style.display = 'flex';
+}
+
+/* ======================================================
+   INIT
+====================================================== */
+document.addEventListener('DOMContentLoaded', async () => {
+    if (!checkAuth()) return;
+    
+    // Theme restore
+    const savedTheme = localStorage.getItem('atlas-theme');
+    if (savedTheme === 'light') {
+        isDarkMode = false;
+        document.body.classList.add('light-mode');
+        document.getElementById('themeBtn').textContent = '☀️';
+    }
+    
+    // Load pomodoro state
+    loadPomoState();
+    
+    loadProfile();
+    
+    // Parallel data load
+    const [examResults, notifs] = await Promise.all([
+        safeFetch(`${SUPABASE_URL}/rest/v1/exam_results?phone=eq.${currentUser.phone}&select=*&order=submitted_at.desc&limit=100`),
+        safeFetch(`${SUPABASE_URL}/rest/v1/notifications?phone=eq.${currentUser.phone}&select=id,is_read&limit=30`)
+    ]);
+    
+    examResultsCache = examResults || [];
+    document.getElementById('countExams').textContent = toBanglaNum(examResultsCache.length) + ' এক্সাম';
+    document.getElementById('statExams').textContent = toBanglaNum(examResultsCache.length);
+    
+    buildExamGraph(examResultsCache);
+    buildProfileStats(examResultsCache);
+    loadClassHistory();
+    loadBookmarks();
+    
+    const unread = (notifs || []).filter(n => !n.is_read).length;
+    document.getElementById('countNotifs').textContent = toBanglaNum(unread) + ' নতুন';
+    
+    if (unread > 0) {
+        const badge = document.getElementById('unreadBadge');
+        badge.style.display = 'flex';
+        badge.textContent = unread > 9 ? '9+' : unread;
+    }
+    
+    // Hash routing
+    const hash = (location.hash || '').replace('#', '');
+    if (hash === 'mistakesScreen') {
+        openScreen('mistakesScreen');
+        loadMistakesFullscreen();
+    } else if (hash === 'todoScreen') {
+        openScreen('todoScreen');
+        renderTodoList();
+        startTodoCountdowns();
+    } else if (hash === 'pomoScreen') {
+        openScreen('pomoScreen');
+        updatePomoDisplay();
+        renderPomoHistory();
+    } else if (hash && ['history','classhistory','bookmarks','notifications','edit','weaklist','leaderboard'].includes(hash)) {
+        showTab(hash);
+    } else {
+        showTab('main');
+    }
+    
+    // Notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+});
+</script>
+</body>
+</html>
