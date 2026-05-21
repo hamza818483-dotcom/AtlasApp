@@ -1331,6 +1331,58 @@ function submitExam(isAutoSubmit=false){
             withGpa=finalScore+gpaScore;
         }
     }catch(e){}
+    // DASHBOARD CONNECTION: Return result
+const urlParams = new URLSearchParams(location.search);
+const source = urlParams.get('source');
+
+if (source === 'dashboard' && isLoggedIn()) {
+    try {
+        const wrongQs = examQuestions.filter(q => {
+            const ua = userAnswers[q.id];
+            return ua && ua !== q.answer_index;
+        }).map(q => ({
+            question_id: q.id,
+            question: {
+                question: q.question_text,
+                optionA: q.option1,
+                optionB: q.option2,
+                optionC: q.option3,
+                optionD: q.option4,
+                correct: ['A','B','C','D','E'][q.answer_index - 1] || 'A',
+                explanation: q.explanation,
+                image_url: q.image_url
+            },
+            user_answer: userAnswers[q.id],
+            subject: currentExam?.subject || 'Mixed',
+            category: currentExam?.exam_type || ''
+        }));
+        
+        const resultData = {
+            examId: currentExam?.id,
+            title: currentExam?.title || 'Practice',
+            subject: currentExam?.subject || 'Mixed',
+            category: currentExam?.exam_type || '',
+            total: totalQ,
+            correct: correct,
+            wrong: wrong,
+            skipped: skipped,
+            percentage: Math.round((correct / totalQ) * 100),
+            timeTaken: totalSeconds - examSeconds,
+            mistakes: wrongQs
+        };
+        
+        const resultId = 'result_' + Date.now();
+        localStorage.setItem('exam_result_' + resultId, JSON.stringify(resultData));
+        
+        setTimeout(() => {
+            window.location.href = 'dashboard2_with_fixes.html?exam_result=' + resultId;
+        }, 2000);
+        
+        return; // Stop here, don't show normal result
+    } catch (e) {
+        console.error('Dashboard return error:', e);
+    }
+}
 
        showResult(correct,wrong,skipped,negMark,finalScore,withGpa,gpaScore,deduction,isSecondTimer,totalQ);
     
