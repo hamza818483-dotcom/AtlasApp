@@ -2248,8 +2248,18 @@ function pomoSetPreset(mins, btn) {
     // Active preset styling
     document.querySelectorAll('.pomo-preset').forEach(b => b.classList.remove('active-preset'));
     if (btn) btn.classList.add('active-preset');
+    
+    // Get task name
+    const task = document.getElementById('pomoTaskInput')?.value?.trim() || 'Study Session';
+    if (task) pomoCurrentTask = task;
+    
     updatePomoDisplay();
-    showToast(`⏱️ ${mins} মিনিট সেট হয়েছে`);
+    showToast(`⏱️ ${mins} মিনিট শুরু হচ্ছে...`);
+    
+    // IMPROVEMENT: Auto-start immediately
+    setTimeout(() => {
+        if (!pomoRunning) togglePomodoro();
+    }, 500);
 }
 
 function pomoApplySetup() {
@@ -2264,7 +2274,12 @@ function pomoApplySetup() {
     if (task) pomoCurrentTask = task;
     document.querySelectorAll('.pomo-preset').forEach(b => b.classList.remove('active-preset'));
     updatePomoDisplay();
-    showToast('✅ Pomodoro সেট হয়েছে');
+    showToast('✅ Pomodoro শুরু হচ্ছে...');
+    
+    // IMPROVEMENT: Auto-start immediately
+    setTimeout(() => {
+        if (!pomoRunning) togglePomodoro();
+    }, 500);
 }
 
 function renderPomoHistory() {
@@ -2956,197 +2971,48 @@ async function loadWeakList() {
     </div>`;
 }
 
-// FIX 6: Vertical Exam Style Function (exam.html pattern)
-function startVerticalExam(questions, examTitle, isReview = false) {
+// CONNECT TO EXAM.HTML - All exams use exam.html style
+function startVerticalExam(questions, examTitle, isReview = false, timeLimit = null) {
     if (!questions || questions.length === 0) {
         alert('কোনো প্রশ্ন নেই!');
         return;
     }
     
-    const examId = isReview ? 'review_' + Date.now() : 'exam_' + Date.now();
-    const userAnswers = {};
-    let currentIndex = 0;
+    // Normalize questions format for exam.html
+    const normalizedQuestions = questions.map(q => ({
+        id: q.id || Math.random(),
+        question: q.question || q.question_text || '',
+        optionA: q.optionA || q.option1 || '',
+        optionB: q.optionB || q.option2 || '',
+        optionC: q.optionC || q.option3 || '',
+        optionD: q.optionD || q.option4 || '',
+        correct: q.correct || (['A','B','C','D'][parseInt(q.answer_index || 1) - 1]) || 'A',
+        explanation: q.explanation || '',
+        image_url: q.image_url || null,
+        subject: q.subject || 'Mixed',
+        category: q.category || ''
+    }));
     
-    const examContainer = document.createElement('div');
-    examContainer.id = 'verticalExamContainer';
-    examContainer.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: var(--bg);
-        z-index: 10000;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-    `;
-    
-    function renderExam() {
-        const q = questions[currentIndex];
-        examContainer.innerHTML = `
-            <div style="max-width: 800px; margin: 0 auto; padding: 16px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--border);">
-                    <div>
-                        <div style="font-size: 18px; font-weight: 700; color: var(--text);">${escHtml(examTitle)}</div>
-                        <div style="font-size: 13px; color: var(--text2); margin-top: 4px;">প্রশ্ন ${currentIndex + 1} / ${questions.length}</div>
-                    </div>
-                    <button onclick="closeVerticalExam()" style="padding: 8px 16px; background: var(--red); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">✕ Close</button>
-                </div>
-                
-                <div style="width: 100%; height: 6px; background: var(--bg2); border-radius: 3px; margin-bottom: 24px; overflow: hidden;">
-                    <div style="width: ${((currentIndex + 1) / questions.length * 100).toFixed(1)}%; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-dark)); transition: width 0.3s;"></div>
-                </div>
-                
-                <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
-                    <div style="font-size: 16px; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 20px;">
-                        <span style="color: var(--accent); font-weight: 700;">Q${currentIndex + 1}.</span> ${escHtml(q.question)}
-                    </div>
-                    
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
-                        ${['A', 'B', 'C', 'D'].map(opt => {
-                            const isSelected = userAnswers[currentIndex] === opt;
-                            return `
-                                <div onclick="selectVerticalAnswer(${currentIndex}, '${opt}')" 
-                                     id="vopt_${currentIndex}_${opt}"
-                                     style="padding: 16px; background: ${isSelected ? 'var(--accent)' : 'var(--bg2)'}; 
-                                            color: ${isSelected ? 'white' : 'var(--text)'}; 
-                                            border: 2px solid ${isSelected ? 'var(--accent-dark)' : 'var(--border)'}; 
-                                            border-radius: 10px; cursor: pointer; transition: all 0.2s; 
-                                            font-weight: ${isSelected ? '700' : '500'};
-                                            display: flex; align-items: center; gap: 12px;">
-                                    <span style="min-width: 28px; height: 28px; border-radius: 50%; 
-                                                 background: ${isSelected ? 'white' : 'var(--bg)'}; 
-                                                 color: ${isSelected ? 'var(--accent)' : 'var(--text2)'}; 
-                                                 display: flex; align-items: center; justify-content: center; 
-                                                 font-weight: 700; font-size: 14px;">${opt}</span>
-                                    <span style="flex: 1;">${escHtml(q['option' + opt])}</span>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                </div>
-                
-                <div style="display: flex; gap: 12px; margin-bottom: 20px;">
-                    <button onclick="navigateVerticalExam(-1)" 
-                            ${currentIndex === 0 ? 'disabled' : ''}
-                            style="flex: 1; padding: 14px; background: var(--bg2); color: var(--text); 
-                                   border: 1px solid var(--border); border-radius: 10px; font-weight: 600; 
-                                   cursor: ${currentIndex === 0 ? 'not-allowed' : 'pointer'}; opacity: ${currentIndex === 0 ? '0.5' : '1'};">
-                        ← Previous
-                    </button>
-                    ${currentIndex < questions.length - 1 ? `
-                        <button onclick="navigateVerticalExam(1)" 
-                                style="flex: 1; padding: 14px; background: var(--accent); color: white; 
-                                       border: none; border-radius: 10px; font-weight: 600; cursor: pointer;">
-                            Next →
-                        </button>
-                    ` : `
-                        <button onclick="submitVerticalExam()" 
-                                style="flex: 1; padding: 14px; background: var(--green); color: white; 
-                                       border: none; border-radius: 10px; font-weight: 700; cursor: pointer;">
-                            ✓ Submit Exam
-                        </button>
-                    `}
-                </div>
-                
-                <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px;">
-                    <div style="font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 12px;">Quick Navigation:</div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 8px;">
-                        ${questions.map((_, i) => {
-                            const answered = userAnswers[i] !== undefined;
-                            const isCurrent = i === currentIndex;
-                            return `
-                                <button onclick="jumpToVerticalQuestion(${i})" 
-                                        style="padding: 10px; background: ${isCurrent ? 'var(--accent)' : answered ? 'var(--green)' : 'var(--bg2)'}; 
-                                               color: ${isCurrent || answered ? 'white' : 'var(--text2)'}; 
-                                               border: 2px solid ${isCurrent ? 'var(--accent-dark)' : answered ? 'var(--green)' : 'var(--border)'}; 
-                                               border-radius: 8px; font-weight: ${isCurrent ? '700' : '600'}; 
-                                               cursor: pointer; font-size: 13px;">
-                                    ${i + 1}
-                                </button>
-                            `;
-                        }).join('')}
-                    </div>
-                    <div style="margin-top: 12px; font-size: 12px; color: var(--text2); display: flex; gap: 16px; flex-wrap: wrap;">
-                        <span>🟢 Answered: ${Object.keys(userAnswers).length}</span>
-                        <span>⚪ Unanswered: ${questions.length - Object.keys(userAnswers).length}</span>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-    
-    window.selectVerticalAnswer = (index, option) => {
-        userAnswers[index] = option;
-        renderExam();
+    // Prepare exam data
+    const examData = {
+        questions: normalizedQuestions,
+        title: examTitle,
+        isReview: isReview,
+        timeLimit: timeLimit || (normalizedQuestions.length * 60),
+        returnUrl: window.location.href,
+        examId: 'exam_' + Date.now()
     };
     
-    window.navigateVerticalExam = (direction) => {
-        const newIndex = currentIndex + direction;
-        if (newIndex >= 0 && newIndex < questions.length) {
-            currentIndex = newIndex;
-            renderExam();
-            examContainer.scrollTop = 0;
-        }
-    };
+    // Save to localStorage
+    localStorage.setItem('pending_exam_data', JSON.stringify(examData));
     
-    window.jumpToVerticalQuestion = (index) => {
-        currentIndex = index;
-        renderExam();
-        examContainer.scrollTop = 0;
-    };
-    
-    window.submitVerticalExam = () => {
-        const unanswered = questions.length - Object.keys(userAnswers).length;
-        if (unanswered > 0) {
-            if (!confirm(`আপনি ${unanswered}টি প্রশ্নের উত্তর দেননি। Submit করতে চান?`)) {
-                return;
-            }
-        }
-        
-        let correct = 0;
-        questions.forEach((q, i) => {
-            if (userAnswers[i] === q.correct) correct++;
-        });
-        
-        const score = correct;
-        const total = questions.length;
-        const percentage = ((score / total) * 100).toFixed(1);
-        
-        if (!isReview) {
-            const result = {
-                exam_id: examId,
-                exam_name: examTitle,
-                subject: questions[0]?.subject || 'Mixed',
-                total_questions: total,
-                final_score: score,
-                percentage: parseFloat(percentage),
-                submitted_at: new Date().toISOString(),
-                questions: questions.map((q, i) => ({
-                    ...q,
-                    user_answer: userAnswers[i] || null
-                }))
-            };
-            
-            const examHistory = JSON.parse(localStorage.getItem('exam_history') || '[]');
-            examHistory.push(result);
-            localStorage.setItem('exam_history', JSON.stringify(examHistory));
-        }
-        
-        closeVerticalExam();
-        alert(`✅ Exam Complete!\n\nScore: ${score}/${total} (${percentage}%)\nCorrect: ${correct}\nWrong: ${total - correct}`);
-        
-        if (typeof loadExamHistory === 'function') loadExamHistory();
-    };
-    
-    window.closeVerticalExam = () => {
-        if (examContainer && examContainer.parentNode) {
-            examContainer.remove();
-        }
-    };
-    
-    document.body.appendChild(examContainer);
-    renderExam();
+    // Redirect to exam.html
+    window.location.href = 'exam.html?source=dashboard&exam_id=' + examData.examId;
+}
+
+// Redirect old startPracticeExam to unified system
+function startPracticeExam(questions, title, retryFn) {
+    startVerticalExam(questions, title, false, questions.length * 60);
 }
 
 /* ======================================================
@@ -3308,6 +3174,72 @@ function buildProfileStats(examResults) {
 ====================================================== */
 document.addEventListener('DOMContentLoaded', async () => {
     if (!checkAuth()) return;
+
+    // Handle return from exam.html with results
+    const urlParams = new URLSearchParams(window.location.search);
+    const examResult = urlParams.get('exam_result');
+    
+    if (examResult) {
+        try {
+            const resultData = JSON.parse(localStorage.getItem('exam_result_' + examResult));
+            
+            if (resultData && currentUser) {
+                // Save to Supabase
+                const dbResult = {
+                    exam_id: resultData.examId || 0,
+                    exam_name: resultData.title,
+                    subject: resultData.subject || 'Mixed',
+                    category: resultData.category || '',
+                    total_questions: resultData.total,
+                    final_score: resultData.correct,
+                    correct: resultData.correct,
+                    wrong: resultData.wrong,
+                    skipped: resultData.skipped,
+                    percentage: resultData.percentage,
+                    time_taken: resultData.timeTaken,
+                    submitted_at: new Date().toISOString(),
+                    phone: currentUser.phone
+                };
+                
+                safeFetch(`${SUPABASE_URL}/rest/v1/exam_results`, {
+                    method: 'POST',
+                    body: JSON.stringify(dbResult)
+                }).then(() => {
+                    showToast('✅ Result saved!');
+                }).catch(() => {});
+                
+                // Save mistakes to localStorage
+                if (resultData.mistakes && resultData.mistakes.length) {
+                    const existingMistakes = JSON.parse(localStorage.getItem('mistakes_' + currentUser.phone) || '[]');
+                    resultData.mistakes.forEach(m => {
+                        if (!existingMistakes.find(em => em.question_id === m.question_id)) {
+                            existingMistakes.push({
+                                question_id: m.question_id,
+                                question: m.question,
+                                user_answer: m.user_answer,
+                                exam_name: resultData.title,
+                                subject: m.subject,
+                                category: m.category,
+                                timestamp: new Date().toISOString()
+                            });
+                        }
+                    });
+                    localStorage.setItem('mistakes_' + currentUser.phone, JSON.stringify(existingMistakes));
+                }
+                
+                // Clean up
+                localStorage.removeItem('exam_result_' + examResult);
+                
+                // Remove query parameter from URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+                
+                // Show success message
+                showToast(`🎉 Score: ${resultData.correct}/${resultData.total} (${resultData.percentage}%)`, 3000);
+            }
+        } catch (e) {
+            console.error('Error processing exam result:', e);
+        }
+    }
 
     // Theme restore
     const savedTheme=localStorage.getItem('atlas-theme');
