@@ -583,6 +583,121 @@
         @media(max-width:360px) {
             .mistakes-stats-grid { grid-template-columns:repeat(3,1fr); }
         }
+        
+        /* Result Page Styles */
+.result-wrap {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 14px;
+}
+
+.result-score-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 14px;
+    text-align: center;
+}
+
+.result-exam-name {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--accent);
+    margin-bottom: 8px;
+}
+
+.result-big-score {
+    font-size: 42px;
+    font-weight: 800;
+    color: var(--accent);
+}
+
+.result-total {
+    font-size: 14px;
+    color: var(--text2);
+}
+
+.result-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.result-stat {
+    background: var(--hover);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    text-align: center;
+}
+
+.correct-val { color: var(--green); }
+.wrong-val { color: var(--red); }
+.skipped-val { color: var(--yellow); }
+
+.gpa-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.gpa-box {
+    background: var(--card);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 14px;
+    text-align: center;
+}
+
+.gpa-box-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 6px;
+}
+
+.gpa-box-val {
+    font-size: 30px;
+    font-weight: 800;
+    color: var(--accent);
+}
+
+.chart-wrap {
+    width: 160px;
+    height: 160px;
+    margin: 0 auto;
+}
+
+.filter-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--hover);
+    cursor: pointer;
+    font-size: 11px;
+    font-family: inherit;
+}
+
+.filter-btn.active {
+    background: var(--accent);
+    color: #fff;
+}
+
+.solve-item {
+    margin-bottom: 16px;
+}
+        
     </style>
 </head>
 <body>
@@ -884,6 +999,21 @@
         <div id="previewQuestionsArea"></div>
     </div>
     <button class="reveal-fab" id="revealFab" onclick="toggleRevealAnswers()">✨ উত্তর দেখো</button>
+</div>
+
+<!-- MODE 5: Exam Hall -->
+<div class="mode-container" id="modeHall">
+    <div class="exam-hall-wrap">
+        <div class="exam-info-bar" id="examInfoBar"></div>
+        <div class="timer-sticky" id="timerSticky">
+            <span class="timer-text" id="timerText">৬০:০০</span>
+            <span class="progress-text" id="progressText">📈 ০%</span>
+        </div>
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressBarFill" style="width:0%"></div></div>
+        <div class="questions-area" id="questionsArea"></div>
+        <button class="submit-fixed" id="submitBtn" onclick="submitExam()">📤 Submit</button>
+        <button class="nav-fab" id="navFab" onclick="openNavPopup()">📋</button>
+    </div>
 </div>
 
 <!-- MODE 6: Result -->
