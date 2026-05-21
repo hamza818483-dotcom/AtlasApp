@@ -1195,6 +1195,55 @@ let pomoTotalTime = 25 * 60;
 let pomoRunning = false;
 let pomoSessions = [];
 let pomoCurrentTask = '';
+// ========== POMODORO STATE PERSISTENCE ==========
+function savePomoState() {
+    const pomoState = {
+        task: pomoCurrentTask,
+        timeLeft: pomoTimeLeft,
+        totalTime: pomoTotalTime,
+        isRunning: pomoRunning,
+        lastUpdated: Date.now()
+    };
+    localStorage.setItem('pomo_state', JSON.stringify(pomoState));
+}
+
+function loadPomoState() {
+    const saved = localStorage.getItem('pomo_state');
+    if (!saved) return;
+    try {
+        const state = JSON.parse(saved);
+        const elapsed = (Date.now() - state.lastUpdated) / 1000;
+        pomoCurrentTask = state.task;
+        pomoTotalTime = state.totalTime;
+        
+        if (state.isRunning) {
+            pomoTimeLeft = Math.max(0, state.timeLeft - elapsed);
+            if (pomoTimeLeft > 0) {
+                pomoRunning = true;
+                // Restart timer
+                if (pomoInterval) clearInterval(pomoInterval);
+                pomoInterval = setInterval(() => {
+                    if (pomoTimeLeft <= 0) {
+                        clearInterval(pomoInterval);
+                        pomoRunning = false;
+                        document.getElementById('pomoCompletionModal').style.display = 'flex';
+                        return;
+                    }
+                    pomoTimeLeft--;
+                    updatePomoDisplay();
+                    savePomoState();
+                }, 1000);
+            } else {
+                pomoRunning = false;
+                pomoTimeLeft = 0;
+            }
+        } else {
+            pomoTimeLeft = state.timeLeft;
+            pomoRunning = false;
+        }
+        updatePomoDisplay();
+    } catch(e) { console.error('Pomo load error:', e); }
+}
 
 // To-Do state — Flutter: TodoProvider
 let todoTimerInterval = null;
@@ -1320,10 +1369,190 @@ function closeConfirm() {
     confirmCallback = null;
     document.getElementById('confirmDialog').classList.remove('active');
 }
-document.getElementById('confirmOkBtn').onclick = () => {
-    if (confirmCallback) confirmCallback();
-    closeConfirm();
-};
+function showExamResultFullPage(resultData) {
+    // Switch to result mode
+    switchMode('Result');
+    
+    const totalQ = resultData.total;
+    const correct = resultData.correct;
+    const wrong = resultData.wrong;
+    const skipped = resultData.skipped;
+    const negMark = wrong * 0.25;
+    let finalScore = correct - negMark;
+    
+    let gpaScore = 0, withGpa = finalScore, deduction = 0, isSecondTimer = false;
+    try {
+        const user = getSession();
+        if (user) {
+            const ssc = parseFloat(user.ssc_gpa) || 0;
+            const hsc = parseFloat(user.hsc_gpa) || 0;
+            gpaScore = (ssc * 8) + (hsc * 12);
+            if (user.timer_type === 'second') {
+                isSecondTimer = true;
+                deduction = totalQ <= 50 ? 1.5 : 3;
+                finalScore = finalScore - deduction;
+            }
+            withGpa = finalScore + gpaScore;
+        }
+    } catch(e) {}
+    
+    const examName = resultData.title || 'Practice Exam';
+    const allowSolveSheet = true;
+    
+    let html = '';
+    
+    // Score Card
+    html += `<div class="result-score-card">
+        <div class="result-exam-name">📝 ${examName}</div>
+        <div class="result-big-score">${finalScore.toFixed(2)}</div>
+        <div class="result-total">/ ${totalQ}</div>
+    </div>`;
+    
+    // Stats Grid
+    html += `<div class="result-grid">
+        <div class="result-stat"><div class="result-stat-val correct-val">✅ ${correct}</div><div class="result-stat-label">সঠিক</div></div>
+        <div class="result-stat"><div class="result-stat-val wrong-val">❌ ${wrong}</div><div class="result-stat-label">ভুল</div></div>
+        <div class="result-stat"><div class="result-stat-val skipped-val">⏭️ ${skipped}</div><div class="result-stat-label">স্কিপ</div></div>
+    </div>`;
+    
+    // Negative Mark
+    html += `<div class="result-score-card" style="padding:12px;">
+        <div class="info-row"><span class="info-label">নেগেটিভ মার্ক</span><span class="info-value" style="color:var(--error);">-${negMark.toFixed(2)}</span></div>
+    </div>`;
+    
+    // GPA Row
+    if (gpaScore > 0) {
+        html += `<div class="gpa-row">
+            <div class="gpa-box"><div class="gpa-box-title">📊 Without GPA</div><div class="gpa-box-val">${finalScore.toFixed(2)}</div></div>
+            <div class="gpa-box"><div class="gpa-box-title">🎓 With GPA</div><div class="gpa-box-val">${withGpa.toFixed(2)}</div><div class="gpa-box-sub">+${gpaScore.toFixed(2)}</div></div>
+        </div>`;
+    }
+    if (isSecondTimer) html += `<div class="deduction-note">⚠️ সেকেন্ড টাইমার: -${deduction} মার্ক কর্তন</div>`;
+    
+    // Pie Chart
+    html += `<div class="result-score-card" style="padding:16px;">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:#fff;">📊 পারফরম্যান্স</div>
+        <div class="chart-wrap"><canvas id="resultChart" width="160" height="160"></canvas></div>
+    </div>`;
+    
+    // Action Buttons
+    html += `<div class="result-actions">
+        ${allowSolveSheet ? `<button class="result-action-btn" onclick="generateSolveSheetPDF(resultData)">📚 Solve Sheet PDF</button>` : ''}
+        <button class="result-action-btn leaderboard-btn" onclick="openLeaderboard('${resultData.examId || 0}','${examName.replace(/'/g, '')}')">🏆 Leaderboard</button>
+    </div>`;
+    
+    html += `<div class="practice-actions">
+        <button class="practice-btn btn-practice-again" onclick="retakeFromResult('${resultData.examId}')">🔄 Practice Again</button>
+        <button class="practice-btn btn-mistake-practice" onclick="mistakePracticeFromResult('${resultData.examId}')">❌ Mistake Practice</button>
+    </div>`;
+    
+    // Filter Buttons
+    html += `<div class="filter-bar">
+        <button class="filter-btn active" onclick="filterResultGrid(event,'all')">সব</button>
+        <button class="filter-btn" onclick="filterResultGrid(event,'correct')">✅ সঠিক</button>
+        <button class="filter-btn" onclick="filterResultGrid(event,'wrong')">❌ ভুল</button>
+        <button class="filter-btn" onclick="filterResultGrid(event,'skipped')">⏭️ স্কিপ</button>
+    </div>`;
+    
+    // Solve Sheet
+    html += `<div id="solveSheet">`;
+    if (resultData.questions) {
+        resultData.questions.forEach((q, i) => {
+            const userAnswer = q.user_answer;
+            const correctAnswer = q.correct;
+            const correctIndex = ['A','B','C','D','E'].indexOf(correctAnswer);
+            const isCorrect = userAnswer === correctAnswer;
+            const status = isCorrect ? 'correct' : (userAnswer ? 'wrong' : 'skipped');
+            
+            html += `<div class="mcq-card solve-item" data-status="${status}">
+                <div class="q-status ${status}">${status === 'correct' ? '✅ সঠিক' : (status === 'wrong' ? '❌ ভুল' : '⏭️ স্কিপ')}</div>
+                <div class="q-header"><span class="q-number">প্রশ্ন ${i+1}/${resultData.questions.length}</span></div>
+                <div class="q-text">${q.question_text || q.question || ''}</div>`;
+            
+            const options = ['A','B','C','D','E'];
+            options.forEach((opt, idx) => {
+                const optText = q['option' + (idx+1)] || q['option' + options[idx]] || '';
+                if (optText && optText !== '—') {
+                    let cls = '';
+                    if (options[idx] === correctAnswer) cls = ' correct-reveal';
+                    else if (options[idx] === userAnswer && userAnswer !== correctAnswer) cls = ' wrong-reveal';
+                    html += `<div class="option-item${cls}">
+                        <span class="option-radio">${['ক','খ','গ','ঘ','ঙ'][idx]}</span>
+                        <span class="option-text">${optText}</span>
+                        ${options[idx] === correctAnswer ? '<span style="color:var(--success);margin-left:4px;">✅</span>' : ''}
+                        ${options[idx] === userAnswer && userAnswer !== correctAnswer ? '<span style="color:var(--error);margin-left:4px;">❌</span>' : ''}
+                    </div>`;
+                }
+            });
+            
+            if (q.explanation) {
+                html += `<div class="explanation-box csv-box"><div class="exp-header">📋 ব্যাখ্যা</div><div class="exp-content">${q.explanation}</div></div>`;
+            }
+            html += `</div>`;
+        });
+    }
+    html += `</div>`;
+    html += `<button class="btn btn-outline" onclick="backToList()" style="width:100%;margin-top:8px;">🏠 এক্সাম লিস্টে যান</button>`;
+    
+    document.getElementById('resultContent').innerHTML = html;
+    
+    // Draw pie chart
+    setTimeout(() => {
+        const canvas = document.getElementById('resultChart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const total = correct + wrong + skipped || 1;
+        const data = [correct / total, wrong / total, skipped / total];
+        const colors = ['#22D47A', '#F87171', '#FBBF24'];
+        let startAngle = -Math.PI / 2;
+        const cx = 80, cy = 80, r = 65;
+        data.forEach((slice, i) => {
+            const angle = slice * Math.PI * 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.arc(cx, cy, r, startAngle, startAngle + angle);
+            ctx.fillStyle = colors[i];
+            ctx.fill();
+            startAngle += angle;
+        });
+        ctx.beginPath();
+        ctx.arc(cx, cy, 30, 0, Math.PI * 2);
+        ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--atlas-bg') || '#0A0D1E';
+        ctx.fill();
+    }, 100);
+    
+    switchMode('Result');
+}
+
+// Filter function for result grid
+function filterResultGrid(event, type) {
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    document.querySelectorAll('.solve-item').forEach(item => {
+        item.style.display = (type === 'all' || item.dataset.status === type) ? 'block' : 'none';
+    });
+}
+
+// Retake from result
+function retakeFromResult(examId) {
+    if (examId && examId !== '0' && examId !== 0) {
+        retakeExam(examId);
+    } else {
+        showToast('⚠️ এই এক্সাম আবার দেওয়ার অপশন নেই');
+    }
+}
+
+// Mistake practice from result
+function mistakePracticeFromResult(examId) {
+    showToast('⚠️ মিস্টেক প্র্যাকটিস শীঘ্রই আসছে');
+}
+
+// Generate Solve Sheet PDF
+function generateSolveSheetPDF(resultData) {
+    // This will use the existing openSolveSheetPDF logic
+    // You can implement based on your exam.html's PDF generation
+    showToast('📄 PDF জেনারেট হচ্ছে...');
+}
 
 /* ======================================================
    AUTH CHECK
@@ -2216,12 +2445,14 @@ function pomoStart() {
         pomoTimeLeft--;
         updatePomoDisplay();
     }, 1000);
+    savePomoState();
 }
 
 function pomoPause() {
     clearInterval(pomoInterval);
     pomoRunning = false;
     updatePomoDisplay();
+    savePomoState();
 }
 
 function pomoReset() {
@@ -2229,6 +2460,7 @@ function pomoReset() {
     pomoRunning = false;
     pomoTimeLeft = pomoTotalTime;
     updatePomoDisplay();
+    savePomoState();
 }
 
 function stopPomodoro() {
@@ -2236,6 +2468,7 @@ function stopPomodoro() {
     pomoRunning = false;
     pomoTimeLeft = pomoTotalTime;
     updatePomoDisplay();
+    savePomoState();
     showToast('⏹ Pomodoro বন্ধ করা হয়েছে');
 }
 
@@ -3204,8 +3437,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 safeFetch(`${SUPABASE_URL}/rest/v1/exam_results`, {
                     method: 'POST',
                     body: JSON.stringify(dbResult)
-                }).then(() => {
-                    showToast('✅ Result saved!');
                 }).catch(() => {});
                 
                 // Save mistakes to localStorage
@@ -3227,13 +3458,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     localStorage.setItem('mistakes_' + currentUser.phone, JSON.stringify(existingMistakes));
                 }
                 
+                // Show result full page
+                showExamResultFullPage(resultData);
+                
                 // Clean up
                 localStorage.removeItem('exam_result_' + examResult);
-                
-                // Remove query parameter from URL
                 window.history.replaceState({}, document.title, window.location.pathname);
-                
-                // Show success message
                 showToast(`🎉 Score: ${resultData.correct}/${resultData.total} (${resultData.percentage}%)`, 3000);
             }
         } catch (e) {
@@ -3241,52 +3471,61 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Theme restore
-    const savedTheme=localStorage.getItem('atlas-theme');
-    if (savedTheme==='light') { isDarkMode=false; document.body.classList.add('light-mode'); document.getElementById('themeBtn').textContent='☀️'; }
+    // ✅ Theme restore (সঠিকভাবে, একবারই)
+    const savedTheme = localStorage.getItem('atlas-theme');
+    if (savedTheme === 'light') { 
+        isDarkMode = false; 
+        document.body.classList.add('light-mode'); 
+        document.getElementById('themeBtn').textContent = '☀️'; 
+    }
 
     // Restore pomodoro sessions
-    const savedSessions=localStorage.getItem('pomo_sessions_'+currentUser.phone);
-    if (savedSessions) { try { pomoSessions=JSON.parse(savedSessions); } catch(e){} }
+    const savedSessions = localStorage.getItem('pomo_sessions_' + currentUser.phone);
+    if (savedSessions) { try { pomoSessions = JSON.parse(savedSessions); } catch(e){} }
 
     loadProfile();
 
     // Parallel data load
-    const [examResults, notifs]=await Promise.all([
+    const [examResults, notifs] = await Promise.all([
         safeFetch(`${SUPABASE_URL}/rest/v1/exam_results?phone=eq.${currentUser.phone}&select=*&order=submitted_at.desc&limit=100`),
         safeFetch(`${SUPABASE_URL}/rest/v1/notifications?phone=eq.${currentUser.phone}&select=id,is_read&limit=30`)
     ]);
 
-    examResultsCache=examResults||[];
-    document.getElementById('countExams').textContent=toBanglaNum(examResultsCache.length)+' এক্সাম';
-    document.getElementById('statExams').textContent=toBanglaNum(examResultsCache.length);
+    examResultsCache = examResults || [];
+    document.getElementById('countExams').textContent = toBanglaNum(examResultsCache.length) + ' এক্সাম';
+    document.getElementById('statExams').textContent = toBanglaNum(examResultsCache.length);
     buildExamGraph(examResultsCache);
     buildProfileStats(examResultsCache);
     loadClassHistory();
     loadBookmarks();
 
-    const unread=(notifs||[]).filter(n=>!n.is_read).length;
-    document.getElementById('countNotifs').textContent=toBanglaNum(unread)+' নতুন';
-    if (unread>0) {
-        const badge=document.getElementById('unreadBadge');
-        badge.style.display='flex'; badge.textContent=unread>9?'9+':unread;
+    const unread = (notifs || []).filter(n => !n.is_read).length;
+    document.getElementById('countNotifs').textContent = toBanglaNum(unread) + ' নতুন';
+    if (unread > 0) {
+        const badge = document.getElementById('unreadBadge');
+        badge.style.display = 'flex';
+        badge.textContent = unread > 9 ? '9+' : unread;
     }
 
-    // Hash routing — FIX #5
-    const hash=(location.hash||'').replace('#','');
-    if (hash==='mistakesScreen') { openScreen('mistakesScreen'); loadMistakesFullscreen(); }
-    else if (hash==='todoScreen') { openScreen('todoScreen'); renderTodoList(); startTodoCountdowns(); }
-    else if (hash==='pomoScreen') { openScreen('pomoScreen'); updatePomoDisplay(); renderPomoHistory(); renderPomoSuccessGraph(); }
-    else if (hash && ['history','classhistory','bookmarks','notifications','edit','weaklist','leaderboard'].includes(hash)) showTab(hash);
+    // Hash routing
+    const hash = (location.hash || '').replace('#', '');
+    if (hash === 'mistakesScreen') { openScreen('mistakesScreen'); loadMistakesFullscreen(); }
+    else if (hash === 'todoScreen') { openScreen('todoScreen'); renderTodoList(); startTodoCountdowns(); }
+    else if (hash === 'pomoScreen') { openScreen('pomoScreen'); updatePomoDisplay(); renderPomoHistory(); renderPomoSuccessGraph(); }
+    else if (hash && ['history', 'classhistory', 'bookmarks', 'notifications', 'edit', 'weaklist', 'leaderboard'].includes(hash)) showTab(hash);
     else showTab('main');
     
     // Initialize success graph on main tab
     renderPomoSuccessGraph();
 
+    // Pomodoro state restore
+    loadPomoState();
+
     // Notification permission
     if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
 });
 
+ 
 // FIX 8: Storage Event Listener for Multi-Tab Sync
 window.addEventListener('storage', (e) => {
     if (!currentUser) return;
