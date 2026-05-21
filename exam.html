@@ -1306,86 +1306,82 @@ async function submitReport(){
 // =============================================================
 // SUBMIT & RESULT (req #16: auto submit when timer ends)
 // =============================================================
-function submitExam(isAutoSubmit = false) {
-    if (isExamSubmitted) return;
-    if (!isAutoSubmit && !confirm('এক্সাম সাবমিট করবেন? ফেরত আসা যাবে না।')) return;
-    
-    isExamSubmitted = true;
-    stopTimer();
-    document.getElementById('submitBtn').style.display = 'none';
-    document.getElementById('navFab').style.display = 'none';
-    
-    // ক্যালকুলেশন
-    let correct = 0, wrong = 0, skipped = 0;
-    examQuestions.forEach(q => {
-        const ua = userAnswers[q.id];
-        if (!ua) skipped++;
-        else if (ua === q.answer_index) correct++;
-        else wrong++;
-    });
-    
-    const totalQ = examQuestions.length;
-    const negMark = wrong * 0.25;
-    let finalScore = correct - negMark;
-    
-    let gpaScore = 0, withGpa = finalScore, deduction = 0, isSecondTimer = false;
-    try {
-        const user = getSession();
-        if (user) {
-            const ssc = parseFloat(user.ssc_gpa) || 0;
-            const hsc = parseFloat(user.hsc_gpa) || 0;
-            gpaScore = (ssc * 8) + (hsc * 12);
-            if (user.timer_type === 'second') {
-                isSecondTimer = true;
-                deduction = totalQ <= 50 ? 1.5 : 3;
-                finalScore = finalScore - deduction;
+function submitExam(isAutoSubmit=false){
+    if(isExamSubmitted)return;
+    if(!isAutoSubmit&&!confirm('এক্সাম সাবমিট করবেন? ফেরত আসা যাবে না।'))return;
+    isExamSubmitted=true;stopTimer();
+    document.getElementById('submitBtn').style.display='none';
+    document.getElementById('navFab').style.display='none';
+    switchMode('Result');
+
+    let correct=0,wrong=0,skipped=0;
+    examQuestions.forEach(q=>{const ua=userAnswers[q.id];if(!ua)skipped++;else if(ua===q.answer_index)correct++;else wrong++;});
+    const totalQ=examQuestions.length,negMark=wrong*0.25;
+    let finalScore=correct-negMark;
+
+    let gpaScore=0,withGpa=finalScore,deduction=0,isSecondTimer=false;
+    try{
+        const user=getSession();
+        if(user){
+            const ssc=parseFloat(user.ssc_gpa)||0,hsc=parseFloat(user.hsc_gpa)||0;
+            gpaScore=(ssc*8)+(hsc*12);
+            if(user.timer_type==='second'){
+                isSecondTimer=true;deduction=totalQ<=50?1.5:3;finalScore=finalScore-deduction;
             }
-            withGpa = finalScore + gpaScore;
+            withGpa=finalScore+gpaScore;
         }
-    } catch(e) {}
-    
-    const pct = totalQ > 0 ? Math.round((correct / totalQ) * 100) : 0;
-    
-    // ✅ DASHBOARD এ পাঠানোর জন্য (Exam History + My Mistakes দুটোর জন্য)
-    const resultId = 'result_' + Date.now();
-    const resultData = {
-        examId: currentExam?.id || 'practice_' + Date.now(),
-        title: currentExam?.title || (currentExam?.subject + ' - ' + currentExam?.chapter) || 'Practice Exam',
-        subject: currentExam?.subject || 'Mixed',
-        category: currentExam?.exam_type || 'practice',
-        total: totalQ,
-        correct: correct,
-        wrong: wrong,
-        skipped: skipped,
-        percentage: pct,
-        timeTaken: totalSeconds - examSeconds,
-        finalScore: finalScore,
-        withGpa: withGpa,
-        gpaScore: gpaScore,
-        isSecondTimer: isSecondTimer,
-        deduction: deduction,
-        questions: examQuestions.map(q => ({
-            id: q.id,
-            question_text: q.question_text || q.question || '',
+    }catch(e){}
+    // DASHBOARD CONNECTION: Return result
+const urlParams = new URLSearchParams(location.search);
+const source = urlParams.get('source');
+
+if (source === 'dashboard' && isLoggedIn()) {
+    try {
+        const wrongQs = examQuestions.filter(q => {
+            const ua = userAnswers[q.id];
+            return ua && ua !== q.answer_index;
+        }).map(q => ({
+            question_id: q.id,
+            question: {
+                question: q.question_text,
+                optionA: q.option1,
+                optionB: q.option2,
+                optionC: q.option3,
+                optionD: q.option4,
+                correct: ['A','B','C','D','E'][q.answer_index - 1] || 'A',
+                explanation: q.explanation,
+                image_url: q.image_url
+            },
             user_answer: userAnswers[q.id],
-            correct: q.answer_index || q.correct_option,
-            explanation: q.explanation || '',
-            option1: q.option1 || '',
-            option2: q.option2 || '',
-            option3: q.option3 || '',
-            option4: q.option4 || '',
-            option5: q.option5 || ''
-        }))
-    };
-    
-    localStorage.setItem('exam_result_' + resultId, JSON.stringify(resultData));
-    
-    // Dashboard এ রিডাইরেক্ট
-    setTimeout(() => {
-        window.location.href = 'dashboard.html?exam_result=' + resultId;
-    }, 500);
-    
-    return; // এখানেই থামুন
+            subject: currentExam?.subject || 'Mixed',
+            category: currentExam?.exam_type || ''
+        }));
+        
+        const resultData = {
+            examId: currentExam?.id,
+            title: currentExam?.title || 'Practice',
+            subject: currentExam?.subject || 'Mixed',
+            category: currentExam?.exam_type || '',
+            total: totalQ,
+            correct: correct,
+            wrong: wrong,
+            skipped: skipped,
+            percentage: Math.round((correct / totalQ) * 100),
+            timeTaken: totalSeconds - examSeconds,
+            mistakes: wrongQs
+        };
+        
+        const resultId = 'result_' + Date.now();
+        localStorage.setItem('exam_result_' + resultId, JSON.stringify(resultData));
+        
+        setTimeout(() => {
+            window.location.href = 'dashboard.html?exam_result=' + resultId;
+        }, 2000);
+        
+        return; // Stop here, don't show normal result
+    } catch (e) {
+        console.error('Dashboard return error:', e);
+    }
 }
 
 
