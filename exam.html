@@ -1375,7 +1375,7 @@ if (source === 'dashboard' && isLoggedIn()) {
         localStorage.setItem('exam_result_' + resultId, JSON.stringify(resultData));
         
         setTimeout(() => {
-            window.location.href = 'dashboard2_with_fixes.html?exam_result=' + resultId;
+            window.location.href = 'dashboard.html?exam_result=' + resultId;
         }, 2000);
         
         return; // Stop here, don't show normal result
@@ -1769,7 +1769,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
 
     // URL params (→ Flutter: GoRouter)
-    const urlparams=new URLSearchParams(location.search);
+    const urlParams=new URLSearchParams(location.search);
     const practice=urlParams.get('practice');
 const examId=urlParams.get('id');
 const cat=urlParams.get('cat');
@@ -1814,7 +1814,7 @@ if(practice==='mock'){
     if(examId)             loadExamById(examId);
     else if(mock==='true') startMockTest();
     else if(model)         startModelExam(model);
-    else if(cat==='model') loadModelExams('medical',urlparams.get('sub')||'');
+    else if(cat==='model') loadModelExams('medical',urlParams.get('sub')||'');
     else if(cat)           showCategory(cat);
     else                   { loadCategoryCounts(); }
  // DASHBOARD CONNECTION (add before closing of DOMContentLoaded)
