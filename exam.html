@@ -1769,12 +1769,12 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
 
     // URL params (→ Flutter: GoRouter)
-    const params=new URLSearchParams(location.search);
-    const practice=params.get('practice');
-    const examId=params.get('id');
-    const cat=params.get('cat');
-    const mock=params.get('mock');
-    const model=params.get('model');
+    const urlparams=new URLSearchParams(location.search);
+    const practice=urlParams.get('practice');
+const examId=urlParams.get('id');
+const cat=urlParams.get('cat');
+const mock=urlParams.get('mock');
+const model=urlParams.get('model');
     // Mock Test Practice Mode
 if(practice==='mock'){
    isMockTest = true;
@@ -1814,7 +1814,7 @@ if(practice==='mock'){
     if(examId)             loadExamById(examId);
     else if(mock==='true') startMockTest();
     else if(model)         startModelExam(model);
-    else if(cat==='model') loadModelExams('medical',params.get('sub')||'');
+    else if(cat==='model') loadModelExams('medical',urlparams.get('sub')||'');
     else if(cat)           showCategory(cat);
     else                   { loadCategoryCounts(); }
  // DASHBOARD CONNECTION (add before closing of DOMContentLoaded)
