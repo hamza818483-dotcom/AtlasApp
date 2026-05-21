@@ -770,6 +770,12 @@
                 <select id="filterCat" onchange="loadHistory()"><option value="all">সব ক্যাটাগরি</option></select>
                 <select id="filterSub" onchange="loadHistory()"><option value="all">সব সাবজেক্ট</option></select>
             </div>
+            <!-- FIX 7: Bulk practice button -->
+            <div id="bulkPracticeBar" style="display:none;padding:12px 16px;background:var(--accent);margin:0 -16px 16px -16px;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                <button class="btn" onclick="startBulkPractice()" style="width:100%;background:white;color:var(--accent);font-weight:700;border:none;">
+                    📚 Selected Practice শুরু করুন (<span id="bulkCount">0</span>টি)
+                </button>
+            </div>
             <div id="historyList"></div>
         </div>
 
@@ -1589,6 +1595,97 @@ function bulkPracticeMistakes() {
     startPracticeExam(formatted, `Bulk Practice (${checkboxes.length} এক্সাম)`, () => { openScreen('mistakesScreen'); loadMistakesFullscreen(); });
 }
 
+function showMistakesBySubject(type) {
+    const mistakes = getMistakesData();
+    const filtered = type === 'all' ? mistakes : 
+                     type === 'wrong' ? mistakes.filter(m => getMistakeStatus(m) === 'wrong') :
+                     mistakes.filter(m => getMistakeStatus(m) === 'skipped');
+    
+    if (filtered.length === 0) {
+        document.getElementById('mistakesBody').innerHTML = '<div class="empty-state"><span class="empty-state-icon">🎉</span><div class="empty-state-text">কোনো ভুল নেই!</div></div>';
+        return;
+    }
+    
+    const subjects = {};
+    filtered.forEach(m => {
+        const sub = m.subject || (m.question||m).subject || 'General';
+        if (!subjects[sub]) subjects[sub] = [];
+        subjects[sub].push(m);
+    });
+    
+    const body = document.getElementById('mistakesBody');
+    body.innerHTML = Object.keys(subjects).map(sub => `
+        <div class="subject-box" onclick="showSubjectExams('${escHtml(sub)}', '${type}')" style="background:var(--hover);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;cursor:pointer;transition:0.2s;">
+            <div style="font-size:16px;font-weight:700;margin-bottom:6px;">📘 ${escHtml(sub)}</div>
+            <div style="font-size:13px;color:var(--text2);">${subjects[sub].length}টি প্রশ্ন</div>
+        </div>
+    `).join('');
+}
+
+function showSubjectExams(subject, type) {
+    const mistakes = getMistakesData();
+    const filtered = mistakes.filter(m => {
+        const sub = m.subject || (m.question||m).subject || 'General';
+        const status = getMistakeStatus(m);
+        const typeMatch = type === 'all' ? true : 
+                         type === 'wrong' ? status === 'wrong' : status === 'skipped';
+        return sub === subject && typeMatch;
+    });
+    
+    const examGroups = {};
+    filtered.forEach(m => {
+        const exam = m.exam_name || (m.question||m).exam_name || 'অন্যান্য';
+        if (!examGroups[exam]) examGroups[exam] = [];
+        examGroups[exam].push(m);
+    });
+    
+    const body = document.getElementById('mistakesBody');
+    body.innerHTML = `<button onclick="loadMistakesFullscreen()" style="margin-bottom:12px;background:var(--hover);border:1px solid var(--border);padding:8px 12px;border-radius:8px;cursor:pointer;">← ফিরে যান</button>` +
+        Object.keys(examGroups).map(exam => {
+            const items = examGroups[exam];
+            return `<div class="exam-group-card" style="background:var(--hover);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;">
+                <div style="font-size:14px;font-weight:700;margin-bottom:8px;">📝 ${escHtml(exam)} (${items.length}টি)</div>
+                <div style="display:flex;gap:6px;">
+                    <button onclick="practiceSubjectExam('${escHtml(exam)}', '${escHtml(subject)}', '${type}')" style="flex:1;background:var(--accent);color:#fff;border:none;padding:8px;border-radius:8px;cursor:pointer;">📝 Practice</button>
+                </div>
+            </div>`;
+        }).join('');
+}
+
+function practiceSubjectExam(exam, subject, type) {
+    const mistakes = getMistakesData();
+    const filtered = mistakes.filter(m => {
+        const sub = m.subject || (m.question||m).subject || 'General';
+        const examName = m.exam_name || (m.question||m).exam_name;
+        const status = getMistakeStatus(m);
+        const typeMatch = type === 'all' ? true : type === 'wrong' ? status === 'wrong' : status === 'skipped';
+        return sub === subject && examName === exam && typeMatch;
+    });
+    
+    const formatted = filtered.map(m => {
+        const q = m.question || m;
+        return {
+            id: q.id || Math.random().toString(36).substr(2,9),
+            question_text: q.question_text || q.question || '',
+            question: q.question_text || q.question || '',
+            image_url: q.image_url || q.image || '',
+            option1: q.option1 || q.options?.[0] || '',
+            option2: q.option2 || q.options?.[1] || '',
+            option3: q.option3 || q.options?.[2] || '',
+            option4: q.option4 || q.options?.[3] || '',
+            option5: q.option5 || q.options?.[4] || '—',
+            answer_index: q.answer_index || q.correct_option || q.answer,
+            correct_option: q.answer_index || q.correct_option || q.answer,
+            explanation: q.explanation || '',
+            subject: q.subject || subject,
+            chapter: q.chapter || ''
+        };
+    });
+    
+    closeScreen('mistakesScreen');
+    startPracticeExam(formatted, `${exam} - ${subject}`, () => { openScreen('mistakesScreen'); loadMistakesFullscreen(); });
+}
+
 function setMType(type, btn) {
     mistakesCurrentFilter = type;
     document.querySelectorAll('.mtype-tab').forEach(b => b.classList.remove('active'));
@@ -1628,12 +1725,9 @@ function renderMistakesGroups() {
     });
 
     let html = `<div style="display:flex;gap:6px;margin-bottom:12px;">
-        <button class="exam-action-btn btn-p1" onclick="startMistakePractice('wrong')" style="flex:1;padding:10px;">
-            <span class="btn-main-label">⚡ Practice-01</span><span class="btn-sub-label">সব ভুল প্রশ্ন</span>
-        </button>
-        <button class="exam-action-btn btn-p2" onclick="startMistakePractice('all')" style="flex:1;padding:10px;">
-            <span class="btn-main-label">📚 Practice-02</span><span class="btn-sub-label">ভুল+স্কিপ</span>
-        </button>
+        <button onclick="showMistakesBySubject('wrong')" style="flex:1;background:var(--red);color:#fff;border:none;padding:10px;border-radius:10px;font-weight:600;cursor:pointer;">❌ সকল ভুল</button>
+        <button onclick="showMistakesBySubject('skipped')" style="flex:1;background:var(--yellow);color:#000;border:none;padding:10px;border-radius:10px;font-weight:600;cursor:pointer;">⏭️ সকল স্কিপ</button>
+        <button onclick="showMistakesBySubject('all')" style="flex:1;background:var(--accent);color:#fff;border:none;padding:10px;border-radius:10px;font-weight:600;cursor:pointer;">📚 সব ভুল+স্কিপ</button>
     </div>`;
 
     // FIX #7: category/exam type name-wise list with big font name + info chips
@@ -2083,6 +2177,13 @@ function togglePomodoro() {
 }
 
 function pomoStart() {
+    // Check if task is set
+    const task = document.getElementById('pomoTaskInput')?.value?.trim();
+    if (!task) {
+        showToast('❌ প্রথমে টাস্ক সেট করুন', 2000);
+        return;
+    }
+    
     if (pomoTimeLeft <= 0 || pomoTimeLeft === pomoTotalTime) {
         // Read custom time if set
         const h = parseInt(document.getElementById('pomoHours')?.value) || 0;
@@ -2092,8 +2193,7 @@ function pomoStart() {
         else if (pomoTotalTime > 0) { pomoTimeLeft = pomoTotalTime; }
         else { showToast('⚠️ টাইম সেট করুন'); return; }
     }
-    const task = document.getElementById('pomoTaskInput')?.value?.trim();
-    if (task) pomoCurrentTask = task;
+    pomoCurrentTask = task;
     pomoRunning = true;
     updatePomoDisplay();
     clearInterval(pomoInterval);
@@ -2174,14 +2274,23 @@ function renderPomoHistory() {
         el.innerHTML = '<div style="text-align:center;color:var(--text2);font-size:12px;padding:10px;">এখনো কোনো সেশন নেই</div>';
         return;
     }
-    el.innerHTML = pomoSessions.slice(0,10).map(s => `
-        <div class="pomo-history-item">
-            <span>${s.success ? '✅' : s.success === false ? '❌' : '⏱️'} ${escHtml(s.task)||'টাস্ক'}</span>
+    el.innerHTML = pomoSessions.slice(0,10).map((s, i) => `
+        <div class="pomo-history-item" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <span style="flex:1;">${s.success ? '✅' : s.success === false ? '❌' : '⏱️'} ${escHtml(s.task)||'টাস্ক'}</span>
             <div style="text-align:right;">
                 <div style="font-size:10px;color:var(--accent);">${formatSeconds(s.duration)}</div>
                 <div style="font-size:9px;color:var(--text2);">${toBanglaDate(s.completedAt)}</div>
             </div>
+            <button onclick="deletePomoSession(${i})" style="background:var(--red);color:#fff;border:none;padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;">🗑️</button>
         </div>`).join('');
+}
+
+function deletePomoSession(index) {
+    if (!confirm('এই সেশন মুছে ফেলবেন?')) return;
+    pomoSessions.splice(index, 1);
+    localStorage.setItem('pomo_sessions_' + currentUser?.phone, JSON.stringify(pomoSessions));
+    renderPomoHistory();
+    renderPomoSuccessGraph();
 }
 
 function completePomoSession(success) {
@@ -2296,19 +2405,21 @@ function buildHistoryCard(r) {
     const pct = Math.round((score/total)*100);
     const badge = pct>=80?'score-high':pct>=50?'score-mid':'score-low';
     const examName = r.exam_name||`এক্সাম #${r.exam_id}`;
-    return `<div class="card-item">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+    return `<div class="card-item" style="position:relative;">
+        <!-- FIX 7: Checkbox for bulk practice -->
+        <input type="checkbox" class="history-checkbox" data-exam-id="${r.exam_id}" style="position:absolute;top:12px;left:12px;width:18px;height:18px;cursor:pointer;" onchange="updateBulkPracticeBtn()">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;padding-left:32px;">
             <div class="card-item-title" style="flex:1;margin-bottom:0;font-size:13px;">📝 ${escHtml(examName)}</div>
             <span class="score-badge ${badge}" style="margin-left:6px;white-space:nowrap;">${score.toFixed(1)}/${total}</span>
         </div>
-        <div style="margin-bottom:5px;">
+        <div style="margin-bottom:5px;padding-left:32px;">
             ${r.subject?`<span class="meta-chip">📘 ${escHtml(r.subject)}${r.chapter?' › '+escHtml(r.chapter):''}${r.category?' › '+escHtml(r.category):''}</span>`:''}
         </div>
-        <div class="card-item-row"><span>✅ সঠিক</span><span style="color:var(--green);font-weight:700;">${r.correct||0}</span></div>
-        <div class="card-item-row"><span>❌ ভুল</span><span style="color:var(--red);font-weight:700;">${r.wrong||0}</span></div>
-        <div class="card-item-row" style="border-bottom:none;"><span>⏭️ স্কিপ</span><span style="color:var(--yellow);font-weight:700;">${r.skipped||0}</span></div>
-        <div class="card-item-sub" style="margin-top:4px;">📅 ${toBanglaDate(r.submitted_at)}</div>
-        <div class="btn-row">
+        <div class="card-item-row" style="padding-left:32px;"><span>✅ সঠিক</span><span style="color:var(--green);font-weight:700;">${r.correct||0}</span></div>
+        <div class="card-item-row" style="padding-left:32px;"><span>❌ ভুল</span><span style="color:var(--red);font-weight:700;">${r.wrong||0}</span></div>
+        <div class="card-item-row" style="border-bottom:none;padding-left:32px;"><span>⏭️ স্কিপ</span><span style="color:var(--yellow);font-weight:700;">${r.skipped||0}</span></div>
+        <div class="card-item-sub" style="margin-top:4px;padding-left:32px;">📅 ${toBanglaDate(r.submitted_at)}</div>
+        <div class="btn-row" style="padding-left:32px;">
             <!-- FIX #5: all 3 buttons work instantly -->
             <button class="btn btn-outline" onclick="viewDetails('${r.id}','${r.exam_id}')">📋 বিস্তারিত</button>
             <button class="btn btn-primary" onclick="retakeExam('${r.exam_id}')">🔄 আবার দাও</button>
@@ -2348,6 +2459,72 @@ async function deleteHistory(resultId) {
         await safeFetch(`${SUPABASE_URL}/rest/v1/exam_results?id=eq.${resultId}`, { method:'DELETE' });
         showToast('🗑️ ডিলিট সম্পন্ন'); loadHistory();
     });
+}
+
+// FIX 7: Bulk Practice Functions
+function updateBulkPracticeBtn() {
+    const checkboxes = document.querySelectorAll('.history-checkbox:checked');
+    const count = checkboxes.length;
+    const bar = document.getElementById('bulkPracticeBar');
+    const countSpan = document.getElementById('bulkCount');
+    
+    if (count > 0) {
+        bar.style.display = 'block';
+        countSpan.textContent = count;
+    } else {
+        bar.style.display = 'none';
+    }
+}
+
+async function startBulkPractice() {
+    const checkboxes = document.querySelectorAll('.history-checkbox:checked');
+    if (checkboxes.length === 0) {
+        showToast('❌ কোনো এক্সাম সিলেক্ট করুন');
+        return;
+    }
+    
+    const examIds = Array.from(checkboxes).map(cb => cb.dataset.examId);
+    showToast('⏳ প্রশ্ন লোড হচ্ছে...');
+    
+    try {
+        // Fetch all questions from selected exams
+        const allQuestions = [];
+        for (const examId of examIds) {
+            const questions = await safeFetch(`${SUPABASE_URL}/rest/v1/questions?exam_id=eq.${examId}&select=*&order=id.asc`);
+            if (questions && questions.length > 0) {
+                allQuestions.push(...questions);
+            }
+        }
+        
+        if (allQuestions.length === 0) {
+            showToast('❌ কোনো প্রশ্ন পাওয়া যায়নি');
+            return;
+        }
+        
+        // Convert to vertical exam format
+        const formattedQuestions = allQuestions.map(q => ({
+            question: q.question_text || q.question || '',
+            optionA: q.option1 || '',
+            optionB: q.option2 || '',
+            optionC: q.option3 || '',
+            optionD: q.option4 || '',
+            correct: ['A', 'B', 'C', 'D'][parseInt(q.answer_index || 1) - 1] || 'A',
+            subject: q.subject || 'Mixed',
+            category: q.category || '',
+            explanation: q.explanation || ''
+        }));
+        
+        // Start vertical exam
+        startVerticalExam(formattedQuestions, `Bulk Practice (${examIds.length} এক্সাম)`, false);
+        
+        // Clear checkboxes
+        checkboxes.forEach(cb => cb.checked = false);
+        updateBulkPracticeBtn();
+        
+    } catch (e) {
+        showToast('❌ প্রশ্ন লোড করতে সমস্যা হয়েছে');
+        console.error(e);
+    }
 }
 
 /* ======================================================
@@ -2779,6 +2956,199 @@ async function loadWeakList() {
     </div>`;
 }
 
+// FIX 6: Vertical Exam Style Function (exam.html pattern)
+function startVerticalExam(questions, examTitle, isReview = false) {
+    if (!questions || questions.length === 0) {
+        alert('কোনো প্রশ্ন নেই!');
+        return;
+    }
+    
+    const examId = isReview ? 'review_' + Date.now() : 'exam_' + Date.now();
+    const userAnswers = {};
+    let currentIndex = 0;
+    
+    const examContainer = document.createElement('div');
+    examContainer.id = 'verticalExamContainer';
+    examContainer.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--bg);
+        z-index: 10000;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    `;
+    
+    function renderExam() {
+        const q = questions[currentIndex];
+        examContainer.innerHTML = `
+            <div style="max-width: 800px; margin: 0 auto; padding: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--border);">
+                    <div>
+                        <div style="font-size: 18px; font-weight: 700; color: var(--text);">${escHtml(examTitle)}</div>
+                        <div style="font-size: 13px; color: var(--text2); margin-top: 4px;">প্রশ্ন ${currentIndex + 1} / ${questions.length}</div>
+                    </div>
+                    <button onclick="closeVerticalExam()" style="padding: 8px 16px; background: var(--red); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">✕ Close</button>
+                </div>
+                
+                <div style="width: 100%; height: 6px; background: var(--bg2); border-radius: 3px; margin-bottom: 24px; overflow: hidden;">
+                    <div style="width: ${((currentIndex + 1) / questions.length * 100).toFixed(1)}%; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-dark)); transition: width 0.3s;"></div>
+                </div>
+                
+                <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                    <div style="font-size: 16px; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 20px;">
+                        <span style="color: var(--accent); font-weight: 700;">Q${currentIndex + 1}.</span> ${escHtml(q.question)}
+                    </div>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        ${['A', 'B', 'C', 'D'].map(opt => {
+                            const isSelected = userAnswers[currentIndex] === opt;
+                            return `
+                                <div onclick="selectVerticalAnswer(${currentIndex}, '${opt}')" 
+                                     id="vopt_${currentIndex}_${opt}"
+                                     style="padding: 16px; background: ${isSelected ? 'var(--accent)' : 'var(--bg2)'}; 
+                                            color: ${isSelected ? 'white' : 'var(--text)'}; 
+                                            border: 2px solid ${isSelected ? 'var(--accent-dark)' : 'var(--border)'}; 
+                                            border-radius: 10px; cursor: pointer; transition: all 0.2s; 
+                                            font-weight: ${isSelected ? '700' : '500'};
+                                            display: flex; align-items: center; gap: 12px;">
+                                    <span style="min-width: 28px; height: 28px; border-radius: 50%; 
+                                                 background: ${isSelected ? 'white' : 'var(--bg)'}; 
+                                                 color: ${isSelected ? 'var(--accent)' : 'var(--text2)'}; 
+                                                 display: flex; align-items: center; justify-content: center; 
+                                                 font-weight: 700; font-size: 14px;">${opt}</span>
+                                    <span style="flex: 1;">${escHtml(q['option' + opt])}</span>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+                    <button onclick="navigateVerticalExam(-1)" 
+                            ${currentIndex === 0 ? 'disabled' : ''}
+                            style="flex: 1; padding: 14px; background: var(--bg2); color: var(--text); 
+                                   border: 1px solid var(--border); border-radius: 10px; font-weight: 600; 
+                                   cursor: ${currentIndex === 0 ? 'not-allowed' : 'pointer'}; opacity: ${currentIndex === 0 ? '0.5' : '1'};">
+                        ← Previous
+                    </button>
+                    ${currentIndex < questions.length - 1 ? `
+                        <button onclick="navigateVerticalExam(1)" 
+                                style="flex: 1; padding: 14px; background: var(--accent); color: white; 
+                                       border: none; border-radius: 10px; font-weight: 600; cursor: pointer;">
+                            Next →
+                        </button>
+                    ` : `
+                        <button onclick="submitVerticalExam()" 
+                                style="flex: 1; padding: 14px; background: var(--green); color: white; 
+                                       border: none; border-radius: 10px; font-weight: 700; cursor: pointer;">
+                            ✓ Submit Exam
+                        </button>
+                    `}
+                </div>
+                
+                <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px;">
+                    <div style="font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 12px;">Quick Navigation:</div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 8px;">
+                        ${questions.map((_, i) => {
+                            const answered = userAnswers[i] !== undefined;
+                            const isCurrent = i === currentIndex;
+                            return `
+                                <button onclick="jumpToVerticalQuestion(${i})" 
+                                        style="padding: 10px; background: ${isCurrent ? 'var(--accent)' : answered ? 'var(--green)' : 'var(--bg2)'}; 
+                                               color: ${isCurrent || answered ? 'white' : 'var(--text2)'}; 
+                                               border: 2px solid ${isCurrent ? 'var(--accent-dark)' : answered ? 'var(--green)' : 'var(--border)'}; 
+                                               border-radius: 8px; font-weight: ${isCurrent ? '700' : '600'}; 
+                                               cursor: pointer; font-size: 13px;">
+                                    ${i + 1}
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                    <div style="margin-top: 12px; font-size: 12px; color: var(--text2); display: flex; gap: 16px; flex-wrap: wrap;">
+                        <span>🟢 Answered: ${Object.keys(userAnswers).length}</span>
+                        <span>⚪ Unanswered: ${questions.length - Object.keys(userAnswers).length}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    window.selectVerticalAnswer = (index, option) => {
+        userAnswers[index] = option;
+        renderExam();
+    };
+    
+    window.navigateVerticalExam = (direction) => {
+        const newIndex = currentIndex + direction;
+        if (newIndex >= 0 && newIndex < questions.length) {
+            currentIndex = newIndex;
+            renderExam();
+            examContainer.scrollTop = 0;
+        }
+    };
+    
+    window.jumpToVerticalQuestion = (index) => {
+        currentIndex = index;
+        renderExam();
+        examContainer.scrollTop = 0;
+    };
+    
+    window.submitVerticalExam = () => {
+        const unanswered = questions.length - Object.keys(userAnswers).length;
+        if (unanswered > 0) {
+            if (!confirm(`আপনি ${unanswered}টি প্রশ্নের উত্তর দেননি। Submit করতে চান?`)) {
+                return;
+            }
+        }
+        
+        let correct = 0;
+        questions.forEach((q, i) => {
+            if (userAnswers[i] === q.correct) correct++;
+        });
+        
+        const score = correct;
+        const total = questions.length;
+        const percentage = ((score / total) * 100).toFixed(1);
+        
+        if (!isReview) {
+            const result = {
+                exam_id: examId,
+                exam_name: examTitle,
+                subject: questions[0]?.subject || 'Mixed',
+                total_questions: total,
+                final_score: score,
+                percentage: parseFloat(percentage),
+                submitted_at: new Date().toISOString(),
+                questions: questions.map((q, i) => ({
+                    ...q,
+                    user_answer: userAnswers[i] || null
+                }))
+            };
+            
+            const examHistory = JSON.parse(localStorage.getItem('exam_history') || '[]');
+            examHistory.push(result);
+            localStorage.setItem('exam_history', JSON.stringify(examHistory));
+        }
+        
+        closeVerticalExam();
+        alert(`✅ Exam Complete!\n\nScore: ${score}/${total} (${percentage}%)\nCorrect: ${correct}\nWrong: ${total - correct}`);
+        
+        if (typeof loadExamHistory === 'function') loadExamHistory();
+    };
+    
+    window.closeVerticalExam = () => {
+        if (examContainer && examContainer.parentNode) {
+            examContainer.remove();
+        }
+    };
+    
+    document.body.appendChild(examContainer);
+    renderExam();
+}
+
 /* ======================================================
    LEADERBOARD — FIX #7 #8: user's exams only, exam-wise list,
    "Leaderboard দেখো" button, auto update, no edit
@@ -2983,6 +3353,63 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Notification permission
     if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+});
+
+// FIX 8: Storage Event Listener for Multi-Tab Sync
+window.addEventListener('storage', (e) => {
+    if (!currentUser) return;
+    
+    // Sync exam history across tabs
+    if (e.key === 'exam_history' || e.key?.startsWith('exam_results_')) {
+        const currentTab = document.querySelector('.tab-content.active');
+        if (currentTab && currentTab.id === 'tabHistoryContent') {
+            loadHistory();
+        }
+    }
+    
+    // Sync mistakes across tabs
+    if (e.key === `mistakes_${currentUser.phone}`) {
+        const mistakesScreen = document.getElementById('mistakesScreen');
+        if (mistakesScreen && mistakesScreen.classList.contains('active')) {
+            loadMistakesFullscreen();
+        }
+    }
+    
+    // Sync bookmarks across tabs
+    if (e.key === `bookmarks_${currentUser.phone}`) {
+        const currentTab = document.querySelector('.tab-content.active');
+        if (currentTab && currentTab.id === 'tabBookmarksContent') {
+            loadBookmarks();
+        }
+    }
+    
+    // Sync class history across tabs
+    if (e.key === `class_history_${currentUser.phone}`) {
+        const currentTab = document.querySelector('.tab-content.active');
+        if (currentTab && currentTab.id === 'tabClasshistoryContent') {
+            loadClassHistory();
+        }
+    }
+    
+    // Sync pomodoro sessions across tabs
+    if (e.key === `pomo_sessions_${currentUser.phone}`) {
+        try {
+            pomoSessions = JSON.parse(e.newValue || '[]');
+            renderPomoSuccessGraph();
+        } catch (err) {
+            console.error('Pomo sync error:', err);
+        }
+    }
+    
+    // Sync theme across tabs
+    if (e.key === 'atlas-theme') {
+        const newTheme = e.newValue;
+        if (newTheme === 'light' && isDarkMode) {
+            toggleTheme();
+        } else if (newTheme === 'dark' && !isDarkMode) {
+            toggleTheme();
+        }
+    }
 });
 </script>
 
