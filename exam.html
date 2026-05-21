@@ -1765,6 +1765,48 @@ if(practice==='mock'){
     else if(cat==='model') loadModelExams('medical',params.get('sub')||'');
     else if(cat)           showCategory(cat);
     else                   { loadCategoryCounts(); }
+ // DASHBOARD CONNECTION (add before closing of DOMContentLoaded)
+const source = urlParams.get('source');
+
+if (source === 'dashboard') {
+    try {
+        const examData = JSON.parse(localStorage.getItem('pending_exam_data'));
+        
+        if (examData && examData.questions) {
+            examQuestions = examData.questions.map(q => ({
+                id: q.id || Math.random(),
+                question_text: q.question || q.question_text || '',
+                option1: q.optionA || q.option1 || '',
+                option2: q.optionB || q.option2 || '',
+                option3: q.optionC || q.option3 || '',
+                option4: q.optionD || q.option4 || '',
+                option5: q.optionE || q.option5 || null,
+                answer_index: ['A','B','C','D','E'].indexOf(q.correct) + 1 || parseInt(q.answer_index) || 1,
+                explanation: q.explanation || '',
+                image_url: q.image_url || null
+            }));
+            
+            currentExam = {
+                title: examData.title || 'Practice',
+                subject: examData.questions[0]?.subject || 'Mixed',
+                chapter: 'Practice',
+                exam_type: 'practice',
+                total_marks: examQuestions.length,
+                duration_minutes: examData.timeLimit ? Math.ceil(examData.timeLimit / 60) : Math.ceil(examQuestions.length / 1.5),
+                id: examData.examId || 'dash_' + Date.now(),
+                allow_preview: false,
+                allow_solve_sheet: true
+            };
+            
+            localStorage.removeItem('pending_exam_data');
+            showPreExamFromData(currentExam, examQuestions);
+            showToast('📚 ' + examQuestions.length + ' প্রশ্ন লোড হয়েছে');
+        }
+    } catch (e) {
+        console.error('Dashboard error:', e);
+    }
+}
+  
 });
 history.pushState(null,'',location.href);
 
