@@ -871,6 +871,8 @@
             <div id="leaderboardList"></div>
         </div>
     </div>
+    <!-- Result content container -->
+<div id="resultContent" style="display:none;"></div>
 </main>
 
 <!-- ========== MY MISTAKES SCREEN (Flutter: MistakesScreen) ========== -->
@@ -1316,6 +1318,12 @@ function toggleSidebar() {
     isSidebarOpen = !isSidebarOpen;
     document.getElementById('sidebarOverlay').classList.toggle('active', isSidebarOpen);
     document.getElementById('sidebar').classList.toggle('active', isSidebarOpen);
+}
+function switchMode(mode) {
+    document.querySelectorAll('.mode-container').forEach(m => m.classList.remove('active'));
+    const modeId = 'mode' + mode.charAt(0).toUpperCase() + mode.slice(1);
+    const el = document.getElementById(modeId);
+    if (el) el.classList.add('active');
 }
 function closeSidebar() {
     isSidebarOpen = false;
