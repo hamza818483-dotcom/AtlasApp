@@ -1,0 +1,38 @@
+name: Sync to HuggingFace Space
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Build/**'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Push Build/ to HuggingFace Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git config --global user.email "atlas@app.com"
+          git config --global user.name "Atlas"
+
+          # Clone HF Space
+          git clone https://HamzaHF1:${HF_TOKEN}@huggingface.co/spaces/HamzaHF1/atlas-proxy hf_space
+
+          # Copy Build/ contents to HF Space root
+          cp Build/app.py hf_space/app.py
+          cp Build/Dockerfile hf_space/Dockerfile
+          cp Build/requirements.txt hf_space/requirements.txt
+
+          # Push
+          cd hf_space
+          git add .
+          git diff --cached --quiet || git commit -m "sync from GitHub"
+          git push
