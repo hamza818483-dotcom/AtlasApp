@@ -495,7 +495,7 @@
     <div class="header-left">
         <button class="global-back-btn" onclick="goBackGlobal()" title="ফিরে যান" aria-label="ফিরে যান">←</button>
         <button class="hamburger" onclick="toggleSidebar()">☰</button>
-        <div class="atlas-brand-box">
+        <div class="atlas-brand-box" onclick="goTo('index.html')">
             <img src="https://cdn.phototourl.com/free/2026-05-15-b45df560-6dc8-4cb7-9040-238612c8a161.png" class="atlas-logo-img" alt="ATLAS">
             <span class="atlas-brand-text">ATLAS APP</span>
         </div>
@@ -1192,5 +1192,9 @@ window.addEventListener('unhandledrejection', (e) => {
     showError('⚠️ প্রসেসিং সমস্যা', 'অনুরোধ সম্পূর্ণ করা যায়নি', e.reason?.message, null);
 });
 </script>
+
+<!-- ══════════════ গ্লোবাল নেভিগেশন + UI কন্ট্রোল (নতুন, আলাদা ফাইল) ══════════════ -->
+<script src="global-nav.js"></script>
+<script src="atlas-ui.js"></script>
 </body>
 </html>

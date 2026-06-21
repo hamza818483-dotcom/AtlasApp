@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATLAS APP · Focus Timer</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .focus-container { max-width: 560px; margin: 0 auto; padding: 0 0 80px; }
+
+        /* ── Intro screen ── */
+        .intro-wrap { padding: 14px 14px 24px; }
+        .intro-hero { text-align: center; padding: 10px 0; }
+        .intro-icon { font-size: 38px; margin-bottom: 6px; animation: focusFloat 3s ease-in-out infinite; }
+        @keyframes focusFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+        .intro-title { font-size: 19px; font-weight: 900; color: var(--accent); }
+        .intro-sub { font-size: 11.5px; color: var(--text-secondary); margin-top: 3px; }
+
+        .premium-box {
+            background: var(--accent-light); border: 1.5px solid var(--accent);
+            border-radius: var(--radius); padding: 12px 14px; margin: 14px 0 10px;
+        }
+        .premium-box-title { font-size: 12px; font-weight: 800; color: var(--accent); margin-bottom: 8px; }
+        .feature-list { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+        .feature-list li { font-size: 11.5px; color: var(--text); display: flex; gap: 6px; line-height: 1.4; }
+        .feature-list li::before { content:'✅'; flex-shrink:0; font-size:10px; }
+
+        .how-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 14px; }
+        .how-title { font-size: 11px; font-weight: 800; color: var(--text-secondary); margin-bottom: 8px; }
+        .how-step { font-size: 11.5px; color: var(--text); display: flex; gap: 6px; align-items: flex-start; line-height: 1.3; margin-bottom: 5px; }
+        .how-step-num {
+            width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+            background: var(--accent-light); border: 1px solid var(--accent);
+            color: var(--accent); font-size: 9px; font-weight: 900;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .intro-start-btn {
+            width: 100%; padding: 14px; background: var(--accent); border: none;
+            border-radius: var(--radius); color: #fff; font-size: 15px; font-weight: 900;
+            cursor: pointer; font-family: inherit; box-shadow: var(--shadow-md);
+        }
+        .intro-start-btn:active { transform: scale(.98); }
+
+        /* ── Timer screen ── */
+        .timer-screen { display: none; }
+        .timer-screen.show { display: block; }
+
+        .live-summary {
+            display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 14px;
+            background: var(--card-bg); border-bottom: 1px solid var(--border); font-size: 11px;
+        }
+        .ls-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 16px; font-weight: 700; font-size: 10px; }
+        .ls-reading { background: rgba(16,185,129,.12); color: #10B981; }
+        .ls-break { background: rgba(245,158,11,.12); color: #F59E0B; }
+        .ls-name { font-weight: 800; font-size: 10px; max-width: 60px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ls-dot { width: 5px; height: 5px; border-radius: 50%; animation: focusBlink 1.2s ease-in-out infinite; }
+        .ls-dot-g { background: #10B981; }
+        .ls-dot-a { background: #F59E0B; }
+        @keyframes focusBlink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+        .timer-main { display: flex; flex-direction: column; align-items: center; padding: 16px 14px 8px; position: relative; }
+        .timer-fab-row { position: absolute; top: 12px; right: 14px; display: flex; flex-direction: column; gap: 6px; }
+        .fab { display: flex; align-items: center; gap: 4px; padding: 7px 10px; border-radius: 8px; font-size: 10px; font-weight: 800; cursor: pointer; border: none; font-family: inherit; white-space: nowrap; }
+        .fab-break { background: linear-gradient(135deg,#F59E0B,#D97706); color: #fff; }
+        .fab-break:disabled { opacity: .4; cursor: not-allowed; }
+        .fab-end { background: var(--card-bg); color: var(--text-secondary); border: 1.5px solid var(--border); }
+
+        .timer-ring-wrap { position: relative; width: 170px; height: 170px; margin-bottom: 8px; }
+        .timer-svg { transform: rotate(-90deg); }
+        .t-track { fill:none; stroke:var(--border); stroke-width:10; }
+        .t-ring { fill:none; stroke:var(--accent); stroke-width:10; stroke-linecap:round; stroke-dasharray:502; stroke-dashoffset:502; transition: stroke-dashoffset .9s linear, stroke .4s; }
+        .timer-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; }
+        .t-display { font-size: 38px; font-weight: 900; font-family: 'Inter',monospace; letter-spacing: 2px; color: var(--text); }
+        .t-label { font-size: 10px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+
+        .break-track { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+        .break-dots { display: flex; gap: 6px; }
+        .bd { width: 10px; height: 10px; border-radius: 50%; background: var(--border); transition: all .3s; }
+        .bd.used { background: #F59E0B; }
+        .bd.avail { background: rgba(245,158,11,.2); border: 1.5px solid #F59E0B; }
+        .break-lbl { font-size: 9px; color: var(--text-secondary); }
+
+        .break-warn-bar { margin: 0 14px 6px; padding: 6px 12px; background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.35); border-radius: 8px; font-size: 11px; color: #F59E0B; text-align: center; font-weight: 600; display: none; }
+        .break-warn-bar.show { display: block; }
+
+        .resume-btn { display: none; margin: 0 14px 8px; width: calc(100% - 28px); padding: 12px; background: #10B981; border: none; border-radius: var(--radius); color: #fff; font-size: 14px; font-weight: 800; cursor: pointer; font-family: inherit; }
+        .resume-btn.show { display: block; }
+
+        .live-stats-box { margin: 8px 14px; padding: 10px 12px; background: var(--card-bg); border: 1.5px solid var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: space-around; }
+        .lsb-item { text-align: center; flex: 1; }
+        .lsb-val { font-size: 18px; font-weight: 900; }
+        .lsb-val.green { color: #10B981; }
+        .lsb-val.amber { color: #F59E0B; }
+        .lsb-lbl { font-size: 9px; color: var(--text-secondary); font-weight: 600; }
+        .lsb-divider { width: 1px; height: 28px; background: var(--border); flex-shrink: 0; }
+        .lsb-top-name { font-size: 11px; font-weight: 900; color: #F59E0B; max-width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .batch-filter { display: flex; gap: 6px; padding: 6px 14px; overflow-x: auto; }
+        .bf-chip { padding: 4px 10px; border-radius: 14px; font-size: 10px; font-weight: 700; white-space: nowrap; cursor: pointer; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-secondary); flex-shrink: 0; }
+        .bf-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+        .students-section { padding: 0 0 10px; }
+        .students-header { padding: 6px 14px; display: flex; align-items: center; justify-content: space-between; }
+        .sh-title { font-size: 12px; font-weight: 800; }
+        .students-list { display: flex; flex-direction: column; gap: 3px; padding: 0 14px; }
+        .s-card { display: flex; align-items: center; gap: 8px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 6px 8px; }
+        .s-card:first-child { border-color: rgba(245,158,11,.35); background: rgba(245,158,11,.04); }
+        .s-rank { font-size: 14px; flex-shrink: 0; width: 20px; text-align: center; }
+        .s-photo { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; background: var(--accent-light); display: flex; align-items: center; justify-content: center; font-size: 14px; overflow: hidden; }
+        .s-photo img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+        .s-info { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; }
+        .s-name { font-size: 11px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; }
+        .s-time { font-size: 10px; font-weight: 700; color: #10B981; white-space: nowrap; }
+        .s-breaks { font-size: 9px; color: var(--text-secondary); white-space: nowrap; }
+        .s-right { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+        .status-indicator { display: inline-flex; align-items: center; gap: 3px; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 10px; }
+        .status-reading { background: rgba(16,185,129,.12); color: #10B981; }
+        .status-break { background: rgba(245,158,11,.12); color: #F59E0B; }
+        .status-dot { width: 5px; height: 5px; border-radius: 50%; animation: focusBlink 1.2s ease-in-out infinite; }
+        .status-reading .status-dot { background: #10B981; }
+        .status-break .status-dot { background: #F59E0B; }
+
+        /* ── End modal ── */
+        .focus-modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 500; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .focus-modal-bg.show { display: flex; }
+        .focus-modal { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; width: 100%; max-width: 300px; text-align: center; }
+        .focus-modal h3 { font-size: 16px; font-weight: 900; margin-bottom: 6px; }
+        .focus-modal p { font-size: 11px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 14px; }
+        .focus-modal-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 14px; background: var(--bg); border-radius: 8px; padding: 10px; }
+        .fms-val { font-size: 20px; font-weight: 900; color: var(--accent); }
+        .fms-lbl { font-size: 9px; color: var(--text-secondary); margin-top: 1px; }
+        .focus-modal-row { display: flex; gap: 8px; }
+        .focus-modal-row button { flex: 1; }
+    </style>
+</head>
+<body class="dark-mode">
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-header"><div class="sidebar-logo">ATLAS APP</div></div>
+    <div class="sidebar-menu">
+        <button class="sidebar-item" onclick="navigateTo('profile');closeSidebar();">👤 প্রোফাইল</button>
+        <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();">🏠 হোম</button>
+        <button class="sidebar-item" onclick="goTo('study-aid.html');closeSidebar();">🧩 Study Aid</button>
+        <button class="sidebar-item" onclick="goTo('study.html');closeSidebar();">📖 মূলবই</button>
+        <div class="sidebar-divider"></div>
+        <button class="sidebar-item" onclick="toggleTheme()">🌙 ডার্ক মোড</button>
+    </div>
+    <div class="sidebar-footer">
+        <button class="sidebar-item logout-btn" onclick="logout()">🚪 লগআউট</button>
+    </div>
+</aside>
+
+<header class="header">
+    <div class="header-left">
+        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+        <div class="atlas-brand-box" onclick="goTo('index.html')">
+            <img src="https://cdn.phototourl.com/free/2026-05-15-b45df560-6dc8-4cb7-9040-238612c8a161.png" class="atlas-logo-img" alt="ATLAS">
+            <span class="atlas-brand-text">ATLAS APP</span>
+        </div>
+    </div>
+    <div class="header-right">
+        <button class="header-icon" onclick="toggleTheme()" id="themeToggle">🌙</button>
+        <button class="header-icon" onclick="navigateTo('profile')">👤</button>
+    </div>
+</header>
+
+<!-- End Confirm Modal -->
+<div class="focus-modal-bg" id="endModal">
+    <div class="focus-modal">
+        <h3>⏹ Session শেষ করবে?</h3>
+        <p>Timer বন্ধ হবে এবং পড়াশোনার সময় সেভ হবে।</p>
+        <div class="focus-modal-stats">
+            <div><div class="fms-val" id="ms-time">0:00</div><div class="fms-lbl">পড়ার সময়</div></div>
+            <div><div class="fms-val" id="ms-breaks">0/3</div><div class="fms-lbl">বিরতি ব্যবহার</div></div>
+        </div>
+        <div class="focus-modal-row">
+            <button class="btn btn-outline" onclick="closeModal()" style="flex:1">← ফিরে যাও</button>
+            <button class="btn btn-primary" onclick="confirmEnd()" style="flex:1;background:var(--error)">শেষ করো</button>
+        </div>
+    </div>
+</div>
+
+<main class="focus-container">
+
+    <!-- ═══ INTRO SCREEN ═══ -->
+    <div id="introScreen">
+        <div class="intro-wrap">
+            <div class="intro-hero">
+                <div class="intro-icon">⏱️</div>
+                <div class="intro-title">ATLAS Focus Timer</div>
+                <div class="intro-sub">মনোযোগী পড়াশোনার জন্য বাংলাদেশের সেরা টাইমার</div>
+            </div>
+
+            <div class="premium-box">
+                <div class="premium-box-title">✨ কেন ব্যবহার করবে?</div>
+                <ul class="feature-list">
+                    <li>পড়াশোনার সময় track করো এবং নিজেকে motivate রাখো</li>
+                    <li>Live দেখো কতজন student এই মুহূর্তে পড়ছে</li>
+                    <li>Top Focused Student হওয়ার সুযোগ পাও</li>
+                    <li>Break নিলেও study time count হতে থাকে সঠিকভাবে</li>
+                </ul>
+            </div>
+
+            <div class="how-box">
+                <div class="how-title">📋 কীভাবে ব্যবহার করবে?</div>
+                <div class="how-step"><div class="how-step-num">১</div><span>"পড়াশোনা শুরু করো" বাটনে চাপো — timer শুরু হবে</span></div>
+                <div class="how-step"><div class="how-step-num">২</div><span>ক্লান্ত হলে "Break নাও" — সর্বোচ্চ ১ ঘণ্টা, মোট ৩ বার</span></div>
+                <div class="how-step"><div class="how-step-num">৩</div><span>পড়া শেষে "বন্ধ" — সময় সেভ হবে</span></div>
+            </div>
+
+            <button class="intro-start-btn" onclick="startSession()">▶ পড়াশোনা শুরু করো</button>
+        </div>
+    </div>
+
+    <!-- ═══ TIMER SCREEN ═══ -->
+    <div class="timer-screen" id="timerScreen">
+
+        <div class="live-summary" id="liveSummary"></div>
+
+        <div class="timer-main">
+            <div class="timer-fab-row">
+                <button class="fab fab-break" id="fabBreak" onclick="takeBreak()">★ Break</button>
+                <button class="fab fab-end" onclick="showModal()">⏹ বন্ধ</button>
+            </div>
+
+            <div class="timer-ring-wrap">
+                <svg class="timer-svg" width="170" height="170" viewBox="0 0 170 170">
+                    <circle class="t-track" cx="85" cy="85" r="80"/>
+                    <circle class="t-ring" cx="85" cy="85" r="80" id="tRing"/>
+                </svg>
+                <div class="timer-center">
+                    <div class="t-display" id="tDisplay">00:00</div>
+                    <div class="t-label" id="tLabel">পড়াশোনা</div>
+                </div>
+            </div>
+
+            <div class="break-track">
+                <div class="break-dots" id="breakDots"></div>
+                <div class="break-lbl">বিরতি ৩টি পর্যন্ত</div>
+            </div>
+        </div>
+
+        <div class="break-warn-bar" id="breakWarn"></div>
+        <button class="resume-btn" id="resumeBtn" onclick="resumeStudy()">▶ আবার শুরু করো</button>
+
+        <div class="live-stats-box">
+            <div class="lsb-item">
+                <div class="lsb-val green" id="lsbActive">0</div>
+                <div class="lsb-lbl">📖 পড়ছে</div>
+            </div>
+            <div class="lsb-divider"></div>
+            <div class="lsb-item">
+                <div class="lsb-val amber" id="lsbBreak">0</div>
+                <div class="lsb-lbl">☕ বিরতিতে</div>
+            </div>
+            <div class="lsb-divider"></div>
+            <div class="lsb-item">
+                <div class="lsb-val gold" style="color:#F59E0B">🏆</div>
+                <div class="lsb-top-name" id="lsbTopName">—</div>
+                <div class="lsb-lbl">Top Focused</div>
+            </div>
+        </div>
+
+        <div class="batch-filter" id="batchFilter"></div>
+
+        <div class="students-section">
+            <div class="students-header">
+                <div class="sh-title" id="shTitle">🟢 সকল ছাত্র-ছাত্রী — <span id="shCount">0</span> জন</div>
+            </div>
+            <div class="students-list" id="studentsList"></div>
+        </div>
+
+    </div>
+
+</main>
+
+<nav class="bottom-nav">
+    <button class="nav-item" onclick="goTo('index.html')"><span class="nav-icon">🏠</span>হোম</button>
+    <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon">📚</span>ক্লাস</button>
+    <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon">📝</span>এক্সাম</button>
+    <button class="nav-item" onclick="goTo('mock-test.html')"><span class="nav-icon">🎯</span>মক</button>
+    <button class="nav-item active" onclick="goTo('study-aid.html')"><span class="nav-icon">🧩</span>Study Aid</button>
+    <button class="nav-item" onclick="navigateTo('profile')"><span class="nav-icon">👤</span>প্রোফাইল</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
+
+let isDarkMode = true, isSidebarOpen = false, currentUser = null;
+
+function showToast(m,d=2000){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
+function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'☀️':'🌙';localStorage.setItem('atlas-theme',isDarkMode?'dark':'light');}
+function toggleSidebar(){isSidebarOpen=!isSidebarOpen;document.getElementById('sidebarOverlay').classList.toggle('active',isSidebarOpen);document.getElementById('sidebar').classList.toggle('active',isSidebarOpen);}
+function closeSidebar(){isSidebarOpen=false;document.getElementById('sidebarOverlay').classList.remove('active');document.getElementById('sidebar').classList.remove('active');}
+function goTo(u){location.href=u;}
+function navigateTo(p){const r={home:'index.html',profile:'profile.html',class:'class.html',exam:'exam.html'};goTo(r[p]||'index.html');}
+function logout(){localStorage.removeItem('atlas-session');goTo('index.html');}
+function escHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+async function safeFetch(url, opts = {}) {
+    opts.headers = Object.assign({ apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }, opts.headers || {});
+    if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') opts.headers['Content-Type'] = 'application/json';
+    if (opts.method === 'POST' || opts.method === 'PATCH') opts.headers['Prefer'] = 'return=representation';
+    try {
+        const res = await fetch(url, opts);
+        const text = await res.text();
+        if (!text?.trim()) return [];
+        const data = JSON.parse(text);
+        if (!res.ok) throw new Error(data.message || 'API Error');
+        return data;
+    } catch (e) { console.error('❌', e.message); return []; }
+}
+
+/* ── Constants ── */
+const MAX_BREAKS = 3;
+const MAX_BREAK_SEC = 3600;
+const CIRC = 2 * Math.PI * 80;
+let state = 'idle';       // idle | active | break
+let sessionId = null;
+let studySecs = 0, breakSecs = 0, breaksUsed = 0;
+let ticker = null, pollInterval = null;
+let allStudents = [], selectedBatch = 'all';
+
+function fmtSmart(s) {
+    const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+    if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+    return `${m}:${String(sec).padStart(2,'0')}`;
+}
+
+/* ── localStorage persistence (so a refresh / tab close doesn't lose state) ── */
+const STATE_KEY = 'focus_state';
+function saveState() {
+    localStorage.setItem(STATE_KEY, JSON.stringify({ state, sessionId, studySecs, breakSecs, breaksUsed, savedAt: Date.now() }));
+}
+function loadState() { try { return JSON.parse(localStorage.getItem(STATE_KEY)); } catch(_) { return null; } }
+function clearState() { localStorage.removeItem(STATE_KEY); }
+
+/* ── Start / Break / Resume / End ── */
+async function startSession() {
+    if (!currentUser) { showToast('⚠️ লগইন করো'); goTo('auth.html'); return; }
+    state = 'active'; studySecs = 0; breakSecs = 0; breaksUsed = 0;
+    const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions`, {
+        method: 'POST',
+        body: JSON.stringify({ user_phone: currentUser.phone, status: 'active' })
+    });
+    sessionId = rows?.[0]?.id || null;
+    showTimerScreen();
+    renderTimer();
+    saveState();
+    ticker = setInterval(tick, 1000);
+    renderStudents();
+    startPolling();
+}
+
+function showTimerScreen() {
+    document.getElementById('introScreen').style.display = 'none';
+    document.getElementById('timerScreen').classList.add('show');
+}
+
+function tick() {
+    if (state === 'active') studySecs++;
+    else if (state === 'break') {
+        breakSecs++;
+        if (breakSecs >= MAX_BREAK_SEC) { doEnd(true); return; }
+    }
+    renderTimer();
+    if (studySecs % 15 === 0 || breakSecs % 15 === 0) { saveState(); syncSession(); }
+}
+
+async function syncSession() {
+    if (!sessionId) return;
+    await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${sessionId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: state, study_seconds: studySecs, break_seconds: breakSecs, breaks_used: breaksUsed, updated_at: new Date().toISOString() })
+    });
+}
+
+function renderTimer() {
+    const display = state === 'break' ? breakSecs : studySecs;
+    document.getElementById('tDisplay').textContent = fmtSmart(display);
+    document.getElementById('tLabel').textContent = state === 'break' ? 'বিরতি' : 'পড়াশোনা';
+
+    const ring = document.getElementById('tRing');
+    if (state === 'break') {
+        const progress = Math.min(breakSecs / MAX_BREAK_SEC, 1);
+        ring.style.strokeDashoffset = CIRC * (1 - progress);
+        ring.style.stroke = '#F59E0B';
+        const remain = MAX_BREAK_SEC - breakSecs;
+        if (remain <= 300) {
+            document.getElementById('breakWarn').textContent = `⚠️ বিরতি শেষ হতে ${fmtSmart(remain)} বাকি`;
+            document.getElementById('breakWarn').classList.add('show');
+        } else {
+            document.getElementById('breakWarn').classList.remove('show');
+        }
+        document.getElementById('resumeBtn').classList.add('show');
+        document.getElementById('fabBreak').disabled = true;
+    } else {
+        const progress = (studySecs % 1500) / 1500; // visual ring cycles every 25 min
+        ring.style.strokeDashoffset = CIRC * (1 - progress);
+        ring.style.stroke = 'var(--accent)';
+        document.getElementById('breakWarn').classList.remove('show');
+        document.getElementById('resumeBtn').classList.remove('show');
+        document.getElementById('fabBreak').disabled = breaksUsed >= MAX_BREAKS;
+    }
+
+    const dotsEl = document.getElementById('breakDots');
+    dotsEl.innerHTML = Array.from({length: MAX_BREAKS}, (_, i) =>
+        `<div class="bd ${i < breaksUsed ? 'used' : 'avail'}"></div>`).join('');
+}
+
+function takeBreak() {
+    if (breaksUsed >= MAX_BREAKS) { showToast('⚠️ সর্বোচ্চ ৩ বার বিরতি নেওয়া হয়ে গেছে'); return; }
+    state = 'break'; breaksUsed++; breakSecs = 0;
+    renderTimer(); saveState(); syncSession();
+    showToast('☕ বিরতি শুরু হলো — সর্বোচ্চ ১ ঘণ্টা');
+}
+
+function resumeStudy() {
+    state = 'active'; breakSecs = 0;
+    renderTimer(); saveState(); syncSession();
+    showToast('▶ পড়াশোনা আবার শুরু হলো');
+}
+
+function showModal() {
+    document.getElementById('ms-time').textContent = fmtSmart(studySecs);
+    document.getElementById('ms-breaks').textContent = `${breaksUsed}/${MAX_BREAKS}`;
+    document.getElementById('endModal').classList.add('show');
+}
+function closeModal() { document.getElementById('endModal').classList.remove('show'); }
+function confirmEnd() { closeModal(); doEnd(false); }
+
+async function doEnd(autoEnded) {
+    clearInterval(ticker); stopPolling();
+    if (sessionId) {
+        await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${sessionId}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status: 'ended', study_seconds: studySecs, break_seconds: breakSecs, breaks_used: breaksUsed, ended_at: new Date().toISOString() })
+        });
+        // Roll into today's Study Tracker total
+        await upsertDailyTotal(studySecs);
+    }
+    clearState();
+    showToast(autoEnded ? '⏹ বিরতির সময় শেষ — সেশন বন্ধ হলো' : `✅ সম্পন্ন! মোট পড়েছো ${fmtSmart(studySecs)}`, 3500);
+    setTimeout(() => goTo('study-aid.html'), 1200);
+}
+
+async function upsertDailyTotal(addSecs) {
+    if (!currentUser || !addSecs) return;
+    const today = new Date().toISOString().slice(0,10);
+    try {
+        const existing = await safeFetch(`${SUPABASE_URL}/rest/v1/study_tracker_daily?user_phone=eq.${encodeURIComponent(currentUser.phone)}&study_date=eq.${today}&select=*`);
+        if (existing?.length) {
+            await safeFetch(`${SUPABASE_URL}/rest/v1/study_tracker_daily?id=eq.${existing[0].id}`, {
+                method: 'PATCH', body: JSON.stringify({ total_seconds: (existing[0].total_seconds||0) + addSecs })
+            });
+        } else {
+            await safeFetch(`${SUPABASE_URL}/rest/v1/study_tracker_daily`, {
+                method: 'POST', body: JSON.stringify({ user_phone: currentUser.phone, study_date: today, total_seconds: addSecs })
+            });
+        }
+    } catch(_) {}
+}
+
+/* ── Live polling ── */
+function startPolling() { stopPolling(); pollInterval = setInterval(renderStudents, 8000); }
+function stopPolling() { if (pollInterval) { clearInterval(pollInterval); pollInterval = null; } }
+
+const MEDALS = ['🥇','🥈','🥉'];
+
+async function renderStudents() {
+    try {
+        const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?status=in.(active,break)&select=*,users(name,batch)&order=study_seconds.desc&limit=50`);
+        const students = (rows || []).map(r => ({
+            name: r.users?.name || 'Student',
+            batch: r.users?.batch || null,
+            status: r.status,
+            study_seconds: r.study_seconds || 0,
+            breaks_used: r.breaks_used || 0
+        }));
+        allStudents = students;
+        const active = students.filter(s => s.status === 'active').length;
+        const onBreak = students.filter(s => s.status === 'break').length;
+        const top = students[0]?.name || null;
+
+        document.getElementById('lsbActive').textContent = active;
+        document.getElementById('lsbBreak').textContent = onBreak;
+        document.getElementById('lsbTopName').textContent = top || '—';
+        document.getElementById('shCount').textContent = active + onBreak;
+
+        renderLiveSummary(students);
+        renderBatchFilter(students);
+        renderStudentList(students);
+    } catch (_) {}
+}
+
+function renderLiveSummary(students) {
+    const el = document.getElementById('liveSummary');
+    if (!students.length) { el.innerHTML = '<span style="font-size:10px;color:var(--text-secondary)">কেউ পড়ছে না এখন</span>'; return; }
+    el.innerHTML = students.slice(0,8).map(s => {
+        const isBreak = s.status === 'break';
+        return `<span class="ls-chip ${isBreak?'ls-break':'ls-reading'}">
+            <span class="ls-dot ${isBreak?'ls-dot-a':'ls-dot-g'}"></span>
+            <span class="ls-name">${escHtml(s.name)}</span>
+            ${s.batch ? `<span style="font-size:9px;opacity:.8">'${escHtml(String(s.batch).slice(-2))}</span>` : ''}
+        </span>`;
+    }).join('');
+}
+
+function renderBatchFilter(students) {
+    const batches = {};
+    students.forEach(s => { const b = s.batch || 'অন্যান্য'; batches[b] = (batches[b]||0)+1; });
+    const el = document.getElementById('batchFilter');
+    const keys = Object.keys(batches).sort();
+    if (keys.length <= 1) { el.innerHTML = ''; return; }
+    el.innerHTML = `<div class="bf-chip ${selectedBatch==='all'?'active':''}" onclick="filterBatch('all')">সবাই (${students.length})</div>` +
+        keys.map(k => `<div class="bf-chip ${selectedBatch===k?'active':''}" onclick="filterBatch('${escHtml(k)}')">${escHtml(k)} (${batches[k]})</div>`).join('');
+}
+
+function filterBatch(b) { selectedBatch = b; renderBatchFilter(allStudents); renderStudentList(allStudents); }
+
+function renderStudentList(students) {
+    const filtered = selectedBatch === 'all' ? students : students.filter(s => (s.batch||'অন্যান্য') === selectedBatch);
+    const list = document.getElementById('studentsList');
+    if (!filtered.length) { list.innerHTML = `<div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:11px">এই মুহূর্তে কেউ পড়ছে না</div>`; return; }
+    list.innerHTML = filtered.map((s,i) => {
+        const isBreak = s.status === 'break';
+        return `<div class="s-card">
+            <div class="s-rank">${i<3?MEDALS[i]:`<span style="font-size:10px;font-weight:800;color:var(--text-secondary)">${i+1}</span>`}</div>
+            <div class="s-photo">👤</div>
+            <div class="s-info">
+                <div class="s-name">${escHtml(s.name)}</div>
+                <span class="s-time">${fmtSmart(s.study_seconds)}</span>
+                <span class="s-breaks">· ☕${s.breaks_used}</span>
+            </div>
+            <div class="s-right">
+                <span class="status-indicator ${isBreak?'status-break':'status-reading'}"><span class="status-dot"></span>${isBreak?'বিরতি':'LIVE'}</span>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+/* ── Restore session on reload ── */
+function restoreSession() {
+    const saved = loadState();
+    if (!saved || (saved.state !== 'active' && saved.state !== 'break')) return false;
+    const elapsed = Math.floor((Date.now() - saved.savedAt) / 1000);
+    state = saved.state; sessionId = saved.sessionId; breaksUsed = saved.breaksUsed || 0;
+    if (state === 'active') { studySecs = (saved.studySecs||0) + elapsed; breakSecs = saved.breakSecs||0; }
+    else { studySecs = saved.studySecs||0; breakSecs = (saved.breakSecs||0) + elapsed; if (breakSecs >= MAX_BREAK_SEC) { clearState(); return false; } }
+    showTimerScreen(); renderTimer(); saveState();
+    ticker = setInterval(tick, 1000);
+    renderStudents(); startPolling();
+    return true;
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { saveState(); }
+    else {
+        const saved = loadState();
+        if (saved && (state === 'active' || state === 'break')) {
+            const elapsed = Math.floor((Date.now() - saved.savedAt) / 1000);
+            if (state === 'active') studySecs = (saved.studySecs||0) + elapsed;
+            else { breakSecs = (saved.breakSecs||0) + elapsed; if (breakSecs >= MAX_BREAK_SEC) { doEnd(true); return; } }
+            renderTimer(); renderStudents();
+        }
+    }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('atlas-theme');
+    if (saved === 'light') { isDarkMode = false; document.body.classList.add('light-mode'); document.body.classList.remove('dark-mode'); document.getElementById('themeToggle').textContent = '🌙'; }
+
+    try { currentUser = JSON.parse(localStorage.getItem('atlas-session')); } catch(_) { currentUser = null; }
+    if (!currentUser) { location.replace('auth.html'); return; }
+
+    const restored = restoreSession();
+    if (!restored) renderStudents();
+    setInterval(renderStudents, 30000);
+});
+history.pushState(null, '', location.href);
+window.addEventListener('popstate', () => history.back());
+</script>
+
+<!-- ══════════════ গ্লোবাল নেভিগেশন + UI কন্ট্রোল (নতুন, আলাদা ফাইল) ══════════════ -->
+<script src="global-nav.js"></script>
+<script src="atlas-ui.js"></script>
+</body>
+</html>

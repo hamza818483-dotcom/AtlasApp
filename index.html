@@ -116,14 +116,15 @@
         }
         .global-back-btn:active { opacity:0.6; }
 
-        /* Brand box  (Flutter: AnimatedLogo widget) */
+        /* Brand box  (Flutter: AnimatedLogo widget) — clean, no hazy glow */
         .atlas-brand-box {
             display: flex; align-items: center; gap: 7px;
-            background: linear-gradient(135deg,rgba(124,131,255,.12),rgba(88,166,255,.06));
-            border: 1px solid rgba(124,131,255,.2);
+            background: var(--card-bg);
+            border: 1px solid var(--border);
             border-radius: 8px; padding: 4px 10px;
-            
+            cursor: pointer; transition: border-color .2s ease;
         }
+        .atlas-brand-box:active { border-color: var(--accent); }
         .atlas-logo-img { height: 22px; width: auto; }
         .atlas-brand-text { font-size: 17px; font-weight: 800; color: var(--accent); letter-spacing: -.5px; }
 
@@ -293,7 +294,10 @@
         .slideshow-track {
             display: flex; width: 100%;
             transition: transform .6s ease-in-out;
+            touch-action: pan-y; /* vertical scroll pass-through, horizontal handled by JS swipe */
+            cursor: grab;
         }
+        .slideshow-track:active { cursor: grabbing; }
         .slideshow-slide {
             flex: 0 0 100%; width: 100%; min-width: 100%;
         }
@@ -367,8 +371,28 @@
            Each row is its own grid container so spacing/column-count
            is explicit per spec, instead of relying on auto-wrap.
         ───────────────────────────────────────────── */
+
+        /* Outer coverage box — thin border around the entire button area */
+        .btn-coverage-box {
+            border: 1px solid var(--border); border-radius: 18px;
+            padding: 14px 10px 10px; margin-bottom: 14px;
+            background: rgba(255,255,255,.012);
+        }
+
+        /* Section separator — thin line with a small gradient label
+           box centered on top of it. */
+        .section-sep { position: relative; text-align: center; margin: 22px 0 16px; height: 1px; background: var(--border); }
+        .section-sep:first-child { margin-top: 2px; }
+        .section-sep-label {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+            background: linear-gradient(135deg, var(--accent), #3D35B0);
+            color: #fff; font-size: 8.5px; font-weight: 800; letter-spacing: .2px;
+            padding: 3px 10px; border-radius: 8px; white-space: nowrap;
+            box-shadow: 0 2px 10px rgba(108,99,255,.35);
+        }
+
         .home-row { display: grid; gap: 9px; margin-bottom: 9px; }
-        .home-row:last-child { margin-bottom: 16px; }
+        .home-row:last-child { margin-bottom: 4px; }
         .home-row-2  { grid-template-columns: repeat(2,1fr); }   /* 50/50 hero pairs */
         .home-row-3  { grid-template-columns: repeat(3,1fr); }   /* HSC / Admission / অনুশীলনী */
         .home-row-4  { grid-template-columns: repeat(4,1fr); }   /* Focus/Tracker/Pomodoro/GPA */
@@ -390,41 +414,79 @@
             transform: translateY(-2px);
         }
 
-        /* Premium icon tile — colored rounded-square behind every icon */
+        /* Premium icon tile — glossy gradient + soft top highlight + deep shadow */
         .btn-icon-tile {
-            width: 36px; height: 36px; border-radius: 11px;
+            width: 38px; height: 38px; border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 18px; flex-shrink: 0;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 2px 8px rgba(0,0,0,.18);
+            font-size: 19px; flex-shrink: 0; position: relative;
+            box-shadow:
+                inset 0 1.5px 0 rgba(255,255,255,.35),
+                inset 0 -6px 10px rgba(0,0,0,.18),
+                0 4px 12px rgba(0,0,0,.28),
+                0 0 0 1px rgba(255,255,255,.05);
         }
-        .home-btn .btn-text { font-size: 10.5px; line-height: 1.25; font-weight: 700; }
+        .btn-icon-tile svg { width: 20px; height: 20px; flex-shrink: 0; }
+        .home-btn-hero .btn-icon-tile svg { width: 24px; height: 24px; }
+        .home-btn .btn-text { font-size: 10.5px; line-height: 1.25; font-weight: 700; margin-top: 1px; }
 
-        /* Hero style — bigger tile, left-aligned, used in 50/50 + full-width rows */
+        /* Hero style — bigger tile, now column layout (icon top, text bottom) like small buttons */
         .home-btn-hero {
-            flex-direction: row; align-items: center; justify-content: flex-start;
-            padding: 14px 12px; gap: 10px; text-align: left;
+            flex-direction: column; align-items: center; justify-content: center;
+            padding: 16px 10px; gap: 9px; text-align: center;
         }
-        .home-btn-hero .btn-icon-tile { width: 42px; height: 42px; font-size: 21px; border-radius: 12px; }
-        .home-btn-hero .btn-text { font-size: 12.5px; line-height: 1.3; }
+        .home-btn-hero .btn-icon-tile { width: 46px; height: 46px; font-size: 23px; border-radius: 14px; }
+        .home-btn-hero .btn-text { font-size: 12px; line-height: 1.3; margin-top: 0; }
 
-        /* Distinct icon-tile color themes (premium gradients, not generic) */
-        .tile-indigo  { background: linear-gradient(135deg,#5A5FE0,#3B3FB8); }
-        .tile-amber   { background: linear-gradient(135deg,#F5A524,#C9810A); }
-        .tile-violet  { background: linear-gradient(135deg,#8B5CF6,#6228D7); }
-        .tile-rose    { background: linear-gradient(135deg,#F43F8E,#C81E68); }
-        .tile-emerald { background: linear-gradient(135deg,#10B981,#0A8F63); }
-        .tile-sky     { background: linear-gradient(135deg,#38BDF8,#0D8FD0); }
-        .tile-orange  { background: linear-gradient(135deg,#FB923C,#D85F11); }
-        .tile-teal    { background: linear-gradient(135deg,#14B8A6,#0C8B7D); }
-        .tile-red     { background: linear-gradient(135deg,#F87171,#D63B3B); }
-        .tile-gold    { background: linear-gradient(135deg,#FBBF24,#D69400); }
-        .tile-plum    { background: linear-gradient(135deg,#A855F7,#7B23D6); }
+        /* Premium icon-tile gradients — richer, deeper, glossier (3-stop, true jewel tones) */
+        .tile-indigo  { background: linear-gradient(150deg,#7B7FFF 0%,#5A5FE0 45%,#322B96 100%); }
+        .tile-amber   { background: linear-gradient(150deg,#FFD166 0%,#F5A524 45%,#A8650A 100%); }
+        .tile-violet  { background: linear-gradient(150deg,#A78BFA 0%,#8B5CF6 45%,#4C1D95 100%); }
+        .tile-rose    { background: linear-gradient(150deg,#FB7AAE 0%,#F43F8E 45%,#9D174D 100%); }
+        .tile-emerald { background: linear-gradient(150deg,#34D9A0 0%,#10B981 45%,#065F46 100%); }
+        .tile-sky     { background: linear-gradient(150deg,#7DD3FC 0%,#38BDF8 45%,#075985 100%); }
+        .tile-orange  { background: linear-gradient(150deg,#FDBA74 0%,#FB923C 45%,#9A3412 100%); }
+        .tile-teal    { background: linear-gradient(150deg,#5EEAD4 0%,#14B8A6 45%,#115E59 100%); }
+        .tile-red     { background: linear-gradient(150deg,#FCA5A5 0%,#F87171 45%,#991B1B 100%); }
+        .tile-gold    { background: linear-gradient(150deg,#FDE68A 0%,#FBBF24 45%,#92400E 100%); }
+        .tile-plum    { background: linear-gradient(150deg,#D8B4FE 0%,#A855F7 45%,#581C87 100%); }
 
-        .home-btn.admin-btn {
-            border-color: #FFD700; color: #FFD700; display: none;
-            background: rgba(255,215,0,.04);
+        /* Admin button — separate full-width button, lives OUTSIDE the coverage box */
+        .admin-fullwidth-btn {
+            display: none; width: 100%; align-items: center; justify-content: center; gap: 10px;
+            background: linear-gradient(135deg, rgba(255,215,0,.14), rgba(255,180,0,.06));
+            border: 1.5px solid #FFD700; border-radius: 14px; padding: 13px;
+            color: #FFD700; font-family: 'Noto Sans Bengali','Inter',sans-serif;
+            font-size: 13px; font-weight: 800; cursor: pointer; margin-bottom: 14px;
         }
-        .home-btn.admin-btn:hover { background: rgba(255,215,0,.08); box-shadow: 0 0 0 2px rgba(255,215,0,.2); }
+        .admin-fullwidth-btn:hover { background: rgba(255,215,0,.1); box-shadow: 0 0 0 2px rgba(255,215,0,.2); }
+
+        /* ATLAS All Courses banner — premium static gradient card (no rotating border) */
+        .courses-banner {
+            position: relative; width: 100%; padding: 0; border-radius: 16px;
+            margin-bottom: 14px; cursor: pointer;
+            background: linear-gradient(135deg, #6C63FF 0%, #5A4FE8 45%, #3D35B0 100%);
+            box-shadow: 0 6px 22px rgba(108,99,255,.38), inset 0 1px 0 rgba(255,255,255,.18);
+            overflow: hidden; transition: transform .2s ease, box-shadow .2s ease;
+        }
+        .courses-banner::before {
+            /* স্থির শিন/হাইলাইট — আগের ঘোরানো বর্ডার অ্যানিমেশনের বদলে একটা প্রিমিয়াম
+               স্ট্যাটিক গ্লো, যাতে চোখে পড়ে কিন্তু distract না করে */
+            content: ''; position: absolute; top: -60%; right: -20%; width: 70%; height: 220%;
+            background: radial-gradient(circle, rgba(255,255,255,.16) 0%, transparent 70%);
+            pointer-events: none; z-index: 0;
+        }
+        .courses-banner:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(108,99,255,.48), inset 0 1px 0 rgba(255,255,255,.22); }
+        .courses-banner:active { transform: scale(.98); }
+        .courses-banner-inner {
+            position: relative; z-index: 1; border-radius: 16px;
+            padding: 18px 16px; display: flex; align-items: center; justify-content: center;
+            flex-direction: column; gap: 4px; text-align: center;
+        }
+        .courses-banner-icon { display: flex; align-items: center; justify-content: center; margin-bottom: 2px; }
+        .courses-banner-text { width: 100%; }
+        .courses-banner-title { font-size: 17px; font-weight: 900; color: #fff; letter-spacing: .2px; }
+        .courses-banner-sub { font-size: 10.5px; color: rgba(255,255,255,.82); margin-top: 3px; }
+        .courses-banner-arr { display: none; }
 
         @media(max-width:340px) {
             .home-row-4 { grid-template-columns: repeat(2,1fr); }
@@ -867,7 +929,7 @@
     <div class="header-left">
         <button class="global-back-btn" onclick="goBackGlobal()" title="ফিরে যান" aria-label="ফিরে যান">←</button>
         <button class="hamburger" onclick="toggleSidebar()">☰</button>
-        <div class="atlas-brand-box">
+        <div class="atlas-brand-box" onclick="goTo('index.html')">
             <img src="https://cdn.phototourl.com/free/2026-05-15-b45df560-6dc8-4cb7-9040-238612c8a161.png"
                  class="atlas-logo-img" alt="ATLAS"
                  onerror="this.style.display='none'">
@@ -921,65 +983,85 @@
     <!-- (Flutter: CountdownTimerList widget) -->
     <div id="timerContainer"></div>
 
+    <!-- ATLAS All Courses — premium static gradient banner, links to atlascourses.com -->
+    <div class="courses-banner" onclick="window.open('https://atlascourses.com','_blank')">
+        <div class="courses-banner-inner">
+            <span class="courses-banner-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5L2.5 9 12 13.5 21.5 9z"/><path d="M6.5 11.2v5c0 1.4 2.5 2.5 5.5 2.5s5.5-1.1 5.5-2.5v-5"/><path d="M21.5 9v6"/></svg></span>
+            <div class="courses-banner-text">
+                <div class="courses-banner-title">ATLAS All Courses</div>
+                <div class="courses-banner-sub">সম্পূর্ণ কোর্স দেখো atlascourses.com-এ</div>
+            </div>
+        </div>
+    </div>
+
     <!-- ── Home Buttons — Premium Grid ── -->
     <!-- (Flutter: Column of Rows, each Row = GridView shrinkWrap) -->
+    <div class="btn-coverage-box">
+
+    <div class="section-sep"><span class="section-sep-label">📚 Class + Practice</span></div>
 
     <!-- Row 1: ফ্রি ক্লাস + মূলবই পেইজভিত্তিক প্রস্তুতি (50/50) -->
     <div class="home-row home-row-2">
         <button class="home-btn home-btn-hero" onclick="goTo('class.html')">
-            <span class="btn-icon-tile tile-indigo">📚</span>
+            <span class="btn-icon-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="13" rx="2.5"/><path d="M10 9.3v5.4l4.5-2.7z" fill="#fff" stroke="none"/></svg></span>
             <span class="btn-text">ফ্রি ক্লাস</span>
         </button>
         <button class="home-btn home-btn-hero" onclick="goTo('study.html')">
-            <span class="btn-icon-tile tile-violet">📖</span>
+            <span class="btn-icon-tile tile-violet"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z"/><path d="M12 5.5v13.4"/></svg></span>
             <span class="btn-text">মূলবই পেইজভিত্তিক প্রস্তুতি</span>
         </button>
     </div>
 
+    <div class="section-sep"><span class="section-sep-label">🧩 ATLAS Study Aid</span></div>
+
     <!-- Row 2: Focus Timer, Study Tracker, Pomodoro, GPA Calculator -->
     <div class="home-row home-row-4">
         <button class="home-btn" onclick="goTo('focus.html')">
-            <span class="btn-icon-tile tile-emerald">⏱️</span>
+            <span class="btn-icon-tile tile-emerald"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.8" fill="#fff" stroke="none"/></svg></span>
             <span class="btn-text">Focus Timer</span>
         </button>
         <button class="home-btn" onclick="showToast('শীঘ্রই আসছে! 🚧')">
-            <span class="btn-icon-tile tile-sky">📊</span>
+            <span class="btn-icon-tile tile-sky"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V11"/><path d="M9.5 19V6"/><path d="M15 19V13.5"/><path d="M20 19V8.5"/></svg></span>
             <span class="btn-text">Study Tracker</span>
         </button>
         <button class="home-btn" onclick="goTo('profile.html#pomoScreen')">
-            <span class="btn-icon-tile tile-rose">🍅</span>
+            <span class="btn-icon-tile tile-rose"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.2V2.5"/><path d="M9.8 2.5h4.4"/><circle cx="12" cy="13.5" r="8"/><path d="M12 9.5v4l3 2"/></svg></span>
             <span class="btn-text">Pomodoro</span>
         </button>
         <button class="home-btn" onclick="openGpaCalculatorModal()">
-            <span class="btn-icon-tile tile-gold">🎯</span>
+            <span class="btn-icon-tile tile-gold"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2.2"/><path d="M8 7.5h8"/><path d="M8 12h1.2M11.4 12h1.2M14.8 12h1.2M8 16h1.2M11.4 16h1.2M14.8 16h1.2"/></svg></span>
             <span class="btn-text">GPA Calculator</span>
         </button>
     </div>
 
+    <div class="section-sep"><span class="section-sep-label">🗂️ Category / Type</span></div>
+
     <!-- Row 3: HSC, Admission, অনুশীলনী -->
     <div class="home-row home-row-3">
         <button class="home-btn" onclick="goTo('exam.html?cat=board')">
-            <span class="btn-icon-tile tile-sky">🎓</span>
+            <span class="btn-icon-tile tile-sky"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5L2.5 9 12 13.5 21.5 9z"/><path d="M6.5 11.2v5c0 1.4 2.5 2.5 5.5 2.5s5.5-1.1 5.5-2.5v-5"/><path d="M21.5 9v6"/></svg></span>
             <span class="btn-text">HSC</span>
         </button>
         <button class="home-btn" onclick="openAdmissionModal()">
-            <span class="btn-icon-tile tile-teal">🏛️</span>
+            <span class="btn-icon-tile tile-teal"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 9.5L12 4l8.5 5.5"/><path d="M4.5 9.5v9.5h15V9.5"/><path d="M9.5 19v-5h5v5"/></svg></span>
             <span class="btn-text">এডমিশন</span>
         </button>
         <button class="home-btn" onclick="goTo('exam.html?cat=onushiloni')">
-            <span class="btn-icon-tile tile-orange">📋</span>
+            <span class="btn-icon-tile tile-orange"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6.5l1.3 1.3L8.5 5.5"/><path d="M11.5 6.5h7.5"/><path d="M5 12.5l1.3 1.3L8.5 11.5"/><path d="M11.5 12.5h7.5"/><path d="M5 18.5l1.3 1.3L8.5 17.5"/><path d="M11.5 18.5h7.5"/></svg></span>
             <span class="btn-text">অনুশীলনী</span>
         </button>
     </div>
 
+    <div class="section-sep"><span class="section-sep-label">🚀 Super Practice</span></div>
+
     <!-- Row 4: অনুশীলনী এক্সাম + Model Test (pair) -->
     <div class="home-row home-row-2">
         <button class="home-btn home-btn-hero" onclick="goTo('exam.html?cat=onushiloni')">
-            <span class="btn-icon-tile tile-orange">✏️</span>
+            <span class="btn-icon-tile tile-orange"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4.5l5 5L8 21H3v-5z"/><path d="M12.5 6.5l5 5"/></svg></span>
             <span class="btn-text">অনুশীলনী এক্সাম</span>
         </button>
         <button class="home-btn home-btn-hero" onclick="openModelTestModal()">
-            <span class="btn-icon-tile tile-amber">🧪</span>
+            <span class="btn-icon-tile tile-amber"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 3.5h5"/><path d="M10.2 3.5v6.3L5.3 18c-.7 1.2.2 2.7 1.6 2.7h10.2c1.4 0 2.3-1.5 1.6-2.7l-4.9-8.2V3.5"/><path d="M7.5 15.5h9"/></svg></span>
             <span class="btn-text">Model Test</span>
         </button>
     </div>
@@ -987,27 +1069,21 @@
     <!-- Row 5: Unlimited Mock Test + ATLAS AI (50/50) -->
     <div class="home-row home-row-2">
         <button class="home-btn home-btn-hero" onclick="goTo('mock-test.html')">
-            <span class="btn-icon-tile tile-red">🔁</span>
+            <span class="btn-icon-tile tile-red"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 13.6-5.7L19.5 8"/><path d="M19.5 4v4h-4"/><path d="M20 12a8 8 0 0 1-13.6 5.7L4.5 16"/><path d="M4.5 20v-4h4"/></svg></span>
             <span class="btn-text">Unlimited Mock Test</span>
         </button>
         <button class="home-btn home-btn-hero" onclick="goTo('ai.html')">
-            <span class="btn-icon-tile tile-plum">✨</span>
+            <span class="btn-icon-tile tile-plum"><svg viewBox="0 0 24 24" fill="#fff" stroke="none"><path d="M12 2.5l1.8 5.7 5.7 1.8-5.7 1.8L12 17.5l-1.8-5.7-5.7-1.8 5.7-1.8z"/><path d="M19 16.5l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z" opacity=".75"/></svg></span>
             <span class="btn-text">ATLAS AI</span>
         </button>
     </div>
 
-    <!-- My Mistakes — preserved (was in old grid, kept accessible, not in new spec's main rows) -->
-    <div class="home-row home-row-2">
-        <button class="home-btn home-btn-hero" onclick="openMistakesModal()">
-            <span class="btn-icon-tile tile-red">⚠️</span>
-            <span class="btn-text">My Mistakes</span>
-        </button>
-        <!-- Admin button — hidden for non-admins (Flutter: Visibility widget) -->
-        <button class="home-btn home-btn-hero admin-btn" id="adminBtn" onclick="goTo('admin.html')" style="display:none">
-            <span class="btn-icon-tile tile-gold">👑</span>
-            <span class="btn-text">Admin Control</span>
-        </button>
-    </div>
+    </div><!-- /btn-coverage-box -->
+
+    <!-- Admin Control — owner-only, lives OUTSIDE the button coverage area, separate full-width button -->
+    <button class="admin-fullwidth-btn" id="adminBtn" onclick="goTo('admin.html')">
+        <span style="font-size:18px">👑</span> Admin Control
+    </button>
 
     <!-- Social Chips Row  (Flutter: SocialChipsRow widget) -->
     <div class="social-row" id="socialRow"></div>
@@ -1234,7 +1310,8 @@ async function safeFetch(url, opts = {}) {
 ══════════════════════════════════════════════ */
 async function loadTimers() {
     try {
-        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/countdowns?select=*&order=sort_order.asc&limit=5`);
+        // is_active=eq.true OR is_active=is.null (পুরনো এন্ট্রি যেগুলোতে এই কলামটাই নেই, সেগুলো ডিফল্টভাবে সক্রিয় ধরা হয়)
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/countdowns?select=*&or=(is_active.eq.true,is_active.is.null)&order=sort_order.asc&limit=5`);
         if (!data?.length) return;
 
         const container = document.getElementById('timerContainer');
@@ -1304,19 +1381,36 @@ function startCountdown(endTime, i) {
 ══════════════════════════════════════════════ */
 let __slideshowTimer = null;
 let __slideshowIdx = 0;
+let __slideshowTotal = 0;
+let __slideshowTouchStartX = null;
+let __slideshowTouchDeltaX = 0;
 
 async function loadSlideshow() {
     try {
-        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/slideshow_images?select=*&order=sort_order.asc,created_at.asc&limit=20`);
         const container = document.getElementById('slideshowContainer');
         if (!container) return;
+
+        // is_active=true ছবিই দেখানো হবে — অ্যাডমিন প্যানেলের on/off টগল
+        // দিয়ে কোনো ছবি বন্ধ রাখলে সেটা এখানে বাদ পড়ে যাবে।
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/slideshow_images?select=*&order=sort_order.asc,created_at.asc&limit=20&is_active=eq.true`);
 
         if (__slideshowTimer) { clearInterval(__slideshowTimer); __slideshowTimer = null; }
 
         if (!data?.length) { container.innerHTML = ''; return; }
 
+        // ছবিগুলো ব্রাউজার cache-এ আগেই preload করা হচ্ছে — base64 ছবি
+        // সরাসরি innerHTML-এ বসালে প্রথমবার decode করতে সময় লাগে এবং
+        // "loading দিলে চলে যায়" (flicker/disappear) সমস্যা হয়। preload
+        // শেষ হওয়ার পরই DOM-এ বসানো হচ্ছে, যাতে স্মুথ ও instant দেখায়।
+        await Promise.all(data.map(s => new Promise(resolve => {
+            const img = new Image();
+            img.onload = resolve;
+            img.onerror = resolve; // ভাঙা ছবি থাকলেও বাকি স্লাইডের জন্য আটকাবে না
+            img.src = s.image_url;
+        })));
+
         const slidesHtml = data.map(s =>
-            `<div class="slideshow-slide"><img src="${escHtml(s.image_url)}" alt="Slide" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`
+            `<div class="slideshow-slide"><img src="${escHtml(s.image_url)}" alt="Slide" onerror="this.parentElement.style.display='none'"></div>`
         ).join('');
         const dotsHtml = data.length > 1
             ? `<div class="slideshow-dots">${data.map((_, i) => `<span class="slideshow-dot${i === 0 ? ' active' : ''}" data-idx="${i}"></span>`).join('')}</div>`
@@ -1329,20 +1423,65 @@ async function loadSlideshow() {
             </div>`;
 
         __slideshowIdx = 0;
+        __slideshowTotal = data.length;
+        attachSlideshowSwipe();
         if (data.length > 1) {
-            __slideshowTimer = setInterval(() => advanceSlideshow(data.length), 2000);
+            startSlideshowAutoTimer();
         }
     } catch (e) { console.error('Slideshow load error:', e); }
 }
 
+function startSlideshowAutoTimer() {
+    if (__slideshowTimer) clearInterval(__slideshowTimer);
+    __slideshowTimer = setInterval(() => advanceSlideshow(__slideshowTotal), 2000);
+}
+
 function advanceSlideshow(total) {
     __slideshowIdx = (__slideshowIdx + 1) % total;
+    renderSlideshowPosition();
+}
+
+function renderSlideshowPosition() {
     const track = document.getElementById('slideshowTrack');
     if (!track) return;
-    // Right-to-left movement: slide content shifts left as if entering from the right
     track.style.transform = `translateX(-${__slideshowIdx * 100}%)`;
     document.querySelectorAll('.slideshow-dot').forEach((dot, i) => {
         dot.classList.toggle('active', i === __slideshowIdx);
+    });
+}
+
+// ── ইউজার চাইলে ফিঙ্গার (টাচ) দিয়ে টেনে স্লাইড করতে পারবে ──
+// সোয়াইপ করার সময় auto-timer সাময়িক বন্ধ থাকে, swipe শেষ হলে আবার চালু হয়,
+// যাতে ইউজারের ম্যানুয়াল কন্ট্রোল আর অটো-স্লাইড একসাথে কনফ্লিক্ট না করে।
+function attachSlideshowSwipe() {
+    const track = document.getElementById('slideshowTrack');
+    if (!track) return;
+
+    track.addEventListener('touchstart', e => {
+        __slideshowTouchStartX = e.touches[0].clientX;
+        __slideshowTouchDeltaX = 0;
+        if (__slideshowTimer) { clearInterval(__slideshowTimer); __slideshowTimer = null; }
+    }, { passive: true });
+
+    track.addEventListener('touchmove', e => {
+        if (__slideshowTouchStartX === null) return;
+        __slideshowTouchDeltaX = e.touches[0].clientX - __slideshowTouchStartX;
+        track.style.transition = 'none';
+        track.style.transform = `translateX(calc(-${__slideshowIdx * 100}% + ${__slideshowTouchDeltaX}px))`;
+    }, { passive: true });
+
+    track.addEventListener('touchend', () => {
+        track.style.transition = '';
+        const threshold = 40; // px — এর বেশি টানলে স্লাইড পরিবর্তন হবে
+        if (__slideshowTouchDeltaX < -threshold && __slideshowIdx < __slideshowTotal - 1) {
+            __slideshowIdx++;
+        } else if (__slideshowTouchDeltaX > threshold && __slideshowIdx > 0) {
+            __slideshowIdx--;
+        }
+        renderSlideshowPosition();
+        __slideshowTouchStartX = null;
+        __slideshowTouchDeltaX = 0;
+        if (__slideshowTotal > 1) startSlideshowAutoTimer(); // সোয়াইপ শেষে অটো-সিস্টেম আবার চালু
     });
 }
 
@@ -1936,5 +2075,9 @@ window.addEventListener('popstate', () => history.back());
 </script>
 <!-- NEW FEATURES (Pomodoro Timer + GPA Calculator) — isolated in separate file -->
 <script src="home-features.js"></script>
+
+<!-- ══════════════ গ্লোবাল নেভিগেশন + UI কন্ট্রোল (নতুন, আলাদা ফাইল) ══════════════ -->
+<script src="global-nav.js"></script>
+<script src="atlas-ui.js"></script>
 </body>
 </html>
