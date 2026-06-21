@@ -2,9 +2,11 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Always get latest yt-dlp at build time
+RUN pip install --no-cache-dir --upgrade yt-dlp
 
 COPY app.py .
 
