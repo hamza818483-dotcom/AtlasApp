@@ -463,9 +463,8 @@
         .cplayer-wrap {
             position: relative;
             background: #000;
-            border-radius: var(--cl-radius-sm);
+            border-radius: var(--cl-radius-sm) var(--cl-radius-sm) 0 0;
             overflow: hidden;
-            margin-bottom: 12px;
             box-shadow: var(--shadow-float);
             user-select: none;
         }
@@ -480,7 +479,7 @@
             width: 100%;
             height: 100%;
         }
-        /* Full transparent blocker - catches ALL iframe clicks */
+        /* Full transparent blocker - ALL iframe clicks blocked */
         .cplayer-blocker {
             position: absolute;
             inset: 0;
@@ -488,12 +487,30 @@
             background: transparent;
             cursor: pointer;
         }
+        /* Hard black mask over YT watermark/logo area at bottom */
+        .cplayer-bottom-mask {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 22%;
+            z-index: 21;
+            background: linear-gradient(0deg, rgba(0,0,0,0.96) 0%, transparent 100%);
+            pointer-events: none;
+        }
+        /* Hard black mask over top-left (channel avatar/name) */
+        .cplayer-top-mask {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 18%;
+            z-index: 21;
+            background: linear-gradient(180deg, rgba(0,0,0,0.94) 0%, transparent 100%);
+            pointer-events: none;
+        }
         /* End screen overlay */
         .cplayer-end {
             position: absolute;
             inset: 0;
             z-index: 30;
-            background: rgba(0,0,0,0.88);
+            background: rgba(0,0,0,0.92);
             display: none;
             flex-direction: column;
             align-items: center;
@@ -508,82 +525,140 @@
             font-size: 13px; font-weight: 700; cursor: pointer;
             font-family: 'Noto Sans Bengali', sans-serif;
         }
-        /* Controls bar */
-        .cplayer-controls {
-            background: linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 100%);
-            padding: 8px 12px 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+
+        /* ===== PREMIUM CONTROLS CARD ===== */
+        .cplayer-card {
+            background: var(--cl-card);
+            border: 1.5px solid var(--cl-border);
+            border-top: none;
+            border-radius: 0 0 var(--cl-radius-sm) var(--cl-radius-sm);
+            padding: 12px 14px 14px;
+            margin-bottom: 10px;
+            box-shadow: var(--shadow-float);
         }
         /* Progress bar */
         .cplayer-progress-wrap {
             position: relative;
-            height: 4px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 4px;
+            height: 5px;
+            background: var(--cl-card2);
+            border-radius: 5px;
             cursor: pointer;
             touch-action: none;
+            margin-bottom: 12px;
         }
         .cplayer-progress-fill {
             height: 100%;
-            background: var(--cl-primary);
-            border-radius: 4px;
+            background: linear-gradient(90deg, var(--cl-primary), var(--cl-secondary));
+            border-radius: 5px;
             width: 0%;
-            transition: width 0.2s linear;
             pointer-events: none;
         }
         .cplayer-progress-thumb {
             position: absolute;
-            top: 50%; right: auto;
-            width: 12px; height: 12px;
+            top: 50%;
+            width: 14px; height: 14px;
             background: #fff;
             border-radius: 50%;
             transform: translate(-50%, -50%);
             left: 0%;
             pointer-events: none;
-            box-shadow: 0 0 4px rgba(0,0,0,0.5);
+            box-shadow: 0 0 6px rgba(108,99,255,0.6);
         }
-        /* Bottom row */
+        /* Controls row */
         .cplayer-row {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
         .cplayer-btn {
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 20px;
+            background: var(--cl-card2);
+            border: 1.5px solid var(--cl-border);
+            border-radius: 10px;
+            color: var(--cl-text);
+            font-size: 18px;
+            width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
             cursor: pointer;
-            padding: 4px;
-            line-height: 1;
             flex-shrink: 0;
-            opacity: 0.9;
-            transition: opacity 0.15s, transform 0.1s;
+            transition: all 0.15s;
         }
-        .cplayer-btn:active { opacity: 1; transform: scale(0.88); }
-        .cplayer-play { font-size: 22px; }
+        .cplayer-btn:active { transform: scale(0.88); background: var(--cl-primary); color: #fff; border-color: var(--cl-primary); }
+        .cplayer-play {
+            background: var(--cl-primary);
+            color: #fff;
+            border-color: var(--cl-primary);
+            width: 44px; height: 44px;
+            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(108,99,255,0.35);
+        }
+        .cplayer-play:active { background: #5a52e0; }
         .cplayer-time {
             font-size: 11px;
-            color: rgba(255,255,255,0.8);
+            color: var(--cl-text2);
             font-variant-numeric: tabular-nums;
             flex-shrink: 0;
+            font-weight: 600;
         }
         .cplayer-spacer { flex: 1; }
         .cplayer-speed-wrap {
             display: flex;
             align-items: center;
             gap: 2px;
-            background: rgba(255,255,255,0.12);
-            border-radius: 8px;
-            padding: 3px 7px;
+            background: var(--cl-card2);
+            border: 1.5px solid var(--cl-border);
+            border-radius: 10px;
+            padding: 4px 8px;
         }
-        .cplayer-speed-label { font-size: 10px; color: rgba(255,255,255,0.6); margin-right: 2px; }
-        .cplayer-speed-val { font-size: 12px; font-weight: 800; color: #fff; min-width: 28px; text-align: center; }
-        .cplayer-speed-btn { background: none; border: none; color: rgba(255,255,255,0.7); font-size: 15px; cursor: pointer; padding: 0 2px; line-height: 1; }
-        .cplayer-speed-btn:active { color: #fff; }
-        .cplayer-vol-btn { font-size: 18px; }
+        .cplayer-speed-label { font-size: 10px; color: var(--cl-text2); font-weight: 600; margin-right: 2px; }
+        .cplayer-speed-val { font-size: 12px; font-weight: 800; color: var(--cl-primary); min-width: 28px; text-align: center; }
+        .cplayer-speed-btn { background: none; border: none; color: var(--cl-text2); font-size: 15px; cursor: pointer; padding: 0 2px; line-height: 1; }
+        .cplayer-speed-btn:active { color: var(--cl-primary); }
+
+        /* ===== DOWNLOAD CARD ===== */
+        .cplayer-dl-card {
+            background: linear-gradient(135deg, rgba(0,212,170,0.08), rgba(108,99,255,0.08));
+            border: 1.5px solid rgba(0,212,170,0.25);
+            border-radius: var(--cl-radius-sm);
+            padding: 14px;
+            margin-bottom: 10px;
+            display: none;
+        }
+        .cplayer-dl-card.visible { display: block; }
+        .cplayer-dl-title {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--cl-secondary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .cplayer-dl-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--cl-secondary), #00b894);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 800;
+            padding: 13px;
+            cursor: pointer;
+            font-family: 'Noto Sans Bengali', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 16px rgba(0,212,170,0.3);
+            transition: all 0.15s;
+        }
+        .cplayer-dl-btn:active { transform: scale(0.97); opacity: 0.85; }
+        .cplayer-dl-note {
+            font-size: 10px;
+            color: var(--cl-text2);
+            text-align: center;
+            margin-top: 8px;
+            font-family: 'Noto Sans Bengali', sans-serif;
+        }
 
         /* ===== INFO CARD ===== */
         .info-card-fl {
@@ -832,11 +907,14 @@
         <button class="back-btn-fl" id="videoBackBtn" onclick="videoBack()">← ফিরে যান</button>
         <div class="breadcrumb-fl" id="videoBreadcrumb"></div>
 
-        <!-- Custom Player -->
+        <!-- Video Player -->
         <div class="cplayer-wrap" id="cplayerWrap">
             <div class="cplayer-ratio">
                 <div id="videoPlayer"></div>
-                <!-- Full blocker: prevents ALL iframe clicks (share, save, logo, suggestions) -->
+                <!-- Gradient masks to hide YT branding/watermarks -->
+                <div class="cplayer-top-mask"></div>
+                <div class="cplayer-bottom-mask"></div>
+                <!-- Full click blocker -->
                 <div class="cplayer-blocker" id="cplayerBlocker" onclick="ytTogglePlay()"></div>
                 <!-- End screen -->
                 <div class="cplayer-end" id="cplayerEnd">
@@ -845,35 +923,39 @@
                     <button class="cplayer-end-btn" onclick="ytRestart()">🔄 আবার দেখুন</button>
                 </div>
             </div>
-            <!-- Controls -->
-            <div class="cplayer-controls" id="cplayerControls">
-                <!-- Progress bar -->
-                <div class="cplayer-progress-wrap" id="cpProgress"
-                     onmousedown="cpSeekStart(event)" ontouchstart="cpSeekStart(event)">
-                    <div class="cplayer-progress-fill" id="cpFill"></div>
-                    <div class="cplayer-progress-thumb" id="cpThumb"></div>
-                </div>
-                <!-- Buttons row -->
-                <div class="cplayer-row">
-                    <button class="cplayer-btn" onclick="ytSkip(-10)" title="১০ সেকেন্ড পেছনে">⏪</button>
-                    <button class="cplayer-btn cplayer-play" id="playPauseBtn" onclick="ytTogglePlay()">▶</button>
-                    <button class="cplayer-btn" onclick="ytSkip(10)" title="১০ সেকেন্ড সামনে">⏩</button>
-                    <button class="cplayer-btn cplayer-vol-btn" id="volBtn" onclick="ytToggleMute()">🔊</button>
-                    <span class="cplayer-time"><span id="cpCurTime">0:00</span> / <span id="cpDurTime">0:00</span></span>
-                    <div class="cplayer-spacer"></div>
-                    <!-- Speed -->
-                    <div class="cplayer-speed-wrap">
-                        <span class="cplayer-speed-label">গতি</span>
-                        <button class="cplayer-speed-btn" onclick="ytSpeedChange(-1)">−</button>
-                        <span class="cplayer-speed-val" id="speedVal">1×</span>
-                        <button class="cplayer-speed-btn" onclick="ytSpeedChange(1)">+</button>
-                    </div>
-                    <!-- Fullscreen -->
-                    <button class="cplayer-btn" onclick="cpFullscreen()" style="font-size:16px;">⛶</button>
-                    <!-- Download -->
-                    <button class="cplayer-btn" id="cpDlBtn" onclick="ytDownload()" style="font-size:16px;display:none;" title="ডাউনলোড">⬇</button>
-                </div>
+        </div>
+
+        <!-- Premium Controls Card -->
+        <div class="cplayer-card" id="cplayerControls">
+            <div class="cplayer-progress-wrap" id="cpProgress"
+                 onmousedown="cpSeekStart(event)" ontouchstart="cpSeekStart(event)">
+                <div class="cplayer-progress-fill" id="cpFill"></div>
+                <div class="cplayer-progress-thumb" id="cpThumb"></div>
             </div>
+            <div class="cplayer-row">
+                <button class="cplayer-btn" onclick="ytSkip(-10)">⏪</button>
+                <button class="cplayer-btn cplayer-play" id="playPauseBtn" onclick="ytTogglePlay()">▶</button>
+                <button class="cplayer-btn" onclick="ytSkip(10)">⏩</button>
+                <button class="cplayer-btn" id="volBtn" onclick="ytToggleMute()" style="font-size:18px;">🔊</button>
+                <span class="cplayer-time"><span id="cpCurTime">0:00</span> / <span id="cpDurTime">0:00</span></span>
+                <div class="cplayer-spacer"></div>
+                <div class="cplayer-speed-wrap">
+                    <span class="cplayer-speed-label">গতি</span>
+                    <button class="cplayer-speed-btn" onclick="ytSpeedChange(-1)">−</button>
+                    <span class="cplayer-speed-val" id="speedVal">1×</span>
+                    <button class="cplayer-speed-btn" onclick="ytSpeedChange(1)">+</button>
+                </div>
+                <button class="cplayer-btn" onclick="cpFullscreen()" style="font-size:16px;">⛶</button>
+            </div>
+        </div>
+
+        <!-- Download Card -->
+        <div class="cplayer-dl-card" id="cplayerDlCard">
+            <div class="cplayer-dl-title">⬇ ভিডিও সেভ করুন</div>
+            <button class="cplayer-dl-btn" id="cpDlBtn" onclick="ytDownload()">
+                ⬇ গ্যালারিতে ডাউনলোড করুন
+            </button>
+            <div class="cplayer-dl-note">ডাউনলোড হতে কিছুটা সময় লাগতে পারে</div>
         </div>
 
         <!-- hidden anchors for JS refs -->
@@ -1363,7 +1445,7 @@ function ytRestart() {
 }
 
 // ===== DOWNLOAD VIA PROXY =====
-const PROXY_URL = 'https://hamzahf1-atlas-proxy.hf.space';
+const PROXY_URL = 'https://hamza-02-atlas-proxy.hf.space';
 let dlInProgress = false;
 
 async function ytDownload() {
@@ -1374,24 +1456,22 @@ async function ytDownload() {
     if (!vid) return;
 
     dlInProgress = true;
-    const orig = btn.textContent;
-    btn.textContent = '⏳';
-    btn.style.opacity = '0.5';
+    btn.innerHTML = '⏳ লোড হচ্ছে...';
+    btn.disabled = true;
+    btn.style.opacity = '0.7';
 
     try {
         const res = await fetch(`${PROXY_URL}/dl?vid=${encodeURIComponent(vid)}`, {
-            signal: AbortSignal.timeout(30000)
+            signal: AbortSignal.timeout(35000)
         });
 
         if (!res.ok) throw new Error('Proxy error ' + res.status);
         const data = await res.json();
-
         if (!data.url) throw new Error('No URL');
 
-        // Trigger download
         const a = document.createElement('a');
         a.href = data.url;
-        a.download = title.replace(/[^\w\s\u0980-\u09FF]/g, '') + '.mp4';
+        a.download = (title.replace(/[^\w\s\u0980-\u09FF\-]/g, '') || 'class-video') + '.mp4';
         a.target = '_blank';
         document.body.appendChild(a);
         a.click();
@@ -1402,7 +1482,8 @@ async function ytDownload() {
         showToast('❌ ডাউনলোড হয়নি, পরে চেষ্টা করুন');
     } finally {
         dlInProgress = false;
-        btn.textContent = orig;
+        btn.innerHTML = '⬇ গ্যালারিতে ডাউনলোড করুন';
+        btn.disabled = false;
         btn.style.opacity = '';
     }
 }
@@ -1471,6 +1552,7 @@ function playVideo(link, title, classType, classNote, backView, breadcrumbParts)
     // Restore blocker + controls bar (may have been hidden for MP4/error)
     const _bl = document.getElementById('cplayerBlocker'); if(_bl) _bl.style.display = '';
     const _ct = document.getElementById('cplayerControls'); if(_ct) _ct.style.display = '';
+    const _dlCard = document.getElementById('cplayerDlCard'); if(_dlCard) _dlCard.classList.remove('visible');
     // Reset progress bar
     const _cf = document.getElementById('cpFill'); if(_cf) _cf.style.width = '0%';
     const _cth = document.getElementById('cpThumb'); if(_cth) _cth.style.left = '0%';
@@ -1486,9 +1568,11 @@ function playVideo(link, title, classType, classNote, backView, breadcrumbParts)
         // YouTube video — no external link shown to user
         dlBtn.style.display = 'none';
         ytBtn.style.display = 'none';
-        // Show download button in controls
+        // Show download card
+        const dlCard = document.getElementById('cplayerDlCard');
+        if(dlCard) { dlCard.classList.add('visible'); }
         const cpDl = document.getElementById('cpDlBtn');
-        if(cpDl) { cpDl.style.display = ''; cpDl.dataset.vid = videoId; cpDl.dataset.title = title; }
+        if(cpDl) { cpDl.dataset.vid = videoId; cpDl.dataset.title = title; }
 
         // Use IFrame API
         if (ytReady) {
@@ -1528,9 +1612,23 @@ function playVideo(link, title, classType, classNote, backView, breadcrumbParts)
     // Class note
     if (classNote) {
         document.getElementById('classNoteCard').style.display = 'block';
-        document.getElementById('classNoteContent').innerHTML = classNote.startsWith('http')
-            ? `<a href="${classNote}" target="_blank">${classNote}</a>`
-            : classNote;
+        let noteHtml = '';
+        if (classNote.startsWith('http')) {
+            const isPdf = classNote.includes('.pdf') || classNote.includes('drive.google') || classNote.includes('docs.google');
+            noteHtml = `
+                <a href="${classNote}" target="_blank" rel="noopener" style="
+                    display:flex;align-items:center;justify-content:center;gap:8px;
+                    background:linear-gradient(135deg,var(--cl-primary),#5a52e0);
+                    color:#fff;border-radius:12px;padding:13px;
+                    font-size:13px;font-weight:800;text-decoration:none;
+                    font-family:'Noto Sans Bengali',sans-serif;
+                    box-shadow:0 4px 14px rgba(108,99,255,0.3);">
+                    ${isPdf ? '📄' : '🔗'} ক্লাস নোট দেখুন
+                </a>`;
+        } else {
+            noteHtml = `<p style="font-size:13px;color:var(--cl-text);line-height:1.7;font-family:'Noto Sans Bengali',sans-serif;margin:0;">${classNote}</p>`;
+        }
+        document.getElementById('classNoteContent').innerHTML = noteHtml;
     } else {
         document.getElementById('classNoteCard').style.display = 'none';
     }
