@@ -126,18 +126,7 @@
         }
         .atlas-brand-box:active { border-color: var(--accent); }
         .atlas-logo-img { height: 22px; width: auto; }
-        @keyframes textSweep {
-            0%   { background-position: -200% center; }
-            100% { background-position: 300% center; }
-        }
-        .atlas-brand-text {
-            font-size: 16px; font-weight: 900; letter-spacing: .8px;
-            font-family: 'Montserrat', 'Inter', system-ui, sans-serif;
-            background: linear-gradient(105deg, var(--accent) 0%, var(--accent) 35%, #fff 50%, var(--accent) 65%, var(--accent) 100%);
-            background-size: 200% auto;
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-            animation: textSweep 3.5s linear infinite;
-        }
+        .atlas-brand-text { font-size: 17px; font-weight: 800; color: var(--accent); letter-spacing: -.5px; }
 
         /* Header icon buttons */
         .header-icon {
@@ -389,14 +378,14 @@
 
         /* Section separator — thin line with a small gradient label
            box centered on top of it. */
-        .section-sep { position: relative; text-align: center; margin: 20px 0 16px; height: 1px; background: var(--border); }
+        .section-sep { position: relative; text-align: center; margin: 18px 0 10px; height: 1px; background: var(--border); }
         .section-sep:first-child { margin-top: 2px; }
         .section-sep-label {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
             background: linear-gradient(135deg, var(--accent), #3D35B0);
-            color: #fff; font-size: 8px; font-weight: 700; letter-spacing: .2px;
-            padding: 2px 8px; border-radius: 6px; white-space: nowrap;
-            box-shadow: 0 2px 8px rgba(108,99,255,.3);
+            color: #fff; font-size: 10px; font-weight: 800; letter-spacing: .3px;
+            padding: 4px 12px; border-radius: 8px; white-space: nowrap;
+            box-shadow: 0 2px 10px rgba(108,99,255,.35);
         }
 
         .home-row { display: grid; gap: 9px; margin-bottom: 9px; }
@@ -433,19 +422,7 @@
                 0 4px 12px rgba(0,0,0,.28),
                 0 0 0 1px rgba(255,255,255,.05);
         }
-        .home-btn { flex-direction: column; align-items: center; justify-content: center; }
-        .home-btn .btn-text { font-size: 9.5px; line-height: 1.2; font-weight: 700; margin-top: 4px; text-align: center; width: 100%; }
-        .home-btn-hero .btn-text { font-size: 11.5px; margin-top: 5px; }
-        .btn-svg-icon {
-            width: 38px; height: 38px; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-            box-shadow: inset 0 1.5px 0 rgba(255,255,255,.35), inset 0 -4px 8px rgba(0,0,0,.15), 0 3px 10px rgba(0,0,0,.25);
-        }
-        .btn-svg-icon-lg {
-            width: 44px; height: 44px; border-radius: 13px;
-            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-            box-shadow: inset 0 1.5px 0 rgba(255,255,255,.35), inset 0 -4px 8px rgba(0,0,0,.15), 0 3px 10px rgba(0,0,0,.25);
-        }
+        .home-btn .btn-text { font-size: 10.5px; line-height: 1.25; font-weight: 700; margin-top: 1px; }
 
         /* Hero style — bigger tile, left-aligned, used in 50/50 + full-width rows */
         .home-btn-hero {
@@ -478,36 +455,27 @@
         }
         .admin-fullwidth-btn:hover { background: rgba(255,215,0,.1); box-shadow: 0 0 0 2px rgba(255,215,0,.2); }
 
-        /* ATLAS All Courses banner — premium */
+        /* ATLAS Courses banner — rotating glow border, sits above the coverage box */
         .courses-banner {
-            position: relative; width: 100%; padding: 2.5px; border-radius: 18px;
+            position: relative; width: 100%; padding: 2px; border-radius: 16px;
             margin-bottom: 14px; cursor: pointer; background: var(--bg);
-            box-shadow: 0 4px 20px rgba(108,99,255,.2);
         }
         .courses-banner::before {
-            content: ''; position: absolute; inset: -1.5px; border-radius: 18px; z-index: 0;
-            background: conic-gradient(from 0deg, #6C63FF, #00D4AA, #FFBE0B, #FF006E, #A855F7, #6C63FF);
-            animation: coursesRotate 3s linear infinite;
+            content: ''; position: absolute; inset: -1.5px; border-radius: 16px; z-index: 0;
+            background: conic-gradient(from 0deg, #6C63FF, #00D4AA, #FFBE0B, #FF006E, #6C63FF);
+            animation: coursesRotate 3.5s linear infinite;
         }
         @keyframes coursesRotate { to { transform: rotate(360deg); } }
         .courses-banner-inner {
-            position: relative; z-index: 1; border-radius: 15.5px;
-            background: linear-gradient(135deg, #1a1040 0%, #0f0b2a 100%);
-            padding: 15px 18px; display: flex; align-items: center; gap: 12px;
+            position: relative; z-index: 1; border-radius: 14.5px;
+            background: linear-gradient(135deg, var(--card-bg), var(--card-hover));
+            padding: 13px 16px; display: flex; align-items: center; gap: 10px;
         }
-        .courses-banner-icon { font-size: 28px; flex-shrink: 0; filter: drop-shadow(0 0 8px rgba(168,85,247,.6)); }
+        .courses-banner-icon { font-size: 22px; flex-shrink: 0; }
         .courses-banner-text { flex: 1; }
-        .courses-banner-title {
-            font-size: 18px; font-weight: 900; letter-spacing: .3px;
-            background: linear-gradient(90deg, #fff 0%, #c4b5fd 50%, #fff 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-        }
-        .courses-banner-sub { font-size: 10.5px; color: rgba(196,181,253,.7); margin-top: 3px; }
-        .courses-banner-arr {
-            font-size: 20px; font-weight: 900;
-            background: linear-gradient(135deg, #A855F7, #6C63FF);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-        }
+        .courses-banner-title { font-size: 13px; font-weight: 900; color: var(--text); }
+        .courses-banner-sub { font-size: 10.5px; color: var(--text-secondary); margin-top: 1px; }
+        .courses-banner-arr { font-size: 16px; color: var(--accent); }
 
         @media(max-width:340px) {
             .home-row-4 { grid-template-columns: repeat(2,1fr); }
@@ -948,6 +916,7 @@
 ════════════════════════════════════════════ -->
 <header class="header">
     <div class="header-left">
+        <button class="global-back-btn" onclick="goBackGlobal()" title="ফিরে যান" aria-label="ফিরে যান">←</button>
         <button class="hamburger" onclick="toggleSidebar()">☰</button>
         <div class="atlas-brand-box" onclick="goTo('index.html')">
             <img src="https://cdn.phototourl.com/free/2026-05-15-b45df560-6dc8-4cb7-9040-238612c8a161.png"
@@ -1003,12 +972,12 @@
     <!-- (Flutter: CountdownTimerList widget) -->
     <div id="timerContainer"></div>
 
-    <!-- ATLAS All Courses banner -->
+    <!-- ATLAS Courses — rotating glow border banner, links to atlascourses.com -->
     <div class="courses-banner" onclick="window.open('https://atlascourses.com','_blank')">
         <div class="courses-banner-inner">
             <span class="courses-banner-icon">🎓</span>
             <div class="courses-banner-text">
-                <div class="courses-banner-title">ATLAS All Courses</div>
+                <div class="courses-banner-title">ATLAS Courses</div>
                 <div class="courses-banner-sub">সম্পূর্ণ কোর্স দেখো atlascourses.com-এ</div>
             </div>
             <span class="courses-banner-arr">↗</span>
@@ -1024,15 +993,11 @@
     <!-- Row 1: ফ্রি ক্লাস + মূলবই পেইজভিত্তিক প্রস্তুতি (50/50) -->
     <div class="home-row home-row-2">
         <button class="home-btn home-btn-hero" onclick="goTo('class.html')">
-            <span class="btn-svg-icon-lg tile-indigo">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="2" y="4" width="20" height="14" rx="2.5" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/><path d="M10 8.5l6 3.5-6 3.5V8.5z" fill="white"/><path d="M7 21h10M12 18v3" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/></svg>
-            </span>
+            <span class="btn-icon-tile tile-indigo">📚</span>
             <span class="btn-text">ফ্রি ক্লাস</span>
         </button>
         <button class="home-btn home-btn-hero" onclick="goTo('study.html')">
-            <span class="btn-svg-icon-lg tile-violet">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 4h16v16a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"/><path d="M8 8h8M8 11h8M8 14h5" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg>
-            </span>
+            <span class="btn-icon-tile tile-violet">📖</span>
             <span class="btn-text">মূলবই পেইজভিত্তিক প্রস্তুতি</span>
         </button>
     </div>
@@ -1042,27 +1007,19 @@
     <!-- Row 2: Focus Timer, Study Tracker, Pomodoro, GPA Calculator -->
     <div class="home-row home-row-4">
         <button class="home-btn" onclick="goTo('focus.html')">
-            <span class="btn-svg-icon tile-emerald">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" stroke="white" stroke-width="1.8" fill="rgba(255,255,255,0.1)"/><path d="M12 9v4l2.5 2.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 3h4M12 3v2" stroke="rgba(255,255,255,0.8)" stroke-width="1.6" stroke-linecap="round"/></svg>
-            </span>
+            <span class="btn-icon-tile tile-emerald">⏱️</span>
             <span class="btn-text">Focus Timer</span>
         </button>
         <button class="home-btn" onclick="showToast('শীঘ্রই আসছে! 🚧')">
-            <span class="btn-svg-icon tile-sky">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="white" stroke-width="1.6" fill="rgba(255,255,255,0.1)"/><path d="M7 16l3-4 3 2 4-5" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
+            <span class="btn-icon-tile tile-sky">📊</span>
             <span class="btn-text">Study Tracker</span>
         </button>
         <button class="home-btn" onclick="goTo('profile.html#pomoScreen')">
-            <span class="btn-svg-icon tile-rose">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="3" stroke="white" stroke-width="1.8" fill="rgba(255,255,255,0.1)"/><path d="M9 12h6M12 9v6" stroke="white" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="2" fill="white"/></svg>
-            </span>
+            <span class="btn-icon-tile tile-rose">🍅</span>
             <span class="btn-text">Pomodoro</span>
         </button>
         <button class="home-btn" onclick="openGpaCalculatorModal()">
-            <span class="btn-svg-icon tile-gold">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="white" stroke-width="1.6" fill="rgba(255,255,255,0.1)"/><path d="M7 8h10M7 12h4M7 16h6" stroke="white" stroke-width="1.4" stroke-linecap="round"/><path d="M15 14l1.5 1.5L19 12" stroke="rgba(255,255,255,0.8)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
+            <span class="btn-icon-tile tile-gold">🎯</span>
             <span class="btn-text">GPA Calculator</span>
         </button>
     </div>
@@ -1072,21 +1029,15 @@
     <!-- Row 3: HSC, Admission, অনুশীলনী -->
     <div class="home-row home-row-3">
         <button class="home-btn" onclick="goTo('exam.html?cat=board')">
-            <span class="btn-svg-icon tile-sky">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3L4 7v5c0 5 3.5 9 8 10 4.5-1 8-5 8-10V7L12 3z" fill="rgba(255,255,255,0.12)" stroke="white" stroke-width="1.6"/><path d="M9 12l2 2 4-4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
+            <span class="btn-icon-tile tile-sky">🎓</span>
             <span class="btn-text">HSC</span>
         </button>
         <button class="home-btn" onclick="openAdmissionModal()">
-            <span class="btn-svg-icon tile-teal">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M5 21V10l7-7 7 7v11" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.1)"/><rect x="9" y="14" width="6" height="7" rx="1" stroke="rgba(255,255,255,0.7)" stroke-width="1.4" fill="rgba(255,255,255,0.15)"/></svg>
-            </span>
+            <span class="btn-icon-tile tile-teal">🏛️</span>
             <span class="btn-text">এডমিশন</span>
         </button>
         <button class="home-btn" onclick="goTo('exam.html?cat=onushiloni')">
-            <span class="btn-svg-icon tile-orange">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="white" stroke-width="1.6" fill="rgba(255,255,255,0.1)"/><path d="M8 8h8M8 12h8M8 16h5" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg>
-            </span>
+            <span class="btn-icon-tile tile-orange">📋</span>
             <span class="btn-text">অনুশীলনী</span>
         </button>
     </div>
@@ -1096,15 +1047,11 @@
     <!-- Row 4: অনুশীলনী এক্সাম + Model Test (pair) -->
     <div class="home-row home-row-2">
         <button class="home-btn home-btn-hero" onclick="goTo('exam.html?cat=onushiloni')">
-            <span class="btn-svg-icon-lg tile-orange">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 3 21l.5-4.5L17 3z" fill="rgba(255,255,255,0.12)" stroke="white" stroke-width="1.6" stroke-linejoin="round"/></svg>
-            </span>
+            <span class="btn-icon-tile tile-orange">✏️</span>
             <span class="btn-text">অনুশীলনী এক্সাম</span>
         </button>
         <button class="home-btn home-btn-hero" onclick="openModelTestModal()">
-            <span class="btn-svg-icon-lg tile-amber">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M9 3v8L4 18a2 2 0 001.7 3h12.6A2 2 0 0020 18l-5-7V3" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.1)"/><path d="M9 3h6" stroke="white" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="16" r="1.2" fill="white"/><circle cx="14" cy="14" r="1" fill="rgba(255,255,255,0.7)"/></svg>
-            </span>
+            <span class="btn-icon-tile tile-amber">🧪</span>
             <span class="btn-text">Model Test</span>
         </button>
     </div>
@@ -1112,15 +1059,11 @@
     <!-- Row 5: Unlimited Mock Test + ATLAS AI (50/50) -->
     <div class="home-row home-row-2">
         <button class="home-btn home-btn-hero" onclick="goTo('mock-test.html')">
-            <span class="btn-svg-icon-lg tile-red">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M17 2l4 4-4 4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 11V9a4 4 0 014-4h14" stroke="white" stroke-width="1.8" stroke-linecap="round"/><path d="M7 22l-4-4 4-4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 13v2a4 4 0 01-4 4H3" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
-            </span>
+            <span class="btn-icon-tile tile-red">🔁</span>
             <span class="btn-text">Unlimited Mock Test</span>
         </button>
         <button class="home-btn home-btn-hero" onclick="goTo('ai.html')">
-            <span class="btn-svg-icon-lg tile-plum">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2a7 7 0 017 7c0 2.5-1.3 4.7-3.3 6l-.7 5H9l-.7-5A7 7 0 0112 2z" fill="rgba(255,255,255,0.12)" stroke="white" stroke-width="1.6"/><circle cx="9.5" cy="9" r="1.2" fill="white"/><circle cx="14.5" cy="9" r="1.2" fill="white"/><path d="M9 12.5c.8 1.2 2.4 1.2 3.2 0" stroke="rgba(255,255,255,0.8)" stroke-width="1.3" stroke-linecap="round"/><path d="M9 20h6" stroke="rgba(255,255,255,0.6)" stroke-width="1.4" stroke-linecap="round"/></svg>
-            </span>
+            <span class="btn-icon-tile tile-plum">✨</span>
             <span class="btn-text">ATLAS AI</span>
         </button>
     </div>
@@ -1265,7 +1208,10 @@ function toggleTheme() {
    SIDEBAR  (Flutter: Drawer)
 ══════════════════════════════════════════════ */
 // Global back button — always goes exactly one step back in real browser history (never further, never to a different page)
-function goBackGlobal() { history.back(); }
+function goBackGlobal() {
+    if (window.history.length > 1) { history.back(); }
+    else { location.href = 'index.html'; }
+}
 function toggleSidebar() {
     isSidebarOpen = !isSidebarOpen;
     document.getElementById('sidebarOverlay').classList.toggle('active', isSidebarOpen);
@@ -1354,13 +1300,12 @@ async function safeFetch(url, opts = {}) {
 ══════════════════════════════════════════════ */
 async function loadTimers() {
     try {
-        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/countdowns?select=*&order=sort_order.asc&limit=10`);
-        const visible = (data || []).filter(c => c.is_visible !== false).slice(0, 5);
-        if (!visible?.length) return;
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/countdowns?select=*&order=sort_order.asc&limit=5`);
+        if (!data?.length) return;
 
         const container = document.getElementById('timerContainer');
         let html = '';
-        visible.forEach((cd, i) => {
+        data.forEach((cd, i) => {
             const n = i + 1;
             html += `<div class="countdown-card timer-${n}">
                 <div class="timer-serial-box">ATLAS Special Timer-${String(n).padStart(2,'0')}</div>
@@ -1426,34 +1371,33 @@ function startCountdown(endTime, i) {
 let __slideshowTimer = null;
 let __slideshowIdx = 0;
 
-function renderSlideshow(data) {
-    const container = document.getElementById('slideshowContainer');
-    if (!container || !data?.length) return;
-    if (__slideshowTimer) { clearInterval(__slideshowTimer); __slideshowTimer = null; }
-    __slideshowIdx = 0;
-    const slidesHtml = data.map(s =>
-        `<div class="slideshow-slide"><img src="${escHtml(s.image_url)}" alt="Slide" loading="eager" onerror="this.parentElement.style.display='none'"></div>`
-    ).join('');
-    const dotsHtml = data.length > 1
-        ? `<div class="slideshow-dots">${data.map((_, i) => `<span class="slideshow-dot${i === 0 ? ' active' : ''}" data-idx="${i}"></span>`).join('')}</div>`
-        : '';
-    container.innerHTML = `<div class="slideshow-wrap"><div class="slideshow-track" id="slideshowTrack">${slidesHtml}</div>${dotsHtml}</div>`;
-    if (data.length > 1) { __slideshowTimer = setInterval(() => advanceSlideshow(data.length), 2000); }
-}
 async function loadSlideshow() {
     try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/slideshow_images?select=*&order=sort_order.asc,created_at.asc&limit=20`);
         const container = document.getElementById('slideshowContainer');
         if (!container) return;
-        // Show from cache instantly
-        try {
-            const cached = localStorage.getItem('atlas-slideshow-cache');
-            if (cached) { renderSlideshow(JSON.parse(cached)); }
-        } catch(e) {}
-        // Fetch fresh data
-        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/slideshow_images?select=*&order=sort_order.asc,created_at.asc&limit=20`);
-        if (!data?.length) { container.innerHTML = ''; localStorage.removeItem('atlas-slideshow-cache'); return; }
-        localStorage.setItem('atlas-slideshow-cache', JSON.stringify(data));
-        renderSlideshow(data);
+
+        if (__slideshowTimer) { clearInterval(__slideshowTimer); __slideshowTimer = null; }
+
+        if (!data?.length) { container.innerHTML = ''; return; }
+
+        const slidesHtml = data.map(s =>
+            `<div class="slideshow-slide"><img src="${escHtml(s.image_url)}" alt="Slide" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`
+        ).join('');
+        const dotsHtml = data.length > 1
+            ? `<div class="slideshow-dots">${data.map((_, i) => `<span class="slideshow-dot${i === 0 ? ' active' : ''}" data-idx="${i}"></span>`).join('')}</div>`
+            : '';
+
+        container.innerHTML = `
+            <div class="slideshow-wrap">
+                <div class="slideshow-track" id="slideshowTrack">${slidesHtml}</div>
+                ${dotsHtml}
+            </div>`;
+
+        __slideshowIdx = 0;
+        if (data.length > 1) {
+            __slideshowTimer = setInterval(() => advanceSlideshow(data.length), 2000);
+        }
     } catch (e) { console.error('Slideshow load error:', e); }
 }
 
