@@ -485,8 +485,26 @@
             top: 0 !important;
             height: 100% !important;
         }
-        /* Full transparent blocker - ALL iframe clicks blocked */
-        .cplayer-blocker {
+        /* Pause overlay - covers YT controls when paused */
+        .cplayer-pause-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 19;
+            background: rgba(0,0,0,0.35);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+        .cplayer-pause-overlay.show { display: flex; }
+        .cplayer-pause-icon {
+            width: 60px; height: 60px;
+            background: rgba(0,0,0,0.6);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px;
+            color: #fff;
+        }
             position: absolute;
             inset: 0;
             z-index: 20;
@@ -922,6 +940,10 @@
         <div class="cplayer-wrap" id="cplayerWrap">
             <div class="cplayer-ratio">
                 <div id="videoPlayer"></div>
+                <!-- Pause overlay: hides YT controls when paused -->
+                <div class="cplayer-pause-overlay" id="cpPauseOverlay">
+                    <div class="cplayer-pause-icon">▶</div>
+                </div>
                 <!-- Full click blocker -->
                 <div class="cplayer-blocker" id="cplayerBlocker" onclick="ytTogglePlay()"></div>
                 <!-- End screen -->
@@ -947,9 +969,9 @@
                 <!-- Volume button with popup slider -->
                 <div style="position:relative;">
                     <button class="cplayer-btn" id="volBtn" onclick="toggleVolSlider()" style="font-size:16px;">🔊</button>
-                    <div id="volSliderWrap" style="display:none;position:absolute;bottom:48px;left:50%;transform:translateX(-50%);
+                    <div id="volSliderWrap" style="display:none;position:absolute;top:48px;left:50%;transform:translateX(-50%);
                         background:var(--cl-card);border:1.5px solid var(--cl-border);border-radius:12px;
-                        padding:12px 8px;z-index:100;box-shadow:0 4px 20px rgba(0,0,0,0.4);">
+                        padding:12px 8px;z-index:200;box-shadow:0 4px 20px rgba(0,0,0,0.4);">
                         <input type="range" id="volSlider" min="0" max="100" value="100"
                             oninput="setVolume(this.value)"
                             style="writing-mode:vertical-lr;direction:rtl;
@@ -1369,9 +1391,13 @@ function _createYTPlayer(videoId) {
                 if (e.data === YT.PlayerState.PLAYING) {
                     if(btn) btn.textContent = '⏸';
                     document.getElementById('cplayerEnd').style.display = 'none';
+                    const po = document.getElementById('cpPauseOverlay');
+                    if(po) po.classList.remove('show');
                     cpStartTimer();
                 } else if (e.data === YT.PlayerState.PAUSED) {
                     if(btn) btn.textContent = '▶';
+                    const po = document.getElementById('cpPauseOverlay');
+                    if(po) po.classList.add('show');
                     cpStopTimer();
                 } else if (e.data === YT.PlayerState.ENDED) {
                     if(btn) btn.textContent = '▶';
@@ -1486,6 +1512,10 @@ function cpFullscreen() {
         }
     }
 }
+
+// ===== FULLSCREEN CONTROLS =====
+let fsRaf = null;
+let fsSeeking = false;
 
 // Fullscreen enter/exit
 document.addEventListener('fullscreenchange', _onFsChange);
