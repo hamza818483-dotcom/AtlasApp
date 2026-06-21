@@ -848,6 +848,16 @@
             <span class="btn-icon">🤖</span>
             <span class="btn-text">ATLAS AI</span>
         </button>
+        <!-- NEW: Pomodoro Timer quick-access box (feature code lives in home-features.js) -->
+        <button class="home-btn" onclick="openHomePomodoroModal()">
+            <span class="btn-icon">⏱️</span>
+            <span class="btn-text">Pomodoro Timer</span>
+        </button>
+        <!-- NEW: GPA Calculator box (feature code lives in home-features.js) -->
+        <button class="home-btn" onclick="openGpaCalculatorModal()">
+            <span class="btn-icon">🎯</span>
+            <span class="btn-text">GPA Calculator</span>
+        </button>
         <!-- Admin button — hidden for non-admins (Flutter: Visibility widget) -->
         <button class="home-btn home-btn-full admin-btn" id="adminBtn" onclick="goTo('admin.html')">
             <span class="btn-icon">👑</span>
@@ -1700,5 +1710,7 @@ document.addEventListener('DOMContentLoaded', () => {
 history.pushState(null, '', location.href);
 window.addEventListener('popstate', () => history.back());
 </script>
+<!-- NEW FEATURES (Pomodoro Timer + GPA Calculator) — isolated in separate file -->
+<script src="home-features.js"></script>
 </body>
 </html>
