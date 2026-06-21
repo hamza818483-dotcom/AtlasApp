@@ -8,7 +8,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://atlasprep.pages.dev", "http://localhost"],
+    allow_origins=["*"],
     allow_methods=["GET"],
     allow_headers=["*"],
 )

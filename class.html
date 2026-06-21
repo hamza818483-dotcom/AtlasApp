@@ -863,6 +863,8 @@
                     </div>
                     <!-- Fullscreen -->
                     <button class="cplayer-btn" onclick="cpFullscreen()" style="font-size:16px;">⛶</button>
+                    <!-- Download -->
+                    <button class="cplayer-btn" id="cpDlBtn" onclick="ytDownload()" style="font-size:16px;display:none;" title="ডাউনলোড">⬇</button>
                 </div>
             </div>
         </div>
@@ -1352,6 +1354,51 @@ function ytRestart() {
     try { ytPlayer.seekTo(0, true); ytPlayer.playVideo(); } catch(e) {}
 }
 
+// ===== DOWNLOAD VIA PROXY =====
+const PROXY_URL = 'https://hamzahf1-atlas-proxy.hf.space';
+let dlInProgress = false;
+
+async function ytDownload() {
+    if (dlInProgress) return;
+    const btn = document.getElementById('cpDlBtn');
+    const vid = btn?.dataset?.vid;
+    const title = btn?.dataset?.title || 'class-video';
+    if (!vid) return;
+
+    dlInProgress = true;
+    const orig = btn.textContent;
+    btn.textContent = '⏳';
+    btn.style.opacity = '0.5';
+
+    try {
+        const res = await fetch(`${PROXY_URL}/dl?vid=${encodeURIComponent(vid)}`, {
+            signal: AbortSignal.timeout(30000)
+        });
+
+        if (!res.ok) throw new Error('Proxy error ' + res.status);
+        const data = await res.json();
+
+        if (!data.url) throw new Error('No URL');
+
+        // Trigger download
+        const a = document.createElement('a');
+        a.href = data.url;
+        a.download = title.replace(/[^\w\s\u0980-\u09FF]/g, '') + '.mp4';
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        showToast('✅ ডাউনলোড শুরু হয়েছে');
+    } catch(e) {
+        showToast('❌ ডাউনলোড হয়নি, পরে চেষ্টা করুন');
+    } finally {
+        dlInProgress = false;
+        btn.textContent = orig;
+        btn.style.opacity = '';
+    }
+}
+
 // Auto-pause when user leaves tab
 document.addEventListener('visibilitychange', () => {
     if (document.hidden && ytPlayer) { try { ytPlayer.pauseVideo(); } catch(e) {} }
@@ -1430,7 +1477,10 @@ function playVideo(link, title, classType, classNote, backView, breadcrumbParts)
     if (videoId) {
         // YouTube video — no external link shown to user
         dlBtn.style.display = 'none';
-        ytBtn.style.display = 'none'; // intentionally hidden — keep user inside app
+        ytBtn.style.display = 'none';
+        // Show download button in controls
+        const cpDl = document.getElementById('cpDlBtn');
+        if(cpDl) { cpDl.style.display = ''; cpDl.dataset.vid = videoId; cpDl.dataset.title = title; }
 
         // Use IFrame API
         if (ytReady) {
