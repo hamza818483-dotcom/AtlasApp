@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ATLAS APP · প্রোফাইল</title>
-    <!-- All profile features have moved to profile.html — redirect old links/bookmarks there, preserving any hash -->
-    <script>location.replace('profile.html' + (location.hash || ''));</script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+Bengali:wght@400;600;700;800&family=Rajdhani:wght@500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <style>
         /* =============================================
@@ -138,6 +136,8 @@
         /* ===== PROFILE CARD ===== */
         .profile-card { background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:14px;text-align:center;box-shadow:var(--shadow);position:relative;overflow:hidden; }
         .profile-card::before { content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--blue),var(--accent));background-size:200% auto;animation:brandShift 4s linear infinite; }
+        .profile-edit-corner-btn { position:absolute;top:14px;right:14px;z-index:2;background:var(--accent-light);border:1px solid var(--accent);color:var(--accent);font-size:11px;font-weight:700;padding:6px 12px;border-radius:var(--radius-full);cursor:pointer; }
+        .profile-edit-corner-btn:active { transform:scale(0.96); }
         .profile-avatar-wrap { position:relative;width:90px;height:90px;margin:0 auto 10px;cursor:pointer; }
         .profile-avatar { width:90px;height:90px;border-radius:12px;object-fit:cover;border:2px solid var(--border);background:var(--hover); }
         .profile-avatar-upload { position:absolute;bottom:-2px;right:-2px;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid var(--card); }
@@ -760,8 +760,11 @@
 
 <!-- ========== MAIN ========== -->
 <main class="dash-container">
+    <!-- PROFILE HOME SECTION — hidden when a sub-tab (History/Bookmarks/etc.) is open, so sub-pages are truly full-screen -->
+    <div id="profileMainSection">
     <!-- PROFILE CARD -->
     <div class="profile-card" id="profileCard">
+        <button class="profile-edit-corner-btn" onclick="showTab('edit')" title="প্রোফাইল এডিট">✏️ এডিট</button>
         <div class="profile-avatar-wrap" onclick="document.getElementById('avatarInput').click()">
             <img class="profile-avatar" id="profileAvatar" src="" onerror="this.style.display='none';document.getElementById('profileAvatarFallback').style.display='flex';" alt="Photo">
             <div class="profile-avatar" id="profileAvatarFallback" style="display:flex;align-items:center;justify-content:center;font-size:32px;position:absolute;top:0;left:0;">👤</div>
@@ -779,28 +782,13 @@
         </div>
         <!-- Pomodoro active display in profile -->
         <div id="pomoActiveInProfile"></div>
-        <!-- Row 1: LB | Weak | Mistakes -->
-        <div class="profile-actions-row1">
-            <button class="profile-action-btn lb-btn" onclick="showTab('leaderboard')">
-                <span class="btn-icon">🏆</span><span class="btn-label">Leaderboard</span>
-            </button>
-            <button class="profile-action-btn weak-btn" onclick="showTab('weaklist')">
-                <span class="btn-icon">📋</span><span class="btn-label">Weak List</span>
-            </button>
-            <button class="profile-action-btn mistakes-btn" onclick="openScreen('mistakesScreen');loadMistakesFullscreen();">
-                <span class="btn-icon">⚠️</span><span class="btn-label">My Mistakes</span>
-            </button>
-        </div>
-        <!-- Row 2: ToDo | Pomo | Edit | Logout -->
+        <!-- Row: ToDo | Pomo | Logout (Leaderboard/Weak List/My Mistakes removed — extra, not needed here; Edit moved to top corner) -->
         <div class="profile-actions-row2">
             <button class="profile-action-btn todo-btn" onclick="openScreen('todoScreen');renderTodoList();startTodoCountdowns();">
                 <span class="btn-icon">✅</span><span class="btn-label">To-Do</span>
             </button>
             <button class="profile-action-btn pomodoro-btn" onclick="openScreen('pomoScreen');updatePomoDisplay();renderPomoHistory();">
                 <span class="btn-icon">🕐</span><span class="btn-label">Pomodoro</span>
-            </button>
-            <button class="profile-action-btn" onclick="showTab('edit')">
-                <span class="btn-icon">✏️</span><span class="btn-label">এডিট</span>
             </button>
             <!-- FIX #4: logout button instant -->
             <button class="profile-action-btn logout-btn" onclick="confirmLogout()">
@@ -875,11 +863,8 @@
         </div>
     </div>
 
-    <div class="quick-strip">
-        <button class="quick-btn q-lb" onclick="showTab('leaderboard')">🏆 Leaderboard</button>
-        <button class="quick-btn q-weak" onclick="showTab('weaklist')">📋 Weak List</button>
-        <button class="quick-btn" onclick="openScreen('mistakesScreen');loadMistakesFullscreen();">⚠️ My Mistakes</button>
-    </div>
+    <!-- quick-strip removed: Leaderboard/Weak List/My Mistakes are extra, not part of Profile per spec -->
+    </div> <!-- /profileMainSection -->
 
     <!-- TAB CONTENT -->
     <div id="tabContent">
@@ -1445,6 +1430,26 @@ function closeScreen(screenId) {
 }
 
 // Android back button handler — Flutter: WillPopScope
+function renderTabOnly(tab) {
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    window.scrollTo(0, 0);
+    const profileMain = document.getElementById('profileMainSection');
+    if (profileMain) profileMain.style.display = (tab === 'main') ? '' : 'none';
+    const map = {
+        history:'tabHistoryContent', classhistory:'tabClasshistoryContent',
+        bookmarks:'tabBookmarksContent', notifications:'tabNotificationsContent',
+        edit:'tabEditContent', weaklist:'tabWeaklistContent', leaderboard:'tabLeaderboardContent',
+        main:'tabMain'
+    };
+    const el = document.getElementById(map[tab] || 'tabMain');
+    if (el) el.classList.add('active');
+    if (tab==='history') loadHistory();
+    else if (tab==='classhistory') loadClassHistory();
+    else if (tab==='bookmarks') loadBookmarks();
+    else if (tab==='notifications') loadNotifications();
+    else if (tab==='weaklist') loadWeakList();
+    else if (tab==='leaderboard') loadLeaderboard(currentLbTab);
+}
 window.addEventListener('popstate', (e) => {
     // Find topmost visible screen
     const screens = ['resultOverlay','examOverlay','mdScreen','mistakesScreen','todoScreen','pomoScreen'];
@@ -1458,10 +1463,10 @@ window.addEventListener('popstate', (e) => {
             return;
         }
     }
-    // Normal tab hash restore
+    // Normal tab hash restore — render directly, do NOT call showTab (that would push a new history entry)
     const hash = (location.hash || '').replace('#','');
-    if (hash && hash !== 'main' && !hash.startsWith('Screen')) showTab(hash);
-    else showTab('main');
+    if (hash && hash !== 'main' && !hash.startsWith('Screen')) renderTabOnly(hash);
+    else renderTabOnly('main');
 });
 
 /* ======================================================
@@ -1839,10 +1844,14 @@ async function updateProfile() {
 ====================================================== */
 function showTab(tab) {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    window.scrollTo(0, 0);
+    const profileMain = document.getElementById('profileMainSection');
     if (tab === 'main') {
+        if (profileMain) profileMain.style.display = '';
         document.getElementById('tabMain').classList.add('active');
-        history.replaceState(null, '', location.pathname + '#main'); return;
+        history.pushState({ tab: 'main' }, '', location.pathname + '#main'); return;
     }
+    if (profileMain) profileMain.style.display = 'none';
     const map = {
         history:'tabHistoryContent', classhistory:'tabClasshistoryContent',
         bookmarks:'tabBookmarksContent', notifications:'tabNotificationsContent',
@@ -1850,7 +1859,7 @@ function showTab(tab) {
     };
     const el = document.getElementById(map[tab]);
     if (el) el.classList.add('active');
-    history.replaceState(null, '', location.pathname + '#' + tab);
+    history.pushState({ tab }, '', location.pathname + '#' + tab);
     if (tab==='history') loadHistory();
     else if (tab==='classhistory') loadClassHistory();
     else if (tab==='bookmarks') loadBookmarks();
@@ -1979,30 +1988,29 @@ function updateMistakesSummaryBar() {
 function bulkPracticeMistakes() {
     const checkboxes = document.querySelectorAll('.mistake-exam-checkbox:checked');
     if (checkboxes.length === 0) { showToast('❌ কোনো এক্সাম সিলেক্ট করা হয়নি',2000); return; }
-    const selectedExamIds = Array.from(checkboxes).map(cb => cb.value);
+    const selectedKeys = Array.from(checkboxes).map(cb => cb.value);
     const allMistakes = getMistakesData();
-    const filtered = allMistakes.filter(m => selectedExamIds.includes(String(m.exam_id || (m.question && m.question.exam_id))));
+    const filtered = allMistakes.filter(m => {
+        const q = m.question || m;
+        const key = String(m.exam_id || q.exam_id || m.exam_name || q.exam_name || 'অন্যান্য');
+        return selectedKeys.includes(key);
+    });
     if (filtered.length === 0) { showToast('❌ সিলেক্টেড এক্সামে কোনো ভুল নেই',2000); return; }
-    const formatted = filtered.map(m => {
+    const questions = filtered.map(m => {
         const q = m.question || m;
         return {
             id: q.id || Math.random().toString(36).substr(2,9),
             question_text: q.question_text || q.question || '',
-            question: q.question_text || q.question || '',
-            option1: q.option1 || q.options?.[0] || '',
-            option2: q.option2 || q.options?.[1] || '',
-            option3: q.option3 || q.options?.[2] || '',
-            option4: q.option4 || q.options?.[3] || '',
-            option5: q.option5 || q.options?.[4] || '—',
-            answer_index: q.answer_index || q.correct_option || q.answer,
-            correct_option: q.answer_index || q.correct_option || q.answer,
+            option1: q.option1 || '', option2: q.option2 || '', option3: q.option3 || '',
+            option4: q.option4 || '', option5: q.option5 || null,
+            answer_index: q.answer_index || q.correct_option || 1,
             explanation: q.explanation || '',
-            subject: q.subject || m.subject || 'General',
-            chapter: q.chapter || m.chapter || ''
+            image_url: q.image_url || null
         };
     });
-    closeScreen('mistakesScreen');
-    startPracticeExam(formatted, `Bulk Practice (${checkboxes.length} এক্সাম)`, () => { openScreen('mistakesScreen'); loadMistakesFullscreen(); });
+    sessionStorage.setItem('practiceQuestions', JSON.stringify(questions));
+    sessionStorage.setItem('practiceTitle', `📚 মিক্সড প্র্যাকটিস (${checkboxes.length} এক্সাম)`);
+    goTo('exam.html?practice=mistakes');
 }
 
 function showMistakesBySubject(type) {
@@ -2146,20 +2154,25 @@ function renderMistakesGroups() {
         const wrongCount = items.filter(m => getMistakeStatus(m) === 'wrong').length;
         const skipCount = items.filter(m => getMistakeStatus(m) === 'skipped').length;
         const subjects = [...new Set(items.map(m => m.subject||(m.question||m).subject||'').filter(Boolean))];
+        const chapters = [...new Set(items.map(m => m.chapter||(m.question||m).chapter||'').filter(Boolean))];
         const cat = items[0]?.category || (items[0]?.question||items[0])?.category || '';
+        const latestDate = items.map(m=>m.date||m.timestamp).filter(Boolean).sort().pop();
+        const dateTimeStr = latestDate ? toBanglaDate(latestDate) : '';
         const gId = 'grp_' + gi;
         const safeExamName = examName.replace(/'/g,"\\'");
 
         html += `<div class="exam-group-card">
             <div class="exam-group-header" onclick="toggleGroup('${gId}')">
                 <label onclick="event.stopPropagation();" style="margin-right:8px;">
-                    <input type="checkbox" class="mistake-exam-checkbox" value="${items[0]?.exam_id || examName}" onchange="updateMistakesSummaryBar()" style="cursor:pointer;width:16px;height:16px;">
+                    <input type="checkbox" class="mistake-exam-checkbox" value="${items[0]?.exam_id || examName}" onchange="updateMistakesSummaryBar()" style="cursor:pointer;width:16px;height:16px;" data-exam-name="${escHtml(examName)}">
                 </label>
                 <div class="exam-group-info">
                     <div class="exam-group-name">📝 ${escHtml(examName)}</div>
                     <div class="exam-group-meta">
                         ${cat?`<span class="meta-chip">🏷️ ${escHtml(cat)}</span>`:''}
                         ${subjects.map(s=>`<span class="meta-chip">📘 ${escHtml(s)}</span>`).join('')}
+                        ${chapters.map(c=>`<span class="meta-chip">📑 ${escHtml(c)}</span>`).join('')}
+                        ${dateTimeStr?`<span class="meta-chip">📅 ${dateTimeStr}</span>`:''}
                         ${wrongCount?`<span class="exam-group-badge badge-wrong">❌ ${wrongCount} ভুল</span>`:''}
                         ${skipCount?`<span class="exam-group-badge badge-skip">⏭️ ${skipCount} স্কিপ</span>`:''}
                         <span class="exam-group-badge badge-total">📋 ${items.length}টি</span>
@@ -2172,13 +2185,13 @@ function renderMistakesGroups() {
                     <span class="btn-main-label">📋 বিস্তারিত</span>
                     <span class="btn-sub-label">প্রশ্ন+উত্তর+ব্যাখ্যা</span>
                 </button>
-                <button class="exam-action-btn btn-p1" onclick="startGroupPractice('${safeExamName}','wrong');event.stopPropagation();">
-                    <span class="btn-main-label">⚡ Practice-01</span>
-                    <span class="btn-sub-label">শুধু ভুল প্রশ্ন</span>
+                <button class="exam-action-btn btn-p1" onclick="openMistakePracticeChoice('${safeExamName}');event.stopPropagation();">
+                    <span class="btn-main-label">🎯 Mistake Practice</span>
+                    <span class="btn-sub-label">ভুল / ভুল+স্কিপ</span>
                 </button>
-                <button class="exam-action-btn btn-p2" onclick="startGroupPractice('${safeExamName}','all');event.stopPropagation();">
-                    <span class="btn-main-label">📚 Practice-02</span>
-                    <span class="btn-sub-label">ভুল+স্কিপ</span>
+                <button class="exam-action-btn btn-danger" onclick="deleteMistakeGroup('${safeExamName}');event.stopPropagation();" style="background:rgba(248,81,73,0.12);color:var(--red);border:1px solid var(--red);">
+                    <span class="btn-main-label">🗑️ ডিলিট</span>
+                    <span class="btn-sub-label">এই এক্সাম মুছুন</span>
                 </button>
             </div>
             <div class="exam-group-body" id="${gId}" style="display:none;">
@@ -2328,10 +2341,51 @@ function startGroupPractice(examName, mode) {
         const q = m.question || m;
         return { id: q.id || m.question_id || Math.random(), question_text: q.question_text || q.question || 'প্রশ্ন', option1:q.option1||'', option2:q.option2||'', option3:q.option3||'', option4:q.option4||'', option5:q.option5||null, answer_index:q.answer_index||q.correct_option||1, explanation:q.explanation||'', image_url:q.image_url||null };
     });
-    const title = (mode==='wrong'?'⚡ P-01: ':'📚 P-02: ') + examName;
+    const title = (mode==='wrong'?'⚡ শুধু ভুল: ':'📚 ভুল+স্কিপ: ') + examName;
     sessionStorage.setItem('practiceQuestions', JSON.stringify(questions));
     sessionStorage.setItem('practiceTitle', title);
     goTo('exam.html?practice=mistakes');
+}
+
+// Mistake Practice choice popup: Only WRONG vs Wrong+Skip (per spec)
+function openMistakePracticeChoice(examName) {
+    const items = mistakesAllData.filter(m => {
+        const q = m.question || m;
+        return (m.exam_name || q.exam_name || 'অন্যান্য') === examName;
+    });
+    const wrongCount = items.filter(m => getMistakeStatus(m) === 'wrong').length;
+    const skipCount = items.filter(m => getMistakeStatus(m) === 'skipped').length;
+    const safeExamName = examName.replace(/'/g,"\\'");
+    const modal = document.getElementById('detailModal');
+    document.getElementById('detailModalContent').innerHTML = `
+        <div class="modal-title">🎯 Mistake Practice</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:14px;">${escHtml(examName)}</div>
+        <button class="exam-action-btn btn-p1" style="width:100%;margin-bottom:10px;" onclick="document.getElementById('detailModal').classList.remove('active');startGroupPractice('${safeExamName}','wrong');">
+            <span class="btn-main-label">❌ Only WRONG</span>
+            <span class="btn-sub-label">${wrongCount} টি ভুল প্রশ্ন</span>
+        </button>
+        <button class="exam-action-btn btn-p2" style="width:100%;margin-bottom:10px;" onclick="document.getElementById('detailModal').classList.remove('active');startGroupPractice('${safeExamName}','all');">
+            <span class="btn-main-label">📚 Wrong + Skip</span>
+            <span class="btn-sub-label">${wrongCount + skipCount} টি প্রশ্ন</span>
+        </button>
+        <button class="btn btn-outline" style="width:100%;" onclick="document.getElementById('detailModal').classList.remove('active');">✕ বাতিল</button>`;
+    modal.classList.add('active');
+}
+
+// Delete all mistake entries for one exam group
+function deleteMistakeGroup(examName) {
+    showConfirm('ডিলিট করুন', `"${examName}" এক্সামের সব ভুল/স্কিপ মুছে ফেলবেন?`, '🗑️ ডিলিট', () => {
+        if (!currentUser) return;
+        const key = 'mistakes_' + currentUser.phone;
+        const all = getMistakesData();
+        const remaining = all.filter(m => {
+            const q = m.question || m;
+            return (m.exam_name || q.exam_name || 'অন্যান্য') !== examName;
+        });
+        localStorage.setItem(key, JSON.stringify(remaining));
+        showToast('🗑️ ডিলিট সম্পন্ন');
+        loadMistakesFullscreen();
+    });
 }
 
 function startSinglePractice(qId, mode) {
@@ -3336,7 +3390,9 @@ function startMistakePractice(mode) {
     let filtered = mode==='wrong' ? mistakes.filter(m=>getMistakeStatus(m)==='wrong') : mistakes.filter(m=>['wrong','skipped'].includes(getMistakeStatus(m)));
     if (!filtered.length) { showToast('⚠️ কোনো প্রশ্ন নেই!'); return; }
     const questions=filtered.map(m=>{const q=m.question||m;return{id:q.id||m.question_id||Math.random(),question_text:q.question_text||q.question||'প্রশ্ন',option1:q.option1||'',option2:q.option2||'',option3:q.option3||'',option4:q.option4||'',option5:q.option5||null,answer_index:q.answer_index||q.correct_option||1,explanation:q.explanation||'',image_url:q.image_url||null};});
-    startPracticeExam(questions, mode==='wrong'?'⚡ Practice-01 (শুধু ভুল)':'📚 Practice-02 (ভুল+স্কিপ)', ()=>startMistakePractice(mode));
+    sessionStorage.setItem('practiceQuestions', JSON.stringify(questions));
+    sessionStorage.setItem('practiceTitle', mode==='wrong'?'⚡ শুধু ভুল (সব এক্সাম)':'📚 ভুল+স্কিপ (সব এক্সাম)');
+    goTo('exam.html?practice=mistakes');
 }
 
 async function retakeExam(examId) {
@@ -3697,7 +3753,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Hash routing
     const hash = (location.hash || '').replace('#', '');
-    if (hash === 'mistakesScreen') { openScreen('mistakesScreen'); loadMistakesFullscreen(); }
+    if (hash === 'mistakesScreen' || hash === 'mistakes') { openScreen('mistakesScreen'); loadMistakesFullscreen(); }
     else if (hash === 'todoScreen') { openScreen('todoScreen'); renderTodoList(); startTodoCountdowns(); }
     else if (hash === 'pomoScreen') { openScreen('pomoScreen'); updatePomoDisplay(); renderPomoHistory(); renderPomoSuccessGraph(); }
     else if (hash && ['history', 'classhistory', 'bookmarks', 'notifications', 'edit', 'weaklist', 'leaderboard'].includes(hash)) showTab(hash);

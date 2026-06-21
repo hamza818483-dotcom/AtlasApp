@@ -397,6 +397,12 @@
             animation:gradShift 3s linear infinite;
         }
         @keyframes gradShift { 0%{background-position:0%} 100%{background-position:200%} }
+    /* Global back button — always navigates exactly one step back in real browser history */
+        .global-back-btn {
+            background: none; border: none; color: var(--text);
+            font-size: 20px; cursor: pointer; padding: 6px 4px 6px 2px; line-height:1;
+        }
+        .global-back-btn:active { opacity:0.6; }
     </style>
 </head>
 <body class="dark-mode">
@@ -431,6 +437,7 @@
 <!-- Header -->
 <header class="header">
     <div class="header-left">
+        <button class="global-back-btn" onclick="goBackGlobal()" title="ফিরে যান" aria-label="ফিরে যান">←</button>
         <button class="hamburger" onclick="toggleSidebar()">☰</button>
         <div class="atlas-brand-box">
             <img src="https://cdn.phototourl.com/free/2026-05-15-b45df560-6dc8-4cb7-9040-238612c8a161.png" class="atlas-logo-img" alt="ATLAS">
@@ -684,10 +691,15 @@ function checkUserHasAccess() { const s=getSession(); return s?.has_paid_access=
 // =============================================================
 function showToast(m,d=2000){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
 function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'☀️':'🌙';localStorage.setItem('atlas-theme',isDarkMode?'dark':'light');}
+// Global back button — always goes exactly one step back in real browser history (never further, never to a different page)
+function goBackGlobal() {
+    if (window.history.length > 1) { history.back(); }
+    else { location.href = 'index.html'; }
+}
 function toggleSidebar(){isSidebarOpen=!isSidebarOpen;document.getElementById('sidebarOverlay').classList.toggle('active',isSidebarOpen);document.getElementById('sidebar').classList.toggle('active',isSidebarOpen);}
 function closeSidebar(){isSidebarOpen=false;document.getElementById('sidebarOverlay').classList.remove('active');document.getElementById('sidebar').classList.remove('active');}
-function goTo(u){location.replace(u);}
-function navigateTo(p){const r={home:'index.html',profile:'dashboard.html',class:'class.html',exam:'exam.html'};goTo(r[p]||'index.html');}
+function goTo(u){location.href=u;}
+function navigateTo(p){const r={home:'index.html',profile:'profile.html',class:'class.html',exam:'exam.html'};goTo(r[p]||'index.html');}
 function openWA(){window.open('https://wa.me/8801999681290','_blank');}
 function openTG(){window.open('https://t.me/rafi_somc','_blank');}
 function logout(){localStorage.removeItem('atlas-session');goTo('index.html');}
@@ -1129,7 +1141,7 @@ async function startModelExam(modelId){
 
 function openMistakes(){
     if(!isLoggedIn()){showToast('⚠️ লগইন করুন');return;}
-    goTo('dashboard.html');
+    goTo('profile.html');
 }
 
 // =============================================================
@@ -1336,59 +1348,37 @@ function submitExam(isAutoSubmit=false){
             withGpa=finalScore+gpaScore;
         }
     }catch(e){}
-    // DASHBOARD CONNECTION: Return result
-const urlParams = new URLSearchParams(location.search);
-const source = urlParams.get('source');
-
-if (source === 'dashboard' && isLoggedIn()) {
-    try {
-        const wrongQs = examQuestions.filter(q => {
-            const ua = userAnswers[q.id];
-            return ua && ua !== q.answer_index;
-        }).map(q => ({
-            question_id: q.id,
-            question: {
-                question: q.question_text,
-                optionA: q.option1,
-                optionB: q.option2,
-                optionC: q.option3,
-                optionD: q.option4,
-                correct: ['A','B','C','D','E'][q.answer_index - 1] || 'A',
-                explanation: q.explanation,
-                image_url: q.image_url
-            },
-            user_answer: userAnswers[q.id],
-            subject: currentExam?.subject || 'Mixed',
-            category: currentExam?.exam_type || ''
-        }));
-        
-        const resultData = {
-            examId: currentExam?.id,
-            title: currentExam?.title || 'Practice',
-            subject: currentExam?.subject || 'Mixed',
-            category: currentExam?.exam_type || '',
-            total: totalQ,
-            correct: correct,
-            wrong: wrong,
-            skipped: skipped,
-            percentage: Math.round((correct / totalQ) * 100),
-            timeTaken: totalSeconds - examSeconds,
-            mistakes: wrongQs
-        };
-        
-        const resultId = 'result_' + Date.now();
-        localStorage.setItem('exam_result_' + resultId, JSON.stringify(resultData));
-        
-        setTimeout(() => {
-            window.location.href = 'dashboard.html?exam_result=' + resultId;
-        }, 2000);
-        
-        return; // Stop here, don't show normal result
-    } catch (e) {
-        console.error('Dashboard return error:', e);
-    }
-}
-
+       // Save wrong/skipped questions to the same mistakes store dashboard.html's "My Mistakes" reads from
+       try {
+           const user = getSession();
+           if (user && user.phone) {
+               const newMistakes = examQuestions.filter(q => {
+                   const ua = userAnswers[q.id];
+                   return ua === undefined || ua === null || ua !== q.answer_index;
+               }).map(q => ({
+                   question: {
+                       question_text: q.question_text,
+                       option1: q.option1, option2: q.option2, option3: q.option3,
+                       option4: q.option4, option5: q.option5 || null,
+                       answer_index: q.answer_index,
+                       explanation: q.explanation,
+                       image_url: q.image_url || null
+                   },
+                   user_answer: userAnswers[q.id] ?? null,
+                   exam_id: currentExam?.id,
+                   exam_name: currentExam?.title || ((currentExam?.subject || '') + ' - ' + (currentExam?.chapter || '')),
+                   subject: currentExam?.subject || 'Mixed',
+                   chapter: currentExam?.chapter || '',
+                   category: currentExam?.exam_type || '',
+                   date: new Date().toISOString()
+               }));
+               if (newMistakes.length) {
+                   const key = 'mistakes_' + user.phone;
+                   const existing = JSON.parse(localStorage.getItem(key) || '[]');
+                   localStorage.setItem(key, JSON.stringify(existing.concat(newMistakes)));
+               }
+           }
+       } catch (e) { console.error('Mistake-save error:', e); }
 
        showResult(correct,wrong,skipped,negMark,finalScore,withGpa,gpaScore,deduction,isSecondTimer,totalQ);
     

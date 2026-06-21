@@ -109,6 +109,12 @@
             background: none; border: none; color: var(--text);
             font-size: 22px; cursor: pointer; padding: 6px; line-height:1;
         }
+        /* Global back button — always navigates exactly one step back in real browser history */
+        .global-back-btn {
+            background: none; border: none; color: var(--text);
+            font-size: 20px; cursor: pointer; padding: 6px 4px 6px 2px; line-height:1;
+        }
+        .global-back-btn:active { opacity:0.6; }
 
         /* Brand box  (Flutter: AnimatedLogo widget) */
         .atlas-brand-box {
@@ -787,7 +793,7 @@
         <button class="sidebar-item" onclick="showToast('শীঘ্রই আসছে! 🚧');closeSidebar();">
             <span class="si-icon">📊</span> Study Tracker
         </button>
-        <button class="sidebar-item" onclick="goTo('dashboard.html#pomoScreen');closeSidebar();">
+        <button class="sidebar-item" onclick="goTo('profile.html#pomoScreen');closeSidebar();">
             <span class="si-icon">🍅</span> Pomodoro
         </button>
         <button class="sidebar-item" onclick="openGpaCalculatorModal();closeSidebar();">
@@ -859,6 +865,7 @@
 ════════════════════════════════════════════ -->
 <header class="header">
     <div class="header-left">
+        <button class="global-back-btn" onclick="goBackGlobal()" title="ফিরে যান" aria-label="ফিরে যান">←</button>
         <button class="hamburger" onclick="toggleSidebar()">☰</button>
         <div class="atlas-brand-box">
             <img src="https://cdn.phototourl.com/free/2026-05-15-b45df560-6dc8-4cb7-9040-238612c8a161.png"
@@ -939,7 +946,7 @@
             <span class="btn-icon-tile tile-sky">📊</span>
             <span class="btn-text">Study Tracker</span>
         </button>
-        <button class="home-btn" onclick="goTo('dashboard.html#pomoScreen')">
+        <button class="home-btn" onclick="goTo('profile.html#pomoScreen')">
             <span class="btn-icon-tile tile-rose">🍅</span>
             <span class="btn-text">Pomodoro</span>
         </button>
@@ -1134,6 +1141,11 @@ function toggleTheme() {
 /* ══════════════════════════════════════════════
    SIDEBAR  (Flutter: Drawer)
 ══════════════════════════════════════════════ */
+// Global back button — always goes exactly one step back in real browser history (never further, never to a different page)
+function goBackGlobal() {
+    if (window.history.length > 1) { history.back(); }
+    else { location.href = 'index.html'; }
+}
 function toggleSidebar() {
     isSidebarOpen = !isSidebarOpen;
     document.getElementById('sidebarOverlay').classList.toggle('active', isSidebarOpen);
@@ -1148,9 +1160,9 @@ function closeSidebar() {
 /* ══════════════════════════════════════════════
    NAVIGATION  (Flutter: Navigator / GoRouter)
 ══════════════════════════════════════════════ */
-function goTo(url) { location.replace(url); }
+function goTo(url) { location.href = url; }
 function navigateTo(page) {
-    const map = { home:'index.html', profile:'dashboard.html', class:'class.html', exam:'exam.html' };
+    const map = { home:'index.html', profile:'profile.html', class:'class.html', exam:'exam.html' };
     goTo(map[page] || 'index.html');
 }
 
@@ -1536,7 +1548,7 @@ async function openMistakesModal() {
         return;
     }
     
-    goTo('dashboard.html#mistakes');
+    goTo('profile.html#mistakes');
 }
 
 function renderMistakesModal() {

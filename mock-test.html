@@ -22,6 +22,12 @@
         .mock-custom-input{flex:1;min-width:100px;padding:10px 12px;background:var(--option-bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:'Noto Sans Bengali','Inter',sans-serif;outline:none;}
         .mock-custom-input:focus{border-color:var(--accent);}
         .mock-custom-btn{padding:10px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
+    /* Global back button — always navigates exactly one step back in real browser history */
+        .global-back-btn {
+            background: none; border: none; color: var(--text);
+            font-size: 20px; cursor: pointer; padding: 6px 4px 6px 2px; line-height:1;
+        }
+        .global-back-btn:active { opacity:0.6; }
     </style>
 </head>
 <body class="dark-mode">
@@ -35,7 +41,7 @@
         <button class="sidebar-item" onclick="goTo('class.html');closeSidebar();">📚 ফ্রি ক্লাস</button>
         <button class="sidebar-item" onclick="goTo('exam.html');closeSidebar();">📝 ফ্রি এক্সাম</button>
         <button class="sidebar-item" onclick="goTo('mock-test.html');closeSidebar();">🎯 মক টেস্ট</button>
-        <button class="sidebar-item" onclick="goTo('dashboard.html');closeSidebar();">⚠️ My Mistakes</button>
+        <button class="sidebar-item" onclick="goTo('profile.html#mistakes');closeSidebar();">⚠️ My Mistakes</button>
         <button class="sidebar-item" onclick="goTo('ai.html');closeSidebar();">🤖 ATLAS AI</button>
         <div class="sidebar-divider"></div>
         <button class="sidebar-item" onclick="toggleTheme()">🌙 ডার্ক মোড</button>
@@ -47,6 +53,7 @@
 
 <header class="header">
     <div class="header-left">
+        <button class="global-back-btn" onclick="goBackGlobal()" title="ফিরে যান" aria-label="ফিরে যান">←</button>
         <button class="hamburger" onclick="toggleSidebar()">☰</button>
         <div class="atlas-brand-box">
             <img src="https://cdn.phototourl.com/free/2026-05-15-b45df560-6dc8-4cb7-9040-238612c8a161.png" class="atlas-logo-img" alt="ATLAS">
@@ -114,10 +121,15 @@ let isDarkMode=true,isSidebarOpen=false,selectedStd='medical',selectedCnt=50;
 
 function showToast(m,d=2000){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
 function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'☀️':'🌙';}
+// Global back button — always goes exactly one step back in real browser history (never further, never to a different page)
+function goBackGlobal() {
+    if (window.history.length > 1) { history.back(); }
+    else { location.href = 'index.html'; }
+}
 function toggleSidebar(){isSidebarOpen=!isSidebarOpen;document.getElementById('sidebarOverlay').classList.toggle('active',isSidebarOpen);document.getElementById('sidebar').classList.toggle('active',isSidebarOpen);}
 function closeSidebar(){isSidebarOpen=false;document.getElementById('sidebarOverlay').classList.remove('active');document.getElementById('sidebar').classList.remove('active');}
 function goTo(u){location.href=u;}
-function navigateTo(p){const r={home:'index.html',profile:'dashboard.html',class:'class.html',exam:'exam.html'};goTo(r[p]||'index.html');}
+function navigateTo(p){const r={home:'index.html',profile:'profile.html',class:'class.html',exam:'exam.html'};goTo(r[p]||'index.html');}
 function openWA(){window.open('https://wa.me/8801999681290','_blank');}
 function openTG(){window.open('https://t.me/rafi_somc','_blank');}
 function logout(){localStorage.removeItem('atlas-session');goTo('index.html');}
