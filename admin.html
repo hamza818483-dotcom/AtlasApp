@@ -1571,25 +1571,24 @@ async function saveExam() {
             examId = Array.isArray(res) ? res[0]?.id : res?.id;
         }
         if (!examId) { showToast('❌ Exam ID পাওয়া যায়নি'); return; }
-        // FIX: skip question-saving loop entirely when there's no new CSV (metadata-only update)
+        // FIX: batch-insert all questions in ONE request instead of looping one-by-one,
+        // so save is instant even for large CSVs (was previously slow + felt like nothing happened).
         if (examCSVData?.length) {
-            showToast('⏳ প্রশ্ন সেইভ হচ্ছে... ' + examCSVData.length + 'টি');
-            let saved = 0;
-            for (const q of examCSVData) {
-                await safeFetch(`${SUPABASE_URL}/rest/v1/questions`, { method: 'POST', body: JSON.stringify({
-                    exam_id: examId, question_text: q.questions || '',
-                    option1: q.option1, option2: q.option2, option3: q.option3, option4: q.option4,
-                    option5: q.option5 || null, answer_index: parseInt(q.answer) || 1,
-                    explanation: q.explanation || '', type: parseInt(q.type) || 1, section: parseInt(q.section) || 1
-                })});
-                saved++;
-            }
-            showToast('✅ ' + saved + ' প্রশ্ন সেইভ | ID: ' + examId, 5000);
+            showToast('⏳ সেইভ হচ্ছে...');
+            const rows = examCSVData.map(q => ({
+                exam_id: examId, question_text: q.questions || '',
+                option1: q.option1, option2: q.option2, option3: q.option3, option4: q.option4,
+                option5: q.option5 || null, answer_index: parseInt(q.answer) || 1,
+                explanation: q.explanation || '', type: parseInt(q.type) || 1, section: parseInt(q.section) || 1
+            }));
+            await safeFetch(`${SUPABASE_URL}/rest/v1/questions`, { method: 'POST', body: JSON.stringify(rows) });
+            showToast('✅ ' + rows.length + ' প্রশ্ন সেইভ | ID: ' + examId, 5000);
         } else {
             showToast('✅ এক্সাম তথ্য আপডেট হয়েছে | ID: ' + examId, 4000);
         }
         navigator.clipboard?.writeText(location.origin + '/exam.html?id=' + examId);
-        clearExamForm(); loadExams();
+        clearExamForm();
+        await loadExams(); // FIX: await so list visibly refreshes right after save completes, not in background
     } catch(e) { showToast('❌ এরর: ' + e.message, 5000); }
 }
 
@@ -1644,6 +1643,11 @@ async function loadExams() {
 function copyLink(link) { navigator.clipboard?.writeText(link); showToast('📋 লিংক কপি হয়েছে'); }
 
 async function editExam(id) {
+    // FIX: clear any leftover CSV state from a previous add/edit before loading this exam,
+    // so editing this exam never accidentally reuses a stale CSV from another exam.
+    examCSVData = null;
+    const csvNameEl = document.getElementById('examCSVName');
+    if (csvNameEl) csvNameEl.textContent = '';
     editItem('exams', id, d => {
         document.getElementById('examEditId').value  = d.id;
         document.getElementById('examSubject').value = d.subject  || '';
