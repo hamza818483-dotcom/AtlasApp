@@ -2081,13 +2081,26 @@ async function uploadSlideshowImages() {
     let done = 0, errors = 0;
     let lastError = '';
     const total = slideshowSelectedFiles.length;
+
+    // sort_order একটা সাধারণ integer কলাম (PostgreSQL int4, সর্বোচ্চ ~2.1 বিলিয়ন)।
+    // Date.now() (millisecond timestamp, ~13 ডিজিট) সরাসরি এখানে দিলে
+    // "out of range for type integer" এরর হয়। তাই বিদ্যমান সর্বোচ্চ
+    // sort_order বের করে তার পর থেকে ছোট ক্রমিক সংখ্যা ব্যবহার করা হচ্ছে।
+    let nextSortOrder = 0;
+    try {
+        const existing = await safeFetch(`${SUPABASE_URL}/rest/v1/slideshow_images?select=sort_order&order=sort_order.desc&limit=1`);
+        if (existing?.length && typeof existing[0].sort_order === 'number') {
+            nextSortOrder = existing[0].sort_order + 1;
+        }
+    } catch (e) { /* লিস্ট খালি বা এরর হলে ০ থেকেই শুরু */ }
+
     for (const file of slideshowSelectedFiles) {
         status.textContent = `⏳ আপলোড হচ্ছে (${done + 1}/${total})...`;
         try {
             const dataUrl = await fileToDataUrl(file);
             const result = await safeFetch(`${SUPABASE_URL}/rest/v1/slideshow_images`, {
                 method: 'POST',
-                body: JSON.stringify({ image_url: dataUrl, sort_order: Date.now() + done })
+                body: JSON.stringify({ image_url: dataUrl, sort_order: nextSortOrder + done })
             });
             if (!Array.isArray(result) || !result.length) {
                 throw new Error('সেইভড রো ফেরত আসেনি (RLS/policy সমস্যা হতে পারে)');
