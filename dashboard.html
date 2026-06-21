@@ -1367,7 +1367,7 @@ function loadPomoState() {
         pomoTotalTime = state.totalTime;
         
         if (state.isRunning) {
-            pomoTimeLeft = Math.max(0, state.timeLeft - elapsed);
+            pomoTimeLeft = Math.max(0, Math.round(state.timeLeft - elapsed));
             if (pomoTimeLeft > 0) {
                 pomoRunning = true;
                 // Restart timer using a fixed end timestamp so it never drifts/skips during loading
@@ -1511,6 +1511,7 @@ function escHtml(str) {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 function formatSeconds(s) {
+    s = Math.max(0, Math.floor(s));
     const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
     if (h > 0) return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
     return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
