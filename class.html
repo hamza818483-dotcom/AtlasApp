@@ -1144,7 +1144,7 @@ function openPaper(subj, paper) {
     Object.keys(chapters).forEach(ch => {
         const first = chapters[ch][0];
         html += listCard('📖', 'orange', ch, chapters[ch].length + ' টি পার্ট',
-            `playVideo('${esc(first.youtube_link||'')}','${esc(ch)}','${esc(first.class_type||'website')}','${esc(first.class_note||'')}','viewChapters',[['🧬 Medical','${esc(subj)}','${esc(paper)}','${esc(ch)}']],first.download_enabled);currentChapter='${esc(ch)}'`
+            `playVideo('${esc(first.youtube_link||'')}','${esc(ch)}','${esc(first.class_type||'website')}','${esc(first.class_note||'')}','viewChapters',[['🧬 Medical','${esc(subj)}','${esc(paper)}','${esc(ch)}']],${first.download_enabled});currentChapter='${esc(ch)}'`
         );
     });
     document.getElementById('chapterList').innerHTML = html || emptyState('কোনো চ্যাপ্টার নেই');
@@ -1169,7 +1169,7 @@ function openTimerVideos(timerType) {
         html += listCard('▶️', 'blue',
             c.topic || c.title || ('ভিডিও ' + (i+1)),
             c.description || '',
-            `playVideo('${esc(c.youtube_link||'')}','${esc(c.topic||c.title||'')}','${esc(c.class_type||'website')}','${esc(c.class_note||'')}','viewVideoList',[['📋 Medical Guide','${esc(timerType)}','${esc(c.topic||'')}']],c.download_enabled)`
+            `playVideo('${esc(c.youtube_link||'')}','${esc(c.topic||c.title||'')}','${esc(c.class_type||'website')}','${esc(c.class_note||'')}','viewVideoList',[['📋 Medical Guide','${esc(timerType)}','${esc(c.topic||'')}']],${c.download_enabled})`
         );
     });
     document.getElementById('videoListItems').innerHTML = html || emptyState('কোনো ভিডিও নেই');
@@ -1188,7 +1188,7 @@ function openVarsityGuide() {
         html += listCard('▶️', 'orange',
             c.topic || c.title || ('ভিডিও ' + (i+1)),
             c.description || '',
-            `playVideo('${esc(c.youtube_link||'')}','${esc(c.topic||c.title||'')}','${esc(c.class_type||'website')}','${esc(c.class_note||'')}','viewVideoList',[['🎓 Varsity Guide','${esc(c.topic||'')}']],c.download_enabled)`
+            `playVideo('${esc(c.youtube_link||'')}','${esc(c.topic||c.title||'')}','${esc(c.class_type||'website')}','${esc(c.class_note||'')}','viewVideoList',[['🎓 Varsity Guide','${esc(c.topic||'')}']],${c.download_enabled})`
         );
     });
     document.getElementById('videoListItems').innerHTML = html || emptyState('কোনো ভিডিও নেই');
@@ -1212,7 +1212,7 @@ function openShortTrick() {
             html += listCard('⚡', 'pink',
                 c.subject || c.topic || ('ট্রিক ' + (i+1)),
                 c.description || '',
-                `playVideo('${esc(c.youtube_link||'')}','${esc(c.subject||c.topic||'')}','${esc(c.class_type||'website')}','${esc(c.class_note||'')}','viewVideoList',[['⚡ Short Trick','${esc(c.subject||'')}']],c.download_enabled)`
+                `playVideo('${esc(c.youtube_link||'')}','${esc(c.subject||c.topic||'')}','${esc(c.class_type||'website')}','${esc(c.class_note||'')}','viewVideoList',[['⚡ Short Trick','${esc(c.subject||'')}']],${c.download_enabled})`
             );
         });
         document.getElementById('videoListItems').innerHTML = html || emptyState('কোনো ভিডিও নেই');
@@ -1242,7 +1242,7 @@ function openShortTrickSubject(subj) {
         html += listCard('▶️', 'pink',
             c.topic || c.title || ('ট্রিক ' + (i+1)),
             c.description || '',
-            `playVideo('${esc(c.youtube_link||'')}','${esc(c.topic||c.title||'')}','${esc(c.class_type||'website')}','${esc(c.class_note||'')}','viewVideoList',[['⚡ Short Trick','${esc(subj)}','${esc(c.topic||'')}']],c.download_enabled)`
+            `playVideo('${esc(c.youtube_link||'')}','${esc(c.topic||c.title||'')}','${esc(c.class_type||'website')}','${esc(c.class_note||'')}','viewVideoList',[['⚡ Short Trick','${esc(subj)}','${esc(c.topic||'')}']],${c.download_enabled})`
         );
     });
     document.getElementById('videoListItems').innerHTML = html || emptyState('কোনো ভিডিও নেই');
@@ -1277,7 +1277,7 @@ function openCourseVideos(courseName) {
         html += listCard('▶️', 'teal',
             c.feature_name || c.title || ('ফিচার ' + (i+1)),
             c.description || '',
-            `playVideo('${esc(c.youtube_link||'')}','${esc(c.feature_name||c.title||'')}','${esc(c.class_type||'website')}','${esc(c.class_note||'')}','viewVideoList',[['🎯 Course Feature','${esc(courseName)}','${esc(c.feature_name||'')}']],c.download_enabled)`
+            `playVideo('${esc(c.youtube_link||'')}','${esc(c.feature_name||c.title||'')}','${esc(c.class_type||'website')}','${esc(c.class_note||'')}','viewVideoList',[['🎯 Course Feature','${esc(courseName)}','${esc(c.feature_name||'')}']],${c.download_enabled})`
         );
     });
     document.getElementById('videoListItems').innerHTML = html || emptyState('কোনো ভিডিও নেই');
