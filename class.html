@@ -459,6 +459,132 @@
         }
         .video-outer { border-radius: var(--cl-radius-sm); margin-bottom: 12px; }
 
+        /* ===== CUSTOM VIDEO PLAYER UI ===== */
+        .cplayer-wrap {
+            position: relative;
+            background: #000;
+            border-radius: var(--cl-radius-sm);
+            overflow: hidden;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow-float);
+            user-select: none;
+        }
+        .cplayer-ratio {
+            position: relative;
+            padding-top: 56.25%;
+            background: #000;
+        }
+        .cplayer-ratio > * {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+        /* Full transparent blocker - catches ALL iframe clicks */
+        .cplayer-blocker {
+            position: absolute;
+            inset: 0;
+            z-index: 20;
+            background: transparent;
+            cursor: pointer;
+        }
+        /* End screen overlay */
+        .cplayer-end {
+            position: absolute;
+            inset: 0;
+            z-index: 30;
+            background: rgba(0,0,0,0.88);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .cplayer-end-icon { font-size: 36px; }
+        .cplayer-end-title { font-size: 15px; font-weight: 700; color: #fff; font-family: 'Noto Sans Bengali', sans-serif; }
+        .cplayer-end-btn {
+            background: var(--cl-primary); color: #fff; border: none;
+            border-radius: 10px; padding: 10px 22px;
+            font-size: 13px; font-weight: 700; cursor: pointer;
+            font-family: 'Noto Sans Bengali', sans-serif;
+        }
+        /* Controls bar */
+        .cplayer-controls {
+            background: linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 100%);
+            padding: 8px 12px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        /* Progress bar */
+        .cplayer-progress-wrap {
+            position: relative;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+            cursor: pointer;
+            touch-action: none;
+        }
+        .cplayer-progress-fill {
+            height: 100%;
+            background: var(--cl-primary);
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.2s linear;
+            pointer-events: none;
+        }
+        .cplayer-progress-thumb {
+            position: absolute;
+            top: 50%; right: auto;
+            width: 12px; height: 12px;
+            background: #fff;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            left: 0%;
+            pointer-events: none;
+            box-shadow: 0 0 4px rgba(0,0,0,0.5);
+        }
+        /* Bottom row */
+        .cplayer-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .cplayer-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px;
+            line-height: 1;
+            flex-shrink: 0;
+            opacity: 0.9;
+            transition: opacity 0.15s, transform 0.1s;
+        }
+        .cplayer-btn:active { opacity: 1; transform: scale(0.88); }
+        .cplayer-play { font-size: 22px; }
+        .cplayer-time {
+            font-size: 11px;
+            color: rgba(255,255,255,0.8);
+            font-variant-numeric: tabular-nums;
+            flex-shrink: 0;
+        }
+        .cplayer-spacer { flex: 1; }
+        .cplayer-speed-wrap {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            background: rgba(255,255,255,0.12);
+            border-radius: 8px;
+            padding: 3px 7px;
+        }
+        .cplayer-speed-label { font-size: 10px; color: rgba(255,255,255,0.6); margin-right: 2px; }
+        .cplayer-speed-val { font-size: 12px; font-weight: 800; color: #fff; min-width: 28px; text-align: center; }
+        .cplayer-speed-btn { background: none; border: none; color: rgba(255,255,255,0.7); font-size: 15px; cursor: pointer; padding: 0 2px; line-height: 1; }
+        .cplayer-speed-btn:active { color: #fff; }
+        .cplayer-vol-btn { font-size: 18px; }
+
         /* ===== INFO CARD ===== */
         .info-card-fl {
             background: var(--cl-card);
@@ -699,11 +825,49 @@
         <button class="back-btn-fl" id="videoBackBtn" onclick="videoBack()">← ফিরে যান</button>
         <div class="breadcrumb-fl" id="videoBreadcrumb"></div>
 
-        <div class="video-outer">
-            <div class="video-ratio" id="videoPlayer"></div>
+        <!-- Custom Player -->
+        <div class="cplayer-wrap" id="cplayerWrap">
+            <div class="cplayer-ratio">
+                <div id="videoPlayer"></div>
+                <!-- Full blocker: prevents ALL iframe clicks (share, save, logo, suggestions) -->
+                <div class="cplayer-blocker" id="cplayerBlocker" onclick="ytTogglePlay()"></div>
+                <!-- End screen -->
+                <div class="cplayer-end" id="cplayerEnd">
+                    <div class="cplayer-end-icon">✅</div>
+                    <div class="cplayer-end-title">ক্লাস শেষ হয়েছে</div>
+                    <button class="cplayer-end-btn" onclick="ytRestart()">🔄 আবার দেখুন</button>
+                </div>
+            </div>
+            <!-- Controls -->
+            <div class="cplayer-controls" id="cplayerControls">
+                <!-- Progress bar -->
+                <div class="cplayer-progress-wrap" id="cpProgress"
+                     onmousedown="cpSeekStart(event)" ontouchstart="cpSeekStart(event)">
+                    <div class="cplayer-progress-fill" id="cpFill"></div>
+                    <div class="cplayer-progress-thumb" id="cpThumb"></div>
+                </div>
+                <!-- Buttons row -->
+                <div class="cplayer-row">
+                    <button class="cplayer-btn" onclick="ytSkip(-10)" title="১০ সেকেন্ড পেছনে">⏪</button>
+                    <button class="cplayer-btn cplayer-play" id="playPauseBtn" onclick="ytTogglePlay()">▶</button>
+                    <button class="cplayer-btn" onclick="ytSkip(10)" title="১০ সেকেন্ড সামনে">⏩</button>
+                    <button class="cplayer-btn cplayer-vol-btn" id="volBtn" onclick="ytToggleMute()">🔊</button>
+                    <span class="cplayer-time"><span id="cpCurTime">0:00</span> / <span id="cpDurTime">0:00</span></span>
+                    <div class="cplayer-spacer"></div>
+                    <!-- Speed -->
+                    <div class="cplayer-speed-wrap">
+                        <span class="cplayer-speed-label">গতি</span>
+                        <button class="cplayer-speed-btn" onclick="ytSpeedChange(-1)">−</button>
+                        <span class="cplayer-speed-val" id="speedVal">1×</span>
+                        <button class="cplayer-speed-btn" onclick="ytSpeedChange(1)">+</button>
+                    </div>
+                    <!-- Fullscreen -->
+                    <button class="cplayer-btn" onclick="cpFullscreen()" style="font-size:16px;">⛶</button>
+                </div>
+            </div>
         </div>
 
-        <!-- hidden anchors kept for JS refs -->
+        <!-- hidden anchors for JS refs -->
         <a id="vcbDownloadBtn" href="#" style="display:none;" download></a>
         <a id="vcbYtBtn" href="#" style="display:none;" target="_blank"></a>
 
@@ -1056,33 +1220,11 @@ window.onYouTubeIframeAPIReady = function() {
 
 function _createYTPlayer(videoId) {
     if (ytPlayer) { try { ytPlayer.destroy(); } catch(e) {} ytPlayer = null; }
-    // Wrapper: player div + anti-redirect overlay on top
-    document.getElementById('videoPlayer').innerHTML = `
-        <div id="ytPlayerEl" style="position:absolute;inset:0;width:100%;height:100%;"></div>
-        <div id="ytShield" style="
-            position:absolute;inset:0;z-index:10;
-            background:transparent;pointer-events:none;
-        ">
-            <!-- Block top bar (YT logo, title, channel link) -->
-            <div style="position:absolute;top:0;left:0;right:0;height:15%;pointer-events:auto;"
-                 onclick="event.stopPropagation();event.preventDefault();return false;"></div>
-            <!-- Block bottom-right (YouTube branding / watch-on-YT button) -->
-            <div style="position:absolute;bottom:0;right:0;width:25%;height:15%;pointer-events:auto;"
-                 onclick="event.stopPropagation();event.preventDefault();return false;"></div>
-            <!-- Block end-screen suggested videos overlay -->
-            <div id="ytEndScreen" style="position:absolute;inset:0;background:rgba(0,0,0,0.85);
-                 display:none;align-items:center;justify-content:center;pointer-events:auto;">
-                <div style="text-align:center;color:#fff;font-family:'Noto Sans Bengali',sans-serif;">
-                    <div style="font-size:32px;margin-bottom:8px;">✅</div>
-                    <div style="font-size:15px;font-weight:700;">ক্লাস শেষ হয়েছে</div>
-                    <button onclick="ytPlayer&&ytPlayer.seekTo(0,true);ytPlayer&&ytPlayer.playVideo();document.getElementById('ytEndScreen').style.display='none';"
-                        style="margin-top:12px;background:#6C63FF;color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans Bengali',sans-serif;">
-                        🔄 আবার দেখুন
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
+    if (cpTimer) { clearInterval(cpTimer); cpTimer = null; }
+    document.getElementById('videoPlayer').innerHTML = '<div id="ytPlayerEl" style="width:100%;height:100%;"></div>';
+    document.getElementById('cplayerEnd').style.display = 'none';
+    document.getElementById('playPauseBtn').textContent = '▶';
+
     ytPlayer = new YT.Player('ytPlayerEl', {
         width: '100%',
         height: '100%',
@@ -1092,54 +1234,133 @@ function _createYTPlayer(videoId) {
             modestbranding: 1,
             showinfo: 0,
             iv_load_policy: 3,
-            fs: 1,
+            fs: 0,           // disable YT fullscreen button (we have our own)
             playsinline: 1,
             enablejsapi: 1,
             origin: location.origin,
-            // Prevent suggested videos on end
-            controls: 1,
+            controls: 0,     // ← hide ALL YouTube UI (logo, share, save, suggestions)
+            disablekb: 1,    // disable YT keyboard (we handle it)
+            cc_load_policy: 0,
         },
         events: {
             onReady: (e) => {
                 e.target.setPlaybackRate(YT_SPEEDS[ytSpeedIdx]);
-                const pb = document.getElementById('playPauseBtn'); if(pb) pb.textContent = '⏸';
+                cpStartTimer();
             },
             onStateChange: (e) => {
                 const btn = document.getElementById('playPauseBtn');
                 if (e.data === YT.PlayerState.PLAYING) {
                     if(btn) btn.textContent = '⏸';
-                    const es = document.getElementById('ytEndScreen');
-                    if (es) es.style.display = 'none';
+                    document.getElementById('cplayerEnd').style.display = 'none';
+                    cpStartTimer();
                 } else if (e.data === YT.PlayerState.PAUSED) {
                     if(btn) btn.textContent = '▶';
                 } else if (e.data === YT.PlayerState.ENDED) {
                     if(btn) btn.textContent = '▶';
-                    // Show our own end screen instead of YT suggested videos
-                    const es = document.getElementById('ytEndScreen');
-                    if (es) { es.style.display = 'flex'; }
+                    if(cpTimer) { clearInterval(cpTimer); cpTimer = null; }
+                    document.getElementById('cplayerEnd').style.display = 'flex';
                 }
             }
         }
     });
 }
 
-// Auto-pause when user leaves the tab/app (prevents accidental redirect playing in bg)
-document.addEventListener('visibilitychange', () => {
-    if (document.hidden && ytPlayer) {
-        try { ytPlayer.pauseVideo(); } catch(e) {}
+// ===== PROGRESS BAR =====
+let cpTimer = null;
+let cpSeeking = false;
+
+function cpStartTimer() {
+    if (cpTimer) clearInterval(cpTimer);
+    cpTimer = setInterval(cpTick, 500);
+}
+
+function cpTick() {
+    if (!ytPlayer || cpSeeking) return;
+    try {
+        const cur = ytPlayer.getCurrentTime() || 0;
+        const dur = ytPlayer.getDuration() || 0;
+        if (dur > 0) {
+            const pct = (cur / dur) * 100;
+            document.getElementById('cpFill').style.width = pct + '%';
+            document.getElementById('cpThumb').style.left = pct + '%';
+        }
+        document.getElementById('cpCurTime').textContent = fmtTime(cur);
+        document.getElementById('cpDurTime').textContent = fmtTime(dur);
+    } catch(e) {}
+}
+
+function fmtTime(s) {
+    s = Math.floor(s);
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return m + ':' + (sec < 10 ? '0' : '') + sec;
+}
+
+function cpSeekStart(e) {
+    cpSeeking = true;
+    cpSeekMove(e);
+    const move = ev => cpSeekMove(ev);
+    const up = () => {
+        cpSeeking = false;
+        document.removeEventListener('mousemove', move);
+        document.removeEventListener('mouseup', up);
+        document.removeEventListener('touchmove', move);
+        document.removeEventListener('touchend', up);
+    };
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', up);
+    document.addEventListener('touchmove', move, { passive: true });
+    document.addEventListener('touchend', up);
+}
+
+function cpSeekMove(e) {
+    const bar = document.getElementById('cpProgress');
+    if (!bar || !ytPlayer) return;
+    const rect = bar.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    try {
+        const dur = ytPlayer.getDuration() || 0;
+        ytPlayer.seekTo(pct * dur, true);
+        document.getElementById('cpFill').style.width = (pct * 100) + '%';
+        document.getElementById('cpThumb').style.left = (pct * 100) + '%';
+    } catch(e2) {}
+}
+
+function cpFullscreen() {
+    const wrap = document.getElementById('cplayerWrap');
+    if (!wrap) return;
+    if (document.fullscreenElement) {
+        document.exitFullscreen();
+    } else {
+        wrap.requestFullscreen && wrap.requestFullscreen();
     }
+}
+
+let ytMuted = false;
+function ytToggleMute() {
+    if (!ytPlayer) return;
+    try {
+        if (ytMuted) { ytPlayer.unMute(); ytMuted = false; document.getElementById('volBtn').textContent = '🔊'; }
+        else { ytPlayer.mute(); ytMuted = true; document.getElementById('volBtn').textContent = '🔇'; }
+    } catch(e) {}
+}
+
+function ytRestart() {
+    document.getElementById('cplayerEnd').style.display = 'none';
+    if (!ytPlayer) return;
+    try { ytPlayer.seekTo(0, true); ytPlayer.playVideo(); } catch(e) {}
+}
+
+// Auto-pause when user leaves tab
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden && ytPlayer) { try { ytPlayer.pauseVideo(); } catch(e) {} }
 });
-// Block any attempt to open youtube.com links from within the page
+// Block any youtube.com link navigation from within page
 document.addEventListener('click', (e) => {
     const a = e.target.closest('a');
     if (a && a.href && (a.href.includes('youtube.com') || a.href.includes('youtu.be'))) {
-        const dlBtn = document.getElementById('vcbDownloadBtn');
-        const ytBtn = document.getElementById('vcbYtBtn');
-        // Only allow the explicit YT button
-        if (a !== ytBtn) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
+        if (a.id !== 'vcbYtBtn') { e.preventDefault(); e.stopPropagation(); }
     }
 }, true);
 
@@ -1190,6 +1411,16 @@ function playVideo(link, title, classType, classNote, backView, breadcrumbParts)
     ytSpeedIdx = 3;
     const _sv = document.getElementById('speedVal'); if(_sv) _sv.textContent = '1×';
     const _pb = document.getElementById('playPauseBtn'); if(_pb) _pb.textContent = '▶';
+    ytMuted = false;
+    const _vb = document.getElementById('volBtn'); if(_vb) _vb.textContent = '🔊';
+    // Restore blocker + controls bar (may have been hidden for MP4/error)
+    const _bl = document.getElementById('cplayerBlocker'); if(_bl) _bl.style.display = '';
+    const _ct = document.getElementById('cplayerControls'); if(_ct) _ct.style.display = '';
+    // Reset progress bar
+    const _cf = document.getElementById('cpFill'); if(_cf) _cf.style.width = '0%';
+    const _cth = document.getElementById('cpThumb'); if(_cth) _cth.style.left = '0%';
+    const _cc = document.getElementById('cpCurTime'); if(_cc) _cc.textContent = '0:00';
+    const _cd = document.getElementById('cpDurTime'); if(_cd) _cd.textContent = '0:00';
 
     // Download / YT buttons
     const dlBtn = document.getElementById('vcbDownloadBtn');
@@ -1206,31 +1437,28 @@ function playVideo(link, title, classType, classNote, backView, breadcrumbParts)
             _createYTPlayer(videoId);
         } else {
             ytPendingVideoId = videoId;
-            // Fallback iframe while API loads (shields block redirect areas)
+            // Fallback: controls=0 iframe while API loads, blocker covers all YT UI
             document.getElementById('videoPlayer').innerHTML =
-                `<iframe src="https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&showinfo=0&iv_load_policy=3&fs=1&playsinline=1&enablejsapi=1&origin=${encodeURIComponent(location.origin)}" allow="autoplay;encrypted-media;picture-in-picture" allowfullscreen></iframe>
-                 <div class="video-click-shield">
-                     <div class="shield-top" onclick="event.stopPropagation();event.preventDefault();return false;"></div>
-                     <div class="shield-corner" onclick="event.stopPropagation();event.preventDefault();return false;"></div>
-                     <div class="shield-pass"></div>
-                 </div>`;
+                `<iframe src="https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&showinfo=0&iv_load_policy=3&fs=0&playsinline=1&enablejsapi=1&controls=0&disablekb=1&origin=${encodeURIComponent(location.origin)}" allow="autoplay;encrypted-media;picture-in-picture"></iframe>`;
         }
     } else if (link && (link.endsWith('.mp4') || link.includes('.mp4'))) {
-        // Direct MP4 — show download button
-        ytBtn.style.display = 'none';
+        // Direct MP4
         dlBtn.style.display = 'flex';
         dlBtn.href = link;
         dlBtn.setAttribute('download', title || 'video');
-
+        // Hide blocker — native video has its own controls
+        const bl = document.getElementById('cplayerBlocker');
+        if(bl) bl.style.display = 'none';
         if (ytPlayer) { try { ytPlayer.destroy(); } catch(e) {} ytPlayer = null; }
         document.getElementById('videoPlayer').innerHTML =
             `<video controls playsinline style="position:absolute;inset:0;width:100%;height:100%;background:#000;">
                 <source src="${link}" type="video/mp4">
              </video>`;
     } else {
-        dlBtn.style.display = 'none';
-        ytBtn.style.display = 'none';
         if (ytPlayer) { try { ytPlayer.destroy(); } catch(e) {} ytPlayer = null; }
+        // Hide controls bar for error state
+        const ctrl = document.getElementById('cplayerControls');
+        if(ctrl) ctrl.style.display = 'none';
         document.getElementById('videoPlayer').innerHTML = `
             <div class="video-no-embed">
                 <div class="vne-icon">⚠️</div>
