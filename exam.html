@@ -833,37 +833,86 @@ async function loadExamsBySubType(cat,sub){
     }catch(e){}
 }
 
+// ── Exam Subject List → Exam List (২-স্তর নেভিগেশন, page-by-page) ──
+// আগে এটা সব subject-এর exam একসাথে গ্রুপ-হেডার দিয়ে flat list-এ
+// দেখাত। এখন প্রথমে Subject List (নতুন পেজ) দেখাবে, subject ক্লিক
+// করলে তখন সেই subject-এর exam list (নতুন পেজ, back বাটন সহ) আসবে।
+window.__examListState = { data: [], subject: null };
+
 function showExamList(data){
-    const grouped={};
-    data.forEach(e=>{const s=e.subject||'সাধারণ';if(!grouped[s])grouped[s]=[];grouped[s].push(e);});
-    let html='';
-    Object.keys(grouped).forEach(s=>{
-        html+=`<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;">📘 ${s}</div>`;
-        grouped[s].forEach(e=>{
-            const info=e.chapter||e.title||'—';
-            const meta=[e.board,e.year,e.writer,e.unit].filter(Boolean).join(' | ');
-            if(e.is_locked===true||e.is_locked==='true'){
-                html+=`<div class="list-item locked-exam" onclick="showLockedExamBanner('${(e.title||info).replace(/'/g,'')}')">
-                    <div>
-                        <div class="list-item-title">🔒 ${info}</div>
-                        <div class="list-item-sub">${meta?meta+' | ':''}${e.total_marks||0} প্রশ্ন</div>
-                    </div>
-                    <span class="lock-badge">🔒 Locked</span>
-                </div>`;
-            } else {
-                html+=`<div class="list-item" onclick="loadExamById(${e.id})">
-                    <div>
-                        <div class="list-item-title">📖 ${info}</div>
-                        <div class="list-item-sub">${meta?meta+' | ':''}${e.total_marks||0} প্রশ্ন</div>
-                    </div>
-                    <span class="list-item-arrow">→</span>
-                </div>`;
-            }
-        });
+    window.__examListState = { data, subject: null };
+    renderExamSubjectList();
+}
+
+function renderExamSubjectList(){
+    const { data } = window.__examListState;
+    const bySubject = {};
+    data.forEach(e=>{const s=e.subject||'সাধারণ';if(!bySubject[s])bySubject[s]=[];bySubject[s].push(e);});
+    const subjects = Object.keys(bySubject);
+
+    // একটাই subject থাকলে সরাসরি exam list দেখানো (অতিরিক্ত ক্লিক এড়াতে)
+    if (subjects.length === 1) {
+        renderExamListForSubject(subjects[0]);
+        return;
+    }
+
+    let html = `<div class="kcq-header-info">📚 মোট সাবজেক্ট: <b>${subjects.length}</b></div><div class="kcq-box-list">`;
+    subjects.forEach(s=>{
+        const count = bySubject[s].length;
+        html += `<div class="kcq-box" onclick="window.__examOpenSubject('${s.replace(/'/g,"\\'")}')">
+            <div class="kcq-box-main">
+                <div class="kcq-box-title">📘 ${s}</div>
+                <div class="kcq-box-sub">${count}টি এক্সাম</div>
+            </div>
+            <span class="kcq-box-count">${count}</span>
+            <span class="kcq-box-arrow">→</span>
+        </div>`;
+    });
+    html += `</div>`;
+    document.getElementById('categoryContent').innerHTML = html;
+    switchMode('Category');
+}
+
+window.__examOpenSubject = function(subject){
+    window.__examListState.subject = subject;
+    renderExamListForSubject(subject);
+};
+
+function renderExamListForSubject(subject){
+    const { data } = window.__examListState;
+    const list = data.filter(e => (e.subject||'সাধারণ') === subject);
+    const showBack = Object.keys(data.reduce((a,e)=>{a[e.subject||'সাধারণ']=1;return a;},{})).length > 1;
+
+    let html = showBack ? `<button class="back-btn" onclick="window.__examBackToSubjects()">← সাবজেক্ট তালিকায় ফিরুন</button>` : '';
+    html += `<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;">📘 ${subject}</div>`;
+    list.forEach(e=>{
+        const info=e.chapter||e.title||'—';
+        const meta=[e.board,e.year,e.writer,e.unit].filter(Boolean).join(' | ');
+        if(e.is_locked===true||e.is_locked==='true'){
+            html+=`<div class="list-item locked-exam" onclick="showLockedExamBanner('${(e.title||info).replace(/'/g,'')}')">
+                <div>
+                    <div class="list-item-title">🔒 ${info}</div>
+                    <div class="list-item-sub">${meta?meta+' | ':''}${e.total_marks||0} প্রশ্ন</div>
+                </div>
+                <span class="lock-badge">🔒 Locked</span>
+            </div>`;
+        } else {
+            html+=`<div class="list-item" onclick="loadExamById(${e.id})">
+                <div>
+                    <div class="list-item-title">📖 ${info}</div>
+                    <div class="list-item-sub">${meta?meta+' | ':''}${e.total_marks||0} প্রশ্ন</div>
+                </div>
+                <span class="list-item-arrow">→</span>
+            </div>`;
+        }
     });
     document.getElementById('categoryContent').innerHTML=html||'<p style="text-align:center;color:var(--text-secondary);padding:20px;">কোনো এক্সাম নেই</p>';
     switchMode('Category');
 }
+
+window.__examBackToSubjects = function(){
+    renderExamSubjectList();
+};
 
 function showLockedExamBanner(examTitle){
     document.getElementById('preExamContent').innerHTML=`

@@ -2234,9 +2234,11 @@ async function loadSlideshowAdmin() {
         if (!data?.length) { document.getElementById('slideshowList').innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">কোনো ছবি নেই</p>'; return; }
         let html = '<div style="display:flex;flex-direction:column;gap:8px;">';
         data.forEach(s => {
+            const isActive = s.is_active !== false; // কলাম না থাকলে/null হলে ডিফল্ট সক্রিয় ধরা হবে
             html += `<div class="list-item">
                 <img src="${s.image_url}" style="width:60px;height:40px;object-fit:cover;border-radius:6px;margin-right:8px;flex-shrink:0;">
                 <div style="flex:1;font-size:12px;color:var(--text2);">${s.caption || 'স্লাইড ছবি'}</div>
+                <div class="toggle-switch ${isActive ? 'on success' : ''}" style="margin-right:8px;" onclick="toggleSlideshowActive('${s.id}',${isActive})" title="${isActive ? 'বন্ধ করুন' : 'চালু করুন'}"></div>
                 ${isAdmin ? `<button class="btn btn-sm btn-danger" onclick="deleteItem('slideshow_images','${s.id}',loadSlideshowAdmin)">🗑️</button>` : ''}
             </div>`;
         });
@@ -2245,6 +2247,23 @@ async function loadSlideshowAdmin() {
     } catch (e) {
         document.getElementById('slideshowList').innerHTML = '<p style="color:var(--red);">লোড এরর — slideshow_images টেবিল তৈরি হয়েছে কিনা যাচাই করুন</p>';
         console.error('loadSlideshowAdmin error:', e);
+    }
+}
+
+// প্রতিটা স্লাইডের on/off — home page-এ কাস্টমভাবে কোনটা দেখাবে/বন্ধ
+// রাখবে অ্যাডমিন নিজেই কন্ট্রোল করতে পারে। সরাসরি Supabase-এ PATCH হয়,
+// তাৎক্ষণিক UI আপডেট সহ (পুরো লিস্ট আবার লোড না করেই)।
+async function toggleSlideshowActive(id, currentlyActive) {
+    const newVal = !currentlyActive;
+    try {
+        await safeFetch(`${SUPABASE_URL}/rest/v1/slideshow_images?id=eq.${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ is_active: newVal })
+        });
+        loadSlideshowAdmin();
+    } catch (e) {
+        console.error('toggleSlideshowActive error:', e);
+        showToast('⚠️ টগল করতে সমস্যা হয়েছে: ' + (e.message || 'অজানা এরর'));
     }
 }
 

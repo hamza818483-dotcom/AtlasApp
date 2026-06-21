@@ -294,7 +294,10 @@
         .slideshow-track {
             display: flex; width: 100%;
             transition: transform .6s ease-in-out;
+            touch-action: pan-y; /* vertical scroll pass-through, horizontal handled by JS swipe */
+            cursor: grab;
         }
+        .slideshow-track:active { cursor: grabbing; }
         .slideshow-slide {
             flex: 0 0 100%; width: 100%; min-width: 100%;
         }
@@ -1370,19 +1373,36 @@ function startCountdown(endTime, i) {
 ══════════════════════════════════════════════ */
 let __slideshowTimer = null;
 let __slideshowIdx = 0;
+let __slideshowTotal = 0;
+let __slideshowTouchStartX = null;
+let __slideshowTouchDeltaX = 0;
 
 async function loadSlideshow() {
     try {
-        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/slideshow_images?select=*&order=sort_order.asc,created_at.asc&limit=20`);
         const container = document.getElementById('slideshowContainer');
         if (!container) return;
+
+        // is_active=true ছবিই দেখানো হবে — অ্যাডমিন প্যানেলের on/off টগল
+        // দিয়ে কোনো ছবি বন্ধ রাখলে সেটা এখানে বাদ পড়ে যাবে।
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/slideshow_images?select=*&order=sort_order.asc,created_at.asc&limit=20&is_active=eq.true`);
 
         if (__slideshowTimer) { clearInterval(__slideshowTimer); __slideshowTimer = null; }
 
         if (!data?.length) { container.innerHTML = ''; return; }
 
+        // ছবিগুলো ব্রাউজার cache-এ আগেই preload করা হচ্ছে — base64 ছবি
+        // সরাসরি innerHTML-এ বসালে প্রথমবার decode করতে সময় লাগে এবং
+        // "loading দিলে চলে যায়" (flicker/disappear) সমস্যা হয়। preload
+        // শেষ হওয়ার পরই DOM-এ বসানো হচ্ছে, যাতে স্মুথ ও instant দেখায়।
+        await Promise.all(data.map(s => new Promise(resolve => {
+            const img = new Image();
+            img.onload = resolve;
+            img.onerror = resolve; // ভাঙা ছবি থাকলেও বাকি স্লাইডের জন্য আটকাবে না
+            img.src = s.image_url;
+        })));
+
         const slidesHtml = data.map(s =>
-            `<div class="slideshow-slide"><img src="${escHtml(s.image_url)}" alt="Slide" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`
+            `<div class="slideshow-slide"><img src="${escHtml(s.image_url)}" alt="Slide" onerror="this.parentElement.style.display='none'"></div>`
         ).join('');
         const dotsHtml = data.length > 1
             ? `<div class="slideshow-dots">${data.map((_, i) => `<span class="slideshow-dot${i === 0 ? ' active' : ''}" data-idx="${i}"></span>`).join('')}</div>`
@@ -1395,20 +1415,65 @@ async function loadSlideshow() {
             </div>`;
 
         __slideshowIdx = 0;
+        __slideshowTotal = data.length;
+        attachSlideshowSwipe();
         if (data.length > 1) {
-            __slideshowTimer = setInterval(() => advanceSlideshow(data.length), 2000);
+            startSlideshowAutoTimer();
         }
     } catch (e) { console.error('Slideshow load error:', e); }
 }
 
+function startSlideshowAutoTimer() {
+    if (__slideshowTimer) clearInterval(__slideshowTimer);
+    __slideshowTimer = setInterval(() => advanceSlideshow(__slideshowTotal), 2000);
+}
+
 function advanceSlideshow(total) {
     __slideshowIdx = (__slideshowIdx + 1) % total;
+    renderSlideshowPosition();
+}
+
+function renderSlideshowPosition() {
     const track = document.getElementById('slideshowTrack');
     if (!track) return;
-    // Right-to-left movement: slide content shifts left as if entering from the right
     track.style.transform = `translateX(-${__slideshowIdx * 100}%)`;
     document.querySelectorAll('.slideshow-dot').forEach((dot, i) => {
         dot.classList.toggle('active', i === __slideshowIdx);
+    });
+}
+
+// ── ইউজার চাইলে ফিঙ্গার (টাচ) দিয়ে টেনে স্লাইড করতে পারবে ──
+// সোয়াইপ করার সময় auto-timer সাময়িক বন্ধ থাকে, swipe শেষ হলে আবার চালু হয়,
+// যাতে ইউজারের ম্যানুয়াল কন্ট্রোল আর অটো-স্লাইড একসাথে কনফ্লিক্ট না করে।
+function attachSlideshowSwipe() {
+    const track = document.getElementById('slideshowTrack');
+    if (!track) return;
+
+    track.addEventListener('touchstart', e => {
+        __slideshowTouchStartX = e.touches[0].clientX;
+        __slideshowTouchDeltaX = 0;
+        if (__slideshowTimer) { clearInterval(__slideshowTimer); __slideshowTimer = null; }
+    }, { passive: true });
+
+    track.addEventListener('touchmove', e => {
+        if (__slideshowTouchStartX === null) return;
+        __slideshowTouchDeltaX = e.touches[0].clientX - __slideshowTouchStartX;
+        track.style.transition = 'none';
+        track.style.transform = `translateX(calc(-${__slideshowIdx * 100}% + ${__slideshowTouchDeltaX}px))`;
+    }, { passive: true });
+
+    track.addEventListener('touchend', () => {
+        track.style.transition = '';
+        const threshold = 40; // px — এর বেশি টানলে স্লাইড পরিবর্তন হবে
+        if (__slideshowTouchDeltaX < -threshold && __slideshowIdx < __slideshowTotal - 1) {
+            __slideshowIdx++;
+        } else if (__slideshowTouchDeltaX > threshold && __slideshowIdx > 0) {
+            __slideshowIdx--;
+        }
+        renderSlideshowPosition();
+        __slideshowTouchStartX = null;
+        __slideshowTouchDeltaX = 0;
+        if (__slideshowTotal > 1) startSlideshowAutoTimer(); // সোয়াইপ শেষে অটো-সিস্টেম আবার চালু
     });
 }
 

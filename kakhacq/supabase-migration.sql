@@ -54,3 +54,8 @@ CREATE POLICY "Public read access" ON slideshow_images
 DROP POLICY IF EXISTS "Public write access" ON slideshow_images;
 CREATE POLICY "Public write access" ON slideshow_images
     FOR ALL USING (true) WITH CHECK (true);
+
+-- on/off টগল — অ্যাডমিন প্রতিটা স্লাইড আলাদাভাবে চালু/বন্ধ রাখতে পারবে,
+-- বন্ধ করা ছবি home page-এ দেখাবে না কিন্তু লিস্ট থেকে ডিলিট হবে না।
+ALTER TABLE slideshow_images
+ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
