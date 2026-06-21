@@ -402,7 +402,7 @@
 <body class="dark-mode">
 
 <!-- Sidebar -->
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<div class="sidebar-overlay" id="sidebarOverlay" style="display:none!important" onclick="closeSidebar()"></div>
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-header"><div class="sidebar-logo">ATLAS APP</div></div>
     <div class="sidebar-menu">
@@ -432,7 +432,6 @@
 <header class="header">
     <div class="header-left">
         <button class="global-back-btn" onclick="goBackGlobal()" title="ফিরে যান" aria-label="ফিরে যান">←</button>
-        <button class="hamburger" onclick="toggleSidebar()">☰</button>
         <div class="atlas-brand-box" onclick="goTo('index.html')">
             <img src="https://cdn.phototourl.com/free/2026-05-15-b45df560-6dc8-4cb7-9040-238612c8a161.png" class="atlas-logo-img" alt="ATLAS">
             <span class="atlas-brand-text">ATLAS APP</span>
@@ -686,8 +685,7 @@ function checkUserHasAccess() { const s=getSession(); return s?.has_paid_access=
 function showToast(m,d=2000){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
 function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'☀️':'🌙';localStorage.setItem('atlas-theme',isDarkMode?'dark':'light');}
 // Global back button — always goes exactly one step back in real browser history (never further, never to a different page)
-function goBackGlobal() {
-    if (window.history.length > 1) { history.back(); }
+function goBackGlobal() { history.back(); }
     else { location.href = 'index.html'; }
 }
 function toggleSidebar(){isSidebarOpen=!isSidebarOpen;document.getElementById('sidebarOverlay').classList.toggle('active',isSidebarOpen);document.getElementById('sidebar').classList.toggle('active',isSidebarOpen);}

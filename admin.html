@@ -793,6 +793,13 @@
                 <div class="input-group"><label>শুরু</label><input type="datetime-local" id="cdStart"></div>
                 <div class="input-group"><label>শেষ</label><input type="datetime-local" id="cdEnd"></div>
             </div>
+            <div class="input-group">
+                <label>Home Page এ দেখাবে?</label>
+                <select id="cdVisible" style="padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;width:100%;">
+                    <option value="true">✅ হ্যাঁ দেখাবে (On)</option>
+                    <option value="false">❌ দেখাবে না (Off)</option>
+                </select>
+            </div>
             <div style="display:flex;gap:8px;">
                 <button class="btn btn-primary" onclick="saveCountdown()" style="flex:1;">✅ সেইভ</button>
                 <button class="btn btn-outline btn-sm" onclick="clearCdForm()" style="white-space:nowrap;">🔄 ক্লিয়ার</button>
@@ -1835,16 +1842,35 @@ async function loadKaKha(){
 /* ═══════════════════════════════════════════════
    COUNTDOWN  (Flutter: TimerAdminController)
 ═══════════════════════════════════════════════ */
-function saveCountdown(){const d={main_topic:document.getElementById('cdTopic').value.trim(),subtopic:document.getElementById('cdSubtopic').value.trim()||null,start_time:document.getElementById('cdStart').value||null,end_time:document.getElementById('cdEnd').value};if(!d.main_topic||!d.end_time){showToast('⚠️ টপিক ও শেষ সময় দিন');return;}saveItem('countdowns',d,document.getElementById('cdEditId').value||null,clearCdForm,loadCountdowns);}
-function clearCdForm(){['cdTopic','cdSubtopic','cdStart','cdEnd','cdEditId'].forEach(id=>document.getElementById(id).value='');}
-function editCountdown(id){editItem('countdowns',id,d=>{document.getElementById('cdEditId').value=d.id;document.getElementById('cdTopic').value=d.main_topic||'';document.getElementById('cdSubtopic').value=d.subtopic||'';document.getElementById('cdStart').value=d.start_time||'';document.getElementById('cdEnd').value=d.end_time||'';window.scrollTo({top:0,behavior:'smooth'});});}
+function saveCountdown(){
+    const d={
+        main_topic:document.getElementById('cdTopic').value.trim(),
+        subtopic:document.getElementById('cdSubtopic').value.trim()||null,
+        start_time:document.getElementById('cdStart').value||null,
+        end_time:document.getElementById('cdEnd').value,
+        is_visible:document.getElementById('cdVisible').value !== 'false'
+    };
+    if(!d.main_topic||!d.end_time){showToast('⚠️ টপিক ও শেষ সময় দিন');return;}
+    saveItem('countdowns',d,document.getElementById('cdEditId').value||null,clearCdForm,loadCountdowns);
+}
+function clearCdForm(){['cdTopic','cdSubtopic','cdStart','cdEnd','cdEditId'].forEach(id=>document.getElementById(id).value='');document.getElementById('cdVisible').value='true';}
+function editCountdown(id){editItem('countdowns',id,d=>{
+    document.getElementById('cdEditId').value=d.id;
+    document.getElementById('cdTopic').value=d.main_topic||'';
+    document.getElementById('cdSubtopic').value=d.subtopic||'';
+    document.getElementById('cdStart').value=d.start_time ? d.start_time.slice(0,16) : '';
+    document.getElementById('cdEnd').value=d.end_time ? d.end_time.slice(0,16) : '';
+    document.getElementById('cdVisible').value=d.is_visible===false ? 'false' : 'true';
+    window.scrollTo({top:0,behavior:'smooth'});
+});
+}
 async function loadCountdowns(){
     try{
         const data=await safeFetch(`${SUPABASE_URL}/rest/v1/countdowns?select=*&order=sort_order.asc,created_at.desc&limit=20`);
         if(!data?.length){document.getElementById('cdList').innerHTML='<p style="color:var(--text2);text-align:center;padding:16px;">কোনো টাইমার নেই</p>';return;}
         const now=new Date();
-        let html='<table class="data-table"><tr><th>টপিক</th><th>শেষ সময়</th><th>Status</th><th>Actions</th></tr>';
-        data.forEach(c=>{const end=new Date(c.end_time);const isExpired=end<now;const diff=Math.max(0,Math.floor((end-now)/86400000));html+=`<tr><td><b>${c.main_topic}</b>${c.subtopic?`<br><span style="font-size:10px;color:var(--text2);">${c.subtopic}</span>`:''}</td><td style="font-size:11px;">${end.toLocaleString('bn-BD')}</td><td><span class="badge ${isExpired?'badge-red':'badge-green'}">${isExpired?'⌛ শেষ':'🟢 '+diff+'দিন'}</span></td><td style="white-space:nowrap;"><button class="btn btn-sm btn-outline" onclick="editCountdown('${c.id}')">✏️</button>${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('countdowns','${c.id}',loadCountdowns)" style="margin-left:3px;">🗑️</button>`:''}</td></tr>`;});
+        let html='<table class="data-table"><tr><th>টপিক</th><th>শেষ সময়</th><th>Status</th><th>দেখাবে?</th><th>Actions</th></tr>';
+        data.forEach(c=>{const end=new Date(c.end_time);const isExpired=end<now;const diff=Math.max(0,Math.floor((end-now)/86400000));const visIcon=c.is_visible===false?'🔴 Off':'🟢 On';html+=`<tr><td><b>${c.main_topic}</b>${c.subtopic?`<br><span style="font-size:10px;color:var(--text2);">${c.subtopic}</span>`:''}</td><td style="font-size:11px;">${end.toLocaleString('bn-BD')}</td><td><span class="badge ${isExpired?'badge-red':'badge-green'}">${isExpired?'⌛ শেষ':'🟢 '+diff+'দিন'}</span></td><td><span style="font-size:11px;">${visIcon}</span></td><td style="white-space:nowrap;"><button class="btn btn-sm btn-outline" onclick="editCountdown('${c.id}')">✏️</button>${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('countdowns','${c.id}',loadCountdowns)" style="margin-left:3px;">🗑️</button>`:''}</td></tr>`;});
         html+='</table>';
         document.getElementById('cdList').innerHTML=html;
     }catch(e){document.getElementById('cdList').innerHTML='<p style="color:var(--red);">লোড এরর</p>';}
