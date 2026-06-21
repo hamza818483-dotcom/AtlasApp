@@ -457,7 +457,7 @@
             font-family: 'Noto Sans Bengali', sans-serif;
             flex-shrink: 0;
         }
-        .video-outer { border-radius: var(--cl-radius-sm) var(--cl-radius-sm) 0 0; margin-bottom: 0; }
+        .video-outer { border-radius: var(--cl-radius-sm); margin-bottom: 12px; }
 
         /* ===== INFO CARD ===== */
         .info-card-fl {
@@ -703,31 +703,9 @@
             <div class="video-ratio" id="videoPlayer"></div>
         </div>
 
-        <!-- Custom Video Controls -->
-        <div class="video-controls-bar" id="videoControlsBar">
-            <!-- Skip back -->
-            <div class="vcb-group">
-                <button class="vcb-btn" onclick="ytSkip(-10)" title="১০ সেকেন্ড পেছনে">⏪</button>
-                <button class="vcb-btn play-pause" id="playPauseBtn" onclick="ytTogglePlay()">▶</button>
-                <button class="vcb-btn" onclick="ytSkip(10)" title="১০ সেকেন্ড সামনে">⏩</button>
-
-                <!-- Speed -->
-                <div class="vcb-speed-wrap">
-                    <span class="vcb-speed-label">স্পিড</span>
-                    <button class="vcb-speed-btn" onclick="ytSpeedChange(-1)">−</button>
-                    <span class="vcb-speed-val" id="speedVal">1×</span>
-                    <button class="vcb-speed-btn" onclick="ytSpeedChange(1)">+</button>
-                </div>
-            </div>
-
-            <!-- Download / YT link -->
-            <a id="vcbDownloadBtn" href="#" class="vcb-download" style="display:none;" download>
-                ⬇ ডাউনলোড
-            </a>
-            <a id="vcbYtBtn" href="#" class="vcb-yt-link" target="_blank" style="display:none;">
-                ▶ YT-তে দেখুন
-            </a>
-        </div>
+        <!-- hidden anchors kept for JS refs -->
+        <a id="vcbDownloadBtn" href="#" style="display:none;" download></a>
+        <a id="vcbYtBtn" href="#" style="display:none;" target="_blank"></a>
 
         <div class="info-card-fl" id="videoInfoCard">
             <div class="ic-title">📊 ক্লাস তথ্য</div>
@@ -1124,19 +1102,18 @@ function _createYTPlayer(videoId) {
         events: {
             onReady: (e) => {
                 e.target.setPlaybackRate(YT_SPEEDS[ytSpeedIdx]);
-                document.getElementById('playPauseBtn').textContent = '⏸';
+                const pb = document.getElementById('playPauseBtn'); if(pb) pb.textContent = '⏸';
             },
             onStateChange: (e) => {
                 const btn = document.getElementById('playPauseBtn');
-                if (!btn) return;
                 if (e.data === YT.PlayerState.PLAYING) {
-                    btn.textContent = '⏸';
+                    if(btn) btn.textContent = '⏸';
                     const es = document.getElementById('ytEndScreen');
                     if (es) es.style.display = 'none';
                 } else if (e.data === YT.PlayerState.PAUSED) {
-                    btn.textContent = '▶';
+                    if(btn) btn.textContent = '▶';
                 } else if (e.data === YT.PlayerState.ENDED) {
-                    btn.textContent = '▶';
+                    if(btn) btn.textContent = '▶';
                     // Show our own end screen instead of YT suggested videos
                     const es = document.getElementById('ytEndScreen');
                     if (es) { es.style.display = 'flex'; }
@@ -1186,7 +1163,7 @@ function ytSkip(seconds) {
 function ytSpeedChange(dir) {
     ytSpeedIdx = Math.max(0, Math.min(YT_SPEEDS.length - 1, ytSpeedIdx + dir));
     const speed = YT_SPEEDS[ytSpeedIdx];
-    document.getElementById('speedVal').textContent = speed + '×';
+    const sv = document.getElementById('speedVal'); if(sv) sv.textContent = speed + '×';
     if (ytPlayer) { try { ytPlayer.setPlaybackRate(speed); } catch(e) {} }
 }
 
@@ -1211,8 +1188,8 @@ function playVideo(link, title, classType, classNote, backView, breadcrumbParts)
 
     // Reset speed UI
     ytSpeedIdx = 3;
-    document.getElementById('speedVal').textContent = '1×';
-    document.getElementById('playPauseBtn').textContent = '▶';
+    const _sv = document.getElementById('speedVal'); if(_sv) _sv.textContent = '1×';
+    const _pb = document.getElementById('playPauseBtn'); if(_pb) _pb.textContent = '▶';
 
     // Download / YT buttons
     const dlBtn = document.getElementById('vcbDownloadBtn');
