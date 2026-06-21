@@ -316,6 +316,26 @@
             height: 100%;
             border: none;
         }
+        /* FIX: block clicks on the areas where YouTube shows clickable logo/title/channel link,
+           so users can never be taken to YouTube or another channel from inside the player. */
+        .video-click-shield {
+            position: absolute;
+            inset: 0;
+            z-index: 5;
+            background: transparent;
+        }
+        .video-click-shield .shield-top {
+            position: absolute; top: 0; left: 0; right: 0; height: 14%;
+            pointer-events: auto;
+        }
+        .video-click-shield .shield-corner {
+            position: absolute; bottom: 0; right: 0; width: 18%; height: 14%;
+            pointer-events: auto;
+        }
+        .video-click-shield .shield-pass {
+            position: absolute; top: 14%; left: 0; right: 0; bottom: 14%;
+            pointer-events: none; /* let play/pause/seek controls work normally */
+        }
         .video-no-embed {
             position: absolute;
             inset: 0;
@@ -929,19 +949,18 @@ function playVideo(link, title, classType, classNote, backView, breadcrumbParts)
     }
 
     // Player
+    // FIX: 'youtube' class_type used to open YouTube in a new tab / redirect away from the app.
+    // Per requirement, classes must NEVER redirect to YouTube or another browser/channel —
+    // every class video is always embedded inside the app, regardless of class_type.
     const videoId = extractYouTubeID(link);
-    if (classType === 'youtube') {
-        document.getElementById('videoPlayer').innerHTML = `
-            <div class="video-no-embed">
-                <div class="vne-icon">▶️</div>
-                <div class="vne-text">YouTube-এ খুলুন</div>
-                <button class="vne-btn" onclick="window.open('${link}','_blank')">YouTube-এ দেখুন</button>
-            </div>
-        `;
-        window.open(link, '_blank');
-    } else if (videoId) {
+    if (videoId) {
         document.getElementById('videoPlayer').innerHTML =
-            `<iframe src="https://www.youtube.com/embed/${videoId}?rel=0" allow="autoplay;encrypted-media;picture-in-picture" allowfullscreen></iframe>`;
+            `<iframe src="https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&showinfo=0&iv_load_policy=3&fs=1&playsinline=1" allow="autoplay;encrypted-media;picture-in-picture" allowfullscreen></iframe>
+             <div class="video-click-shield">
+                 <div class="shield-top" onclick="event.stopPropagation();"></div>
+                 <div class="shield-corner" onclick="event.stopPropagation();"></div>
+                 <div class="shield-pass"></div>
+             </div>`;
     } else {
         document.getElementById('videoPlayer').innerHTML = `
             <div class="video-no-embed">
