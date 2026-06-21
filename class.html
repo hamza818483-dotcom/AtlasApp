@@ -924,6 +924,9 @@
                 <div id="videoPlayer"></div>
                 <!-- Full click blocker -->
                 <div class="cplayer-blocker" id="cplayerBlocker" onclick="ytTogglePlay()"></div>
+                <!-- Zone blockers for YT watermark areas - pointer-events:auto blocks clicks there -->
+                <div style="position:absolute;top:0;left:0;right:0;height:20%;z-index:25;background:rgba(0,0,0,0.75);pointer-events:auto;" onclick="ytTogglePlay()"></div>
+                <div style="position:absolute;bottom:0;left:0;right:0;height:22%;z-index:25;background:rgba(0,0,0,0.88);pointer-events:auto;" onclick="ytTogglePlay()"></div>
                 <!-- End screen -->
                 <div class="cplayer-end" id="cplayerEnd">
                     <div class="cplayer-end-icon">✅</div>
@@ -944,7 +947,20 @@
                 <button class="cplayer-btn" onclick="ytSkip(-10)">⏪</button>
                 <button class="cplayer-btn cplayer-play" id="playPauseBtn" onclick="ytTogglePlay()">▶</button>
                 <button class="cplayer-btn" onclick="ytSkip(10)">⏩</button>
-                <button class="cplayer-btn" id="volBtn" onclick="ytToggleMute()" style="font-size:18px;">🔊</button>
+                <!-- Volume button with popup slider -->
+                <div style="position:relative;">
+                    <button class="cplayer-btn" id="volBtn" onclick="toggleVolSlider()" style="font-size:16px;">🔊</button>
+                    <div id="volSliderWrap" style="display:none;position:absolute;bottom:48px;left:50%;transform:translateX(-50%);
+                        background:var(--cl-card);border:1.5px solid var(--cl-border);border-radius:12px;
+                        padding:12px 8px;z-index:100;box-shadow:0 4px 20px rgba(0,0,0,0.4);">
+                        <input type="range" id="volSlider" min="0" max="100" value="100"
+                            oninput="setVolume(this.value)"
+                            style="writing-mode:vertical-lr;direction:rtl;
+                                   width:24px;height:90px;cursor:pointer;
+                                   accent-color:var(--cl-primary);">
+                        <div id="volPct" style="font-size:10px;font-weight:700;color:var(--cl-primary);text-align:center;margin-top:4px;">100%</div>
+                    </div>
+                </div>
                 <span class="cplayer-time"><span id="cpCurTime">0:00</span> / <span id="cpDurTime">0:00</span></span>
                 <div class="cplayer-spacer"></div>
                 <div class="cplayer-speed-wrap">
@@ -1609,11 +1625,60 @@ function _updateFsUi() {
 }
 
 let ytMuted = false;
+let ytVolume = 100;
+
+function toggleVolSlider() {
+    const wrap = document.getElementById('volSliderWrap');
+    if (!wrap) return;
+    const isOpen = wrap.style.display !== 'none';
+    wrap.style.display = isOpen ? 'none' : 'block';
+    if (!isOpen) {
+        // Close on outside click
+        setTimeout(() => {
+            document.addEventListener('click', function closeVol(e) {
+                if (!e.target.closest('#volSliderWrap') && !e.target.closest('#volBtn')) {
+                    document.getElementById('volSliderWrap').style.display = 'none';
+                    document.removeEventListener('click', closeVol);
+                }
+            });
+        }, 0);
+    }
+}
+
+function setVolume(val) {
+    ytVolume = parseInt(val);
+    if (!ytPlayer) return;
+    try {
+        ytPlayer.setVolume(ytVolume);
+        if (ytVolume === 0) {
+            ytPlayer.mute();
+            ytMuted = true;
+        } else {
+            ytPlayer.unMute();
+            ytMuted = false;
+        }
+        const btn = document.getElementById('volBtn');
+        const pct = document.getElementById('volPct');
+        if(btn) btn.textContent = ytVolume === 0 ? '🔇' : ytVolume < 50 ? '🔉' : '🔊';
+        if(pct) pct.textContent = ytVolume + '%';
+    } catch(e) {}
+}
+
 function ytToggleMute() {
     if (!ytPlayer) return;
     try {
-        if (ytMuted) { ytPlayer.unMute(); ytMuted = false; document.getElementById('volBtn').textContent = '🔊'; }
-        else { ytPlayer.mute(); ytMuted = true; document.getElementById('volBtn').textContent = '🔇'; }
+        if (ytMuted) {
+            ytPlayer.unMute();
+            ytPlayer.setVolume(ytVolume || 100);
+            ytMuted = false;
+            const sl = document.getElementById('volSlider');
+            if(sl) sl.value = ytVolume || 100;
+            document.getElementById('volBtn').textContent = '🔊';
+        } else {
+            ytPlayer.mute();
+            ytMuted = true;
+            document.getElementById('volBtn').textContent = '🔇';
+        }
     } catch(e) {}
 }
 
