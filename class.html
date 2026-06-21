@@ -42,8 +42,8 @@
         * { box-sizing: border-box; }
 
         .class-container {
-            max-width: 600px;
-            margin: 0 auto;
+            max-width: 100%;
+            margin: 0;
             padding: 10px 12px 24px;
         }
 
@@ -487,22 +487,13 @@
             background: transparent;
             cursor: pointer;
         }
-        /* Hard black mask over YT watermark/logo area at bottom */
+        /* Bottom mask - blocks YT share/save/watch-on-YT bar */
         .cplayer-bottom-mask {
             position: absolute;
             bottom: 0; left: 0; right: 0;
-            height: 22%;
+            height: 28%;
             z-index: 21;
-            background: linear-gradient(0deg, rgba(0,0,0,0.96) 0%, transparent 100%);
-            pointer-events: none;
-        }
-        /* Hard black mask over top-left (channel avatar/name) */
-        .cplayer-top-mask {
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 18%;
-            z-index: 21;
-            background: linear-gradient(180deg, rgba(0,0,0,0.94) 0%, transparent 100%);
+            background: linear-gradient(0deg, rgba(0,0,0,0.98) 0%, rgba(0,0,0,0.7) 60%, transparent 100%);
             pointer-events: none;
         }
         /* End screen overlay */
@@ -532,86 +523,91 @@
             border: 1.5px solid var(--cl-border);
             border-top: none;
             border-radius: 0 0 var(--cl-radius-sm) var(--cl-radius-sm);
-            padding: 12px 14px 14px;
+            padding: 8px 10px 10px;
             margin-bottom: 10px;
             box-shadow: var(--shadow-float);
         }
         /* Progress bar */
         .cplayer-progress-wrap {
             position: relative;
-            height: 5px;
+            height: 4px;
             background: var(--cl-card2);
-            border-radius: 5px;
+            border-radius: 4px;
             cursor: pointer;
             touch-action: none;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
         .cplayer-progress-fill {
             height: 100%;
             background: linear-gradient(90deg, var(--cl-primary), var(--cl-secondary));
-            border-radius: 5px;
+            border-radius: 4px;
             width: 0%;
             pointer-events: none;
         }
         .cplayer-progress-thumb {
             position: absolute;
             top: 50%;
-            width: 14px; height: 14px;
+            width: 12px; height: 12px;
             background: #fff;
             border-radius: 50%;
             transform: translate(-50%, -50%);
             left: 0%;
             pointer-events: none;
-            box-shadow: 0 0 6px rgba(108,99,255,0.6);
+            box-shadow: 0 0 5px rgba(108,99,255,0.6);
         }
-        /* Controls row */
+        /* Controls row - single line, compact */
         .cplayer-row {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
+            flex-wrap: nowrap;
+            overflow: hidden;
         }
         .cplayer-btn {
             background: var(--cl-card2);
             border: 1.5px solid var(--cl-border);
-            border-radius: 10px;
+            border-radius: 8px;
             color: var(--cl-text);
-            font-size: 18px;
-            width: 40px; height: 40px;
+            font-size: 15px;
+            width: 34px; height: 34px;
             display: flex; align-items: center; justify-content: center;
             cursor: pointer;
             flex-shrink: 0;
             transition: all 0.15s;
+            padding: 0;
         }
         .cplayer-btn:active { transform: scale(0.88); background: var(--cl-primary); color: #fff; border-color: var(--cl-primary); }
         .cplayer-play {
             background: var(--cl-primary);
             color: #fff;
             border-color: var(--cl-primary);
-            width: 44px; height: 44px;
-            font-size: 20px;
-            box-shadow: 0 4px 12px rgba(108,99,255,0.35);
+            width: 38px; height: 38px;
+            font-size: 17px;
+            box-shadow: 0 3px 10px rgba(108,99,255,0.35);
         }
         .cplayer-play:active { background: #5a52e0; }
         .cplayer-time {
-            font-size: 11px;
+            font-size: 10px;
             color: var(--cl-text2);
             font-variant-numeric: tabular-nums;
             flex-shrink: 0;
             font-weight: 600;
+            white-space: nowrap;
         }
-        .cplayer-spacer { flex: 1; }
+        .cplayer-spacer { flex: 1; min-width: 2px; }
         .cplayer-speed-wrap {
             display: flex;
             align-items: center;
-            gap: 2px;
+            gap: 1px;
             background: var(--cl-card2);
             border: 1.5px solid var(--cl-border);
-            border-radius: 10px;
-            padding: 4px 8px;
+            border-radius: 8px;
+            padding: 3px 5px;
+            flex-shrink: 0;
         }
-        .cplayer-speed-label { font-size: 10px; color: var(--cl-text2); font-weight: 600; margin-right: 2px; }
-        .cplayer-speed-val { font-size: 12px; font-weight: 800; color: var(--cl-primary); min-width: 28px; text-align: center; }
-        .cplayer-speed-btn { background: none; border: none; color: var(--cl-text2); font-size: 15px; cursor: pointer; padding: 0 2px; line-height: 1; }
+        .cplayer-speed-label { font-size: 9px; color: var(--cl-text2); font-weight: 600; margin-right: 1px; }
+        .cplayer-speed-val { font-size: 11px; font-weight: 800; color: var(--cl-primary); min-width: 24px; text-align: center; }
+        .cplayer-speed-btn { background: none; border: none; color: var(--cl-text2); font-size: 14px; cursor: pointer; padding: 0 1px; line-height: 1; }
         .cplayer-speed-btn:active { color: var(--cl-primary); }
 
         /* ===== DOWNLOAD CARD ===== */
@@ -911,8 +907,7 @@
         <div class="cplayer-wrap" id="cplayerWrap">
             <div class="cplayer-ratio">
                 <div id="videoPlayer"></div>
-                <!-- Gradient masks to hide YT branding/watermarks -->
-                <div class="cplayer-top-mask"></div>
+                <!-- Bottom mask: blocks YT share/save/watch-on-YT -->
                 <div class="cplayer-bottom-mask"></div>
                 <!-- Full click blocker -->
                 <div class="cplayer-blocker" id="cplayerBlocker" onclick="ytTogglePlay()"></div>
@@ -1149,7 +1144,7 @@ function openPaper(subj, paper) {
     Object.keys(chapters).forEach(ch => {
         const first = chapters[ch][0];
         html += listCard('📖', 'orange', ch, chapters[ch].length + ' টি পার্ট',
-            `playVideo('${esc(first.youtube_link||'')}','${esc(ch)}','${esc(first.class_type||'website')}','${esc(first.class_note||'')}','viewChapters',[['🧬 Medical','${esc(subj)}','${esc(paper)}','${esc(ch)}']]);currentChapter='${esc(ch)}'`
+            `playVideo('${esc(first.youtube_link||'')}','${esc(ch)}','${esc(first.class_type||'website')}','${esc(first.class_note||'')}','viewChapters',[['🧬 Medical','${esc(subj)}','${esc(paper)}','${esc(ch)}']],first.download_enabled);currentChapter='${esc(ch)}'`
         );
     });
     document.getElementById('chapterList').innerHTML = html || emptyState('কোনো চ্যাপ্টার নেই');
@@ -1174,7 +1169,7 @@ function openTimerVideos(timerType) {
         html += listCard('▶️', 'blue',
             c.topic || c.title || ('ভিডিও ' + (i+1)),
             c.description || '',
-            `playVideo('${esc(c.youtube_link||'')}','${esc(c.topic||c.title||'')}','${esc(c.class_type||'website')}','${esc(c.class_note||'')}','viewVideoList',[['📋 Medical Guide','${esc(timerType)}','${esc(c.topic||'')}']])`
+            `playVideo('${esc(c.youtube_link||'')}','${esc(c.topic||c.title||'')}','${esc(c.class_type||'website')}','${esc(c.class_note||'')}','viewVideoList',[['📋 Medical Guide','${esc(timerType)}','${esc(c.topic||'')}']],c.download_enabled)`
         );
     });
     document.getElementById('videoListItems').innerHTML = html || emptyState('কোনো ভিডিও নেই');
@@ -1193,7 +1188,7 @@ function openVarsityGuide() {
         html += listCard('▶️', 'orange',
             c.topic || c.title || ('ভিডিও ' + (i+1)),
             c.description || '',
-            `playVideo('${esc(c.youtube_link||'')}','${esc(c.topic||c.title||'')}','${esc(c.class_type||'website')}','${esc(c.class_note||'')}','viewVideoList',[['🎓 Varsity Guide','${esc(c.topic||'')}']])`
+            `playVideo('${esc(c.youtube_link||'')}','${esc(c.topic||c.title||'')}','${esc(c.class_type||'website')}','${esc(c.class_note||'')}','viewVideoList',[['🎓 Varsity Guide','${esc(c.topic||'')}']],c.download_enabled)`
         );
     });
     document.getElementById('videoListItems').innerHTML = html || emptyState('কোনো ভিডিও নেই');
@@ -1217,7 +1212,7 @@ function openShortTrick() {
             html += listCard('⚡', 'pink',
                 c.subject || c.topic || ('ট্রিক ' + (i+1)),
                 c.description || '',
-                `playVideo('${esc(c.youtube_link||'')}','${esc(c.subject||c.topic||'')}','${esc(c.class_type||'website')}','${esc(c.class_note||'')}','viewVideoList',[['⚡ Short Trick','${esc(c.subject||'')}']])`
+                `playVideo('${esc(c.youtube_link||'')}','${esc(c.subject||c.topic||'')}','${esc(c.class_type||'website')}','${esc(c.class_note||'')}','viewVideoList',[['⚡ Short Trick','${esc(c.subject||'')}']],c.download_enabled)`
             );
         });
         document.getElementById('videoListItems').innerHTML = html || emptyState('কোনো ভিডিও নেই');
@@ -1247,7 +1242,7 @@ function openShortTrickSubject(subj) {
         html += listCard('▶️', 'pink',
             c.topic || c.title || ('ট্রিক ' + (i+1)),
             c.description || '',
-            `playVideo('${esc(c.youtube_link||'')}','${esc(c.topic||c.title||'')}','${esc(c.class_type||'website')}','${esc(c.class_note||'')}','viewVideoList',[['⚡ Short Trick','${esc(subj)}','${esc(c.topic||'')}']])`
+            `playVideo('${esc(c.youtube_link||'')}','${esc(c.topic||c.title||'')}','${esc(c.class_type||'website')}','${esc(c.class_note||'')}','viewVideoList',[['⚡ Short Trick','${esc(subj)}','${esc(c.topic||'')}']],c.download_enabled)`
         );
     });
     document.getElementById('videoListItems').innerHTML = html || emptyState('কোনো ভিডিও নেই');
@@ -1282,7 +1277,7 @@ function openCourseVideos(courseName) {
         html += listCard('▶️', 'teal',
             c.feature_name || c.title || ('ফিচার ' + (i+1)),
             c.description || '',
-            `playVideo('${esc(c.youtube_link||'')}','${esc(c.feature_name||c.title||'')}','${esc(c.class_type||'website')}','${esc(c.class_note||'')}','viewVideoList',[['🎯 Course Feature','${esc(courseName)}','${esc(c.feature_name||'')}']])`
+            `playVideo('${esc(c.youtube_link||'')}','${esc(c.feature_name||c.title||'')}','${esc(c.class_type||'website')}','${esc(c.class_note||'')}','viewVideoList',[['🎯 Course Feature','${esc(courseName)}','${esc(c.feature_name||'')}']],c.download_enabled)`
         );
     });
     document.getElementById('videoListItems').innerHTML = html || emptyState('কোনো ভিডিও নেই');
@@ -1326,13 +1321,15 @@ function _createYTPlayer(videoId) {
             modestbranding: 1,
             showinfo: 0,
             iv_load_policy: 3,
-            fs: 0,           // disable YT fullscreen button (we have our own)
+            fs: 0,
             playsinline: 1,
             enablejsapi: 1,
             origin: location.origin,
-            controls: 0,     // ← hide ALL YouTube UI (logo, share, save, suggestions)
-            disablekb: 1,    // disable YT keyboard (we handle it)
+            controls: 0,
+            disablekb: 1,
             cc_load_policy: 0,
+            autoplay: 1,
+            widget_referrer: location.origin,
         },
         events: {
             onReady: (e) => {
@@ -1456,30 +1453,57 @@ async function ytDownload() {
     if (!vid) return;
 
     dlInProgress = true;
-    btn.innerHTML = '⏳ লোড হচ্ছে...';
+    btn.innerHTML = '⏳ লিংক নেওয়া হচ্ছে...';
     btn.disabled = true;
     btn.style.opacity = '0.7';
 
     try {
+        // Step 1: get direct URL from proxy
         const res = await fetch(`${PROXY_URL}/dl?vid=${encodeURIComponent(vid)}`, {
-            signal: AbortSignal.timeout(35000)
+            signal: AbortSignal.timeout(40000)
         });
-
-        if (!res.ok) throw new Error('Proxy error ' + res.status);
+        if (!res.ok) throw new Error('Proxy ' + res.status);
         const data = await res.json();
         if (!data.url) throw new Error('No URL');
 
+        btn.innerHTML = '⬇ ডাউনলোড হচ্ছে...';
+
+        // Step 2: fetch video as blob with progress
+        const videoRes = await fetch(data.url);
+        if (!videoRes.ok) throw new Error('Video fetch failed');
+
+        const contentLength = videoRes.headers.get('content-length');
+        const total = contentLength ? parseInt(contentLength) : 0;
+        const reader = videoRes.body.getReader();
+        const chunks = [];
+        let received = 0;
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            received += value.length;
+            if (total > 0) {
+                const pct = Math.round((received / total) * 100);
+                btn.innerHTML = `⬇ ${pct}% ডাউনলোড হচ্ছে...`;
+            }
+        }
+
+        // Step 3: create blob and trigger save
+        const blob = new Blob(chunks, { type: 'video/mp4' });
+        const blobUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = data.url;
+        a.href = blobUrl;
         a.download = (title.replace(/[^\w\s\u0980-\u09FF\-]/g, '') || 'class-video') + '.mp4';
-        a.target = '_blank';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
 
-        showToast('✅ ডাউনলোড শুরু হয়েছে');
+        showToast('✅ ডাউনলোড সম্পন্ন হয়েছে');
     } catch(e) {
-        showToast('❌ ডাউনলোড হয়নি, পরে চেষ্টা করুন');
+        console.error('Download error:', e);
+        showToast('❌ ডাউনলোড হয়নি। পরে চেষ্টা করুন।');
     } finally {
         dlInProgress = false;
         btn.innerHTML = '⬇ গ্যালারিতে ডাউনলোড করুন';
@@ -1524,7 +1548,7 @@ function ytSpeedChange(dir) {
     if (ytPlayer) { try { ytPlayer.setPlaybackRate(speed); } catch(e) {} }
 }
 
-function playVideo(link, title, classType, classNote, backView, breadcrumbParts) {
+function playVideo(link, title, classType, classNote, backView, breadcrumbParts, downloadEnabled) {
     videoBackTarget = backView || 'viewChapters';
     ytCurrentLink = link;
 
@@ -1568,9 +1592,9 @@ function playVideo(link, title, classType, classNote, backView, breadcrumbParts)
         // YouTube video — no external link shown to user
         dlBtn.style.display = 'none';
         ytBtn.style.display = 'none';
-        // Show download card
+        // Show download card only if admin enabled it
         const dlCard = document.getElementById('cplayerDlCard');
-        if(dlCard) { dlCard.classList.add('visible'); }
+        if(dlCard) { dlCard.classList.toggle('visible', !!downloadEnabled); }
         const cpDl = document.getElementById('cpDlBtn');
         if(cpDl) { cpDl.dataset.vid = videoId; cpDl.dataset.title = title; }
 

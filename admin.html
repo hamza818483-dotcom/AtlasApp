@@ -605,6 +605,22 @@
                 <div class="input-group"><label>Serial Order (ঐচ্ছিক)</label><input type="number" id="classSortOrder" placeholder="0" min="0"></div>
             </div>
             <div class="input-group"><label>YouTube লিংক ★</label><input type="url" id="classLink" placeholder="https://youtube.com/watch?v=..."></div>
+            <div class="input-group" style="display:flex;align-items:center;justify-content:space-between;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;">
+                <div>
+                    <div style="font-size:13px;font-weight:700;color:var(--text);">⬇ ডাউনলোড অনুমতি</div>
+                    <div style="font-size:11px;color:var(--text2);">User এই ভিডিও download করতে পারবে</div>
+                </div>
+                <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;">
+                    <input type="checkbox" id="classDownloadEnabled" style="opacity:0;width:0;height:0;">
+                    <span onclick="this.previousElementSibling.checked=!this.previousElementSibling.checked" style="
+                        position:absolute;cursor:pointer;inset:0;
+                        background:#333;border-radius:24px;transition:0.3s;
+                        display:flex;align-items:center;padding:2px;">
+                        <span style="width:20px;height:20px;background:#fff;border-radius:50%;transition:0.3s;
+                            transform:translateX(0px);display:block;" id="dlToggleThumb"></span>
+                    </span>
+                </label>
+            </div>
             <div class="input-group">
                 <label>ক্লাস নোট (ঐচ্ছিক)</label>
                 <div style="display:flex;gap:8px;margin-bottom:6px;">
@@ -1469,6 +1485,7 @@ function buildClassData(note = null) {
         class_type:  document.getElementById('classType').value,
         youtube_link: link,
         class_note:  note,
+        download_enabled: document.getElementById('classDownloadEnabled')?.checked || false,
         start_time:  document.getElementById('classStart').value || null,
         end_time:    document.getElementById('classEnd').value || null,
         sort_order:  parseInt(document.getElementById('classSortOrder').value) || 0,
@@ -1526,6 +1543,7 @@ function clearClassForm() {
     ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     const nf = document.getElementById('classNoteFile'); if(nf) nf.value = '';
     const ns = document.getElementById('classNoteFileStatus'); if(ns) ns.textContent = '';
+    const dl = document.getElementById('classDownloadEnabled'); if(dl) dl.checked = false;
     document.getElementById('classType').value = 'website';
     switchNoteMode('link');
 }
@@ -1556,6 +1574,7 @@ function editClass(id) {
             document.getElementById('classCourseDesc').value   = d.description  || '';
         }
         document.getElementById('classType').value       = d.class_type  || 'website';
+        const dlChk = document.getElementById('classDownloadEnabled'); if(dlChk) dlChk.checked = !!d.download_enabled;
         document.getElementById('classLink').value       = d.youtube_link || '';
         // Populate note field based on content type
         if (d.class_note) {
