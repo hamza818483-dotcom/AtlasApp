@@ -113,6 +113,17 @@ ALTER TABLE study_tracker_daily ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "public read" ON book_subjects FOR SELECT USING (true);
 CREATE POLICY "public read" ON book_chapters FOR SELECT USING (true);
+-- KNOWN LIMITATION: app-layer premium gating (study.html checks
+-- currentUser.is_premium before requesting file_url) is the only real
+-- enforcement here. Because this app authenticates via localStorage
+-- ('atlas-session'), not Supabase Auth, RLS cannot see who's logged in or
+-- whether they're premium — so this policy is permissive for everyone,
+-- and a technically determined user could query book_pdfs?select=file_url
+-- directly and bypass the UI gate. True server-side enforcement would
+-- require either Supabase Auth + a premium-aware RLS policy, or a small
+-- backend endpoint that checks premium status before returning the URL —
+-- worth doing if premium content needs to be airtight rather than just
+-- UI-gated for casual users.
 CREATE POLICY "public read" ON book_pdfs FOR SELECT USING (true);
 CREATE POLICY "public read" ON book_page_views FOR SELECT USING (true);
 CREATE POLICY "public write" ON book_page_views FOR INSERT WITH CHECK (true);

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ATLAS EXAM · অ্যাডমিন</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
         /* ══════════════════════════════════════════════
            FLUTTER-READY CSS VARIABLES
@@ -495,6 +496,7 @@
     <!-- 14 Tab Buttons  (Flutter: TabBar with 14 tabs) -->
     <div class="tab-grid">
         <button class="tab-btn active" onclick="switchSection('class',this)">📚 Class</button>
+        <button class="tab-btn" onclick="switchSection('mulboi',this)">📖 মূলবই</button>
         <button class="tab-btn" onclick="switchSection('exam',this)">📝 Exam</button>
         <button class="tab-btn" onclick="switchSection('kakha',this)">📦 ক,খ,CQ</button>
         <button class="tab-btn" onclick="switchSection('timer',this)">⏰ Timer</button>
@@ -661,6 +663,56 @@
         </div>
     </div><!-- end secClass -->
 
+    <!-- ══════════════ TAB: মূলবই পেইজভিত্তিক প্রস্তুতি ══════════════ -->
+    <!-- (Flutter: BookSubjectsAdminScreen — nested Subject → Chapter → PDF accordion) -->
+    <div class="admin-section" id="secMulboi">
+
+        <!-- Add Subject -->
+        <div class="form-card">
+            <h3>📚 নতুন বিষয় যোগ করো</h3>
+            <input type="hidden" id="mbSubjectEditId">
+            <div class="input-row">
+                <div class="input-group">
+                    <label>বিষয়ের নাম</label>
+                    <input type="text" id="mbSubjectName" placeholder="যেমন: জীববিজ্ঞান ১ম পত্র">
+                </div>
+                <div class="input-group" style="max-width:90px;">
+                    <label>আইকন</label>
+                    <input type="text" id="mbSubjectIcon" placeholder="📘" maxlength="4">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>বর্ণনা (ঐচ্ছিক)</label>
+                <input type="text" id="mbSubjectDesc" placeholder="ছোট বর্ণনা">
+            </div>
+            <div class="input-group">
+                <label>কালার থিম</label>
+                <select id="mbSubjectColor">
+                    <option value="0">🟣 Indigo</option>
+                    <option value="1">🟢 Emerald</option>
+                    <option value="2">🔴 Red</option>
+                    <option value="3">🟡 Gold</option>
+                    <option value="4">🔵 Sky</option>
+                    <option value="5">🩷 Rose</option>
+                    <option value="6">🟪 Violet</option>
+                    <option value="7">🩵 Pink</option>
+                </select>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-primary" onclick="saveMbSubject()" style="flex:1;">💾 সেভ করো</button>
+                <button class="btn btn-outline" onclick="clearMbSubjectForm()">✕ বাতিল</button>
+            </div>
+        </div>
+
+        <!-- Subjects accordion list -->
+        <div class="form-card">
+            <h3>📖 বিষয় ও অধ্যায় তালিকা</h3>
+            <p style="font-size:11px;color:var(--text2);margin-bottom:10px;">প্রতিটি বিষয়ে ক্লিক করে অধ্যায় ও PDF যোগ করো।</p>
+            <div id="mbSubjectsList"><p style="color:var(--text2);text-align:center;padding:16px;">লোড হচ্ছে...</p></div>
+        </div>
+
+    </div><!-- end secMulboi -->
+
     <!-- ══════════════ TAB 2: EXAM ══════════════ -->
     <!-- (Flutter: ExamAdminScreen) -->
     <div class="admin-section" id="secExam">
@@ -819,6 +871,10 @@
                 <h3 style="margin:0;">👥 স্টুডেন্ট তালিকা</h3>
                 <button class="btn btn-sm btn-success" onclick="openNotifModal()">🔔 Notify All</button>
             </div>
+            <div style="display:flex;gap:6px;margin-bottom:10px;background:var(--hover);border-radius:8px;padding:8px;">
+                <input type="text" id="quickPremPhone" placeholder="⭐ ফোন নম্বর দিয়ে দ্রুত Premium দাও" style="flex:1;">
+                <button class="btn btn-sm btn-success" onclick="quickGrantPremium()">⭐ Premium দাও</button>
+            </div>
             <div class="filter-row">
                 <input type="text" id="filterName" placeholder="🔍 নাম" oninput="loadStudents()">
                 <input type="text" id="filterBatch" placeholder="🔍 ব্যাচ" oninput="loadStudents()">
@@ -828,6 +884,11 @@
                     <option value="student">student</option>
                     <option value="sub_admin">sub_admin</option>
                     <option value="admin">admin</option>
+                </select>
+                <select id="filterPremium" onchange="loadStudents()">
+                    <option value="">🆓⭐ সব প্যাকেজ</option>
+                    <option value="premium">⭐ শুধু Premium</option>
+                    <option value="free">🆓 শুধু Free</option>
                 </select>
             </div>
             <div id="studentTable"></div>
@@ -1291,6 +1352,7 @@ function switchSection(sec, el) {
     document.getElementById(secId)?.classList.add('active');
     const loaders = {
         class:     loadClasses,
+        mulboi:    loadMulboiSubjects,
         exam:      loadExams,
         kakha:     loadKaKha,
         timer:     loadCountdowns,
@@ -1735,6 +1797,311 @@ function clearExamForm() {
     setSwitchVal('examIsLocked', false);
 }
 
+/* ═══════════════════════════════════════════════
+   মূলবই পেইজভিত্তিক প্রস্তুতি — Subject → Chapter → PDF
+   (Flutter: BookSubjectsController — nested accordion state)
+═══════════════════════════════════════════════ */
+const MB_COLOR_NAMES = ['Indigo','Emerald','Red','Gold','Sky','Rose','Violet','Pink'];
+let mbOpenSubject = null; // currently expanded subject id (accordion — one at a time)
+let mbOpenChapters = new Set(); // chapter ids currently expanded within the open subject
+
+function clearMbSubjectForm() {
+    document.getElementById('mbSubjectEditId').value = '';
+    document.getElementById('mbSubjectName').value = '';
+    document.getElementById('mbSubjectIcon').value = '';
+    document.getElementById('mbSubjectDesc').value = '';
+    document.getElementById('mbSubjectColor').value = '0';
+}
+
+function saveMbSubject() {
+    const name = document.getElementById('mbSubjectName').value.trim();
+    if (!name) { showToast('⚠️ বিষয়ের নাম দিন'); return; }
+    const d = {
+        name,
+        icon: document.getElementById('mbSubjectIcon').value.trim() || '📘',
+        description: document.getElementById('mbSubjectDesc').value.trim() || null,
+        color_idx: parseInt(document.getElementById('mbSubjectColor').value) || 0
+    };
+    saveItem('book_subjects', d, document.getElementById('mbSubjectEditId').value || null, clearMbSubjectForm, loadMulboiSubjects);
+}
+
+function editMbSubject(id) {
+    editItem('book_subjects', id, s => {
+        document.getElementById('mbSubjectEditId').value = s.id;
+        document.getElementById('mbSubjectName').value = s.name || '';
+        document.getElementById('mbSubjectIcon').value = s.icon || '';
+        document.getElementById('mbSubjectDesc').value = s.description || '';
+        document.getElementById('mbSubjectColor').value = s.color_idx ?? 0;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+}
+
+async function loadMulboiSubjects() {
+    const box = document.getElementById('mbSubjectsList');
+    box.innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">লোড হচ্ছে...</p>';
+    try {
+        const subjects = await safeFetch(`${SUPABASE_URL}/rest/v1/book_subjects?select=*&order=sort_order.asc,created_at.asc`);
+        if (!subjects?.length) { box.innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">কোনো বিষয় নেই — উপরে থেকে যোগ করো</p>'; return; }
+        box.innerHTML = subjects.map(s => `
+            <div class="form-card" style="margin-bottom:8px;padding:0;overflow:hidden;">
+                <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;" onclick="toggleMbSubject('${s.id}')">
+                    <span style="font-size:22px;">${s.icon || '📘'}</span>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-weight:700;font-size:13px;">${escMb(s.name)}</div>
+                        <div style="font-size:10px;color:var(--text2);">${escMb(s.description || (MB_COLOR_NAMES[s.color_idx]||'') )}</div>
+                    </div>
+                    <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();editMbSubject('${s.id}')">✏️</button>
+                    <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteItem('book_subjects','${s.id}',loadMulboiSubjects)">🗑️</button>
+                    <span style="font-size:12px;color:var(--text2);transform:${mbOpenSubject===s.id?'rotate(90deg)':'rotate(0)'};transition:transform .2s;">▶</span>
+                </div>
+                <div id="mbChapBox_${s.id}" style="display:${mbOpenSubject===s.id?'block':'none'};border-top:1px solid var(--border);padding:12px 14px;background:var(--hover);">
+                    <div id="mbChapInner_${s.id}"><p style="color:var(--text2);font-size:11px;">লোড হচ্ছে...</p></div>
+                </div>
+            </div>`).join('');
+        if (mbOpenSubject) loadMbChapters(mbOpenSubject);
+    } catch (e) { box.innerHTML = '<p style="color:var(--red);">লোড এরর</p>'; }
+}
+
+function toggleMbSubject(id) {
+    mbOpenSubject = (mbOpenSubject === id) ? null : id;
+    mbOpenChapters.clear();
+    loadMulboiSubjects();
+}
+
+async function loadMbChapters(subjectId) {
+    const inner = document.getElementById('mbChapInner_' + subjectId);
+    if (!inner) return;
+    try {
+        const chapters = await safeFetch(`${SUPABASE_URL}/rest/v1/book_chapters?subject_id=eq.${subjectId}&select=*&order=sort_order.asc,created_at.asc`);
+        let html = `
+            <div style="display:flex;gap:6px;margin-bottom:10px;">
+                <input type="text" id="mbNewChapName_${subjectId}" placeholder="নতুন অধ্যায়ের নাম" style="flex:1;">
+                <button class="btn btn-sm btn-primary" onclick="addMbChapter('${subjectId}')">+ যোগ</button>
+            </div>`;
+        if (!chapters?.length) {
+            html += '<p style="color:var(--text2);font-size:11px;text-align:center;padding:8px;">কোনো অধ্যায় নেই</p>';
+        } else {
+            html += chapters.map(ch => `
+                <div style="border:1px solid var(--border);border-radius:8px;margin-bottom:6px;overflow:hidden;background:var(--card-bg,var(--bg));">
+                    <div style="display:flex;align-items:center;gap:8px;padding:9px 10px;cursor:pointer;" onclick="toggleMbChapter('${ch.id}','${subjectId}')">
+                        <span style="flex:1;font-size:12px;font-weight:600;">📑 ${escMb(ch.name)}</span>
+                        <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();renameMbChapter('${ch.id}','${escMb(ch.name).replace(/'/g,"\\'")}',  '${subjectId}')">✏️</button>
+                        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteItem('book_chapters','${ch.id}',()=>loadMbChapters('${subjectId}'))">🗑️</button>
+                        <span style="font-size:10px;color:var(--text2);">${mbOpenChapters.has(ch.id)?'▼':'▶'}</span>
+                    </div>
+                    <div id="mbPdfBox_${ch.id}" style="display:${mbOpenChapters.has(ch.id)?'block':'none'};border-top:1px solid var(--border);padding:10px;">
+                        <div id="mbPdfInner_${ch.id}"><p style="color:var(--text2);font-size:11px;">লোড হচ্ছে...</p></div>
+                    </div>
+                </div>`).join('');
+        }
+        inner.innerHTML = html;
+        mbOpenChapters.forEach(chId => loadMbPdfs(chId));
+    } catch (e) { inner.innerHTML = '<p style="color:var(--red);font-size:11px;">লোড এরর</p>'; }
+}
+
+function addMbChapter(subjectId) {
+    const input = document.getElementById('mbNewChapName_' + subjectId);
+    const name = input.value.trim();
+    if (!name) { showToast('⚠️ অধ্যায়ের নাম দিন'); return; }
+    saveItem('book_chapters', { subject_id: subjectId, name }, null, () => { input.value = ''; }, () => loadMbChapters(subjectId));
+}
+
+function renameMbChapter(id, oldName, subjectId) {
+    const name = prompt('অধ্যায়ের নতুন নাম:', oldName);
+    if (!name || !name.trim()) return;
+    saveItem('book_chapters', { name: name.trim() }, id, null, () => loadMbChapters(subjectId));
+}
+
+function toggleMbChapter(chapterId, subjectId) {
+    if (mbOpenChapters.has(chapterId)) mbOpenChapters.delete(chapterId);
+    else mbOpenChapters.add(chapterId);
+    loadMbChapters(subjectId);
+}
+
+async function loadMbPdfs(chapterId) {
+    const inner = document.getElementById('mbPdfInner_' + chapterId);
+    if (!inner) return;
+    try {
+        const pdfs = await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdfs?chapter_id=eq.${chapterId}&select=*&order=sort_order.asc,created_at.asc`);
+        let html = `
+            <div style="background:var(--hover);border-radius:8px;padding:8px;margin-bottom:8px;">
+                <input type="text" id="mbPdfTitle_${chapterId}" placeholder="PDF শিরোনাম" style="margin-bottom:6px;">
+                <div style="display:flex;gap:6px;margin-bottom:6px;">
+                    <button class="btn btn-sm" id="mbModeUploadBtn_${chapterId}" onclick="setMbPdfMode('${chapterId}','upload')" style="flex:1;">📤 ফাইল আপলোড</button>
+                    <button class="btn btn-sm btn-outline" id="mbModeUrlBtn_${chapterId}" onclick="setMbPdfMode('${chapterId}','url')" style="flex:1;">🔗 URL দাও</button>
+                </div>
+                <div id="mbUploadModeBox_${chapterId}">
+                    <input type="file" id="mbPdfFile_${chapterId}" accept="application/pdf" style="margin-bottom:6px;">
+                </div>
+                <div id="mbUrlModeBox_${chapterId}" style="display:none;">
+                    <input type="url" id="mbPdfUrl_${chapterId}" placeholder="https://example.com/file.pdf" style="margin-bottom:6px;">
+                </div>
+                <input type="number" id="mbPdfPageCount_${chapterId}" placeholder="পেইজ সংখ্যা (ফাইল আপলোডে স্বয়ংক্রিয়)" min="1" style="margin-bottom:6px;">
+                <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);margin-bottom:6px;">
+                    <input type="checkbox" id="mbPdfPremium_${chapterId}" style="width:auto;"> ⭐ Premium PDF (শুধু Premium user দেখবে)
+                </label>
+                <div id="mbUploadProgress_${chapterId}" style="display:none;font-size:11px;color:var(--accent);margin-bottom:6px;">
+                    <div style="background:var(--border);border-radius:6px;height:6px;overflow:hidden;margin-bottom:3px;">
+                        <div id="mbUploadBar_${chapterId}" style="background:var(--accent);height:100%;width:0%;transition:width .2s;"></div>
+                    </div>
+                    <span id="mbUploadPct_${chapterId}">0%</span>
+                </div>
+                <button class="btn btn-sm btn-primary" style="width:100%;" onclick="uploadMbPdf('${chapterId}')" id="mbUploadBtn_${chapterId}">📤 PDF সংরক্ষণ করো</button>
+            </div>`;
+        if (!pdfs?.length) {
+            html += '<p style="color:var(--text2);font-size:11px;text-align:center;">কোনো PDF নেই</p>';
+        } else {
+            html += pdfs.map(p => `
+                <div style="display:flex;align-items:center;gap:8px;padding:7px 8px;border:1px solid var(--border);border-radius:6px;margin-bottom:5px;">
+                    <span style="font-size:16px;">📕</span>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escMb(p.title)}</div>
+                        <div style="font-size:9.5px;color:var(--text2);">${p.page_count ? p.page_count + ' পেইজ' : 'PDF'}</div>
+                    </div>
+                    <button class="btn btn-sm ${p.is_premium?'btn-outline':'btn-success'}" style="font-size:9px;padding:4px 7px;" onclick="toggleMbPdfPremium('${p.id}',${!p.is_premium},'${chapterId}')">${p.is_premium?'⭐ Premium':'🆓 Free'}</button>
+                    <button class="btn btn-sm btn-danger" style="font-size:9px;padding:4px 7px;" onclick="deleteMbPdf('${p.id}','${chapterId}')">🗑️</button>
+                </div>`).join('');
+        }
+        inner.innerHTML = html;
+    } catch (e) { inner.innerHTML = '<p style="color:var(--red);font-size:11px;">লোড এরর</p>'; }
+}
+
+function setMbPdfMode(chapterId, mode) {
+    document.getElementById('mbUploadModeBox_' + chapterId).style.display = mode === 'upload' ? 'block' : 'none';
+    document.getElementById('mbUrlModeBox_' + chapterId).style.display = mode === 'url' ? 'block' : 'none';
+    document.getElementById('mbModeUploadBtn_' + chapterId).className = 'btn btn-sm' + (mode === 'upload' ? '' : ' btn-outline');
+    document.getElementById('mbModeUrlBtn_' + chapterId).className = 'btn btn-sm' + (mode === 'url' ? '' : ' btn-outline');
+    const box = document.getElementById('mbUploadModeBox_' + chapterId);
+    box.dataset.mode = mode;
+    document.getElementById('mbPdfBox_' + chapterId)?.setAttribute('data-pdf-mode', mode);
+}
+
+// Try to detect page count client-side via PDF.js so the admin doesn't have
+// to count pages manually — falls back silently to the manual field if it fails.
+async function detectMbPageCount(file) {
+    try {
+        if (typeof pdfjsLib === 'undefined') return null;
+        const buf = await file.arrayBuffer();
+        const doc = await pdfjsLib.getDocument({ data: buf }).promise;
+        return doc.numPages || null;
+    } catch (e) { return null; }
+}
+
+// Direct upload to Supabase Storage 'pdfs' bucket via REST API (no Cloudflare
+// Worker proxy needed — this app talks to Supabase directly everywhere).
+// Supports two modes: upload a file, or paste an existing public PDF URL.
+async function uploadMbPdf(chapterId) {
+    const titleInput = document.getElementById('mbPdfTitle_' + chapterId);
+    const premCheck = document.getElementById('mbPdfPremium_' + chapterId);
+    const pageCountInput = document.getElementById('mbPdfPageCount_' + chapterId);
+    const progressEl = document.getElementById('mbUploadProgress_' + chapterId);
+    const barEl = document.getElementById('mbUploadBar_' + chapterId);
+    const pctEl = document.getElementById('mbUploadPct_' + chapterId);
+    const btn = document.getElementById('mbUploadBtn_' + chapterId);
+    const urlBox = document.getElementById('mbUrlModeBox_' + chapterId);
+    const mode = urlBox.style.display === 'none' ? 'upload' : 'url';
+
+    const title = titleInput.value.trim();
+    if (!title) { showToast('⚠️ PDF শিরোনাম দিন'); return; }
+
+    let pageCount = parseInt(pageCountInput.value) || null;
+    let publicUrl = null;
+
+    btn.disabled = true;
+
+    try {
+        if (mode === 'url') {
+            publicUrl = document.getElementById('mbPdfUrl_' + chapterId).value.trim();
+            if (!publicUrl) { showToast('⚠️ PDF URL দিন'); btn.disabled = false; return; }
+        } else {
+            const fileInput = document.getElementById('mbPdfFile_' + chapterId);
+            const file = fileInput.files[0];
+            if (!file) { showToast('⚠️ PDF ফাইল নির্বাচন করো'); btn.disabled = false; return; }
+            if (file.type !== 'application/pdf') { showToast('⚠️ শুধুমাত্র PDF ফাইল আপলোড করা যাবে'); btn.disabled = false; return; }
+            if (file.size > 50 * 1024 * 1024) { showToast('⚠️ ফাইল সাইজ ৫০MB এর কম হতে হবে'); btn.disabled = false; return; }
+
+            btn.textContent = '🔍 পেইজ গুনছে...';
+            if (!pageCount) pageCount = await detectMbPageCount(file);
+
+            btn.textContent = '⏳ আপলোড হচ্ছে...';
+            progressEl.style.display = 'block';
+
+            const safeFileName = Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+            const storagePath = `chapter_${chapterId}/${safeFileName}`;
+
+            publicUrl = await new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', `${SUPABASE_URL}/storage/v1/object/pdfs/${storagePath}`);
+                xhr.setRequestHeader('apikey', SUPABASE_KEY);
+                xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_KEY);
+                xhr.setRequestHeader('Content-Type', 'application/pdf');
+                xhr.upload.onprogress = ev => {
+                    if (ev.lengthComputable) {
+                        const pct = Math.round((ev.loaded / ev.total) * 100);
+                        barEl.style.width = pct + '%';
+                        pctEl.textContent = pct + '%';
+                    }
+                };
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        resolve(`${SUPABASE_URL}/storage/v1/object/public/pdfs/${storagePath}`);
+                    } else {
+                        reject(new Error('Storage আপলোড ব্যর্থ (' + xhr.status + ')'));
+                    }
+                };
+                xhr.onerror = () => reject(new Error('নেটওয়ার্ক এরর'));
+                xhr.send(file);
+            });
+        }
+
+        await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdfs`, {
+            method: 'POST',
+            body: JSON.stringify({
+                chapter_id: chapterId,
+                title,
+                file_url: publicUrl,
+                page_count: pageCount,
+                is_premium: !!premCheck.checked
+            })
+        });
+
+        showToast('✅ PDF সংরক্ষণ সম্পন্ন');
+        titleInput.value = '';
+        pageCountInput.value = '';
+        premCheck.checked = false;
+        const fileInput = document.getElementById('mbPdfFile_' + chapterId);
+        if (fileInput) fileInput.value = '';
+        const urlInput = document.getElementById('mbPdfUrl_' + chapterId);
+        if (urlInput) urlInput.value = '';
+        loadMbPdfs(chapterId);
+    } catch (e) {
+        showToast('❌ এরর: ' + e.message, 5000);
+    } finally {
+        btn.disabled = false; btn.textContent = '📤 PDF সংরক্ষণ করো';
+        progressEl.style.display = 'none';
+        barEl.style.width = '0%'; pctEl.textContent = '0%';
+    }
+}
+
+function toggleMbPdfPremium(pdfId, makePremium, chapterId) {
+    safeFetch(`${SUPABASE_URL}/rest/v1/book_pdfs?id=eq.${pdfId}`, {
+        method: 'PATCH', body: JSON.stringify({ is_premium: makePremium })
+    }).then(() => { showToast(makePremium ? '⭐ Premium করা হয়েছে' : '🆓 Free করা হয়েছে'); loadMbPdfs(chapterId); })
+      .catch(e => showToast('❌ এরর: ' + e.message));
+}
+
+async function deleteMbPdf(pdfId, chapterId) {
+    if (!confirm('এই PDF মুছে ফেলতে চান? এর সাথে generated MCQ cache-ও মুছে যাবে।')) return;
+    try {
+        await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdfs?id=eq.${pdfId}`, { method: 'DELETE' });
+        showToast('🗑️ PDF মুছে ফেলা হয়েছে');
+        loadMbPdfs(chapterId);
+    } catch (e) { showToast('❌ ডিলিট এরর'); }
+}
+
+function escMb(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+
 async function loadExams() {
     try {
         const data = await safeFetch(`${SUPABASE_URL}/rest/v1/exams?select=*&order=created_at.desc&limit=200`);
@@ -1867,15 +2234,23 @@ async function toggleCountdownActive(id,newState){
 ═══════════════════════════════════════════════ */
 async function loadStudents(){
     try{
-        const name=document.getElementById('filterName').value.trim();const batch=document.getElementById('filterBatch').value.trim();const college=document.getElementById('filterCollege').value.trim();const role=document.getElementById('filterRole').value;
+        const name=document.getElementById('filterName').value.trim();const batch=document.getElementById('filterBatch').value.trim();const college=document.getElementById('filterCollege').value.trim();const role=document.getElementById('filterRole').value;const premFilter=document.getElementById('filterPremium').value;
         let url=`${SUPABASE_URL}/rest/v1/users?select=*&order=created_at.desc&limit=200`;if(role)url+=`&role=eq.${role}`;
         const allData=await safeFetch(url);
-        let data=(allData||[]).filter(u=>(!name||u.name?.toLowerCase().includes(name.toLowerCase()))&&(!batch||(u.batch||'').toLowerCase().includes(batch.toLowerCase()))&&(!college||(u.college||'').toLowerCase().includes(college.toLowerCase())));
+        let data=(allData||[]).filter(u=>(!name||u.name?.toLowerCase().includes(name.toLowerCase()))&&(!batch||(u.batch||'').toLowerCase().includes(batch.toLowerCase()))&&(!college||(u.college||'').toLowerCase().includes(college.toLowerCase()))&&(!premFilter||(premFilter==='premium'?!!u.is_premium:!u.is_premium)));
         const total=data.length;const start=(studentPage-1)*studentPageSize;const paged=data.slice(start,start+studentPageSize);
         if(!paged.length){document.getElementById('studentTable').innerHTML='<p style="color:var(--text2);text-align:center;padding:16px;">কোনো স্টুডেন্ট নেই</p>';document.getElementById('studentPager').innerHTML='';return;}
         let html=`<p style="font-size:11px;color:var(--text2);margin-bottom:6px;">মোট: ${total} জন</p>`;
-        html+='<table class="data-table"><tr><th>নাম</th><th>ব্যাচ</th><th>কলেজ</th><th>ফোন</th><th>রোল</th><th>Actions</th></tr>';
-        paged.forEach(u=>{const roleColor=u.role==='admin'?'var(--red)':u.role==='sub_admin'?'var(--yellow)':'var(--text2)';html+=`<tr><td><b>${u.name||'—'}</b></td><td>${u.batch||'—'}</td><td>${u.college||'—'}</td><td style="font-size:11px;">${u.phone}</td><td><span style="font-size:10px;color:${roleColor};font-weight:700;">${u.role||'student'}</span></td><td style="white-space:nowrap;"><button class="btn btn-sm btn-outline" onclick="sendNotifToUser('${u.phone}','${u.name||''}')">🔔</button>${isAdmin&&u.role!=='admin'?`<button class="btn btn-sm btn-danger" onclick="deleteItem('users','${u.id}',loadStudents)" style="margin-left:3px;">🗑️</button>`:''}</td></tr>`;});
+        html+='<table class="data-table"><tr><th>নাম</th><th>ব্যাচ</th><th>কলেজ</th><th>ফোন</th><th>রোল</th><th>প্যাকেজ</th><th>Actions</th></tr>';
+        paged.forEach(u=>{
+            const roleColor=u.role==='admin'?'var(--red)':u.role==='sub_admin'?'var(--yellow)':'var(--text2)';
+            const isPrem=!!u.is_premium;
+            const premBadge=isPrem?`<span class="badge badge-green" style="white-space:nowrap;">⭐ Premium</span>`:`<span class="badge" style="background:var(--hover);color:var(--text2);white-space:nowrap;">🆓 Free</span>`;
+            const premBtn=isPrem
+                ?`<button class="btn btn-sm btn-outline" onclick="togglePremium('${u.phone}',false)" title="Premium সরাও">⭐ সরাও</button>`
+                :`<button class="btn btn-sm btn-success" onclick="togglePremium('${u.phone}',true)" title="Premium দাও">⭐ দাও</button>`;
+            html+=`<tr><td><b>${u.name||'—'}</b></td><td>${u.batch||'—'}</td><td>${u.college||'—'}</td><td style="font-size:11px;">${u.phone}</td><td><span style="font-size:10px;color:${roleColor};font-weight:700;">${u.role||'student'}</span></td><td>${premBadge}</td><td style="white-space:nowrap;">${premBtn} <button class="btn btn-sm btn-outline" onclick="sendNotifToUser('${u.phone}','${u.name||''}')">🔔</button>${isAdmin&&u.role!=='admin'?`<button class="btn btn-sm btn-danger" onclick="deleteItem('users','${u.id}',loadStudents)" style="margin-left:3px;">🗑️</button>`:''}</td></tr>`;
+        });
         html+='</table>';document.getElementById('studentTable').innerHTML=html;
         const totalPages=Math.ceil(total/studentPageSize);let pager='';
         if(totalPages>1){if(studentPage>1)pager+=`<button class="btn btn-sm btn-outline" onclick="studentPage--;loadStudents()">◀</button>`;pager+=`<span style="font-size:12px;color:var(--text2);padding:5px 10px;">${studentPage}/${totalPages}</span>`;if(studentPage<totalPages)pager+=`<button class="btn btn-sm btn-outline" onclick="studentPage++;loadStudents()">▶</button>`;}
@@ -1884,7 +2259,30 @@ async function loadStudents(){
         document.getElementById('statStudents').textContent = total;
     }catch(e){document.getElementById('studentTable').innerHTML='<p style="color:var(--red);">লোড এরর</p>';}
 }
+
+// Grant/revoke full-website Premium access for one user by phone number.
+// Sets users.is_premium directly — every premium-gated feature across the
+// app (মূলবই PDFs, etc.) reads this same flag, so this is a single
+// site-wide switch, not feature-specific.
+async function togglePremium(phone,give){
+    if(!confirm(give?`${phone} কে Premium অ্যাক্সেস দিতে চান?`:`${phone} এর Premium অ্যাক্সেস সরাতে চান?`))return;
+    try{
+        await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${encodeURIComponent(phone)}`,{method:'PATCH',body:JSON.stringify({is_premium:give})});
+        showToast(give?'⭐ Premium দেওয়া হয়েছে':'✅ Premium সরানো হয়েছে');
+        loadStudents();
+    }catch(e){showToast('❌ এরর: '+e.message);}
+}
+
+// Quick grant by phone number — for when admin wants to grant Premium
+// without scrolling/searching the full student list.
+function quickGrantPremium(){
+    const phone=document.getElementById('quickPremPhone').value.trim();
+    if(!phone){showToast('⚠️ ফোন নম্বর দিন');return;}
+    togglePremium(phone,true);
+    document.getElementById('quickPremPhone').value='';
+}
 function sendNotifToUser(phone,name){document.getElementById('notifPhone').value=phone;notifType='phone';document.querySelectorAll('#notifTypeAll,#notifTypePhone').forEach(el=>el.classList.remove('active'));document.getElementById('notifTypePhone').classList.add('active');document.getElementById('notifPhoneField').style.display='block';document.getElementById('notifTitle').value='';document.getElementById('notifMessage').value='';document.getElementById('notifModal').classList.add('active');}
+
 
 /* ═══════════════════════════════════════════════
    MOCK  (Flutter: MockAdminController)
@@ -2419,5 +2817,10 @@ document.addEventListener('DOMContentLoaded', () => {
 <script src="kakhacq/kakhacq-parser.js"></script>
 <script src="kakhacq/imgbb-manager.js"></script>
 <script src="kakhacq/kakhacq-admin.js"></script>
+
+<!-- গ্লোবাল নেভিগেশন স্ট্যাক + zoom-lock (copy-lock ছাড়া — অ্যাডমিনের
+     ফোন নম্বর/ID কপি করার দরকার হয়) -->
+<script src="global-nav.js"></script>
+<script src="atlas-admin-zoom.js"></script>
 </body>
     </html>

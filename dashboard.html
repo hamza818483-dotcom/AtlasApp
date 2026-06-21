@@ -458,13 +458,14 @@
             box-shadow:0 0 40px rgba(99,102,241,0.15);
         }
         .pomo-watch-card::before {
-            content:'';position:absolute;inset:-1px;border-radius:20px;
-            background:conic-gradient(from 0deg,rgba(99,102,241,0),rgba(99,102,241,0.6),rgba(99,102,241,0),rgba(129,140,248,0.4),rgba(99,102,241,0));
-            animation:pomoBorderSpin 3s linear infinite;z-index:0;
-        }
-        .pomo-watch-card::after {
-            content:'';position:absolute;inset:1px;border-radius:19px;
-            background:linear-gradient(145deg,#0F1117,#1A1F2E);z-index:0;
+            content:'';position:absolute;inset:0;border-radius:20px;z-index:0;
+            padding:2px;
+            background:conic-gradient(from 0deg,#6366F1,#818CF8,#A78BFA,#6366F1);
+            -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+            -webkit-mask-composite:xor;
+            mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+            mask-composite:exclude;
+            animation:pomoBorderSpin 3s linear infinite;
         }
         @keyframes pomoBorderSpin { to{transform:rotate(360deg);} }
         .pomo-watch-inner { position:relative;z-index:1; }
