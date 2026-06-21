@@ -76,3 +76,22 @@ RLS পলিসি বা মিসিং কলামের কারণে si
 - `supabase-migration.sql` Supabase SQL Editor-এ রান হয়েছে (`parsed_content` কলাম আছে কিনা)
 - `ka_kha_cq` টেবিলে RLS policy public insert/select অনুমতি দেয় কিনা
 - ব্রাউজার Console (F12) এ কোনো red error আসছে কিনা — থাকলে exact মেসেজ দেখুন
+
+## আপডেট ২: প্রোডাকশনে `column does not exist` এরর — রুট-কজ পাওয়া গেছে
+
+লাইভ টেস্টিং-এ ধরা পড়েছে — `ka_kha_cq` টেবিলে `type`, `cq_type`, `year`,
+`topic` কলাম আসলে **কখনোই ছিল না**, যদিও কোডের অনেক জায়গায় (মূল
+`saveKaKha`/`loadKaKha`/`editKaKha`, এবং `exam.html`-এর ইউজার-সাইড
+ফিল্টার) এগুলো অনেক আগে থেকেই রেফারেন্স করা হচ্ছিল। এটা এই ফাইল-আপলোড
+ফিচারের কারণে হওয়া বাগ না — schema আর কোডের মধ্যে আগে থেকেই drift ছিল।
+
+এছাড়া `link_or_file` কলামে `NOT NULL` constraint ছিল, যেটা ফাইল-বেইজড
+এন্ট্রির জন্য (যেখানে `link_or_file = null` পাঠানো হয়) insert ব্লক করছিল।
+
+`supabase-migration.sql`-এ এখন এই দুটোর ফিক্স যুক্ত করা হয়েছে:
+- মিসিং কলামগুলো (`type`, `cq_type`, `year`, `topic`) যুক্ত হবে
+- `link_or_file`-এর `NOT NULL` constraint সরানো হবে
+
+যদি আগে migration রান করে থাকেন এবং তারপরও "column does not exist" বা
+"violates not-null constraint" এরর পান, তাহলে **migration ফাইলটা আবার
+রান করুন** (নতুন ভার্সনে এই ফিক্সগুলো আছে)।

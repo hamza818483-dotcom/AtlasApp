@@ -1,12 +1,28 @@
 -- ============================================================
 -- ক, খ, CQ ফাইল-আপলোড ফিচারের জন্য নতুন কলাম
 -- এটা Supabase Dashboard > SQL Editor এ গিয়ে রান করতে হবে।
--- বিদ্যমান ka_kha_cq টেবিলের কোনো ডেটা/কলাম মুছে যাবে না —
--- শুধু একটা নতুন optional কলাম যোগ হবে।
+-- বিদ্যমান ka_kha_cq টেবিলের কোনো ডেটা মুছে যাবে না —
+-- শুধু কিছু নতুন optional কলাম যোগ হবে এবং একটা constraint শিথিল হবে।
 -- ============================================================
 
 ALTER TABLE ka_kha_cq
 ADD COLUMN IF NOT EXISTS parsed_content JSONB;
+
+-- কোডে (admin.html-এর মূল saveKaKha/loadKaKha/editKaKha ফাংশন এবং
+-- exam.html-এর ইউজার-সাইড ফিল্টার) এই কলামগুলো অনেক আগে থেকেই রেফারেন্স
+-- করা হচ্ছিল, কিন্তু টেবিলে এগুলো ছিল না — ফলে যেকোনো insert
+-- ("column ... does not exist" এরর দিয়ে) সম্পূর্ণ ব্যর্থ হতো।
+ALTER TABLE ka_kha_cq
+ADD COLUMN IF NOT EXISTS type VARCHAR,
+ADD COLUMN IF NOT EXISTS cq_type VARCHAR,
+ADD COLUMN IF NOT EXISTS year VARCHAR,
+ADD COLUMN IF NOT EXISTS topic VARCHAR;
+
+-- ফাইল-বেইজড এন্ট্রিতে (parsed_content আছে) আলাদা লিংকের দরকার নেই,
+-- তাই link_or_file = NULL পাঠানো হয়। কিন্তু টেবিলে এই কলামে NOT NULL
+-- constraint ছিল, যা insert ব্লক করছিল। এখন NULL অনুমোদিত।
+ALTER TABLE ka_kha_cq
+ALTER COLUMN link_or_file DROP NOT NULL;
 
 -- (ঐচ্ছিক কিন্তু রেকমেন্ডেড) পারফরম্যান্সের জন্য ইনডেক্স —
 -- যদি ভবিষ্যতে parsed_content এর ভেতরে সার্চ করার দরকার হয়
