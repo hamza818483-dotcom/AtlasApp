@@ -280,8 +280,8 @@
         .countdown-card {
             background: linear-gradient(140deg,var(--bg) 0%,var(--card-bg) 100%);
             border: 1.5px solid var(--atlas-border, var(--border));
-            border-radius: var(--radius); padding: 20px 16px;
-            margin-bottom: 14px; text-align: center;
+            border-radius: var(--radius); padding: 16px 14px;
+            margin: 0 auto 14px; max-width: 320px; text-align: center;
             position: relative; animation: pulseGlow 3s ease-in-out infinite;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             overflow: hidden;
@@ -306,47 +306,94 @@
         .timer-4 .timer-serial-box { background: var(--t4); }
         .timer-5 .timer-serial-box { background: var(--t5); }
 
-        .timer-main-topic { font-size: 35px; font-weight: 900; color: var(--text); margin-bottom: 4px; }
-        .timer-subtopic { font-size: 25px; color: var(--text-secondary); margin-bottom: 15px; }
+        .timer-main-topic { font-size: 19px; font-weight: 900; color: var(--text); margin-top: 10px; }
+        .timer-subtopic { font-size: 13px; color: var(--text-secondary); margin-bottom: 10px; }
 
-        .timer-row { display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .timer-clock-icon { font-size: 50px; }
-        .timer-values { display: flex; align-items: center; gap: 4px; }
-        .timer-block { display: flex; flex-direction: column; align-items: center; }
-        .timer-number { font-size: 40px; font-weight: 700; color: var(--text); letter-spacing: 1px; font-variant-numeric: tabular-nums; }
-        .timer-separator { font-size: 18px; font-weight: 700; color: var(--text-secondary); margin-top: -8px; }
-        .timer-label { font-size: 9px; color: var(--text-secondary); opacity: .7; margin-top: 2px; }
+        /* Inner premium clock card — clock icon + digits live in their own
+           contained card inside the outer timer card, per spec. */
+        .timer-clock-card {
+            width: 100%;
+            background: linear-gradient(155deg, var(--card-bg) 0%, var(--card-hover) 100%);
+            border: 1px solid var(--border); border-radius: 12px;
+            padding: 10px 8px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 2px 10px rgba(0,0,0,.15);
+        }
+        .timer-row { display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .timer-clock-icon { font-size: 26px; flex-shrink: 0; }
+        .timer-values { display: flex; align-items: center; gap: 3px; }
+        .timer-block { display: flex; flex-direction: column; align-items: center; min-width: 26px; }
+        .timer-number { font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: .5px; font-variant-numeric: tabular-nums; }
+        .timer-separator { font-size: 13px; font-weight: 700; color: var(--text-secondary); margin-top: -6px; }
+        .timer-label { font-size: 8px; color: var(--text-secondary); opacity: .7; margin-top: 1px; }
 
         /* ─────────────────────────────────────────────
-           HOME BUTTONS  (Flutter: GridView + InkWell)
+           HOME BUTTONS — Premium Grid  (Flutter: GridView + InkWell)
+           Each row is its own grid container so spacing/column-count
+           is explicit per spec, instead of relying on auto-wrap.
         ───────────────────────────────────────────── */
-        .home-buttons {
-            display: grid; grid-template-columns: repeat(2,1fr);
-            gap: 10px; margin-bottom: 14px;
-        }
-        @media(min-width:600px) { .home-buttons { grid-template-columns: repeat(3,1fr); } }
+        .home-row { display: grid; gap: 9px; margin-bottom: 9px; }
+        .home-row:last-child { margin-bottom: 16px; }
+        .home-row-2  { grid-template-columns: repeat(2,1fr); }   /* 50/50 hero pairs */
+        .home-row-3  { grid-template-columns: repeat(3,1fr); }   /* HSC / Admission / অনুশীলনী */
+        .home-row-4  { grid-template-columns: repeat(4,1fr); }   /* Focus/Tracker/Pomodoro/GPA */
 
         .home-btn {
-            background-color: var(--card-bg); color: var(--text);
-            border: 1px solid var(--border); border-radius: var(--radius-md);
-            padding: 16px 10px; font-family: 'Noto Sans Bengali','Inter',sans-serif;
-            font-size: 12px; font-weight: 600; text-align: center; cursor: pointer;
+            background: linear-gradient(155deg, var(--card-bg) 0%, var(--card-hover) 100%);
+            color: var(--text);
+            border: 1px solid var(--border); border-radius: 14px;
+            padding: 12px 6px; font-family: 'Noto Sans Bengali','Inter',sans-serif;
+            font-size: 11px; font-weight: 700; text-align: center; cursor: pointer;
             transition: all .2s ease; box-shadow: var(--shadow-sm);
-            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            display: flex; flex-direction: column; align-items: center; gap: 7px;
+            position: relative; overflow: hidden; width: 100%;
         }
+        .home-btn:active { transform: scale(.96); }
         .home-btn:hover {
             border-color: var(--accent);
             box-shadow: var(--shadow-glow), var(--shadow);
             transform: translateY(-2px);
         }
-        .home-btn .btn-icon { font-size: 24px; }
-        .home-btn .btn-text { font-size: 11px; line-height: 1.3; }
-        .home-btn-full { grid-column: 1 / -1; }
+
+        /* Premium icon tile — colored rounded-square behind every icon */
+        .btn-icon-tile {
+            width: 36px; height: 36px; border-radius: 11px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; flex-shrink: 0;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 2px 8px rgba(0,0,0,.18);
+        }
+        .home-btn .btn-text { font-size: 10.5px; line-height: 1.25; font-weight: 700; }
+
+        /* Hero style — bigger tile, left-aligned, used in 50/50 + full-width rows */
+        .home-btn-hero {
+            flex-direction: row; align-items: center; justify-content: flex-start;
+            padding: 14px 12px; gap: 10px; text-align: left;
+        }
+        .home-btn-hero .btn-icon-tile { width: 42px; height: 42px; font-size: 21px; border-radius: 12px; }
+        .home-btn-hero .btn-text { font-size: 12.5px; line-height: 1.3; }
+
+        /* Distinct icon-tile color themes (premium gradients, not generic) */
+        .tile-indigo  { background: linear-gradient(135deg,#5A5FE0,#3B3FB8); }
+        .tile-amber   { background: linear-gradient(135deg,#F5A524,#C9810A); }
+        .tile-violet  { background: linear-gradient(135deg,#8B5CF6,#6228D7); }
+        .tile-rose    { background: linear-gradient(135deg,#F43F8E,#C81E68); }
+        .tile-emerald { background: linear-gradient(135deg,#10B981,#0A8F63); }
+        .tile-sky     { background: linear-gradient(135deg,#38BDF8,#0D8FD0); }
+        .tile-orange  { background: linear-gradient(135deg,#FB923C,#D85F11); }
+        .tile-teal    { background: linear-gradient(135deg,#14B8A6,#0C8B7D); }
+        .tile-red     { background: linear-gradient(135deg,#F87171,#D63B3B); }
+        .tile-gold    { background: linear-gradient(135deg,#FBBF24,#D69400); }
+        .tile-plum    { background: linear-gradient(135deg,#A855F7,#7B23D6); }
+
         .home-btn.admin-btn {
             border-color: #FFD700; color: #FFD700; display: none;
             background: rgba(255,215,0,.04);
         }
         .home-btn.admin-btn:hover { background: rgba(255,215,0,.08); box-shadow: 0 0 0 2px rgba(255,215,0,.2); }
+
+        @media(max-width:340px) {
+            .home-row-4 { grid-template-columns: repeat(2,1fr); }
+            .home-row-3 { grid-template-columns: repeat(1,1fr); }
+        }
 
         /* Button icons — proper semantic icons not color circles */
         .icon-class::before    { content: '📚'; }
@@ -701,6 +748,30 @@
         <button class="sidebar-item" onclick="goTo('class.html');closeSidebar();">
             <span class="si-icon">📚</span> ফ্রি ক্লাস
         </button>
+        <button class="sidebar-item" onclick="goTo('study.html');closeSidebar();">
+            <span class="si-icon">📖</span> মূলবই পেইজভিত্তিক প্রস্তুতি
+        </button>
+        <button class="sidebar-item" onclick="goTo('focus.html');closeSidebar();">
+            <span class="si-icon">⏱️</span> Focus Timer
+        </button>
+        <button class="sidebar-item" onclick="showToast('শীঘ্রই আসছে! 🚧');closeSidebar();">
+            <span class="si-icon">📊</span> Study Tracker
+        </button>
+        <button class="sidebar-item" onclick="goTo('dashboard.html#pomoScreen');closeSidebar();">
+            <span class="si-icon">🍅</span> Pomodoro
+        </button>
+        <button class="sidebar-item" onclick="openGpaCalculatorModal();closeSidebar();">
+            <span class="si-icon">🎯</span> GPA Calculator
+        </button>
+        <button class="sidebar-item" onclick="goTo('exam.html?cat=board');closeSidebar();">
+            <span class="si-icon">🎓</span> HSC
+        </button>
+        <button class="sidebar-item" onclick="openAdmissionModal();closeSidebar();">
+            <span class="si-icon">🏛️</span> এডমিশন
+        </button>
+        <button class="sidebar-item" onclick="goTo('exam.html?cat=onushiloni');closeSidebar();">
+            <span class="si-icon">📋</span> অনুশীলনী
+        </button>
         <button class="sidebar-item" onclick="goTo('exam.html');closeSidebar();">
             <span class="si-icon">📝</span> ফ্রি এক্সাম
         </button>
@@ -708,13 +779,13 @@
             <span class="si-icon">🎯</span> মক টেস্ট
         </button>
         <button class="sidebar-item" onclick="openModelTestModal();closeSidebar();">
-            <span class="si-icon">📖</span> Model Test
+            <span class="si-icon">🧪</span> Model Test
         </button>
         <button class="sidebar-item" onclick="openMistakesModal();closeSidebar();">
             <span class="si-icon">⚠️</span> My Mistakes
         </button>
         <button class="sidebar-item" onclick="goTo('ai.html');closeSidebar();">
-            <span class="si-icon">🤖</span> ATLAS AI
+            <span class="si-icon">✨</span> ATLAS AI
         </button>
         <button class="sidebar-item admin-sidebar" id="adminSidebarBtn" onclick="goTo('admin.html');closeSidebar();" style="display:none;">
             <span class="si-icon">👑</span> Admin Control
@@ -809,58 +880,90 @@
     <!-- (Flutter: CountdownTimerList widget) -->
     <div id="timerContainer"></div>
 
-    <!-- ── Home Buttons Grid ── -->
-    <!-- (Flutter: GridView.count with InkWell cards) -->
-    <div class="home-buttons">
-        <button class="home-btn" onclick="goTo('class.html')">
-            <span class="btn-icon">📚</span>
+    <!-- ── Home Buttons — Premium Grid ── -->
+    <!-- (Flutter: Column of Rows, each Row = GridView shrinkWrap) -->
+
+    <!-- Row 1: ফ্রি ক্লাস + মূলবই পেইজভিত্তিক প্রস্তুতি (50/50) -->
+    <div class="home-row home-row-2">
+        <button class="home-btn home-btn-hero" onclick="goTo('class.html')">
+            <span class="btn-icon-tile tile-indigo">📚</span>
             <span class="btn-text">ফ্রি ক্লাস</span>
         </button>
-        <button class="home-btn" onclick="goTo('exam.html?cat=board')">
-            <span class="btn-icon">📋</span>
-            <span class="btn-text">বোর্ড প্রস্তুতি</span>
+        <button class="home-btn home-btn-hero" onclick="goTo('study.html')">
+            <span class="btn-icon-tile tile-violet">📖</span>
+            <span class="btn-text">মূলবই পেইজভিত্তিক প্রস্তুতি</span>
         </button>
-        <button class="home-btn" onclick="goTo('exam.html?cat=medical')">
-            <span class="btn-icon">🏥</span>
-            <span class="btn-text">মেডিকেল+ডেন্টাল</span>
+    </div>
+
+    <!-- Row 2: Focus Timer, Study Tracker, Pomodoro, GPA Calculator -->
+    <div class="home-row home-row-4">
+        <button class="home-btn" onclick="goTo('focus.html')">
+            <span class="btn-icon-tile tile-emerald">⏱️</span>
+            <span class="btn-text">Focus Timer</span>
         </button>
-        <button class="home-btn" onclick="goTo('exam.html?cat=varsity')">
-            <span class="btn-icon">🎓</span>
-            <span class="btn-text">ভার্সিটি প্রস্তুতি</span>
+        <button class="home-btn" onclick="showToast('শীঘ্রই আসছে! 🚧')">
+            <span class="btn-icon-tile tile-sky">📊</span>
+            <span class="btn-text">Study Tracker</span>
         </button>
-        <button class="home-btn" onclick="goTo('exam.html?cat=onushiloni')">
-            <span class="btn-icon">✏️</span>
-            <span class="btn-text">অনুশীলনী এক্সাম</span>
-        </button>
-        <button class="home-btn" onclick="openModelTestModal()">
-            <span class="btn-icon">📖</span>
-            <span class="btn-text">Model Test</span>
-        </button>
-        <button class="home-btn home-btn-full" onclick="goTo('mock-test.html')">
-            <span class="btn-icon">🔁</span>
-            <span class="btn-text">Unlimited Mock Test</span>
-        </button>
-        <button class="home-btn" onclick="openMistakesModal()">
-            <span class="btn-icon">⚠️</span>
-            <span class="btn-text">My Mistakes</span>
-        </button>
-        <button class="home-btn" onclick="goTo('ai.html')">
-            <span class="btn-icon">🤖</span>
-            <span class="btn-text">ATLAS AI</span>
-        </button>
-        <!-- Pomodoro Timer quick-access — opens the SAME Pomodoro screen/state as the profile page (no separate/duplicate timer) -->
         <button class="home-btn" onclick="goTo('dashboard.html#pomoScreen')">
-            <span class="btn-icon">⏱️</span>
-            <span class="btn-text">Pomodoro Timer</span>
+            <span class="btn-icon-tile tile-rose">🍅</span>
+            <span class="btn-text">Pomodoro</span>
         </button>
-        <!-- NEW: GPA Calculator box (feature code lives in home-features.js) -->
         <button class="home-btn" onclick="openGpaCalculatorModal()">
-            <span class="btn-icon">🎯</span>
+            <span class="btn-icon-tile tile-gold">🎯</span>
             <span class="btn-text">GPA Calculator</span>
         </button>
+    </div>
+
+    <!-- Row 3: HSC, Admission, অনুশীলনী -->
+    <div class="home-row home-row-3">
+        <button class="home-btn" onclick="goTo('exam.html?cat=board')">
+            <span class="btn-icon-tile tile-sky">🎓</span>
+            <span class="btn-text">HSC</span>
+        </button>
+        <button class="home-btn" onclick="openAdmissionModal()">
+            <span class="btn-icon-tile tile-teal">🏛️</span>
+            <span class="btn-text">এডমিশন</span>
+        </button>
+        <button class="home-btn" onclick="goTo('exam.html?cat=onushiloni')">
+            <span class="btn-icon-tile tile-orange">📋</span>
+            <span class="btn-text">অনুশীলনী</span>
+        </button>
+    </div>
+
+    <!-- Row 4: অনুশীলনী এক্সাম + Model Test (pair) -->
+    <div class="home-row home-row-2">
+        <button class="home-btn home-btn-hero" onclick="goTo('exam.html?cat=onushiloni')">
+            <span class="btn-icon-tile tile-orange">✏️</span>
+            <span class="btn-text">অনুশীলনী এক্সাম</span>
+        </button>
+        <button class="home-btn home-btn-hero" onclick="openModelTestModal()">
+            <span class="btn-icon-tile tile-amber">🧪</span>
+            <span class="btn-text">Model Test</span>
+        </button>
+    </div>
+
+    <!-- Row 5: Unlimited Mock Test + ATLAS AI (50/50) -->
+    <div class="home-row home-row-2">
+        <button class="home-btn home-btn-hero" onclick="goTo('mock-test.html')">
+            <span class="btn-icon-tile tile-red">🔁</span>
+            <span class="btn-text">Unlimited Mock Test</span>
+        </button>
+        <button class="home-btn home-btn-hero" onclick="goTo('ai.html')">
+            <span class="btn-icon-tile tile-plum">✨</span>
+            <span class="btn-text">ATLAS AI</span>
+        </button>
+    </div>
+
+    <!-- My Mistakes — preserved (was in old grid, kept accessible, not in new spec's main rows) -->
+    <div class="home-row home-row-2">
+        <button class="home-btn home-btn-hero" onclick="openMistakesModal()">
+            <span class="btn-icon-tile tile-red">⚠️</span>
+            <span class="btn-text">My Mistakes</span>
+        </button>
         <!-- Admin button — hidden for non-admins (Flutter: Visibility widget) -->
-        <button class="home-btn home-btn-full admin-btn" id="adminBtn" onclick="goTo('admin.html')">
-            <span class="btn-icon">👑</span>
+        <button class="home-btn home-btn-hero admin-btn" id="adminBtn" onclick="goTo('admin.html')" style="display:none">
+            <span class="btn-icon-tile tile-gold">👑</span>
             <span class="btn-text">Admin Control</span>
         </button>
     </div>
@@ -913,6 +1016,7 @@
     <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon">📚</span>ক্লাস</button>
     <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon">📝</span>এক্সাম</button>
     <button class="nav-item" onclick="goTo('mock-test.html')"><span class="nav-icon">🎯</span>মক</button>
+    <button class="nav-item" onclick="goTo('study-aid.html')"><span class="nav-icon">🧩</span>Study Aid</button>
     <button class="nav-item" onclick="navigateTo('profile')"><span class="nav-icon">👤</span>প্রোফাইল</button>
 </nav>
 
@@ -1095,27 +1199,29 @@ async function loadTimers() {
                 <div class="timer-serial-box">ATLAS Special Timer-${String(n).padStart(2,'0')}</div>
                 <div class="timer-main-topic">${escHtml(cd.main_topic)}</div>
                 ${cd.subtopic ? `<div class="timer-subtopic">${escHtml(cd.subtopic)}</div>` : ''}
-                <div class="timer-row">
-                    <span class="timer-clock-icon">🕐</span>
-                    <div class="timer-values">
-                        <div class="timer-block">
-                            <span class="timer-number countdown-d-${i}">--</span>
-                            <span class="timer-label">দিন</span>
-                        </div>
-                        <span class="timer-separator">:</span>
-                        <div class="timer-block">
-                            <span class="timer-number countdown-h-${i}">--</span>
-                            <span class="timer-label">ঘণ্টা</span>
-                        </div>
-                        <span class="timer-separator">:</span>
-                        <div class="timer-block">
-                            <span class="timer-number countdown-m-${i}">--</span>
-                            <span class="timer-label">মিনিট</span>
-                        </div>
-                        <span class="timer-separator">:</span>
-                        <div class="timer-block">
-                            <span class="timer-number countdown-s-${i}">--</span>
-                            <span class="timer-label">সেকেন্ড</span>
+                <div class="timer-clock-card">
+                    <div class="timer-row">
+                        <span class="timer-clock-icon">🕐</span>
+                        <div class="timer-values">
+                            <div class="timer-block">
+                                <span class="timer-number countdown-d-${i}">--</span>
+                                <span class="timer-label">দিন</span>
+                            </div>
+                            <span class="timer-separator">:</span>
+                            <div class="timer-block">
+                                <span class="timer-number countdown-h-${i}">--</span>
+                                <span class="timer-label">ঘণ্টা</span>
+                            </div>
+                            <span class="timer-separator">:</span>
+                            <div class="timer-block">
+                                <span class="timer-number countdown-m-${i}">--</span>
+                                <span class="timer-label">মিনিট</span>
+                            </div>
+                            <span class="timer-separator">:</span>
+                            <div class="timer-block">
+                                <span class="timer-number countdown-s-${i}">--</span>
+                                <span class="timer-label">সেকেন্ড</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1303,6 +1409,25 @@ function openModelTestModal() {
         </div>`;
     document.getElementById('mainModal').classList.add('active');
 }
+
+/* NEW: Admission selector — preserves old direct links (cat=medical / cat=varsity),
+   just groups them behind one home button per the updated home-page spec. */
+function openAdmissionModal() {
+    const mc = document.getElementById('modalContent');
+    mc.innerHTML = `
+        <div class="modal-title">🏛️ এডমিশন প্রস্তুতি</div>
+        <button class="model-btn" onclick="closeModal();goTo('exam.html?cat=medical')">
+            🏥 মেডিকেল/ডেন্টাল
+        </button>
+        <button class="model-btn" onclick="closeModal();goTo('exam.html?cat=varsity')">
+            🎓 ভার্সিটি প্রস্তুতি
+        </button>
+        <div class="modal-close">
+            <button class="btn btn-outline" onclick="closeModal()" style="width:100%;">✕ বন্ধ</button>
+        </div>`;
+    document.getElementById('mainModal').classList.add('active');
+}
+
 
 function closeModal() {
     document.getElementById('mainModal').classList.remove('active');

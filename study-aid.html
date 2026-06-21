@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATLAS APP · Study Aid</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .said-container { max-width: 560px; margin: 0 auto; padding: 14px 14px 20px; }
+        .said-hero {
+            text-align: center; padding: 6px 0 16px;
+        }
+        .said-hero-icon { font-size: 30px; margin-bottom: 4px; }
+        .said-hero-title { font-size: 18px; font-weight: 900; color: var(--text); }
+        .said-hero-sub { font-size: 11.5px; color: var(--text-secondary); margin-top: 2px; }
+
+        /* 2-per-row grid — every Study Aid tool fits on a single screen */
+        .said-grid {
+            display: grid; grid-template-columns: repeat(2,1fr);
+            gap: 10px;
+        }
+        .said-card {
+            background: linear-gradient(155deg, var(--card-bg) 0%, var(--card-hover) 100%);
+            border: 1px solid var(--border); border-radius: 14px;
+            padding: 16px 12px; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+            text-align: center; transition: all .2s ease; box-shadow: var(--shadow-sm);
+        }
+        .said-card:active { transform: scale(.96); }
+        .said-card:hover { border-color: var(--accent); box-shadow: var(--shadow-glow), var(--shadow); transform: translateY(-2px); }
+        .said-icon-tile {
+            width: 44px; height: 44px; border-radius: 13px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; flex-shrink: 0;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 2px 8px rgba(0,0,0,.18);
+        }
+        .said-card-title { font-size: 12.5px; font-weight: 800; color: var(--text); line-height: 1.3; }
+        .said-card-sub { font-size: 10px; color: var(--text-secondary); line-height: 1.3; }
+
+        .tile-indigo  { background: linear-gradient(135deg,#5A5FE0,#3B3FB8); }
+        .tile-violet  { background: linear-gradient(135deg,#8B5CF6,#6228D7); }
+        .tile-emerald { background: linear-gradient(135deg,#10B981,#0A8F63); }
+        .tile-sky     { background: linear-gradient(135deg,#38BDF8,#0D8FD0); }
+        .tile-rose    { background: linear-gradient(135deg,#F43F8E,#C81E68); }
+        .tile-gold    { background: linear-gradient(135deg,#FBBF24,#D69400); }
+        .tile-plum    { background: linear-gradient(135deg,#A855F7,#7B23D6); }
+        .tile-teal    { background: linear-gradient(135deg,#14B8A6,#0C8B7D); }
+    </style>
+</head>
+<body class="dark-mode">
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-header"><div class="sidebar-logo">ATLAS APP</div></div>
+    <div class="sidebar-menu">
+        <button class="sidebar-item" onclick="navigateTo('profile');closeSidebar();">👤 প্রোফাইল</button>
+        <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();">🏠 হোম</button>
+        <button class="sidebar-item" onclick="goTo('class.html');closeSidebar();">📚 ফ্রি ক্লাস</button>
+        <button class="sidebar-item" onclick="goTo('exam.html');closeSidebar();">📝 ফ্রি এক্সাম</button>
+        <button class="sidebar-item" onclick="goTo('mock-test.html');closeSidebar();">🎯 মক টেস্ট</button>
+        <button class="sidebar-item" onclick="goTo('ai.html');closeSidebar();">✨ ATLAS AI</button>
+        <div class="sidebar-divider"></div>
+        <button class="sidebar-item" onclick="toggleTheme()">🌙 ডার্ক মোড</button>
+    </div>
+    <div class="sidebar-footer">
+        <button class="sidebar-item logout-btn" onclick="logout()">🚪 লগআউট</button>
+    </div>
+</aside>
+
+<header class="header">
+    <div class="header-left">
+        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+        <div class="atlas-brand-box">
+            <img src="https://cdn.phototourl.com/free/2026-05-15-b45df560-6dc8-4cb7-9040-238612c8a161.png" class="atlas-logo-img" alt="ATLAS">
+            <span class="atlas-brand-text">ATLAS APP</span>
+        </div>
+    </div>
+    <div class="header-right">
+        <button class="header-icon" onclick="toggleTheme()" id="themeToggle">🌙</button>
+        <button class="header-icon" onclick="navigateTo('profile')">👤</button>
+    </div>
+</header>
+
+<main class="said-container">
+
+    <div class="said-hero">
+        <div class="said-hero-icon">🧩</div>
+        <div class="said-hero-title">Study Aid</div>
+        <div class="said-hero-sub">তোমার পড়াশোনার সব টুল এক জায়গায়</div>
+    </div>
+
+    <div class="said-grid">
+        <div class="said-card" onclick="goTo('study.html')">
+            <span class="said-icon-tile tile-violet">📖</span>
+            <div class="said-card-title">মূলবই পেইজভিত্তিক প্রস্তুতি</div>
+            <div class="said-card-sub">বিষয় → অধ্যায় → পেইজ → এক্সাম</div>
+        </div>
+        <div class="said-card" onclick="goTo('focus.html')">
+            <span class="said-icon-tile tile-emerald">⏱️</span>
+            <div class="said-card-title">Focus Timer</div>
+            <div class="said-card-sub">মনোযোগী পড়াশোনার টাইমার</div>
+        </div>
+        <div class="said-card" onclick="goTo('dashboard.html#pomoScreen')">
+            <span class="said-icon-tile tile-rose">🍅</span>
+            <div class="said-card-title">Pomodoro</div>
+            <div class="said-card-sub">২৫ মিনিট ফোকাস সেশন</div>
+        </div>
+        <div class="said-card" onclick="openGpaCalculatorModal()">
+            <span class="said-icon-tile tile-gold">🎯</span>
+            <div class="said-card-title">GPA Calculator</div>
+            <div class="said-card-sub">রেজাল্ট হিসাব করো</div>
+        </div>
+        <div class="said-card" onclick="showToast('শীঘ্রই আসছে! 🚧')">
+            <span class="said-icon-tile tile-sky">📊</span>
+            <div class="said-card-title">Study Tracker</div>
+            <div class="said-card-sub">পড়ার অগ্রগতি দেখো</div>
+        </div>
+        <div class="said-card" onclick="goTo('ai.html')">
+            <span class="said-icon-tile tile-plum">✨</span>
+            <div class="said-card-title">ATLAS AI</div>
+            <div class="said-card-sub">যেকোনো প্রশ্নের উত্তর</div>
+        </div>
+        <div class="said-card" onclick="openMistakesModal()">
+            <span class="said-icon-tile tile-teal">⚠️</span>
+            <div class="said-card-title">My Mistakes</div>
+            <div class="said-card-sub">ভুল প্রশ্নগুলো রিভিউ করো</div>
+        </div>
+        <div class="said-card" onclick="goTo('class.html')">
+            <span class="said-icon-tile tile-indigo">📚</span>
+            <div class="said-card-title">ফ্রি ক্লাস</div>
+            <div class="said-card-sub">চ্যাপ্টার ভিত্তিক ক্লাস</div>
+        </div>
+    </div>
+
+</main>
+
+<nav class="bottom-nav">
+    <button class="nav-item" onclick="goTo('index.html')"><span class="nav-icon">🏠</span>হোম</button>
+    <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon">📚</span>ক্লাস</button>
+    <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon">📝</span>এক্সাম</button>
+    <button class="nav-item" onclick="goTo('mock-test.html')"><span class="nav-icon">🎯</span>মক</button>
+    <button class="nav-item active" onclick="goTo('study-aid.html')"><span class="nav-icon">🧩</span>Study Aid</button>
+    <button class="nav-item" onclick="navigateTo('profile')"><span class="nav-icon">👤</span>প্রোফাইল</button>
+</nav>
+
+<div class="floating-buttons">
+    <button class="fab fab-wa" onclick="openWA()"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg></button>
+    <button class="fab fab-tg" onclick="openTG()"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.223-.548.082l.183-2.852 5.19-4.688c.226-.198-.05-.308-.348-.11l-6.415 4.04-2.762-.862c-.6-.186-.61-.6.127-.892l10.79-4.155c.497-.185.93.12.773.862z"/></svg></button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="home-features.js"></script>
+<script>
+let isDarkMode=true,isSidebarOpen=false;
+
+function showToast(m,d=2000){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
+function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'☀️':'🌙';localStorage.setItem('atlas-theme',isDarkMode?'dark':'light');}
+function toggleSidebar(){isSidebarOpen=!isSidebarOpen;document.getElementById('sidebarOverlay').classList.toggle('active',isSidebarOpen);document.getElementById('sidebar').classList.toggle('active',isSidebarOpen);}
+function closeSidebar(){isSidebarOpen=false;document.getElementById('sidebarOverlay').classList.remove('active');document.getElementById('sidebar').classList.remove('active');}
+function goTo(u){location.href=u;}
+function navigateTo(p){const r={home:'index.html',profile:'dashboard.html',class:'class.html',exam:'exam.html'};goTo(r[p]||'index.html');}
+function openWA(){window.open('https://wa.me/8801999681290','_blank');}
+function openTG(){window.open('https://t.me/rafi_somc','_blank');}
+function logout(){localStorage.removeItem('atlas-session');goTo('index.html');}
+
+/* My Mistakes modal — lightweight redirect since this page has no #mainModal;
+   send user to dashboard's mistakes view to avoid duplicating modal logic. */
+function openMistakesModal(){ goTo('dashboard.html#mistakes'); }
+
+document.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('atlas-theme');
+    if (saved === 'light') { isDarkMode = false; document.body.classList.add('light-mode'); document.body.classList.remove('dark-mode'); document.getElementById('themeToggle').textContent = '🌙'; }
+});
+history.pushState(null, '', location.href);
+window.addEventListener('popstate', () => history.back());
+</script>
+</body>
+</html>

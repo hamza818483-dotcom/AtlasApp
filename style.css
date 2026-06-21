@@ -261,22 +261,24 @@ body {
 .sidebar::-webkit-scrollbar-thumb { background-color: var(--border); border-radius: 2px; }
 
 /* ============================================
-   FEATURE 9: BOTTOM NAVIGATION (5 Items)
+   FEATURE 9: BOTTOM NAVIGATION (6 Items, compact)
    ============================================ */
 .bottom-nav {
-    position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
+    position: fixed; bottom: 0; left: 0; right: 0; height: 58px;
     background-color: var(--header-bg); border-top: 1px solid var(--border);
     display: flex; align-items: center; justify-content: space-around;
     z-index: 1000; box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.12);
+    padding: 0 2px;
 }
 .nav-item {
     display: flex; flex-direction: column; align-items: center; gap: 2px;
     background: none; border: none; color: var(--text-tertiary);
     font-family: 'Noto Sans Bengali', 'Inter', sans-serif;
-    font-size: 10px; font-weight: 500; cursor: pointer;
-    padding: 6px 10px; border-radius: var(--radius-sm); transition: all 0.2s ease;
+    font-size: 9px; font-weight: 500; cursor: pointer;
+    padding: 6px 4px; border-radius: var(--radius-sm); transition: all 0.2s ease;
+    flex: 1; min-width: 0; white-space: nowrap;
 }
-.nav-item .nav-icon { font-size: 20px; }
+.nav-item .nav-icon { font-size: 17px; }
 .nav-item.active { color: var(--accent); }
 .nav-item:hover { color: var(--accent); background: var(--accent-light); }
 
@@ -530,14 +532,10 @@ body {
    ============================================ */
 @media (min-width: 600px) {
     .main-container, .main-content, .class-container, .mock-container, .dash-container, .ai-container, .admin-container { max-width: 600px; }
-    .home-buttons { grid-template-columns: repeat(3, 1fr); }
     .cat-grid { grid-template-columns: repeat(3, 1fr); }
     .tab-grid { grid-template-columns: repeat(6, 1fr); }
     .dash-grid { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 360px) {
-    .home-buttons { gap: 7px; }
-    .home-btn { padding: 13px 8px; }
-    .home-btn .btn-icon { font-size: 20px; }
     .tab-grid { grid-template-columns: repeat(3, 1fr); }
 }
