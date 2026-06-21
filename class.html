@@ -1476,73 +1476,135 @@ function cpSeekMove(e) {
 }
 
 function cpFullscreen() {
-    const wrap = document.getElementById('cplayerWrap');
-    if (!wrap) return;
-    if (document.fullscreenElement) {
-        document.exitFullscreen();
-        try { screen.orientation.unlock(); } catch(e) {}
+    const isFs = document.body.classList.contains('fs-landscape');
+    if (isFs) {
+        _exitFsLandscape();
     } else {
-        const req = wrap.requestFullscreen || wrap.webkitRequestFullscreen || wrap.mozRequestFullScreen;
-        if (req) {
-            req.call(wrap).then(() => {
-                try { screen.orientation.lock('landscape').catch(()=>{}); } catch(e) {}
-            }).catch(() => {});
-        }
+        _enterFsLandscape();
     }
 }
 
-// ===== FULLSCREEN OVERLAY =====
+function _enterFsLandscape() {
+    const vw = window.screen.width;
+    const vh = window.screen.height;
+    const short = Math.min(vw, vh);
+    const long  = Math.max(vw, vh);
+
+    const fs = document.getElementById('fsOverlay') || _createFsOverlay();
+
+    // Position: rotated 90deg, sized to fill screen in landscape
+    fs.style.cssText = `
+        position:fixed;
+        top:${(vh - short)/2 - (long - short)/2}px;
+        left:${(vw - long)/2 + (long - short)/2}px;
+        width:${long}px;
+        height:${short}px;
+        transform:rotate(90deg);
+        transform-origin:center center;
+        z-index:9999;
+        background:#000;
+        display:flex;
+        flex-direction:column;
+    `;
+
+    document.body.appendChild(fs);
+    document.body.classList.add('fs-landscape');
+    document.body.style.overflow = 'hidden';
+
+    // Move player iframe into overlay
+    const vp = document.getElementById('videoPlayer');
+    const vpClone = vp.cloneNode(false);
+    vpClone.id = 'fsVideoPlayer';
+    vpClone.style.cssText = 'flex:1;width:100%;position:relative;';
+
+    // Move actual ytPlayer iframe
+    const iframe = vp.querySelector('iframe') || vp.querySelector('#ytPlayerEl');
+    if (iframe) {
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+        wrapper.appendChild(iframe);
+        vpClone.appendChild(wrapper);
+    }
+    fs.querySelector('#fsVideoSlot').appendChild(vpClone);
+
+    _buildFsControls(fs);
+    _startFsRaf();
+
+    // Try native orientation lock too
+    try { screen.orientation.lock('landscape').catch(()=>{}); } catch(e) {}
+}
+
+function _exitFsLandscape() {
+    _stopFsRaf();
+    try { screen.orientation.unlock(); } catch(e) {}
+
+    // Return iframe to original player
+    const fsVp = document.getElementById('fsVideoPlayer');
+    const vp   = document.getElementById('videoPlayer');
+    if (fsVp && vp) {
+        const iframe = fsVp.querySelector('iframe') || fsVp.querySelector('#ytPlayerEl');
+        if (iframe) vp.appendChild(iframe);
+    }
+
+    const fc = document.getElementById('fsControls');
+    if (fc) fc.remove();
+    const fo = document.getElementById('fsOverlay');
+    if (fo) fo.remove();
+
+    document.body.classList.remove('fs-landscape');
+    document.body.style.overflow = '';
+}
+
+function _createFsOverlay() {
+    const fo = document.createElement('div');
+    fo.id = 'fsOverlay';
+    const slot = document.createElement('div');
+    slot.id = 'fsVideoSlot';
+    slot.style.cssText = 'flex:1;position:relative;overflow:hidden;';
+    fo.appendChild(slot);
+    return fo;
+}
+
+// ===== FULLSCREEN CONTROLS =====
 let fsRaf = null;
 let fsSeeking = false;
 
-document.addEventListener('fullscreenchange', () => {
-    const wrap = document.getElementById('cplayerWrap');
-    if (document.fullscreenElement) {
-        _buildFsControls(wrap);
-        _startFsRaf();
-    } else {
-        _stopFsRaf();
-        try { screen.orientation.unlock(); } catch(e) {}
-        const fc = document.getElementById('fsControls');
-        if (fc) fc.remove();
-    }
-});
-
-function _buildFsControls(wrap) {
+function _buildFsControls(container) {
     if (document.getElementById('fsControls')) return;
     const fc = document.createElement('div');
     fc.id = 'fsControls';
     fc.style.cssText = `
-        position:absolute;bottom:0;left:0;right:0;z-index:50;
-        padding:6px 14px 14px;
-        background:linear-gradient(0deg,rgba(0,0,0,0.92) 0%,transparent 100%);
-        opacity:1;transition:opacity 0.4s;
+        width:100%;
+        background:linear-gradient(0deg,rgba(0,0,0,0.95) 0%,transparent 100%);
+        padding:6px 16px 12px;
+        flex-shrink:0;
+        opacity:1;
+        transition:opacity 0.35s;
     `;
     fc.innerHTML = `
-        <div id="fsProgress" style="position:relative;height:5px;background:rgba(255,255,255,0.25);border-radius:5px;cursor:pointer;margin-bottom:10px;touch-action:none;">
-            <div id="fsFill" style="height:100%;background:#6C63FF;border-radius:5px;width:0%;pointer-events:none;transition:width 0.1s linear;"></div>
-            <div id="fsThumb" style="position:absolute;top:50%;width:14px;height:14px;background:#fff;border-radius:50%;transform:translate(-50%,-50%);left:0%;pointer-events:none;box-shadow:0 0 5px rgba(108,99,255,0.7);"></div>
+        <div id="fsProgress" style="position:relative;height:5px;background:rgba(255,255,255,0.22);border-radius:5px;cursor:pointer;margin-bottom:12px;touch-action:none;">
+            <div id="fsFill" style="height:100%;background:#6C63FF;border-radius:5px;width:0%;pointer-events:none;"></div>
+            <div id="fsThumb" style="position:absolute;top:50%;width:16px;height:16px;background:#fff;border-radius:50%;transform:translate(-50%,-50%);left:0%;pointer-events:none;box-shadow:0 0 6px rgba(108,99,255,0.8);"></div>
         </div>
-        <div style="display:flex;align-items:center;gap:6px;">
-            <button onclick="ytSkip(-10)" style="background:rgba(255,255,255,0.12);border:none;color:#fff;font-size:17px;width:38px;height:38px;border-radius:9px;cursor:pointer;flex-shrink:0;">⏪</button>
-            <button id="fsPPBtn" onclick="ytTogglePlay()" style="background:#6C63FF;border:none;color:#fff;font-size:19px;width:42px;height:42px;border-radius:9px;cursor:pointer;flex-shrink:0;box-shadow:0 3px 10px rgba(108,99,255,0.4);">⏸</button>
-            <button onclick="ytSkip(10)" style="background:rgba(255,255,255,0.12);border:none;color:#fff;font-size:17px;width:38px;height:38px;border-radius:9px;cursor:pointer;flex-shrink:0;">⏩</button>
-            <button id="fsMuteBtn" onclick="ytToggleMute()" style="background:rgba(255,255,255,0.12);border:none;color:#fff;font-size:16px;width:38px;height:38px;border-radius:9px;cursor:pointer;flex-shrink:0;">🔊</button>
-            <span id="fsCurTime" style="font-size:11px;color:rgba(255,255,255,0.85);font-variant-numeric:tabular-nums;flex-shrink:0;">0:00</span>
-            <span style="font-size:11px;color:rgba(255,255,255,0.4);flex-shrink:0;">/</span>
-            <span id="fsDurTime" style="font-size:11px;color:rgba(255,255,255,0.85);font-variant-numeric:tabular-nums;flex-shrink:0;">0:00</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <button onclick="ytSkip(-10)" style="background:rgba(255,255,255,0.12);border:none;color:#fff;font-size:18px;width:40px;height:40px;border-radius:10px;cursor:pointer;flex-shrink:0;">⏪</button>
+            <button id="fsPPBtn" onclick="ytTogglePlay()" style="background:#6C63FF;border:none;color:#fff;font-size:20px;width:44px;height:44px;border-radius:10px;cursor:pointer;flex-shrink:0;box-shadow:0 3px 12px rgba(108,99,255,0.4);">⏸</button>
+            <button onclick="ytSkip(10)" style="background:rgba(255,255,255,0.12);border:none;color:#fff;font-size:18px;width:40px;height:40px;border-radius:10px;cursor:pointer;flex-shrink:0;">⏩</button>
+            <span id="fsCurTime" style="font-size:12px;color:rgba(255,255,255,0.9);font-variant-numeric:tabular-nums;flex-shrink:0;">0:00</span>
+            <span style="font-size:12px;color:rgba(255,255,255,0.4);">/</span>
+            <span id="fsDurTime" style="font-size:12px;color:rgba(255,255,255,0.9);font-variant-numeric:tabular-nums;flex-shrink:0;">0:00</span>
             <div style="flex:1;"></div>
-            <div style="display:flex;align-items:center;background:rgba(255,255,255,0.12);border-radius:9px;padding:4px 8px;gap:2px;flex-shrink:0;">
-                <button onclick="ytSpeedChange(-1)" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:15px;cursor:pointer;padding:0 2px;">−</button>
-                <span id="fsSpeedVal" style="font-size:11px;font-weight:800;color:#fff;min-width:26px;text-align:center;">1×</span>
-                <button onclick="ytSpeedChange(1)" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:15px;cursor:pointer;padding:0 2px;">+</button>
+            <div style="display:flex;align-items:center;background:rgba(255,255,255,0.12);border-radius:10px;padding:5px 10px;gap:3px;flex-shrink:0;">
+                <button onclick="ytSpeedChange(-1)" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:16px;cursor:pointer;padding:0 3px;">−</button>
+                <span id="fsSpeedVal" style="font-size:12px;font-weight:800;color:#fff;min-width:28px;text-align:center;">1×</span>
+                <button onclick="ytSpeedChange(1)" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:16px;cursor:pointer;padding:0 3px;">+</button>
             </div>
-            <button onclick="cpFullscreen()" style="background:rgba(255,255,255,0.12);border:none;color:#fff;font-size:16px;width:38px;height:38px;border-radius:9px;cursor:pointer;flex-shrink:0;">✕</button>
+            <button onclick="cpFullscreen()" style="background:rgba(255,255,255,0.12);border:none;color:#fff;font-size:16px;width:40px;height:40px;border-radius:10px;cursor:pointer;flex-shrink:0;">✕</button>
         </div>
     `;
-    wrap.appendChild(fc);
+    container.appendChild(fc);
 
-    // Smooth seek on progress bar
+    // Smooth seek
     document.getElementById('fsProgress').addEventListener('pointerdown', (e) => {
         e.preventDefault();
         fsSeeking = true;
@@ -1553,22 +1615,22 @@ function _buildFsControls(wrap) {
             document.removeEventListener('pointermove', onMove);
             document.removeEventListener('pointerup', onUp);
         };
-        document.addEventListener('pointermove', onMove, { passive: false });
+        document.addEventListener('pointermove', onMove, { passive:false });
         document.addEventListener('pointerup', onUp);
     });
 
-    // Tap video area to toggle controls
-    let hideTimer = null;
-    const showControls = () => {
+    // Tap to show/hide
+    let hideTimer;
+    const show = () => {
         fc.style.opacity = '1';
         clearTimeout(hideTimer);
         hideTimer = setTimeout(() => { fc.style.opacity = '0'; }, 3500);
     };
-    wrap.addEventListener('click', (e) => {
+    container.addEventListener('click', (e) => {
         if (e.target.closest('#fsControls')) return;
-        showControls();
+        show();
     });
-    showControls();
+    show();
 }
 
 function _fsMoveSeek(e) {
