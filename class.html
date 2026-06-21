@@ -487,13 +487,22 @@
             background: transparent;
             cursor: pointer;
         }
-        /* Bottom mask - blocks YT share/save/watch-on-YT bar */
+        /* Top mask - hides YT title/channel/avatar bar */
+        .cplayer-top-mask {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 22%;
+            z-index: 22;
+            background: linear-gradient(180deg, rgba(0,0,0,0.97) 0%, rgba(0,0,0,0.6) 70%, transparent 100%);
+            pointer-events: none;
+        }
+        /* Bottom mask - fully hides YT share/save/watch-on-YT/logo */
         .cplayer-bottom-mask {
             position: absolute;
             bottom: 0; left: 0; right: 0;
-            height: 28%;
-            z-index: 21;
-            background: linear-gradient(0deg, rgba(0,0,0,0.98) 0%, rgba(0,0,0,0.7) 60%, transparent 100%);
+            height: 32%;
+            z-index: 22;
+            background: linear-gradient(0deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.95) 50%, transparent 100%);
             pointer-events: none;
         }
         /* End screen overlay */
@@ -907,7 +916,9 @@
         <div class="cplayer-wrap" id="cplayerWrap">
             <div class="cplayer-ratio">
                 <div id="videoPlayer"></div>
-                <!-- Bottom mask: blocks YT share/save/watch-on-YT -->
+                <!-- Top mask: hides YT title/channel bar -->
+                <div class="cplayer-top-mask"></div>
+                <!-- Bottom mask: fully hides YT share/save/logo/watch-on-YT -->
                 <div class="cplayer-bottom-mask"></div>
                 <!-- Full click blocker -->
                 <div class="cplayer-blocker" id="cplayerBlocker" onclick="ytTogglePlay()"></div>
