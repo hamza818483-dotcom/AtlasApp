@@ -924,9 +924,6 @@
                 <div id="videoPlayer"></div>
                 <!-- Full click blocker -->
                 <div class="cplayer-blocker" id="cplayerBlocker" onclick="ytTogglePlay()"></div>
-                <!-- Zone blockers for YT watermark areas - pointer-events:auto blocks clicks there -->
-                <div style="position:absolute;top:0;left:0;right:0;height:20%;z-index:25;background:rgba(0,0,0,0.75);pointer-events:auto;" onclick="ytTogglePlay()"></div>
-                <div style="position:absolute;bottom:0;left:0;right:0;height:22%;z-index:25;background:rgba(0,0,0,0.88);pointer-events:auto;" onclick="ytTogglePlay()"></div>
                 <!-- End screen -->
                 <div class="cplayer-end" id="cplayerEnd">
                     <div class="cplayer-end-icon">✅</div>
@@ -1476,108 +1473,53 @@ function cpSeekMove(e) {
 }
 
 function cpFullscreen() {
-    const isFs = document.body.classList.contains('fs-landscape');
-    if (isFs) {
-        _exitFsLandscape();
+    const wrap = document.getElementById('cplayerWrap');
+    if (!wrap) return;
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+        (document.exitFullscreen || document.webkitExitFullscreen).call(document);
     } else {
-        _enterFsLandscape();
+        const req = wrap.requestFullscreen || wrap.webkitRequestFullscreen;
+        if (req) {
+            req.call(wrap).then(() => {
+                try { screen.orientation.lock('landscape').catch(()=>{}); } catch(e) {}
+            }).catch(()=>{});
+        }
     }
 }
 
-function _enterFsLandscape() {
-    const vw = window.screen.width;
-    const vh = window.screen.height;
-    const short = Math.min(vw, vh);
-    const long  = Math.max(vw, vh);
+// Fullscreen enter/exit
+document.addEventListener('fullscreenchange', _onFsChange);
+document.addEventListener('webkitfullscreenchange', _onFsChange);
 
-    const fs = document.getElementById('fsOverlay') || _createFsOverlay();
-
-    // Position: rotated 90deg, sized to fill screen in landscape
-    fs.style.cssText = `
-        position:fixed;
-        top:${(vh - short)/2 - (long - short)/2}px;
-        left:${(vw - long)/2 + (long - short)/2}px;
-        width:${long}px;
-        height:${short}px;
-        transform:rotate(90deg);
-        transform-origin:center center;
-        z-index:9999;
-        background:#000;
-        display:flex;
-        flex-direction:column;
-    `;
-
-    document.body.appendChild(fs);
-    document.body.classList.add('fs-landscape');
-    document.body.style.overflow = 'hidden';
-
-    // Move player iframe into overlay
-    const vp = document.getElementById('videoPlayer');
-    const vpClone = vp.cloneNode(false);
-    vpClone.id = 'fsVideoPlayer';
-    vpClone.style.cssText = 'flex:1;width:100%;position:relative;';
-
-    // Move actual ytPlayer iframe
-    const iframe = vp.querySelector('iframe') || vp.querySelector('#ytPlayerEl');
-    if (iframe) {
-        const wrapper = document.createElement('div');
-        wrapper.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
-        wrapper.appendChild(iframe);
-        vpClone.appendChild(wrapper);
+function _onFsChange() {
+    const inFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+    const wrap  = document.getElementById('cplayerWrap');
+    if (inFs) {
+        _buildFsControls(wrap);
+        _startFsRaf();
+    } else {
+        _stopFsRaf();
+        try { screen.orientation.unlock(); } catch(e) {}
+        const fc = document.getElementById('fsControls');
+        if (fc) fc.remove();
     }
-    fs.querySelector('#fsVideoSlot').appendChild(vpClone);
-
-    _buildFsControls(fs);
-    _startFsRaf();
-
-    // Try native orientation lock too
-    try { screen.orientation.lock('landscape').catch(()=>{}); } catch(e) {}
 }
 
-function _exitFsLandscape() {
-    _stopFsRaf();
-    try { screen.orientation.unlock(); } catch(e) {}
-
-    // Return iframe to original player
-    const fsVp = document.getElementById('fsVideoPlayer');
-    const vp   = document.getElementById('videoPlayer');
-    if (fsVp && vp) {
-        const iframe = fsVp.querySelector('iframe') || fsVp.querySelector('#ytPlayerEl');
-        if (iframe) vp.appendChild(iframe);
+// Physical rotation while in fullscreen → re-lock orientation
+window.addEventListener('orientationchange', () => {
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+        try { screen.orientation.lock('landscape').catch(()=>{}); } catch(e) {}
     }
-
-    const fc = document.getElementById('fsControls');
-    if (fc) fc.remove();
-    const fo = document.getElementById('fsOverlay');
-    if (fo) fo.remove();
-
-    document.body.classList.remove('fs-landscape');
-    document.body.style.overflow = '';
-}
-
-function _createFsOverlay() {
-    const fo = document.createElement('div');
-    fo.id = 'fsOverlay';
-    const slot = document.createElement('div');
-    slot.id = 'fsVideoSlot';
-    slot.style.cssText = 'flex:1;position:relative;overflow:hidden;';
-    fo.appendChild(slot);
-    return fo;
-}
-
-// ===== FULLSCREEN CONTROLS =====
-let fsRaf = null;
-let fsSeeking = false;
+});
 
 function _buildFsControls(container) {
     if (document.getElementById('fsControls')) return;
     const fc = document.createElement('div');
     fc.id = 'fsControls';
     fc.style.cssText = `
-        width:100%;
+        position:absolute;bottom:0;left:0;right:0;z-index:50;
         background:linear-gradient(0deg,rgba(0,0,0,0.95) 0%,transparent 100%);
-        padding:6px 16px 12px;
-        flex-shrink:0;
+        padding:6px 16px 16px;
         opacity:1;
         transition:opacity 0.35s;
     `;
