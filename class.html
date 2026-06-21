@@ -360,6 +360,105 @@
             font-family: 'Noto Sans Bengali', sans-serif;
         }
 
+        /* ===== CUSTOM VIDEO CONTROLS ===== */
+        .video-controls-bar {
+            background: var(--cl-card);
+            border: 1.5px solid var(--cl-border);
+            border-top: none;
+            border-radius: 0 0 var(--cl-radius-sm) var(--cl-radius-sm);
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        .vcb-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 1;
+        }
+        .vcb-btn {
+            background: var(--cl-card2);
+            border: 1.5px solid var(--cl-border);
+            border-radius: 10px;
+            color: var(--cl-text);
+            font-size: 18px;
+            width: 38px; height: 38px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: all 0.18s;
+            flex-shrink: 0;
+        }
+        .vcb-btn:active { transform: scale(0.9); background: var(--cl-primary); }
+        .vcb-btn.play-pause { background: var(--cl-primary); color: #fff; border-color: var(--cl-primary); width: 42px; height: 42px; font-size: 20px; }
+        .vcb-speed-wrap {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--cl-card2);
+            border: 1.5px solid var(--cl-border);
+            border-radius: 10px;
+            padding: 4px 8px;
+        }
+        .vcb-speed-label {
+            font-size: 10px;
+            color: var(--cl-text2);
+            font-weight: 600;
+        }
+        .vcb-speed-val {
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--cl-primary);
+            min-width: 32px;
+            text-align: center;
+        }
+        .vcb-speed-btn {
+            background: none;
+            border: none;
+            color: var(--cl-text2);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0 2px;
+            line-height: 1;
+        }
+        .vcb-speed-btn:active { color: var(--cl-primary); }
+        .vcb-download {
+            background: linear-gradient(135deg, var(--cl-secondary), #00b894);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 8px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            text-decoration: none;
+            font-family: 'Noto Sans Bengali', sans-serif;
+            flex-shrink: 0;
+        }
+        .vcb-download:active { opacity: 0.8; transform: scale(0.95); }
+        .vcb-yt-link {
+            background: linear-gradient(135deg, #ff0000, #cc0000);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 8px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            text-decoration: none;
+            font-family: 'Noto Sans Bengali', sans-serif;
+            flex-shrink: 0;
+        }
+        .video-outer { border-radius: var(--cl-radius-sm) var(--cl-radius-sm) 0 0; margin-bottom: 0; }
+
         /* ===== INFO CARD ===== */
         .info-card-fl {
             background: var(--cl-card);
@@ -602,6 +701,32 @@
 
         <div class="video-outer">
             <div class="video-ratio" id="videoPlayer"></div>
+        </div>
+
+        <!-- Custom Video Controls -->
+        <div class="video-controls-bar" id="videoControlsBar">
+            <!-- Skip back -->
+            <div class="vcb-group">
+                <button class="vcb-btn" onclick="ytSkip(-10)" title="১০ সেকেন্ড পেছনে">⏪</button>
+                <button class="vcb-btn play-pause" id="playPauseBtn" onclick="ytTogglePlay()">▶</button>
+                <button class="vcb-btn" onclick="ytSkip(10)" title="১০ সেকেন্ড সামনে">⏩</button>
+
+                <!-- Speed -->
+                <div class="vcb-speed-wrap">
+                    <span class="vcb-speed-label">স্পিড</span>
+                    <button class="vcb-speed-btn" onclick="ytSpeedChange(-1)">−</button>
+                    <span class="vcb-speed-val" id="speedVal">1×</span>
+                    <button class="vcb-speed-btn" onclick="ytSpeedChange(1)">+</button>
+                </div>
+            </div>
+
+            <!-- Download / YT link -->
+            <a id="vcbDownloadBtn" href="#" class="vcb-download" style="display:none;" download>
+                ⬇ ডাউনলোড
+            </a>
+            <a id="vcbYtBtn" href="#" class="vcb-yt-link" target="_blank" style="display:none;">
+                ▶ YT-তে দেখুন
+            </a>
         </div>
 
         <div class="info-card-fl" id="videoInfoCard">
@@ -930,8 +1055,77 @@ function openCourseVideos(courseName) {
 }
 
 // ===== VIDEO PLAYER =====
+// ===== YOUTUBE IFRAME API =====
+let ytPlayer = null;
+let ytReady = false;
+let ytPendingVideoId = null;
+let ytCurrentLink = null;
+const YT_SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+let ytSpeedIdx = 3; // default 1x
+
+// Load YouTube IFrame API once
+if (!window._ytApiLoaded) {
+    window._ytApiLoaded = true;
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(tag);
+}
+
+window.onYouTubeIframeAPIReady = function() {
+    ytReady = true;
+    if (ytPendingVideoId) _createYTPlayer(ytPendingVideoId);
+};
+
+function _createYTPlayer(videoId) {
+    if (ytPlayer) { try { ytPlayer.destroy(); } catch(e) {} ytPlayer = null; }
+    document.getElementById('videoPlayer').innerHTML = '<div id="ytPlayerEl"></div>';
+    ytPlayer = new YT.Player('ytPlayerEl', {
+        width: '100%',
+        height: '100%',
+        videoId: videoId,
+        playerVars: { rel: 0, modestbranding: 1, showinfo: 0, iv_load_policy: 3, fs: 1, playsinline: 1, enablejsapi: 1 },
+        events: {
+            onReady: (e) => {
+                e.target.setPlaybackRate(YT_SPEEDS[ytSpeedIdx]);
+                document.getElementById('playPauseBtn').textContent = '⏸';
+            },
+            onStateChange: (e) => {
+                const btn = document.getElementById('playPauseBtn');
+                if (!btn) return;
+                if (e.data === YT.PlayerState.PLAYING) btn.textContent = '⏸';
+                else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED) btn.textContent = '▶';
+            }
+        }
+    });
+}
+
+function ytTogglePlay() {
+    if (!ytPlayer) return;
+    try {
+        const state = ytPlayer.getPlayerState();
+        if (state === YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
+        else ytPlayer.playVideo();
+    } catch(e) {}
+}
+
+function ytSkip(seconds) {
+    if (!ytPlayer) return;
+    try {
+        const cur = ytPlayer.getCurrentTime() || 0;
+        ytPlayer.seekTo(Math.max(0, cur + seconds), true);
+    } catch(e) {}
+}
+
+function ytSpeedChange(dir) {
+    ytSpeedIdx = Math.max(0, Math.min(YT_SPEEDS.length - 1, ytSpeedIdx + dir));
+    const speed = YT_SPEEDS[ytSpeedIdx];
+    document.getElementById('speedVal').textContent = speed + '×';
+    if (ytPlayer) { try { ytPlayer.setPlaybackRate(speed); } catch(e) {} }
+}
+
 function playVideo(link, title, classType, classNote, backView, breadcrumbParts) {
     videoBackTarget = backView || 'viewChapters';
+    ytCurrentLink = link;
 
     // Breadcrumb
     document.getElementById('videoBreadcrumb').innerHTML = bc(breadcrumbParts ? breadcrumbParts[0] : []);
@@ -948,20 +1142,52 @@ function playVideo(link, title, classType, classNote, backView, breadcrumbParts)
         document.getElementById('videoInfoRows').innerHTML = rows;
     }
 
-    // Player
-    // FIX: 'youtube' class_type used to open YouTube in a new tab / redirect away from the app.
-    // Per requirement, classes must NEVER redirect to YouTube or another browser/channel —
-    // every class video is always embedded inside the app, regardless of class_type.
+    // Reset speed UI
+    ytSpeedIdx = 3;
+    document.getElementById('speedVal').textContent = '1×';
+    document.getElementById('playPauseBtn').textContent = '▶';
+
+    // Download / YT buttons
+    const dlBtn = document.getElementById('vcbDownloadBtn');
+    const ytBtn = document.getElementById('vcbYtBtn');
     const videoId = extractYouTubeID(link);
+
     if (videoId) {
+        // YouTube video — show YT link button, hide download
+        dlBtn.style.display = 'none';
+        ytBtn.style.display = 'flex';
+        ytBtn.href = `https://www.youtube.com/watch?v=${videoId}`;
+
+        // Use IFrame API
+        if (ytReady) {
+            _createYTPlayer(videoId);
+        } else {
+            ytPendingVideoId = videoId;
+            // Fallback iframe while API loads
+            document.getElementById('videoPlayer').innerHTML =
+                `<iframe src="https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&showinfo=0&iv_load_policy=3&fs=1&playsinline=1&enablejsapi=1" allow="autoplay;encrypted-media;picture-in-picture" allowfullscreen></iframe>
+                 <div class="video-click-shield">
+                     <div class="shield-top" onclick="event.stopPropagation();"></div>
+                     <div class="shield-corner" onclick="event.stopPropagation();"></div>
+                     <div class="shield-pass"></div>
+                 </div>`;
+        }
+    } else if (link && (link.endsWith('.mp4') || link.includes('.mp4'))) {
+        // Direct MP4 — show download button
+        ytBtn.style.display = 'none';
+        dlBtn.style.display = 'flex';
+        dlBtn.href = link;
+        dlBtn.setAttribute('download', title || 'video');
+
+        if (ytPlayer) { try { ytPlayer.destroy(); } catch(e) {} ytPlayer = null; }
         document.getElementById('videoPlayer').innerHTML =
-            `<iframe src="https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&showinfo=0&iv_load_policy=3&fs=1&playsinline=1" allow="autoplay;encrypted-media;picture-in-picture" allowfullscreen></iframe>
-             <div class="video-click-shield">
-                 <div class="shield-top" onclick="event.stopPropagation();"></div>
-                 <div class="shield-corner" onclick="event.stopPropagation();"></div>
-                 <div class="shield-pass"></div>
-             </div>`;
+            `<video controls playsinline style="position:absolute;inset:0;width:100%;height:100%;background:#000;">
+                <source src="${link}" type="video/mp4">
+             </video>`;
     } else {
+        dlBtn.style.display = 'none';
+        ytBtn.style.display = 'none';
+        if (ytPlayer) { try { ytPlayer.destroy(); } catch(e) {} ytPlayer = null; }
         document.getElementById('videoPlayer').innerHTML = `
             <div class="video-no-embed">
                 <div class="vne-icon">⚠️</div>
