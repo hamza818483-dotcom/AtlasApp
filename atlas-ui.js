@@ -76,14 +76,13 @@
         // viewport meta ট্যাগ আপডেট — মোবাইলে pinch-zoom বন্ধ, ডেস্কটপে
         // ব্রাউজার নিজের zoom (Ctrl+/Ctrl-) ব্যবহার করতে পারবে কারণ সেটা
         // viewport-নির্ভর না, OS/ব্রাউজার লেভেলের zoom।
+        const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
         let viewportTag = document.querySelector('meta[name="viewport"]');
-        if (viewportTag) {
-            const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-            if (isMobile) {
-                viewportTag.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
-            }
-            // ডেস্কটপে viewport tag স্পর্শ করা হচ্ছে না — যেমন আগে ছিল, zoom স্বাভাবিক থাকবে
+        if (viewportTag && isMobile) {
+            viewportTag.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover');
         }
+        // ডেস্কটপে viewport tag স্পর্শ করা হচ্ছে না — zoom স্বাভাবিক থাকবে
 
         // টেক্সট কপি/সিলেক্ট বন্ধ (ডেস্কটপ ও মোবাইল উভয়ে — শুধু পড়া যাবে, কপি না)
         const style = document.createElement('style');
@@ -102,8 +101,42 @@
                 -ms-user-select: text;
                 user-select: text;
             }
+            ${isMobile ? `
+            /* মোবাইলে pinch-zoom/gesture দিয়ে স্কেল করা বন্ধ — শুধু স্বাভাবিক স্ক্রল চলবে।
+               viewport meta ট্যাগ একা যথেষ্ট না (Android-এর "Force enable zoom"
+               accessibility সেটিং সেটা override করতে পারে), তাই CSS touch-action
+               দিয়েও আটকানো হচ্ছে — এটা accessibility সেটিং দ্বারা override হয় না। */
+            html, body {
+                touch-action: pan-x pan-y;
+            }
+            ` : ''}
         `;
         document.head.appendChild(style);
+
+        if (isMobile) {
+            // ডাবল-ট্যাপ জুম বন্ধ — কিছু Android ব্রাউজারে viewport meta এটা পুরোপুরি
+            // আটকায় না, তাই দ্রুত পরপর দুইটা ট্যাপ হলে দ্বিতীয়টার ডিফল্ট আচরণ বাতিল করা হয়
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function (e) {
+                const now = Date.now();
+                if (now - lastTouchEnd <= 350) {
+                    e.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, { passive: false });
+
+            // দুই আঙুলের পিঞ্চ-জেসচার (gesturestart/gesturechange — iOS Safari) সরাসরি বন্ধ
+            document.addEventListener('gesturestart', e => e.preventDefault());
+            document.addEventListener('gesturechange', e => e.preventDefault());
+
+            // মাল্টি-টাচ পিঞ্চ-জুম (Android Chrome সহ সব মোবাইল ব্রাউজার) — দুই বা
+            // তার বেশি আঙুল দিয়ে স্পর্শ করলে ডিফল্ট pinch-zoom আচরণ আটকানো হয়
+            document.addEventListener('touchmove', function (e) {
+                if (e.touches && e.touches.length > 1) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+        }
     }
 
     // ---------- ৪. মিসিং "ফিরে যান" বাটন যোগ করা (যেসব পেজে নেই) ----------
