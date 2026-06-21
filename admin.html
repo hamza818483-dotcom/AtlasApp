@@ -1526,7 +1526,10 @@ function toggleExamFields() {
 }
 
 async function saveExam() {
-    if (!examCSVData?.length) { showToast('⚠️ CSV আপলোড করুন'); return; }
+    const eidCheck = document.getElementById('examEditId').value;
+    // FIX: CSV required only when creating a NEW exam. On edit, CSV is optional —
+    // if admin doesn't upload a new CSV, existing questions are kept untouched.
+    if (!eidCheck && !examCSVData?.length) { showToast('⚠️ CSV আপলোড করুন'); return; }
     // ── NEW: read allow_preview + is_locked  (Flutter: ExamModel.allowPreview, isLocked)
     const allowPreview = getSwitchVal('examAllowPreview');
     const isLocked     = getSwitchVal('examIsLocked');
@@ -1543,36 +1546,48 @@ async function saveExam() {
         writer:  document.getElementById('examWriter').value.trim()|| null,
         start_time: document.getElementById('examStart').value || null,
         end_time:   document.getElementById('examEnd').value   || null,
-        total_marks: examCSVData.length,
-        duration_minutes: Math.ceil(examCSVData.length / 2),
         allow_preview: allowPreview,   // ← NEW
         is_locked:     isLocked,       // ← NEW
         created_by: currentUser?.phone
     };
+    // FIX: only overwrite total_marks/duration when a new CSV was actually uploaded.
+    // On a metadata-only edit (no new CSV), leave these untouched so existing question count stays correct.
+    if (examCSVData?.length) {
+        d.total_marks = examCSVData.length;
+        d.duration_minutes = Math.ceil(examCSVData.length / 2);
+    }
     if (!d.subject || !d.chapter || !d.exam_type) { showToast('⚠️ সাবজেক্ট, চ্যাপ্টার ও টাইপ দিন'); return; }
     const eid = document.getElementById('examEditId').value;
     try {
         let examId = eid;
         if (eid) {
             await safeFetch(`${SUPABASE_URL}/rest/v1/exams?id=eq.${eid}`, { method: 'PATCH', body: JSON.stringify(d) });
-            await safeFetch(`${SUPABASE_URL}/rest/v1/questions?exam_id=eq.${eid}`, { method: 'DELETE' });
+            // FIX: only wipe + replace questions if admin actually uploaded a new CSV this time.
+            if (examCSVData?.length) {
+                await safeFetch(`${SUPABASE_URL}/rest/v1/questions?exam_id=eq.${eid}`, { method: 'DELETE' });
+            }
         } else {
             const res = await safeFetch(`${SUPABASE_URL}/rest/v1/exams`, { method: 'POST', body: JSON.stringify(d) });
             examId = Array.isArray(res) ? res[0]?.id : res?.id;
         }
         if (!examId) { showToast('❌ Exam ID পাওয়া যায়নি'); return; }
-        showToast('⏳ প্রশ্ন সেইভ হচ্ছে... ' + examCSVData.length + 'টি');
-        let saved = 0;
-        for (const q of examCSVData) {
-            await safeFetch(`${SUPABASE_URL}/rest/v1/questions`, { method: 'POST', body: JSON.stringify({
-                exam_id: examId, question_text: q.questions || '',
-                option1: q.option1, option2: q.option2, option3: q.option3, option4: q.option4,
-                option5: q.option5 || null, answer_index: parseInt(q.answer) || 1,
-                explanation: q.explanation || '', type: parseInt(q.type) || 1, section: parseInt(q.section) || 1
-            })});
-            saved++;
+        // FIX: skip question-saving loop entirely when there's no new CSV (metadata-only update)
+        if (examCSVData?.length) {
+            showToast('⏳ প্রশ্ন সেইভ হচ্ছে... ' + examCSVData.length + 'টি');
+            let saved = 0;
+            for (const q of examCSVData) {
+                await safeFetch(`${SUPABASE_URL}/rest/v1/questions`, { method: 'POST', body: JSON.stringify({
+                    exam_id: examId, question_text: q.questions || '',
+                    option1: q.option1, option2: q.option2, option3: q.option3, option4: q.option4,
+                    option5: q.option5 || null, answer_index: parseInt(q.answer) || 1,
+                    explanation: q.explanation || '', type: parseInt(q.type) || 1, section: parseInt(q.section) || 1
+                })});
+                saved++;
+            }
+            showToast('✅ ' + saved + ' প্রশ্ন সেইভ | ID: ' + examId, 5000);
+        } else {
+            showToast('✅ এক্সাম তথ্য আপডেট হয়েছে | ID: ' + examId, 4000);
         }
-        showToast('✅ ' + saved + ' প্রশ্ন সেইভ | ID: ' + examId, 5000);
         navigator.clipboard?.writeText(location.origin + '/exam.html?id=' + examId);
         clearExamForm(); loadExams();
     } catch(e) { showToast('❌ এরর: ' + e.message, 5000); }
