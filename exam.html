@@ -621,6 +621,10 @@
 // CONFIG (→ Flutter: constants.dart)
 const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
+// kakhacq-user-render.js (আলাদা <script src> ফাইল) window.SUPABASE_URL/window.safeFetch
+// ব্যবহার করে। top-level const এমনিতে window-এ attach হয় না, তাই এক্সপ্লিসিট সেট:
+window.SUPABASE_URL = SUPABASE_URL;
+window.SUPABASE_KEY = SUPABASE_KEY;
 const GEMINI_KEY = 'AIzaSyBHfdZwqQkrBWF2pp1hLCGZKaXKrinP9ew';
 const GROQ_KEY   = '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';
 const AUTH_URL   = 'https://atlasprep.pages.dev/auth';

@@ -1127,6 +1127,14 @@ const SUPABASE_URL  = 'https://btezborkuiqfogykrjrn.supabase.co';
 const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
 const ADMIN_PHONE   = '01754365403';
 
+// kakhacq/*.js ফাইলগুলো window.SUPABASE_URL ও window.safeFetch ব্যবহার করে
+// (এগুলো আলাদা <script src> ফাইল, এই ব্লকের lexical scope-এর বাইরে)।
+// top-level const/let দিয়ে ঘোষিত ভ্যারিয়েবল var-এর মতো অটোমেটিক window-এ
+// attach হয় না, তাই এখানে এক্সপ্লিসিটভাবে window-এ বসানো হচ্ছে। এই লাইনগুলো
+// safeFetch/showToast ডিফাইন হওয়ার পর (নিচে) আরেকবার রিপিট করা হয়েছে।
+window.SUPABASE_URL = SUPABASE_URL;
+window.SUPABASE_KEY = SUPABASE_KEY;
+
 let currentUser   = null;
 let isAdmin       = true;
 let isSubAdmin    = false;

@@ -206,6 +206,9 @@
     // এক্সিস্টিং লিংক-বেইজড এন্ট্রিগুলো অপরিবর্তিত থাকবে কারণ তাদের
     // এই কলাম খালি (NULL) থাকবে।
     async function saveToSupabase(parsed, meta) {
+        if (!window.SUPABASE_URL) {
+            throw new Error('window.SUPABASE_URL সেট নেই — admin.html ঠিকভাবে লোড হয়েছে কিনা যাচাই করুন।');
+        }
         const payload = {
             subject: meta.subject,
             chapter: meta.chapter,
