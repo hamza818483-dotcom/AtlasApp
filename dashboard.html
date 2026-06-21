@@ -67,13 +67,9 @@
         .header-left { display:flex;align-items:center;gap:10px; }
         .hamburger { background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:6px;border-radius:8px;transition:background 0.2s; }
         .hamburger:hover { background:var(--hover); }
-        .atlas-brand-box { display:flex;align-items:center;gap:8px; }
+        .atlas-brand-box { display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:4px 10px;cursor:pointer; }
         .atlas-logo-img { width:28px;height:28px;border-radius:6px; }
-        .atlas-brand-text {
-            font-size:18px;font-weight:800;letter-spacing:-0.5px;
-            background:linear-gradient(135deg,#7C83FF 0%,#58A6FF 50%,#7C83FF 100%);
-            background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;
-            background-clip:text;animation:brandShift 4s linear infinite;
+        .atlas-brand-text { font-size:18px;font-weight:800;letter-spacing:-0.5px;color:var(--accent); }
         }
         @keyframes brandShift { 0%{background-position:0%}100%{background-position:200%} }
         .header-right { display:flex;gap:6px; }
@@ -747,7 +743,7 @@
     <div class="header-left">
         <button class="global-back-btn" onclick="goBackGlobal()" title="ফিরে যান" aria-label="ফিরে যান">←</button>
         <button class="hamburger" onclick="toggleSidebar()">☰</button>
-        <div class="atlas-brand-box">
+        <div class="atlas-brand-box" onclick="goTo('index.html')">
             <img src="https://cdn.phototourl.com/free/2026-05-15-b45df560-6dc8-4cb7-9040-238612c8a161.png" class="atlas-logo-img" alt="ATLAS" onerror="this.style.display='none'">
             <span class="atlas-brand-text">ATLAS APP</span>
         </div>

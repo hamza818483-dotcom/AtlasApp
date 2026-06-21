@@ -388,15 +388,9 @@
         .btn-danger   { background:var(--error); color:#fff; }
 
         /* ── ATLAS BRAND (Header) ── */
-        .atlas-brand-box { display:flex; align-items:center; gap:8px; }
+        .atlas-brand-box { display:flex; align-items:center; gap:8px; background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:4px 10px; cursor:pointer; }
         .atlas-logo-img  { width:28px; height:28px; border-radius:6px; object-fit:cover; }
-        .atlas-brand-text {
-            font-size:18px; font-weight:900; letter-spacing:-0.5px;
-            background:linear-gradient(135deg,#818CF8,#C4B5FD,#F472B6,#818CF8);
-            background-size:200% auto; -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-            animation:gradShift 3s linear infinite;
-        }
-        @keyframes gradShift { 0%{background-position:0%} 100%{background-position:200%} }
+        .atlas-brand-text { font-size:18px; font-weight:900; letter-spacing:-0.5px; color:var(--accent); }
     /* Global back button — always navigates exactly one step back in real browser history */
         .global-back-btn {
             background: none; border: none; color: var(--text);
@@ -439,7 +433,7 @@
     <div class="header-left">
         <button class="global-back-btn" onclick="goBackGlobal()" title="ফিরে যান" aria-label="ফিরে যান">←</button>
         <button class="hamburger" onclick="toggleSidebar()">☰</button>
-        <div class="atlas-brand-box">
+        <div class="atlas-brand-box" onclick="goTo('index.html')">
             <img src="https://cdn.phototourl.com/free/2026-05-15-b45df560-6dc8-4cb7-9040-238612c8a161.png" class="atlas-logo-img" alt="ATLAS">
             <span class="atlas-brand-text">ATLAS APP</span>
         </div>
@@ -959,6 +953,7 @@ function showPreExamFromData(exam,questions){
             ${exam.year?`<div class="info-row"><span class="info-label">সাল</span><span class="info-value">${exam.year}</span></div>`:''}
             ${exam.writer?`<div class="info-row"><span class="info-label">রাইটার</span><span class="info-value">${exam.writer}</span></div>`:''}
             ${exam.unit?`<div class="info-row"><span class="info-label">ইউনিট</span><span class="info-value">${exam.unit}</span></div>`:''}
+            ${exam.pages?`<div class="info-row"><span class="info-label">নির্বাচিত পেইজ</span><span class="info-value">${exam.pages}</span></div>`:''}
         </div>`;
     document.getElementById('preExamContent').innerHTML=html;
     switchMode('PreExam');
@@ -1194,6 +1189,29 @@ function selectOption(qid,oid,el){
     el.classList.add('selected');el.classList.remove('dimmed');
     const lock=document.getElementById(`lock${qid}_${oid}`);if(lock)lock.style.display='inline';
     updateProgress(); // Req #15: update progress on each answer
+    scrollToNextQuestion(qid);
+}
+
+// Auto-scroll to the next unanswered question so the user doesn't have to
+// manually scroll after every answer — jumps to the next card after current.
+function scrollToNextQuestion(qid){
+    const idx=examQuestions.findIndex(q=>q.id===qid);
+    if(idx===-1)return;
+    let nextQ=null;
+    for(let i=idx+1;i<examQuestions.length;i++){
+        if(!userAnswers[examQuestions[i].id]){nextQ=examQuestions[i];break;}
+    }
+    if(!nextQ){
+        for(let i=0;i<idx;i++){
+            if(!userAnswers[examQuestions[i].id]){nextQ=examQuestions[i];break;}
+        }
+    }
+    if(nextQ){
+        setTimeout(()=>{
+            const el=document.getElementById('qCard'+nextQ.id);
+            if(el)el.scrollIntoView({behavior:'smooth',block:'center'});
+        },350);
+    }
 }
 
 // Req #15, #16: Timer + Auto Submit
@@ -1471,11 +1489,13 @@ function showResult(correct,wrong,skipped,negMark,finalScore,withGpa,gpaScore,de
         const statusHTML=status==='correct'?'<div class="q-status correct">✅ সঠিক</div>':
             status==='wrong'?`<div class="q-status wrong">❌ ভুল${ua?' (আপনি: '+['ক','খ','গ','ঘ','ঙ'][ua-1]+')':''}</div>`:
             '<div class="q-status" style="color:var(--warning);">⏭️ স্কিপ</div>';
+        const bmClassR=bookmarkedQuestions[q.id]?' active':'';
         html+=`<div class="mcq-card solve-item" data-status="${status}">
             ${statusHTML}
             <div class="q-header" style="margin-top:4px;">
                 <span class="q-number">প্রশ্ন ${i+1}/${examQuestions.length}</span>
                 <div class="q-actions">
+                    <button class="icon-btn bookmark${bmClassR}" id="bmBtn${q.id}" title="বুকমার্ক" onclick="toggleBookmark(${q.id})">🔖</button>
                     <!-- Req #1: AI Chat in result too -->
                     <button class="icon-btn ai-chat-btn" title="ATLAS AI" onclick="openAIChat(${q.id})">🤖 AI</button>
                     <button class="icon-btn" title="রিপোর্ট" onclick="openReportModal(${q.id})">🚩</button>
@@ -1777,6 +1797,7 @@ if(practice==='mock'){
     const qData=sessionStorage.getItem('practiceQuestions');
     const title=sessionStorage.getItem('practiceTitle')||'Mock Test';
     const time=parseInt(sessionStorage.getItem('practiceTime'))||0;
+    const pages=sessionStorage.getItem('practicePages')||null; // set by study.html (মূলবই পেইজভিত্তিক প্রস্তুতি) to show which page(s) were selected
     if(qData){
         try{
             examQuestions=JSON.parse(qData);
@@ -1784,7 +1805,8 @@ if(practice==='mock'){
                 title,subject:'Mock',chapter:'Mock',
                 exam_type:'mock',total_marks:examQuestions.length,
                 duration_minutes:time||Math.ceil(examQuestions.length/1.5),
-                id:'mock_'+Date.now(),allow_preview:false,allow_solve_sheet:true
+                id:'mock_'+Date.now(),allow_preview:false,allow_solve_sheet:true,
+                pages
             };
             showPreExamFromData(currentExam,examQuestions);
         }catch(e){showToast('❌ প্রশ্ন লোড করতে সমস্যা');}

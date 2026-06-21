@@ -116,14 +116,15 @@
         }
         .global-back-btn:active { opacity:0.6; }
 
-        /* Brand box  (Flutter: AnimatedLogo widget) */
+        /* Brand box  (Flutter: AnimatedLogo widget) — clean, no hazy glow */
         .atlas-brand-box {
             display: flex; align-items: center; gap: 7px;
-            background: linear-gradient(135deg,rgba(124,131,255,.12),rgba(88,166,255,.06));
-            border: 1px solid rgba(124,131,255,.2);
+            background: var(--card-bg);
+            border: 1px solid var(--border);
             border-radius: 8px; padding: 4px 10px;
-            
+            cursor: pointer; transition: border-color .2s ease;
         }
+        .atlas-brand-box:active { border-color: var(--accent); }
         .atlas-logo-img { height: 22px; width: auto; }
         .atlas-brand-text { font-size: 17px; font-weight: 800; color: var(--accent); letter-spacing: -.5px; }
 
@@ -367,8 +368,28 @@
            Each row is its own grid container so spacing/column-count
            is explicit per spec, instead of relying on auto-wrap.
         ───────────────────────────────────────────── */
+
+        /* Outer coverage box — thin border around the entire button area */
+        .btn-coverage-box {
+            border: 1px solid var(--border); border-radius: 18px;
+            padding: 14px 10px 10px; margin-bottom: 14px;
+            background: rgba(255,255,255,.012);
+        }
+
+        /* Section separator — thin line with a small gradient label
+           box centered on top of it. */
+        .section-sep { position: relative; text-align: center; margin: 18px 0 10px; height: 1px; background: var(--border); }
+        .section-sep:first-child { margin-top: 2px; }
+        .section-sep-label {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+            background: linear-gradient(135deg, var(--accent), #3D35B0);
+            color: #fff; font-size: 10px; font-weight: 800; letter-spacing: .3px;
+            padding: 4px 12px; border-radius: 8px; white-space: nowrap;
+            box-shadow: 0 2px 10px rgba(108,99,255,.35);
+        }
+
         .home-row { display: grid; gap: 9px; margin-bottom: 9px; }
-        .home-row:last-child { margin-bottom: 16px; }
+        .home-row:last-child { margin-bottom: 4px; }
         .home-row-2  { grid-template-columns: repeat(2,1fr); }   /* 50/50 hero pairs */
         .home-row-3  { grid-template-columns: repeat(3,1fr); }   /* HSC / Admission / অনুশীলনী */
         .home-row-4  { grid-template-columns: repeat(4,1fr); }   /* Focus/Tracker/Pomodoro/GPA */
@@ -390,41 +411,71 @@
             transform: translateY(-2px);
         }
 
-        /* Premium icon tile — colored rounded-square behind every icon */
+        /* Premium icon tile — glossy gradient + soft top highlight + deep shadow */
         .btn-icon-tile {
-            width: 36px; height: 36px; border-radius: 11px;
+            width: 38px; height: 38px; border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 18px; flex-shrink: 0;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 2px 8px rgba(0,0,0,.18);
+            font-size: 19px; flex-shrink: 0; position: relative;
+            box-shadow:
+                inset 0 1.5px 0 rgba(255,255,255,.35),
+                inset 0 -6px 10px rgba(0,0,0,.18),
+                0 4px 12px rgba(0,0,0,.28),
+                0 0 0 1px rgba(255,255,255,.05);
         }
-        .home-btn .btn-text { font-size: 10.5px; line-height: 1.25; font-weight: 700; }
+        .home-btn .btn-text { font-size: 10.5px; line-height: 1.25; font-weight: 700; margin-top: 1px; }
 
         /* Hero style — bigger tile, left-aligned, used in 50/50 + full-width rows */
         .home-btn-hero {
             flex-direction: row; align-items: center; justify-content: flex-start;
             padding: 14px 12px; gap: 10px; text-align: left;
         }
-        .home-btn-hero .btn-icon-tile { width: 42px; height: 42px; font-size: 21px; border-radius: 12px; }
-        .home-btn-hero .btn-text { font-size: 12.5px; line-height: 1.3; }
+        .home-btn-hero .btn-icon-tile { width: 44px; height: 44px; font-size: 22px; border-radius: 13px; }
+        .home-btn-hero .btn-text { font-size: 12.5px; line-height: 1.3; margin-top: 0; }
 
-        /* Distinct icon-tile color themes (premium gradients, not generic) */
-        .tile-indigo  { background: linear-gradient(135deg,#5A5FE0,#3B3FB8); }
-        .tile-amber   { background: linear-gradient(135deg,#F5A524,#C9810A); }
-        .tile-violet  { background: linear-gradient(135deg,#8B5CF6,#6228D7); }
-        .tile-rose    { background: linear-gradient(135deg,#F43F8E,#C81E68); }
-        .tile-emerald { background: linear-gradient(135deg,#10B981,#0A8F63); }
-        .tile-sky     { background: linear-gradient(135deg,#38BDF8,#0D8FD0); }
-        .tile-orange  { background: linear-gradient(135deg,#FB923C,#D85F11); }
-        .tile-teal    { background: linear-gradient(135deg,#14B8A6,#0C8B7D); }
-        .tile-red     { background: linear-gradient(135deg,#F87171,#D63B3B); }
-        .tile-gold    { background: linear-gradient(135deg,#FBBF24,#D69400); }
-        .tile-plum    { background: linear-gradient(135deg,#A855F7,#7B23D6); }
+        /* Premium icon-tile gradients — richer, deeper, glossier (3-stop, true jewel tones) */
+        .tile-indigo  { background: linear-gradient(150deg,#7B7FFF 0%,#5A5FE0 45%,#322B96 100%); }
+        .tile-amber   { background: linear-gradient(150deg,#FFD166 0%,#F5A524 45%,#A8650A 100%); }
+        .tile-violet  { background: linear-gradient(150deg,#A78BFA 0%,#8B5CF6 45%,#4C1D95 100%); }
+        .tile-rose    { background: linear-gradient(150deg,#FB7AAE 0%,#F43F8E 45%,#9D174D 100%); }
+        .tile-emerald { background: linear-gradient(150deg,#34D9A0 0%,#10B981 45%,#065F46 100%); }
+        .tile-sky     { background: linear-gradient(150deg,#7DD3FC 0%,#38BDF8 45%,#075985 100%); }
+        .tile-orange  { background: linear-gradient(150deg,#FDBA74 0%,#FB923C 45%,#9A3412 100%); }
+        .tile-teal    { background: linear-gradient(150deg,#5EEAD4 0%,#14B8A6 45%,#115E59 100%); }
+        .tile-red     { background: linear-gradient(150deg,#FCA5A5 0%,#F87171 45%,#991B1B 100%); }
+        .tile-gold    { background: linear-gradient(150deg,#FDE68A 0%,#FBBF24 45%,#92400E 100%); }
+        .tile-plum    { background: linear-gradient(150deg,#D8B4FE 0%,#A855F7 45%,#581C87 100%); }
 
-        .home-btn.admin-btn {
-            border-color: #FFD700; color: #FFD700; display: none;
-            background: rgba(255,215,0,.04);
+        /* Admin button — separate full-width button, lives OUTSIDE the coverage box */
+        .admin-fullwidth-btn {
+            display: none; width: 100%; align-items: center; justify-content: center; gap: 10px;
+            background: linear-gradient(135deg, rgba(255,215,0,.14), rgba(255,180,0,.06));
+            border: 1.5px solid #FFD700; border-radius: 14px; padding: 13px;
+            color: #FFD700; font-family: 'Noto Sans Bengali','Inter',sans-serif;
+            font-size: 13px; font-weight: 800; cursor: pointer; margin-bottom: 14px;
         }
-        .home-btn.admin-btn:hover { background: rgba(255,215,0,.08); box-shadow: 0 0 0 2px rgba(255,215,0,.2); }
+        .admin-fullwidth-btn:hover { background: rgba(255,215,0,.1); box-shadow: 0 0 0 2px rgba(255,215,0,.2); }
+
+        /* ATLAS Courses banner — rotating glow border, sits above the coverage box */
+        .courses-banner {
+            position: relative; width: 100%; padding: 2px; border-radius: 16px;
+            margin-bottom: 14px; cursor: pointer; background: var(--bg);
+        }
+        .courses-banner::before {
+            content: ''; position: absolute; inset: -1.5px; border-radius: 16px; z-index: 0;
+            background: conic-gradient(from 0deg, #6C63FF, #00D4AA, #FFBE0B, #FF006E, #6C63FF);
+            animation: coursesRotate 3.5s linear infinite;
+        }
+        @keyframes coursesRotate { to { transform: rotate(360deg); } }
+        .courses-banner-inner {
+            position: relative; z-index: 1; border-radius: 14.5px;
+            background: linear-gradient(135deg, var(--card-bg), var(--card-hover));
+            padding: 13px 16px; display: flex; align-items: center; gap: 10px;
+        }
+        .courses-banner-icon { font-size: 22px; flex-shrink: 0; }
+        .courses-banner-text { flex: 1; }
+        .courses-banner-title { font-size: 13px; font-weight: 900; color: var(--text); }
+        .courses-banner-sub { font-size: 10.5px; color: var(--text-secondary); margin-top: 1px; }
+        .courses-banner-arr { font-size: 16px; color: var(--accent); }
 
         @media(max-width:340px) {
             .home-row-4 { grid-template-columns: repeat(2,1fr); }
@@ -867,7 +918,7 @@
     <div class="header-left">
         <button class="global-back-btn" onclick="goBackGlobal()" title="ফিরে যান" aria-label="ফিরে যান">←</button>
         <button class="hamburger" onclick="toggleSidebar()">☰</button>
-        <div class="atlas-brand-box">
+        <div class="atlas-brand-box" onclick="goTo('index.html')">
             <img src="https://cdn.phototourl.com/free/2026-05-15-b45df560-6dc8-4cb7-9040-238612c8a161.png"
                  class="atlas-logo-img" alt="ATLAS"
                  onerror="this.style.display='none'">
@@ -921,8 +972,23 @@
     <!-- (Flutter: CountdownTimerList widget) -->
     <div id="timerContainer"></div>
 
+    <!-- ATLAS Courses — rotating glow border banner, links to atlascourses.com -->
+    <div class="courses-banner" onclick="window.open('https://atlascourses.com','_blank')">
+        <div class="courses-banner-inner">
+            <span class="courses-banner-icon">🎓</span>
+            <div class="courses-banner-text">
+                <div class="courses-banner-title">ATLAS Courses</div>
+                <div class="courses-banner-sub">সম্পূর্ণ কোর্স দেখো atlascourses.com-এ</div>
+            </div>
+            <span class="courses-banner-arr">↗</span>
+        </div>
+    </div>
+
     <!-- ── Home Buttons — Premium Grid ── -->
     <!-- (Flutter: Column of Rows, each Row = GridView shrinkWrap) -->
+    <div class="btn-coverage-box">
+
+    <div class="section-sep"><span class="section-sep-label">📚 Class + Practice</span></div>
 
     <!-- Row 1: ফ্রি ক্লাস + মূলবই পেইজভিত্তিক প্রস্তুতি (50/50) -->
     <div class="home-row home-row-2">
@@ -935,6 +1001,8 @@
             <span class="btn-text">মূলবই পেইজভিত্তিক প্রস্তুতি</span>
         </button>
     </div>
+
+    <div class="section-sep"><span class="section-sep-label">🧩 ATLAS Study Aid</span></div>
 
     <!-- Row 2: Focus Timer, Study Tracker, Pomodoro, GPA Calculator -->
     <div class="home-row home-row-4">
@@ -956,6 +1024,8 @@
         </button>
     </div>
 
+    <div class="section-sep"><span class="section-sep-label">🗂️ Category / Type</span></div>
+
     <!-- Row 3: HSC, Admission, অনুশীলনী -->
     <div class="home-row home-row-3">
         <button class="home-btn" onclick="goTo('exam.html?cat=board')">
@@ -971,6 +1041,8 @@
             <span class="btn-text">অনুশীলনী</span>
         </button>
     </div>
+
+    <div class="section-sep"><span class="section-sep-label">🚀 Super Practice</span></div>
 
     <!-- Row 4: অনুশীলনী এক্সাম + Model Test (pair) -->
     <div class="home-row home-row-2">
@@ -996,18 +1068,12 @@
         </button>
     </div>
 
-    <!-- My Mistakes — preserved (was in old grid, kept accessible, not in new spec's main rows) -->
-    <div class="home-row home-row-2">
-        <button class="home-btn home-btn-hero" onclick="openMistakesModal()">
-            <span class="btn-icon-tile tile-red">⚠️</span>
-            <span class="btn-text">My Mistakes</span>
-        </button>
-        <!-- Admin button — hidden for non-admins (Flutter: Visibility widget) -->
-        <button class="home-btn home-btn-hero admin-btn" id="adminBtn" onclick="goTo('admin.html')" style="display:none">
-            <span class="btn-icon-tile tile-gold">👑</span>
-            <span class="btn-text">Admin Control</span>
-        </button>
-    </div>
+    </div><!-- /btn-coverage-box -->
+
+    <!-- Admin Control — owner-only, lives OUTSIDE the button coverage area, separate full-width button -->
+    <button class="admin-fullwidth-btn" id="adminBtn" onclick="goTo('admin.html')">
+        <span style="font-size:18px">👑</span> Admin Control
+    </button>
 
     <!-- Social Chips Row  (Flutter: SocialChipsRow widget) -->
     <div class="social-row" id="socialRow"></div>

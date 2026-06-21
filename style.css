@@ -168,7 +168,6 @@ body {
 @keyframes spinnerAnim { to{transform:rotate(360deg);} }
 @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
 @keyframes spin { to{transform:rotate(360deg);} }
-@keyframes brandGlow { 0%,100%{box-shadow:0 0 8px rgba(123,130,255,0.4),0 0 16px rgba(139,92,246,0.2);} 50%{box-shadow:0 0 16px rgba(123,130,255,0.6),0 0 24px rgba(139,92,246,0.35);} }
 
 /* ============================================
    FEATURE 6: HEADER (Fixed + Blur)
@@ -199,24 +198,19 @@ body {
 .header-icon:active { transform: scale(0.92); }
 
 /* ============================================
-   FEATURE 7: ATLAS BRAND BOX (Gradient + Logo + Glow)
+   FEATURE 7: ATLAS BRAND BOX (Clean, Premium — no haze/blur glow)
    ============================================ */
 .atlas-brand-box {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 6px 14px 6px 8px; border-radius: 8px; max-width: fit-content;
-    background: linear-gradient(135deg, #5A5FE0 0%, #8B5CF6 100%);
-    color: #fff; position: relative;
-    animation: brandGlow 2.5s ease-in-out infinite;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+    background: var(--card-bg, #1A1F35);
+    border: 1px solid var(--border, rgba(255,255,255,.1));
+    color: var(--text, #fff); position: relative; cursor: pointer;
+    transition: border-color .2s ease;
 }
-.dark-mode .atlas-brand-box { background: linear-gradient(135deg, #7B82FF 0%, #A78BFA 100%); }
-.atlas-brand-box::before {
-    content: ''; position: absolute; inset: -3px; border-radius: 10px;
-    background: conic-gradient(from 0deg, transparent 0deg, rgba(123,130,255,0.5) 90deg, transparent 180deg, transparent 270deg, rgba(139,92,246,0.5) 360deg);
-    z-index: -1; opacity: 0.5; filter: blur(4px);
-}
+.atlas-brand-box:active { border-color: var(--accent, #7B82FF); }
 .atlas-logo-img { width: 26px !important; height: 26px !important; max-width: 26px !important; max-height: 26px !important; border-radius: 4px; object-fit: contain; flex-shrink: 0; display: inline-block; }
-.atlas-brand-text { font-size: 16px; font-weight: 800; letter-spacing: -0.5px; color: #fff; white-space: nowrap; }
+.atlas-brand-text { font-size: 16px; font-weight: 800; letter-spacing: -0.5px; color: var(--accent, #7B82FF); white-space: nowrap; }
 
 /* ============================================
    FEATURE 8: SIDEBAR (Slide-in + Overlay Blur + Footer Logout)
