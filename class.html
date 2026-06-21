@@ -1656,22 +1656,28 @@ function showError(title, message, details, retryFn) {
     if (existing) existing.remove();
     const overlay = document.createElement('div');
     overlay.className = 'error-popup-overlay';
-    let retryHTML = '';
-    if (retryFn) retryHTML = `<button class="error-popup-retry" onclick="this.closest('.error-popup-overlay').remove();(${retryFn.toString()})();">🔄 আবার চেষ্টা</button>`;
     overlay.innerHTML = `
         <div class="error-popup" onclick="event.stopPropagation()">
             <div class="error-popup-icon">⚠️</div>
             <div class="error-popup-title">${title || 'কিছু সমস্যা হয়েছে'}</div>
             <div class="error-popup-message">${message || 'পরে আবার চেষ্টা করুন'}</div>
             ${details ? `<div class="error-popup-details">${details}</div>` : ''}
-            <div style="display:flex;justify-content:center;gap:8px;">
-                ${retryHTML}
-                <button class="error-popup-btn" onclick="this.closest('.error-popup-overlay').remove()">✕ বন্ধ</button>
+            <div style="display:flex;justify-content:center;gap:8px;" id="errorPopupBtnRow">
+                <button class="error-popup-btn" id="errorPopupCloseBtn">✕ বন্ধ</button>
             </div>
         </div>
     `;
-    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
     document.body.appendChild(overlay);
+    overlay.querySelector('#errorPopupCloseBtn').addEventListener('click', () => overlay.remove());
+    // Attach retry handler directly (preserves closure — toString()+onclick would lose it, causing "X is not defined" errors)
+    if (retryFn) {
+        const retryBtn = document.createElement('button');
+        retryBtn.className = 'error-popup-retry';
+        retryBtn.textContent = '🔄 আবার চেষ্টা';
+        retryBtn.addEventListener('click', () => { overlay.remove(); retryFn(); });
+        overlay.querySelector('#errorPopupBtnRow').prepend(retryBtn);
+    }
 }
 window.addEventListener('error', e => {
     showError('💥 সমস্যা', 'পৃষ্ঠাটি রিলোড করুন', e.error?.message, () => location.reload());

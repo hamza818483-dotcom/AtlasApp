@@ -1194,6 +1194,19 @@ function selectOption(qid,oid,el){
     el.classList.add('selected');el.classList.remove('dimmed');
     const lock=document.getElementById(`lock${qid}_${oid}`);if(lock)lock.style.display='inline';
     updateProgress(); // Req #15: update progress on each answer
+    autoAdvanceToNextQuestion(qid); // user pref: jump straight to next question after answering, no manual scrolling needed
+}
+
+// Scrolls to the next unanswered question right after the current one is answered.
+function autoAdvanceToNextQuestion(currentQid) {
+    const idx = examQuestions.findIndex(q => q.id === currentQid);
+    if (idx === -1) return;
+    for (let i = idx + 1; i < examQuestions.length; i++) {
+        if (!userAnswers[examQuestions[i].id]) {
+            setTimeout(() => goToQuestion(examQuestions[i].id), 350);
+            return;
+        }
+    }
 }
 
 // Req #15, #16: Timer + Auto Submit
@@ -1288,14 +1301,15 @@ function toggleBookmark(qid){
     if(!checkGuestAction())return;
     try{
         const sess=getSession();if(!sess)return;
+        const allBtns=document.querySelectorAll(`[id="bmBtn${qid}"]`);
         if(bookmarkedQuestions[qid]){
             delete bookmarkedQuestions[qid];
-            document.getElementById('bmBtn'+qid)?.classList.remove('active');
+            allBtns.forEach(b=>b.classList.remove('active'));
             showToast('🔖 রিমুভ');
         } else {
             const q=examQuestions.find(q=>q.id==qid);
             bookmarkedQuestions[qid]={exam_name:currentExam?.title||(currentExam?.subject+' - '+currentExam?.chapter),subject:currentExam?.subject,chapter:currentExam?.chapter,category:currentExam?.exam_type,question_text:q.question_text,option1:q.option1,option2:q.option2,option3:q.option3,option4:q.option4,option5:q.option5,answer_index:q.answer_index,explanation:q.explanation,bookmarked_at:new Date().toISOString()};
-            document.getElementById('bmBtn'+qid)?.classList.add('active');
+            allBtns.forEach(b=>b.classList.add('active'));
             showToast('🔖 সেভ');
         }
         localStorage.setItem('bookmarks_'+sess.phone,JSON.stringify(bookmarkedQuestions));
@@ -1399,14 +1413,23 @@ function submitExam(isAutoSubmit=false){
 async function saveResultToDB(c,w,s,n,f,g,wg,t){
     try{
         const user=getSession();if(!user)return;
-        await safeFetch(`${SUPABASE_URL}/rest/v1/exam_results`,{method:'POST',body:JSON.stringify({phone:user.phone,exam_id:currentExam?.id,exam_name:currentExam?.title||(currentExam?.subject+' - '+currentExam?.chapter),subject:currentExam?.subject,chapter:currentExam?.chapter,category:currentExam?.exam_type,total_questions:t,correct:c,wrong:w,skipped:s,negative_marks:n,final_score:f,gpa_score:g,with_gpa_total:wg})});
+        await safeFetch(`${SUPABASE_URL}/rest/v1/exam_results`,{method:'POST',body:JSON.stringify({phone:user.phone,exam_id:safeNumericExamId(currentExam?.id),exam_name:currentExam?.title||(currentExam?.subject+' - '+currentExam?.chapter),subject:currentExam?.subject,chapter:currentExam?.chapter,category:currentExam?.exam_type,total_questions:t,correct:c,wrong:w,skipped:s,negative_marks:n,final_score:f,gpa_score:g,with_gpa_total:wg})});
     }catch(e){}
+}
+
+// exam_id in Supabase is a bigint column, but practice/mock/retake-from-mistakes flows
+// generate string IDs like "exam_1782..." / "mock_..." / "practice_..." — sending those
+// causes a 400 "invalid input syntax for type bigint" error. Only pass through real numeric IDs.
+function safeNumericExamId(id) {
+    if (id === undefined || id === null) return null;
+    const n = Number(id);
+    return Number.isFinite(n) && String(id).match(/^-?\d+$/) ? n : null;
 }
 
 async function saveLeaderboardEntry(correct,wrong,skipped,finalScore,totalQ){
     try{
         const user=getSession();if(!user)return;
-        await safeFetch(`${SUPABASE_URL}/rest/v1/leaderboard`,{method:'POST',body:JSON.stringify({exam_id:currentExam?.id,exam_name:currentExam?.title||(currentExam?.subject+' - '+currentExam?.chapter),exam_type:currentExam?.exam_type,phone:user.phone,name:user.name||'অজানা',college:user.college||'—',hsc_batch:user.hsc_batch||user.batch||'—',correct,wrong,skipped,score:finalScore,total_questions:totalQ,exam_date:new Date().toISOString()})});
+        await safeFetch(`${SUPABASE_URL}/rest/v1/leaderboard`,{method:'POST',body:JSON.stringify({exam_id:safeNumericExamId(currentExam?.id),exam_name:currentExam?.title||(currentExam?.subject+' - '+currentExam?.chapter),exam_type:currentExam?.exam_type,phone:user.phone,name:user.name||'অজানা',college:user.college||'—',hsc_batch:user.hsc_batch||user.batch||'—',correct,wrong,skipped,score:finalScore,total_questions:totalQ,exam_date:new Date().toISOString()})});
     }catch(e){}
 }
 
@@ -1476,6 +1499,8 @@ function showResult(correct,wrong,skipped,negMark,finalScore,withGpa,gpaScore,de
             <div class="q-header" style="margin-top:4px;">
                 <span class="q-number">প্রশ্ন ${i+1}/${examQuestions.length}</span>
                 <div class="q-actions">
+                    <!-- Bookmark — was present during the exam, now also shown in the post-submit review -->
+                    <button class="icon-btn bookmark${bookmarkedQuestions[q.id]?' active':''}" id="bmBtn${q.id}" title="বুকমার্ক" onclick="toggleBookmark(${q.id})">🔖</button>
                     <!-- Req #1: AI Chat in result too -->
                     <button class="icon-btn ai-chat-btn" title="ATLAS AI" onclick="openAIChat(${q.id})">🤖 AI</button>
                     <button class="icon-btn" title="রিপোর্ট" onclick="openReportModal(${q.id})">🚩</button>
@@ -1731,16 +1756,24 @@ function openSolveSheetPDF(){
 function showError(title,message,details,retryFn){
     const existing=document.querySelector('.error-popup-overlay');if(existing)existing.remove();
     const overlay=document.createElement('div');overlay.className='error-popup-overlay';
-    let retryHTML='';if(retryFn)retryHTML=`<button class="error-popup-retry" onclick="this.closest('.error-popup-overlay').remove();(${retryFn.toString()})();">🔄 আবার চেষ্টা</button>`;
     overlay.innerHTML=`<div class="error-popup" onclick="event.stopPropagation()">
         <div class="error-popup-icon">⚠️</div>
         <div class="error-popup-title">${title||'কিছু সমস্যা হয়েছে'}</div>
         <div class="error-popup-message">${message||'পরে আবার চেষ্টা করুন'}</div>
         ${details?`<div class="error-popup-details">${details}</div>`:''}
-        <div style="display:flex;justify-content:center;gap:8px;">${retryHTML}<button class="error-popup-btn" onclick="this.closest('.error-popup-overlay').remove()">✕ বন্ধ</button></div>
+        <div style="display:flex;justify-content:center;gap:8px;" id="errorPopupBtnRow"><button class="error-popup-btn" id="errorPopupCloseBtn">✕ বন্ধ</button></div>
     </div>`;
     overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
     document.body.appendChild(overlay);
+    overlay.querySelector('#errorPopupCloseBtn').addEventListener('click',()=>overlay.remove());
+    // Attach retry handler directly (preserves closure — toString()+onclick would lose it)
+    if (retryFn) {
+        const retryBtn = document.createElement('button');
+        retryBtn.className = 'error-popup-retry';
+        retryBtn.textContent = '🔄 আবার চেষ্টা';
+        retryBtn.addEventListener('click', () => { overlay.remove(); retryFn(); });
+        overlay.querySelector('#errorPopupBtnRow').prepend(retryBtn);
+    }
 }
 window.addEventListener('error',e=>{showError('💥 অপ্রত্যাশিত সমস্যা','পৃষ্ঠাটি রিলোড করুন.',e.error?.message,()=>location.reload());});
 window.addEventListener('unhandledrejection',e=>{showError('⚠️ প্রসেসিং সমস্যা','অনুরোধ সম্পূর্ণ করা যায়নি.',e.reason?.message,null);});

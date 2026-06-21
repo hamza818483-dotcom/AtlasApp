@@ -782,7 +782,16 @@
         </div>
         <!-- Pomodoro active display in profile -->
         <div id="pomoActiveInProfile"></div>
-        <!-- Row: ToDo | Pomo | Logout (Leaderboard/Weak List/My Mistakes removed — extra, not needed here; Edit moved to top corner) -->
+        <!-- Row 1: Leaderboard | Weak List (restored — full function, just needed an entry point) -->
+        <div class="profile-actions-row1">
+            <button class="profile-action-btn lb-btn" onclick="showTab('leaderboard')">
+                <span class="btn-icon">🏆</span><span class="btn-label">Leaderboard</span>
+            </button>
+            <button class="profile-action-btn weak-btn" onclick="showTab('weaklist')">
+                <span class="btn-icon">📋</span><span class="btn-label">Weak List</span>
+            </button>
+        </div>
+        <!-- Row 2: ToDo | Pomo | Logout (Edit moved to top corner) -->
         <div class="profile-actions-row2">
             <button class="profile-action-btn todo-btn" onclick="openScreen('todoScreen');renderTodoList();startTodoCountdowns();">
                 <span class="btn-icon">✅</span><span class="btn-label">To-Do</span>
