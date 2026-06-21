@@ -936,7 +936,7 @@
         <!-- Premium Controls Card -->
         <div class="cplayer-card" id="cplayerControls">
             <div class="cplayer-progress-wrap" id="cpProgress"
-                 onmousedown="cpSeekStart(event)" ontouchstart="cpSeekStart(event)">
+                 onpointerdown="cpSeekStart(event)">
                 <div class="cplayer-progress-fill" id="cpFill"></div>
                 <div class="cplayer-progress-thumb" id="cpThumb"></div>
             </div>
@@ -1359,10 +1359,11 @@ function _createYTPlayer(videoId) {
                     cpStartTimer();
                 } else if (e.data === YT.PlayerState.PAUSED) {
                     if(btn) btn.textContent = '▶';
+                    cpStopTimer();
                 } else if (e.data === YT.PlayerState.ENDED) {
                     if(btn) btn.textContent = '▶';
-                    if(cpTimer) { clearInterval(cpTimer); cpTimer = null; }
-                    // Immediately seek back 1 sec and pause to prevent YT suggested videos
+                    cpStopTimer();
+                    // Seek back 1s and pause to prevent YT suggested videos
                     try {
                         const dur = ytPlayer.getDuration() || 0;
                         if (dur > 2) ytPlayer.seekTo(dur - 1, true);
@@ -1375,13 +1376,22 @@ function _createYTPlayer(videoId) {
     });
 }
 
-// ===== PROGRESS BAR =====
+// ===== PROGRESS BAR (SMOOTH) =====
 let cpTimer = null;
 let cpSeeking = false;
+let cpRaf = null;
 
 function cpStartTimer() {
-    if (cpTimer) clearInterval(cpTimer);
-    cpTimer = setInterval(cpTick, 500);
+    if (cpRaf) cancelAnimationFrame(cpRaf);
+    function tick() {
+        cpTick();
+        cpRaf = requestAnimationFrame(tick);
+    }
+    cpRaf = requestAnimationFrame(tick);
+}
+
+function cpStopTimer() {
+    if (cpRaf) { cancelAnimationFrame(cpRaf); cpRaf = null; }
 }
 
 function cpTick() {
@@ -1391,11 +1401,15 @@ function cpTick() {
         const dur = ytPlayer.getDuration() || 0;
         if (dur > 0) {
             const pct = (cur / dur) * 100;
-            document.getElementById('cpFill').style.width = pct + '%';
-            document.getElementById('cpThumb').style.left = pct + '%';
+            const fill = document.getElementById('cpFill');
+            const thumb = document.getElementById('cpThumb');
+            if(fill) fill.style.width = pct + '%';
+            if(thumb) thumb.style.left = pct + '%';
         }
-        document.getElementById('cpCurTime').textContent = fmtTime(cur);
-        document.getElementById('cpDurTime').textContent = fmtTime(dur);
+        const ct = document.getElementById('cpCurTime');
+        const dt = document.getElementById('cpDurTime');
+        if(ct) ct.textContent = fmtTime(cur);
+        if(dt) dt.textContent = fmtTime(dur);
     } catch(e) {}
 }
 
@@ -1407,33 +1421,41 @@ function fmtTime(s) {
 }
 
 function cpSeekStart(e) {
+    e.preventDefault();
     cpSeeking = true;
     cpSeekMove(e);
-    const move = ev => cpSeekMove(ev);
-    const up = () => {
+
+    const onMove = ev => { ev.preventDefault(); cpSeekMove(ev); };
+    const onEnd = () => {
         cpSeeking = false;
-        document.removeEventListener('mousemove', move);
-        document.removeEventListener('mouseup', up);
-        document.removeEventListener('touchmove', move);
-        document.removeEventListener('touchend', up);
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onEnd);
+        if (ytPlayer) {
+            try {
+                const state = ytPlayer.getPlayerState();
+                if (state === YT.PlayerState.PLAYING) cpStartTimer();
+            } catch(e) {}
+        }
     };
-    document.addEventListener('mousemove', move);
-    document.addEventListener('mouseup', up);
-    document.addEventListener('touchmove', move, { passive: true });
-    document.addEventListener('touchend', up);
+    document.addEventListener('pointermove', onMove, { passive: false });
+    document.addEventListener('pointerup', onEnd);
 }
 
 function cpSeekMove(e) {
     const bar = document.getElementById('cpProgress');
     if (!bar || !ytPlayer) return;
     const rect = bar.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientX = e.touches ? e.touches[0].clientX : (e.clientX || e.x || 0);
     const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     try {
         const dur = ytPlayer.getDuration() || 0;
         ytPlayer.seekTo(pct * dur, true);
-        document.getElementById('cpFill').style.width = (pct * 100) + '%';
-        document.getElementById('cpThumb').style.left = (pct * 100) + '%';
+        const fill = document.getElementById('cpFill');
+        const thumb = document.getElementById('cpThumb');
+        const ct = document.getElementById('cpCurTime');
+        if(fill) fill.style.width = (pct * 100) + '%';
+        if(thumb) thumb.style.left = (pct * 100) + '%';
+        if(ct) ct.textContent = fmtTime(pct * dur);
     } catch(e2) {}
 }
 
@@ -1442,102 +1464,128 @@ function cpFullscreen() {
     if (!wrap) return;
     if (document.fullscreenElement) {
         document.exitFullscreen();
-        // Release orientation lock
         try { screen.orientation.unlock(); } catch(e) {}
     } else {
         const req = wrap.requestFullscreen || wrap.webkitRequestFullscreen || wrap.mozRequestFullScreen;
         if (req) {
             req.call(wrap).then(() => {
-                // Auto-rotate to landscape on Android
-                try {
-                    screen.orientation.lock('landscape').catch(() => {});
-                } catch(e) {}
+                try { screen.orientation.lock('landscape').catch(()=>{}); } catch(e) {}
             }).catch(() => {});
         }
     }
 }
 
-// Fullscreen change handler - show/hide controls overlay
+// ===== FULLSCREEN OVERLAY =====
+let fsRaf = null;
+let fsSeeking = false;
+
 document.addEventListener('fullscreenchange', () => {
     const wrap = document.getElementById('cplayerWrap');
-    const fsControls = document.getElementById('fsControls');
     if (document.fullscreenElement) {
-        // Build fullscreen overlay if not exists
-        if (!fsControls) {
-            const overlay = document.createElement('div');
-            overlay.id = 'fsControls';
-            overlay.style.cssText = `
-                position:absolute;bottom:0;left:0;right:0;z-index:50;
-                background:linear-gradient(0deg,rgba(0,0,0,0.9) 0%,transparent 100%);
-                padding:8px 12px 12px;display:flex;flex-direction:column;gap:8px;
-                opacity:0;transition:opacity 0.3s;
-            `;
-            overlay.innerHTML = `
-                <div style="position:relative;height:4px;background:rgba(255,255,255,0.25);border-radius:4px;cursor:pointer;" id="fsProgress">
-                    <div id="fsFill" style="height:100%;background:#6C63FF;border-radius:4px;width:0%;pointer-events:none;"></div>
-                    <div id="fsThumb" style="position:absolute;top:50%;width:12px;height:12px;background:#fff;border-radius:50%;transform:translate(-50%,-50%);left:0%;pointer-events:none;"></div>
-                </div>
-                <div style="display:flex;align-items:center;gap:8px;">
-                    <button onclick="ytSkip(-10)" style="background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:18px;width:36px;height:36px;border-radius:8px;cursor:pointer;">⏪</button>
-                    <button id="fsPPBtn" onclick="ytTogglePlay()" style="background:#6C63FF;border:none;color:#fff;font-size:18px;width:40px;height:40px;border-radius:8px;cursor:pointer;">⏸</button>
-                    <button onclick="ytSkip(10)" style="background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:18px;width:36px;height:36px;border-radius:8px;cursor:pointer;">⏩</button>
-                    <span id="fsCurTime" style="font-size:11px;color:rgba(255,255,255,0.8);font-variant-numeric:tabular-nums;">0:00</span>
-                    <span style="font-size:11px;color:rgba(255,255,255,0.5);">/</span>
-                    <span id="fsDurTime" style="font-size:11px;color:rgba(255,255,255,0.8);font-variant-numeric:tabular-nums;">0:00</span>
-                    <div style="flex:1;"></div>
-                    <div style="display:flex;align-items:center;gap:1px;background:rgba(255,255,255,0.12);border-radius:8px;padding:3px 6px;">
-                        <button onclick="ytSpeedChange(-1)" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:14px;cursor:pointer;padding:0 1px;">−</button>
-                        <span id="fsSpeedVal" style="font-size:11px;font-weight:800;color:#fff;min-width:26px;text-align:center;">1×</span>
-                        <button onclick="ytSpeedChange(1)" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:14px;cursor:pointer;padding:0 1px;">+</button>
-                    </div>
-                    <button onclick="cpFullscreen()" style="background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:16px;width:36px;height:36px;border-radius:8px;cursor:pointer;">✕</button>
-                </div>
-            `;
-            wrap.appendChild(overlay);
-
-            // Seek on progress bar tap
-            document.getElementById('fsProgress').addEventListener('touchstart', fsFsSeek, {passive:true});
-            document.getElementById('fsProgress').addEventListener('mousedown', fsFsSeek);
-
-            // Show/hide on tap
-            wrap.addEventListener('click', (e) => {
-                if (e.target.closest('button') || e.target.closest('#fsProgress')) return;
-                const fc = document.getElementById('fsControls');
-                if (fc) {
-                    fc.style.opacity = fc.style.opacity === '1' ? '0' : '1';
-                    if (fc.style.opacity === '1') {
-                        clearTimeout(window._fsHideTimer);
-                        window._fsHideTimer = setTimeout(() => { if(fc) fc.style.opacity='0'; }, 3000);
-                    }
-                }
-            });
-        }
-
-        // Start updating fs progress
-        window._fsTimer = setInterval(updateFsProgress, 500);
+        _buildFsControls(wrap);
+        _startFsRaf();
     } else {
-        // Exit fullscreen
-        clearInterval(window._fsTimer);
+        _stopFsRaf();
         try { screen.orientation.unlock(); } catch(e) {}
         const fc = document.getElementById('fsControls');
         if (fc) fc.remove();
     }
 });
 
-function fsFsSeek(e) {
+function _buildFsControls(wrap) {
+    if (document.getElementById('fsControls')) return;
+    const fc = document.createElement('div');
+    fc.id = 'fsControls';
+    fc.style.cssText = `
+        position:absolute;bottom:0;left:0;right:0;z-index:50;
+        padding:6px 14px 14px;
+        background:linear-gradient(0deg,rgba(0,0,0,0.92) 0%,transparent 100%);
+        opacity:1;transition:opacity 0.4s;
+    `;
+    fc.innerHTML = `
+        <div id="fsProgress" style="position:relative;height:5px;background:rgba(255,255,255,0.25);border-radius:5px;cursor:pointer;margin-bottom:10px;touch-action:none;">
+            <div id="fsFill" style="height:100%;background:#6C63FF;border-radius:5px;width:0%;pointer-events:none;transition:width 0.1s linear;"></div>
+            <div id="fsThumb" style="position:absolute;top:50%;width:14px;height:14px;background:#fff;border-radius:50%;transform:translate(-50%,-50%);left:0%;pointer-events:none;box-shadow:0 0 5px rgba(108,99,255,0.7);"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+            <button onclick="ytSkip(-10)" style="background:rgba(255,255,255,0.12);border:none;color:#fff;font-size:17px;width:38px;height:38px;border-radius:9px;cursor:pointer;flex-shrink:0;">⏪</button>
+            <button id="fsPPBtn" onclick="ytTogglePlay()" style="background:#6C63FF;border:none;color:#fff;font-size:19px;width:42px;height:42px;border-radius:9px;cursor:pointer;flex-shrink:0;box-shadow:0 3px 10px rgba(108,99,255,0.4);">⏸</button>
+            <button onclick="ytSkip(10)" style="background:rgba(255,255,255,0.12);border:none;color:#fff;font-size:17px;width:38px;height:38px;border-radius:9px;cursor:pointer;flex-shrink:0;">⏩</button>
+            <button id="fsMuteBtn" onclick="ytToggleMute()" style="background:rgba(255,255,255,0.12);border:none;color:#fff;font-size:16px;width:38px;height:38px;border-radius:9px;cursor:pointer;flex-shrink:0;">🔊</button>
+            <span id="fsCurTime" style="font-size:11px;color:rgba(255,255,255,0.85);font-variant-numeric:tabular-nums;flex-shrink:0;">0:00</span>
+            <span style="font-size:11px;color:rgba(255,255,255,0.4);flex-shrink:0;">/</span>
+            <span id="fsDurTime" style="font-size:11px;color:rgba(255,255,255,0.85);font-variant-numeric:tabular-nums;flex-shrink:0;">0:00</span>
+            <div style="flex:1;"></div>
+            <div style="display:flex;align-items:center;background:rgba(255,255,255,0.12);border-radius:9px;padding:4px 8px;gap:2px;flex-shrink:0;">
+                <button onclick="ytSpeedChange(-1)" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:15px;cursor:pointer;padding:0 2px;">−</button>
+                <span id="fsSpeedVal" style="font-size:11px;font-weight:800;color:#fff;min-width:26px;text-align:center;">1×</span>
+                <button onclick="ytSpeedChange(1)" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:15px;cursor:pointer;padding:0 2px;">+</button>
+            </div>
+            <button onclick="cpFullscreen()" style="background:rgba(255,255,255,0.12);border:none;color:#fff;font-size:16px;width:38px;height:38px;border-radius:9px;cursor:pointer;flex-shrink:0;">✕</button>
+        </div>
+    `;
+    wrap.appendChild(fc);
+
+    // Smooth seek on progress bar
+    document.getElementById('fsProgress').addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        fsSeeking = true;
+        _fsMoveSeek(e);
+        const onMove = ev => { ev.preventDefault(); _fsMoveSeek(ev); };
+        const onUp = () => {
+            fsSeeking = false;
+            document.removeEventListener('pointermove', onMove);
+            document.removeEventListener('pointerup', onUp);
+        };
+        document.addEventListener('pointermove', onMove, { passive: false });
+        document.addEventListener('pointerup', onUp);
+    });
+
+    // Tap video area to toggle controls
+    let hideTimer = null;
+    const showControls = () => {
+        fc.style.opacity = '1';
+        clearTimeout(hideTimer);
+        hideTimer = setTimeout(() => { fc.style.opacity = '0'; }, 3500);
+    };
+    wrap.addEventListener('click', (e) => {
+        if (e.target.closest('#fsControls')) return;
+        showControls();
+    });
+    showControls();
+}
+
+function _fsMoveSeek(e) {
     const bar = document.getElementById('fsProgress');
     if (!bar || !ytPlayer) return;
     const rect = bar.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
     const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     try {
         ytPlayer.seekTo(pct * (ytPlayer.getDuration()||0), true);
-        document.getElementById('fsFill').style.width = (pct*100)+'%';
-        document.getElementById('fsThumb').style.left = (pct*100)+'%';
+        const fill = document.getElementById('fsFill');
+        const thumb = document.getElementById('fsThumb');
+        const ct = document.getElementById('fsCurTime');
+        if(fill) fill.style.width = (pct*100)+'%';
+        if(thumb) thumb.style.left = (pct*100)+'%';
+        if(ct) ct.textContent = fmtTime(pct*(ytPlayer.getDuration()||0));
     } catch(er) {}
 }
 
-function updateFsProgress() {
+function _startFsRaf() {
+    if (fsRaf) cancelAnimationFrame(fsRaf);
+    function tick() {
+        if (!fsSeeking) _updateFsUi();
+        fsRaf = requestAnimationFrame(tick);
+    }
+    fsRaf = requestAnimationFrame(tick);
+}
+
+function _stopFsRaf() {
+    if (fsRaf) { cancelAnimationFrame(fsRaf); fsRaf = null; }
+}
+
+function _updateFsUi() {
     if (!ytPlayer) return;
     try {
         const cur = ytPlayer.getCurrentTime()||0;
@@ -1549,12 +1597,14 @@ function updateFsProgress() {
         const dt = document.getElementById('fsDurTime');
         const sv = document.getElementById('fsSpeedVal');
         const pb = document.getElementById('fsPPBtn');
+        const mb = document.getElementById('fsMuteBtn');
         if(fill) fill.style.width = pct+'%';
         if(thumb) thumb.style.left = pct+'%';
         if(ct) ct.textContent = fmtTime(cur);
         if(dt) dt.textContent = fmtTime(dur);
         if(sv) sv.textContent = YT_SPEEDS[ytSpeedIdx]+'×';
         if(pb) pb.textContent = ytPlayer.getPlayerState()===YT.PlayerState.PLAYING ? '⏸' : '▶';
+        if(mb) mb.textContent = ytMuted ? '🔇' : '🔊';
     } catch(er) {}
 }
 
