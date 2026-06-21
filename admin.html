@@ -507,6 +507,7 @@
         <button class="tab-btn" onclick="switchSection('owner',this)">👤 Owner</button>
         <button class="tab-btn" onclick="switchSection('mentors',this)">👨‍🏫 Mentors</button>
         <button class="tab-btn" onclick="switchSection('special',this)">🃏 Special Card</button>
+        <button class="tab-btn" onclick="switchSection('slideshow',this)">🖼️ Slideshow</button>
         <button class="tab-btn" onclick="switchSection('serial',this)">🔢 Serial</button>
     </div>
 
@@ -1071,6 +1072,28 @@
         </div>
     </div>
 
+    <!-- ══════════════ TAB: SLIDESHOW ══════════════ -->
+    <div class="admin-section" id="secSlideshow">
+        <div class="form-card">
+            <h3>🖼️ স্লাইডশো ছবি যোগ করুন</h3>
+            <div class="perm-note">Home page-এ header-এর নিচে এই ছবিগুলো right-to-left, প্রতি ২ সেকেন্ড পর পর অটো-স্লাইড আকারে দেখাবে। একসাথে একাধিক ছবি সিলেক্ট করা যাবে।</div>
+            <div class="input-group">
+                <label>ছবি (একাধিক সিলেক্ট করা যাবে)</label>
+                <input type="file" id="slideshowFiles" accept="image/*" multiple onchange="previewSlideshowFiles(this)">
+            </div>
+            <div id="slideshowPreviewWrap" style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;"></div>
+            <button class="btn btn-primary" onclick="uploadSlideshowImages()" style="width:100%;" id="slideshowUploadBtn" disabled>⚡ আপলোড করুন</button>
+            <div id="slideshowUploadStatus" style="margin-top:8px;font-size:12px;color:var(--text2);"></div>
+        </div>
+        <div class="form-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <h3 style="margin:0;">📋 স্লাইডশো তালিকা</h3>
+                <button class="btn btn-sm btn-outline" onclick="openSerialModal('slideshow')">🔢 Order</button>
+            </div>
+            <div id="slideshowList"></div>
+        </div>
+    </div>
+
     <!-- ══════════════ TAB 14: SERIAL ══════════════ -->
     <div class="admin-section" id="secSerial">
         <div class="form-card">
@@ -1085,6 +1108,7 @@
                 <button class="btn btn-outline" onclick="openSerialModal('social')">🔗 Social Order</button>
                 <button class="btn btn-outline" onclick="openSerialModal('mentors')">👨‍🏫 Mentor Order</button>
                 <button class="btn btn-outline" onclick="openSerialModal('modeltest')">📖 Model Test Order</button>
+                <button class="btn btn-outline" onclick="openSerialModal('slideshow')">🖼️ Slideshow Order</button>
             </div>
         </div>
     </div>
@@ -1244,6 +1268,7 @@ function switchSection(sec, el) {
         owner:     loadOwner,
         mentors:   loadMentors,
         special:   loadSpecials,
+        slideshow: loadSlideshowAdmin,
         serial:    () => {}
     };
     if (loaders[sec]) loaders[sec]();
@@ -1684,13 +1709,23 @@ async function loadKaKha(){
         let url = `${SUPABASE_URL}/rest/v1/ka_kha_cq?select=*&order=created_at.desc&limit=100`;
         if(filterType) url += `&type=eq.${filterType}`;
         const data = await safeFetch(url);
-        if(!data?.length){document.getElementById('kaList').innerHTML='<p style="color:var(--text2);text-align:center;padding:16px;">কোনো ডাটা নেই</p>';return;}
+        if(!data?.length){
+            document.getElementById('kaList').innerHTML = filterType
+                ? `<p style="color:var(--text2);text-align:center;padding:16px;">এই টাইপে কোনো ডাটা নেই। <button class="btn btn-sm btn-outline" onclick="document.getElementById('kaFilterType').value='';loadKaKha();">সব টাইপ দেখুন</button></p>`
+                : '<p style="color:var(--text2);text-align:center;padding:16px;">কোনো ডাটা নেই</p>';
+            return;
+        }
         const typeLabel = {ka:'🔵 ক',kha:'🟠 খ',cq:'🟣 CQ'};
         let html='<table class="data-table"><tr><th>সাবজেক্ট</th><th>চ্যাপ্টার</th><th>টাইপ</th><th>সাল</th><th>Actions</th></tr>';
-        data.forEach(k=>{html+=`<tr><td><b>${k.subject}</b></td><td>${k.chapter}${k.topic?`<br><span style="font-size:10px;color:var(--text2);">${k.topic}</span>`:''}</td><td>${typeLabel[k.type]||k.type||'—'}</td><td>${k.year||'—'}</td><td style="white-space:nowrap;"><button class="btn btn-sm btn-outline" onclick="editKaKha('${k.id}')">✏️</button>${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('ka_kha_cq','${k.id}',loadKaKha)" style="margin-left:3px;">🗑️</button>`:''}</td></tr>`;});
+        data.forEach(k=>{
+            // parsed_content (ফাইল আপলোড থেকে আসা এন্ট্রি) থাকলে একটা ব্যাজ দেখানো হয়,
+            // যাতে অ্যাডমিন বুঝতে পারে এটা ফাইল-বেইজড এন্ট্রি এবং সেইভ সফল হয়েছে
+            const fileBadge = k.parsed_content ? ' <span style="font-size:9px;background:rgba(14,122,86,0.15);color:#0E7A56;padding:2px 6px;border-radius:8px;white-space:nowrap;">📄 ফাইল</span>' : '';
+            html+=`<tr><td><b>${k.subject}</b>${fileBadge}</td><td>${k.chapter}${k.topic?`<br><span style="font-size:10px;color:var(--text2);">${k.topic}</span>`:''}</td><td>${typeLabel[k.type]||k.type||'—'}</td><td>${k.year||'—'}</td><td style="white-space:nowrap;"><button class="btn btn-sm btn-outline" onclick="editKaKha('${k.id}')">✏️</button>${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('ka_kha_cq','${k.id}',loadKaKha)" style="margin-left:3px;">🗑️</button>`:''}</td></tr>`;
+        });
         html+='</table>';
         document.getElementById('kaList').innerHTML=html;
-    }catch(e){document.getElementById('kaList').innerHTML='<p style="color:var(--red);">লোড এরর</p>';}
+    }catch(e){document.getElementById('kaList').innerHTML='<p style="color:var(--red);">লোড এরর: '+(e.message||'অজানা সমস্যা')+'</p>';console.error('loadKaKha error:',e);}
 }
 
 /* ═══════════════════════════════════════════════
@@ -1980,6 +2015,94 @@ async function loadSpecials(){
 function editSpecial(id){editItem('special_cards',id,s=>{document.getElementById('specialEditId').value=s.id;document.getElementById('specialDesc').value=s.description||'';document.getElementById('specialText').value=s.special_text||'';document.getElementById('specialLink').value=s.link||'';if(s.image_url){document.getElementById('specialPreview').src=s.image_url;document.getElementById('specialPreview').style.display='block';}window.scrollTo({top:0,behavior:'smooth'});});}
 
 /* ═══════════════════════════════════════════════
+   SLIDESHOW  (Flutter: SlideshowAdminController)
+   Home page header-এর নিচে দেখানো হবে, R-to-L, 2s interval।
+   একাধিক ছবি একসাথে আপলোড করা যায়।
+═══════════════════════════════════════════════ */
+let slideshowSelectedFiles = [];
+
+function previewSlideshowFiles(input) {
+    slideshowSelectedFiles = Array.from(input.files || []);
+    const wrap = document.getElementById('slideshowPreviewWrap');
+    const btn  = document.getElementById('slideshowUploadBtn');
+    wrap.innerHTML = '';
+    if (!slideshowSelectedFiles.length) { btn.disabled = true; return; }
+    btn.disabled = false;
+    slideshowSelectedFiles.forEach((file, i) => {
+        const r = new FileReader();
+        r.onload = e => {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.style.cssText = 'width:64px;height:64px;object-fit:cover;border-radius:8px;border:2px solid var(--border);';
+            wrap.appendChild(img);
+        };
+        r.readAsDataURL(file);
+    });
+}
+
+function fileToDataUrl(file) {
+    return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = e => resolve(e.target.result);
+        r.onerror = reject;
+        r.readAsDataURL(file);
+    });
+}
+
+async function uploadSlideshowImages() {
+    if (!slideshowSelectedFiles.length) { showToast('⚠️ অন্তত একটি ছবি সিলেক্ট করুন'); return; }
+    const status = document.getElementById('slideshowUploadStatus');
+    const btn = document.getElementById('slideshowUploadBtn');
+    btn.disabled = true;
+    let done = 0, errors = 0;
+    const total = slideshowSelectedFiles.length;
+    for (const file of slideshowSelectedFiles) {
+        status.textContent = `⏳ আপলোড হচ্ছে (${done + 1}/${total})...`;
+        try {
+            const dataUrl = await fileToDataUrl(file);
+            await safeFetch(`${SUPABASE_URL}/rest/v1/slideshow_images`, {
+                method: 'POST',
+                body: JSON.stringify({ image_url: dataUrl, sort_order: Date.now() + done })
+            });
+            done++;
+        } catch (e) {
+            console.error('Slideshow upload error:', e);
+            errors++;
+        }
+    }
+    status.textContent = errors === 0
+        ? `✅ ${done}টি ছবি সফলভাবে যোগ হয়েছে।`
+        : `⚠️ ${done}টি সফল, ${errors}টি ব্যর্থ। (slideshow_images টেবিল আছে কিনা যাচাই করুন)`;
+    showToast(errors === 0 ? `✅ ${done}টি ছবি যোগ হয়েছে` : `⚠️ ${done}/${total} সফল হয়েছে`);
+
+    slideshowSelectedFiles = [];
+    document.getElementById('slideshowFiles').value = '';
+    document.getElementById('slideshowPreviewWrap').innerHTML = '';
+    btn.disabled = true;
+    loadSlideshowAdmin();
+}
+
+async function loadSlideshowAdmin() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/slideshow_images?select=*&order=sort_order.asc,created_at.asc&limit=50`);
+        if (!data?.length) { document.getElementById('slideshowList').innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">কোনো ছবি নেই</p>'; return; }
+        let html = '<div style="display:flex;flex-direction:column;gap:8px;">';
+        data.forEach(s => {
+            html += `<div class="list-item">
+                <img src="${s.image_url}" style="width:60px;height:40px;object-fit:cover;border-radius:6px;margin-right:8px;flex-shrink:0;">
+                <div style="flex:1;font-size:12px;color:var(--text2);">${s.caption || 'স্লাইড ছবি'}</div>
+                ${isAdmin ? `<button class="btn btn-sm btn-danger" onclick="deleteItem('slideshow_images','${s.id}',loadSlideshowAdmin)">🗑️</button>` : ''}
+            </div>`;
+        });
+        html += '</div>';
+        document.getElementById('slideshowList').innerHTML = html;
+    } catch (e) {
+        document.getElementById('slideshowList').innerHTML = '<p style="color:var(--red);">লোড এরর — slideshow_images টেবিল তৈরি হয়েছে কিনা যাচাই করুন</p>';
+        console.error('loadSlideshowAdmin error:', e);
+    }
+}
+
+/* ═══════════════════════════════════════════════
    SERIAL MANAGEMENT  (Flutter: ReorderableListView)
 ═══════════════════════════════════════════════ */
 const serialConfig = {
@@ -1990,7 +2113,8 @@ const serialConfig = {
     mock:      { table:'mock_questions',  label:'🎯 Mock',        nameField: d => `${d.subject} › ${d.chapter}` },
     social:    { table:'social_links',    label:'🔗 Social',      nameField: d => d.media_name },
     mentors:   { table:'mentors',         label:'👨‍🏫 Mentors',   nameField: d => d.name },
-    modeltest: { table:'model_tests',     label:'📖 Model Test',  nameField: d => `${d.type} › ${d.subject||d.varsity_name||'—'}` }
+    modeltest: { table:'model_tests',     label:'📖 Model Test',  nameField: d => `${d.type} › ${d.subject||d.varsity_name||'—'}` },
+    slideshow: { table:'slideshow_images',label:'🖼️ Slideshow',  nameField: d => d.caption || `ছবি #${(d.id||'').toString().slice(0,6)}` }
 };
 
 async function openSerialModal(key) {

@@ -168,7 +168,7 @@
     }
 
     // ---------- মূল রেন্ডারার: একটা entry-র parsed_content দেখিয়ে পেজিনেট করে ----------
-    function renderParsedEntry(container, entry, label) {
+    function renderParsedEntry(container, entry, label, showBackBtn) {
         injectStyles();
         let parsed;
         try {
@@ -185,6 +185,10 @@
         const pageSize = PAGE_SIZE[type] || 5;
         let currentPage = 0;
         const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+
+        const backBtnHtml = showBackBtn
+            ? `<button class="kcq-page-btn" style="margin-bottom:10px;" onclick="window.loadKaKhaContent('${type}')">← চ্যাপ্টার তালিকায় ফিরুন</button>`
+            : '';
 
         function renderPage() {
             const start = currentPage * pageSize;
@@ -203,7 +207,8 @@
                 </div>` : '';
 
             container.innerHTML = `
-                <div class="section-header"><div class="section-title">📦 ${label}</div></div>
+                <div class="section-header"><div class="section-title">📦 ${label} ${entry.chapter ? '— ' + escapeHtml(entry.chapter) : ''}</div></div>
+                ${backBtnHtml}
                 <div class="kcq-wrap">${cardsHtml || '<div class="kcq-empty">কোনো প্রশ্ন নেই</div>'}</div>
                 ${paginationHtml}
             `;
@@ -218,12 +223,13 @@
     }
 
     // ---------- exam.html-এর loadKaKhaContent ওভাররাইড ----------
-    // বিদ্যমান ফাংশনের সিগনেচার অপরিবর্তিত (type প্যারামিটার নেয়),
-    // কিন্তু এখন প্রতিটা এন্ট্রি চেক করে — parsed_content থাকলে নতুন
-    // প্রিমিয়াম কার্ড UI দেখাবে, না থাকলে (পুরনো লিংক-বেইজড এন্ট্রি)
-    // আগের আচরণ (নতুন ট্যাবে লিংক ওপেন) বজায় থাকবে।
-    const originalLoadKaKhaContent = window.loadKaKhaContent;
-
+    // বিদ্যমান ফাংশনের সিগনেচার অপরিবর্তিত (type প্যারামিটার নেয়)।
+    // আগের ভার্সনে ভুল ছিল: parsed_content থাকা প্রথম এন্ট্রিকেই সরাসরি
+    // পুরো-স্ক্রিন প্রিমিয়াম UI-তে দেখিয়ে দিত, ফলে একই টাইপের অন্য
+    // সাবজেক্ট/চ্যাপ্টারগুলো (এমনকি অন্য ফাইল-আপলোড এন্ট্রিও) আর কখনো
+    // দেখা যেত না। এখন সবসময় প্রথমে চ্যাপ্টার-তালিকা দেখানো হয়; ফাইল-
+    // বেইজড এন্ট্রিতে ক্লিক করলে প্রিমিয়াম কার্ড UI খোলে, লিংক-বেইজড
+    // এন্ট্রিতে ক্লিক করলে আগের মতোই লিংক নতুন ট্যাবে খোলে।
     window.loadKaKhaContent = async function (type) {
         const labels = { ka: 'ক ভান্ডার', kha: 'খ ভান্ডার', cq: 'টাইপ CQ' };
         const container = document.getElementById('categoryContent');
@@ -237,24 +243,57 @@
                 return;
             }
 
-            // নতুন ফাইল-বেইজড এন্ট্রি (parsed_content আছে) থাকলে প্রথমটাকে প্রিমিয়াম UI-তে দেখানো
-            const fileEntry = filtered.find(d => d.parsed_content);
-            if (fileEntry) {
-                renderParsedEntry(container, fileEntry, labels[type]);
+            // একটাই এন্ট্রি থাকলে এবং সেটাতে parsed_content থাকলে — সরাসরি
+            // প্রিমিয়াম কার্ড UI-তে দেখানো (অতিরিক্ত ক্লিক এড়াতে)
+            if (filtered.length === 1 && filtered[0].parsed_content) {
+                renderParsedEntry(container, filtered[0], labels[type]);
                 window.switchMode('Category');
                 return;
             }
 
-            // কোনো ফাইল-বেইজড এন্ট্রি না থাকলে — মূল (link-based) ফাংশনই চলবে, অপরিবর্তিত
-            if (typeof originalLoadKaKhaContent === 'function') {
-                return originalLoadKaKhaContent(type);
-            }
+            // একাধিক এন্ট্রি থাকলে — subject অনুযায়ী গ্রুপ করে চ্যাপ্টার-তালিকা
+            // দেখানো হয়। ফাইল-বেইজড এন্ট্রিতে একটা "📄" ব্যাজ থাকবে এবং
+            // ক্লিক করলে প্রিমিয়াম কার্ড UI খুলবে।
+            window.__kcqEntries = window.__kcqEntries || {};
+            const grouped = {};
+            filtered.forEach(d => {
+                const s = d.subject || 'সাধারণ';
+                if (!grouped[s]) grouped[s] = [];
+                grouped[s].push(d);
+                window.__kcqEntries[d.id] = d;
+            });
+
+            let html = `<div class="section-header"><div class="section-title">📦 ${labels[type]}</div></div>`;
+            Object.keys(grouped).forEach(s => {
+                html += `<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;">📘 ${s}</div>`;
+                grouped[s].forEach(d => {
+                    const isFile = !!d.parsed_content;
+                    const clickAction = isFile
+                        ? `window.__kcqOpenEntry('${d.id}','${labels[type]}')`
+                        : `window.open('${(d.link_or_file || '#').replace(/'/g, "\\'")}','_blank')`;
+                    html += `<div class="list-item" onclick="${clickAction}">
+                        <div><div class="list-item-title">📖 ${d.chapter || 'সাধারণ'}${isFile ? ' <span style="font-size:9px;background:rgba(14,122,86,0.15);color:#0E7A56;padding:2px 6px;border-radius:8px;">📄 ফাইল</span>' : ''}</div>
+                        <div class="list-item-sub">${[d.year, d.topic].filter(Boolean).join(' | ')} ${isFile ? '✨ প্রিমিয়াম ভিউ' : '🔗 লিংক'}</div></div>
+                        <span class="list-item-arrow">→</span></div>`;
+                });
+            });
+            container.innerHTML = html;
+            window.switchMode('Category');
+
         } catch (e) {
             console.error('loadKaKhaContent (premium) error:', e);
-            if (typeof originalLoadKaKhaContent === 'function') {
-                return originalLoadKaKhaContent(type);
-            }
+            container.innerHTML = `<div class="section-header"><div class="section-title">📦 ${labels[type]}</div></div><p style="text-align:center;color:var(--red);padding:20px;">লোড করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।</p>`;
+            window.switchMode('Category');
         }
+    };
+
+    // চ্যাপ্টার-তালিকা থেকে কোনো ফাইল-বেইজড এন্ট্রিতে ক্লিক করলে এটা কল হয়
+    window.__kcqOpenEntry = function (id, label) {
+        const entry = window.__kcqEntries && window.__kcqEntries[id];
+        const container = document.getElementById('categoryContent');
+        if (!entry || !container) return;
+        // ফিরে যাওয়ার বাটন যুক্ত করে প্রিমিয়াম কার্ড UI রেন্ডার করা হচ্ছে
+        renderParsedEntry(container, entry, label, true);
     };
 
 })();

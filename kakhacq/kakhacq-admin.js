@@ -88,7 +88,7 @@
             });
 
             status.textContent = '💾 সেইভ করা হচ্ছে...';
-            await saveToSupabase(parsed, { subject, chapter, year, topic, type });
+            const saved = await saveToSupabase(parsed, { subject, chapter, year, topic, type });
 
             status.textContent = `✅ সম্পন্ন! ${parsed.items.length}টি প্রশ্ন যোগ হয়েছে।`;
             window.showToast(`✅ ${parsed.items.length}টি প্রশ্ন সফলভাবে যোগ হয়েছে`);
@@ -96,12 +96,18 @@
             // ইনপুট রিসেট
             selectedFile = null;
             document.getElementById('kaFileInput').value = '';
+
+            // নিচের "তালিকা" সেকশনে নতুন এন্ট্রি যেন সাথে সাথে দেখা যায়,
+            // তার জন্য ফিল্টার ড্রপডাউন এই টাইপে সেট করে দেওয়া হচ্ছে।
+            // আগে ফিল্টার অন্য টাইপে সেট থাকলে নতুন এন্ট্রি লিস্টে দেখা যেত না।
+            const filterEl = document.getElementById('kaFilterType');
+            if (filterEl) filterEl.value = type;
             if (typeof window.loadKaKha === 'function') window.loadKaKha();
 
         } catch (err) {
             console.error('KaKhaCQ upload error:', err);
             status.textContent = '❌ এরর: ' + err.message;
-            window.showToast('❌ ফাইল প্রসেস ব্যর্থ: ' + err.message);
+            window.showToast('❌ ফাইল প্রসেস ব্যর্থ: ' + err.message, 5000);
             await notifyAdminOnError(err, selectedFile?.name, type);
         } finally {
             btn.disabled = false;
@@ -212,10 +218,19 @@
             link_or_file: null // ফাইল-বেইজড এন্ট্রিতে আলাদা লিংকের দরকার নেই
         };
 
-        await window.safeFetch(`${window.SUPABASE_URL}/rest/v1/ka_kha_cq`, {
+        const result = await window.safeFetch(`${window.SUPABASE_URL}/rest/v1/ka_kha_cq`, {
             method: 'POST',
             body: JSON.stringify(payload)
         });
+
+        // safeFetch সাধারণত non-2xx রেসপন্সে throw করে, কিন্তু Supabase কখনো
+        // কখনো 2xx দিয়ে খালি/ভিন্ন array রিটার্ন করতে পারে (যেমন RLS policy
+        // insert-কে silently filter করলে)। তাই insert সত্যিই row তৈরি করেছে
+        // কিনা সেটা এখানে নিশ্চিত করা হচ্ছে, নাহলে স্পষ্ট এরর দেখানো হবে।
+        if (!Array.isArray(result) || !result.length) {
+            throw new Error('Supabase থেকে কোনো সেইভড রো ফেরত আসেনি — RLS পলিসি বা parsed_content কলাম মিসিং হতে পারে। supabase-migration.sql রান করা হয়েছে কিনা যাচাই করুন।');
+        }
+        return result[0];
     }
 
     // ---------- এরর হলে এডমিনকে নোটিফাই ----------

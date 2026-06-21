@@ -275,6 +275,36 @@
         .special-link:hover { transform: scale(1.05); box-shadow: 0 4px 18px rgba(124,131,255,.5); }
 
         /* ─────────────────────────────────────────────
+           SLIDESHOW  (Flutter: AutoSlideCarousel widget)
+           Header-এর ঠিক নিচে। Right-to-left auto-slide,
+           প্রতি ২ সেকেন্ড পর পর। ছবি সাইজ অনুযায়ী auto-height।
+        ───────────────────────────────────────────── */
+        .slideshow-wrap {
+            position: relative; width: 100%; overflow: hidden;
+            border-radius: var(--radius); margin-bottom: 14px;
+            box-shadow: var(--shadow-sm); background: var(--card-bg);
+        }
+        .slideshow-track {
+            display: flex; width: 100%;
+            transition: transform .6s ease-in-out;
+        }
+        .slideshow-slide {
+            flex: 0 0 100%; width: 100%; min-width: 100%;
+        }
+        .slideshow-slide img {
+            width: 100%; height: auto; display: block; object-fit: contain;
+        }
+        .slideshow-dots {
+            position: absolute; bottom: 8px; left: 0; right: 0;
+            display: flex; justify-content: center; gap: 6px;
+        }
+        .slideshow-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: rgba(255,255,255,0.5); transition: all .25s;
+        }
+        .slideshow-dot.active { background: #fff; width: 16px; border-radius: 3px; }
+
+        /* ─────────────────────────────────────────────
            TIMER CARDS  (Flutter: CountdownTimerCard widget)
         ───────────────────────────────────────────── */
         .countdown-card {
@@ -872,6 +902,10 @@
 ════════════════════════════════════════════ -->
 <main class="main-container">
 
+    <!-- Slideshow container (header-এর ঠিক নিচে, auto-slide R-to-L every 2s) -->
+    <!-- (Flutter: AutoSlideCarousel widget) -->
+    <div id="slideshowContainer"></div>
+
     <!-- Special Cards container (max 2 per spec) -->
     <!-- (Flutter: SpecialCardList widget) -->
     <div id="specialCardContainer"></div>
@@ -1250,6 +1284,54 @@ function startCountdown(endTime, i) {
         sEl.textContent = String(Math.floor((diff%(1000*60))/1000)).padStart(2,'0');
     }
     update(); setInterval(update, 1000);
+}
+
+/* ══════════════════════════════════════════════
+   SLIDESHOW  (Flutter: AutoSlideCarouselService)
+   Header-এর নিচে। Right-to-left, প্রতি ২ সেকেন্ডে অটো-স্লাইড।
+══════════════════════════════════════════════ */
+let __slideshowTimer = null;
+let __slideshowIdx = 0;
+
+async function loadSlideshow() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/slideshow_images?select=*&order=sort_order.asc,created_at.asc&limit=20`);
+        const container = document.getElementById('slideshowContainer');
+        if (!container) return;
+
+        if (__slideshowTimer) { clearInterval(__slideshowTimer); __slideshowTimer = null; }
+
+        if (!data?.length) { container.innerHTML = ''; return; }
+
+        const slidesHtml = data.map(s =>
+            `<div class="slideshow-slide"><img src="${escHtml(s.image_url)}" alt="Slide" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`
+        ).join('');
+        const dotsHtml = data.length > 1
+            ? `<div class="slideshow-dots">${data.map((_, i) => `<span class="slideshow-dot${i === 0 ? ' active' : ''}" data-idx="${i}"></span>`).join('')}</div>`
+            : '';
+
+        container.innerHTML = `
+            <div class="slideshow-wrap">
+                <div class="slideshow-track" id="slideshowTrack">${slidesHtml}</div>
+                ${dotsHtml}
+            </div>`;
+
+        __slideshowIdx = 0;
+        if (data.length > 1) {
+            __slideshowTimer = setInterval(() => advanceSlideshow(data.length), 2000);
+        }
+    } catch (e) { console.error('Slideshow load error:', e); }
+}
+
+function advanceSlideshow(total) {
+    __slideshowIdx = (__slideshowIdx + 1) % total;
+    const track = document.getElementById('slideshowTrack');
+    if (!track) return;
+    // Right-to-left movement: slide content shifts left as if entering from the right
+    track.style.transform = `translateX(-${__slideshowIdx * 100}%)`;
+    document.querySelectorAll('.slideshow-dot').forEach((dot, i) => {
+        dot.classList.toggle('active', i === __slideshowIdx);
+    });
 }
 
 /* ══════════════════════════════════════════════
@@ -1825,6 +1907,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Load all sections  (Flutter: Future.wait([...]))
     loadTimers();
+    loadSlideshow();
     loadSpecialCards();
     loadSocialLinks();
     loadOwnerInfo();
