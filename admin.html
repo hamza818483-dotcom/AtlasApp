@@ -1415,7 +1415,7 @@ async function uploadNoteFile() {
     const ext = file.name.split('.').pop();
     const fname = 'notes/' + Date.now() + '_' + Math.random().toString(36).slice(2) + '.' + ext;
     try {
-        const res = await fetch(`${SUPABASE_URL}/storage/v1/object/class-notes/${fname}`, {
+        const res = await fetch(`${SUPABASE_URL}/storage/v1/object/pdfs/${fname}`, {
             method: 'POST',
             headers: {
                 'apikey': SUPABASE_KEY,
@@ -1429,7 +1429,7 @@ async function uploadNoteFile() {
             const err = await res.text();
             throw new Error(err);
         }
-        const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/class-notes/${fname}`;
+        const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/pdfs/${fname}`;
         status.textContent = '✅ আপলোড সফল';
         return publicUrl;
     } catch(e) {
