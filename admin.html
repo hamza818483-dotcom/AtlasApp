@@ -1627,10 +1627,10 @@ async function loadExams() {
                 if(e.writer)  info += ` · ${e.writer}`;
                 info += ` <span style="color:var(--text2);font-size:10px;">(${e.total_marks||0} প্রশ্ন)</span>`;
                 // ── NEW: preview + lock badges  (Flutter: ExamStatusBadges widget)
-                const previewBadge = e.allow_preview !== false
-                    ? `<span class="badge badge-blue">👁️ Preview</span>`
-                    : `<span class="badge badge-red">🚫 No Preview</span>`;
-                const lockBadge = e.is_locked
+                const previewBadge = (e.allow_preview===false||e.allow_preview==='false')
+                    ? `<span class="badge badge-red">🚫 No Preview</span>`
+                    : `<span class="badge badge-blue">👁️ Preview</span>`;
+                const lockBadge = (e.is_locked===true||e.is_locked==='true')
                     ? `<span class="badge badge-yellow">🔒 Locked</span>`
                     : `<span class="badge badge-green">🔓 Open</span>`;
                 html += `<div class="list-item"><div style="flex:1;">${info}<div class="exam-flags">${previewBadge}${lockBadge}</div></div><div style="display:flex;gap:3px;flex-shrink:0;"><button class="btn btn-sm btn-copy" onclick="copyLink('${link}')">📋</button><button class="btn btn-sm btn-outline" onclick="editExam('${e.id}')">✏️</button>${isAdmin?`<button class="btn btn-sm btn-danger" onclick="deleteItem('exams','${e.id}',loadExams)">🗑️</button>`:''}</div></div>`;
@@ -1662,8 +1662,8 @@ async function editExam(id) {
         document.getElementById('examStart').value   = d.start_time || '';
         document.getElementById('examEnd').value     = d.end_time   || '';
         // ── NEW: restore toggles  (Flutter: SwitchListTile.value)
-        setSwitchVal('examAllowPreview', d.allow_preview !== false);
-        setSwitchVal('examIsLocked', !!d.is_locked);
+        setSwitchVal('examAllowPreview', !(d.allow_preview===false||d.allow_preview==='false'));
+        setSwitchVal('examIsLocked', d.is_locked===true||d.is_locked==='true');
         switchSection('exam', document.querySelector('.tab-btn:nth-child(2)'));
         window.scrollTo({ top: 0, behavior: 'smooth' });
     });

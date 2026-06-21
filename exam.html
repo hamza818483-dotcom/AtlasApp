@@ -831,7 +831,7 @@ function showExamList(data){
         grouped[s].forEach(e=>{
             const info=e.chapter||e.title||'—';
             const meta=[e.board,e.year,e.writer,e.unit].filter(Boolean).join(' | ');
-            if(e.is_locked){
+            if(e.is_locked===true||e.is_locked==='true'){
                 html+=`<div class="list-item locked-exam" onclick="showLockedExamBanner('${(e.title||info).replace(/'/g,'')}')">
                     <div>
                         <div class="list-item-title">🔒 ${info}</div>
@@ -897,7 +897,7 @@ async function loadExamById(examId){
     try{
         const [examData]=await safeFetch(`${SUPABASE_URL}/rest/v1/exams?id=eq.${examId}&select=*`);
         if(!examData){showToast('❌ এক্সাম পাওয়া যায়নি');return;}
-        if(examData.is_locked&&!checkUserHasAccess()){showLockedExamBanner(examData.title||examData.chapter);return;}
+        if((examData.is_locked===true||examData.is_locked==='true')&&!checkUserHasAccess()){showLockedExamBanner(examData.title||examData.chapter);return;}
         currentExam=examData;
         examQuestions=await safeFetch(`${SUPABASE_URL}/rest/v1/questions?exam_id=eq.${examId}&select=*&order=id.asc`);
         if(!examQuestions?.length){showNoQuestions();return;}
@@ -922,7 +922,7 @@ function showNoQuestions(){
 // Req #11: allow_preview field controls "প্রশ্ন দেখো" button
 function showPreExamFromData(exam,questions){
     examQuestions=questions||[];
-    const allowPreview=exam.allow_preview!==false; // default true
+    const allowPreview=!(exam.allow_preview===false||exam.allow_preview==='false'); // default true
     document.getElementById('startExamBtn').style.display='block';
     document.getElementById('seeQuestionsBtn').style.display=allowPreview?'block':'none';
 
