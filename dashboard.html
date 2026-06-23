@@ -453,18 +453,37 @@
         .pomo-body-inner { flex:1;overflow-y:auto;padding:16px 14px 20px;display:flex;flex-direction:column;gap:14px;max-width:480px;margin:0 auto;width:100%; }
         .pomo-watch-card {
             background:linear-gradient(145deg,#0F1117,#1A1F2E);
-            border:1px solid rgba(99,102,241,0.4);border-radius:20px;
-            padding:24px 20px 24px;text-align:center;position:relative;
+            border:none;border-radius:20px;
+            padding:24px 20px 24px;text-align:center;
+            position:relative;overflow:hidden;
         }
         .pomo-watch-card::before {
-            content:'';position:absolute;inset:0;border-radius:20px;z-index:0;
-            padding:2px;
-            background:conic-gradient(from 0deg,transparent 0deg,transparent 270deg,#818CF8 320deg,#A78BFA 360deg);
-            -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
-            -webkit-mask-composite:xor;
-            mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
-            mask-composite:exclude;
+            content:'';
+            position:absolute;
+            /* 200%x200% centered — conic spins around card center, stays clipped by overflow:hidden */
+            width:200%;height:200%;
+            top:-50%;left:-50%;
+            background:conic-gradient(
+                from 0deg,
+                transparent 0deg,
+                transparent 260deg,
+                #818CF8 310deg,
+                #A78BFA 340deg,
+                #C4B5FD 355deg,
+                transparent 360deg
+            );
             animation:pomoBorderSpin 3s linear infinite;
+            z-index:0;
+            transform-origin:center center;
+        }
+        /* Inner mask layer — covers the center so only the border area is visible */
+        .pomo-watch-card::after {
+            content:'';
+            position:absolute;
+            inset:2px;
+            border-radius:18px;
+            background:linear-gradient(145deg,#0F1117,#1A1F2E);
+            z-index:0;
         }
         @keyframes pomoBorderSpin { to{transform:rotate(360deg);} }
         .pomo-watch-inner { position:relative;z-index:1; }
