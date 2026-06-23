@@ -1347,7 +1347,8 @@ async function safeFetch(url, opts = {}) {
 ══════════════════════════════════════════════ */
 async function loadTimers() {
     try {
-        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/countdowns?select=*&order=sort_order.asc&limit=5`);
+        // is_active=eq.true OR is_active=is.null (পুরনো এন্ট্রি যেগুলোতে এই কলামটাই নেই, সেগুলো ডিফল্টভাবে সক্রিয় ধরা হয়)
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/countdowns?select=*&or=(is_active.eq.true,is_active.is.null)&order=sort_order.asc&limit=5`);
         if (!data?.length) return;
 
         const container = document.getElementById('timerContainer');
@@ -2156,24 +2157,28 @@ function showError(title, message, details, retryFn) {
     if (existing) existing.remove();
     const overlay = document.createElement('div');
     overlay.className = 'error-popup-overlay';
-    let retryHTML = '';
-    if (retryFn) {
-        retryHTML = `<button class="error-popup-retry"
-            onclick="this.closest('.error-popup-overlay').remove();(${retryFn.toString()})();">
-            🔄 আবার চেষ্টা</button>`;
-    }
-    overlay.innerHTML = `<div class="error-popup" onclick="event.stopPropagation()">
-        <div class="error-popup-icon">⚠️</div>
-        <div class="error-popup-title">${escHtml(title||'কিছু সমস্যা হয়েছে')}</div>
-        <div class="error-popup-message">${escHtml(message||'পরে আবার চেষ্টা করুন')}</div>
-        ${details?`<div class="error-popup-details">${escHtml(details)}</div>`:''}
-        <div style="display:flex;justify-content:center;gap:8px;">
-            ${retryHTML}
-            <button class="error-popup-btn" onclick="this.closest('.error-popup-overlay').remove()">✕ বন্ধ</button>
+    overlay.innerHTML = `
+        <div class="error-popup" onclick="event.stopPropagation()">
+            <div class="error-popup-icon">⚠️</div>
+            <div class="error-popup-title">${title || 'কিছু সমস্যা হয়েছে'}</div>
+            <div class="error-popup-message">${message || 'পরে আবার চেষ্টা করুন'}</div>
+            ${details ? `<div class="error-popup-details">${details}</div>` : ''}
+            <div style="display:flex;justify-content:center;gap:8px;" id="errorPopupBtnRow">
+                <button class="error-popup-btn" id="errorPopupCloseBtn">✕ বন্ধ</button>
+            </div>
         </div>
-    </div>`;
-    overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
+    `;
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
     document.body.appendChild(overlay);
+    overlay.querySelector('#errorPopupCloseBtn').addEventListener('click', () => overlay.remove());
+    // Attach retry handler directly (preserves closure — toString()+onclick would lose it, causing "X is not defined" errors)
+    if (retryFn) {
+        const retryBtn = document.createElement('button');
+        retryBtn.className = 'error-popup-retry';
+        retryBtn.textContent = '🔄 আবার চেষ্টা';
+        retryBtn.addEventListener('click', () => { overlay.remove(); retryFn(); });
+        overlay.querySelector('#errorPopupBtnRow').prepend(retryBtn);
+    }
 }
 
 window.addEventListener('error', e => {
@@ -2220,5 +2225,9 @@ window.addEventListener('popstate', () => history.back());
 </script>
 <!-- NEW FEATURES (Pomodoro Timer + GPA Calculator) — isolated in separate file -->
 <script src="home-features.js"></script>
+
+<!-- ══════════════ গ্লোবাল নেভিগেশন + UI কন্ট্রোল (নতুন, আলাদা ফাইল) ══════════════ -->
+<script src="global-nav.js"></script>
+<script src="atlas-ui.js"></script>
 </body>
 </html>

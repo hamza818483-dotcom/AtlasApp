@@ -457,13 +457,14 @@
             box-shadow:0 0 40px rgba(99,102,241,0.15);
         }
         .pomo-watch-card::before {
-            content:'';position:absolute;inset:-1px;border-radius:20px;
-            background:conic-gradient(from 0deg,rgba(99,102,241,0),rgba(99,102,241,0.6),rgba(99,102,241,0),rgba(129,140,248,0.4),rgba(99,102,241,0));
-            animation:pomoBorderSpin 3s linear infinite;z-index:0;
-        }
-        .pomo-watch-card::after {
-            content:'';position:absolute;inset:1px;border-radius:19px;
-            background:linear-gradient(145deg,#0F1117,#1A1F2E);z-index:0;
+            content:'';position:absolute;inset:0;border-radius:20px;z-index:0;
+            padding:2px; /* this padding IS the visible ring thickness — confined exactly to the border line */
+            background:conic-gradient(from 0deg,transparent 0deg,transparent 270deg,#818CF8 320deg,#A78BFA 360deg);
+            -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+            -webkit-mask-composite:xor;
+            mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+            mask-composite:exclude;
+            animation:pomoBorderSpin 3s linear infinite;
         }
         @keyframes pomoBorderSpin { to{transform:rotate(360deg);} }
         .pomo-watch-inner { position:relative;z-index:1; }
@@ -777,7 +778,16 @@
         </div>
         <!-- Pomodoro active display in profile -->
         <div id="pomoActiveInProfile"></div>
-        <!-- Row: ToDo | Pomo | Logout (Leaderboard/Weak List/My Mistakes removed — extra, not needed here; Edit moved to top corner) -->
+        <!-- Row 1: Leaderboard | Weak List (restored — full function, just needed an entry point) -->
+        <div class="profile-actions-row1">
+            <button class="profile-action-btn lb-btn" onclick="showTab('leaderboard')">
+                <span class="btn-icon">🏆</span><span class="btn-label">Leaderboard</span>
+            </button>
+            <button class="profile-action-btn weak-btn" onclick="showTab('weaklist')">
+                <span class="btn-icon">📋</span><span class="btn-label">Weak List</span>
+            </button>
+        </div>
+        <!-- Row 2: ToDo | Pomo | Logout (Edit moved to top corner) -->
         <div class="profile-actions-row2">
             <button class="profile-action-btn todo-btn" onclick="openScreen('todoScreen');renderTodoList();startTodoCountdowns();">
                 <span class="btn-icon">✅</span><span class="btn-label">To-Do</span>
@@ -3835,5 +3845,8 @@ window.addEventListener('storage', (e) => {
     </div>
 </div>
 
+<!-- ══════════════ গ্লোবাল নেভিগেশন + UI কন্ট্রোল (নতুন, আলাদা ফাইল) ══════════════ -->
+<script src="global-nav.js"></script>
+<script src="atlas-ui.js"></script>
 </body>
 </html>

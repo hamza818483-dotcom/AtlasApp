@@ -268,7 +268,9 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;',
 async function safeFetch(url, opts = {}) {
     opts.headers = Object.assign({ apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }, opts.headers || {});
     if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') opts.headers['Content-Type'] = 'application/json';
-    if (opts.method === 'POST' || opts.method === 'PATCH') opts.headers['Prefer'] = 'return=representation';
+    // Don't clobber an explicitly-set Prefer header (e.g. 'resolution=merge-duplicates' for upserts) —
+    // only default it when the caller didn't specify one.
+    if ((opts.method === 'POST' || opts.method === 'PATCH') && !opts.headers['Prefer']) opts.headers['Prefer'] = 'return=representation';
     try {
         const res = await fetch(url, opts);
         const text = await res.text();
@@ -334,12 +336,16 @@ async function openChapter(id, name) {
     const c = document.getElementById('pdf-list');
     c.innerHTML = '<div class="ctr"><div class="sp"></div><div>লোড হচ্ছে...</div></div>';
     try {
-        const pdfs = await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdfs?chapter_id=eq.${id}&select=*&order=sort_order.asc`);
+        // Security note: file_url is deliberately excluded here for premium
+        // PDFs so a free-tier user can't read it straight from this network
+        // response. It's fetched separately in openPdf() only after the
+        // premium-access check passes.
+        const pdfs = await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdfs?chapter_id=eq.${id}&select=id,title,page_count,is_premium,sort_order&order=sort_order.asc`);
         if (!pdfs?.length) { c.innerHTML = '<div class="ctr">কোনো PDF পাওয়া যায়নি</div>'; return; }
         document.getElementById('pdfs-title').textContent = name + ' (' + pdfs.length + ' টি PDF)';
-        if (pdfs.length === 1) { openPdf(pdfs[0].id, pdfs[0].title, pdfs[0].is_premium, pdfs[0].file_url); return; }
+        if (pdfs.length === 1) { openPdf(pdfs[0].id, pdfs[0].title, pdfs[0].is_premium); return; }
         c.innerHTML = '<div class="item-list">' + pdfs.map(p => `
-            <div class="list-item" onclick="openPdf(${p.id},'${esc(p.title)}',${!!p.is_premium},'${esc(p.file_url)}')">
+            <div class="list-item" onclick="openPdf(${p.id},'${esc(p.title)}',${!!p.is_premium})">
                 <div style="font-size:26px">📕</div>
                 <div class="list-info">
                     <div class="list-name">${esc(p.title)}</div>
@@ -352,7 +358,7 @@ async function openChapter(id, name) {
 }
 
 /* ── PDF Viewer ── */
-async function openPdf(id, title, isPremium, fileUrl) {
+async function openPdf(id, title, isPremium) {
     if (isPremium && !(currentUser?.is_premium)) {
         showToast('⭐ এটি Premium কন্টেন্ট — আপগ্রেড করো');
         return;
@@ -364,6 +370,8 @@ async function openPdf(id, title, isPremium, fileUrl) {
     const wrap = document.getElementById('pages-wrap');
     wrap.innerHTML = '<div class="ctr"><div class="sp"></div><div>PDF লোড হচ্ছে...</div></div>';
     try {
+        const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdfs?id=eq.${id}&select=file_url`);
+        const fileUrl = rows?.[0]?.file_url;
         if (!fileUrl) throw new Error('URL পাওয়া যায়নি');
         pdfDoc = await pdfjsLib.getDocument({ url: fileUrl }).promise;
         const n = pdfDoc.numPages;
@@ -619,22 +627,47 @@ function mcqPrompt(type) {
 ১. প্রশ্ন, অপশন, ব্যাখ্যা — সব অবশ্যই এই পেইজের ভাষায় (যদি পেইজ বাংলায় হয় তাহলে বাংলায়, ইংরেজিতে হলে ইংরেজিতে) লিখবে।
 ২. ${typeInstructions[type] || typeInstructions.standard}
 ৩. প্রতিটি প্রশ্নের সাথে সংক্ষিপ্ত ব্যাখ্যা দিবে।
-৪. শুধুমাত্র এই পেইজের কন্টেন্ট থেকে প্রশ্ন বানাবে, বাইরের তথ্য না।
+৪. শুধুমাত্র এই পেইজের কন্টেন্ট থেকে প্রশ্ন বানাবে, বাইরের তথ্য না। প্লেসহোল্ডার/নমুনা প্রশ্ন বানাবে না।
 
 শুধুমাত্র নিচের JSON ফরম্যাটে উত্তর দিবে, অন্য কোনো লেখা/markdown/backtick ছাড়া:
 {"questions":[{"question":"...","options":["...","...","...","..."],"answer_index":0,"explanation":"..."}]}`;
 }
 
+// Parallel-race fallback chain — mirrors AtlasPro's server-side Worker
+// strategy (callAiVisionChain in workers/utils.js): try the fastest-priority
+// providers together and take whichever responds first with usable output,
+// instead of waiting on each one sequentially. Gemini 2.5 Flash leads the
+// first group per the agreed priority order.
 async function generateMCQsFromImage(imageData, type) {
-    for (const model of MCQ_VISION_MODELS) {
-        try {
-            let raw = null;
-            if (model.provider === 'google') raw = await callGoogleVision(model, imageData, type);
-            else if (model.provider === 'groq') raw = await callGroqVision(model, imageData, type);
-            if (!raw) continue;
-            const parsed = parseQuestionsJSON(raw);
+    // Group 1: Gemini 2.5 Flash + Gemini 2.0 Flash race together (fastest, highest priority)
+    const group1 = [
+        callGoogleVision(MCQ_VISION_MODELS[0], imageData, type).catch(() => null),
+        callGoogleVision(MCQ_VISION_MODELS[1], imageData, type).catch(() => null)
+    ];
+    let result = await raceForValidQuestions(group1);
+    if (result?.length) return result;
+
+    // Group 2: Groq vision fallback if both Gemini calls failed/empty
+    const group2 = [
+        callGroqVision(MCQ_VISION_MODELS[2], imageData, type).catch(() => null)
+    ];
+    result = await raceForValidQuestions(group2);
+    if (result?.length) return result;
+
+    return [];
+}
+
+// Waits for all promises in the group (Promise.allSettled) and returns the
+// first one that parses into a non-empty, quality-filtered question list —
+// matches the "for (r of results) if fulfilled && value) return" pattern
+// from the real Worker fallback chain.
+async function raceForValidQuestions(promises) {
+    const settled = await Promise.allSettled(promises);
+    for (const r of settled) {
+        if (r.status === 'fulfilled' && r.value) {
+            const parsed = parseQuestionsJSON(r.value);
             if (parsed?.length) return parsed;
-        } catch (e) { continue; }
+        }
     }
     return [];
 }
@@ -674,11 +707,25 @@ async function callGroqVision(model, imageData, type) {
     return data.choices?.[0]?.message?.content || null;
 }
 
+// Quality filtering — mirrors parseMcqJson() from AtlasPro's workers/utils.js:
+// rejects empty/placeholder/sample questions and anything with fewer than
+// 2 filled options, so a flaky AI response can't slip a garbage MCQ into the exam.
 function parseQuestionsJSON(raw) {
     try {
         let clean = raw.trim().replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/```\s*$/,'');
         const parsed = JSON.parse(clean);
-        return parsed.questions || [];
+        const list = parsed.questions || [];
+        return list.filter(q => {
+            if (!q || typeof q !== 'object') return false;
+            const qText = (q.question || '').trim();
+            if (!qText || qText.length < 5) return false;
+            if (/^(MCQ|প্রশ্ন)\s*\d+/i.test(qText) && qText.length < 30) return false;
+            if (/প্রশ্নটি যোগ করুন|add.*question|your question here|sample question/i.test(qText)) return false;
+            const opts = (q.options || []).map(o => (o || '').trim());
+            const filledOpts = opts.filter(o => o.length > 0);
+            if (filledOpts.length < 2) return false;
+            return true;
+        });
     } catch (e) { return []; }
 }
 
@@ -694,5 +741,9 @@ document.addEventListener('DOMContentLoaded', () => {
 history.pushState(null, '', location.href);
 window.addEventListener('popstate', () => history.back());
 </script>
+
+<!-- ══════════════ গ্লোবাল নেভিগেশন + UI কন্ট্রোল (নতুন, আলাদা ফাইল) ══════════════ -->
+<script src="global-nav.js"></script>
+<script src="atlas-ui.js"></script>
 </body>
 </html>
