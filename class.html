@@ -968,16 +968,15 @@
                 <button class="cplayer-btn" onclick="ytSkip(10)">⏩</button>
                 <!-- Volume button with popup slider -->
                 <div style="position:relative;">
-                    <button class="cplayer-btn" id="volBtn" onclick="toggleVolSlider()" style="font-size:16px;">🔊</button>
-                    <div id="volSliderWrap" style="display:none;position:absolute;top:48px;left:50%;transform:translateX(-50%);
+                    <button class="cplayer-btn" id="volBtn" onclick="toggleVolSlider(event)" style="font-size:16px;">🔊</button>
+                    <div id="volSliderWrap" style="display:none;position:absolute;top:46px;left:50%;transform:translateX(-50%);
                         background:var(--cl-card);border:1.5px solid var(--cl-border);border-radius:12px;
-                        padding:12px 8px;z-index:200;box-shadow:0 4px 20px rgba(0,0,0,0.4);">
+                        padding:10px 14px;z-index:200;box-shadow:0 4px 20px rgba(0,0,0,0.5);min-width:140px;">
+                        <div style="font-size:10px;color:var(--cl-text2);font-weight:700;margin-bottom:6px;text-align:center;">🔊 ভলিউম</div>
                         <input type="range" id="volSlider" min="0" max="100" value="100"
                             oninput="setVolume(this.value)"
-                            style="writing-mode:vertical-lr;direction:rtl;
-                                   width:24px;height:90px;cursor:pointer;
-                                   accent-color:var(--cl-primary);">
-                        <div id="volPct" style="font-size:10px;font-weight:700;color:var(--cl-primary);text-align:center;margin-top:4px;">100%</div>
+                            style="width:100%;cursor:pointer;accent-color:var(--cl-primary);height:20px;">
+                        <div id="volPct" style="font-size:11px;font-weight:800;color:var(--cl-primary);text-align:center;margin-top:4px;">100%</div>
                     </div>
                 </div>
                 <span class="cplayer-time"><span id="cpCurTime">0:00</span> / <span id="cpDurTime">0:00</span></span>
@@ -1498,60 +1497,89 @@ function cpSeekMove(e) {
     } catch(e2) {}
 }
 
-function cpFullscreen() {
-    const wrap = document.getElementById('cplayerWrap');
-    if (!wrap) return;
-    if (document.fullscreenElement || document.webkitFullscreenElement) {
-        (document.exitFullscreen || document.webkitExitFullscreen).call(document);
-    } else {
-        const req = wrap.requestFullscreen || wrap.webkitRequestFullscreen;
-        if (req) {
-            req.call(wrap).then(() => {
-                try { screen.orientation.lock('landscape').catch(()=>{}); } catch(e) {}
-            }).catch(()=>{});
-        }
-    }
-}
-
-// ===== FULLSCREEN CONTROLS =====
+// ===== FULLSCREEN (CSS rotate - works on all Android browsers) =====
 let fsRaf = null;
 let fsSeeking = false;
 
-// Fullscreen enter/exit
-document.addEventListener('fullscreenchange', _onFsChange);
-document.addEventListener('webkitfullscreenchange', _onFsChange);
-
-function _onFsChange() {
-    const inFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
-    const wrap  = document.getElementById('cplayerWrap');
-    if (inFs) {
-        _buildFsControls(wrap);
-        _startFsRaf();
+function cpFullscreen() {
+    if (document.getElementById('fsOverlay')) {
+        _exitFsLandscape();
     } else {
-        _stopFsRaf();
-        try { screen.orientation.unlock(); } catch(e) {}
-        const fc = document.getElementById('fsControls');
-        if (fc) fc.remove();
+        _enterFsLandscape();
     }
 }
 
-// Physical rotation while in fullscreen → re-lock orientation
-window.addEventListener('orientationchange', () => {
-    if (document.fullscreenElement || document.webkitFullscreenElement) {
-        try { screen.orientation.lock('landscape').catch(()=>{}); } catch(e) {}
+function _enterFsLandscape() {
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+
+    const fo = document.createElement('div');
+    fo.id = 'fsOverlay';
+    fo.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;z-index:99999;overflow:hidden;';
+
+    // Rotated inner: portrait dimensions → landscape via rotate(90deg)
+    const inner = document.createElement('div');
+    inner.id = 'fsInner';
+    inner.style.cssText = [
+        'position:absolute',
+        'top:50%', 'left:50%',
+        'width:' + H + 'px',
+        'height:' + W + 'px',
+        'transform:translate(-50%,-50%) rotate(90deg)',
+        'transform-origin:center center',
+        'display:flex',
+        'flex-direction:column',
+        'background:#000',
+    ].join(';') + ';';
+
+    // Video slot
+    const slot = document.createElement('div');
+    slot.id = 'fsSlot';
+    slot.style.cssText = 'flex:1;position:relative;overflow:hidden;background:#000;';
+
+    // Move YT iframe into slot
+    const ytEl = document.getElementById('ytPlayerEl');
+    if (ytEl) {
+        ytEl.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+        slot.appendChild(ytEl);
     }
-});
+
+    inner.appendChild(slot);
+    fo.appendChild(inner);
+    document.body.appendChild(fo);
+    document.body.style.overflow = 'hidden';
+
+    _buildFsControls(inner);
+    _startFsRaf();
+}
+
+function _exitFsLandscape() {
+    _stopFsRaf();
+
+    // Return YT iframe to original container
+    const ytEl = document.getElementById('ytPlayerEl');
+    const vp = document.getElementById('videoPlayer');
+    if (ytEl && vp) {
+        ytEl.style.cssText = 'width:100%;height:100%;';
+        vp.appendChild(ytEl);
+    }
+
+    const fo = document.getElementById('fsOverlay');
+    if (fo) fo.remove();
+    document.body.style.overflow = '';
+}
 
 function _buildFsControls(container) {
     if (document.getElementById('fsControls')) return;
     const fc = document.createElement('div');
     fc.id = 'fsControls';
     fc.style.cssText = `
-        position:absolute;bottom:0;left:0;right:0;z-index:50;
-        background:linear-gradient(0deg,rgba(0,0,0,0.95) 0%,transparent 100%);
-        padding:6px 16px 16px;
+        width:100%;
+        flex-shrink:0;
+        background:rgba(0,0,0,0.92);
+        padding:8px 16px 16px;
         opacity:1;
-        transition:opacity 0.35s;
+        transition:opacity 0.3s;
     `;
     fc.innerHTML = `
         <div id="fsProgress" style="position:relative;height:5px;background:rgba(255,255,255,0.22);border-radius:5px;cursor:pointer;margin-bottom:12px;touch-action:none;">
@@ -1609,16 +1637,18 @@ function _fsMoveSeek(e) {
     const bar = document.getElementById('fsProgress');
     if (!bar || !ytPlayer) return;
     const rect = bar.getBoundingClientRect();
-    const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+    // In rotated landscape, pointer X maps to bar position
+    const clientX = e.clientX !== undefined ? e.clientX : (e.touches ? e.touches[0].clientX : 0);
     const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     try {
-        ytPlayer.seekTo(pct * (ytPlayer.getDuration()||0), true);
+        const dur = ytPlayer.getDuration() || 0;
+        ytPlayer.seekTo(pct * dur, true);
         const fill = document.getElementById('fsFill');
         const thumb = document.getElementById('fsThumb');
         const ct = document.getElementById('fsCurTime');
         if(fill) fill.style.width = (pct*100)+'%';
         if(thumb) thumb.style.left = (pct*100)+'%';
-        if(ct) ct.textContent = fmtTime(pct*(ytPlayer.getDuration()||0));
+        if(ct) ct.textContent = fmtTime(pct * dur);
     } catch(er) {}
 }
 
@@ -1661,21 +1691,22 @@ function _updateFsUi() {
 let ytMuted = false;
 let ytVolume = 100;
 
-function toggleVolSlider() {
+function toggleVolSlider(e) {
+    if(e) e.stopPropagation();
     const wrap = document.getElementById('volSliderWrap');
     if (!wrap) return;
     const isOpen = wrap.style.display !== 'none';
     wrap.style.display = isOpen ? 'none' : 'block';
     if (!isOpen) {
-        // Close on outside click
         setTimeout(() => {
-            document.addEventListener('click', function closeVol(e) {
-                if (!e.target.closest('#volSliderWrap') && !e.target.closest('#volBtn')) {
-                    document.getElementById('volSliderWrap').style.display = 'none';
+            document.addEventListener('click', function closeVol(ev) {
+                if (!ev.target.closest('#volSliderWrap') && !ev.target.closest('#volBtn')) {
+                    const w = document.getElementById('volSliderWrap');
+                    if(w) w.style.display = 'none';
                     document.removeEventListener('click', closeVol);
                 }
             });
-        }, 0);
+        }, 100);
     }
 }
 
@@ -1722,8 +1753,7 @@ function ytRestart() {
     try { ytPlayer.seekTo(0, true); ytPlayer.playVideo(); } catch(e) {}
 }
 
-// ===== DOWNLOAD VIA PROXY =====
-const PROXY_URL = 'https://hamza-02-atlas-proxy.hf.space';
+// ===== DOWNLOAD =====
 let dlInProgress = false;
 
 async function ytDownload() {
@@ -1736,26 +1766,44 @@ async function ytDownload() {
     dlInProgress = true;
     btn.innerHTML = '⏳ লিংক নেওয়া হচ্ছে...';
     btn.disabled = true;
-    btn.style.opacity = '0.7';
 
     try {
-        // Step 1: get direct URL from proxy
-        const res = await fetch(`${PROXY_URL}/dl?vid=${encodeURIComponent(vid)}`, {
-            signal: AbortSignal.timeout(40000)
+        // cobalt.tools - free, no auth needed
+        const res = await fetch('https://api.cobalt.tools/api/json', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+                url: `https://www.youtube.com/watch?v=${vid}`,
+                vQuality: '720',
+                filenamePattern: 'basic',
+                isAudioOnly: false,
+            }),
+            signal: AbortSignal.timeout(20000)
         });
-        if (!res.ok) throw new Error('Proxy ' + res.status);
+
+        if (!res.ok) throw new Error('cobalt ' + res.status);
         const data = await res.json();
-        if (!data.url) throw new Error('No URL');
+
+        let dlUrl = null;
+        if (data.status === 'stream' || data.status === 'redirect') {
+            dlUrl = data.url;
+        } else if (data.status === 'picker') {
+            dlUrl = data.picker?.[0]?.url;
+        }
+
+        if (!dlUrl) throw new Error('No URL from cobalt');
 
         btn.innerHTML = '⬇ ডাউনলোড হচ্ছে...';
 
-        // Step 2: fetch video as blob with progress
-        const videoRes = await fetch(data.url);
-        if (!videoRes.ok) throw new Error('Video fetch failed');
+        // Fetch as blob with progress
+        const vRes = await fetch(dlUrl, { signal: AbortSignal.timeout(120000) });
+        if (!vRes.ok) throw new Error('Video fetch ' + vRes.status);
 
-        const contentLength = videoRes.headers.get('content-length');
-        const total = contentLength ? parseInt(contentLength) : 0;
-        const reader = videoRes.body.getReader();
+        const total = parseInt(vRes.headers.get('content-length') || '0');
+        const reader = vRes.body.getReader();
         const chunks = [];
         let received = 0;
 
@@ -1765,23 +1813,21 @@ async function ytDownload() {
             chunks.push(value);
             received += value.length;
             if (total > 0) {
-                const pct = Math.round((received / total) * 100);
-                btn.innerHTML = `⬇ ${pct}% ডাউনলোড হচ্ছে...`;
+                btn.innerHTML = `⬇ ${Math.round(received/total*100)}% হচ্ছে...`;
             }
         }
 
-        // Step 3: create blob and trigger save
         const blob = new Blob(chunks, { type: 'video/mp4' });
         const blobUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = blobUrl;
-        a.download = (title.replace(/[^\w\s\u0980-\u09FF\-]/g, '') || 'class-video') + '.mp4';
+        a.download = (title.replace(/[^\w\s\u0980-\u09FF\-]/g, '') || 'class') + '.mp4';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
 
-        showToast('✅ ডাউনলোড সম্পন্ন হয়েছে');
+        showToast('✅ ডাউনলোড সম্পন্ন!');
     } catch(e) {
         console.error('Download error:', e);
         showToast('❌ ডাউনলোড হয়নি। পরে চেষ্টা করুন।');
@@ -1789,7 +1835,6 @@ async function ytDownload() {
         dlInProgress = false;
         btn.innerHTML = '⬇ গ্যালারিতে ডাউনলোড করুন';
         btn.disabled = false;
-        btn.style.opacity = '';
     }
 }
 
