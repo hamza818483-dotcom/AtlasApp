@@ -559,6 +559,8 @@
             padding: 8px 10px 10px;
             margin-bottom: 10px;
             box-shadow: var(--shadow-float);
+            overflow: visible;
+            position: relative;
         }
         /* Progress bar */
         .cplayer-progress-wrap {
@@ -1393,11 +1395,16 @@ function _createYTPlayer(videoId) {
                     const po = document.getElementById('cpPauseOverlay');
                     if(po) po.classList.remove('show');
                     cpStartTimer();
+                    // Update fs controls
+                    const fp = document.getElementById('fsPPBtn');
+                    if(fp) fp.textContent = '⏸';
                 } else if (e.data === YT.PlayerState.PAUSED) {
                     if(btn) btn.textContent = '▶';
                     const po = document.getElementById('cpPauseOverlay');
                     if(po) po.classList.add('show');
                     cpStopTimer();
+                    const fp = document.getElementById('fsPPBtn');
+                    if(fp) fp.textContent = '▶';
                 } else if (e.data === YT.PlayerState.ENDED) {
                     if(btn) btn.textContent = '▶';
                     cpStopTimer();
@@ -1517,7 +1524,6 @@ function _enterFsLandscape() {
     fo.id = 'fsOverlay';
     fo.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;z-index:99999;overflow:hidden;';
 
-    // Rotated inner: portrait dimensions → landscape via rotate(90deg)
     const inner = document.createElement('div');
     inner.id = 'fsInner';
     inner.style.cssText = [
@@ -1543,6 +1549,16 @@ function _enterFsLandscape() {
         ytEl.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
         slot.appendChild(ytEl);
     }
+
+    // Blocker inside slot — blocks ALL YT iframe clicks (logo, share, save etc)
+    const blocker = document.createElement('div');
+    blocker.id = 'fsBlocker';
+    blocker.style.cssText = 'position:absolute;inset:0;z-index:10;background:transparent;cursor:pointer;';
+    blocker.addEventListener('click', () => {
+        ytTogglePlay();
+        _showFsControls();
+    });
+    slot.appendChild(blocker);
 
     inner.appendChild(slot);
     fo.appendChild(inner);
@@ -1586,7 +1602,7 @@ function _buildFsControls(container) {
             <div id="fsFill" style="height:100%;background:#6C63FF;border-radius:5px;width:0%;pointer-events:none;"></div>
             <div id="fsThumb" style="position:absolute;top:50%;width:16px;height:16px;background:#fff;border-radius:50%;transform:translate(-50%,-50%);left:0%;pointer-events:none;box-shadow:0 0 6px rgba(108,99,255,0.8);"></div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;">
+        <div style="display:flex;align-items:center;gap:8px;" onclick="_showFsControls()">
             <button onclick="ytSkip(-10)" style="background:rgba(255,255,255,0.12);border:none;color:#fff;font-size:18px;width:40px;height:40px;border-radius:10px;cursor:pointer;flex-shrink:0;">⏪</button>
             <button id="fsPPBtn" onclick="ytTogglePlay()" style="background:#6C63FF;border:none;color:#fff;font-size:20px;width:44px;height:44px;border-radius:10px;cursor:pointer;flex-shrink:0;box-shadow:0 3px 12px rgba(108,99,255,0.4);">⏸</button>
             <button onclick="ytSkip(10)" style="background:rgba(255,255,255,0.12);border:none;color:#fff;font-size:18px;width:40px;height:40px;border-radius:10px;cursor:pointer;flex-shrink:0;">⏩</button>
@@ -1619,18 +1635,19 @@ function _buildFsControls(container) {
         document.addEventListener('pointerup', onUp);
     });
 
-    // Tap to show/hide
-    let hideTimer;
-    const show = () => {
-        fc.style.opacity = '1';
-        clearTimeout(hideTimer);
-        hideTimer = setTimeout(() => { fc.style.opacity = '0'; }, 3500);
-    };
-    container.addEventListener('click', (e) => {
-        if (e.target.closest('#fsControls')) return;
-        show();
-    });
-    show();
+    _showFsControls();
+}
+
+let _fsHideTimer = null;
+function _showFsControls() {
+    const fc = document.getElementById('fsControls');
+    if (!fc) return;
+    fc.style.opacity = '1';
+    clearTimeout(_fsHideTimer);
+    _fsHideTimer = setTimeout(() => {
+        const f = document.getElementById('fsControls');
+        if(f) f.style.opacity = '0';
+    }, 3500);
 }
 
 function _fsMoveSeek(e) {
@@ -1754,6 +1771,7 @@ function ytRestart() {
 }
 
 // ===== DOWNLOAD =====
+const PROXY_URL = 'https://hamza-02-atlas-proxy.hf.space';
 let dlInProgress = false;
 
 async function ytDownload() {
@@ -1768,39 +1786,17 @@ async function ytDownload() {
     btn.disabled = true;
 
     try {
-        // cobalt.tools - free, no auth needed
-        const res = await fetch('https://api.cobalt.tools/api/json', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify({
-                url: `https://www.youtube.com/watch?v=${vid}`,
-                vQuality: '720',
-                filenamePattern: 'basic',
-                isAudioOnly: false,
-            }),
-            signal: AbortSignal.timeout(20000)
+        const res = await fetch(`${PROXY_URL}/dl?vid=${encodeURIComponent(vid)}`, {
+            signal: AbortSignal.timeout(45000)
         });
-
-        if (!res.ok) throw new Error('cobalt ' + res.status);
+        if (!res.ok) throw new Error('proxy ' + res.status);
         const data = await res.json();
-
-        let dlUrl = null;
-        if (data.status === 'stream' || data.status === 'redirect') {
-            dlUrl = data.url;
-        } else if (data.status === 'picker') {
-            dlUrl = data.picker?.[0]?.url;
-        }
-
-        if (!dlUrl) throw new Error('No URL from cobalt');
+        if (!data.url) throw new Error('no url');
 
         btn.innerHTML = '⬇ ডাউনলোড হচ্ছে...';
 
-        // Fetch as blob with progress
-        const vRes = await fetch(dlUrl, { signal: AbortSignal.timeout(120000) });
-        if (!vRes.ok) throw new Error('Video fetch ' + vRes.status);
+        const vRes = await fetch(data.url, { signal: AbortSignal.timeout(180000) });
+        if (!vRes.ok) throw new Error('video fetch ' + vRes.status);
 
         const total = parseInt(vRes.headers.get('content-length') || '0');
         const reader = vRes.body.getReader();
@@ -1812,24 +1808,21 @@ async function ytDownload() {
             if (done) break;
             chunks.push(value);
             received += value.length;
-            if (total > 0) {
-                btn.innerHTML = `⬇ ${Math.round(received/total*100)}% হচ্ছে...`;
-            }
+            if (total > 0) btn.innerHTML = `⬇ ${Math.round(received/total*100)}% হচ্ছে...`;
         }
 
         const blob = new Blob(chunks, { type: 'video/mp4' });
         const blobUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = blobUrl;
-        a.download = (title.replace(/[^\w\s\u0980-\u09FF\-]/g, '') || 'class') + '.mp4';
+        a.download = (title.replace(/[^\w\s\u0980-\u09FF\-]/g,'') || 'class') + '.mp4';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
-
         showToast('✅ ডাউনলোড সম্পন্ন!');
     } catch(e) {
-        console.error('Download error:', e);
+        console.error(e);
         showToast('❌ ডাউনলোড হয়নি। পরে চেষ্টা করুন।');
     } finally {
         dlInProgress = false;
