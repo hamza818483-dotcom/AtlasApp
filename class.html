@@ -968,18 +968,12 @@
                 <button class="cplayer-btn" onclick="ytSkip(-10)">⏪</button>
                 <button class="cplayer-btn cplayer-play" id="playPauseBtn" onclick="ytTogglePlay()">▶</button>
                 <button class="cplayer-btn" onclick="ytSkip(10)">⏩</button>
-                <!-- Volume button with popup slider -->
-                <div style="position:relative;">
-                    <button class="cplayer-btn" id="volBtn" onclick="toggleVolSlider(event)" style="font-size:16px;">🔊</button>
-                    <div id="volSliderWrap" style="display:none;position:absolute;top:46px;left:50%;transform:translateX(-50%);
-                        background:var(--cl-card);border:1.5px solid var(--cl-border);border-radius:12px;
-                        padding:10px 14px;z-index:200;box-shadow:0 4px 20px rgba(0,0,0,0.5);min-width:140px;">
-                        <div style="font-size:10px;color:var(--cl-text2);font-weight:700;margin-bottom:6px;text-align:center;">🔊 ভলিউম</div>
-                        <input type="range" id="volSlider" min="0" max="100" value="100"
-                            oninput="setVolume(this.value)"
-                            style="width:100%;cursor:pointer;accent-color:var(--cl-primary);height:20px;">
-                        <div id="volPct" style="font-size:11px;font-weight:800;color:var(--cl-primary);text-align:center;margin-top:4px;">100%</div>
-                    </div>
+                <!-- Volume inline slider -->
+                <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
+                    <span id="volBtn" style="font-size:15px;cursor:pointer;" onclick="ytToggleMute()">🔊</span>
+                    <input type="range" id="volSlider" min="0" max="100" value="100"
+                        oninput="setVolume(this.value)"
+                        style="width:60px;cursor:pointer;accent-color:var(--cl-primary);height:4px;flex-shrink:0;">
                 </div>
                 <span class="cplayer-time"><span id="cpCurTime">0:00</span> / <span id="cpDurTime">0:00</span></span>
                 <div class="cplayer-spacer"></div>
@@ -1504,75 +1498,83 @@ function cpSeekMove(e) {
     } catch(e2) {}
 }
 
-// ===== FULLSCREEN (CSS rotate - works on all Android browsers) =====
+// ===== FULLSCREEN =====
 let fsRaf = null;
 let fsSeeking = false;
+let _fsHideTimer = null;
 
 function cpFullscreen() {
     if (document.getElementById('fsOverlay')) {
         _exitFsLandscape();
     } else {
-        _enterFsLandscape();
+        // First go native fullscreen to hide browser chrome
+        const el = document.documentElement;
+        const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
+        if (req) {
+            req.call(el).then(() => _enterFsLandscape()).catch(() => _enterFsLandscape());
+        } else {
+            _enterFsLandscape();
+        }
     }
 }
 
 function _enterFsLandscape() {
-    const W = window.innerWidth;
-    const H = window.innerHeight;
+    // Use screen dimensions (after browser chrome hidden)
+    const W = screen.width;
+    const H = screen.height;
+    const short = Math.min(W, H);
+    const long  = Math.max(W, H);
 
     const fo = document.createElement('div');
     fo.id = 'fsOverlay';
-    fo.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;z-index:99999;overflow:hidden;';
+    fo.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:2147483647;overflow:hidden;';
 
+    // Inner rotated container — landscape sized
     const inner = document.createElement('div');
     inner.id = 'fsInner';
-    inner.style.cssText = [
-        'position:absolute',
-        'top:50%', 'left:50%',
-        'width:' + H + 'px',
-        'height:' + W + 'px',
-        'transform:translate(-50%,-50%) rotate(90deg)',
-        'transform-origin:center center',
-        'display:flex',
-        'flex-direction:column',
-        'background:#000',
-    ].join(';') + ';';
+    inner.style.cssText = `
+        position:absolute;
+        top:50%;left:50%;
+        width:${long}px;
+        height:${short}px;
+        transform:translate(-50%,-50%) rotate(90deg);
+        transform-origin:center center;
+        display:flex;
+        flex-direction:column;
+        background:#000;
+    `;
 
     // Video slot
     const slot = document.createElement('div');
     slot.id = 'fsSlot';
-    slot.style.cssText = 'flex:1;position:relative;overflow:hidden;background:#000;';
+    slot.style.cssText = 'flex:1;position:relative;overflow:hidden;background:#000;min-height:0;';
 
-    // Move YT iframe into slot
+    // Move YT iframe
     const ytEl = document.getElementById('ytPlayerEl');
     if (ytEl) {
-        ytEl.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+        ytEl.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:none;';
         slot.appendChild(ytEl);
     }
 
-    // Blocker inside slot — blocks ALL YT iframe clicks (logo, share, save etc)
+    // Blocker — blocks ALL YT iframe clicks
     const blocker = document.createElement('div');
-    blocker.id = 'fsBlocker';
-    blocker.style.cssText = 'position:absolute;inset:0;z-index:10;background:transparent;cursor:pointer;';
-    blocker.addEventListener('click', () => {
-        ytTogglePlay();
-        _showFsControls();
-    });
+    blocker.style.cssText = 'position:absolute;inset:0;z-index:20;background:transparent;cursor:pointer;';
+    blocker.addEventListener('click', () => { ytTogglePlay(); _showFsControls(); });
     slot.appendChild(blocker);
 
     inner.appendChild(slot);
     fo.appendChild(inner);
     document.body.appendChild(fo);
-    document.body.style.overflow = 'hidden';
 
     _buildFsControls(inner);
     _startFsRaf();
+    _showFsControls();
 }
 
 function _exitFsLandscape() {
     _stopFsRaf();
 
-    // Return YT iframe to original container
+    // Return iframe
     const ytEl = document.getElementById('ytPlayerEl');
     const vp = document.getElementById('videoPlayer');
     if (ytEl && vp) {
@@ -1582,7 +1584,13 @@ function _exitFsLandscape() {
 
     const fo = document.getElementById('fsOverlay');
     if (fo) fo.remove();
-    document.body.style.overflow = '';
+
+    // Exit native fullscreen
+    try {
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+            (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+        }
+    } catch(e) {}
 }
 
 function _buildFsControls(container) {
@@ -1638,7 +1646,6 @@ function _buildFsControls(container) {
     _showFsControls();
 }
 
-let _fsHideTimer = null;
 function _showFsControls() {
     const fc = document.getElementById('fsControls');
     if (!fc) return;
