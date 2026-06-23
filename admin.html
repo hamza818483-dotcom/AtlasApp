@@ -1214,6 +1214,9 @@
 const SUPABASE_URL  = 'https://btezborkuiqfogykrjrn.supabase.co';
 const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
 const ADMIN_PHONE   = '01754365403';
+// Same keys as study.html — used by the মূলবই MCQ panel's AI-generate tab (kept in sync intentionally)
+const GROQ_KEY = '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';
+const GEMINI_KEYS = ['AIzaSyBHfdZwqQkrBWF2pp1hLCGZKaXKrinP9ew'];
 
 // kakhacq/*.js ফাইলগুলো window.SUPABASE_URL ও window.safeFetch ব্যবহার করে
 // (এগুলো আলাদা <script src> ফাইল, এই ব্লকের lexical scope-এর বাইরে)।
@@ -1291,7 +1294,9 @@ async function safeFetch(url, opts = {}) {
     );
     if (!opts.headers['Content-Type'] && opts.method !== 'DELETE')
         opts.headers['Content-Type'] = 'application/json';
-    if (opts.method === 'POST' || opts.method === 'PATCH')
+    // Don't clobber an explicitly-set Prefer header (e.g. an upsert's 'resolution=merge-duplicates') —
+    // only default it when the caller didn't specify one.
+    if ((opts.method === 'POST' || opts.method === 'PATCH') && !opts.headers['Prefer'])
         opts.headers['Prefer'] = opts.method === 'POST' ? 'return=representation' : 'return=minimal';
     try {
         const res  = await fetch(url, opts);
@@ -1958,6 +1963,7 @@ async function loadMbPdfs(chapterId) {
                         <div style="font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escMb(p.title)}</div>
                         <div style="font-size:9.5px;color:var(--text2);">${p.page_count ? p.page_count + ' পেইজ' : 'PDF'}</div>
                     </div>
+                    <button class="btn btn-sm" style="font-size:9px;padding:4px 7px;background:rgba(124,131,255,0.12);color:var(--accent);border:1px solid var(--accent);" onclick="openMbMcqPanel('${p.id}','${escMb(p.title).replace(/'/g,"\\'")}',${p.page_count||0},'${(p.file_url||'').replace(/'/g,"\\'")}')">❓ MCQ</button>
                     <button class="btn btn-sm ${p.is_premium?'btn-outline':'btn-success'}" style="font-size:9px;padding:4px 7px;" onclick="toggleMbPdfPremium('${p.id}',${!p.is_premium},'${chapterId}')">${p.is_premium?'⭐ Premium':'🆓 Free'}</button>
                     <button class="btn btn-sm btn-danger" style="font-size:9px;padding:4px 7px;" onclick="deleteMbPdf('${p.id}','${chapterId}')">🗑️</button>
                 </div>`).join('');
@@ -2822,5 +2828,7 @@ document.addEventListener('DOMContentLoaded', () => {
      ফোন নম্বর/ID কপি করার দরকার হয়) -->
 <script src="global-nav.js"></script>
 <script src="atlas-admin-zoom.js"></script>
+<!-- মূলবই MCQ panel — new isolated feature, copied/adapted from AtlasPro's admin/pdf.html -->
+<script src="mulboi-mcq-admin.js"></script>
 </body>
     </html>

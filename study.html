@@ -268,7 +268,9 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;',
 async function safeFetch(url, opts = {}) {
     opts.headers = Object.assign({ apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }, opts.headers || {});
     if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') opts.headers['Content-Type'] = 'application/json';
-    if (opts.method === 'POST' || opts.method === 'PATCH') opts.headers['Prefer'] = 'return=representation';
+    // Don't clobber an explicitly-set Prefer header (e.g. 'resolution=merge-duplicates' for upserts) —
+    // only default it when the caller didn't specify one.
+    if ((opts.method === 'POST' || opts.method === 'PATCH') && !opts.headers['Prefer']) opts.headers['Prefer'] = 'return=representation';
     try {
         const res = await fetch(url, opts);
         const text = await res.text();
