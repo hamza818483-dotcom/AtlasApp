@@ -960,7 +960,11 @@
         <!-- Premium Controls Card -->
         <div class="cplayer-card" id="cplayerControls">
             <div class="cplayer-progress-wrap" id="cpProgress"
-                 onpointerdown="cpSeekStart(event)">
+                 onpointerdown="cpSeekStart(event)"
+                 onpointermove="cpSeekMove(event)"
+                 onpointerup="cpSeekEnd(event)"
+                 onpointercancel="cpSeekEnd(event)"
+                 style="touch-action:none;">
                 <div class="cplayer-progress-fill" id="cpFill"></div>
                 <div class="cplayer-progress-thumb" id="cpThumb"></div>
             </div>
@@ -968,13 +972,7 @@
                 <button class="cplayer-btn" onclick="ytSkip(-10)">⏪</button>
                 <button class="cplayer-btn cplayer-play" id="playPauseBtn" onclick="ytTogglePlay()">▶</button>
                 <button class="cplayer-btn" onclick="ytSkip(10)">⏩</button>
-                <!-- Volume inline slider -->
-                <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
-                    <span id="volBtn" style="font-size:15px;cursor:pointer;" onclick="ytToggleMute()">🔊</span>
-                    <input type="range" id="volSlider" min="0" max="100" value="100"
-                        oninput="setVolume(this.value)"
-                        style="width:60px;cursor:pointer;accent-color:var(--cl-primary);height:4px;flex-shrink:0;">
-                </div>
+                <button class="cplayer-btn" id="volBtn" onclick="ytToggleMute()" style="font-size:15px;">🔊</button>
                 <span class="cplayer-time"><span id="cpCurTime">0:00</span> / <span id="cpDurTime">0:00</span></span>
                 <div class="cplayer-spacer"></div>
                 <div class="cplayer-speed-wrap">
@@ -1462,29 +1460,18 @@ function fmtTime(s) {
 function cpSeekStart(e) {
     e.preventDefault();
     cpSeeking = true;
+    cpStopTimer();
+    // Capture pointer for smooth drag even outside element
+    try { e.target.setPointerCapture(e.pointerId); } catch(_) {}
     cpSeekMove(e);
-
-    const onMove = ev => { ev.preventDefault(); cpSeekMove(ev); };
-    const onEnd = () => {
-        cpSeeking = false;
-        document.removeEventListener('pointermove', onMove);
-        document.removeEventListener('pointerup', onEnd);
-        if (ytPlayer) {
-            try {
-                const state = ytPlayer.getPlayerState();
-                if (state === YT.PlayerState.PLAYING) cpStartTimer();
-            } catch(e) {}
-        }
-    };
-    document.addEventListener('pointermove', onMove, { passive: false });
-    document.addEventListener('pointerup', onEnd);
 }
 
 function cpSeekMove(e) {
+    if (!cpSeeking && e.type === 'pointermove') return;
     const bar = document.getElementById('cpProgress');
     if (!bar || !ytPlayer) return;
     const rect = bar.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : (e.clientX || e.x || 0);
+    const clientX = e.clientX !== undefined ? e.clientX : (e.touches ? e.touches[0].clientX : 0);
     const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     try {
         const dur = ytPlayer.getDuration() || 0;
@@ -1496,6 +1483,14 @@ function cpSeekMove(e) {
         if(thumb) thumb.style.left = (pct * 100) + '%';
         if(ct) ct.textContent = fmtTime(pct * dur);
     } catch(e2) {}
+}
+
+function cpSeekEnd(e) {
+    cpSeeking = false;
+    try { e.target.releasePointerCapture(e.pointerId); } catch(_) {}
+    try {
+        if (ytPlayer && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) cpStartTimer();
+    } catch(_) {}
 }
 
 // ===== FULLSCREEN =====
@@ -1519,35 +1514,39 @@ function cpFullscreen() {
 }
 
 function _enterFsLandscape() {
-    // Use screen dimensions (after browser chrome hidden)
-    const W = screen.width;
-    const H = screen.height;
-    const short = Math.min(W, H);
-    const long  = Math.max(W, H);
+    // After requestFullscreen, innerWidth/Height gives actual available space
+    // But we need to handle both cases
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    // We want landscape: longer side = width, shorter side = height
+    const short = Math.min(vw, vh);
+    const long  = Math.max(vw, vh);
 
     const fo = document.createElement('div');
     fo.id = 'fsOverlay';
-    fo.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:2147483647;overflow:hidden;';
+    fo.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;z-index:2147483647;overflow:hidden;';
 
-    // Inner rotated container — landscape sized
+    // Rotated inner — fills full viewport when rotated
     const inner = document.createElement('div');
     inner.id = 'fsInner';
+    // Width = vh (becomes height after rotate), Height = vw (becomes width after rotate)
     inner.style.cssText = `
         position:absolute;
         top:50%;left:50%;
-        width:${long}px;
-        height:${short}px;
+        width:${vh}px;
+        height:${vw}px;
         transform:translate(-50%,-50%) rotate(90deg);
         transform-origin:center center;
         display:flex;
         flex-direction:column;
         background:#000;
+        overflow:hidden;
     `;
 
-    // Video slot
+    // Video slot — takes all remaining space
     const slot = document.createElement('div');
     slot.id = 'fsSlot';
-    slot.style.cssText = 'flex:1;position:relative;overflow:hidden;background:#000;min-height:0;';
+    slot.style.cssText = 'flex:1;position:relative;overflow:hidden;background:#000;';
 
     // Move YT iframe
     const ytEl = document.getElementById('ytPlayerEl');
@@ -1558,7 +1557,7 @@ function _enterFsLandscape() {
 
     // Blocker — blocks ALL YT iframe clicks
     const blocker = document.createElement('div');
-    blocker.style.cssText = 'position:absolute;inset:0;z-index:20;background:transparent;cursor:pointer;';
+    blocker.style.cssText = 'position:absolute;inset:0;z-index:20;background:transparent;';
     blocker.addEventListener('click', () => { ytTogglePlay(); _showFsControls(); });
     slot.appendChild(blocker);
 
