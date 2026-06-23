@@ -41,6 +41,19 @@
         window.closeSidebar = function () { /* non-home পেজে সাইডবার নিষ্ক্রিয় */ };
     }
 
+    // ---------- ১ক. Home পেজে "ফিরে যান" বাটন দেখাবে না ----------
+    // হোম পেজ অ্যাপের শুরুর পয়েন্ট — এখান থেকে আর "ফিরে" যাওয়ার কিছু নেই,
+    // তাই এই বাটনটা এখানে অপ্রয়োজনীয়। বাকি সব পেজে এটা স্বাভাবিকভাবে থাকবে।
+    function hideBackButtonOnHome() {
+        if (!isHome) return;
+        const style = document.createElement('style');
+        style.id = 'atlas-home-backbtn-hide';
+        style.textContent = `
+            .global-back-btn { display: none !important; }
+        `;
+        document.head.appendChild(style);
+    }
+
     // ---------- ২. ATLAS APP টেক্সট শিমার অ্যানিমেশন ----------
     function injectShimmerStyle() {
         if (document.getElementById('atlas-shimmer-style')) return;
@@ -172,6 +185,7 @@
     // ---------- ইনিশিয়ালাইজ ----------
     function init() {
         injectVisibilityStyle();
+        hideBackButtonOnHome();
         injectShimmerStyle();
         applyZoomAndCopyLock();
         ensureBackButton();
