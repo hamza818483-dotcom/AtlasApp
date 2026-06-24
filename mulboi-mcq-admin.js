@@ -15,6 +15,12 @@
    Does not modify or override any existing admin.html function.
 ═══════════════════════════════════════════════════════════ */
 
+// PDF.js worker setup — must run before any pdfjsLib.getDocument() call
+if (typeof pdfjsLib !== 'undefined') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
 /* ---------- ALL-PDFS FLAT LIST (parity with AtlasPro's loadAllPdfs) ---------- */
 async function mbLoadAllPdfs() {
     const box = document.getElementById('mbAllPdfsList');
