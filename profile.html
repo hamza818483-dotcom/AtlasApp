@@ -454,13 +454,17 @@
             background:linear-gradient(145deg,#0F1117,#1A1F2E);
             border:none;border-radius:20px;
             padding:24px 20px 24px;text-align:center;
-            position:relative;overflow:hidden;
+            position:relative;overflow:visible;
         }
-        .pomo-watch-card::before {
+        .pomo-watch-card-border {
+            position:absolute;inset:0;border-radius:20px;overflow:hidden;pointer-events:none;z-index:0;
+        }
+        .pomo-watch-card-border::before {
             content:'';
             position:absolute;
             width:200%;height:200%;
             top:-50%;left:-50%;
+            transform-origin:center center;
             background:conic-gradient(
                 from 0deg,
                 transparent 0deg,
@@ -471,16 +475,13 @@
                 transparent 360deg
             );
             animation:pomoBorderSpin 3s linear infinite;
-            z-index:0;
-            transform-origin:center center;
         }
-        .pomo-watch-card::after {
+        .pomo-watch-card-border::after {
             content:'';
             position:absolute;
             inset:2px;
             border-radius:18px;
             background:linear-gradient(145deg,#0F1117,#1A1F2E);
-            z-index:0;
         }
         @keyframes pomoBorderSpin { to{transform:rotate(360deg);} }
         .pomo-watch-inner { position:relative;z-index:1; }
@@ -1165,6 +1166,7 @@
     <div class="pomo-body-inner">
         <!-- SVG Ring Watch -->
         <div class="pomo-watch-card">
+            <div class="pomo-watch-card-border"></div>
             <div class="pomo-watch-inner">
                 <div class="pomo-watch-brand">ATLAS Pomodoro Watch</div>
                 <div class="pomo-clock-svg-wrap">

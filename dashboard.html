@@ -188,11 +188,11 @@
         .pomo-watch-face {
             background:linear-gradient(135deg,#0D1117 0%,#161B22 100%);
             border:2px solid var(--accent);border-radius:16px;
-            padding:16px;margin:8px auto;max-width:260px;position:relative;
+            padding:16px 10px;margin:8px auto;max-width:100%;width:100%;position:relative;box-sizing:border-box;
         }
         body.light-mode .pomo-watch-face { background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%); }
         .pomo-watch-label { font-family:'Orbitron',monospace;font-size:9px;color:var(--accent);letter-spacing:2px;margin-bottom:8px;text-transform:uppercase;opacity:0.8; }
-        .pomo-watch-time { font-family:'Orbitron',monospace;font-size:42px;font-weight:900;color:var(--accent);text-shadow:0 0 20px rgba(124,131,255,0.6);letter-spacing:4px;line-height:1; }
+        .pomo-watch-time { font-family:'Orbitron',monospace;font-size:34px;font-weight:900;color:var(--accent);text-shadow:0 0 20px rgba(124,131,255,0.6);letter-spacing:2px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:clip;width:100%; }
         .pomo-task-name-profile { font-size:11px;color:var(--text2);margin-top:6px; }
 
         /* ===== GRAPH CARDS ===== */
@@ -455,14 +455,18 @@
             background:linear-gradient(145deg,#0F1117,#1A1F2E);
             border:none;border-radius:20px;
             padding:24px 20px 24px;text-align:center;
-            position:relative;overflow:hidden;
+            position:relative;overflow:visible;
         }
-        .pomo-watch-card::before {
+        /* Wrapper clips the spinning border without clipping card content */
+        .pomo-watch-card-border {
+            position:absolute;inset:0;border-radius:20px;overflow:hidden;pointer-events:none;z-index:0;
+        }
+        .pomo-watch-card-border::before {
             content:'';
             position:absolute;
-            /* 200%x200% centered — conic spins around card center, stays clipped by overflow:hidden */
             width:200%;height:200%;
             top:-50%;left:-50%;
+            transform-origin:center center;
             background:conic-gradient(
                 from 0deg,
                 transparent 0deg,
@@ -473,17 +477,13 @@
                 transparent 360deg
             );
             animation:pomoBorderSpin 3s linear infinite;
-            z-index:0;
-            transform-origin:center center;
         }
-        /* Inner mask layer — covers the center so only the border area is visible */
-        .pomo-watch-card::after {
+        .pomo-watch-card-border::after {
             content:'';
             position:absolute;
             inset:2px;
             border-radius:18px;
             background:linear-gradient(145deg,#0F1117,#1A1F2E);
-            z-index:0;
         }
         @keyframes pomoBorderSpin { to{transform:rotate(360deg);} }
         .pomo-watch-inner { position:relative;z-index:1; }
@@ -822,6 +822,30 @@
                 <span class="btn-icon">🚪</span><span class="btn-label">লগআউট</span>
             </button>
         </div>
+        <!-- 4 DASH BOXES — profile card-এর ভেতরে, buttons-এর ঠিক নিচে -->
+        <div class="dash-grid" id="mainGrid" style="margin-top:10px;">
+            <div class="dash-box" onclick="showTab('history')">
+                <span class="dash-box-icon">📚</span>
+                <div class="dash-box-title">Exam History</div>
+                <div class="dash-box-count" id="countExams">০ এক্সাম</div>
+            </div>
+            <div class="dash-box" onclick="showTab('classhistory')">
+                <span class="dash-box-icon">🎥</span>
+                <div class="dash-box-title">Class History</div>
+                <div class="dash-box-count" id="countClasses">০ ক্লাস</div>
+            </div>
+            <div class="dash-box" onclick="showTab('bookmarks')">
+                <span class="dash-box-icon">🔖</span>
+                <div class="dash-box-title">Bookmarks</div>
+                <div class="dash-box-count" id="countBookmarks">০ বুকমার্ক</div>
+            </div>
+            <div class="dash-box" onclick="showTab('notifications')" style="position:relative;">
+                <span class="dash-box-icon">🔔</span>
+                <div class="dash-box-title">Notifications</div>
+                <div class="dash-box-count" id="countNotifs">০ নতুন</div>
+                <div class="dash-box-badge" id="unreadBadge" style="display:none;"></div>
+            </div>
+        </div>
     </div>
 
     <!-- POMODORO SUCCESS GRAPH (3-Day) -->
@@ -862,31 +886,6 @@
             <div class="graph-stat"><div class="graph-stat-val" id="cTotal">—</div><div class="graph-stat-lbl">📚 মোট</div></div>
             <div class="graph-stat"><div class="graph-stat-val" id="cWeek">—</div><div class="graph-stat-lbl">📅 এ সপ্তাহে</div></div>
             <div class="graph-stat" style="max-width:80px;overflow:hidden;"><div class="graph-stat-val" id="cFav" style="font-size:10px;">—</div><div class="graph-stat-lbl">⭐ প্রিয়</div></div>
-        </div>
-    </div>
-
-    <!-- 4 DASH BOXES -->
-    <div class="dash-grid" id="mainGrid">
-        <div class="dash-box" onclick="showTab('history')">
-            <span class="dash-box-icon">📚</span>
-            <div class="dash-box-title">Exam History</div>
-            <div class="dash-box-count" id="countExams">০ এক্সাম</div>
-        </div>
-        <div class="dash-box" onclick="showTab('classhistory')">
-            <span class="dash-box-icon">🎥</span>
-            <div class="dash-box-title">Class History</div>
-            <div class="dash-box-count" id="countClasses">০ ক্লাস</div>
-        </div>
-        <div class="dash-box" onclick="showTab('bookmarks')">
-            <span class="dash-box-icon">🔖</span>
-            <div class="dash-box-title">Bookmarks</div>
-            <div class="dash-box-count" id="countBookmarks">০ বুকমার্ক</div>
-        </div>
-        <div class="dash-box" onclick="showTab('notifications')" style="position:relative;">
-            <span class="dash-box-icon">🔔</span>
-            <div class="dash-box-title">Notifications</div>
-            <div class="dash-box-count" id="countNotifs">০ নতুন</div>
-            <div class="dash-box-badge" id="unreadBadge" style="display:none;"></div>
         </div>
     </div>
 
@@ -1174,6 +1173,7 @@
     <div class="pomo-body-inner">
         <!-- SVG Ring Watch -->
         <div class="pomo-watch-card">
+            <div class="pomo-watch-card-border"></div>
             <div class="pomo-watch-inner">
                 <div class="pomo-watch-brand">ATLAS Pomodoro Watch</div>
                 <div class="pomo-clock-svg-wrap">
