@@ -1502,11 +1502,12 @@ function cpFullscreen() {
     if (document.getElementById('fsOverlay')) {
         _exitFsLandscape();
     } else {
-        // First go native fullscreen to hide browser chrome
         const el = document.documentElement;
         const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
         if (req) {
-            req.call(el).then(() => _enterFsLandscape()).catch(() => _enterFsLandscape());
+            req.call(el)
+                .then(() => setTimeout(_enterFsLandscape, 200))
+                .catch(() => _enterFsLandscape());
         } else {
             _enterFsLandscape();
         }
@@ -1514,48 +1515,34 @@ function cpFullscreen() {
 }
 
 function _enterFsLandscape() {
-    // After requestFullscreen, innerWidth/Height gives actual available space
-    // But we need to handle both cases
+    // After fullscreen, get actual screen dimensions
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    // We want landscape: longer side = width, shorter side = height
-    const short = Math.min(vw, vh);
-    const long  = Math.max(vw, vh);
+    // For CSS rotate(90deg): inner width=vh, height=vw so it fills screen exactly
+    const iW = vh;  // becomes screen width after 90deg rotate
+    const iH = vw;  // becomes screen height after 90deg rotate
 
     const fo = document.createElement('div');
     fo.id = 'fsOverlay';
     fo.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;z-index:2147483647;overflow:hidden;';
 
-    // Rotated inner — fills full viewport when rotated
     const inner = document.createElement('div');
     inner.id = 'fsInner';
-    // Width = vh (becomes height after rotate), Height = vw (becomes width after rotate)
-    inner.style.cssText = `
-        position:absolute;
-        top:50%;left:50%;
-        width:${vh}px;
-        height:${vw}px;
-        transform:translate(-50%,-50%) rotate(90deg);
-        transform-origin:center center;
-        display:flex;
-        flex-direction:column;
-        background:#000;
-        overflow:hidden;
-    `;
+    inner.style.cssText = `position:absolute;top:50%;left:50%;width:${iW}px;height:${iH}px;transform:translate(-50%,-50%) rotate(90deg);transform-origin:center center;display:flex;flex-direction:column;background:#000;overflow:hidden;`;
 
-    // Video slot — takes all remaining space
+    // Video slot
     const slot = document.createElement('div');
     slot.id = 'fsSlot';
     slot.style.cssText = 'flex:1;position:relative;overflow:hidden;background:#000;';
 
-    // Move YT iframe
+    // Move YT iframe into slot
     const ytEl = document.getElementById('ytPlayerEl');
     if (ytEl) {
         ytEl.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:none;';
         slot.appendChild(ytEl);
     }
 
-    // Blocker — blocks ALL YT iframe clicks
+    // Blocker — prevents all YT UI interaction
     const blocker = document.createElement('div');
     blocker.style.cssText = 'position:absolute;inset:0;z-index:20;background:transparent;';
     blocker.addEventListener('click', () => { ytTogglePlay(); _showFsControls(); });
@@ -1627,19 +1614,26 @@ function _buildFsControls(container) {
     `;
     container.appendChild(fc);
 
-    // Smooth seek
-    document.getElementById('fsProgress').addEventListener('pointerdown', (e) => {
+    // Smooth seek with pointer capture
+    const fsBar = document.getElementById('fsProgress');
+    fsBar.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         fsSeeking = true;
+        fsBar.setPointerCapture(e.pointerId);
         _fsMoveSeek(e);
-        const onMove = ev => { ev.preventDefault(); _fsMoveSeek(ev); };
-        const onUp = () => {
-            fsSeeking = false;
-            document.removeEventListener('pointermove', onMove);
-            document.removeEventListener('pointerup', onUp);
-        };
-        document.addEventListener('pointermove', onMove, { passive:false });
-        document.addEventListener('pointerup', onUp);
+    });
+    fsBar.addEventListener('pointermove', (e) => {
+        if (!fsSeeking) return;
+        e.preventDefault();
+        _fsMoveSeek(e);
+        _showFsControls();
+    });
+    fsBar.addEventListener('pointerup', (e) => {
+        fsSeeking = false;
+        fsBar.releasePointerCapture(e.pointerId);
+    });
+    fsBar.addEventListener('pointercancel', (e) => {
+        fsSeeking = false;
     });
 
     _showFsControls();
