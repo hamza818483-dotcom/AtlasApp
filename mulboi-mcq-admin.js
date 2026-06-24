@@ -88,6 +88,7 @@ function openMbMcqPanel(pdfId, pdfTitle, pageCount, fileUrl) {
     mbMcq.pageQuestions = [];
     mbMcq.editingIndex = null;
     mbMcq.csvRows = [];
+    mbMcq._currentImageUrl = null;
 
     let overlay = document.getElementById('mbMcqOverlay');
     if (!overlay) { mbBuildMcqPanelDom(); overlay = document.getElementById('mbMcqOverlay'); }
@@ -168,6 +169,13 @@ function mbBuildMcqPanelDom() {
                     <textarea id="mbMcqQuestion" placeholder="প্রশ্ন লিখুন..." rows="2" style="margin-bottom:8px;"></textarea>
                     <div id="mbMcqOptionsWrap" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
                     <textarea id="mbMcqExplanation" placeholder="ব্যাখ্যা (ঐচ্ছিক)" rows="2" style="margin-bottom:8px;"></textarea>
+                    <label style="display:block;font-size:10.5px;font-weight:600;color:var(--text2);margin-bottom:4px;">ছবি (ঐচ্ছিক — ডায়াগ্রাম/চিত্র যুক্ত প্রশ্নের জন্য)</label>
+                    <input type="file" id="mbMcqImage" accept="image/*" onchange="mbMcqImageSelect(event)" style="margin-bottom:6px;">
+                    <div id="mbMcqImagePreviewWrap" style="display:none;margin-bottom:8px;position:relative;">
+                        <img id="mbMcqImagePreview" style="max-width:100%;max-height:120px;border-radius:6px;display:block;">
+                        <button type="button" onclick="mbRemoveMcqImage()" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;">✕</button>
+                    </div>
+                    <div id="mbMcqImageUploading" style="display:none;font-size:10.5px;color:var(--accent);margin-bottom:6px;">⏳ ছবি আপলোড হচ্ছে...</div>
                     <div style="display:flex;gap:8px;">
                         <button class="btn btn-sm btn-outline" id="mbMcqCancelBtn" style="display:none;flex:1;" onclick="mbCancelEdit()">বাতিল</button>
                         <button class="btn btn-sm btn-primary" id="mbMcqSaveBtn" style="flex:1;" onclick="mbSaveManualMcq()">✓ সংরক্ষণ করো</button>
@@ -384,6 +392,7 @@ function mbRenderManualList() {
     listEl.innerHTML = mbMcq.pageQuestions.map((q, i) => `
         <div style="border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;">
             <div style="font-size:12px;font-weight:600;margin-bottom:6px;">${i+1}. ${escMb(q.question)}</div>
+            ${q.image_url ? `<img src="${q.image_url}" style="max-width:100%;max-height:100px;border-radius:6px;margin-bottom:8px;display:block;">` : ''}
             <div style="font-size:10.5px;color:var(--text2);margin-bottom:8px;">
                 ${(q.options||[]).map((o,oi)=>`<div style="${oi===q.answer_index?'color:var(--green);font-weight:700;':''}">${oi===q.answer_index?'✅':'◽'} ${escMb(o)}</div>`).join('')}
             </div>
@@ -403,6 +412,8 @@ function mbEditManualMcq(i) {
     document.getElementById('mbMcqExplanation').value = q.explanation || '';
     (q.options || []).forEach((o, oi) => { const el = document.getElementById('mbOpt_' + oi); if (el && mbMcq.currentType !== 'true_false') el.value = o; });
     mbSelectAnswer(q.answer_index || 0);
+    mbMcq._currentImageUrl = q.image_url || null;
+    mbRenderMcqImagePreview();
     document.getElementById('mbMcqCancelBtn').style.display = 'block';
     document.getElementById('mbMcqSaveBtn').textContent = '✓ আপডেট করো';
     document.getElementById('mbMcqQuestion').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -416,6 +427,9 @@ function mbCancelEdit() {
         for (let i = 0; i < 4; i++) { const el = document.getElementById('mbOpt_' + i); if (el) el.value = ''; }
     }
     mbMcq._selectedAnswer = null;
+    mbMcq._currentImageUrl = null;
+    mbRenderMcqImagePreview();
+    const imgInput = document.getElementById('mbMcqImage'); if (imgInput) imgInput.value = '';
     const count = mbMcq.currentType === 'true_false' ? 2 : 4;
     for (let k = 0; k < count; k++) { const b = document.getElementById('mbAnsBadge_' + k); if (b) { b.style.background='var(--card)'; b.style.color='var(--text)'; b.style.borderColor='var(--border)'; } }
     const cancelBtn = document.getElementById('mbMcqCancelBtn'); if (cancelBtn) cancelBtn.style.display = 'none';
@@ -431,6 +445,66 @@ async function mbDeleteManualMcq(i) {
     mbUpdatePageCountLabel();
 }
 
+/* ---------- MCQ IMAGE (optional, per-question — via ImgBB, same hosting used elsewhere in this app) ---------- */
+function mbRenderMcqImagePreview() {
+    const wrap = document.getElementById('mbMcqImagePreviewWrap');
+    const img = document.getElementById('mbMcqImagePreview');
+    if (!wrap || !img) return;
+    if (mbMcq._currentImageUrl) { img.src = mbMcq._currentImageUrl; wrap.style.display = 'block'; }
+    else { img.src = ''; wrap.style.display = 'none'; }
+}
+
+function mbRemoveMcqImage() {
+    mbMcq._currentImageUrl = null;
+    const imgInput = document.getElementById('mbMcqImage'); if (imgInput) imgInput.value = '';
+    mbRenderMcqImagePreview();
+}
+
+async function mbMcqImageSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const uploadingEl = document.getElementById('mbMcqImageUploading');
+    uploadingEl.style.display = 'block';
+    try {
+        const url = await mbUploadImageFile(file);
+        mbMcq._currentImageUrl = url;
+        mbRenderMcqImagePreview();
+        mbToast('🖼️ ছবি আপলোড সম্পন্ন');
+    } catch (err) {
+        mbToast('❌ ছবি আপলোড ব্যর্থ');
+        e.target.value = '';
+    } finally {
+        uploadingEl.style.display = 'none';
+    }
+}
+
+// Uploads a local image File to ImgBB using the same multi-key pool as
+// ImgBBManager (kakhacq/imgbb-manager.js), but as base64 (ImgBBManager only
+// exposes uploadFromUrl for re-hosting existing URLs, not local files).
+async function mbUploadImageFile(file) {
+    const keys = (typeof ImgBBManager !== 'undefined') ? ImgBBManager.getHealthyKeys() : [];
+    if (!keys.length) throw new Error('NO_HEALTHY_IMGBB_KEYS');
+    const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+    let lastError = null;
+    for (const key of keys) {
+        try {
+            const formData = new FormData();
+            formData.append('key', key);
+            formData.append('image', base64);
+            const res = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data?.success && data.data?.url) return data.data.url;
+            lastError = data?.error?.message || 'Unknown ImgBB error';
+        } catch (e) { lastError = e.message; }
+    }
+    throw new Error(lastError || 'ImgBB upload failed');
+}
+
 async function mbSaveManualMcq() {
     const question = document.getElementById('mbMcqQuestion').value.trim();
     if (!question) { mbToast('❌ প্রশ্ন লিখুন'); return; }
@@ -443,7 +517,8 @@ async function mbSaveManualMcq() {
     const mcqObj = {
         question, options,
         answer_index: mbMcq._selectedAnswer,
-        explanation: document.getElementById('mbMcqExplanation').value.trim() || ''
+        explanation: document.getElementById('mbMcqExplanation').value.trim() || '',
+        image_url: mbMcq._currentImageUrl || null
     };
 
     if (mbMcq.editingIndex !== null) {
