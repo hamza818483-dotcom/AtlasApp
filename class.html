@@ -559,6 +559,8 @@
             padding: 8px 10px 10px;
             margin-bottom: 10px;
             box-shadow: var(--shadow-float);
+            overflow: visible;
+            position: relative;
         }
         /* Progress bar */
         .cplayer-progress-wrap {
@@ -958,7 +960,11 @@
         <!-- Premium Controls Card -->
         <div class="cplayer-card" id="cplayerControls">
             <div class="cplayer-progress-wrap" id="cpProgress"
-                 onpointerdown="cpSeekStart(event)">
+                 onpointerdown="cpSeekStart(event)"
+                 onpointermove="cpSeekMove(event)"
+                 onpointerup="cpSeekEnd(event)"
+                 onpointercancel="cpSeekEnd(event)"
+                 style="touch-action:none;">
                 <div class="cplayer-progress-fill" id="cpFill"></div>
                 <div class="cplayer-progress-thumb" id="cpThumb"></div>
             </div>
@@ -966,20 +972,7 @@
                 <button class="cplayer-btn" onclick="ytSkip(-10)">⏪</button>
                 <button class="cplayer-btn cplayer-play" id="playPauseBtn" onclick="ytTogglePlay()">▶</button>
                 <button class="cplayer-btn" onclick="ytSkip(10)">⏩</button>
-                <!-- Volume button with popup slider -->
-                <div style="position:relative;">
-                    <button class="cplayer-btn" id="volBtn" onclick="toggleVolSlider()" style="font-size:16px;">🔊</button>
-                    <div id="volSliderWrap" style="display:none;position:absolute;top:48px;left:50%;transform:translateX(-50%);
-                        background:var(--cl-card);border:1.5px solid var(--cl-border);border-radius:12px;
-                        padding:12px 8px;z-index:200;box-shadow:0 4px 20px rgba(0,0,0,0.4);">
-                        <input type="range" id="volSlider" min="0" max="100" value="100"
-                            oninput="setVolume(this.value)"
-                            style="writing-mode:vertical-lr;direction:rtl;
-                                   width:24px;height:90px;cursor:pointer;
-                                   accent-color:var(--cl-primary);">
-                        <div id="volPct" style="font-size:10px;font-weight:700;color:var(--cl-primary);text-align:center;margin-top:4px;">100%</div>
-                    </div>
-                </div>
+                <button class="cplayer-btn" id="volBtn" onclick="ytToggleMute()" style="font-size:15px;">🔊</button>
                 <span class="cplayer-time"><span id="cpCurTime">0:00</span> / <span id="cpDurTime">0:00</span></span>
                 <div class="cplayer-spacer"></div>
                 <div class="cplayer-speed-wrap">
@@ -1394,11 +1387,16 @@ function _createYTPlayer(videoId) {
                     const po = document.getElementById('cpPauseOverlay');
                     if(po) po.classList.remove('show');
                     cpStartTimer();
+                    // Update fs controls
+                    const fp = document.getElementById('fsPPBtn');
+                    if(fp) fp.textContent = '⏸';
                 } else if (e.data === YT.PlayerState.PAUSED) {
                     if(btn) btn.textContent = '▶';
                     const po = document.getElementById('cpPauseOverlay');
                     if(po) po.classList.add('show');
                     cpStopTimer();
+                    const fp = document.getElementById('fsPPBtn');
+                    if(fp) fp.textContent = '▶';
                 } else if (e.data === YT.PlayerState.ENDED) {
                     if(btn) btn.textContent = '▶';
                     cpStopTimer();
@@ -1462,29 +1460,18 @@ function fmtTime(s) {
 function cpSeekStart(e) {
     e.preventDefault();
     cpSeeking = true;
+    cpStopTimer();
+    // Capture pointer for smooth drag even outside element
+    try { e.target.setPointerCapture(e.pointerId); } catch(_) {}
     cpSeekMove(e);
-
-    const onMove = ev => { ev.preventDefault(); cpSeekMove(ev); };
-    const onEnd = () => {
-        cpSeeking = false;
-        document.removeEventListener('pointermove', onMove);
-        document.removeEventListener('pointerup', onEnd);
-        if (ytPlayer) {
-            try {
-                const state = ytPlayer.getPlayerState();
-                if (state === YT.PlayerState.PLAYING) cpStartTimer();
-            } catch(e) {}
-        }
-    };
-    document.addEventListener('pointermove', onMove, { passive: false });
-    document.addEventListener('pointerup', onEnd);
 }
 
 function cpSeekMove(e) {
+    if (!cpSeeking && e.type === 'pointermove') return;
     const bar = document.getElementById('cpProgress');
     if (!bar || !ytPlayer) return;
     const rect = bar.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : (e.clientX || e.x || 0);
+    const clientX = e.clientX !== undefined ? e.clientX : (e.touches ? e.touches[0].clientX : 0);
     const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     try {
         const dur = ytPlayer.getDuration() || 0;
@@ -1498,67 +1485,131 @@ function cpSeekMove(e) {
     } catch(e2) {}
 }
 
+function cpSeekEnd(e) {
+    cpSeeking = false;
+    try { e.target.releasePointerCapture(e.pointerId); } catch(_) {}
+    try {
+        if (ytPlayer && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) cpStartTimer();
+    } catch(_) {}
+}
+
+// ===== FULLSCREEN =====
+let fsRaf = null;
+let fsSeeking = false;
+let _fsHideTimer = null;
+
 function cpFullscreen() {
-    const wrap = document.getElementById('cplayerWrap');
-    if (!wrap) return;
-    if (document.fullscreenElement || document.webkitFullscreenElement) {
-        (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    if (document.getElementById('fsOverlay')) {
+        _exitFsLandscape();
     } else {
-        const req = wrap.requestFullscreen || wrap.webkitRequestFullscreen;
+        // First go native fullscreen to hide browser chrome
+        const el = document.documentElement;
+        const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
         if (req) {
-            req.call(wrap).then(() => {
-                try { screen.orientation.lock('landscape').catch(()=>{}); } catch(e) {}
-            }).catch(()=>{});
+            req.call(el).then(() => _enterFsLandscape()).catch(() => _enterFsLandscape());
+        } else {
+            _enterFsLandscape();
         }
     }
 }
 
-// ===== FULLSCREEN CONTROLS =====
-let fsRaf = null;
-let fsSeeking = false;
+function _enterFsLandscape() {
+    // After requestFullscreen, innerWidth/Height gives actual available space
+    // But we need to handle both cases
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    // We want landscape: longer side = width, shorter side = height
+    const short = Math.min(vw, vh);
+    const long  = Math.max(vw, vh);
 
-// Fullscreen enter/exit
-document.addEventListener('fullscreenchange', _onFsChange);
-document.addEventListener('webkitfullscreenchange', _onFsChange);
+    const fo = document.createElement('div');
+    fo.id = 'fsOverlay';
+    fo.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;z-index:2147483647;overflow:hidden;';
 
-function _onFsChange() {
-    const inFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
-    const wrap  = document.getElementById('cplayerWrap');
-    if (inFs) {
-        _buildFsControls(wrap);
-        _startFsRaf();
-    } else {
-        _stopFsRaf();
-        try { screen.orientation.unlock(); } catch(e) {}
-        const fc = document.getElementById('fsControls');
-        if (fc) fc.remove();
+    // Rotated inner — fills full viewport when rotated
+    const inner = document.createElement('div');
+    inner.id = 'fsInner';
+    // Width = vh (becomes height after rotate), Height = vw (becomes width after rotate)
+    inner.style.cssText = `
+        position:absolute;
+        top:50%;left:50%;
+        width:${vh}px;
+        height:${vw}px;
+        transform:translate(-50%,-50%) rotate(90deg);
+        transform-origin:center center;
+        display:flex;
+        flex-direction:column;
+        background:#000;
+        overflow:hidden;
+    `;
+
+    // Video slot — takes all remaining space
+    const slot = document.createElement('div');
+    slot.id = 'fsSlot';
+    slot.style.cssText = 'flex:1;position:relative;overflow:hidden;background:#000;';
+
+    // Move YT iframe
+    const ytEl = document.getElementById('ytPlayerEl');
+    if (ytEl) {
+        ytEl.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:none;';
+        slot.appendChild(ytEl);
     }
+
+    // Blocker — blocks ALL YT iframe clicks
+    const blocker = document.createElement('div');
+    blocker.style.cssText = 'position:absolute;inset:0;z-index:20;background:transparent;';
+    blocker.addEventListener('click', () => { ytTogglePlay(); _showFsControls(); });
+    slot.appendChild(blocker);
+
+    inner.appendChild(slot);
+    fo.appendChild(inner);
+    document.body.appendChild(fo);
+
+    _buildFsControls(inner);
+    _startFsRaf();
+    _showFsControls();
 }
 
-// Physical rotation while in fullscreen → re-lock orientation
-window.addEventListener('orientationchange', () => {
-    if (document.fullscreenElement || document.webkitFullscreenElement) {
-        try { screen.orientation.lock('landscape').catch(()=>{}); } catch(e) {}
+function _exitFsLandscape() {
+    _stopFsRaf();
+
+    // Return iframe
+    const ytEl = document.getElementById('ytPlayerEl');
+    const vp = document.getElementById('videoPlayer');
+    if (ytEl && vp) {
+        ytEl.style.cssText = 'width:100%;height:100%;';
+        vp.appendChild(ytEl);
     }
-});
+
+    const fo = document.getElementById('fsOverlay');
+    if (fo) fo.remove();
+
+    // Exit native fullscreen
+    try {
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+            (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+        }
+    } catch(e) {}
+}
 
 function _buildFsControls(container) {
     if (document.getElementById('fsControls')) return;
     const fc = document.createElement('div');
     fc.id = 'fsControls';
     fc.style.cssText = `
-        position:absolute;bottom:0;left:0;right:0;z-index:50;
-        background:linear-gradient(0deg,rgba(0,0,0,0.95) 0%,transparent 100%);
-        padding:6px 16px 16px;
+        width:100%;
+        flex-shrink:0;
+        background:rgba(0,0,0,0.92);
+        padding:8px 16px 16px;
         opacity:1;
-        transition:opacity 0.35s;
+        transition:opacity 0.3s;
     `;
     fc.innerHTML = `
         <div id="fsProgress" style="position:relative;height:5px;background:rgba(255,255,255,0.22);border-radius:5px;cursor:pointer;margin-bottom:12px;touch-action:none;">
             <div id="fsFill" style="height:100%;background:#6C63FF;border-radius:5px;width:0%;pointer-events:none;"></div>
             <div id="fsThumb" style="position:absolute;top:50%;width:16px;height:16px;background:#fff;border-radius:50%;transform:translate(-50%,-50%);left:0%;pointer-events:none;box-shadow:0 0 6px rgba(108,99,255,0.8);"></div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;">
+        <div style="display:flex;align-items:center;gap:8px;" onclick="_showFsControls()">
             <button onclick="ytSkip(-10)" style="background:rgba(255,255,255,0.12);border:none;color:#fff;font-size:18px;width:40px;height:40px;border-radius:10px;cursor:pointer;flex-shrink:0;">⏪</button>
             <button id="fsPPBtn" onclick="ytTogglePlay()" style="background:#6C63FF;border:none;color:#fff;font-size:20px;width:44px;height:44px;border-radius:10px;cursor:pointer;flex-shrink:0;box-shadow:0 3px 12px rgba(108,99,255,0.4);">⏸</button>
             <button onclick="ytSkip(10)" style="background:rgba(255,255,255,0.12);border:none;color:#fff;font-size:18px;width:40px;height:40px;border-radius:10px;cursor:pointer;flex-shrink:0;">⏩</button>
@@ -1591,34 +1642,36 @@ function _buildFsControls(container) {
         document.addEventListener('pointerup', onUp);
     });
 
-    // Tap to show/hide
-    let hideTimer;
-    const show = () => {
-        fc.style.opacity = '1';
-        clearTimeout(hideTimer);
-        hideTimer = setTimeout(() => { fc.style.opacity = '0'; }, 3500);
-    };
-    container.addEventListener('click', (e) => {
-        if (e.target.closest('#fsControls')) return;
-        show();
-    });
-    show();
+    _showFsControls();
+}
+
+function _showFsControls() {
+    const fc = document.getElementById('fsControls');
+    if (!fc) return;
+    fc.style.opacity = '1';
+    clearTimeout(_fsHideTimer);
+    _fsHideTimer = setTimeout(() => {
+        const f = document.getElementById('fsControls');
+        if(f) f.style.opacity = '0';
+    }, 3500);
 }
 
 function _fsMoveSeek(e) {
     const bar = document.getElementById('fsProgress');
     if (!bar || !ytPlayer) return;
     const rect = bar.getBoundingClientRect();
-    const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+    // In rotated landscape, pointer X maps to bar position
+    const clientX = e.clientX !== undefined ? e.clientX : (e.touches ? e.touches[0].clientX : 0);
     const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     try {
-        ytPlayer.seekTo(pct * (ytPlayer.getDuration()||0), true);
+        const dur = ytPlayer.getDuration() || 0;
+        ytPlayer.seekTo(pct * dur, true);
         const fill = document.getElementById('fsFill');
         const thumb = document.getElementById('fsThumb');
         const ct = document.getElementById('fsCurTime');
         if(fill) fill.style.width = (pct*100)+'%';
         if(thumb) thumb.style.left = (pct*100)+'%';
-        if(ct) ct.textContent = fmtTime(pct*(ytPlayer.getDuration()||0));
+        if(ct) ct.textContent = fmtTime(pct * dur);
     } catch(er) {}
 }
 
@@ -1661,21 +1714,22 @@ function _updateFsUi() {
 let ytMuted = false;
 let ytVolume = 100;
 
-function toggleVolSlider() {
+function toggleVolSlider(e) {
+    if(e) e.stopPropagation();
     const wrap = document.getElementById('volSliderWrap');
     if (!wrap) return;
     const isOpen = wrap.style.display !== 'none';
     wrap.style.display = isOpen ? 'none' : 'block';
     if (!isOpen) {
-        // Close on outside click
         setTimeout(() => {
-            document.addEventListener('click', function closeVol(e) {
-                if (!e.target.closest('#volSliderWrap') && !e.target.closest('#volBtn')) {
-                    document.getElementById('volSliderWrap').style.display = 'none';
+            document.addEventListener('click', function closeVol(ev) {
+                if (!ev.target.closest('#volSliderWrap') && !ev.target.closest('#volBtn')) {
+                    const w = document.getElementById('volSliderWrap');
+                    if(w) w.style.display = 'none';
                     document.removeEventListener('click', closeVol);
                 }
             });
-        }, 0);
+        }, 100);
     }
 }
 
@@ -1722,7 +1776,7 @@ function ytRestart() {
     try { ytPlayer.seekTo(0, true); ytPlayer.playVideo(); } catch(e) {}
 }
 
-// ===== DOWNLOAD VIA PROXY =====
+// ===== DOWNLOAD =====
 const PROXY_URL = 'https://hamza-02-atlas-proxy.hf.space';
 let dlInProgress = false;
 
@@ -1736,26 +1790,22 @@ async function ytDownload() {
     dlInProgress = true;
     btn.innerHTML = '⏳ লিংক নেওয়া হচ্ছে...';
     btn.disabled = true;
-    btn.style.opacity = '0.7';
 
     try {
-        // Step 1: get direct URL from proxy
         const res = await fetch(`${PROXY_URL}/dl?vid=${encodeURIComponent(vid)}`, {
-            signal: AbortSignal.timeout(40000)
+            signal: AbortSignal.timeout(45000)
         });
-        if (!res.ok) throw new Error('Proxy ' + res.status);
+        if (!res.ok) throw new Error('proxy ' + res.status);
         const data = await res.json();
-        if (!data.url) throw new Error('No URL');
+        if (!data.url) throw new Error('no url');
 
         btn.innerHTML = '⬇ ডাউনলোড হচ্ছে...';
 
-        // Step 2: fetch video as blob with progress
-        const videoRes = await fetch(data.url);
-        if (!videoRes.ok) throw new Error('Video fetch failed');
+        const vRes = await fetch(data.url, { signal: AbortSignal.timeout(180000) });
+        if (!vRes.ok) throw new Error('video fetch ' + vRes.status);
 
-        const contentLength = videoRes.headers.get('content-length');
-        const total = contentLength ? parseInt(contentLength) : 0;
-        const reader = videoRes.body.getReader();
+        const total = parseInt(vRes.headers.get('content-length') || '0');
+        const reader = vRes.body.getReader();
         const chunks = [];
         let received = 0;
 
@@ -1764,32 +1814,26 @@ async function ytDownload() {
             if (done) break;
             chunks.push(value);
             received += value.length;
-            if (total > 0) {
-                const pct = Math.round((received / total) * 100);
-                btn.innerHTML = `⬇ ${pct}% ডাউনলোড হচ্ছে...`;
-            }
+            if (total > 0) btn.innerHTML = `⬇ ${Math.round(received/total*100)}% হচ্ছে...`;
         }
 
-        // Step 3: create blob and trigger save
         const blob = new Blob(chunks, { type: 'video/mp4' });
         const blobUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = blobUrl;
-        a.download = (title.replace(/[^\w\s\u0980-\u09FF\-]/g, '') || 'class-video') + '.mp4';
+        a.download = (title.replace(/[^\w\s\u0980-\u09FF\-]/g,'') || 'class') + '.mp4';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
-
-        showToast('✅ ডাউনলোড সম্পন্ন হয়েছে');
+        showToast('✅ ডাউনলোড সম্পন্ন!');
     } catch(e) {
-        console.error('Download error:', e);
+        console.error(e);
         showToast('❌ ডাউনলোড হয়নি। পরে চেষ্টা করুন।');
     } finally {
         dlInProgress = false;
         btn.innerHTML = '⬇ গ্যালারিতে ডাউনলোড করুন';
         btn.disabled = false;
-        btn.style.opacity = '';
     }
 }
 

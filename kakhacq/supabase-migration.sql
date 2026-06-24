@@ -59,3 +59,51 @@ CREATE POLICY "Public write access" ON slideshow_images
 -- বন্ধ করা ছবি home page-এ দেখাবে না কিন্তু লিস্ট থেকে ডিলিট হবে না।
 ALTER TABLE slideshow_images
 ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+
+-- ============================================================
+-- TELEGRAM SUPPORT ফিচারের জন্য নতুন টেবিল
+-- "অনুশীলনী এক্সাম" বাটনের জায়গায় নতুন "Telegram Support" বাটন —
+-- ৪টা সাব-অপশন: Poll/Quiz (subject list), Free PDF Support
+-- (সরাসরি লিংক), Practice Bot (description+লিংক), সকল গ্রুপ+চ্যানেল
+-- (সরাসরি লিংক)। সবকিছু admin panel থেকে যোগ/এডিট/ডিলিট করা যায়।
+-- ============================================================
+
+-- key-value স্টাইল টেবিল — pdf_support, all_groups_channels,
+-- practice_bot — প্রতিটার জন্য একটা মাত্র row (key দিয়ে upsert হয়)।
+CREATE TABLE IF NOT EXISTS telegram_support_links (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    key         TEXT UNIQUE NOT NULL,
+    link        TEXT,
+    description TEXT,
+    created_at  TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE telegram_support_links ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public read access" ON telegram_support_links;
+CREATE POLICY "Public read access" ON telegram_support_links
+    FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public write access" ON telegram_support_links;
+CREATE POLICY "Public write access" ON telegram_support_links
+    FOR ALL USING (true) WITH CHECK (true);
+
+-- Poll/Quiz সাবজেক্ট তালিকা — একাধিক row, একটার বেশি সাবজেক্ট থাকবে
+CREATE TABLE IF NOT EXISTS telegram_poll_subjects (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    subject     TEXT NOT NULL,
+    description TEXT,
+    link        TEXT,
+    sort_order  INTEGER DEFAULT 0,
+    created_at  TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE telegram_poll_subjects ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public read access" ON telegram_poll_subjects;
+CREATE POLICY "Public read access" ON telegram_poll_subjects
+    FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public write access" ON telegram_poll_subjects;
+CREATE POLICY "Public write access" ON telegram_poll_subjects
+    FOR ALL USING (true) WITH CHECK (true);

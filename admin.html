@@ -510,6 +510,7 @@
         <button class="tab-btn" onclick="switchSection('mentors',this)">👨‍🏫 Mentors</button>
         <button class="tab-btn" onclick="switchSection('special',this)">🃏 Special Card</button>
         <button class="tab-btn" onclick="switchSection('slideshow',this)">🖼️ Slideshow</button>
+        <button class="tab-btn" onclick="switchSection('telegram',this)">🔗 Telegram Support</button>
         <button class="tab-btn" onclick="switchSection('serial',this)">🔢 Serial</button>
     </div>
 
@@ -1189,6 +1190,73 @@
         </div>
     </div>
 
+    <!-- ══════════════ TAB: TELEGRAM SUPPORT ══════════════ -->
+    <div class="admin-section" id="secTelegram">
+        <div class="form-card">
+            <h3>🔗 Free PDF Support — লিংক</h3>
+            <div class="perm-note">Home page-এর Telegram Support মেনুতে "Free PDF Support" ক্লিক করলে সরাসরি এই লিংকে যাবে।</div>
+            <div class="input-group">
+                <label>লিংক</label>
+                <input type="text" id="tgPdfLink" placeholder="https://t.me/...">
+            </div>
+            <button class="btn btn-primary" onclick="saveTelegramLink('pdf_support','tgPdfLink')" style="width:100%;">💾 সেইভ করুন</button>
+        </div>
+
+        <div class="form-card">
+            <h3>🔗 সকল গ্রুপ+চ্যানেল — লিংক</h3>
+            <div class="perm-note">এই লিংকেও সরাসরি ক্লিক করে যাওয়া যাবে।</div>
+            <div class="input-group">
+                <label>লিংক</label>
+                <input type="text" id="tgAllGroupsLink" placeholder="https://t.me/...">
+            </div>
+            <button class="btn btn-primary" onclick="saveTelegramLink('all_groups_channels','tgAllGroupsLink')" style="width:100%;">💾 সেইভ করুন</button>
+        </div>
+
+        <div class="form-card">
+            <h3>🔗 Telegram Practice Bot</h3>
+            <div class="perm-note">এখানে বিস্তারিত বর্ণনা (description) ও বটের লিংক দিন — ইউজার "Start Now" বাটনে ক্লিক করে লিংকে যাবে।</div>
+            <div class="input-group">
+                <label>বর্ণনা</label>
+                <textarea id="tgBotDesc" rows="3" placeholder="বটটি কীভাবে কাজ করে তা লিখুন..."></textarea>
+            </div>
+            <div class="input-group">
+                <label>লিংক</label>
+                <input type="text" id="tgBotLink" placeholder="https://t.me/...">
+            </div>
+            <button class="btn btn-primary" onclick="saveTelegramBot()" style="width:100%;">💾 সেইভ করুন</button>
+        </div>
+
+        <div class="form-card">
+            <h3>🔗 Telegram Poll/Quiz — সাবজেক্ট যোগ/এডিট</h3>
+            <div class="perm-note">প্রতিটা সাবজেক্টের জন্য নাম, বর্ণনা (ঐচ্ছিক) ও Join লিংক দিন। ইউজার Poll/Quiz-এ ক্লিক করলে এই সাবজেক্ট তালিকা দেখবে।</div>
+            <input type="hidden" id="tgPollEditId">
+            <div class="input-group">
+                <label>সাবজেক্টের নাম</label>
+                <input type="text" id="tgPollSubject" placeholder="যেমন: পদার্থবিজ্ঞান">
+            </div>
+            <div class="input-group">
+                <label>বর্ণনা (ঐচ্ছিক)</label>
+                <textarea id="tgPollDesc" rows="2" placeholder="এই সাবজেক্টের Poll/Quiz সম্পর্কে বিস্তারিত..."></textarea>
+            </div>
+            <div class="input-group">
+                <label>Join লিংক</label>
+                <input type="text" id="tgPollLink" placeholder="https://t.me/...">
+            </div>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-primary" onclick="saveTelegramPollSubject()" style="flex:1;">✅ সেইভ</button>
+                <button class="btn btn-outline" onclick="clearTelegramPollForm()">🔄 ক্লিয়ার</button>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <h3 style="margin:0;">📋 Poll/Quiz সাবজেক্ট তালিকা</h3>
+                <button class="btn btn-sm btn-outline" onclick="openSerialModal('tgpoll')">🔢 Order</button>
+            </div>
+            <div id="tgPollList"></div>
+        </div>
+    </div>
+
     <!-- ══════════════ TAB 14: SERIAL ══════════════ -->
     <div class="admin-section" id="secSerial">
         <div class="form-card">
@@ -1204,6 +1272,7 @@
                 <button class="btn btn-outline" onclick="openSerialModal('mentors')">👨‍🏫 Mentor Order</button>
                 <button class="btn btn-outline" onclick="openSerialModal('modeltest')">📖 Model Test Order</button>
                 <button class="btn btn-outline" onclick="openSerialModal('slideshow')">🖼️ Slideshow Order</button>
+                <button class="btn btn-outline" onclick="openSerialModal('tgpoll')">🔗 Poll/Quiz Order</button>
             </div>
         </div>
     </div>
@@ -1378,6 +1447,7 @@ function switchSection(sec, el) {
         mentors:   loadMentors,
         special:   loadSpecials,
         slideshow: loadSlideshowAdmin,
+        telegram:  loadTelegramAdmin,
         serial:    () => {}
     };
     if (loaders[sec]) loaders[sec]();
@@ -2693,6 +2763,137 @@ async function toggleSlideshowActive(id, currentlyActive) {
 }
 
 /* ═══════════════════════════════════════════════
+   TELEGRAM SUPPORT  (Flutter: TelegramSupportAdminController)
+   টেবিল: telegram_support_links (key-value, PDF/AllGroups/Bot)
+           telegram_poll_subjects (Poll/Quiz subject list)
+═══════════════════════════════════════════════ */
+
+// সেকশন খোলার সাথেই বিদ্যমান লিংক/বট ফর্মে পূরণ + Poll/Quiz তালিকা লোড
+async function loadTelegramAdmin() {
+    try {
+        const links = await safeFetch(`${SUPABASE_URL}/rest/v1/telegram_support_links?select=*`);
+        const byKey = {};
+        (links || []).forEach(l => { byKey[l.key] = l; });
+
+        document.getElementById('tgPdfLink').value = byKey['pdf_support']?.link || '';
+        document.getElementById('tgAllGroupsLink').value = byKey['all_groups_channels']?.link || '';
+        document.getElementById('tgBotDesc').value = byKey['practice_bot']?.description || '';
+        document.getElementById('tgBotLink').value = byKey['practice_bot']?.link || '';
+    } catch (e) {
+        console.error('loadTelegramAdmin (links) error:', e);
+    }
+    loadTelegramPollList();
+}
+
+// key অনুযায়ী upsert — row থাকলে আপডেট, না থাকলে insert
+async function upsertTelegramLink(key, payload) {
+    const existing = await safeFetch(`${SUPABASE_URL}/rest/v1/telegram_support_links?select=id&key=eq.${key}&limit=1`);
+    if (existing?.length) {
+        await safeFetch(`${SUPABASE_URL}/rest/v1/telegram_support_links?id=eq.${existing[0].id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(payload)
+        });
+    } else {
+        await safeFetch(`${SUPABASE_URL}/rest/v1/telegram_support_links`, {
+            method: 'POST',
+            body: JSON.stringify({ key, ...payload })
+        });
+    }
+}
+
+async function saveTelegramLink(key, inputId) {
+    const link = document.getElementById(inputId).value.trim();
+    if (!link) { showToast('⚠️ একটি লিংক দিন'); return; }
+    try {
+        await upsertTelegramLink(key, { link });
+        showToast('✅ লিংক সেইভ হয়েছে');
+    } catch (e) {
+        console.error('saveTelegramLink error:', e);
+        showToast('⚠️ সেইভ করতে সমস্যা হয়েছে: ' + (e.message || 'অজানা এরর'));
+    }
+}
+
+async function saveTelegramBot() {
+    const description = document.getElementById('tgBotDesc').value.trim();
+    const link = document.getElementById('tgBotLink').value.trim();
+    if (!link) { showToast('⚠️ বটের লিংক দিন'); return; }
+    try {
+        await upsertTelegramLink('practice_bot', { description: description || null, link });
+        showToast('✅ Practice Bot তথ্য সেইভ হয়েছে');
+    } catch (e) {
+        console.error('saveTelegramBot error:', e);
+        showToast('⚠️ সেইভ করতে সমস্যা হয়েছে: ' + (e.message || 'অজানা এরর'));
+    }
+}
+
+// ── Poll/Quiz সাবজেক্ট CRUD ──
+async function saveTelegramPollSubject() {
+    const subject = document.getElementById('tgPollSubject').value.trim();
+    const description = document.getElementById('tgPollDesc').value.trim();
+    const link = document.getElementById('tgPollLink').value.trim();
+    const editId = document.getElementById('tgPollEditId').value;
+
+    if (!subject || !link) { showToast('⚠️ সাবজেক্টের নাম ও লিংক দিন'); return; }
+
+    const payload = { subject, description: description || null, link };
+    try {
+        if (editId) {
+            await safeFetch(`${SUPABASE_URL}/rest/v1/telegram_poll_subjects?id=eq.${editId}`, {
+                method: 'PATCH',
+                body: JSON.stringify(payload)
+            });
+            showToast('✅ আপডেট হয়েছে');
+        } else {
+            await safeFetch(`${SUPABASE_URL}/rest/v1/telegram_poll_subjects`, {
+                method: 'POST',
+                body: JSON.stringify({ ...payload, sort_order: Date.now() % 1000000000 })
+            });
+            showToast('✅ নতুন সাবজেক্ট যোগ হয়েছে');
+        }
+        clearTelegramPollForm();
+        loadTelegramPollList();
+    } catch (e) {
+        console.error('saveTelegramPollSubject error:', e);
+        showToast('⚠️ সেইভ করতে সমস্যা হয়েছে: ' + (e.message || 'অজানা এরর'));
+    }
+}
+
+function clearTelegramPollForm() {
+    document.getElementById('tgPollEditId').value = '';
+    document.getElementById('tgPollSubject').value = '';
+    document.getElementById('tgPollDesc').value = '';
+    document.getElementById('tgPollLink').value = '';
+}
+
+function editTelegramPollSubject(id) {
+    editItem('telegram_poll_subjects', id, d => {
+        document.getElementById('tgPollEditId').value = d.id;
+        document.getElementById('tgPollSubject').value = d.subject || '';
+        document.getElementById('tgPollDesc').value = d.description || '';
+        document.getElementById('tgPollLink').value = d.link || '';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+}
+
+async function loadTelegramPollList() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/telegram_poll_subjects?select=*&order=sort_order.asc,created_at.asc&limit=100`);
+        if (!data?.length) { document.getElementById('tgPollList').innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">কোনো সাবজেক্ট যোগ করা হয়নি</p>'; return; }
+        let html = '<table class="data-table"><tr><th>সাবজেক্ট</th><th>লিংক</th><th>Actions</th></tr>';
+        data.forEach(s => {
+            html += `<tr><td><b>${s.subject}</b>${s.description ? `<br><span style="font-size:10px;color:var(--text2);">${s.description.slice(0,40)}${s.description.length>40?'…':''}</span>` : ''}</td>
+                <td style="font-size:10px;word-break:break-all;">${s.link || '—'}</td>
+                <td style="white-space:nowrap;"><button class="btn btn-sm btn-outline" onclick="editTelegramPollSubject('${s.id}')">✏️</button>${isAdmin ? `<button class="btn btn-sm btn-danger" onclick="deleteItem('telegram_poll_subjects','${s.id}',loadTelegramPollList)" style="margin-left:3px;">🗑️</button>` : ''}</td></tr>`;
+        });
+        html += '</table>';
+        document.getElementById('tgPollList').innerHTML = html;
+    } catch (e) {
+        document.getElementById('tgPollList').innerHTML = '<p style="color:var(--red);">লোড এরর — telegram_poll_subjects টেবিল তৈরি হয়েছে কিনা যাচাই করুন</p>';
+        console.error('loadTelegramPollList error:', e);
+    }
+}
+
+/* ═══════════════════════════════════════════════
    SERIAL MANAGEMENT  (Flutter: ReorderableListView)
 ═══════════════════════════════════════════════ */
 const serialConfig = {
@@ -2704,7 +2905,8 @@ const serialConfig = {
     social:    { table:'social_links',    label:'🔗 Social',      nameField: d => d.media_name },
     mentors:   { table:'mentors',         label:'👨‍🏫 Mentors',   nameField: d => d.name },
     modeltest: { table:'model_tests',     label:'📖 Model Test',  nameField: d => `${d.type} › ${d.subject||d.varsity_name||'—'}` },
-    slideshow: { table:'slideshow_images',label:'🖼️ Slideshow',  nameField: d => d.caption || `ছবি #${(d.id||'').toString().slice(0,6)}` }
+    slideshow: { table:'slideshow_images',label:'🖼️ Slideshow',  nameField: d => d.caption || `ছবি #${(d.id||'').toString().slice(0,6)}` },
+    tgpoll: { table:'telegram_poll_subjects', label:'🔗 Poll/Quiz', nameField: d => d.subject }
 };
 
 async function openSerialModal(key) {
