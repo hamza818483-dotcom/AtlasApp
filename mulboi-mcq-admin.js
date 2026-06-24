@@ -15,6 +15,52 @@
    Does not modify or override any existing admin.html function.
 ═══════════════════════════════════════════════════════════ */
 
+/* ---------- ALL-PDFS FLAT LIST (parity with AtlasPro's loadAllPdfs) ---------- */
+async function mbLoadAllPdfs() {
+    const box = document.getElementById('mbAllPdfsList');
+    if (!box) return;
+    box.innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">লোড হচ্ছে...</p>';
+    try {
+        const pdfs = await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdfs?select=*,book_chapters(name,book_subjects(name))&order=created_at.desc`);
+        if (!pdfs?.length) {
+            box.innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">📄 কোনো PDF নেই — উপরে বিষয় ও অধ্যায় বেছে PDF আপলোড করো</p>';
+            return;
+        }
+        box.innerHTML = pdfs.map(p => {
+            const chapterName = p.book_chapters?.name || '';
+            const subjectName = p.book_chapters?.book_subjects?.name || '';
+            return `
+            <div style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;">
+                <span style="font-size:20px;">📕</span>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escMb(p.title)}</div>
+                    <div style="font-size:9.5px;color:var(--text2);">${subjectName ? '📚 '+escMb(subjectName) : ''}${chapterName ? ' › 📖 '+escMb(chapterName) : ''}${p.page_count ? ' · '+p.page_count+' পেইজ' : ''}</div>
+                </div>
+                <button class="btn btn-sm" style="font-size:9px;padding:4px 7px;background:rgba(124,131,255,0.12);color:var(--accent);border:1px solid var(--accent);" onclick="openMbMcqPanel('${p.id}','${escMb(p.title).replace(/'/g,"\\'")}',${p.page_count||0},'${(p.file_url||'').replace(/'/g,"\\'")}')">❓ MCQ</button>
+                <button class="btn btn-sm btn-danger" style="font-size:9px;padding:4px 7px;" onclick="mbDeletePdfFromFlatList('${p.id}')">🗑️</button>
+            </div>`;
+        }).join('');
+    } catch (e) {
+        box.innerHTML = '<p style="color:var(--red);text-align:center;padding:16px;">লোড এরর — <a href="#" onclick="mbLoadAllPdfs();return false;" style="color:var(--accent);">আবার চেষ্টা করো</a></p>';
+    }
+}
+
+async function mbDeletePdfFromFlatList(pdfId) {
+    if (!confirm('এই PDF মুছে ফেলবেন? এর সব MCQ ও পেইজ-ভিউ ডেটাও মুছে যাবে।')) return;
+    try {
+        await fetch(`${SUPABASE_URL}/rest/v1/book_pdfs?id=eq.${pdfId}`, {
+            method: 'DELETE',
+            headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }
+        });
+        mbToast('🗑️ PDF মুছে গেছে');
+        mbLoadAllPdfs();
+        // Also refresh the subject/chapter accordion if it's currently showing this PDF's chapter
+        if (typeof loadMulboiSubjects === 'function' && typeof mbOpenSubject !== 'undefined' && mbOpenSubject) {
+            loadMbChapters(mbOpenSubject);
+        }
+    } catch (e) { mbToast('❌ ডিলিট ব্যর্থ'); }
+}
+
 let mbMcq = {
     pdfId: null, pdfTitle: '', pageCount: 0, fileUrl: '',
     currentPage: 1, currentType: 'standard',
@@ -148,6 +194,15 @@ function mbBuildMcqPanelDom() {
                 <div style="background:var(--hover);border-radius:8px;padding:10px;margin-bottom:10px;font-size:10.5px;color:var(--text2);line-height:1.6;">
                     🤖 AI (Gemini) দিয়ে এই পেইজের ছবি থেকে স্বয়ংক্রিয় MCQ তৈরি হবে। বর্তমান নির্বাচিত পেইজ ও টাইপ ব্যবহার হবে।
                 </div>
+                <div style="margin-bottom:10px;">
+                    <label style="display:block;font-size:10.5px;font-weight:600;color:var(--text2);margin-bottom:4px;">কাস্টম প্রম্পট (ঐচ্ছিক)</label>
+                    <textarea id="mbAiPrompt" rows="3" placeholder="ফাঁকা রাখলে ডিফল্ট প্রম্পট ব্যবহার হবে"></textarea>
+                    <div style="display:flex;gap:6px;margin-top:6px;">
+                        <button class="btn btn-sm btn-outline" style="flex:1;" id="mbSavePromptBtn" onclick="mbSaveAiPrompt()">💾 প্রম্পট সেভ করো</button>
+                        <button class="btn btn-sm btn-outline" style="flex:1;" id="mbLoadPromptBtn" onclick="mbLoadAiPrompt()">📂 সেভ করা প্রম্পট</button>
+                    </div>
+                    <div id="mbPromptSaveStatus" style="display:none;font-size:10px;margin-top:4px;color:var(--green);font-weight:600;"></div>
+                </div>
                 <button class="btn btn-sm" style="width:100%;background:rgba(251,191,36,0.12);color:#FBBF24;border:1px solid #FBBF24;" id="mbAiGenBtn" onclick="mbAiGenerate()">🤖 AI দিয়ে MCQ তৈরি করো</button>
                 <div id="mbAiSpinner" style="display:none;text-align:center;padding:14px;font-size:11.5px;color:var(--accent);">⏳ AI প্রশ্ন তৈরি করছে...</div>
                 <div id="mbAiPreviewWrap" style="display:none;margin-top:10px;">
@@ -172,6 +227,7 @@ function mbSwitchType(type) {
         const btn = document.getElementById('mbTypeBtn_' + t);
         if (btn) btn.className = 'btn btn-sm' + (t === type ? '' : ' btn-outline');
     });
+    const promptEl = document.getElementById('mbAiPrompt'); if (promptEl) promptEl.value = '';
     mbRenderOptionInputs();
     mbCancelEdit();
     mbLoadPageQuestions();
@@ -480,17 +536,18 @@ const MB_VISION_MODELS = [
     { id: 'llama90v', provider: 'groq', model: 'llama-3.2-90b-vision-preview', key: () => GROQ_KEY }
 ];
 
-function mbMcqPrompt(type) {
+function mbMcqPrompt(type, customPrompt) {
     const typeInstructions = {
         standard: 'সাধারণ মানের ৩-৫টি বহুনির্বাচনী (৪টি অপশন) প্রশ্ন তৈরি করো।',
         true_false: '৩-৫টি সত্য/মিথ্যা ধরনের প্রশ্ন তৈরি করো (অপশন: "সত্য", "মিথ্যা" — ২টি অপশন)।',
         hard: 'বিশ্লেষণমূলক ও কঠিন মানের ৩-৫টি বহুনির্বাচনী (৪টি অপশন) প্রশ্ন তৈরি করো — সরাসরি তথ্য নয়, প্রয়োগ/বিশ্লেষণ ভিত্তিক।'
     };
+    const instructionLine = (customPrompt && customPrompt.trim()) ? customPrompt.trim() : (typeInstructions[type] || typeInstructions.standard);
     return `তুমি একজন অভিজ্ঞ HSC শিক্ষক। নিচের বইয়ের পেইজের ছবি দেখে বাংলায় MCQ তৈরি করো।
 
 নিয়ম:
 ১. প্রশ্ন, অপশন, ব্যাখ্যা — সব অবশ্যই এই পেইজের ভাষায় (যদি পেইজ বাংলায় হয় তাহলে বাংলায়, ইংরেজিতে হলে ইংরেজিতে) লিখবে।
-২. ${typeInstructions[type] || typeInstructions.standard}
+২. ${instructionLine}
 ৩. প্রতিটি প্রশ্নের সাথে সংক্ষিপ্ত ব্যাখ্যা দিবে।
 ৪. শুধুমাত্র এই পেইজের কন্টেন্ট থেকে প্রশ্ন বানাবে, বাইরের তথ্য না। প্লেসহোল্ডার/নমুনা প্রশ্ন বানাবে না।
 
@@ -498,14 +555,14 @@ function mbMcqPrompt(type) {
 {"questions":[{"question":"...","options":["...","...","...","..."],"answer_index":0,"explanation":"..."}]}`;
 }
 
-async function mbCallGoogleVision(model, imageData, type) {
+async function mbCallGoogleVision(model, imageData, type, customPrompt) {
     const key = model.key();
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model.model}:generateContent?key=${key}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             contents: [{ parts: [
                 { inline_data: { mime_type: imageData.mimeType, data: imageData.base64 } },
-                { text: mbMcqPrompt(type) }
+                { text: mbMcqPrompt(type, customPrompt) }
             ] }],
             generationConfig: { temperature: 0.6, responseMimeType: 'application/json' }
         })
@@ -514,7 +571,7 @@ async function mbCallGoogleVision(model, imageData, type) {
     const data = await res.json();
     return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
 }
-async function mbCallGroqVision(model, imageData, type) {
+async function mbCallGroqVision(model, imageData, type, customPrompt) {
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + model.key(), 'Content-Type': 'application/json' },
@@ -522,7 +579,7 @@ async function mbCallGroqVision(model, imageData, type) {
             model: model.model,
             messages: [{ role: 'user', content: [
                 { type: 'image_url', image_url: { url: `data:${imageData.mimeType};base64,${imageData.base64}` } },
-                { type: 'text', text: mbMcqPrompt(type) }
+                { type: 'text', text: mbMcqPrompt(type, customPrompt) }
             ] }],
             temperature: 0.6, max_tokens: 2000
         })
@@ -555,14 +612,14 @@ async function mbRaceForValidQuestions(promises) {
     }
     return [];
 }
-async function mbGenerateMCQsFromImage(imageData, type) {
+async function mbGenerateMCQsFromImage(imageData, type, customPrompt) {
     const group1 = [
-        mbCallGoogleVision(MB_VISION_MODELS[0], imageData, type).catch(() => null),
-        mbCallGoogleVision(MB_VISION_MODELS[1], imageData, type).catch(() => null)
+        mbCallGoogleVision(MB_VISION_MODELS[0], imageData, type, customPrompt).catch(() => null),
+        mbCallGoogleVision(MB_VISION_MODELS[1], imageData, type, customPrompt).catch(() => null)
     ];
     let result = await mbRaceForValidQuestions(group1);
     if (result?.length) return result;
-    const group2 = [mbCallGroqVision(MB_VISION_MODELS[2], imageData, type).catch(() => null)];
+    const group2 = [mbCallGroqVision(MB_VISION_MODELS[2], imageData, type, customPrompt).catch(() => null)];
     result = await mbRaceForValidQuestions(group2);
     return result || [];
 }
@@ -577,7 +634,8 @@ async function mbAiGenerate() {
     try {
         const imageData = await mbGetPageImageBase64();
         if (!imageData) throw new Error('পেইজের ছবি পাওয়া যায়নি');
-        const questions = await mbGenerateMCQsFromImage(imageData, mbMcq.currentType);
+        const customPrompt = document.getElementById('mbAiPrompt')?.value.trim() || '';
+        const questions = await mbGenerateMCQsFromImage(imageData, mbMcq.currentType, customPrompt);
         if (!questions.length) throw new Error('AI কোনো বৈধ MCQ তৈরি করতে পারেনি। আবার চেষ্টা করুন।');
         mbAiPreviewData = questions;
         mbRenderAiPreview(questions);
@@ -587,6 +645,45 @@ async function mbAiGenerate() {
     } finally {
         spin.style.display = 'none'; genBtn.disabled = false;
     }
+}
+
+/* ---------- SAVE/LOAD CUSTOM AI PROMPT (per-PDF, per-type) ---------- */
+async function mbSaveAiPrompt() {
+    const prompt = document.getElementById('mbAiPrompt')?.value.trim();
+    if (!prompt) { mbToast('❌ প্রম্পট লিখুন'); return; }
+    const btn = document.getElementById('mbSavePromptBtn');
+    btn.disabled = true;
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/book_ai_prompts`, {
+            method: 'POST',
+            headers: {
+                apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY,
+                'Content-Type': 'application/json',
+                'Prefer': 'resolution=merge-duplicates,return=minimal'
+            },
+            body: JSON.stringify({ pdf_id: mbMcq.pdfId, mcq_type: mbMcq.currentType, prompt })
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const status = document.getElementById('mbPromptSaveStatus');
+        status.textContent = '✅ প্রম্পট সেভ হয়েছে (' + mbMcq.currentType + ')';
+        status.style.display = 'block';
+        setTimeout(() => status.style.display = 'none', 3000);
+        mbToast('✓ প্রম্পট সেভ হয়েছে');
+    } catch (e) {
+        mbToast('❌ সেভ ব্যর্থ');
+    } finally { btn.disabled = false; }
+}
+
+async function mbLoadAiPrompt() {
+    try {
+        const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/book_ai_prompts?pdf_id=eq.${mbMcq.pdfId}&mcq_type=eq.${mbMcq.currentType}&select=prompt`);
+        if (rows?.length && rows[0].prompt) {
+            document.getElementById('mbAiPrompt').value = rows[0].prompt;
+            mbToast('📂 সেভ করা প্রম্পট লোড হয়েছে (' + mbMcq.currentType + ')');
+        } else {
+            mbToast('এই ধরনের জন্য কোনো সেভ করা প্রম্পট নেই');
+        }
+    } catch (e) { mbToast('❌ লোড ব্যর্থ'); }
 }
 
 function mbRenderAiPreview(qs) {

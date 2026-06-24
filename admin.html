@@ -704,6 +704,13 @@
             </div>
         </div>
 
+        <!-- All PDFs flat list (parity with AtlasPro's "সব PDF" view) -->
+        <div class="form-card">
+            <h3>📕 সব PDF (এক নজরে)</h3>
+            <p style="font-size:11px;color:var(--text2);margin-bottom:10px;">সব বিষয়/অধ্যায়ের PDF একসাথে — সরাসরি MCQ যোগ করতে ক্লিক করো।</p>
+            <div id="mbAllPdfsList"><p style="color:var(--text2);text-align:center;padding:16px;">লোড হচ্ছে...</p></div>
+        </div>
+
         <!-- Subjects accordion list -->
         <div class="form-card">
             <h3>📖 বিষয় ও অধ্যায় তালিকা</h3>
@@ -1865,6 +1872,8 @@ async function loadMulboiSubjects() {
             </div>`).join('');
         if (mbOpenSubject) loadMbChapters(mbOpenSubject);
     } catch (e) { box.innerHTML = '<p style="color:var(--red);">লোড এরর</p>'; }
+    // All-PDFs flat list (feature lives in mulboi-mcq-admin.js, guarded in case it hasn't loaded)
+    if (typeof mbLoadAllPdfs === 'function') mbLoadAllPdfs();
 }
 
 function toggleMbSubject(id) {
