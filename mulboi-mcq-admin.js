@@ -1069,3 +1069,383 @@ async function mbSaveAiMcqs() {
     mbUpdatePageCountLabel();
     if (mbMcq.gridOpen) mbLoadPageGrid();
 }
+
+/* ══════════════════════════════════════════════════════════
+   AtlasPro-style CASCADE SELECT — PDF & MCQ Management
+   All IDs use mb2 prefix. No existing function is modified.
+   These are purely additive — appended to preserve existing code.
+══════════════════════════════════════════════════════════ */
+
+let mb2State = {
+    subjectId: null,
+    chapterId: null,
+    pdfFile: null,
+    uploadMode: 'file'
+};
+
+/* ── Load subjects into mb2SelSubject dropdown ── */
+async function mb2LoadSubjects() {
+    const sel = document.getElementById('mb2SelSubject');
+    if (!sel) return;
+    const prevVal = sel.value;
+    sel.innerHTML = '<option value="">-- বিষয় বেছে নিন --</option>';
+    try {
+        const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/book_subjects?select=id,name,icon&order=sort_order.asc,created_at.asc`);
+        (rows || []).forEach(s => {
+            const o = document.createElement('option');
+            o.value = s.id;
+            o.textContent = (s.icon || '') + ' ' + s.name;
+            sel.appendChild(o);
+        });
+        if (prevVal) sel.value = prevVal;
+    } catch { mbToast('বিষয় লোড ব্যর্থ'); }
+}
+
+/* ── Subject changed → load chapters ── */
+async function mb2OnSubjectChange() {
+    const sid = document.getElementById('mb2SelSubject').value;
+    mb2State.subjectId = sid || null;
+    mb2State.chapterId = null;
+    const chSel = document.getElementById('mb2SelChapter');
+    chSel.innerHTML = '<option value="">-- অধ্যায় বেছে নিন --</option>';
+    chSel.disabled = true;
+    const newChBtn = document.getElementById('mb2NewChapterBtn');
+    if (newChBtn) newChBtn.style.display = 'none';
+    mb2HideUploadAndList();
+    if (!sid) return;
+    try {
+        const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/book_chapters?subject_id=eq.${sid}&select=id,name&order=sort_order.asc,created_at.asc`);
+        (rows || []).forEach(ch => {
+            const o = document.createElement('option');
+            o.value = ch.id; o.textContent = ch.name;
+            chSel.appendChild(o);
+        });
+        chSel.disabled = false;
+        if (newChBtn) newChBtn.style.display = 'inline-block';
+    } catch { mbToast('অধ্যায় লোড ব্যর্থ'); }
+}
+
+/* ── Chapter changed → show upload + PDF list ── */
+function mb2OnChapterChange() {
+    const cid = document.getElementById('mb2SelChapter').value;
+    mb2State.chapterId = cid || null;
+    if (!cid) { mb2HideUploadAndList(); return; }
+    mb2ShowUploadAndList();
+    mb2LoadChapterPdfs();
+}
+
+function mb2HideUploadAndList() {
+    const uc = document.getElementById('mb2UploadCard');
+    const lc = document.getElementById('mb2PdfListCard');
+    if (uc) uc.style.display = 'none';
+    if (lc) lc.style.display = 'none';
+}
+
+function mb2ShowUploadAndList() {
+    const uc = document.getElementById('mb2UploadCard');
+    const lc = document.getElementById('mb2PdfListCard');
+    if (uc) uc.style.display = 'block';
+    if (lc) lc.style.display = 'block';
+}
+
+/* ── Inline: new subject ── */
+function mb2ToggleNewSubject() {
+    const box = document.getElementById('mb2NewSubjectBox');
+    if (!box) return;
+    const show = box.style.display === 'none';
+    box.style.display = show ? 'block' : 'none';
+    if (show) document.getElementById('mb2NewSubjectName')?.focus();
+}
+
+async function mb2CreateSubject() {
+    const name = (document.getElementById('mb2NewSubjectName')?.value || '').trim();
+    const icon = (document.getElementById('mb2NewSubjectIcon')?.value || '').trim() || '📚';
+    if (!name) { mbToast('বিষয়ের নাম লিখুন'); return; }
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/book_subjects`, {
+            method: 'POST',
+            headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+            body: JSON.stringify({ name, icon, description: '', color_idx: 0 })
+        });
+        if (!res.ok) throw new Error('ব্যর্থ');
+        const created = await res.json();
+        mbToast('✓ বিষয় যোগ হয়েছে');
+        if (document.getElementById('mb2NewSubjectName')) document.getElementById('mb2NewSubjectName').value = '';
+        if (document.getElementById('mb2NewSubjectIcon')) document.getElementById('mb2NewSubjectIcon').value = '';
+        if (document.getElementById('mb2NewSubjectBox')) document.getElementById('mb2NewSubjectBox').style.display = 'none';
+        await mb2LoadSubjects();
+        const newId = (Array.isArray(created) ? created[0] : created)?.id;
+        if (newId) {
+            const sel = document.getElementById('mb2SelSubject');
+            if (sel) sel.value = String(newId);
+            mb2State.subjectId = String(newId);
+            await mb2OnSubjectChange();
+        }
+        if (typeof loadMulboiSubjects === 'function') loadMulboiSubjects();
+    } catch (e) { mbToast('সমস্যা: ' + e.message); }
+}
+
+/* ── Inline: new chapter ── */
+function mb2ToggleNewChapter() {
+    const box = document.getElementById('mb2NewChapterBox');
+    if (!box) return;
+    const show = box.style.display === 'none';
+    box.style.display = show ? 'block' : 'none';
+    if (show) document.getElementById('mb2NewChapterName')?.focus();
+}
+
+async function mb2CreateChapter() {
+    if (!mb2State.subjectId) { mbToast('আগে বিষয় নির্বাচন করুন'); return; }
+    const name = (document.getElementById('mb2NewChapterName')?.value || '').trim();
+    if (!name) { mbToast('অধ্যায়ের নাম লিখুন'); return; }
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/book_chapters`, {
+            method: 'POST',
+            headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+            body: JSON.stringify({ subject_id: parseInt(mb2State.subjectId), name })
+        });
+        if (!res.ok) throw new Error('ব্যর্থ');
+        const created = await res.json();
+        mbToast('✓ অধ্যায় যোগ হয়েছে');
+        if (document.getElementById('mb2NewChapterName')) document.getElementById('mb2NewChapterName').value = '';
+        if (document.getElementById('mb2NewChapterBox')) document.getElementById('mb2NewChapterBox').style.display = 'none';
+        const savedSubId = mb2State.subjectId;
+        await mb2OnSubjectChange();
+        const selSub = document.getElementById('mb2SelSubject');
+        if (selSub) selSub.value = savedSubId;
+        const newId = (Array.isArray(created) ? created[0] : created)?.id;
+        if (newId) {
+            const chSel = document.getElementById('mb2SelChapter');
+            if (chSel) chSel.value = String(newId);
+            mb2State.chapterId = String(newId);
+            mb2ShowUploadAndList();
+            mb2LoadChapterPdfs();
+        }
+    } catch (e) { mbToast('ত্রুটি: ' + e.message); }
+}
+
+/* ── Drop zone handlers ── */
+function mb2DzOver(e) {
+    e.preventDefault();
+    const dz = document.getElementById('mb2DropZone');
+    if (dz) { dz.style.borderColor = 'var(--green)'; dz.style.background = 'rgba(16,185,129,.05)'; }
+}
+function mb2DzLeave() {
+    const dz = document.getElementById('mb2DropZone');
+    if (dz) { dz.style.borderColor = 'var(--border)'; dz.style.background = 'var(--hover)'; }
+}
+function mb2DzDrop(e) {
+    e.preventDefault(); mb2DzLeave();
+    const f = e.dataTransfer.files[0];
+    if (f && f.type === 'application/pdf') mb2SetFile(f);
+    else mbToast('শুধু PDF ফাইল গ্রহণযোগ্য');
+}
+function mb2OnFileSelect(e) {
+    if (e.target.files[0]) mb2SetFile(e.target.files[0]);
+}
+function mb2SetFile(f) {
+    mb2State.pdfFile = f;
+    const fc = document.getElementById('mb2FileChosen');
+    if (fc) { fc.textContent = '✓ ' + f.name; fc.style.display = 'block'; }
+    const titleEl = document.getElementById('mb2PdfTitle');
+    if (titleEl && !titleEl.value) titleEl.value = f.name.replace(/\.pdf$/i, '');
+}
+
+/* ── Mode toggle (file / url) ── */
+function mb2SetMode(mode) {
+    mb2State.uploadMode = mode;
+    const urlBox = document.getElementById('mb2UrlBox');
+    const dz = document.getElementById('mb2DropZone');
+    const fileBtn = document.getElementById('mb2ModeFileBtn');
+    const urlBtn = document.getElementById('mb2ModeUrlBtn');
+    if (urlBox) urlBox.style.display = mode === 'url' ? 'block' : 'none';
+    if (dz) dz.style.display = mode === 'file' ? 'block' : 'none';
+    if (fileBtn) fileBtn.className = 'btn btn-sm' + (mode === 'file' ? '' : ' btn-outline');
+    if (urlBtn) urlBtn.className = 'btn btn-sm' + (mode === 'url' ? '' : ' btn-outline');
+}
+
+/* ── Upload PDF to Supabase Storage 'pdfs' bucket ── */
+async function mb2UploadPdf() {
+    if (!mb2State.chapterId) return mbToast('অধ্যায় নির্বাচন করুন');
+    const title = (document.getElementById('mb2PdfTitle')?.value || '').trim();
+    if (!title) return mbToast('PDF শিরোনাম দিন');
+    const isPremium = document.getElementById('mb2PdfPremium')?.checked || false;
+    const btn = document.getElementById('mb2UploadBtn');
+    const progressEl = document.getElementById('mb2UploadProgress');
+    const barEl = document.getElementById('mb2UploadBar');
+    const labelEl = document.getElementById('mb2UploadLabel');
+    const successEl = document.getElementById('mb2UploadSuccess');
+
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span style="display:inline-block;width:12px;height:12px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;"></span> আপলোড হচ্ছে...'; }
+    if (progressEl) progressEl.style.display = 'block';
+    if (barEl) barEl.style.width = '0%';
+    if (successEl) successEl.style.display = 'none';
+
+    let publicUrl = null;
+    let pageCount = null;
+
+    try {
+        if (mb2State.uploadMode === 'url') {
+            publicUrl = (document.getElementById('mb2PdfUrl')?.value || '').trim();
+            if (!publicUrl) throw new Error('URL দিন');
+            if (barEl) barEl.style.width = '100%';
+            if (labelEl) labelEl.textContent = 'URL সংরক্ষণ হচ্ছে...';
+        } else {
+            const f = mb2State.pdfFile;
+            if (!f) throw new Error('PDF ফাইল নির্বাচন করুন');
+            if (typeof detectMbPageCount === 'function') pageCount = await detectMbPageCount(f);
+            const safeFileName = f.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+            const storagePath = `chapter_${mb2State.chapterId}/${Date.now()}_${safeFileName}`;
+            await new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', `${SUPABASE_URL}/storage/v1/object/pdfs/${storagePath}`);
+                xhr.setRequestHeader('apikey', SUPABASE_KEY);
+                xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_KEY);
+                xhr.setRequestHeader('Content-Type', 'application/pdf');
+                xhr.upload.onprogress = ev => {
+                    if (ev.lengthComputable) {
+                        const pct = Math.round(ev.loaded / ev.total * 100);
+                        if (barEl) barEl.style.width = pct + '%';
+                        if (labelEl) labelEl.textContent = 'আপলোড হচ্ছে... ' + pct + '%';
+                    }
+                };
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) resolve();
+                    else reject(new Error('আপলোড ব্যর্থ (' + xhr.status + ')'));
+                };
+                xhr.onerror = () => reject(new Error('নেটওয়ার্ক ত্রুটি'));
+                xhr.send(f);
+            });
+            publicUrl = `${SUPABASE_URL}/storage/v1/object/public/pdfs/${storagePath}`;
+        }
+
+        const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/book_pdfs`, {
+            method: 'POST',
+            headers: {
+                apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY,
+                'Content-Type': 'application/json', 'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({
+                chapter_id: parseInt(mb2State.chapterId),
+                title, file_url: publicUrl,
+                page_count: pageCount || null,
+                is_premium: isPremium
+            })
+        });
+        if (!insertRes.ok) {
+            const errText = await insertRes.text().catch(() => '');
+            throw new Error('ডেটা সংরক্ষণ ব্যর্থ: ' + errText);
+        }
+
+        if (barEl) barEl.style.width = '100%';
+        if (successEl) successEl.style.display = 'block';
+        setTimeout(() => { if (successEl) successEl.style.display = 'none'; }, 3000);
+        mbToast('✓ PDF আপলোড সম্পন্ন');
+
+        mb2State.pdfFile = null;
+        if (document.getElementById('mb2PdfTitle')) document.getElementById('mb2PdfTitle').value = '';
+        const fc = document.getElementById('mb2FileChosen');
+        if (fc) fc.style.display = 'none';
+        const fi = document.getElementById('mb2PdfFileInput');
+        if (fi) fi.value = '';
+        const pu = document.getElementById('mb2PdfUrl');
+        if (pu) pu.value = '';
+        const pp = document.getElementById('mb2PdfPremium');
+        if (pp) pp.checked = false;
+
+        mb2LoadChapterPdfs();
+        if (typeof mbLoadAllPdfs === 'function') mbLoadAllPdfs();
+    } catch (e) {
+        mbToast('আপলোড ব্যর্থ: ' + e.message);
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '📤 আপলোড করো'; }
+        setTimeout(() => { if (progressEl) progressEl.style.display = 'none'; }, 1500);
+    }
+}
+
+/* ── Chapter PDF list ── */
+async function mb2LoadChapterPdfs() {
+    if (!mb2State.chapterId) return;
+    const listEl = document.getElementById('mb2ChapterPdfList');
+    if (!listEl) return;
+    listEl.innerHTML = '<p style="color:var(--text2);text-align:center;padding:12px;font-size:12px;">লোড হচ্ছে...</p>';
+    try {
+        const pdfs = await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdfs?chapter_id=eq.${mb2State.chapterId}&select=*&order=sort_order.asc,created_at.asc`);
+        if (!pdfs?.length) {
+            listEl.innerHTML = '<div style="text-align:center;padding:20px;"><div style="font-size:28px;margin-bottom:8px;">📄</div><div style="font-size:12px;color:var(--text2);">কোনো PDF নেই — উপরে আপলোড করুন</div></div>';
+            return;
+        }
+        listEl.innerHTML = pdfs.map(p => {
+            const safeTitle = escMb(p.title).replace(/'/g, "\\'");
+            const safeUrl   = (p.file_url || '').replace(/'/g, "\\'");
+            return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;transition:border-color .2s;" onmouseenter="this.style.borderColor='rgba(124,131,255,.4)'" onmouseleave="this.style.borderColor='var(--border)'">
+                <div style="font-size:22px;flex-shrink:0;">📕</div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escMb(p.title)}</div>
+                    <div style="font-size:10px;color:var(--text2);margin-top:2px;">${p.page_count ? p.page_count + ' পৃষ্ঠা · ' : ''}${p.is_premium ? '⭐ Premium' : '🆓 Free'}</div>
+                </div>
+                <div style="display:flex;gap:5px;flex-shrink:0;">
+                    <button class="btn btn-sm" style="font-size:9.5px;padding:5px 8px;background:rgba(124,131,255,.12);color:var(--accent);border:1px solid var(--accent);" onclick="openMbMcqPanel('${p.id}','${safeTitle}',${p.page_count||0},'${safeUrl}')">❓ MCQ</button>
+                    <button class="btn btn-sm btn-outline" style="font-size:9.5px;padding:5px 8px;" title="${p.is_premium?'Free করো':'Premium করো'}" onclick="mb2TogglePdfPremium('${p.id}',${!p.is_premium})">${p.is_premium ? '⭐' : '🆓'}</button>
+                    <button class="btn btn-sm btn-danger" style="font-size:9.5px;padding:5px 8px;" onclick="mb2DeletePdf('${p.id}','${safeTitle}')">🗑️</button>
+                </div>
+            </div>`;
+        }).join('');
+    } catch {
+        listEl.innerHTML = '<p style="color:var(--red);text-align:center;padding:12px;font-size:12px;">লোড এরর</p>';
+    }
+}
+
+async function mb2TogglePdfPremium(pdfId, newVal) {
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/book_pdfs?id=eq.${pdfId}`, {
+            method: 'PATCH',
+            headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+            body: JSON.stringify({ is_premium: newVal })
+        });
+        if (!res.ok) throw new Error();
+        mbToast(newVal ? '⭐ Premium করা হয়েছে' : '🆓 Free করা হয়েছে');
+        mb2LoadChapterPdfs();
+        if (typeof mbLoadAllPdfs === 'function') mbLoadAllPdfs();
+    } catch { mbToast('পরিবর্তন ব্যর্থ'); }
+}
+
+async function mb2DeletePdf(pdfId, title) {
+    if (!confirm('"' + title + '" মুছবে?\nএই PDF এর সব MCQ ও ডেটা মুছে যাবে।')) return;
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/book_pdfs?id=eq.${pdfId}`, {
+            method: 'DELETE',
+            headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }
+        });
+        if (!res.ok) throw new Error();
+        mbToast('🗑️ PDF মুছে গেছে');
+        mb2LoadChapterPdfs();
+        if (typeof mbLoadAllPdfs === 'function') mbLoadAllPdfs();
+    } catch { mbToast('মুছতে ব্যর্থ'); }
+}
+
+/* ── Management section collapse/expand ── */
+function mb2ToggleMgmt() {
+    const body = document.getElementById('mb2MgmtBody');
+    const chevron = document.getElementById('mb2MgmtChevron');
+    if (!body) return;
+    const isOpen = body.style.display !== 'none';
+    body.style.display = isOpen ? 'none' : 'block';
+    if (chevron) chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
+    if (!isOpen && typeof loadMulboiSubjects === 'function') loadMulboiSubjects();
+}
+
+/* ── Auto-init: hook into loadMulboiSubjects so mb2 also initialises on tab switch ──
+   loadMulboiSubjects is a plain function declaration in admin.html so it is wrappable. */
+(function mb2PatchLoader() {
+    const _orig = window.loadMulboiSubjects;
+    if (typeof _orig !== 'function') {
+        setTimeout(mb2PatchLoader, 200);
+        return;
+    }
+    window.loadMulboiSubjects = async function () {
+        const r = _orig.apply(this, arguments);
+        mb2LoadSubjects();
+        return r;
+    };
+})();
