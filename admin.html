@@ -667,111 +667,106 @@
     <!-- ══════════════ TAB: মূলবই পেইজভিত্তিক প্রস্তুতি ══════════════ -->
     <div class="admin-section" id="secMulboi">
 
-        <!-- ── Card 1: Cascade Select (বিষয় → অধ্যায়) ── -->
+        <!-- ══ Card 1: বিষয় → অধ্যায় → Upload ══ -->
         <div class="form-card" style="border-top:3px solid var(--accent);">
-            <h3 style="margin-bottom:14px;">📁 PDF ও MCQ ব্যবস্থাপনা</h3>
+            <h3 style="margin-bottom:16px;">📁 PDF ও MCQ ব্যবস্থাপনা</h3>
 
             <!-- বিষয় -->
-            <div style="margin-bottom:14px;">
-                <label style="display:block;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;">বিষয় *</label>
-                <select id="mb2SelSubject" onchange="mb2OnSubjectChange()" style="width:100%;background:var(--hover);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;padding:10px 12px;outline:none;font-family:inherit;transition:border-color .2s;box-sizing:border-box;">
-                    <option value="">-- বিষয় বেছে নিন --</option>
-                </select>
-                <button onclick="mb2ToggleNewSubject()" style="background:none;border:none;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;padding:6px 0;font-family:inherit;">＋ নতুন বিষয় যোগ করো</button>
-                <div id="mb2NewSubjectBox" style="display:none;background:var(--hover);border:1px solid var(--border);border-radius:8px;padding:10px;margin-top:4px;">
-                    <div style="display:flex;gap:8px;align-items:center;">
+            <div style="margin-bottom:12px;">
+                <label style="display:block;font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.5px;margin-bottom:5px;">বিষয়</label>
+                <div style="display:flex;gap:6px;">
+                    <select id="mb2SelSubject" onchange="mb2OnSubjectChange()" style="flex:1;background:var(--hover);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;padding:9px 11px;outline:none;font-family:inherit;">
+                        <option value="">-- বিষয় বেছে নিন --</option>
+                    </select>
+                    <button onclick="mb2ToggleNewSubject()" class="btn btn-sm btn-outline" title="নতুন বিষয়">＋ বিষয়</button>
+                </div>
+                <div id="mb2NewSubjectBox" style="display:none;background:var(--hover);border:1px solid var(--border);border-radius:8px;padding:10px;margin-top:6px;">
+                    <div style="display:flex;gap:6px;align-items:center;">
                         <input id="mb2NewSubjectName" placeholder="বিষয়ের নাম" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;padding:8px 10px;outline:none;font-family:inherit;">
-                        <input id="mb2NewSubjectIcon" placeholder="📚" maxlength="4" style="width:52px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px;padding:8px;outline:none;font-family:inherit;text-align:center;">
-                        <button class="btn btn-sm btn-primary" onclick="mb2CreateSubject()">যোগ</button>
+                        <input id="mb2NewSubjectIcon" placeholder="📚" maxlength="4" style="width:46px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:15px;padding:8px 6px;outline:none;font-family:inherit;text-align:center;">
+                        <button class="btn btn-sm btn-primary" onclick="mb2CreateSubject()">যোগ করো</button>
                     </div>
                 </div>
             </div>
 
             <!-- অধ্যায় -->
-            <div>
-                <label style="display:block;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;">অধ্যায় *</label>
-                <select id="mb2SelChapter" onchange="mb2OnChapterChange()" disabled style="width:100%;background:var(--hover);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;padding:10px 12px;outline:none;font-family:inherit;transition:border-color .2s;box-sizing:border-box;">
-                    <option value="">-- অধ্যায় বেছে নিন --</option>
-                </select>
-                <button id="mb2NewChapterBtn" onclick="mb2ToggleNewChapter()" style="display:none;background:none;border:none;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;padding:6px 0;font-family:inherit;">＋ নতুন অধ্যায় যোগ করো</button>
-                <div id="mb2NewChapterBox" style="display:none;background:var(--hover);border:1px solid var(--border);border-radius:8px;padding:10px;margin-top:4px;">
-                    <div style="display:flex;gap:8px;align-items:center;">
+            <div style="margin-bottom:16px;">
+                <label style="display:block;font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.5px;margin-bottom:5px;">অধ্যায়</label>
+                <div style="display:flex;gap:6px;">
+                    <select id="mb2SelChapter" onchange="mb2OnChapterChange()" disabled style="flex:1;background:var(--hover);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;padding:9px 11px;outline:none;font-family:inherit;">
+                        <option value="">-- অধ্যায় বেছে নিন --</option>
+                    </select>
+                    <button id="mb2NewChapterBtn" onclick="mb2ToggleNewChapter()" class="btn btn-sm btn-outline" style="display:none;" title="নতুন অধ্যায়">＋ অধ্যায়</button>
+                </div>
+                <div id="mb2NewChapterBox" style="display:none;background:var(--hover);border:1px solid var(--border);border-radius:8px;padding:10px;margin-top:6px;">
+                    <div style="display:flex;gap:6px;align-items:center;">
                         <input id="mb2NewChapterName" placeholder="অধ্যায়ের নাম" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;padding:8px 10px;outline:none;font-family:inherit;">
-                        <button class="btn btn-sm btn-primary" onclick="mb2CreateChapter()">যোগ</button>
+                        <button class="btn btn-sm btn-primary" onclick="mb2CreateChapter()">যোগ করো</button>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- ── Card 2: PDF Upload (shown after অধ্যায় selected) ── -->
-        <div class="form-card" id="mb2UploadCard" style="display:none;border-top:3px solid var(--green);">
-            <h3 style="margin-bottom:14px;">📤 PDF আপলোড</h3>
+            <!-- Upload form — visible after chapter selected -->
+            <div id="mb2UploadForm" style="display:none;border-top:1px solid var(--border);padding-top:14px;">
+                <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">📤 নতুন PDF যোগ করো</div>
 
-            <div style="margin-bottom:12px;">
-                <label style="display:block;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;">শিরোনাম *</label>
-                <input id="mb2PdfTitle" placeholder="PDF এর নাম" style="width:100%;background:var(--hover);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;padding:10px 12px;outline:none;font-family:inherit;box-sizing:border-box;">
-            </div>
+                <input id="mb2PdfTitle" placeholder="PDF এর শিরোনাম *" style="width:100%;background:var(--hover);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;padding:9px 11px;outline:none;font-family:inherit;box-sizing:border-box;margin-bottom:10px;">
 
-            <!-- Mode switch -->
-            <div style="display:flex;gap:6px;margin-bottom:10px;">
-                <button class="btn btn-sm" id="mb2ModeFileBtn" onclick="mb2SetMode('file')" style="flex:1;">📤 ফাইল আপলোড</button>
-                <button class="btn btn-sm btn-outline" id="mb2ModeUrlBtn" onclick="mb2SetMode('url')" style="flex:1;">🔗 URL দাও</button>
-            </div>
-
-            <!-- Drop zone (file mode) -->
-            <div id="mb2DropZone" ondragover="mb2DzOver(event)" ondragleave="mb2DzLeave()" ondrop="mb2DzDrop(event)"
-                style="border:2px dashed var(--border);border-radius:10px;padding:26px 16px;text-align:center;cursor:pointer;transition:all .25s;background:var(--hover);position:relative;margin-bottom:10px;">
-                <input type="file" id="mb2PdfFileInput" accept="application/pdf" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;" onchange="mb2OnFileSelect(event)">
-                <div style="font-size:30px;margin-bottom:8px;">📄</div>
-                <div style="font-size:13px;color:var(--text2);line-height:1.5;">PDF ফাইল এখানে ড্র্যাগ করুন বা ক্লিক করুন</div>
-                <div style="font-size:11px;color:var(--text2);margin-top:4px;">সর্বোচ্চ ৫০ MB</div>
-            </div>
-
-            <!-- URL input (url mode) -->
-            <div id="mb2UrlBox" style="display:none;margin-bottom:10px;">
-                <input id="mb2PdfUrl" type="url" placeholder="https://example.com/file.pdf" style="width:100%;background:var(--hover);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;padding:10px 12px;outline:none;font-family:inherit;box-sizing:border-box;">
-            </div>
-
-            <div id="mb2FileChosen" style="display:none;font-size:11.5px;color:var(--green);font-weight:600;margin-bottom:8px;padding:7px 10px;background:rgba(16,185,129,.08);border-radius:6px;border:1px solid rgba(16,185,129,.2);"></div>
-
-            <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text2);margin-bottom:10px;cursor:pointer;">
-                <input type="checkbox" id="mb2PdfPremium" style="width:auto;"> ⭐ Premium PDF (শুধু Premium user দেখবে)
-            </label>
-
-            <!-- Progress bar -->
-            <div id="mb2UploadProgress" style="display:none;margin-bottom:10px;">
-                <div style="background:var(--border);border-radius:4px;height:6px;overflow:hidden;margin-bottom:4px;">
-                    <div id="mb2UploadBar" style="height:100%;background:var(--green);width:0;transition:width .3s;"></div>
+                <!-- Tab: file / url -->
+                <div style="display:flex;gap:5px;margin-bottom:10px;">
+                    <button class="btn btn-sm" id="mb2TabFile" onclick="mb2SetMode('file')" style="flex:1;">📂 ফাইল</button>
+                    <button class="btn btn-sm btn-outline" id="mb2TabUrl" onclick="mb2SetMode('url')" style="flex:1;">🔗 URL</button>
                 </div>
-                <div id="mb2UploadLabel" style="font-size:11px;color:var(--text2);">আপলোড হচ্ছে...</div>
-            </div>
 
-            <button class="btn btn-primary" id="mb2UploadBtn" onclick="mb2UploadPdf()" style="width:100%;">📤 আপলোড করো</button>
-            <div id="mb2UploadSuccess" style="display:none;margin-top:8px;padding:8px 10px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:6px;font-size:12px;color:var(--green);font-weight:600;">✅ PDF আপলোড সম্পন্ন!</div>
+                <!-- file drop zone -->
+                <div id="mb2DropZone" ondragover="mb2DzOver(event)" ondragleave="mb2DzLeave()" ondrop="mb2DzDrop(event)"
+                    style="border:2px dashed var(--border);border-radius:10px;padding:22px 12px;text-align:center;cursor:pointer;background:var(--hover);position:relative;margin-bottom:8px;transition:all .2s;">
+                    <input type="file" id="mb2PdfFileInput" accept="application/pdf" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;" onchange="mb2OnFileSelect(event)">
+                    <div style="font-size:26px;margin-bottom:6px;">📄</div>
+                    <div style="font-size:12px;color:var(--text2);">PDF ড্র্যাগ করুন বা ক্লিক করুন</div>
+                </div>
+                <div id="mb2FileChosen" style="display:none;font-size:11.5px;color:var(--green);font-weight:600;padding:6px 10px;background:rgba(16,185,129,.08);border-radius:6px;border:1px solid rgba(16,185,129,.2);margin-bottom:8px;"></div>
+
+                <!-- url input -->
+                <div id="mb2UrlBox" style="display:none;margin-bottom:8px;">
+                    <input id="mb2PdfUrl" type="url" placeholder="https://... (PDF public URL)" style="width:100%;background:var(--hover);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 11px;outline:none;font-family:inherit;box-sizing:border-box;">
+                </div>
+
+                <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text2);margin-bottom:10px;cursor:pointer;">
+                    <input type="checkbox" id="mb2PdfPremium" style="width:auto;"> ⭐ Premium PDF
+                </label>
+
+                <!-- progress -->
+                <div id="mb2UploadProgress" style="display:none;margin-bottom:8px;">
+                    <div style="background:var(--border);border-radius:4px;height:5px;overflow:hidden;margin-bottom:4px;">
+                        <div id="mb2UploadBar" style="height:100%;background:var(--green);width:0;transition:width .3s;"></div>
+                    </div>
+                    <div id="mb2UploadLabel" style="font-size:11px;color:var(--text2);"></div>
+                </div>
+
+                <!-- error box -->
+                <div id="mb2UploadError" style="display:none;padding:9px 11px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:7px;font-size:11.5px;color:#f87171;margin-bottom:8px;line-height:1.5;"></div>
+
+                <button class="btn btn-primary" id="mb2UploadBtn" onclick="mb2UploadPdf()" style="width:100%;">💾 সংরক্ষণ করো</button>
+            </div>
         </div>
 
-        <!-- ── Card 3: PDF List for selected chapter ── -->
+        <!-- ══ Card 2: Chapter PDF list ══ -->
         <div class="form-card" id="mb2PdfListCard" style="display:none;">
-            <h3 style="margin-bottom:12px;">📕 এই অধ্যায়ের PDF সমূহ</h3>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                <span style="flex:1;font-size:13px;font-weight:700;">📕 PDF তালিকা</span>
+                <span id="mb2PdfListContext" style="font-size:10px;color:var(--text2);"></span>
+            </div>
             <div id="mb2ChapterPdfList"></div>
         </div>
 
-        <!-- ── Card 4: All PDFs flat list ── -->
-        <div class="form-card">
-            <h3>📚 সব PDF (এক নজরে)</h3>
-            <p style="font-size:11px;color:var(--text2);margin-bottom:10px;">সব বিষয়/অধ্যায়ের PDF একসাথে — সরাসরি MCQ যোগ করতে ক্লিক করো।</p>
-            <div id="mbAllPdfsList"><p style="color:var(--text2);text-align:center;padding:16px;">লোড হচ্ছে...</p></div>
-        </div>
-
-        <!-- ── Card 5: Subject & Chapter Management (collapsible) ── -->
+        <!-- ══ Card 3: ⚙️ Management (collapsible, keeps existing IDs) ══ -->
         <div class="form-card" style="padding:0;overflow:hidden;">
-            <div style="display:flex;align-items:center;gap:10px;padding:14px;cursor:pointer;" onclick="mb2ToggleMgmt()">
+            <div style="display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer;" onclick="mb2ToggleMgmt()">
                 <span style="flex:1;font-size:13px;font-weight:700;">⚙️ বিষয় ও অধ্যায় ব্যবস্থাপনা</span>
-                <span id="mb2MgmtChevron" style="font-size:12px;color:var(--text2);transition:transform .25s;">▶</span>
+                <span id="mb2MgmtChevron" style="font-size:11px;color:var(--text2);transition:transform .25s;">▶</span>
             </div>
             <div id="mb2MgmtBody" style="display:none;border-top:1px solid var(--border);padding:14px;">
-                <!-- Add Subject form (kept for backward compat — functions in admin.html use these IDs) -->
-                <h3>📚 নতুন বিষয় যোগ করো</h3>
                 <input type="hidden" id="mbSubjectEditId">
                 <div class="input-row">
                     <div class="input-group">
@@ -790,26 +785,23 @@
                 <div class="input-group">
                     <label>কালার থিম</label>
                     <select id="mbSubjectColor">
-                        <option value="0">🟣 Indigo</option>
-                        <option value="1">🟢 Emerald</option>
-                        <option value="2">🔴 Red</option>
-                        <option value="3">🟡 Gold</option>
-                        <option value="4">🔵 Sky</option>
-                        <option value="5">🩷 Rose</option>
-                        <option value="6">🟪 Violet</option>
-                        <option value="7">🩵 Pink</option>
+                        <option value="0">🟣 Indigo</option><option value="1">🟢 Emerald</option>
+                        <option value="2">🔴 Red</option><option value="3">🟡 Gold</option>
+                        <option value="4">🔵 Sky</option><option value="5">🩷 Rose</option>
+                        <option value="6">🟪 Violet</option><option value="7">🩵 Pink</option>
                     </select>
                 </div>
                 <div style="display:flex;gap:8px;margin-bottom:16px;">
-                    <button class="btn btn-primary" onclick="saveMbSubject()" style="flex:1;">💾 সেভ করো</button>
-                    <button class="btn btn-outline" onclick="clearMbSubjectForm()">✕ বাতিল</button>
+                    <button class="btn btn-primary" onclick="saveMbSubject()" style="flex:1;">💾 সেভ</button>
+                    <button class="btn btn-outline" onclick="clearMbSubjectForm()">✕</button>
                 </div>
-                <!-- Subjects accordion list -->
-                <h3>📖 বিষয় ও অধ্যায় তালিকা</h3>
-                <p style="font-size:11px;color:var(--text2);margin-bottom:10px;">প্রতিটি বিষয়ে ক্লিক করে অধ্যায় ও PDF যোগ করো।</p>
-                <div id="mbSubjectsList"><p style="color:var(--text2);text-align:center;padding:16px;">লোড হচ্ছে...</p></div>
+                <h3 style="margin-bottom:8px;">📖 বিষয় তালিকা</h3>
+                <div id="mbSubjectsList"></div>
             </div>
         </div>
+
+        <!-- hidden anchor for mbAllPdfsList (used by mbLoadAllPdfs in mulboi-mcq-admin.js) -->
+        <div id="mbAllPdfsList" style="display:none;"></div>
 
     </div><!-- end secMulboi -->
 
