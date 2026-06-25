@@ -930,85 +930,60 @@
     <!-- ══════════════ TAB: মূলবই পেইজভিত্তিক প্রস্তুতি ══════════════ -->
     <div class="admin-section" id="secMulboi">
 
+        <!-- UNIFIED: Subject + Chapter + PDF Upload in ONE form -->
         <div class="section-card card-purple">
             <div class="card-body">
-                <div class="card-title">📚 বিষয় ও অধ্যায় নির্বাচন</div>
-                <div class="form-group">
-                    <label class="form-label">বিষয়</label>
-                    <select class="form-select" id="selSubject" onchange="onSubjectChange()">
-                        <option value="">-- বিষয় বেছে নিন --</option>
-                    </select>
-                </div>
-                <button class="link-btn" onclick="toggleNewSubject()">+ নতুন বিষয় যোগ করো</button>
-                <div class="inline-add" id="newSubjectBox">
-                    <div class="inline-add-row">
-                        <input class="form-input" id="newSubjectName" placeholder="বিষয়ের নাম" style="flex:1">
-                        <input class="form-input" id="newSubjectIcon" placeholder="Icon (যেমন: 📚)" style="width:70px">
-                        <button class="btn btn-primary btn-sm" onclick="createSubject()">যোগ করো</button>
-                        <button class="btn btn-sm btn-outline" onclick="toggleNewSubject()">✕</button>
-                    </div>
-                </div>
-                <div class="form-group" style="margin-bottom:6px;margin-top:10px">
-                    <label class="form-label">অধ্যায়</label>
-                    <select class="form-select" id="selChapter" disabled onchange="onChapterChange()">
-                        <option value="">-- অধ্যায় বেছে নিন --</option>
-                    </select>
-                </div>
-                <button class="link-btn" id="newChapterBtn" onclick="toggleNewChapter()" style="display:none;">+ নতুন অধ্যায় যোগ করো</button>
-                <div class="inline-add" id="newChapterBox">
-                    <div class="inline-add-row">
-                        <input class="form-input" id="newChapterName" placeholder="অধ্যায়ের নাম" style="flex:1">
-                        <button class="btn btn-primary btn-sm" onclick="createChapter()">যোগ করো</button>
-                        <button class="btn btn-sm btn-outline" onclick="toggleNewChapter()">✕</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="section-card card-green" id="uploadSection" style="display:none">
-            <div class="card-body">
-                <div class="card-title">📤 PDF আপলোড</div>
-                <div class="form-group">
-                    <label class="form-label">PDF শিরোনাম</label>
-                    <input class="form-input" id="pdfTitle" placeholder="PDF এর নাম লিখুন">
-                </div>
+                <div class="card-title">📚 বিষয় → অধ্যায় → PDF একসাথে যোগ করো</div>
                 
-                <div class="drop-zone" id="dropZone" ondragover="dzOver(event)" ondragleave="dzLeave()" ondrop="dzDrop(event)">
-                    <input type="file" id="pdfFileInput" accept=".pdf" onchange="onFileSelect(event)">
-                    <div class="drop-zone-icon">📄</div>
-                    <div class="drop-zone-text">PDF ফাইল এখানে টানুন বা ক্লিক করুন</div>
-                </div>
-                <div class="file-chosen" id="fileChosen"></div>
-
-                <div class="progress-wrap" id="progressWrap">
-                    <div class="progress-label" id="progressLabel">আপলোড হচ্ছে...</div>
-                    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+                <div class="form-group">
+                    <label class="form-label">বিষয়ের নাম (নতুন বা বিদ্যমান)</label>
+                    <input class="form-input" id="quickSubjectName" placeholder="যেমন: জীববিজ্ঞান">
                 </div>
 
-                <div id="uploadSuccess" class="upload-success">PDF আপলোড সম্পন্ন ✓</div>
+                <div class="form-group">
+                    <label class="form-label">বিষয়ের আইকন (ঐচ্ছিক)</label>
+                    <input class="form-input" id="quickSubjectIcon" placeholder="যেমন: 🧬" style="max-width:100px;">
+                </div>
 
-                <button class="btn btn-primary btn-full" id="uploadBtn" onclick="uploadPdf()" style="margin-top:14px;">💾 সংরক্ষণ করো</button>
+                <div class="form-group">
+                    <label class="form-label">অধ্যায়ের নাম</label>
+                    <input class="form-input" id="quickChapterName" placeholder="যেমন: কোষ বিভাজন">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">PDF ফাইল</label>
+                    <div class="drop-zone" id="quickDropZone" ondragover="quickDzOver(event)" ondragleave="quickDzLeave()" ondrop="quickDzDrop(event)">
+                        <input type="file" id="quickPdfFileInput" accept=".pdf" onchange="quickOnFileSelect(event)">
+                        <div class="drop-zone-icon">📄</div>
+                        <div class="drop-zone-text">PDF ফাইল এখানে টানুন বা ক্লিক করুন</div>
+                    </div>
+                    <div class="file-chosen" id="quickFileChosen"></div>
+                </div>
+
+                <div class="form-group">
+                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                        <input type="checkbox" id="quickIsPremium" style="width:auto;height:auto;"> ⭐ Premium PDF
+                    </label>
+                </div>
+
+                <div class="progress-wrap" id="quickProgressWrap" style="display:none;">
+                    <div class="progress-label" id="quickProgressLabel">প্রক্রিয়া করছে...</div>
+                    <div class="progress-bar-bg"><div class="progress-bar-fill" id="quickProgressFill"></div></div>
+                </div>
+
+                <button class="btn btn-primary btn-full" id="quickSaveBtn" onclick="quickSaveAll()" style="margin-top:14px;">💾 একসাথে সংরক্ষণ করো</button>
             </div>
         </div>
 
-        <div id="pdfListSection" style="display:none;margin-top:16px;">
-            <div class="selected-context" id="selectedContext" style="display:block;"></div>
-            <div class="section-heading">এই অধ্যায়ের PDF সমূহ</div>
-            <div class="pdf-list" id="pdfList"></div>
-        </div>
-
-        <!-- All Saved PDFs (AtlasPro style) - REPLACES old accordion list -->
+        <!-- All Saved PDFs List -->
         <div class="section-card card-amber" style="margin-top:14px">
             <div class="card-body">
                 <div class="card-title">📂 সংরক্ষিত সকল PDF</div>
-                <div class="pdf-list" id="mbAllPdfsList">
-                    <!-- Loaded by mbLoadAllPdfs in mulboi-mcq-admin.js -->
-                </div>
+                <div class="pdf-list" id="mbAllPdfsList"></div>
             </div>
         </div>
 
-        <!-- Old accordion-style subject/chapter list is hidden (doubling fix) -->
-        <div id="mbSubjectsList" style="display:none;"></div>
+
 
     </div><!-- end secMulboi -->
 

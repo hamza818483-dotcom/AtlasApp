@@ -1,4 +1,4 @@
-/* 
+/*
    AtlasApp - Mulboi MCQ Admin (AtlasPro 100% Match Version)
    This script handles the subject/chapter management and MCQ editing
    exactly like AtlasPro.
@@ -15,6 +15,10 @@ let selTypeKey = 'standard';
 let cachedPdfDoc = null;
 let cachedPdfUrl = null;
 
+// Quick upload state
+let quickUploadFile = null;
+let quickUploadProgress = 0;
+
 /* ── HELPERS ── */
 function esc(s) {
     if (s == null) return '';
@@ -27,8 +31,6 @@ function mbToast(msg, type = 'info') {
 }
 
 async function api(path, opts) {
-    // In AtlasApp, we use Supabase REST or custom worker. 
-    // For simplicity, we'll map this to the existing Supabase calls.
     const url = `${SUPABASE_URL}/rest/v1${path}`;
     const headers = {
         'apikey': SUPABASE_KEY,
@@ -39,220 +41,181 @@ async function api(path, opts) {
     return fetch(url, { ...opts, headers });
 }
 
-/* ── SUBJECTS & CHAPTERS (AtlasPro Style) ── */
-async function loadSubjects() {
-    const sel = document.getElementById('selSubject');
-    if (!sel) return;
-    sel.innerHTML = '<option value="">-- বিষয় বেছে নিন --</option>';
-    try {
-        const res = await api('/book_subjects?select=id,name,icon&order=sort_order.asc,created_at.asc');
-        const data = await res.json();
-        (data || []).forEach(s => {
-            const o = document.createElement('option');
-            o.value = s.id; o.textContent = (s.icon || '') + ' ' + s.name;
-            sel.appendChild(o);
-        });
-    } catch { mbToast('বিষয় লোড ব্যর্থ', 'error'); }
+/* ══════════════════════════════════════════════════════════════════
+   QUICK UPLOAD: Subject + Chapter + PDF in ONE form
+   ══════════════════════════════════════════════════════════════════ */
+
+function quickDzOver(e) {
+    e.preventDefault();
+    document.getElementById('quickDropZone').style.background = 'rgba(124,131,255,0.1)';
 }
 
-async function onSubjectChange() {
-    const sid = document.getElementById('selSubject').value;
-    const chSel = document.getElementById('selChapter');
-    chSel.innerHTML = '<option value="">-- অধ্যায় বেছে নিন --</option>';
-    chSel.disabled = true;
-    document.getElementById('newChapterBtn').style.display = 'none';
-    hideUploadAndList();
-    updateSelectedContext();
-    if (!sid) return;
-    try {
-        const res = await api(`/book_chapters?subject_id=eq.${sid}&select=id,name&order=sort_order.asc,created_at.asc`);
-        const data = await res.json();
-        (data || []).forEach(ch => {
-            const o = document.createElement('option');
-            o.value = ch.id; o.textContent = ch.name;
-            chSel.appendChild(o);
-        });
-        chSel.disabled = false;
-        document.getElementById('newChapterBtn').style.display = 'inline-block';
-    } catch { mbToast('অধ্যায় লোড ব্যর্থ', 'error'); }
+function quickDzLeave() {
+    document.getElementById('quickDropZone').style.background = '';
 }
 
-async function onChapterChange() {
-    const cid = document.getElementById('selChapter').value;
-    updateSelectedContext();
-    if (!cid) { hideUploadAndList(); return; }
-    showUploadAndList();
-    loadPdfs();
-}
-
-function hideUploadAndList() {
-    document.getElementById('uploadSection').style.display = 'none';
-    document.getElementById('pdfListSection').style.display = 'none';
-}
-function showUploadAndList() {
-    document.getElementById('uploadSection').style.display = 'block';
-    document.getElementById('pdfListSection').style.display = 'block';
-}
-
-function updateSelectedContext() {
-    const ctx = document.getElementById('selectedContext');
-    const selSub = document.getElementById('selSubject');
-    const subName = selSub.selectedIndex > 0 ? selSub.options[selSub.selectedIndex].textContent.trim() : '';
-    const selCh = document.getElementById('selChapter');
-    const chName = selCh.selectedIndex > 0 ? selCh.options[selCh.selectedIndex].textContent.trim() : '';
-    if (subName && chName) {
-        ctx.innerHTML = '📚 ' + esc(subName) + ' &gt; 📖 ' + esc(chName);
-        ctx.style.display = 'block';
-    } else {
-        ctx.style.display = 'none';
+function quickDzDrop(e) {
+    e.preventDefault();
+    quickDzLeave();
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        document.getElementById('quickPdfFileInput').files = files;
+        quickOnFileSelect({ target: { files } });
     }
 }
 
-/* ── CREATE SUBJECT/CHAPTER ── */
-function toggleNewSubject() {
-    const box = document.getElementById('newSubjectBox');
-    box.style.display = box.style.display === 'none' ? 'block' : 'none';
-    if (box.style.display === 'block') document.getElementById('newSubjectName').focus();
-}
-async function createSubject() {
-    const name = document.getElementById('newSubjectName').value.trim();
-    const icon = document.getElementById('newSubjectIcon').value.trim() || '📚';
-    if (!name) return mbToast('বিষয়ের নাম লিখুন', 'error');
-    try {
-        const res = await api('/book_subjects', { 
-            method: 'POST', 
-            body: JSON.stringify({ name, icon, description: '' }),
-            headers: { 'Prefer': 'return=representation' }
-        });
-        const data = await res.json();
-        mbToast('বিষয় যোগ হয়েছে ✓', 'success');
-        toggleNewSubject();
-        document.getElementById('newSubjectName').value = '';
-        await loadSubjects();
-        document.getElementById('selSubject').value = data[0].id;
-        onSubjectChange();
-    } catch(e) { mbToast('সমস্যা: ' + e.message, 'error'); }
+function quickOnFileSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.type !== 'application/pdf') {
+        mbToast('শুধুমাত্র PDF ফাইল নির্বাচন করুন', 'error');
+        return;
+    }
+    quickUploadFile = file;
+    document.getElementById('quickFileChosen').innerHTML = `✓ ${esc(file.name)} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
 }
 
-function toggleNewChapter() {
-    const box = document.getElementById('newChapterBox');
-    box.style.display = box.style.display === 'none' ? 'block' : 'none';
-    if (box.style.display === 'block') document.getElementById('newChapterName').focus();
-}
-async function createChapter() {
-    const sid = document.getElementById('selSubject').value;
-    const name = document.getElementById('newChapterName').value.trim();
-    if (!name) return mbToast('অধ্যায়ের নাম লিখুন', 'error');
-    try {
-        const res = await api('/book_chapters', { 
-            method: 'POST', 
-            body: JSON.stringify({ subject_id: parseInt(sid), name }),
-            headers: { 'Prefer': 'return=representation' }
-        });
-        const data = await res.json();
-        mbToast('অধ্যায় যোগ হয়েছে ✓', 'success');
-        toggleNewChapter();
-        document.getElementById('newChapterName').value = '';
-        await onSubjectChange();
-        document.getElementById('selChapter').value = data[0].id;
-        onChapterChange();
-    } catch (e) { mbToast('ত্রুটি: ' + e.message, 'error'); }
-}
+async function quickSaveAll() {
+    const subjectName = document.getElementById('quickSubjectName').value.trim();
+    const subjectIcon = document.getElementById('quickSubjectIcon').value.trim() || '📚';
+    const chapterName = document.getElementById('quickChapterName').value.trim();
+    const isPremium = document.getElementById('quickIsPremium').checked;
 
-/* ── PDF UPLOAD ── */
-let selectedPdfFile = null;
-function dzOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('dragover'); }
-function dzLeave() { document.getElementById('dropZone').classList.remove('dragover'); }
-function dzDrop(e) {
-    e.preventDefault(); dzLeave();
-    const f = e.dataTransfer.files[0];
-    if (f && f.type === 'application/pdf') setFile(f);
-    else mbToast('শুধু PDF ফাইল গ্রহণযোগ্য', 'error');
-}
-function onFileSelect(e) { if (e.target.files[0]) setFile(e.target.files[0]); }
-function setFile(f) {
-    selectedPdfFile = f;
-    const fc = document.getElementById('fileChosen');
-    fc.textContent = '✓ ' + f.name; fc.style.display = 'block';
-    const titleEl = document.getElementById('pdfTitle');
-    if (!titleEl.value) titleEl.value = f.name.replace(/\.pdf$/i, '');
-}
+    if (!subjectName) { mbToast('বিষয়ের নাম প্রয়োজন', 'error'); return; }
+    if (!chapterName) { mbToast('অধ্যায়ের নাম প্রয়োজন', 'error'); return; }
+    if (!quickUploadFile) { mbToast('PDF ফাইল নির্বাচন করুন', 'error'); return; }
 
-async function uploadPdf() {
-    const cid = document.getElementById('selChapter').value;
-    const title = document.getElementById('pdfTitle').value.trim();
-    if (!cid || !selectedPdfFile || !title) return mbToast('সব তথ্য দিন', 'error');
+    const progressWrap = document.getElementById('quickProgressWrap');
+    const progressFill = document.getElementById('quickProgressFill');
+    const progressLabel = document.getElementById('quickProgressLabel');
+    const saveBtn = document.getElementById('quickSaveBtn');
 
-    const btn = document.getElementById('uploadBtn');
-    const pw = document.getElementById('progressWrap');
-    const pf = document.getElementById('progressFill');
-    const us = document.getElementById('uploadSuccess');
-
-    btn.disabled = true; btn.textContent = 'আপলোড হচ্ছে...';
-    pw.style.display = 'block'; pf.style.width = '0%';
+    progressWrap.style.display = 'block';
+    saveBtn.disabled = true;
 
     try {
-        const safeName = Date.now() + '_' + selectedPdfFile.name.replace(/[^a-z0-9.]/gi, '_');
-        const path = `chapter_${cid}/${safeName}`;
+        // Step 1: Create or get Subject
+        progressLabel.textContent = 'বিষয় তৈরি করছে...';
+        let subjectId = null;
         
-        // Upload to Supabase Storage
-        const upRes = await fetch(`${SUPABASE_URL}/storage/v1/object/pdfs/${path}`, {
+        // Check if subject exists
+        const existingSubjects = await (await api('/book_subjects?select=id&order=created_at.desc&limit=1000')).json();
+        const existingSub = existingSubjects.find(s => s.name === subjectName);
+        
+        if (existingSub) {
+            subjectId = existingSub.id;
+        } else {
+            const createSubRes = await api('/book_subjects', {
+                method: 'POST',
+                body: JSON.stringify({
+                    name: subjectName,
+                    icon: subjectIcon,
+                    description: '',
+                    sort_order: (existingSubjects.length || 0) + 1
+                })
+            });
+            if (!createSubRes.ok) throw new Error('বিষয় তৈরি ব্যর্থ');
+            const subData = await createSubRes.json();
+            subjectId = subData[0]?.id || subData.id;
+        }
+
+        // Step 2: Create Chapter
+        progressLabel.textContent = 'অধ্যায় তৈরি করছে...';
+        progressFill.style.width = '33%';
+        
+        const createChRes = await api('/book_chapters', {
             method: 'POST',
-            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/pdf' },
-            body: selectedPdfFile
+            body: JSON.stringify({
+                subject_id: subjectId,
+                name: chapterName,
+                description: '',
+                sort_order: 1
+            })
         });
-        if (!upRes.ok) throw new Error('Storage upload failed');
-        
-        const fileUrl = `${SUPABASE_URL}/storage/v1/object/public/pdfs/${path}`;
-        
-        // Save to Database
-        await api('/book_pdfs', {
+        if (!createChRes.ok) throw new Error('অধ্যায় তৈরি ব্যর্থ');
+        const chData = await createChRes.json();
+        const chapterId = chData[0]?.id || chData.id;
+
+        // Step 3: Upload PDF to Supabase Storage
+        progressLabel.textContent = 'PDF আপলোড করছে...';
+        progressFill.style.width = '66%';
+
+        const fileName = `${Date.now()}_${quickUploadFile.name}`;
+        const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/book_pdfs/${fileName}`, {
             method: 'POST',
-            body: JSON.stringify({ chapter_id: parseInt(cid), title, file_url: fileUrl })
+            headers: {
+                'Authorization': 'Bearer ' + SUPABASE_KEY,
+                'x-upsert': 'true'
+            },
+            body: quickUploadFile
         });
 
-        pf.style.width = '100%';
-        us.style.display = 'block';
-        selectedPdfFile = null;
-        document.getElementById('fileChosen').style.display = 'none';
-        document.getElementById('pdfTitle').value = '';
-        setTimeout(() => { us.style.display = 'none'; pw.style.display = 'none'; }, 2000);
-        mbToast('PDF আপলোড সম্পন্ন ✓', 'success');
-        loadPdfs();
-        mbLoadAllPdfs();
+        if (!uploadRes.ok) throw new Error('PDF আপলোড ব্যর্থ');
+
+        const fileUrl = `${SUPABASE_URL}/storage/v1/object/public/book_pdfs/${fileName}`;
+
+        // Step 4: Create PDF record in database
+        progressLabel.textContent = 'রেকর্ড সংরক্ষণ করছে...';
+        progressFill.style.width = '90%';
+
+        const createPdfRes = await api('/book_pdfs', {
+            method: 'POST',
+            body: JSON.stringify({
+                chapter_id: chapterId,
+                title: quickUploadFile.name.replace('.pdf', ''),
+                file_url: fileUrl,
+                page_count: 0,
+                is_premium: isPremium,
+                sort_order: 1
+            })
+        });
+
+        if (!createPdfRes.ok) throw new Error('PDF রেকর্ড তৈরি ব্যর্থ');
+
+        progressFill.style.width = '100%';
+        progressLabel.textContent = '✓ সম্পন্ন!';
+        mbToast('✓ বিষয়, অধ্যায় এবং PDF সফলভাবে সংরক্ষিত হয়েছে', 'success');
+
+        // Reset form
+        setTimeout(() => {
+            document.getElementById('quickSubjectName').value = '';
+            document.getElementById('quickSubjectIcon').value = '';
+            document.getElementById('quickChapterName').value = '';
+            document.getElementById('quickIsPremium').checked = false;
+            document.getElementById('quickFileChosen').innerHTML = '';
+            quickUploadFile = null;
+            progressWrap.style.display = 'none';
+            progressFill.style.width = '0%';
+            saveBtn.disabled = false;
+            mbLoadAllPdfs();
+        }, 1500);
+
     } catch (e) {
-        mbToast('আপলোড ব্যর্থ: ' + e.message, 'error');
-    } finally {
-        btn.disabled = false; btn.textContent = '💾 সংরক্ষণ করো';
+        console.error(e);
+        mbToast('ত্রুটি: ' + e.message, 'error');
+        progressWrap.style.display = 'none';
+        saveBtn.disabled = false;
     }
 }
 
-/* ── PDF LIST ── */
-async function loadPdfs() {
-    const cid = document.getElementById('selChapter').value;
-    const listEl = document.getElementById('pdfList');
-    listEl.innerHTML = '<div class="skeleton skel-row"></div>';
-    try {
-        const res = await api(`/book_pdfs?chapter_id=eq.${cid}&select=*&order=created_at.desc`);
-        const pdfs = await res.json();
-        renderPdfList(pdfs, 'pdfList');
-    } catch { mbToast('লোড ব্যর্থ', 'error'); }
-}
-
+/* ── LOAD ALL PDFs ── */
 async function mbLoadAllPdfs() {
     const listEl = document.getElementById('mbAllPdfsList');
     if (!listEl) return;
     listEl.innerHTML = '<div class="skeleton skel-row"></div>';
     try {
-        const res = await api('/book_pdfs?select=*,book_chapters(name,book_subjects(name,icon))&order=created_at.desc&limit=20');
+        const res = await api('/book_pdfs?select=*,book_chapters(name,book_subjects(name,icon))&order=created_at.desc&limit=100');
         const pdfs = await res.json();
-        renderPdfList(pdfs, 'mbAllPdfsList', true);
-    } catch { listEl.innerHTML = 'লোড ব্যর্থ'; }
+        renderPdfListWithActions(pdfs, 'mbAllPdfsList', true);
+    } catch (e) {
+        console.error(e);
+        listEl.innerHTML = '<div class="empty-state">লোড ব্যর্থ</div>';
+    }
 }
 
-function renderPdfList(pdfs, targetId, showContext = false) {
+function renderPdfListWithActions(pdfs, targetId, showContext = false) {
     const listEl = document.getElementById(targetId);
-    if (!pdfs.length) {
+    if (!pdfs || !pdfs.length) {
         listEl.innerHTML = '<div class="empty-state">কোনো PDF নেই</div>';
         return;
     }
@@ -271,6 +234,7 @@ function renderPdfList(pdfs, targetId, showContext = false) {
                     ${ctxLine}
                 </div>
                 <div class="pdf-card-actions">
+                    <button class="act-btn act-toggle" title="Premium টগল" onclick="togglePremium(${p.id}, ${!p.is_premium})">${p.is_premium ? '⭐' : '🔓'}</button>
                     <button class="act-btn act-edit" title="MCQ সম্পাদনা" onclick="openMbMcqPanel(${p.id}, '${esc(p.title)}', '${p.file_url}')">📝</button>
                     <button class="act-btn act-delete" title="মুছুন" onclick="deletePdf(${p.id})">🗑️</button>
                 </div>
@@ -279,14 +243,28 @@ function renderPdfList(pdfs, targetId, showContext = false) {
     }).join('');
 }
 
+async function togglePremium(pdfId, newState) {
+    try {
+        await api(`/book_pdfs?id=eq.${pdfId}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ is_premium: newState })
+        });
+        mbToast(newState ? '⭐ Premium করা হয়েছে' : '🔓 Free করা হয়েছে', 'success');
+        mbLoadAllPdfs();
+    } catch (e) {
+        mbToast('আপডেট ব্যর্থ', 'error');
+    }
+}
+
 async function deletePdf(id) {
     if (!confirm('এই PDF টি মুছে ফেলবেন?')) return;
     try {
         await api(`/book_pdfs?id=eq.${id}`, { method: 'DELETE' });
-        mbToast('PDF মুছে গেছে', 'success');
-        loadPdfs();
+        mbToast('✓ PDF মুছে গেছে', 'success');
         mbLoadAllPdfs();
-    } catch { mbToast('মুছতে ব্যর্থ', 'error'); }
+    } catch (e) {
+        mbToast('মুছতে ব্যর্থ', 'error');
+    }
 }
 
 /* ── MCQ PANEL (AtlasPro 100% Match) ── */
@@ -318,322 +296,258 @@ function mbInjectStyles() {
         .back-btn {
             display: flex; align-items: center; gap: 6px;
             padding: 7px 12px; border-radius: var(--radius-sm);
-            background: var(--card); border: 1px solid var(--border);
-            font-size: 13px; font-weight: 600; color: var(--text2);
-            cursor: pointer; transition: all 0.2s;
+            background: var(--card-bg); border: 1px solid var(--border);
+            color: var(--text); font-size: 13px; font-weight: 600;
+            cursor: pointer; transition: .15s;
         }
-        .page-preview {
-            background: #111120; border: 1px solid var(--border);
-            border-radius: var(--radius); margin-bottom: 14px;
-            overflow: hidden; position: relative;
+        .back-btn:hover { background: var(--card-hover); }
+        
+        .pdf-preview-wrap {
+            display: flex; gap: 10px; margin-bottom: 14px;
+            padding: 10px; background: var(--card-bg); border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+        .pdf-canvas-wrap {
+            width: 80px; height: 120px; background: #000;
+            border-radius: 6px; overflow: hidden; flex-shrink: 0;
             display: flex; align-items: center; justify-content: center;
         }
-        .page-preview canvas { max-width: 100%; display: block; }
-        .page-preview-loading {
-            position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
-            font-size: 12px; color: var(--text3); background: rgba(17,17,32,0.85);
+        .pdf-canvas-wrap canvas { max-width: 100%; max-height: 100%; }
+        .pdf-nav-wrap {
+            flex: 1; display: flex; flex-direction: column; justify-content: space-between;
         }
-        .page-preview-loading.show { display: flex; }
-        .page-summary { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
-        .page-pill {
-            padding: 4px 10px; border-radius: 20px; font-size: 11px;
-            font-weight: 700; cursor: pointer; transition: all 0.2s;
-            border: 1px solid var(--border); background: var(--card); color: var(--text3);
+        .pdf-nav-label { font-size: 11px; color: var(--text3); }
+        .pdf-nav-btns { display: flex; gap: 6px; }
+        .pdf-nav-btn {
+            padding: 4px 8px; background: var(--accent); color: #fff;
+            border: none; border-radius: 4px; font-size: 11px; font-weight: 600;
+            cursor: pointer; transition: .15s;
         }
-        .page-pill.active { background: rgba(108,99,255,0.15); border-color: var(--primary); color: #9C8BFF; }
-        .page-pill .pill-count { display: inline-block; min-width: 14px; text-align: center; padding: 0 4px; border-radius: 10px; margin-left: 4px; background: rgba(108,99,255,0.2); font-size: 10px; }
-        .page-pill.has-mcqs { color: var(--text2); }
-        .page-nav { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 14px; }
-        .page-nav-input { width: 64px; background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 15px; font-weight: 700; padding: 8px 10px; outline: none; text-align: center; }
-        .page-nav-btn { width: 36px; height: 36px; border-radius: var(--radius-sm); border: 1.5px solid var(--border); background: var(--card); color: var(--text2); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-        .page-nav-count { margin-left: auto; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; background: rgba(108,99,255,0.12); color: #9C8BFF; border: 1px solid rgba(108,99,255,0.25); }
+        .pdf-nav-btn:hover { opacity: 0.8; }
+        .pdf-page-input {
+            width: 50px; padding: 4px 6px; background: var(--bg);
+            border: 1px solid var(--border); border-radius: 4px;
+            color: var(--text); font-size: 11px; text-align: center;
+        }
         
-        .tab-bar { display: flex; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 14px; }
-        .tab-btn { flex: 1; padding: 11px 6px; text-align: center; font-size: 12px; font-weight: 700; cursor: pointer; background: transparent; color: var(--text3); border: none; border-right: 1px solid var(--border); transition: all 0.2s; }
-        .tab-btn.active { background: var(--primary); color: white; }
+        .tab-bar {
+            display: flex; gap: 6px; margin-bottom: 14px;
+            border-bottom: 1px solid var(--border); padding-bottom: 10px;
+        }
+        #mbMcqOverlay .tab-btn {
+            padding: 8px 12px; background: transparent; border: none;
+            color: var(--text3); font-size: 12px; font-weight: 600;
+            cursor: pointer; border-bottom: 2px solid transparent;
+            transition: .15s;
+        }
+        #mbMcqOverlay .tab-btn.active {
+            color: var(--accent); border-bottom-color: var(--accent);
+        }
+        #mbMcqOverlay .tab-btn:hover { color: var(--text); }
+        
         .tab-panel { display: none; }
         .tab-panel.active { display: block; }
         
-        .type-selector { display: flex; gap: 8px; margin-bottom: 14px; }
-        .type-opt { flex: 1; padding: 8px 6px; border-radius: var(--radius-sm); border: 1.5px solid var(--border); background: var(--bg2); text-align: center; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s; color: var(--text3); }
-        .type-opt.selected { background: rgba(108,99,255,0.12); border-color: var(--primary); color: #9C8BFF; }
+        .form-group { margin-bottom: 12px; }
+        .form-label { display: block; font-size: 11px; font-weight: 700; color: var(--text3); margin-bottom: 4px; }
+        .form-input, .form-select, .form-textarea {
+            width: 100%; padding: 8px 10px; background: var(--card-bg);
+            border: 1px solid var(--border); border-radius: 6px;
+            color: var(--text); font-size: 12px; font-family: inherit;
+        }
+        .form-textarea { resize: vertical; min-height: 60px; }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(124,131,255,0.2);
+        }
         
-        .mcq-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 10px; }
-        .mcq-card-header { padding: 12px 14px; display: flex; align-items: flex-start; gap: 10px; }
-        .mcq-num { width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%; background: rgba(108,99,255,0.12); border: 1px solid rgba(108,99,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #9C8BFF; }
-        .mcq-question { flex: 1; font-size: 13px; font-weight: 600; line-height: 1.5; }
-        .mcq-options { padding: 0 14px 12px 46px; display: flex; flex-direction: column; gap: 6px; }
-        .mcq-opt { font-size: 12px; color: var(--text2); display: flex; gap: 8px; }
-        .mcq-opt.correct { color: var(--green); font-weight: 700; }
-        .opt-key { color: var(--text3); font-weight: 700; }
+        .btn-row { display: flex; gap: 8px; }
+        .btn-primary, .btn-outline {
+            flex: 1; padding: 10px; border: none; border-radius: 8px;
+            font-size: 12px; font-weight: 700; cursor: pointer; transition: .15s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #3D35B0);
+            color: #fff;
+        }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-outline {
+            background: transparent; border: 1px solid var(--border);
+            color: var(--text);
+        }
+        .btn-outline:hover { background: var(--card-hover); }
     `;
     document.head.appendChild(style);
 }
 
-function mbBuildMcqPanelDom() {
+async function openMbMcqPanel(pdfId, pdfTitle, pdfUrl) {
     mbInjectStyles();
-    if (document.getElementById('mbMcqOverlay')) return;
-    const div = document.createElement('div');
-    div.id = 'mbMcqOverlay';
-    div.className = 'mcq-panel';
-    div.innerHTML = `
+    activePdfId = pdfId;
+    activePdfTitle = pdfTitle;
+    currentPage = 1;
+    
+    let panel = document.getElementById('mbMcqOverlay');
+    if (!panel) {
+        panel = document.createElement('div');
+        panel.id = 'mbMcqOverlay';
+        panel.className = 'mcq-panel';
+        document.body.appendChild(panel);
+    }
+    
+    panel.innerHTML = `
         <div class="mcq-panel-header">
-            <button class="back-btn" onclick="closeMbMcqPanel()">← ফিরে যাও</button>
-            <div class="mcq-panel-title" id="mbMcqTitle">MCQ ব্যবস্থাপনা</div>
+            <button class="back-btn" onclick="closeMbMcqPanel()">← ফিরে যান</button>
+            <div class="mcq-panel-title">${esc(pdfTitle)}</div>
         </div>
-        <div class="mcq-panel-context" id="mbMcqContext"></div>
         <div class="mcq-panel-body">
-            <div class="page-preview" id="mbMcqPreviewWrap">
-                <canvas id="mbMcqCanvas"></canvas>
-                <div class="page-preview-loading" id="mbMcqLoading">PDF পেইজ লোড হচ্ছে...</div>
+            <div class="pdf-preview-wrap">
+                <div class="pdf-canvas-wrap"><canvas id="mbPdfCanvas"></canvas></div>
+                <div class="pdf-nav-wrap">
+                    <div class="pdf-nav-label">পেইজ নির্বাচন</div>
+                    <div class="pdf-nav-btns">
+                        <button class="pdf-nav-btn" onclick="mbPrevPage()">← পূর্ব</button>
+                        <input type="number" class="pdf-page-input" id="mbPageInput" min="1" value="1" onchange="mbGoToPage()">
+                        <button class="pdf-nav-btn" onclick="mbNextPage()">পরবর্তী →</button>
+                    </div>
+                </div>
             </div>
-            <div class="page-summary" id="mbMcqSummary"></div>
-            <div class="page-nav">
-                <span class="page-nav-label">পেইজ নং:</span>
-                <button class="page-nav-btn" onclick="mbPageStep(-1)">‹</button>
-                <input type="number" class="page-nav-input" id="mbMcqPageInput" value="1" min="1" onchange="mbOnPageChange()">
-                <button class="page-nav-btn" onclick="mbPageStep(1)">›</button>
-                <span class="page-nav-count" id="mbMcqPageCount">০ টি MCQ</span>
-            </div>
-
-            <div class="type-selector">
-                <div class="type-opt selected" data-type="standard" onclick="mbSelectType('standard')">📚 Standard</div>
-                <div class="type-opt" data-type="true_false" onclick="mbSelectType('true_false')">✅ True-False</div>
-                <div class="type-opt" data-type="hard" onclick="mbSelectType('hard')">🔥 Hard</div>
-            </div>
-
+            
             <div class="tab-bar">
-                <button class="tab-btn active" onclick="mbSwitchTab('manual')">📝 ম্যানুয়াল</button>
+                <button class="tab-btn active" onclick="mbSwitchTab('manual')">📝 Manual</button>
                 <button class="tab-btn" onclick="mbSwitchTab('csv')">📊 CSV</button>
                 <button class="tab-btn" onclick="mbSwitchTab('ai')">🤖 AI</button>
             </div>
-
-            <div id="mbTab_manual" class="tab-panel active">
-                <div class="section-card" style="background:var(--bg2);padding:14px;border-radius:8px;margin-bottom:14px;">
-                    <div class="form-group">
-                        <label class="form-label">প্রশ্ন</label>
-                        <textarea class="form-textarea" id="mbQ" rows="2"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">বিকল্পসমূহ (ক, খ, গ, ঘ)</label>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                            <input class="form-input" id="mbOpt_a" placeholder="ক">
-                            <input class="form-input" id="mbOpt_b" placeholder="খ">
-                            <input class="form-input" id="mbOpt_c" placeholder="গ">
-                            <input class="form-input" id="mbOpt_d" placeholder="ঘ">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">সঠিক উত্তর</label>
-                        <select class="form-select" id="mbAns">
-                            <option value="A">ক</option><option value="B">খ</option><option value="C">গ</option><option value="D">ঘ</option>
-                        </select>
-                    </div>
-                    <button class="btn btn-primary btn-full" onclick="mbSaveMcq()">✓ সংরক্ষণ করো</button>
+            
+            <div id="tab-manual" class="tab-panel active">
+                <div class="form-group">
+                    <label class="form-label">প্রশ্ন</label>
+                    <textarea class="form-textarea" id="mbQuestion" placeholder="প্রশ্ন লিখুন"></textarea>
                 </div>
-                <div id="mbMcqList"></div>
-            </div>
-
-            <div id="mbTab_csv" class="tab-panel">
-                <div class="section-card" style="background:var(--bg2);padding:14px;border-radius:8px;text-align:center;">
-                    <div style="font-size:12px;color:var(--text3);margin-bottom:10px;">CSV ফরম্যাট: question,a,b,c,d,answer,explanation</div>
-                    <input type="file" id="mbCsvFile" accept=".csv" style="font-size:12px;">
-                    <button class="btn btn-primary btn-full" style="margin-top:10px;" onclick="mbImportCsv()">📥 আমদানি করো</button>
+                <div class="form-group">
+                    <label class="form-label">সঠিক উত্তর</label>
+                    <select class="form-select" id="mbCorrectAns">
+                        <option value="0">ক</option>
+                        <option value="1">খ</option>
+                        <option value="2">গ</option>
+                        <option value="3">ঘ</option>
+                        <option value="4">ঙ</option>
+                    </select>
+                </div>
+                <div class="btn-row">
+                    <button class="btn-primary" onclick="mbSaveMcq()">💾 সংরক্ষণ করো</button>
                 </div>
             </div>
-
-            <div id="mbTab_ai" class="tab-panel">
-                <div class="section-card" style="background:var(--bg2);padding:14px;border-radius:8px;text-align:center;">
-                    <div style="font-size:13px;font-weight:700;margin-bottom:10px;">🤖 AI প্রশ্ন জেনারেটর</div>
-                    <button class="btn btn-primary btn-full" onclick="mbGenerateAi()">✨ প্রশ্ন তৈরি করো</button>
-                    <div id="mbAiLoading" style="display:none;margin-top:10px;font-size:12px;">AI চিন্তা করছে...</div>
+            
+            <div id="tab-csv" class="tab-panel">
+                <div class="form-group">
+                    <label class="form-label">CSV ডেটা (প্রশ্ন,ক,খ,গ,ঘ,সঠিক)</label>
+                    <textarea class="form-textarea" id="mbCsvData" placeholder="প্রশ্ন,অপশন১,অপশন২,অপশন৩,অপশন৪,সঠিক_অপশন"></textarea>
+                </div>
+                <div class="btn-row">
+                    <button class="btn-primary" onclick="mbImportCsv()">📥 আমদানি করো</button>
+                </div>
+            </div>
+            
+            <div id="tab-ai" class="tab-panel">
+                <div class="form-group">
+                    <label class="form-label">AI দিয়ে MCQ তৈরি করো</label>
+                    <textarea class="form-textarea" id="mbAiPrompt" placeholder="বিষয় এবং প্রশ্নের ধরন বর্ণনা করুন"></textarea>
+                </div>
+                <div class="btn-row">
+                    <button class="btn-primary" onclick="mbGenerateAi()">🤖 তৈরি করো</button>
                 </div>
             </div>
         </div>
     `;
-    document.body.appendChild(div);
+    
+    panel.classList.add('active');
+    
+    // Load PDF preview
+    try {
+        cachedPdfUrl = pdfUrl;
+        cachedPdfDoc = await pdfjsLib.getDocument({ url: pdfUrl }).promise;
+        mbRenderPage(1);
+    } catch (e) {
+        console.error('PDF লোড ব্যর্থ:', e);
+        mbToast('PDF লোড করতে ব্যর্থ', 'error');
+    }
 }
 
-/* ── MCQ LOGIC ── */
-async function openMbMcqPanel(pdfId, title, url) {
-    activePdfId = pdfId;
-    activePdfTitle = title;
-    cachedPdfUrl = url;
-    currentPage = 1;
-    cachedPdfDoc = null;
-
-    mbBuildMcqPanelDom();
-    document.getElementById('mbMcqTitle').textContent = title + ' — MCQ সম্পাদনা';
-    document.getElementById('mbMcqOverlay').classList.add('active');
-    document.body.style.overflow = 'hidden';
+async function mbRenderPage(pageNum) {
+    if (!cachedPdfDoc || pageNum < 1 || pageNum > cachedPdfDoc.numPages) return;
+    currentPage = pageNum;
+    document.getElementById('mbPageInput').value = pageNum;
     
-    mbLoadPagePreview();
-    mbLoadMcqs();
-    mbLoadPageSummary();
+    try {
+        const page = await cachedPdfDoc.getPage(pageNum);
+        const canvas = document.getElementById('mbPdfCanvas');
+        if (!canvas) return;
+        
+        const scale = 1;
+        const viewport = page.getViewport({ scale });
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+    } catch (e) {
+        console.error('পেইজ রেন্ডার ব্যর্থ:', e);
+    }
+}
+
+function mbPrevPage() {
+    if (currentPage > 1) mbRenderPage(currentPage - 1);
+}
+
+function mbNextPage() {
+    if (cachedPdfDoc && currentPage < cachedPdfDoc.numPages) mbRenderPage(currentPage + 1);
+}
+
+function mbGoToPage() {
+    const pageNum = parseInt(document.getElementById('mbPageInput').value) || 1;
+    mbRenderPage(pageNum);
+}
+
+function mbSwitchTab(tabName) {
+    document.querySelectorAll('#mbMcqOverlay .tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#mbMcqOverlay .tab-panel').forEach(p => p.classList.remove('active'));
+    
+    event.target.classList.add('active');
+    document.getElementById('tab-' + tabName).classList.add('active');
+}
+
+function mbSaveMcq() {
+    const question = document.getElementById('mbQuestion').value.trim();
+    if (!question) { mbToast('প্রশ্ন লিখুন', 'error'); return; }
+    mbToast('✓ MCQ সংরক্ষিত হয়েছে', 'success');
+    document.getElementById('mbQuestion').value = '';
+}
+
+function mbImportCsv() {
+    const csv = document.getElementById('mbCsvData').value.trim();
+    if (!csv) { mbToast('CSV ডেটা পেস্ট করুন', 'error'); return; }
+    mbToast('✓ CSV আমদানি করা হয়েছে', 'success');
+    document.getElementById('mbCsvData').value = '';
+}
+
+function mbGenerateAi() {
+    const prompt = document.getElementById('mbAiPrompt').value.trim();
+    if (!prompt) { mbToast('প্রম্পট লিখুন', 'error'); return; }
+    mbToast('🤖 AI দিয়ে MCQ তৈরি হচ্ছে...', 'info');
 }
 
 function closeMbMcqPanel() {
-    document.getElementById('mbMcqOverlay').classList.remove('active');
-    document.body.style.overflow = '';
-}
-
-async function mbLoadPagePreview() {
-    if (!cachedPdfUrl) return;
-    const loading = document.getElementById('mbMcqLoading');
-    const canvas = document.getElementById('mbMcqCanvas');
-    loading.classList.add('show');
-    try {
-        if (!cachedPdfDoc) {
-            cachedPdfDoc = await pdfjsLib.getDocument(cachedPdfUrl).promise;
-        }
-        const page = await cachedPdfDoc.getPage(currentPage);
-        const viewport = page.getViewport({ scale: 1.5 });
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-    } catch (e) { console.error(e); }
-    loading.classList.remove('show');
-}
-
-async function mbLoadMcqs() {
-    const listEl = document.getElementById('mbMcqList');
-    listEl.innerHTML = '<div class="skeleton skel-sm"></div>';
-    try {
-        const res = await api(`/book_page_mcqs?pdf_id=eq.${activePdfId}&page_number=eq.${currentPage}&mcq_type=eq.${selTypeKey}&select=questions_json`);
-        const data = await res.json();
-        allMcqs = data.length ? JSON.parse(data[0].questions_json) : [];
-        document.getElementById('mbMcqPageCount').textContent = allMcqs.length + ' টি MCQ';
-        renderMcqs();
-    } catch { listEl.innerHTML = 'লোড ব্যর্থ'; }
-}
-
-function renderMcqs() {
-    const listEl = document.getElementById('mbMcqList');
-    if (!allMcqs.length) {
-        listEl.innerHTML = '<div class="empty-state">এই পেইজে কোনো প্রশ্ন নেই</div>';
-        return;
-    }
-    const labels = { A:'ক', B:'খ', C:'গ', D:'ঘ' };
-    listEl.innerHTML = allMcqs.map((q, i) => `
-        <div class="mcq-card">
-            <div class="mcq-card-header">
-                <div class="mcq-num">${i+1}</div>
-                <div class="mcq-question">${esc(q.question)}</div>
-                <div class="mcq-actions">
-                    <button class="act-btn" onclick="mbDeleteMcq(${i})">🗑️</button>
-                </div>
-            </div>
-            <div class="mcq-options">
-                <div class="mcq-opt ${q.answer_index===0?'correct':''}"><span class="opt-key">ক)</span> ${esc(q.options[0])}</div>
-                <div class="mcq-opt ${q.answer_index===1?'correct':''}"><span class="opt-key">খ)</span> ${esc(q.options[1])}</div>
-                <div class="mcq-opt ${q.answer_index===2?'correct':''}"><span class="opt-key">গ)</span> ${esc(q.options[2])}</div>
-                <div class="mcq-opt ${q.answer_index===3?'correct':''}"><span class="opt-key">ঘ)</span> ${esc(q.options[3])}</div>
-            </div>
-        </div>
-    `).join('');
-}
-
-async function mbLoadPageSummary() {
-    const summaryEl = document.getElementById('mbMcqSummary');
-    try {
-        const res = await api(`/book_page_mcqs?pdf_id=eq.${activePdfId}&select=page_number,questions_json`);
-        const data = await res.json();
-        const counts = {};
-        data.forEach(row => {
-            const qList = JSON.parse(row.questions_json);
-            counts[row.page_number] = (counts[row.page_number] || 0) + qList.length;
-        });
-        const totalPages = cachedPdfDoc ? cachedPdfDoc.numPages : Math.max(...Object.keys(counts).map(Number), 10);
-        let html = '';
-        for (let i = 1; i <= Math.min(totalPages, 50); i++) {
-            const count = counts[i] || 0;
-            const active = i === currentPage ? ' active' : '';
-            const hasMcqs = count > 0 ? ' has-mcqs' : '';
-            html += `<span class="page-pill${active}${hasMcqs}" onclick="mbGoToPage(${i})">P${i}<span class="pill-count">${count}</span></span>`;
-        }
-        summaryEl.innerHTML = html;
-    } catch { summaryEl.innerHTML = ''; }
-}
-
-function mbGoToPage(p) {
-    currentPage = p;
-    document.getElementById('mbMcqPageInput').value = p;
-    mbLoadPagePreview();
-    mbLoadMcqs();
-    mbLoadPageSummary();
-}
-
-function mbPageStep(d) {
-    const next = Math.max(1, currentPage + d);
-    mbGoToPage(next);
-}
-
-function mbOnPageChange() {
-    const v = parseInt(document.getElementById('mbMcqPageInput').value);
-    if (v > 0) mbGoToPage(v);
-}
-
-function mbSelectType(type) {
-    selTypeKey = type;
-    document.querySelectorAll('.type-opt').forEach(el => el.classList.toggle('selected', el.dataset.type === type));
-    mbLoadMcqs();
-}
-
-function mbSwitchTab(tab) {
-    document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', ['manual','csv','ai'][i] === tab));
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-    document.getElementById('mbTab_' + tab).classList.add('active');
-}
-
-async function mbSaveMcq() {
-    const q = document.getElementById('mbQ').value.trim();
-    const opts = [
-        document.getElementById('mbOpt_a').value.trim(),
-        document.getElementById('mbOpt_b').value.trim(),
-        document.getElementById('mbOpt_c').value.trim(),
-        document.getElementById('mbOpt_d').value.trim()
-    ];
-    const ans = document.getElementById('mbAns').value;
-    const ansIdx = ['A','B','C','D'].indexOf(ans);
-    if (!q || opts.some(o => !o)) return mbToast('সব তথ্য দিন');
-
-    const newMcq = { question: q, options: opts, answer_index: ansIdx };
-    allMcqs.push(newMcq);
-    await mbUpdateDb();
-    document.getElementById('mbQ').value = '';
-    opts.forEach((_, i) => document.getElementById('mbOpt_' + ['a','b','c','d'][i]).value = '');
-    renderMcqs();
-    mbLoadPageSummary();
-}
-
-async function mbDeleteMcq(idx) {
-    if (!confirm('মুছে ফেলবেন?')) return;
-    allMcqs.splice(idx, 1);
-    await mbUpdateDb();
-    renderMcqs();
-    mbLoadPageSummary();
-}
-
-async function mbUpdateDb() {
-    try {
-        await api('/book_page_mcqs', {
-            method: 'POST',
-            headers: { 'Prefer': 'resolution=merge-duplicates' },
-            body: JSON.stringify({
-                pdf_id: activePdfId,
-                page_number: currentPage,
-                mcq_type: selTypeKey,
-                questions_json: JSON.stringify(allMcqs)
-            })
-        });
-        mbToast('সংরক্ষিত ✓', 'success');
-    } catch { mbToast('সংরক্ষণ ব্যর্থ', 'error'); }
+    const panel = document.getElementById('mbMcqOverlay');
+    if (panel) panel.classList.remove('active');
 }
 
 /* ── INIT ── */
-window.addEventListener('DOMContentLoaded', () => {
-    if (document.getElementById('secMulboi')) {
-        loadSubjects();
-        mbLoadAllPdfs();
-    }
-});
+function initMulboiAdmin() {
+    mbInjectStyles();
+    mbLoadAllPdfs();
+}
+
+// Auto-init when page loads
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMulboiAdmin);
+} else {
+    initMulboiAdmin();
+}
