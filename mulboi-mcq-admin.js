@@ -326,7 +326,7 @@ async function mbUploadPdf() {
 
         await new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest();
-            xhr.open('POST', window.SUPABASE_URL + '/storage/v1/object/book_pdfs/' + fileName);
+            xhr.open('POST', window.SUPABASE_URL + '/storage/v1/object/pdfs/' + fileName);
             xhr.setRequestHeader('apikey', window.SUPABASE_KEY);
             xhr.setRequestHeader('Authorization', 'Bearer ' + window.SUPABASE_KEY);
             xhr.setRequestHeader('x-upsert', 'true');
@@ -348,7 +348,7 @@ async function mbUploadPdf() {
             xhr.send(mbPdfFile);
         });
 
-        const fileUrl = window.SUPABASE_URL + '/storage/v1/object/public/book_pdfs/' + fileName;
+        const fileUrl = window.SUPABASE_URL + '/storage/v1/object/public/pdfs/' + fileName;
 
         // Create PDF record in database
         if (pl) pl.textContent = 'রেকর্ড সংরক্ষণ করছে...';
