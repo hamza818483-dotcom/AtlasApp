@@ -935,84 +935,66 @@
                 <div class="card-title">📚 বিষয় ও অধ্যায় নির্বাচন</div>
                 <div class="form-group">
                     <label class="form-label">বিষয়</label>
-                    <select class="form-select" id="mb2SelSubject" onchange="mb2OnSubjectChange()">
+                    <select class="form-select" id="selSubject" onchange="onSubjectChange()">
                         <option value="">-- বিষয় বেছে নিন --</option>
                     </select>
                 </div>
-                <button class="link-btn" onclick="mb2ToggleNewSubject()">+ নতুন বিষয় যোগ করো</button>
-                <div class="inline-add" id="mb2NewSubjectBox">
+                <button class="link-btn" onclick="toggleNewSubject()">+ নতুন বিষয় যোগ করো</button>
+                <div class="inline-add" id="newSubjectBox">
                     <div class="inline-add-row">
-                        <input class="form-input" id="mb2NewSubjectName" placeholder="বিষয়ের নাম" style="flex:1">
-                        <input class="form-input" id="mb2NewSubjectIcon" placeholder="Icon (যেমন: 📚)" style="width:70px">
-                        <button class="btn btn-primary btn-sm" onclick="mb2CreateSubject()">যোগ করো</button>
-                        <button class="btn btn-sm btn-outline" onclick="mb2ToggleNewSubject()">✕</button>
+                        <input class="form-input" id="newSubjectName" placeholder="বিষয়ের নাম" style="flex:1">
+                        <input class="form-input" id="newSubjectIcon" placeholder="Icon (যেমন: 📚)" style="width:70px">
+                        <button class="btn btn-primary btn-sm" onclick="createSubject()">যোগ করো</button>
+                        <button class="btn btn-sm btn-outline" onclick="toggleNewSubject()">✕</button>
                     </div>
                 </div>
                 <div class="form-group" style="margin-bottom:6px;margin-top:10px">
                     <label class="form-label">অধ্যায়</label>
-                    <select class="form-select" id="mb2SelChapter" disabled onchange="mb2OnChapterChange()">
+                    <select class="form-select" id="selChapter" disabled onchange="onChapterChange()">
                         <option value="">-- অধ্যায় বেছে নিন --</option>
                     </select>
                 </div>
-                <button class="link-btn" id="mb2NewChapterBtn" onclick="mb2ToggleNewChapter()" style="display:none;">+ নতুন অধ্যায় যোগ করো</button>
-                <div class="inline-add" id="mb2NewChapterBox">
+                <button class="link-btn" id="newChapterBtn" onclick="toggleNewChapter()" style="display:none;">+ নতুন অধ্যায় যোগ করো</button>
+                <div class="inline-add" id="newChapterBox">
                     <div class="inline-add-row">
-                        <input class="form-input" id="mb2NewChapterName" placeholder="অধ্যায়ের নাম" style="flex:1">
-                        <button class="btn btn-primary btn-sm" onclick="mb2CreateChapter()">যোগ করো</button>
-                        <button class="btn btn-sm btn-outline" onclick="mb2ToggleNewChapter()">✕</button>
+                        <input class="form-input" id="newChapterName" placeholder="অধ্যায়ের নাম" style="flex:1">
+                        <button class="btn btn-primary btn-sm" onclick="createChapter()">যোগ করো</button>
+                        <button class="btn btn-sm btn-outline" onclick="toggleNewChapter()">✕</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="section-card card-green" id="mb2UploadForm" style="display:none">
+        <div class="section-card card-green" id="uploadSection" style="display:none">
             <div class="card-body">
                 <div class="card-title">📤 PDF আপলোড</div>
                 <div class="form-group">
                     <label class="form-label">PDF শিরোনাম</label>
-                    <input class="form-input" id="mb2PdfTitle" placeholder="PDF এর নাম লিখুন">
+                    <input class="form-input" id="pdfTitle" placeholder="PDF এর নাম লিখুন">
                 </div>
                 
-                <div style="display:flex;gap:6px;margin-bottom:12px;">
-                    <button class="btn btn-sm" id="mb2TabFile" onclick="mb2SetMode('file')" style="flex:1;">📂 ফাইল আপলোড</button>
-                    <button class="btn btn-sm btn-outline" id="mb2TabUrl" onclick="mb2SetMode('url')" style="flex:1;">🔗 URL দাও</button>
-                </div>
-
-                <div class="drop-zone" id="mb2DropZone" ondragover="mb2DzOver(event)" ondragleave="mb2DzLeave()" ondrop="mb2DzDrop(event)">
-                    <input type="file" id="mb2PdfFileInput" accept=".pdf" onchange="mb2OnFileSelect(event)">
+                <div class="drop-zone" id="dropZone" ondragover="dzOver(event)" ondragleave="dzLeave()" ondrop="dzDrop(event)">
+                    <input type="file" id="pdfFileInput" accept=".pdf" onchange="onFileSelect(event)">
                     <div class="drop-zone-icon">📄</div>
                     <div class="drop-zone-text">PDF ফাইল এখানে টানুন বা ক্লিক করুন</div>
                 </div>
-                <div class="file-chosen" id="mb2FileChosen"></div>
+                <div class="file-chosen" id="fileChosen"></div>
 
-                <div id="mb2UrlBox" style="display:none;margin-top:12px;">
-                    <div class="form-group">
-                        <label class="form-label">PDF URL</label>
-                        <input class="form-input" id="mb2PdfUrl" placeholder="https://... (Public PDF URL)">
-                    </div>
+                <div class="progress-wrap" id="progressWrap">
+                    <div class="progress-label" id="progressLabel">আপলোড হচ্ছে...</div>
+                    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
                 </div>
 
-                <div class="form-group" style="margin-top:12px;">
-                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
-                        <input type="checkbox" id="mb2PdfPremium" style="width:auto;height:auto;"> ⭐ Premium PDF (শুধুমাত্র সাবস্ক্রাইবাররা দেখবে)
-                    </label>
-                </div>
+                <div id="uploadSuccess" class="upload-success">PDF আপলোড সম্পন্ন ✓</div>
 
-                <div class="progress-wrap" id="mb2UploadProgress">
-                    <div class="progress-label" id="mb2UploadLabel">আপলোড হচ্ছে...</div>
-                    <div class="progress-bar-bg"><div class="progress-bar-fill" id="mb2UploadBar"></div></div>
-                </div>
-
-                <div id="mb2UploadError" style="display:none;margin-top:10px;padding:10px;background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.3);border-radius:8px;font-size:12px;color:var(--red);"></div>
-
-                <button class="btn btn-primary btn-full" id="mb2UploadBtn" onclick="mb2UploadPdf()" style="margin-top:14px;">💾 সংরক্ষণ করো</button>
+                <button class="btn btn-primary btn-full" id="uploadBtn" onclick="uploadPdf()" style="margin-top:14px;">💾 সংরক্ষণ করো</button>
             </div>
         </div>
 
-        <div id="mb2PdfListCard" style="display:none;margin-top:16px;">
-            <div class="selected-context" id="mb2PdfListContext" style="display:block;"></div>
+        <div id="pdfListSection" style="display:none;margin-top:16px;">
+            <div class="selected-context" id="selectedContext" style="display:block;"></div>
             <div class="section-heading">এই অধ্যায়ের PDF সমূহ</div>
-            <div class="pdf-list" id="mb2ChapterPdfList"></div>
+            <div class="pdf-list" id="pdfList"></div>
         </div>
 
         <!-- All Saved PDFs (AtlasPro style) - REPLACES old accordion list -->

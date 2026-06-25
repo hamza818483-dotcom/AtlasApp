@@ -1,141 +1,300 @@
-/* ══════════════════════════════════════════════════════════
-   মূলবই — PDF PER-PAGE MCQ ADMIN PANEL  (NEW FILE, ISOLATED)
-   Brought in from AtlasPro's admin/pdf.html UI/UX, rewritten to use
-   this app's Supabase REST API instead of AtlasPro's Cloudflare
-   Worker + D1 backend. Reuses the exact same AI-generation function
-   already used by study.html (the student-facing reader), so admin-
-   created MCQs and on-demand student-generated MCQs are 100% compatible
-   — both read/write the same `book_page_mcqs` table:
-     columns: pdf_id, page_number, mcq_type, questions_json (JSON array)
-   questions_json item shape: {question, options:[4], answer_index (0-based), explanation}
+/* 
+   AtlasApp - Mulboi MCQ Admin (AtlasPro 100% Match Version)
+   This script handles the subject/chapter management and MCQ editing
+   exactly like AtlasPro.
+*/
 
-   Depends on globals already defined in admin.html: SUPABASE_URL,
-   SUPABASE_KEY, safeFetch(), escMb(), showToast() (if present), pdfjsLib,
-   GROQ_KEY, GEMINI_KEYS.
-   Does not modify or override any existing admin.html function.
-═══════════════════════════════════════════════════════════ */
+/* ── STATE ── */
+let activePdfId = null;
+let activePdfTitle = '';
+let currentPage = 1;
+let allMcqs = [];
+let allPdfMcqs = [];
+let selAnswerKey = null;
+let selTypeKey = 'standard';
+let cachedPdfDoc = null;
+let cachedPdfUrl = null;
 
-// PDF.js worker setup — must run before any pdfjsLib.getDocument() call
-if (typeof pdfjsLib !== 'undefined') {
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+/* ── HELPERS ── */
+function esc(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
-/* ---------- ALL-PDFS FLAT LIST (parity with AtlasPro's loadAllPdfs) ---------- */
-async function mbLoadAllPdfs() {
-    const box = document.getElementById('mbAllPdfsList');
-    if (!box) return;
-    box.innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">লোড হচ্ছে...</p>';
+function mbToast(msg, type = 'info') {
+    if (typeof showToast === 'function') showToast(msg, type);
+    else alert(msg);
+}
+
+async function api(path, opts) {
+    // In AtlasApp, we use Supabase REST or custom worker. 
+    // For simplicity, we'll map this to the existing Supabase calls.
+    const url = `${SUPABASE_URL}/rest/v1${path}`;
+    const headers = {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        ...(opts && opts.headers || {})
+    };
+    return fetch(url, { ...opts, headers });
+}
+
+/* ── SUBJECTS & CHAPTERS (AtlasPro Style) ── */
+async function loadSubjects() {
+    const sel = document.getElementById('selSubject');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">-- বিষয় বেছে নিন --</option>';
     try {
-        const pdfs = await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdfs?select=*,book_chapters(name,book_subjects(name))&order=created_at.desc`);
-        if (!pdfs?.length) {
-            box.innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">📄 কোনো PDF নেই — উপরে বিষয় ও অধ্যায় বেছে PDF আপলোড করো</p>';
-            return;
-        }
-        box.innerHTML = pdfs.map(p => {
-            const chapterName = p.book_chapters?.name || '';
-            const subjectName = p.book_chapters?.book_subjects?.name || '';
-            const st = escMb(p.title).replace(/'/g, "\\'");
-            const su = (p.file_url || '').replace(/'/g, "\\'");
-            return `<div class="pdf-card">
-                <div class="pdf-card-top">
-                    <div class="pdf-card-icon">📕</div>
-                    <div class="pdf-card-info">
-                        <div class="pdf-card-title">${escMb(p.title)}</div>
-                        <div class="pdf-card-meta">
-                            ${subjectName ? '📚 ' + escMb(subjectName) : ''}${chapterName ? ' › 📖 ' + escMb(chapterName) : ''}${p.page_count ? ' · ' + p.page_count + ' পেইজ' : ''}
-                        </div>
-                    </div>
-                    <div class="pdf-card-actions">
-                        <button class="act-btn act-edit" onclick="openMbMcqPanel('${p.id}','${st}',${p.page_count||0},'${su}')" title="MCQ ব্যবস্থাপনা">❓</button>
-                        <button class="act-btn act-delete" onclick="mbDeletePdfFromFlatList('${p.id}')" title="মুছে ফেলুন">🗑️</button>
-                    </div>
-                </div>
-            </div>`;
-        }).join('');
-    } catch (e) {
-        box.innerHTML = '<p style="color:var(--red);text-align:center;padding:16px;">লোড এরর — <a href="#" onclick="mbLoadAllPdfs();return false;" style="color:var(--accent);">আবার চেষ্টা করো</a></p>';
+        const res = await api('/book_subjects?select=id,name,icon&order=sort_order.asc,created_at.asc');
+        const data = await res.json();
+        (data || []).forEach(s => {
+            const o = document.createElement('option');
+            o.value = s.id; o.textContent = (s.icon || '') + ' ' + s.name;
+            sel.appendChild(o);
+        });
+    } catch { mbToast('বিষয় লোড ব্যর্থ', 'error'); }
+}
+
+async function onSubjectChange() {
+    const sid = document.getElementById('selSubject').value;
+    const chSel = document.getElementById('selChapter');
+    chSel.innerHTML = '<option value="">-- অধ্যায় বেছে নিন --</option>';
+    chSel.disabled = true;
+    document.getElementById('newChapterBtn').style.display = 'none';
+    hideUploadAndList();
+    updateSelectedContext();
+    if (!sid) return;
+    try {
+        const res = await api(`/book_chapters?subject_id=eq.${sid}&select=id,name&order=sort_order.asc,created_at.asc`);
+        const data = await res.json();
+        (data || []).forEach(ch => {
+            const o = document.createElement('option');
+            o.value = ch.id; o.textContent = ch.name;
+            chSel.appendChild(o);
+        });
+        chSel.disabled = false;
+        document.getElementById('newChapterBtn').style.display = 'inline-block';
+    } catch { mbToast('অধ্যায় লোড ব্যর্থ', 'error'); }
+}
+
+async function onChapterChange() {
+    const cid = document.getElementById('selChapter').value;
+    updateSelectedContext();
+    if (!cid) { hideUploadAndList(); return; }
+    showUploadAndList();
+    loadPdfs();
+}
+
+function hideUploadAndList() {
+    document.getElementById('uploadSection').style.display = 'none';
+    document.getElementById('pdfListSection').style.display = 'none';
+}
+function showUploadAndList() {
+    document.getElementById('uploadSection').style.display = 'block';
+    document.getElementById('pdfListSection').style.display = 'block';
+}
+
+function updateSelectedContext() {
+    const ctx = document.getElementById('selectedContext');
+    const selSub = document.getElementById('selSubject');
+    const subName = selSub.selectedIndex > 0 ? selSub.options[selSub.selectedIndex].textContent.trim() : '';
+    const selCh = document.getElementById('selChapter');
+    const chName = selCh.selectedIndex > 0 ? selCh.options[selCh.selectedIndex].textContent.trim() : '';
+    if (subName && chName) {
+        ctx.innerHTML = '📚 ' + esc(subName) + ' &gt; 📖 ' + esc(chName);
+        ctx.style.display = 'block';
+    } else {
+        ctx.style.display = 'none';
     }
 }
 
-async function mbDeletePdfFromFlatList(pdfId) {
-    if (!confirm('এই PDF মুছে ফেলবেন? এর সব MCQ ও পেইজ-ভিউ ডেটাও মুছে যাবে।')) return;
+/* ── CREATE SUBJECT/CHAPTER ── */
+function toggleNewSubject() {
+    const box = document.getElementById('newSubjectBox');
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    if (box.style.display === 'block') document.getElementById('newSubjectName').focus();
+}
+async function createSubject() {
+    const name = document.getElementById('newSubjectName').value.trim();
+    const icon = document.getElementById('newSubjectIcon').value.trim() || '📚';
+    if (!name) return mbToast('বিষয়ের নাম লিখুন', 'error');
     try {
-        await fetch(`${SUPABASE_URL}/rest/v1/book_pdfs?id=eq.${pdfId}`, {
-            method: 'DELETE',
-            headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }
+        const res = await api('/book_subjects', { 
+            method: 'POST', 
+            body: JSON.stringify({ name, icon, description: '' }),
+            headers: { 'Prefer': 'return=representation' }
         });
-        mbToast('🗑️ PDF মুছে গেছে');
+        const data = await res.json();
+        mbToast('বিষয় যোগ হয়েছে ✓', 'success');
+        toggleNewSubject();
+        document.getElementById('newSubjectName').value = '';
+        await loadSubjects();
+        document.getElementById('selSubject').value = data[0].id;
+        onSubjectChange();
+    } catch(e) { mbToast('সমস্যা: ' + e.message, 'error'); }
+}
+
+function toggleNewChapter() {
+    const box = document.getElementById('newChapterBox');
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    if (box.style.display === 'block') document.getElementById('newChapterName').focus();
+}
+async function createChapter() {
+    const sid = document.getElementById('selSubject').value;
+    const name = document.getElementById('newChapterName').value.trim();
+    if (!name) return mbToast('অধ্যায়ের নাম লিখুন', 'error');
+    try {
+        const res = await api('/book_chapters', { 
+            method: 'POST', 
+            body: JSON.stringify({ subject_id: parseInt(sid), name }),
+            headers: { 'Prefer': 'return=representation' }
+        });
+        const data = await res.json();
+        mbToast('অধ্যায় যোগ হয়েছে ✓', 'success');
+        toggleNewChapter();
+        document.getElementById('newChapterName').value = '';
+        await onSubjectChange();
+        document.getElementById('selChapter').value = data[0].id;
+        onChapterChange();
+    } catch (e) { mbToast('ত্রুটি: ' + e.message, 'error'); }
+}
+
+/* ── PDF UPLOAD ── */
+let selectedPdfFile = null;
+function dzOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('dragover'); }
+function dzLeave() { document.getElementById('dropZone').classList.remove('dragover'); }
+function dzDrop(e) {
+    e.preventDefault(); dzLeave();
+    const f = e.dataTransfer.files[0];
+    if (f && f.type === 'application/pdf') setFile(f);
+    else mbToast('শুধু PDF ফাইল গ্রহণযোগ্য', 'error');
+}
+function onFileSelect(e) { if (e.target.files[0]) setFile(e.target.files[0]); }
+function setFile(f) {
+    selectedPdfFile = f;
+    const fc = document.getElementById('fileChosen');
+    fc.textContent = '✓ ' + f.name; fc.style.display = 'block';
+    const titleEl = document.getElementById('pdfTitle');
+    if (!titleEl.value) titleEl.value = f.name.replace(/\.pdf$/i, '');
+}
+
+async function uploadPdf() {
+    const cid = document.getElementById('selChapter').value;
+    const title = document.getElementById('pdfTitle').value.trim();
+    if (!cid || !selectedPdfFile || !title) return mbToast('সব তথ্য দিন', 'error');
+
+    const btn = document.getElementById('uploadBtn');
+    const pw = document.getElementById('progressWrap');
+    const pf = document.getElementById('progressFill');
+    const us = document.getElementById('uploadSuccess');
+
+    btn.disabled = true; btn.textContent = 'আপলোড হচ্ছে...';
+    pw.style.display = 'block'; pf.style.width = '0%';
+
+    try {
+        const safeName = Date.now() + '_' + selectedPdfFile.name.replace(/[^a-z0-9.]/gi, '_');
+        const path = `chapter_${cid}/${safeName}`;
+        
+        // Upload to Supabase Storage
+        const upRes = await fetch(`${SUPABASE_URL}/storage/v1/object/pdfs/${path}`, {
+            method: 'POST',
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/pdf' },
+            body: selectedPdfFile
+        });
+        if (!upRes.ok) throw new Error('Storage upload failed');
+        
+        const fileUrl = `${SUPABASE_URL}/storage/v1/object/public/pdfs/${path}`;
+        
+        // Save to Database
+        await api('/book_pdfs', {
+            method: 'POST',
+            body: JSON.stringify({ chapter_id: parseInt(cid), title, file_url: fileUrl })
+        });
+
+        pf.style.width = '100%';
+        us.style.display = 'block';
+        selectedPdfFile = null;
+        document.getElementById('fileChosen').style.display = 'none';
+        document.getElementById('pdfTitle').value = '';
+        setTimeout(() => { us.style.display = 'none'; pw.style.display = 'none'; }, 2000);
+        mbToast('PDF আপলোড সম্পন্ন ✓', 'success');
+        loadPdfs();
         mbLoadAllPdfs();
-        // Also refresh the subject/chapter accordion if it's currently showing this PDF's chapter
-        if (typeof loadMulboiSubjects === 'function' && typeof mbOpenSubject !== 'undefined' && mbOpenSubject) {
-            loadMbChapters(mbOpenSubject);
+    } catch (e) {
+        mbToast('আপলোড ব্যর্থ: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false; btn.textContent = '💾 সংরক্ষণ করো';
+    }
+}
+
+/* ── PDF LIST ── */
+async function loadPdfs() {
+    const cid = document.getElementById('selChapter').value;
+    const listEl = document.getElementById('pdfList');
+    listEl.innerHTML = '<div class="skeleton skel-row"></div>';
+    try {
+        const res = await api(`/book_pdfs?chapter_id=eq.${cid}&select=*&order=created_at.desc`);
+        const pdfs = await res.json();
+        renderPdfList(pdfs, 'pdfList');
+    } catch { mbToast('লোড ব্যর্থ', 'error'); }
+}
+
+async function mbLoadAllPdfs() {
+    const listEl = document.getElementById('mbAllPdfsList');
+    if (!listEl) return;
+    listEl.innerHTML = '<div class="skeleton skel-row"></div>';
+    try {
+        const res = await api('/book_pdfs?select=*,book_chapters(name,book_subjects(name,icon))&order=created_at.desc&limit=20');
+        const pdfs = await res.json();
+        renderPdfList(pdfs, 'mbAllPdfsList', true);
+    } catch { listEl.innerHTML = 'লোড ব্যর্থ'; }
+}
+
+function renderPdfList(pdfs, targetId, showContext = false) {
+    const listEl = document.getElementById(targetId);
+    if (!pdfs.length) {
+        listEl.innerHTML = '<div class="empty-state">কোনো PDF নেই</div>';
+        return;
+    }
+    listEl.innerHTML = pdfs.map(p => {
+        let ctxLine = '';
+        if (showContext && p.book_chapters) {
+            const sub = p.book_chapters.book_subjects;
+            ctxLine = `<div style="font-size:10px;color:var(--text3);margin-top:2px">${sub.icon || ''} ${sub.name} > ${p.book_chapters.name}</div>`;
         }
-    } catch (e) { mbToast('❌ ডিলিট ব্যর্থ'); }
+        return `
+        <div class="pdf-card">
+            <div class="pdf-card-top">
+                <div class="pdf-card-icon">📕</div>
+                <div class="pdf-card-info">
+                    <div class="pdf-card-title">${esc(p.title)}</div>
+                    ${ctxLine}
+                </div>
+                <div class="pdf-card-actions">
+                    <button class="act-btn act-edit" title="MCQ সম্পাদনা" onclick="openMbMcqPanel(${p.id}, '${esc(p.title)}', '${p.file_url}')">📝</button>
+                    <button class="act-btn act-delete" title="মুছুন" onclick="deletePdf(${p.id})">🗑️</button>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
 }
 
-let mbMcq = {
-    pdfId: null, pdfTitle: '', pageCount: 0, fileUrl: '',
-    currentPage: 1, currentType: 'standard',
-    pdfDoc: null, cachedUrl: null,
-    pageQuestions: [], // current page+type's questions array (in-memory, edited then saved as one batch)
-    editingIndex: null,
-    csvRows: [],
-    pageMcqCounts: {}, // { pageNumber: count } for the current type — powers the page-grid badges
-    gridOpen: false
-};
-
-function mbToast(msg) {
-    if (typeof showToast === 'function') { showToast(msg); return; }
-    console.log(msg);
+async function deletePdf(id) {
+    if (!confirm('এই PDF টি মুছে ফেলবেন?')) return;
+    try {
+        await api(`/book_pdfs?id=eq.${id}`, { method: 'DELETE' });
+        mbToast('PDF মুছে গেছে', 'success');
+        loadPdfs();
+        mbLoadAllPdfs();
+    } catch { mbToast('মুছতে ব্যর্থ', 'error'); }
 }
 
-/* ---------- OPEN / CLOSE PANEL ---------- */
-function openMbMcqPanel(pdfId, pdfTitle, pageCount, fileUrl) {
-    mbMcq.pdfId = parseInt(pdfId);
-    mbMcq.pdfTitle = pdfTitle;
-    mbMcq.pageCount = pageCount || 0;
-    mbMcq.fileUrl = fileUrl || '';
-    mbMcq.currentPage = 1;
-    mbMcq.currentType = 'standard';
-    mbMcq.pdfDoc = null;
-    mbMcq.cachedUrl = null;
-    mbMcq.pageQuestions = [];
-    mbMcq.editingIndex = null;
-    mbMcq.csvRows = [];
-    mbMcq._currentImageUrl = null;
-    mbMcq.pageMcqCounts = {};
-    mbMcq.gridOpen = false;
-
-    let overlay = document.getElementById('mbMcqOverlay');
-    if (!overlay) { mbBuildMcqPanelDom(); overlay = document.getElementById('mbMcqOverlay'); }
-    document.getElementById('mbMcqTitle').textContent = '❓ ' + pdfTitle + ' — MCQ ব্যবস্থাপনা';
-    document.getElementById('mbMcqPageInput').value = 1;
-    const aiCountEl = document.getElementById('mbAiCount'); if (aiCountEl) aiCountEl.value = 5;
-    const aiTypeEl = document.getElementById('mbAiTypeSelect'); if (aiTypeEl) aiTypeEl.value = 'current';
-    overlay.classList.add('active');
-    document.body.style.overflow = 'hidden';
-
-    mbRenderOptionInputs();
-    mbSwitchTab('manual');
-    mbLoadPagePreview();
-    mbLoadPageQuestions();
-}
-
-function closeMbMcqPanel() {
-    const overlay = document.getElementById('mbMcqOverlay');
-    if (overlay) overlay.classList.remove('active');
-    document.body.style.overflow = '';
-    mbCancelEdit();
-}
-
-/* ---------- BUILD DOM (once) ---------- */
+/* ── MCQ PANEL (AtlasPro 100% Match) ── */
 function mbInjectStyles() {
     if (document.getElementById('mbMcqStyles')) return;
     const style = document.createElement('style');
     style.id = 'mbMcqStyles';
     style.textContent = `
-        /* MCQ Panel visibility (AtlasPro 100% same style) */
         .mcq-panel {
             position: fixed; inset: 0; background: var(--bg);
             z-index: 1000; transform: translateX(100%);
@@ -143,1457 +302,338 @@ function mbInjectStyles() {
             display: flex; flex-direction: column; overflow: hidden;
         }
         .mcq-panel.active { transform: translateX(0); }
-        #mbMcqOverlay { display: flex; }
-        
-        #mbMcqOverlay .mcq-panel-header {
+        .mcq-panel-header {
             height: 56px; background: var(--bg2);
             border-bottom: 1px solid var(--border);
             display: flex; align-items: center; gap: 10px;
             padding: 0 14px; flex-shrink: 0;
         }
-        #mbMcqOverlay .mcq-panel-title { flex: 1; font-size: 13px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        #mbMcqOverlay .mcq-panel-body { flex: 1; overflow-y: auto; padding: 14px; }
-        #mbMcqOverlay .mcq-panel-context {
+        .mcq-panel-title { flex: 1; font-size: 13px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .mcq-panel-body { flex: 1; overflow-y: auto; padding: 14px; }
+        .mcq-panel-context {
             padding: 6px 14px; font-size: 11px; font-weight: 600;
             color: var(--text3); background: rgba(108,99,255,0.05);
             border-bottom: 1px solid var(--border);
         }
-
-        #mbMcqOverlay .type-selector { display: flex; gap: 8px; margin-bottom: 14px; }
-        #mbMcqOverlay .type-opt {
-            flex: 1; padding: 8px 6px; border-radius: var(--radius-sm);
-            border: 1.5px solid var(--border); background: var(--bg2);
-            text-align: center; font-size: 11px; font-weight: 700;
-            cursor: pointer; transition: all 0.2s; color: var(--text3);
-            font-family: inherit;
-        }
-        #mbMcqOverlay .type-opt.selected {
-            background: rgba(108,99,255,0.12); border-color: var(--primary); color: #9C8BFF;
-        }
-        #mbMcqOverlay .tab-btn {
-            flex: 1; padding: 11px 6px; text-align: center;
-            font-size: 12px; font-weight: 700; cursor: pointer;
-            background: transparent; color: var(--text3);
-            border: none; border-right: 1px solid var(--border);
-            font-family: inherit; transition: all 0.2s; white-space: nowrap;
-        }
-        #mbMcqOverlay .tab-btn:last-child { border-right: none; }
-        #mbMcqOverlay .tab-btn.active { background: var(--primary); color: white; }
-        #mbMcqOverlay .option-badge {
-            width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%;
-            background: rgba(108,99,255,0.12); border: 1.5px solid rgba(108,99,255,0.3);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 12px; font-weight: 700; color: #9C8BFF;
+        .back-btn {
+            display: flex; align-items: center; gap: 6px;
+            padding: 7px 12px; border-radius: var(--radius-sm);
+            background: var(--card); border: 1px solid var(--border);
+            font-size: 13px; font-weight: 600; color: var(--text2);
             cursor: pointer; transition: all 0.2s;
         }
-        #mbMcqOverlay .option-badge.correct-sel {
-            background: var(--green); border-color: var(--green); color: white;
-        }
-        #mbMcqOverlay .tab-panel { display: none; }
-        #mbMcqOverlay .tab-panel.active { display: block; }
-        #mbMcqOverlay .mcq-card {
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: var(--radius); overflow: hidden; transition: border-color 0.2s;
-            margin-bottom: 10px;
-        }
-        #mbMcqOverlay .mcq-num {
-            width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%;
-            background: rgba(108,99,255,0.12); border: 1px solid rgba(108,99,255,0.3);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 10px; font-weight: 700; color: #9C8BFF; margin-top: 2px;
-        }
-        #mbMcqOverlay .type-badge {
-            font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
-            text-transform: uppercase;
-        }
-        #mbMcqOverlay .badge-standard { background: rgba(108,99,255,0.1); color: #9C8BFF; }
-        #mbMcqOverlay .badge-true_false { background: rgba(16,185,129,0.1); color: var(--green); }
-        #mbMcqOverlay .badge-hard { background: rgba(239,68,68,0.1); color: var(--red); }
-
-        /* Page Preview & Nav (AtlasPro Style) */
-        #mbMcqOverlay .page-preview {
+        .page-preview {
             background: #111120; border: 1px solid var(--border);
             border-radius: var(--radius); margin-bottom: 14px;
             overflow: hidden; position: relative;
             display: flex; align-items: center; justify-content: center;
         }
-        #mbMcqOverlay .page-nav {
-            display: flex; align-items: center; gap: 10px;
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: var(--radius); padding: 12px 14px;
-            margin-bottom: 14px;
+        .page-preview canvas { max-width: 100%; display: block; }
+        .page-preview-loading {
+            position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+            font-size: 12px; color: var(--text3); background: rgba(17,17,32,0.85);
         }
-        #mbMcqOverlay .page-nav-input {
-            width: 64px; background: var(--bg2); border: 1.5px solid var(--border);
-            border-radius: var(--radius-sm); color: var(--text);
-            font-size: 15px; font-weight: 700; padding: 8px 10px;
-            outline: none; text-align: center; font-family: inherit;
+        .page-preview-loading.show { display: flex; }
+        .page-summary { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+        .page-pill {
+            padding: 4px 10px; border-radius: 20px; font-size: 11px;
+            font-weight: 700; cursor: pointer; transition: all 0.2s;
+            border: 1px solid var(--border); background: var(--card); color: var(--text3);
         }
-        #mbMcqOverlay .page-nav-btn {
-            width: 36px; height: 36px; border-radius: var(--radius-sm);
-            border: 1.5px solid var(--border); background: var(--card);
-            color: var(--text2); font-size: 16px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            transition: all 0.2s; flex-shrink: 0;
-        }
-        #mbMcqOverlay .page-nav-count {
-            margin-left: auto; font-size: 11px; font-weight: 700;
-            padding: 3px 10px; border-radius: 20px;
-            background: rgba(108,99,255,0.12); color: #9C8BFF;
-            border: 1px solid rgba(108,99,255,0.25); white-space: nowrap;
-        }
-        #mbMcqOverlay .back-btn {
-            display: flex; align-items: center; gap: 6px;
-            padding: 7px 12px; border-radius: var(--radius-sm);
-            background: var(--card); border: 1px solid var(--border);
-            font-size: 13px; font-weight: 600; color: var(--text2);
-            cursor: pointer; transition: all 0.2s; text-decoration: none;
-            white-space: nowrap;
-        }
-        #mbMcqOverlay .back-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .page-pill.active { background: rgba(108,99,255,0.15); border-color: var(--primary); color: #9C8BFF; }
+        .page-pill .pill-count { display: inline-block; min-width: 14px; text-align: center; padding: 0 4px; border-radius: 10px; margin-left: 4px; background: rgba(108,99,255,0.2); font-size: 10px; }
+        .page-pill.has-mcqs { color: var(--text2); }
+        .page-nav { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 14px; }
+        .page-nav-input { width: 64px; background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 15px; font-weight: 700; padding: 8px 10px; outline: none; text-align: center; }
+        .page-nav-btn { width: 36px; height: 36px; border-radius: var(--radius-sm); border: 1.5px solid var(--border); background: var(--card); color: var(--text2); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .page-nav-count { margin-left: auto; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; background: rgba(108,99,255,0.12); color: #9C8BFF; border: 1px solid rgba(108,99,255,0.25); }
+        
+        .tab-bar { display: flex; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 14px; }
+        .tab-btn { flex: 1; padding: 11px 6px; text-align: center; font-size: 12px; font-weight: 700; cursor: pointer; background: transparent; color: var(--text3); border: none; border-right: 1px solid var(--border); transition: all 0.2s; }
+        .tab-btn.active { background: var(--primary); color: white; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+        
+        .type-selector { display: flex; gap: 8px; margin-bottom: 14px; }
+        .type-opt { flex: 1; padding: 8px 6px; border-radius: var(--radius-sm); border: 1.5px solid var(--border); background: var(--bg2); text-align: center; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s; color: var(--text3); }
+        .type-opt.selected { background: rgba(108,99,255,0.12); border-color: var(--primary); color: #9C8BFF; }
+        
+        .mcq-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 10px; }
+        .mcq-card-header { padding: 12px 14px; display: flex; align-items: flex-start; gap: 10px; }
+        .mcq-num { width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%; background: rgba(108,99,255,0.12); border: 1px solid rgba(108,99,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #9C8BFF; }
+        .mcq-question { flex: 1; font-size: 13px; font-weight: 600; line-height: 1.5; }
+        .mcq-options { padding: 0 14px 12px 46px; display: flex; flex-direction: column; gap: 6px; }
+        .mcq-opt { font-size: 12px; color: var(--text2); display: flex; gap: 8px; }
+        .mcq-opt.correct { color: var(--green); font-weight: 700; }
+        .opt-key { color: var(--text3); font-weight: 700; }
     `;
     document.head.appendChild(style);
 }
 
 function mbBuildMcqPanelDom() {
     mbInjectStyles();
+    if (document.getElementById('mbMcqOverlay')) return;
     const div = document.createElement('div');
+    div.id = 'mbMcqOverlay';
+    div.className = 'mcq-panel';
     div.innerHTML = `
-    <div class="mcq-panel" id="mbMcqOverlay">
         <div class="mcq-panel-header">
             <button class="back-btn" onclick="closeMbMcqPanel()">← ফিরে যাও</button>
             <div class="mcq-panel-title" id="mbMcqTitle">MCQ ব্যবস্থাপনা</div>
         </div>
-        <div class="mcq-panel-context" id="mbMcqContext" style="display:block;"></div>
+        <div class="mcq-panel-context" id="mbMcqContext"></div>
         <div class="mcq-panel-body">
-            
-            <div class="page-preview" id="mbMcqPagePreviewWrap">
-                <canvas id="mbMcqPreviewCanvas"></canvas>
-                <div class="page-preview-loading" id="mbMcqPreviewLoading">PDF পেইজ লোড হচ্ছে...</div>
+            <div class="page-preview" id="mbMcqPreviewWrap">
+                <canvas id="mbMcqCanvas"></canvas>
+                <div class="page-preview-loading" id="mbMcqLoading">PDF পেইজ লোড হচ্ছে...</div>
             </div>
-
+            <div class="page-summary" id="mbMcqSummary"></div>
             <div class="page-nav">
                 <span class="page-nav-label">পেইজ নং:</span>
                 <button class="page-nav-btn" onclick="mbPageStep(-1)">‹</button>
                 <input type="number" class="page-nav-input" id="mbMcqPageInput" value="1" min="1" onchange="mbOnPageChange()">
                 <button class="page-nav-btn" onclick="mbPageStep(1)">›</button>
-                <button class="act-btn" id="mbPageGridToggleBtn" onclick="mbTogglePageGrid()" style="margin-left:8px;width:auto;padding:0 10px;font-size:12px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);">▦ সব পেইজ</button>
                 <span class="page-nav-count" id="mbMcqPageCount">০ টি MCQ</span>
             </div>
 
-            <div id="mbPageGridWrap" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:14px;max-height:160px;overflow-y:auto;">
-                <div id="mbPageGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:6px;"></div>
-            </div>
-
             <div class="type-selector">
-                <div class="type-opt selected" id="mbTypeBtn_standard" onclick="mbSwitchType('standard')">📚 Standard</div>
-                <div class="type-opt" id="mbTypeBtn_true_false" onclick="mbSwitchType('true_false')">✅ True-False</div>
-                <div class="type-opt" id="mbTypeBtn_hard" onclick="mbSwitchType('hard')">🔥 Hard</div>
+                <div class="type-opt selected" data-type="standard" onclick="mbSelectType('standard')">📚 Standard</div>
+                <div class="type-opt" data-type="true_false" onclick="mbSelectType('true_false')">✅ True-False</div>
+                <div class="type-opt" data-type="hard" onclick="mbSelectType('hard')">🔥 Hard</div>
             </div>
 
             <div class="tab-bar">
-                <button class="tab-btn active" id="mbTabBtn_manual" onclick="mbSwitchTab('manual')">📝 ম্যানুয়াল</button>
-                <button class="tab-btn" id="mbTabBtn_csv" onclick="mbSwitchTab('csv')">📊 CSV</button>
-                <button class="tab-btn" id="mbTabBtn_ai" onclick="mbSwitchTab('ai')">🤖 AI</button>
+                <button class="tab-btn active" onclick="mbSwitchTab('manual')">📝 ম্যানুয়াল</button>
+                <button class="tab-btn" onclick="mbSwitchTab('csv')">📊 CSV</button>
+                <button class="tab-btn" onclick="mbSwitchTab('ai')">🤖 AI</button>
             </div>
 
-            <!-- MANUAL TAB -->
-            <div id="mbTabPanel_manual">
-                <div class="section-card" style="margin-bottom:14px;border-top:none;">
-                    <div class="card-body" style="background:var(--hover);">
-                        <div class="card-title" id="mbManualFormTitle">➕ নতুন প্রশ্ন যোগ</div>
-                        <div class="form-group">
-                            <label class="form-label">প্রশ্ন *</label>
-                            <textarea class="form-textarea" id="mbMcqQuestion" placeholder="প্রশ্নটি লিখুন..." rows="3"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">বিকল্পসমূহ *</label>
-                            <div id="mbMcqOptionsWrap" style="display:flex;flex-direction:column;gap:8px;"></div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">ব্যাখ্যা (ঐচ্ছিক)</label>
-                            <textarea class="form-textarea" id="mbMcqExplanation" placeholder="সঠিক উত্তরের ব্যাখ্যা..." rows="2"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">ছবি (ঐচ্ছিক)</label>
-                            <input type="file" id="mbMcqImage" accept="image/*" onchange="mbMcqImageSelect(event)" style="font-size:12px;">
-                            <div id="mbMcqImagePreviewWrap" style="display:none;margin-top:10px;position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--border);">
-                                <img id="mbMcqImagePreview" style="max-width:100%;display:block;">
-                                <button type="button" onclick="mbRemoveMcqImage()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;">✕</button>
-                            </div>
-                            <div id="mbMcqImageUploading" style="display:none;font-size:11px;color:var(--accent);margin-top:6px;">⏳ ছবি আপলোড হচ্ছে...</div>
-                        </div>
-                        <div style="display:flex;gap:10px;margin-top:16px;">
-                            <button class="btn btn-outline" id="mbMcqCancelBtn" style="display:none;flex:1;" onclick="mbCancelEdit()">বাতিল</button>
-                            <button class="btn btn-primary" id="mbMcqSaveBtn" style="flex:1;" onclick="mbSaveManualMcq()">✓ সংরক্ষণ করো</button>
+            <div id="mbTab_manual" class="tab-panel active">
+                <div class="section-card" style="background:var(--bg2);padding:14px;border-radius:8px;margin-bottom:14px;">
+                    <div class="form-group">
+                        <label class="form-label">প্রশ্ন</label>
+                        <textarea class="form-textarea" id="mbQ" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">বিকল্পসমূহ (ক, খ, গ, ঘ)</label>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                            <input class="form-input" id="mbOpt_a" placeholder="ক">
+                            <input class="form-input" id="mbOpt_b" placeholder="খ">
+                            <input class="form-input" id="mbOpt_c" placeholder="গ">
+                            <input class="form-input" id="mbOpt_d" placeholder="ঘ">
                         </div>
                     </div>
+                    <div class="form-group">
+                        <label class="form-label">সঠিক উত্তর</label>
+                        <select class="form-select" id="mbAns">
+                            <option value="A">ক</option><option value="B">খ</option><option value="C">গ</option><option value="D">ঘ</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary btn-full" onclick="mbSaveMcq()">✓ সংরক্ষণ করো</button>
                 </div>
-                <div id="mbManualMcqList"></div>
+                <div id="mbMcqList"></div>
             </div>
 
-            <!-- CSV TAB -->
-            <div id="mbTabPanel_csv" style="display:none;">
-                <div class="section-card" style="border-top:none;">
-                    <div class="card-body" style="background:var(--hover);">
-                        <div style="font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:12px;">
-                            <b style="color:var(--green);">CSV ফরম্যাট:</b> <code>question,option1,option2,option3,option4,answer,explanation</code><br>
-                            সঠিক উত্তর (answer) হিসেবে ১, ২, ৩ বা ৪ ব্যবহার করুন।
-                        </div>
-                        <button class="btn btn-outline btn-full" style="margin-bottom:12px;" onclick="mbDownloadCsvTemplate()">⬇️ টেমপ্লেট ডাউনলোড</button>
-                        <div class="drop-zone" id="mbCsvDropZone" onclick="document.getElementById('mbCsvFileInput').click()"
-                            ondragover="mbCsvDragOver(event)" ondragleave="mbCsvDragLeave(event)" ondrop="mbCsvDrop(event)">
-                            <div class="drop-zone-icon">📊</div>
-                            <div class="drop-zone-text">CSV ফাইল এখানে ড্র্যাগ করুন বা ক্লিক করুন</div>
-                            <input type="file" id="mbCsvFileInput" accept=".csv" onchange="mbCsvFileSelect(event)" style="display:none;">
-                        </div>
-                        <div id="mbCsvPreviewInfo" style="display:none;font-size:12px;color:var(--text2);margin-top:12px;font-weight:600;"></div>
-                        <div id="mbCsvPreviewTableWrap" style="display:none;overflow-x:auto;margin-top:10px;border:1px solid var(--border);border-radius:8px;background:var(--card);">
-                            <table style="width:100%;border-collapse:collapse;font-size:11px;">
-                                <thead style="background:var(--hover);border-bottom:1px solid var(--border);">
-                                    <tr><th style="padding:8px;">#</th><th style="padding:8px;text-align:left;">প্রশ্ন</th><th style="padding:8px;">উত্তর</th></tr>
-                                </thead>
-                                <tbody id="mbCsvPreviewBody"></tbody>
-                            </table>
-                        </div>
-                        <button class="btn btn-primary btn-full" id="mbCsvImportBtn" style="display:none;margin-top:14px;" onclick="mbImportCsv()">📥 আমদানি সম্পন্ন করো</button>
-                    </div>
+            <div id="mbTab_csv" class="tab-panel">
+                <div class="section-card" style="background:var(--bg2);padding:14px;border-radius:8px;text-align:center;">
+                    <div style="font-size:12px;color:var(--text3);margin-bottom:10px;">CSV ফরম্যাট: question,a,b,c,d,answer,explanation</div>
+                    <input type="file" id="mbCsvFile" accept=".csv" style="font-size:12px;">
+                    <button class="btn btn-primary btn-full" style="margin-top:10px;" onclick="mbImportCsv()">📥 আমদানি করো</button>
                 </div>
             </div>
 
-            <!-- AI TAB -->
-            <div id="mbTabPanel_ai" style="display:none;">
-                <div class="section-card" style="border-top:none;">
-                    <div class="card-body" style="background:var(--hover);">
-                        <div style="font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:14px;">
-                            🤖 AI এই পেইজের ছবি থেকে স্বয়ংক্রিয়ভাবে MCQ তৈরি করবে।
-                        </div>
-                        <div style="display:flex;gap:10px;margin-bottom:14px;">
-                            <div style="flex:1;">
-                                <label class="form-label">প্রশ্ন সংখ্যা</label>
-                                <input type="number" class="form-input" id="mbAiCount" value="5" min="1" max="20">
-                            </div>
-                            <div style="flex:1;">
-                                <label class="form-label">ধরন</label>
-                                <select class="form-select" id="mbAiTypeSelect">
-                                    <option value="current">বর্তমান টাইপ</option>
-                                    <option value="mixed">🎯 Mixed</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">কাস্টম প্রম্পট (ঐচ্ছিক)</label>
-                            <textarea class="form-textarea" id="mbAiPrompt" rows="3" placeholder="AI-কে বিশেষ কোনো নির্দেশনা দিতে চাইলে এখানে লিখুন..."></textarea>
-                        </div>
-                        <div style="display:flex;gap:8px;margin-bottom:14px;">
-                            <button class="btn btn-sm btn-outline" style="flex:1;" onclick="mbSaveAiPrompt()">💾 সেভ প্রম্পট</button>
-                            <button class="btn btn-sm btn-outline" style="flex:1;" onclick="mbLoadAiPrompt()">📂 লোড প্রম্পট</button>
-                        </div>
-                        <button class="btn btn-primary btn-full" id="mbAiGenBtn" onclick="mbAiGenerate()" style="background:linear-gradient(90deg, #6366F1, #8B5CF6);border:none;">🤖 AI দিয়ে MCQ তৈরি করো</button>
-                        <div id="mbAiSpinner" style="display:none;text-align:center;padding:20px;">
-                            <div style="width:30px;height:30px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 10px;"></div>
-                            <div style="font-size:12px;color:var(--accent);font-weight:600;">AI প্রশ্ন তৈরি করছে...</div>
-                        </div>
-                        <div id="mbAiPreviewWrap" style="display:none;margin-top:16px;">
-                            <div class="section-heading" id="mbAiResultHeader">AI ফলাফল</div>
-                            <div id="mbAiPreviewList"></div>
-                            <div style="display:flex;gap:10px;margin-top:14px;">
-                                <button class="btn btn-outline" style="flex:1;" onclick="mbDiscardAi()">✕ বাতিল</button>
-                                <button class="btn btn-primary" style="flex:1;background:var(--green);border-color:var(--green);" onclick="mbSaveAiMcqs()">✓ সব সেভ করো</button>
-                            </div>
-                        </div>
-                    </div>
+            <div id="mbTab_ai" class="tab-panel">
+                <div class="section-card" style="background:var(--bg2);padding:14px;border-radius:8px;text-align:center;">
+                    <div style="font-size:13px;font-weight:700;margin-bottom:10px;">🤖 AI প্রশ্ন জেনারেটর</div>
+                    <button class="btn btn-primary btn-full" onclick="mbGenerateAi()">✨ প্রশ্ন তৈরি করো</button>
+                    <div id="mbAiLoading" style="display:none;margin-top:10px;font-size:12px;">AI চিন্তা করছে...</div>
                 </div>
             </div>
-
         </div>
-    </div>`;
+    `;
     document.body.appendChild(div);
 }
 
-/* ---------- TYPE / TAB SWITCHING ---------- */
-function mbSwitchType(type) {
-    mbMcq.currentType = type;
-    ['standard','true_false','hard'].forEach(t => {
-        const btn = document.getElementById('mbTypeBtn_' + t);
-        if (btn) btn.className = 'btn btn-sm' + (t === type ? '' : ' btn-outline');
-    });
-    const promptEl = document.getElementById('mbAiPrompt'); if (promptEl) promptEl.value = '';
-    mbRenderOptionInputs();
-    mbCancelEdit();
-    mbLoadPageQuestions();
-    if (mbMcq.gridOpen) mbLoadPageGrid();
+/* ── MCQ LOGIC ── */
+async function openMbMcqPanel(pdfId, title, url) {
+    activePdfId = pdfId;
+    activePdfTitle = title;
+    cachedPdfUrl = url;
+    currentPage = 1;
+    cachedPdfDoc = null;
+
+    mbBuildMcqPanelDom();
+    document.getElementById('mbMcqTitle').textContent = title + ' — MCQ সম্পাদনা';
+    document.getElementById('mbMcqOverlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    mbLoadPagePreview();
+    mbLoadMcqs();
+    mbLoadPageSummary();
+}
+
+function closeMbMcqPanel() {
+    document.getElementById('mbMcqOverlay').classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+async function mbLoadPagePreview() {
+    if (!cachedPdfUrl) return;
+    const loading = document.getElementById('mbMcqLoading');
+    const canvas = document.getElementById('mbMcqCanvas');
+    loading.classList.add('show');
+    try {
+        if (!cachedPdfDoc) {
+            cachedPdfDoc = await pdfjsLib.getDocument(cachedPdfUrl).promise;
+        }
+        const page = await cachedPdfDoc.getPage(currentPage);
+        const viewport = page.getViewport({ scale: 1.5 });
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+    } catch (e) { console.error(e); }
+    loading.classList.remove('show');
+}
+
+async function mbLoadMcqs() {
+    const listEl = document.getElementById('mbMcqList');
+    listEl.innerHTML = '<div class="skeleton skel-sm"></div>';
+    try {
+        const res = await api(`/book_page_mcqs?pdf_id=eq.${activePdfId}&page_number=eq.${currentPage}&mcq_type=eq.${selTypeKey}&select=questions_json`);
+        const data = await res.json();
+        allMcqs = data.length ? JSON.parse(data[0].questions_json) : [];
+        document.getElementById('mbMcqPageCount').textContent = allMcqs.length + ' টি MCQ';
+        renderMcqs();
+    } catch { listEl.innerHTML = 'লোড ব্যর্থ'; }
+}
+
+function renderMcqs() {
+    const listEl = document.getElementById('mbMcqList');
+    if (!allMcqs.length) {
+        listEl.innerHTML = '<div class="empty-state">এই পেইজে কোনো প্রশ্ন নেই</div>';
+        return;
+    }
+    const labels = { A:'ক', B:'খ', C:'গ', D:'ঘ' };
+    listEl.innerHTML = allMcqs.map((q, i) => `
+        <div class="mcq-card">
+            <div class="mcq-card-header">
+                <div class="mcq-num">${i+1}</div>
+                <div class="mcq-question">${esc(q.question)}</div>
+                <div class="mcq-actions">
+                    <button class="act-btn" onclick="mbDeleteMcq(${i})">🗑️</button>
+                </div>
+            </div>
+            <div class="mcq-options">
+                <div class="mcq-opt ${q.answer_index===0?'correct':''}"><span class="opt-key">ক)</span> ${esc(q.options[0])}</div>
+                <div class="mcq-opt ${q.answer_index===1?'correct':''}"><span class="opt-key">খ)</span> ${esc(q.options[1])}</div>
+                <div class="mcq-opt ${q.answer_index===2?'correct':''}"><span class="opt-key">গ)</span> ${esc(q.options[2])}</div>
+                <div class="mcq-opt ${q.answer_index===3?'correct':''}"><span class="opt-key">ঘ)</span> ${esc(q.options[3])}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function mbLoadPageSummary() {
+    const summaryEl = document.getElementById('mbMcqSummary');
+    try {
+        const res = await api(`/book_page_mcqs?pdf_id=eq.${activePdfId}&select=page_number,questions_json`);
+        const data = await res.json();
+        const counts = {};
+        data.forEach(row => {
+            const qList = JSON.parse(row.questions_json);
+            counts[row.page_number] = (counts[row.page_number] || 0) + qList.length;
+        });
+        const totalPages = cachedPdfDoc ? cachedPdfDoc.numPages : Math.max(...Object.keys(counts).map(Number), 10);
+        let html = '';
+        for (let i = 1; i <= Math.min(totalPages, 50); i++) {
+            const count = counts[i] || 0;
+            const active = i === currentPage ? ' active' : '';
+            const hasMcqs = count > 0 ? ' has-mcqs' : '';
+            html += `<span class="page-pill${active}${hasMcqs}" onclick="mbGoToPage(${i})">P${i}<span class="pill-count">${count}</span></span>`;
+        }
+        summaryEl.innerHTML = html;
+    } catch { summaryEl.innerHTML = ''; }
+}
+
+function mbGoToPage(p) {
+    currentPage = p;
+    document.getElementById('mbMcqPageInput').value = p;
+    mbLoadPagePreview();
+    mbLoadMcqs();
+    mbLoadPageSummary();
+}
+
+function mbPageStep(d) {
+    const next = Math.max(1, currentPage + d);
+    mbGoToPage(next);
+}
+
+function mbOnPageChange() {
+    const v = parseInt(document.getElementById('mbMcqPageInput').value);
+    if (v > 0) mbGoToPage(v);
+}
+
+function mbSelectType(type) {
+    selTypeKey = type;
+    document.querySelectorAll('.type-opt').forEach(el => el.classList.toggle('selected', el.dataset.type === type));
+    mbLoadMcqs();
 }
 
 function mbSwitchTab(tab) {
-    ['manual','csv','ai'].forEach(t => {
-        const panel = document.getElementById('mbTabPanel_' + t);
-        const btn = document.getElementById('mbTabBtn_' + t);
-        if (panel) panel.classList.toggle('active', t === tab);
-        if (btn) btn.classList.toggle('active', t === tab);
-    });
+    document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', ['manual','csv','ai'][i] === tab));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('mbTab_' + tab).classList.add('active');
 }
 
-function mbRenderOptionInputs() {
-    const wrap = document.getElementById('mbMcqOptionsWrap');
-    if (!wrap) return;
-    const isTF = mbMcq.currentType === 'true_false';
-    const labels = isTF ? ['সত্য','মিথ্যা'] : ['ক','খ','গ','ঘ'];
-    wrap.innerHTML = labels.map((lbl, i) => `
-        <div style="display:flex;align-items:center;gap:10px;">
-            <div class="option-badge" id="mbAnsBadge_${i}" onclick="mbSelectAnswer(${i})">${lbl}</div>
-            <input class="form-input" id="mbOpt_${i}" placeholder="${isTF ? lbl : 'বিকল্প ' + lbl}" value="${isTF ? lbl : ''}" ${isTF ? 'readonly' : ''} style="flex:1;">
-        </div>`).join('');
-    mbMcq._selectedAnswer = null;
-}
-
-function mbSelectAnswer(i) {
-    mbMcq._selectedAnswer = i;
-    const count = mbMcq.currentType === 'true_false' ? 2 : 4;
-    for (let k = 0; k < count; k++) {
-        const b = document.getElementById('mbAnsBadge_' + k);
-        if (!b) continue;
-        if (k === i) b.classList.add('correct-sel');
-        else b.classList.remove('correct-sel');
-    }
-}
-
-/* ---------- PAGE NAVIGATION ---------- */
-function mbPageStep(d) {
-    const cur = parseInt(document.getElementById('mbMcqPageInput').value) || 1;
-    const next = Math.max(1, cur + d);
-    document.getElementById('mbMcqPageInput').value = next;
-    mbMcq.currentPage = next;
-    mbCancelEdit();
-    mbLoadPagePreview();
-    mbLoadPageQuestions();
-    mbHighlightActiveGridPage();
-}
-function mbOnPageChange() {
-    const v = parseInt(document.getElementById('mbMcqPageInput').value);
-    mbMcq.currentPage = (isNaN(v) || v < 1) ? 1 : v;
-    document.getElementById('mbMcqPageInput').value = mbMcq.currentPage;
-    mbCancelEdit();
-    mbLoadPagePreview();
-    mbLoadPageQuestions();
-    mbHighlightActiveGridPage();
-}
-
-/* ---------- PAGE GRID (parity with AtlasPro's mcq.html page-number grid + count badges) ---------- */
-function mbTogglePageGrid() {
-    mbMcq.gridOpen = !mbMcq.gridOpen;
-    const wrap = document.getElementById('mbPageGridWrap');
-    const btn = document.getElementById('mbPageGridToggleBtn');
-    wrap.style.display = mbMcq.gridOpen ? 'block' : 'none';
-    btn.className = 'btn btn-sm' + (mbMcq.gridOpen ? '' : ' btn-outline');
-    if (mbMcq.gridOpen) mbLoadPageGrid();
-}
-
-async function mbLoadPageGrid() {
-    const grid = document.getElementById('mbPageGrid');
-    if (!grid) return;
-    grid.innerHTML = '<div style="font-size:11px;color:var(--text2);">লোড হচ্ছে...</div>';
-    try {
-        // One query for all pages of this pdf+type, instead of N requests — then count client-side
-        const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/book_page_mcqs?pdf_id=eq.${mbMcq.pdfId}&mcq_type=eq.${mbMcq.currentType}&select=page_number,questions_json`);
-        mbMcq.pageMcqCounts = {};
-        (rows || []).forEach(r => {
-            try { mbMcq.pageMcqCounts[r.page_number] = (JSON.parse(r.questions_json) || []).length; } catch (_) {}
-        });
-    } catch (e) { mbMcq.pageMcqCounts = {}; }
-    mbRenderPageGrid();
-}
-
-function mbRenderPageGrid() {
-    const grid = document.getElementById('mbPageGrid');
-    if (!grid) return;
-    const totalPages = mbMcq.pageCount > 0 ? mbMcq.pageCount : 30;
-    let html = '';
-    for (let p = 1; p <= totalPages; p++) {
-        const count = mbMcq.pageMcqCounts[p] || 0;
-        const hasMcq = count > 0;
-        const isActive = mbMcq.currentPage === p;
-        html += `<button class="mb-page-grid-btn${hasMcq?' has-mcq':''}${isActive?' active':''}" id="mbPageGridBtn_${p}" onclick="mbSelectPageFromGrid(${p})"
-            style="position:relative;height:34px;border-radius:6px;border:1.5px solid ${isActive?'var(--accent)':(hasMcq?'var(--green)':'var(--border)')};background:${isActive?'var(--accent)':'var(--card)'};color:${isActive?'#fff':'var(--text)'};font-size:11px;cursor:pointer;">
-            ${p}${hasMcq?`<span style="position:absolute;top:-5px;right:-5px;background:var(--green);color:#fff;border-radius:8px;font-size:8px;padding:1px 4px;min-width:12px;">${count>9?'9+':count}</span>`:''}
-        </button>`;
-    }
-    grid.innerHTML = html;
-}
-
-function mbHighlightActiveGridPage() {
-    if (!mbMcq.gridOpen) return;
-    document.querySelectorAll('.mb-page-grid-btn').forEach(b => {
-        const isActive = b.id === 'mbPageGridBtn_' + mbMcq.currentPage;
-        b.style.background = isActive ? 'var(--accent)' : 'var(--card)';
-        b.style.color = isActive ? '#fff' : 'var(--text)';
-        b.style.borderColor = isActive ? 'var(--accent)' : (b.classList.contains('has-mcq') ? 'var(--green)' : 'var(--border)');
-    });
-}
-
-function mbSelectPageFromGrid(p) {
-    mbMcq.currentPage = p;
-    document.getElementById('mbMcqPageInput').value = p;
-    mbCancelEdit();
-    mbLoadPagePreview();
-    mbLoadPageQuestions();
-    mbHighlightActiveGridPage();
-}
-
-/* ---------- PDF PAGE PREVIEW (pdf.js, already loaded by admin.html) ---------- */
-async function mbLoadPagePreview() {
-    const loading = document.getElementById('mbMcqPreviewLoading');
-    const canvas = document.getElementById('mbMcqPreviewCanvas');
-    if (!mbMcq.fileUrl || typeof pdfjsLib === 'undefined') {
-        if (loading) loading.textContent = 'PDF প্রিভিউ পাওয়া যায়নি (URL নেই)';
-        return;
-    }
-    loading.style.display = 'block';
-    loading.textContent = 'পেইজ লোড হচ্ছে...';
-    try {
-        if (!mbMcq.pdfDoc || mbMcq.cachedUrl !== mbMcq.fileUrl) {
-            mbMcq.pdfDoc = await pdfjsLib.getDocument(mbMcq.fileUrl).promise;
-            mbMcq.cachedUrl = mbMcq.fileUrl;
-        }
-        const pageNum = Math.min(mbMcq.currentPage, mbMcq.pdfDoc.numPages);
-        if (pageNum < 1) { loading.style.display = 'none'; return; }
-        const page = await mbMcq.pdfDoc.getPage(pageNum);
-        const dpr = window.devicePixelRatio || 2;
-        const maxW = Math.min(canvas.parentElement?.clientWidth || 400, 560);
-        const orig = page.getViewport({ scale: 1 });
-        const scale = (maxW / orig.width) * dpr;
-        const viewport = page.getViewport({ scale });
-        canvas.width = viewport.width; canvas.height = viewport.height;
-        canvas.style.width = (viewport.width / dpr) + 'px';
-        canvas.style.height = (viewport.height / dpr) + 'px';
-        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-        loading.style.display = 'none';
-    } catch (e) {
-        loading.textContent = 'পেইজ প্রিভিউ লোড ব্যর্থ';
-    }
-}
-
-async function mbGetPageImageBase64() {
-    const canvas = document.getElementById('mbMcqPreviewCanvas');
-    if (canvas && canvas.width > 0) {
-        return { base64: canvas.toDataURL('image/jpeg', 0.85).split(',')[1], mimeType: 'image/jpeg' };
-    }
-    return null;
-}
-
-/* ---------- LOAD / SAVE book_page_mcqs ROW ---------- */
-async function mbLoadPageQuestions() {
-    mbMcq.pageQuestions = [];
-    try {
-        const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/book_page_mcqs?pdf_id=eq.${mbMcq.pdfId}&page_number=eq.${mbMcq.currentPage}&mcq_type=eq.${mbMcq.currentType}&select=questions_json`);
-        if (rows?.length) {
-            try { mbMcq.pageQuestions = JSON.parse(rows[0].questions_json) || []; } catch (_) { mbMcq.pageQuestions = []; }
-        }
-    } catch (_) {}
-    mbRenderOptionInputs();
-    mbRenderManualList();
-    mbUpdatePageCountLabel();
-}
-
-async function mbSavePageQuestionsToDb() {
-    // NOTE: uses fetch() directly (not safeFetch()) because safeFetch() unconditionally
-    // overwrites the Prefer header for POST requests, which would silently drop
-    // 'resolution=merge-duplicates' below and break the upsert (causing a duplicate-key
-    // error on every save after the first, since pdf_id+page_number+mcq_type is UNIQUE).
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/book_page_mcqs`, {
-        method: 'POST',
-        headers: {
-            apikey: SUPABASE_KEY,
-            Authorization: 'Bearer ' + SUPABASE_KEY,
-            'Content-Type': 'application/json',
-            'Prefer': 'resolution=merge-duplicates,return=minimal'
-        },
-        body: JSON.stringify({
-            pdf_id: mbMcq.pdfId, page_number: mbMcq.currentPage, mcq_type: mbMcq.currentType,
-            questions_json: JSON.stringify(mbMcq.pageQuestions)
-        })
-    });
-    if (!res.ok) {
-        const errText = await res.text().catch(() => '');
-        console.error('❌ mbSavePageQuestionsToDb failed:', errText);
-        mbToast('❌ সংরক্ষণ ব্যর্থ — আবার চেষ্টা করুন');
-        throw new Error(errText || 'Save failed');
-    }
-    // Keep the page-grid badge in sync without a full reload
-    mbMcq.pageMcqCounts[mbMcq.currentPage] = mbMcq.pageQuestions.length;
-    if (mbMcq.gridOpen) mbRenderPageGrid();
-}
-
-function mbUpdatePageCountLabel() {
-    const el = document.getElementById('mbMcqPageCount');
-    if (el) el.textContent = mbMcq.pageQuestions.length + ' টি MCQ (' + ({standard:'Standard',true_false:'সত্য/মিথ্যা',hard:'Hard'}[mbMcq.currentType] || mbMcq.currentType) + ')';
-}
-
-/* ---------- MANUAL ADD / EDIT / DELETE ---------- */
-function mbRenderManualList() {
-    const listEl = document.getElementById('mbManualMcqList');
-    if (!listEl) return;
-    if (!mbMcq.pageQuestions.length) {
-        listEl.innerHTML = '<div style="text-align:center;padding:30px 10px;color:var(--text3);font-size:12px;">এই পেইজে এখনো কোনো প্রশ্ন যোগ করা হয়নি।</div>';
-        return;
-    }
-    listEl.innerHTML = mbMcq.pageQuestions.map((q, i) => {
-        const isDisabled = q.is_active === false;
-        const typeLabels = { standard: 'Standard', true_false: 'True-False', hard: 'Hard' };
-        const typeKey = q.type || mbMcq.currentType;
-        const typeBadgeClass = `badge-${typeKey}`;
-        
-        return `
-        <div class="mcq-card" style="${isDisabled ? 'opacity:0.6;' : ''}">
-            <div class="mcq-card-header">
-                <div class="mcq-num">${i + 1}</div>
-                <div class="mcq-question">
-                    ${escMb(q.question)}
-                    ${isDisabled ? ' <span style="font-size:10px;color:var(--red);">(নিষ্ক্রিয়)</span>' : ''}
-                </div>
-                <div class="mcq-actions">
-                    <button class="act-btn act-edit" onclick="mbEditManualMcq(${i})" title="সম্পাদনা">✏️</button>
-                    <button class="act-btn act-delete" onclick="mbDeleteManualMcq(${i})" title="মুছে ফেলুন">🗑️</button>
-                </div>
-            </div>
-            ${q.image_url ? `<div style="padding:0 14px 12px 46px;"><img src="${q.image_url}" style="max-width:100%;border-radius:8px;border:1px solid var(--border);"></div>` : ''}
-            <div class="mcq-options">
-                ${(q.options || []).map((o, oi) => `
-                    <div class="mcq-opt ${oi === q.answer_index ? 'correct' : ''}" style="${oi === q.answer_index ? 'border-color:var(--green);background:rgba(16,185,129,0.05);color:var(--green);font-weight:700;' : ''}">
-                        <div style="width:18px;height:18px;border-radius:50%;background:${oi === q.answer_index ? 'var(--green)' : 'var(--border)'};color:${oi === q.answer_index ? '#fff' : 'var(--text3)'};display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">${['ক', 'খ', 'গ', 'ঘ'][oi] || (oi + 1)}</div>
-                        <div style="overflow:hidden;text-overflow:ellipsis;">${escMb(o)}</div>
-                    </div>
-                `).join('')}
-            </div>
-            <div style="padding:8px 14px 12px 46px; border-top:1px solid var(--border); display:flex; align-items:center; gap:10px;">
-                <span class="type-badge ${typeBadgeClass}">${typeLabels[typeKey]}</span>
-                <div style="font-size:10px; color:var(--text3); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                    ${q.explanation ? 'ব্যাখ্যা: ' + escMb(q.explanation) : 'ব্যাখ্যা নেই'}
-                </div>
-                <button onclick="mbToggleMcqActive(${i})" style="background:none;border:none;font-size:12px;cursor:pointer;color:${isDisabled ? 'var(--text3)' : 'var(--green)'};" title="${isDisabled ? 'সক্রিয় করুন' : 'নিষ্ক্রিয় করুন'}">
-                    ${isDisabled ? '👁️‍🗨️' : '👁️'}
-                </button>
-                <div style="display:flex;gap:4px;">
-                    <button class="act-btn" style="width:24px;height:24px;font-size:10px;" onclick="mbMoveMcq(${i},-1)" ${i === 0 ? 'disabled' : ''}>▲</button>
-                    <button class="act-btn" style="width:24px;height:24px;font-size:10px;" onclick="mbMoveMcq(${i},1)" ${i === mbMcq.pageQuestions.length - 1 ? 'disabled' : ''}>▼</button>
-                </div>
-            </div>
-        </div>`;
-    }).join('');
-}
-
-// Reorder a question up(-1)/down(1) within the current page+type, persisted immediately
-async function mbMoveMcq(i, dir) {
-    const j = i + dir;
-    if (j < 0 || j >= mbMcq.pageQuestions.length) return;
-    const tmp = mbMcq.pageQuestions[i];
-    mbMcq.pageQuestions[i] = mbMcq.pageQuestions[j];
-    mbMcq.pageQuestions[j] = tmp;
-    mbRenderManualList();
-    try { await mbSavePageQuestionsToDb(); }
-    catch (e) { mbToast('❌ ক্রম সংরক্ষণ ব্যর্থ'); }
-}
-
-// Toggle a question active/inactive without deleting it — inactive questions are
-// filtered out before being served to students (see study.html / exam.html note below)
-async function mbToggleMcqActive(i) {
-    const q = mbMcq.pageQuestions[i];
-    if (!q) return;
-    const wasActive = q.is_active !== false;
-    q.is_active = !wasActive;
-    mbRenderManualList();
-    try {
-        await mbSavePageQuestionsToDb();
-        mbToast(q.is_active ? 'প্রশ্ন সক্রিয় ✓' : 'প্রশ্ন নিষ্ক্রিয় ✓');
-    } catch (e) {
-        q.is_active = wasActive; // revert on failure
-        mbRenderManualList();
-        mbToast('❌ পরিবর্তন ব্যর্থ');
-    }
-}
-
-
-function mbEditManualMcq(i) {
-    const q = mbMcq.pageQuestions[i];
-    if (!q) return;
-    mbMcq.editingIndex = i;
-    document.getElementById('mbManualFormTitle').textContent = '✏️ প্রশ্ন সম্পাদনা';
-    document.getElementById('mbMcqQuestion').value = q.question || '';
-    document.getElementById('mbMcqExplanation').value = q.explanation || '';
-    (q.options || []).forEach((o, oi) => { const el = document.getElementById('mbOpt_' + oi); if (el && mbMcq.currentType !== 'true_false') el.value = o; });
-    mbSelectAnswer(q.answer_index || 0);
-    mbMcq._currentImageUrl = q.image_url || null;
-    mbRenderMcqImagePreview();
-    document.getElementById('mbMcqCancelBtn').style.display = 'block';
-    document.getElementById('mbMcqSaveBtn').textContent = '✓ আপডেট করো';
-    document.getElementById('mbMcqQuestion').scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
-function mbCancelEdit() {
-    mbMcq.editingIndex = null;
-    const qEl = document.getElementById('mbMcqQuestion'); if (qEl) qEl.value = '';
-    const eEl = document.getElementById('mbMcqExplanation'); if (eEl) eEl.value = '';
-    if (mbMcq.currentType !== 'true_false') {
-        for (let i = 0; i < 4; i++) { const el = document.getElementById('mbOpt_' + i); if (el) el.value = ''; }
-    }
-    mbMcq._selectedAnswer = null;
-    mbMcq._currentImageUrl = null;
-    mbRenderMcqImagePreview();
-    const imgInput = document.getElementById('mbMcqImage'); if (imgInput) imgInput.value = '';
-    const count = mbMcq.currentType === 'true_false' ? 2 : 4;
-    for (let k = 0; k < count; k++) { const b = document.getElementById('mbAnsBadge_' + k); if (b) { b.style.background='var(--card)'; b.style.color='var(--text)'; b.style.borderColor='var(--border)'; } }
-    const cancelBtn = document.getElementById('mbMcqCancelBtn'); if (cancelBtn) cancelBtn.style.display = 'none';
-    const saveBtn = document.getElementById('mbMcqSaveBtn'); if (saveBtn) saveBtn.textContent = '✓ সংরক্ষণ করো';
-}
-
-async function mbDeleteManualMcq(i) {
-    if (!confirm('এই প্রশ্নটি মুছে ফেলবেন?')) return;
-    mbMcq.pageQuestions.splice(i, 1);
-    await mbSavePageQuestionsToDb();
-    mbToast('🗑️ প্রশ্ন মুছে গেছে');
-    mbRenderManualList();
-    mbUpdatePageCountLabel();
-}
-
-/* ---------- MCQ IMAGE (optional, per-question — via ImgBB, same hosting used elsewhere in this app) ---------- */
-function mbRenderMcqImagePreview() {
-    const wrap = document.getElementById('mbMcqImagePreviewWrap');
-    const img = document.getElementById('mbMcqImagePreview');
-    if (!wrap || !img) return;
-    if (mbMcq._currentImageUrl) { img.src = mbMcq._currentImageUrl; wrap.style.display = 'block'; }
-    else { img.src = ''; wrap.style.display = 'none'; }
-}
-
-function mbRemoveMcqImage() {
-    mbMcq._currentImageUrl = null;
-    const imgInput = document.getElementById('mbMcqImage'); if (imgInput) imgInput.value = '';
-    mbRenderMcqImagePreview();
-}
-
-async function mbMcqImageSelect(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const uploadingEl = document.getElementById('mbMcqImageUploading');
-    uploadingEl.style.display = 'block';
-    try {
-        const url = await mbUploadImageFile(file);
-        mbMcq._currentImageUrl = url;
-        mbRenderMcqImagePreview();
-        mbToast('🖼️ ছবি আপলোড সম্পন্ন');
-    } catch (err) {
-        mbToast('❌ ছবি আপলোড ব্যর্থ');
-        e.target.value = '';
-    } finally {
-        uploadingEl.style.display = 'none';
-    }
-}
-
-// Uploads a local image File to ImgBB using the same multi-key pool as
-// ImgBBManager (kakhacq/imgbb-manager.js), but as base64 (ImgBBManager only
-// exposes uploadFromUrl for re-hosting existing URLs, not local files).
-async function mbUploadImageFile(file) {
-    const keys = (typeof ImgBBManager !== 'undefined') ? ImgBBManager.getHealthyKeys() : [];
-    if (!keys.length) throw new Error('NO_HEALTHY_IMGBB_KEYS');
-    const base64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result.split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
-    let lastError = null;
-    for (const key of keys) {
-        try {
-            const formData = new FormData();
-            formData.append('key', key);
-            formData.append('image', base64);
-            const res = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: formData });
-            const data = await res.json();
-            if (data?.success && data.data?.url) return data.data.url;
-            lastError = data?.error?.message || 'Unknown ImgBB error';
-        } catch (e) { lastError = e.message; }
-    }
-    throw new Error(lastError || 'ImgBB upload failed');
-}
-
-async function mbSaveManualMcq() {
-    const question = document.getElementById('mbMcqQuestion').value.trim();
-    if (!question) { mbToast('❌ প্রশ্ন লিখুন'); return; }
-    const count = mbMcq.currentType === 'true_false' ? 2 : 4;
-    const options = [];
-    for (let i = 0; i < count; i++) { options.push((document.getElementById('mbOpt_' + i)?.value || '').trim()); }
-    if (options.some(o => !o)) { mbToast('❌ সব বিকল্প পূরণ করুন'); return; }
-    if (mbMcq._selectedAnswer === null || mbMcq._selectedAnswer === undefined) { mbToast('❌ সঠিক উত্তর বাছুন'); return; }
-
-    const mcqObj = {
-        question, options,
-        answer_index: mbMcq._selectedAnswer,
-        explanation: document.getElementById('mbMcqExplanation').value.trim() || '',
-        image_url: mbMcq._currentImageUrl || null
-    };
-
-    if (mbMcq.editingIndex !== null) {
-        mbMcq.pageQuestions[mbMcq.editingIndex] = mcqObj;
-    } else {
-        mbMcq.pageQuestions.push(mcqObj);
-    }
-    await mbSavePageQuestionsToDb();
-    mbToast(mbMcq.editingIndex !== null ? '✓ প্রশ্ন আপডেট হয়েছে' : '✓ প্রশ্ন যোগ হয়েছে');
-    mbCancelEdit();
-    mbRenderManualList();
-    mbUpdatePageCountLabel();
-}
-
-/* ---------- CSV IMPORT ---------- */
-function mbParseCsv(text) {
-    const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
-    if (!lines.length) return [];
-    const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
-    return lines.slice(1).map(line => {
-        const fields = []; let inQ = false, cur = '';
-        for (const ch of line) {
-            if (ch === '"') inQ = !inQ;
-            else if (ch === ',' && !inQ) { fields.push(cur.trim()); cur = ''; }
-            else cur += ch;
-        }
-        fields.push(cur.trim());
-        const obj = {};
-        headers.forEach((h, i) => { obj[h] = (fields[i] || '').replace(/^"|"$/g, '').trim(); });
-        return obj;
-    }).filter(r => r.question || r.questions || r.question_text);
-}
-
-function mbCsvFileSelect(e) {
-    const file = e.target.files[0];
-    if (file) mbProcessCsvFile(file);
-}
-
-function mbCsvDragOver(e) { e.preventDefault(); document.getElementById('mbCsvDropZone').style.borderColor = 'var(--accent)'; }
-function mbCsvDragLeave(e) { document.getElementById('mbCsvDropZone').style.borderColor = 'var(--border)'; }
-function mbCsvDrop(e) {
-    e.preventDefault();
-    document.getElementById('mbCsvDropZone').style.borderColor = 'var(--border)';
-    const file = e.dataTransfer.files[0];
-    if (file) mbProcessCsvFile(file);
-}
-
-function mbProcessCsvFile(file) {
-    const reader = new FileReader();
-    reader.onload = ev => {
-        const rows = mbParseCsv(ev.target.result);
-        if (!rows.length) { mbToast('❌ CSV ফাইলে কোনো ডেটা নেই'); return; }
-        mbMcq.csvRows = rows;
-        mbRenderCsvPreview(rows);
-    };
-    reader.readAsText(file, 'UTF-8');
-}
-
-function mbRenderCsvPreview(rows) {
-    const info = document.getElementById('mbCsvPreviewInfo');
-    const tableWrap = document.getElementById('mbCsvPreviewTableWrap');
-    const tbody = document.getElementById('mbCsvPreviewBody');
-    const numToIdx = { '1': 0, '2': 1, '3': 2, '4': 3 };
-    const numLabel = { 0: '১', 1: '২', 2: '৩', 3: '৪' };
-
-    const preview = rows.slice(0, 5);
-    tbody.innerHTML = preview.map((r, i) => {
-        const ansIdx = numToIdx[String(r.answer || '1').trim()] ?? 0;
-        return `<tr style="border-top:1px solid var(--border);">
-            <td style="padding:6px 8px;">${i+1}</td>
-            <td style="padding:6px 8px;max-width:160px;overflow:hidden;text-overflow:ellipsis;">${escMb((r.question||'').slice(0,40))}${(r.question||'').length>40?'...':''}</td>
-            <td style="padding:6px 8px;text-align:center;${ansIdx===0?'color:var(--green);font-weight:700;':''}">${escMb((r.option1||'').slice(0,12))}</td>
-            <td style="padding:6px 8px;text-align:center;${ansIdx===1?'color:var(--green);font-weight:700;':''}">${escMb((r.option2||'').slice(0,12))}</td>
-            <td style="padding:6px 8px;text-align:center;${ansIdx===2?'color:var(--green);font-weight:700;':''}">${escMb((r.option3||'').slice(0,12))}</td>
-            <td style="padding:6px 8px;text-align:center;${ansIdx===3?'color:var(--green);font-weight:700;':''}">${escMb((r.option4||'').slice(0,12))}</td>
-            <td style="padding:6px 8px;text-align:center;font-weight:700;">${numLabel[ansIdx]}</td>
-        </tr>`;
-    }).join('');
-
-    tableWrap.style.display = 'block';
-    info.style.display = 'block';
-    info.textContent = 'মোট ' + rows.length + ' টি প্রশ্ন পাওয়া গেছে' + (rows.length > 5 ? ' (প্রথম ৫টি দেখানো হচ্ছে)' : '') + ' — বর্তমান পেইজ ' + mbMcq.currentPage + ', টাইপ "' + mbMcq.currentType + '"-এ যোগ হবে।';
-    const btn = document.getElementById('mbCsvImportBtn');
-    btn.style.display = 'block';
-    btn.textContent = '📥 ' + rows.length + ' টি প্রশ্ন আমদানি করো';
-}
-
-function mbDownloadCsvTemplate() {
-    const headers = 'question,option1,option2,option3,option4,answer,explanation\n';
-    const example = '"বাংলাদেশের রাজধানীর নাম কি?","ঢাকা","চট্টগ্রাম","সিলেট","রাজশাহী","1","ঢাকা বাংলাদেশের রাজধানী"\n';
-    const blob = new Blob([headers + example], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'mcq-template.csv';
-    document.body.appendChild(a); a.click(); a.remove();
-    URL.revokeObjectURL(url);
-}
-
-async function mbImportCsv() {
-    if (!mbMcq.csvRows.length) return;
-    const numToIdx = { '1': 0, '2': 1, '3': 2, '4': 3 };
-    const imported = mbMcq.csvRows.map(r => ({
-        question: r.question || r.questions || r.question_text || '',
-        options: [r.option1 || '', r.option2 || '', r.option3 || '', r.option4 || ''],
-        answer_index: numToIdx[String(r.answer || '1').trim()] ?? 0,
-        explanation: r.explanation || ''
-    })).filter(q => q.question);
-
-    mbMcq.pageQuestions = mbMcq.pageQuestions.concat(imported);
-    await mbSavePageQuestionsToDb();
-
-    const res = document.getElementById('mbCsvImportResult');
-    res.style.display = 'block';
-    res.textContent = '✅ ' + imported.length + ' টি প্রশ্ন আমদানি সম্পন্ন!';
-    mbMcq.csvRows = [];
-    document.getElementById('mbCsvPreviewInfo').style.display = 'none';
-    document.getElementById('mbCsvPreviewTableWrap').style.display = 'none';
-    document.getElementById('mbCsvImportBtn').style.display = 'none';
-    document.getElementById('mbCsvFileInput').value = '';
-    mbToast(imported.length + ' টি প্রশ্ন আমদানি ✓');
-    mbRenderManualList();
-    mbUpdatePageCountLabel();
-}
-
-/* ---------- AI GENERATE (reuses the exact same model chain as study.html) ---------- */
-let mbKeyUsage = {};
-function mbGetNextGeminiKey() {
-    const today = new Date().toDateString();
-    if (mbKeyUsage._date !== today) mbKeyUsage = { _date: today };
-    let best = null, bestCnt = Infinity;
-    GEMINI_KEYS.forEach(k => { const c = mbKeyUsage[k] || 0; if (c < 1450 && c < bestCnt) { best = k; bestCnt = c; } });
-    if (best) { mbKeyUsage[best] = (mbKeyUsage[best] || 0) + 1; return best; }
-    return GEMINI_KEYS[GEMINI_KEYS.length - 1];
-}
-const MB_VISION_MODELS = [
-    { id: 'gemini25', provider: 'google', model: 'gemini-2.5-flash', key: mbGetNextGeminiKey },
-    { id: 'gemini20', provider: 'google', model: 'gemini-2.0-flash', key: mbGetNextGeminiKey },
-    { id: 'llama90v', provider: 'groq', model: 'llama-3.2-90b-vision-preview', key: () => GROQ_KEY }
-];
-
-function mbMcqPrompt(type, customPrompt, count) {
-    count = count || 5;
-    const typeInstructions = {
-        standard: `সাধারণ মানের ${count}টি বহুনির্বাচনী (৪টি অপশন) প্রশ্ন তৈরি করো।`,
-        true_false: `${count}টি সত্য/মিথ্যা ধরনের প্রশ্ন তৈরি করো (অপশন: "সত্য", "মিথ্যা" — ২টি অপশন)।`,
-        hard: `বিশ্লেষণমূলক ও কঠিন মানের ${count}টি বহুনির্বাচনী (৪টি অপশন) প্রশ্ন তৈরি করো — সরাসরি তথ্য নয়, প্রয়োগ/বিশ্লেষণ ভিত্তিক।`
-    };
-    const instructionLine = (customPrompt && customPrompt.trim()) ? customPrompt.trim() : (typeInstructions[type] || typeInstructions.standard);
-    return `তুমি একজন অভিজ্ঞ HSC শিক্ষক। নিচের বইয়ের পেইজের ছবি দেখে বাংলায় MCQ তৈরি করো।
-
-নিয়ম:
-১. প্রশ্ন, অপশন, ব্যাখ্যা — সব অবশ্যই এই পেইজের ভাষায় (যদি পেইজ বাংলায় হয় তাহলে বাংলায়, ইংরেজিতে হলে ইংরেজিতে) লিখবে।
-২. ${instructionLine}
-৩. প্রতিটি প্রশ্নের সাথে সংক্ষিপ্ত ব্যাখ্যা দিবে।
-৪. শুধুমাত্র এই পেইজের কন্টেন্ট থেকে প্রশ্ন বানাবে, বাইরের তথ্য না। প্লেসহোল্ডার/নমুনা প্রশ্ন বানাবে না।
-
-শুধুমাত্র নিচের JSON ফরম্যাটে উত্তর দিবে, অন্য কোনো লেখা/markdown/backtick ছাড়া:
-{"questions":[{"question":"...","options":["...","...","...","..."],"answer_index":0,"explanation":"..."}]}`;
-}
-
-async function mbCallGoogleVision(model, imageData, type, customPrompt, count) {
-    const key = model.key();
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model.model}:generateContent?key=${key}`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            contents: [{ parts: [
-                { inline_data: { mime_type: imageData.mimeType, data: imageData.base64 } },
-                { text: mbMcqPrompt(type, customPrompt, count) }
-            ] }],
-            generationConfig: { temperature: 0.6, responseMimeType: 'application/json' }
-        })
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
-}
-async function mbCallGroqVision(model, imageData, type, customPrompt, count) {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + model.key(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            model: model.model,
-            messages: [{ role: 'user', content: [
-                { type: 'image_url', image_url: { url: `data:${imageData.mimeType};base64,${imageData.base64}` } },
-                { type: 'text', text: mbMcqPrompt(type, customPrompt, count) }
-            ] }],
-            temperature: 0.6, max_tokens: 2000
-        })
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.choices?.[0]?.message?.content || null;
-}
-function mbParseQuestionsJSON(raw) {
-    try {
-        let clean = raw.trim().replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/, '');
-        const parsed = JSON.parse(clean);
-        const list = parsed.questions || [];
-        return list.filter(q => {
-            if (!q || typeof q !== 'object') return false;
-            const qText = (q.question || '').trim();
-            if (!qText || qText.length < 5) return false;
-            const opts = (q.options || []).map(o => (o || '').trim());
-            return opts.filter(o => o.length > 0).length >= 2;
-        });
-    } catch (e) { return []; }
-}
-async function mbRaceForValidQuestions(promises) {
-    const settled = await Promise.allSettled(promises);
-    for (const r of settled) {
-        if (r.status === 'fulfilled' && r.value) {
-            const parsed = mbParseQuestionsJSON(r.value);
-            if (parsed?.length) return parsed;
-        }
-    }
-    return [];
-}
-async function mbGenerateMCQsFromImage(imageData, type, customPrompt, count) {
-    const group1 = [
-        mbCallGoogleVision(MB_VISION_MODELS[0], imageData, type, customPrompt, count).catch(() => null),
-        mbCallGoogleVision(MB_VISION_MODELS[1], imageData, type, customPrompt, count).catch(() => null)
+async function mbSaveMcq() {
+    const q = document.getElementById('mbQ').value.trim();
+    const opts = [
+        document.getElementById('mbOpt_a').value.trim(),
+        document.getElementById('mbOpt_b').value.trim(),
+        document.getElementById('mbOpt_c').value.trim(),
+        document.getElementById('mbOpt_d').value.trim()
     ];
-    let result = await mbRaceForValidQuestions(group1);
-    if (result?.length) return result;
-    const group2 = [mbCallGroqVision(MB_VISION_MODELS[2], imageData, type, customPrompt, count).catch(() => null)];
-    result = await mbRaceForValidQuestions(group2);
-    return result || [];
+    const ans = document.getElementById('mbAns').value;
+    const ansIdx = ['A','B','C','D'].indexOf(ans);
+    if (!q || opts.some(o => !o)) return mbToast('সব তথ্য দিন');
+
+    const newMcq = { question: q, options: opts, answer_index: ansIdx };
+    allMcqs.push(newMcq);
+    await mbUpdateDb();
+    document.getElementById('mbQ').value = '';
+    opts.forEach((_, i) => document.getElementById('mbOpt_' + ['a','b','c','d'][i]).value = '');
+    renderMcqs();
+    mbLoadPageSummary();
 }
 
-let mbAiPreviewData = [];
-let mbAiPreviewIsMixed = false; // tracks whether the current preview spans multiple types (each item tagged with _mbType)
-
-async function mbAiGenerate() {
-    const spin = document.getElementById('mbAiSpinner');
-    const genBtn = document.getElementById('mbAiGenBtn');
-    const resultWrap = document.getElementById('mbAiPreviewWrap');
-    spin.style.display = 'block'; genBtn.disabled = true; resultWrap.style.display = 'none'; mbAiPreviewData = [];
-
-    const count = Math.min(20, Math.max(1, parseInt(document.getElementById('mbAiCount')?.value) || 5));
-    const mode = document.getElementById('mbAiTypeSelect')?.value || 'current';
-    mbAiPreviewIsMixed = (mode === 'mixed');
-
-    try {
-        const imageData = await mbGetPageImageBase64();
-        if (!imageData) throw new Error('পেইজের ছবি পাওয়া যায়নি');
-        const customPrompt = document.getElementById('mbAiPrompt')?.value.trim() || '';
-
-        let questions = [];
-        if (mode === 'mixed') {
-            // Mixed: generate for all 3 types, splitting the requested count roughly evenly,
-            // tagging each question with its type so it saves into the right book_page_mcqs row.
-            const types = ['standard', 'true_false', 'hard'];
-            const perType = Math.max(1, Math.round(count / types.length));
-            for (const t of types) {
-                const qs = await mbGenerateMCQsFromImage(imageData, t, '', perType); // mixed mode ignores custom prompt (it's per-type)
-                qs.forEach(q => q._mbType = t);
-                questions = questions.concat(qs);
-            }
-        } else {
-            questions = await mbGenerateMCQsFromImage(imageData, mbMcq.currentType, customPrompt, count);
-            questions.forEach(q => q._mbType = mbMcq.currentType);
-        }
-
-        if (!questions.length) throw new Error('AI কোনো বৈধ MCQ তৈরি করতে পারেনি। আবার চেষ্টা করুন।');
-        mbAiPreviewData = questions;
-        mbRenderAiPreview(questions);
-        mbToast(questions.length + ' টি MCQ তৈরি হয়েছে ✓');
-    } catch (e) {
-        mbToast('❌ AI ত্রুটি: ' + e.message);
-    } finally {
-        spin.style.display = 'none'; genBtn.disabled = false;
-    }
+async function mbDeleteMcq(idx) {
+    if (!confirm('মুছে ফেলবেন?')) return;
+    allMcqs.splice(idx, 1);
+    await mbUpdateDb();
+    renderMcqs();
+    mbLoadPageSummary();
 }
 
-/* ---------- SAVE/LOAD CUSTOM AI PROMPT (per-PDF, per-type) ---------- */
-async function mbSaveAiPrompt() {
-    const prompt = document.getElementById('mbAiPrompt')?.value.trim();
-    if (!prompt) { mbToast('❌ প্রম্পট লিখুন'); return; }
-    const btn = document.getElementById('mbSavePromptBtn');
-    btn.disabled = true;
+async function mbUpdateDb() {
     try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/book_ai_prompts`, {
+        await api('/book_page_mcqs', {
             method: 'POST',
-            headers: {
-                apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY,
-                'Content-Type': 'application/json',
-                'Prefer': 'resolution=merge-duplicates,return=minimal'
-            },
-            body: JSON.stringify({ pdf_id: mbMcq.pdfId, mcq_type: mbMcq.currentType, prompt })
+            headers: { 'Prefer': 'resolution=merge-duplicates' },
+            body: JSON.stringify({
+                pdf_id: activePdfId,
+                page_number: currentPage,
+                mcq_type: selTypeKey,
+                questions_json: JSON.stringify(allMcqs)
+            })
         });
-        if (!res.ok) throw new Error(await res.text());
-        const status = document.getElementById('mbPromptSaveStatus');
-        status.textContent = '✅ প্রম্পট সেভ হয়েছে (' + mbMcq.currentType + ')';
-        status.style.display = 'block';
-        setTimeout(() => status.style.display = 'none', 3000);
-        mbToast('✓ প্রম্পট সেভ হয়েছে');
-    } catch (e) {
-        mbToast('❌ সেভ ব্যর্থ');
-    } finally { btn.disabled = false; }
+        mbToast('সংরক্ষিত ✓', 'success');
+    } catch { mbToast('সংরক্ষণ ব্যর্থ', 'error'); }
 }
 
-async function mbLoadAiPrompt() {
-    try {
-        const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/book_ai_prompts?pdf_id=eq.${mbMcq.pdfId}&mcq_type=eq.${mbMcq.currentType}&select=prompt`);
-        if (rows?.length && rows[0].prompt) {
-            document.getElementById('mbAiPrompt').value = rows[0].prompt;
-            mbToast('📂 সেভ করা প্রম্পট লোড হয়েছে (' + mbMcq.currentType + ')');
-        } else {
-            mbToast('এই ধরনের জন্য কোনো সেভ করা প্রম্পট নেই');
-        }
-    } catch (e) { mbToast('❌ লোড ব্যর্থ'); }
-}
-
-const MB_TYPE_LABELS = { standard: '📚 Standard', true_false: '✅ সত্য/মিথ্যা', hard: '🔥 Hard' };
-
-function mbRenderAiPreview(qs) {
-    document.getElementById('mbAiResultHeader').textContent = 'AI তৈরি করেছে ' + qs.length + ' টি প্রশ্ন (সম্পাদনা করতে পারবেন)';
-    document.getElementById('mbAiPreviewList').innerHTML = qs.map((q, idx) => `
-        <div style="border:1px solid var(--border);border-radius:8px;padding:8px;margin-bottom:6px;">
-            ${mbAiPreviewIsMixed ? `<div style="font-size:9.5px;color:var(--accent);font-weight:700;margin-bottom:4px;">${MB_TYPE_LABELS[q._mbType] || q._mbType}</div>` : ''}
-            <textarea id="mbAiQ_${idx}" rows="2" style="width:100%;margin-bottom:6px;font-size:12px;">${escMb(q.question)}</textarea>
-            ${(q.options||[]).map((o,oi)=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-                <span style="font-size:10px;width:16px;color:${oi===q.answer_index?'var(--green)':'var(--text2)'};">${oi===q.answer_index?'✅':'◽'}</span>
-                <input id="mbAiOpt_${idx}_${oi}" value="${escMb(o)}" style="flex:1;font-size:11px;padding:5px;">
-            </div>`).join('')}
-            <select id="mbAiAns_${idx}" style="font-size:10.5px;padding:4px;margin-top:4px;">
-                ${(q.options||[]).map((o,oi)=>`<option value="${oi}" ${oi===q.answer_index?'selected':''}>সঠিক: ${oi+1}) ${escMb(o).slice(0,20)}</option>`).join('')}
-            </select>
-        </div>`).join('');
-    document.getElementById('mbAiPreviewWrap').style.display = 'block';
-}
-
-function mbDiscardAi() {
-    mbAiPreviewData = [];
-    mbAiPreviewIsMixed = false;
-    document.getElementById('mbAiPreviewWrap').style.display = 'none';
-    document.getElementById('mbAiPreviewList').innerHTML = '';
-}
-
-async function mbSaveAiMcqs() {
-    if (!mbAiPreviewData.length) return;
-    const finalQs = mbAiPreviewData.map((q, idx) => {
-        const options = (q.options || []).map((_, oi) => document.getElementById(`mbAiOpt_${idx}_${oi}`)?.value.trim() || '');
-        return {
-            question: document.getElementById(`mbAiQ_${idx}`)?.value.trim() || q.question,
-            options,
-            answer_index: parseInt(document.getElementById(`mbAiAns_${idx}`)?.value) || 0,
-            explanation: q.explanation || '',
-            _mbType: q._mbType || mbMcq.currentType
-        };
-    });
-
-    if (mbAiPreviewIsMixed) {
-        // Group by type and save each group into its own book_page_mcqs row (pdf_id+page+type),
-        // without disturbing the in-memory list for types the admin isn't currently viewing.
-        const byType = { standard: [], true_false: [], hard: [] };
-        finalQs.forEach(q => { const { _mbType, ...clean } = q; (byType[_mbType] || byType.standard).push(clean); });
-        const originalType = mbMcq.currentType;
-        let totalSaved = 0;
-        for (const t of Object.keys(byType)) {
-            if (!byType[t].length) continue;
-            if (t === originalType) {
-                mbMcq.pageQuestions = mbMcq.pageQuestions.concat(byType[t]);
-                await mbSavePageQuestionsToDb();
-            } else {
-                // Fetch this type's existing questions for the same page, append, save, without
-                // touching mbMcq.currentType/pageQuestions (which belong to the type being viewed).
-                let existing = [];
-                try {
-                    const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/book_page_mcqs?pdf_id=eq.${mbMcq.pdfId}&page_number=eq.${mbMcq.currentPage}&mcq_type=eq.${t}&select=questions_json`);
-                    if (rows?.length) existing = JSON.parse(rows[0].questions_json) || [];
-                } catch (_) {}
-                const merged = existing.concat(byType[t]);
-                await fetch(`${SUPABASE_URL}/rest/v1/book_page_mcqs`, {
-                    method: 'POST',
-                    headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-                    body: JSON.stringify({ pdf_id: mbMcq.pdfId, page_number: mbMcq.currentPage, mcq_type: t, questions_json: JSON.stringify(merged) })
-                });
-            }
-            totalSaved += byType[t].length;
-        }
-        mbToast('✓ ' + totalSaved + ' টি প্রশ্ন সংরক্ষিত হয়েছে (Mixed: Standard/সত্য-মিথ্যা/Hard)');
-    } else {
-        mbMcq.pageQuestions = mbMcq.pageQuestions.concat(finalQs.map(({ _mbType, ...clean }) => clean));
-        await mbSavePageQuestionsToDb();
-        mbToast('✓ ' + finalQs.length + ' টি প্রশ্ন সংরক্ষিত হয়েছে');
+/* ── INIT ── */
+window.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('secMulboi')) {
+        loadSubjects();
+        mbLoadAllPdfs();
     }
-
-    mbDiscardAi();
-    mbRenderManualList();
-    mbUpdatePageCountLabel();
-    if (mbMcq.gridOpen) mbLoadPageGrid();
-}
-
-/* ══════════════════════════════════════════════════════════
-   AtlasPro-style CASCADE SELECT — PDF & MCQ Management  v2
-   All IDs use mb2 prefix. No existing function is modified.
-   These are purely additive — appended to preserve existing code.
-══════════════════════════════════════════════════════════ */
-
-/* ── state ── */
-let mb2State = { subjectId: null, chapterId: null, pdfFile: null, uploadMode: 'file' };
-
-/* ═══ Subjects ═══ */
-async function mb2LoadSubjects() {
-    const sel = document.getElementById('mb2SelSubject');
-    if (!sel) return;
-    const prev = sel.value;
-    sel.innerHTML = '<option value="">-- বিষয় বেছে নিন --</option>';
-    try {
-        const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/book_subjects?select=id,name,icon&order=sort_order.asc,created_at.asc`);
-        (rows || []).forEach(s => {
-            const o = document.createElement('option');
-            o.value = s.id; o.textContent = (s.icon || '') + ' ' + s.name;
-            sel.appendChild(o);
-        });
-        if (prev) sel.value = prev;
-    } catch { mbToast('বিষয় লোড ব্যর্থ'); }
-}
-
-function mb2ToggleNewSubject() {
-    const box = document.getElementById('mb2NewSubjectBox');
-    if (!box) return;
-    box.style.display = box.style.display === 'none' ? 'block' : 'none';
-    if (box.style.display === 'block') document.getElementById('mb2NewSubjectName')?.focus();
-}
-
-async function mb2CreateSubject() {
-    const name = (document.getElementById('mb2NewSubjectName')?.value || '').trim();
-    const icon = (document.getElementById('mb2NewSubjectIcon')?.value || '').trim() || '📚';
-    if (!name) return mbToast('বিষয়ের নাম লিখুন');
-    try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/book_subjects`, {
-            method: 'POST',
-            headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
-            body: JSON.stringify({ name, icon, description: '', color_idx: 0 })
-        });
-        if (!res.ok) throw new Error(await res.text());
-        const created = await res.json();
-        mbToast('✓ বিষয় যোগ হয়েছে');
-        document.getElementById('mb2NewSubjectName').value = '';
-        document.getElementById('mb2NewSubjectIcon').value = '';
-        document.getElementById('mb2NewSubjectBox').style.display = 'none';
-        await mb2LoadSubjects();
-        const id = (Array.isArray(created) ? created[0] : created)?.id;
-        if (id) { document.getElementById('mb2SelSubject').value = String(id); mb2State.subjectId = String(id); await mb2OnSubjectChange(); }
-        if (typeof loadMulboiSubjects === 'function') loadMulboiSubjects();
-    } catch (e) { mbToast('সমস্যা: ' + e.message.slice(0, 80)); }
-}
-
-/* ═══ Chapters ═══ */
-async function mb2OnSubjectChange() {
-    const sid = document.getElementById('mb2SelSubject').value;
-    mb2State.subjectId = sid || null;
-    mb2State.chapterId = null;
-    const chSel = document.getElementById('mb2SelChapter');
-    chSel.innerHTML = '<option value="">-- অধ্যায় বেছে নিন --</option>';
-    chSel.disabled = true;
-    const btn = document.getElementById('mb2NewChapterBtn');
-    if (btn) btn.style.display = 'none';
-    mb2Hide();
-    if (!sid) return;
-    try {
-        const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/book_chapters?subject_id=eq.${sid}&select=id,name&order=sort_order.asc,created_at.asc`);
-        (rows || []).forEach(ch => {
-            const o = document.createElement('option');
-            o.value = ch.id; o.textContent = ch.name;
-            chSel.appendChild(o);
-        });
-        chSel.disabled = false;
-        if (btn) btn.style.display = 'inline-block';
-    } catch { mbToast('অধ্যায় লোড ব্যর্থ'); }
-}
-
-function mb2OnChapterChange() {
-    const cid = document.getElementById('mb2SelChapter').value;
-    mb2State.chapterId = cid || null;
-    if (!cid) { mb2Hide(); return; }
-    mb2Show();
-    mb2LoadChapterPdfs();
-}
-
-function mb2Hide() {
-    const uf = document.getElementById('mb2UploadForm');
-    const lc = document.getElementById('mb2PdfListCard');
-    if (uf) uf.style.display = 'none';
-    if (lc) lc.style.display = 'none';
-}
-function mb2Show() {
-    const uf = document.getElementById('mb2UploadForm');
-    const lc = document.getElementById('mb2PdfListCard');
-    if (uf) uf.style.display = 'block';
-    if (lc) lc.style.display = 'block';
-}
-
-function mb2ToggleNewChapter() {
-    const box = document.getElementById('mb2NewChapterBox');
-    if (!box) return;
-    box.style.display = box.style.display === 'none' ? 'block' : 'none';
-    if (box.style.display === 'block') document.getElementById('mb2NewChapterName')?.focus();
-}
-
-async function mb2CreateChapter() {
-    if (!mb2State.subjectId) return mbToast('আগে বিষয় নির্বাচন করুন');
-    const name = (document.getElementById('mb2NewChapterName')?.value || '').trim();
-    if (!name) return mbToast('অধ্যায়ের নাম লিখুন');
-    try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/book_chapters`, {
-            method: 'POST',
-            headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
-            body: JSON.stringify({ subject_id: parseInt(mb2State.subjectId), name })
-        });
-        if (!res.ok) throw new Error(await res.text());
-        const created = await res.json();
-        mbToast('✓ অধ্যায় যোগ হয়েছে');
-        document.getElementById('mb2NewChapterName').value = '';
-        document.getElementById('mb2NewChapterBox').style.display = 'none';
-        const savedSub = mb2State.subjectId;
-        await mb2OnSubjectChange();
-        document.getElementById('mb2SelSubject').value = savedSub;
-        const id = (Array.isArray(created) ? created[0] : created)?.id;
-        if (id) {
-            document.getElementById('mb2SelChapter').value = String(id);
-            mb2State.chapterId = String(id);
-            mb2Show(); mb2LoadChapterPdfs();
-        }
-    } catch (e) { mbToast('ত্রুটি: ' + e.message.slice(0, 80)); }
-}
-
-/* ═══ Drop-zone ═══ */
-function mb2DzOver(e) {
-    e.preventDefault();
-    const dz = document.getElementById('mb2DropZone');
-    if (dz) { dz.style.borderColor = 'var(--green)'; dz.style.background = 'rgba(16,185,129,.07)'; }
-}
-function mb2DzLeave() {
-    const dz = document.getElementById('mb2DropZone');
-    if (dz) { dz.style.borderColor = 'var(--border)'; dz.style.background = 'var(--hover)'; }
-}
-function mb2DzDrop(e) {
-    e.preventDefault(); mb2DzLeave();
-    const f = e.dataTransfer.files[0];
-    if (f?.type === 'application/pdf') mb2SetFile(f);
-    else mbToast('শুধু PDF ফাইল গ্রহণযোগ্য');
-}
-function mb2OnFileSelect(e) { if (e.target.files[0]) mb2SetFile(e.target.files[0]); }
-function mb2SetFile(f) {
-    mb2State.pdfFile = f;
-    const fc = document.getElementById('mb2FileChosen');
-    if (fc) { fc.textContent = '✓ ' + f.name; fc.style.display = 'block'; }
-    const titleEl = document.getElementById('mb2PdfTitle');
-    if (titleEl && !titleEl.value) titleEl.value = f.name.replace(/\.pdf$/i, '');
-}
-
-/* ═══ Mode toggle (file / url) ═══ */
-function mb2SetMode(mode) {
-    mb2State.uploadMode = mode;
-    const urlBox = document.getElementById('mb2UrlBox');
-    const dz    = document.getElementById('mb2DropZone');
-    const fc    = document.getElementById('mb2FileChosen');
-    const tFile = document.getElementById('mb2TabFile');
-    const tUrl  = document.getElementById('mb2TabUrl');
-    if (urlBox) urlBox.style.display = mode === 'url' ? 'block' : 'none';
-    if (dz) dz.style.display = mode === 'file' ? 'block' : 'none';
-    if (fc) fc.style.display = (mode === 'file' && mb2State.pdfFile) ? 'block' : 'none';
-    if (tFile) tFile.className = 'btn btn-sm' + (mode === 'file' ? '' : ' btn-outline');
-    if (tUrl)  tUrl.className  = 'btn btn-sm' + (mode === 'url'  ? '' : ' btn-outline');
-}
-
-/* ═══ Upload PDF ═══ */
-async function mb2UploadPdf() {
-    if (!mb2State.chapterId) return mbToast('অধ্যায় নির্বাচন করুন');
-    const title = (document.getElementById('mb2PdfTitle')?.value || '').trim();
-    if (!title) return mbToast('PDF শিরোনাম দিন');
-    const isPremium = document.getElementById('mb2PdfPremium')?.checked || false;
-    const btn       = document.getElementById('mb2UploadBtn');
-    const progEl    = document.getElementById('mb2UploadProgress');
-    const barEl     = document.getElementById('mb2UploadBar');
-    const labelEl   = document.getElementById('mb2UploadLabel');
-    const errEl     = document.getElementById('mb2UploadError');
-
-    if (btn) { btn.disabled = true; btn.textContent = '⏳ সংরক্ষণ হচ্ছে...'; }
-    if (progEl) progEl.style.display = 'block';
-    if (errEl) errEl.style.display = 'none';
-
-    let publicUrl = null, pageCount = null;
-
-    try {
-        if (mb2State.uploadMode === 'url') {
-            publicUrl = (document.getElementById('mb2PdfUrl')?.value || '').trim();
-            if (!publicUrl) throw new Error('PDF URL দিন');
-            if (barEl) barEl.style.width = '100%';
-        } else {
-            const f = mb2State.pdfFile;
-            if (!f) throw new Error('PDF ফাইল নির্বাচন করুন');
-            if (f.size > 500 * 1024 * 1024) throw new Error('ফাইল ৫০০ MB এর বেশি হতে পারবে না');
-
-            if (typeof detectMbPageCount === 'function') {
-                if (labelEl) labelEl.textContent = 'পেইজ সংখ্যা শনাক্ত হচ্ছে...';
-                pageCount = await detectMbPageCount(f);
-            }
-
-            if (labelEl) labelEl.textContent = 'আপলোড হচ্ছে...';
-            const safeName    = Date.now() + '_' + f.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-            const storagePath = 'chapter_' + mb2State.chapterId + '/' + safeName;
-
-            publicUrl = await new Promise((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-                xhr.open('POST', `${SUPABASE_URL}/storage/v1/object/pdfs/${storagePath}`);
-                xhr.setRequestHeader('apikey', SUPABASE_KEY);
-                xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_KEY);
-                xhr.setRequestHeader('Content-Type', 'application/pdf');
-                xhr.upload.onprogress = ev => {
-                    if (ev.lengthComputable && barEl) {
-                        const pct = Math.round(ev.loaded / ev.total * 100);
-                        barEl.style.width = pct + '%';
-                        if (labelEl) labelEl.textContent = pct + '% আপলোড হয়েছে';
-                    }
-                };
-                xhr.onload = () => {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        resolve(`${SUPABASE_URL}/storage/v1/object/public/pdfs/${storagePath}`);
-                    } else {
-                        let msg = xhr.responseText || '';
-                        try { const j = JSON.parse(msg); msg = j.message || j.error || msg; } catch (_) {}
-                        if (xhr.status === 400 || xhr.status === 403 || xhr.status === 404) {
-                            reject(new Error('STORAGE_BUCKET_MISSING:' + msg));
-                        } else {
-                            reject(new Error('Storage ' + xhr.status + ': ' + msg.slice(0, 120)));
-                        }
-                    }
-                };
-                xhr.onerror = () => reject(new Error('নেটওয়ার্ক ত্রুটি'));
-                xhr.send(f);
-            });
-        }
-
-        /* DB insert */
-        const ins = await fetch(`${SUPABASE_URL}/rest/v1/book_pdfs`, {
-            method: 'POST',
-            headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-            body: JSON.stringify({ chapter_id: parseInt(mb2State.chapterId), title, file_url: publicUrl, page_count: pageCount || null, is_premium: isPremium })
-        });
-        if (!ins.ok) {
-            const t = await ins.text().catch(() => '');
-            throw new Error('ডেটা সংরক্ষণ ব্যর্থ (' + ins.status + '): ' + t.slice(0, 80));
-        }
-
-        if (barEl) barEl.style.width = '100%';
-        mbToast('✅ PDF সংরক্ষণ সম্পন্ন');
-
-        /* reset form */
-        mb2State.pdfFile = null;
-        ['mb2PdfTitle','mb2PdfUrl'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-        ['mb2FileChosen','mb2UploadProgress'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
-        const fi = document.getElementById('mb2PdfFileInput'); if (fi) fi.value = '';
-        const pp = document.getElementById('mb2PdfPremium'); if (pp) pp.checked = false;
-
-        mb2LoadChapterPdfs();
-        if (typeof mbLoadAllPdfs === 'function') mbLoadAllPdfs();
-
-    } catch (e) {
-        const isBucketMissing = e.message.startsWith('STORAGE_BUCKET_MISSING');
-        const display = isBucketMissing
-            ? '⚠️ Supabase Storage bucket "pdfs" নেই।\n\nসমাধান:\n1. Supabase Dashboard → Storage → New Bucket\n2. Name: pdfs | Public: ON\n3. আবার চেষ্টা করুন — অথবা 🔗 URL মোড ব্যবহার করুন।'
-            : '❌ ' + e.message;
-        if (errEl) {
-            errEl.style.display = 'block';
-            errEl.style.whiteSpace = 'pre-line';
-            errEl.textContent = display;
-        } else {
-            mbToast(isBucketMissing ? '⚠️ Storage bucket নেই — URL মোড ব্যবহার করুন' : e.message);
-        }
-    } finally {
-        if (btn) { btn.disabled = false; btn.textContent = '💾 সংরক্ষণ করো'; }
-        setTimeout(() => { if (progEl && progEl.style.display !== 'none') progEl.style.display = 'none'; }, 2000);
-    }
-}
-
-/* ═══ Chapter PDF list ═══ */
-async function mb2LoadChapterPdfs() {
-    if (!mb2State.chapterId) return;
-    const listEl = document.getElementById('mb2ChapterPdfList');
-    if (!listEl) return;
-    const ctxEl = document.getElementById('mb2PdfListContext');
-
-    /* context label */
-    if (ctxEl) {
-        const subSel = document.getElementById('mb2SelSubject');
-        const chSel  = document.getElementById('mb2SelChapter');
-        const subTxt = subSel?.options[subSel.selectedIndex]?.text || '';
-        const chTxt  = chSel?.options[chSel.selectedIndex]?.text  || '';
-        ctxEl.textContent = subTxt && chTxt ? subTxt + ' › ' + chTxt : '';
-    }
-
-    listEl.innerHTML = '<p style="text-align:center;padding:14px;font-size:12px;color:var(--text2);">লোড হচ্ছে...</p>';
-    try {
-        const pdfs = await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdfs?chapter_id=eq.${mb2State.chapterId}&select=*&order=sort_order.asc,created_at.asc`);
-        if (!pdfs?.length) {
-            listEl.innerHTML = '<div style="text-align:center;padding:20px;"><div style="font-size:28px;margin-bottom:8px;">📄</div><div style="font-size:12px;color:var(--text2);">কোনো PDF নেই — উপরে যোগ করুন</div></div>';
-            return;
-        }
-        listEl.innerHTML = pdfs.map(p => {
-            const st = escMb(p.title).replace(/'/g, "\\'");
-            const su = (p.file_url || '').replace(/'/g, "\\'");
-            return `<div class="pdf-card">
-                <div class="pdf-card-top">
-                    <div class="pdf-card-icon">📕</div>
-                    <div class="pdf-card-info">
-                        <div class="pdf-card-title">${escMb(p.title)}</div>
-                        <div class="pdf-card-meta">
-                            ${p.page_count ? p.page_count + ' পৃষ্ঠা · ' : ''}${p.is_premium ? '⭐ Premium' : '🆓 Free'}
-                        </div>
-                    </div>
-                    <div class="pdf-card-actions">
-                        <button class="act-btn act-edit" onclick="openMbMcqPanel('${p.id}','${st}',${p.page_count||0},'${su}')" title="MCQ ব্যবস্থাপনা">❓</button>
-                        <button class="act-btn" onclick="mb2TogglePremium('${p.id}',${!p.is_premium})" title="${p.is_premium ? 'ফ্রি করুন' : 'প্রিমিয়াম করুন'}">${p.is_premium ? '⭐' : '🆓'}</button>
-                        <button class="act-btn act-delete" onclick="mb2DeletePdf('${p.id}','${st}')" title="মুছে ফেলুন">🗑️</button>
-                    </div>
-                </div>
-            </div>`;
-        }).join('');
-    } catch {
-        listEl.innerHTML = '<p style="color:var(--red);text-align:center;padding:12px;font-size:12px;">লোড এরর</p>';
-    }
-}
-
-async function mb2TogglePremium(id, val) {
-    try {
-        const r = await fetch(`${SUPABASE_URL}/rest/v1/book_pdfs?id=eq.${id}`, {
-            method: 'PATCH',
-            headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-            body: JSON.stringify({ is_premium: val })
-        });
-        if (!r.ok) throw new Error();
-        mbToast(val ? '⭐ Premium করা হয়েছে' : '🆓 Free করা হয়েছে');
-        mb2LoadChapterPdfs();
-        if (typeof mbLoadAllPdfs === 'function') mbLoadAllPdfs();
-    } catch { mbToast('পরিবর্তন ব্যর্থ'); }
-}
-
-async function mb2DeletePdf(id, title) {
-    if (!confirm('"' + title + '" মুছবে?\nএর সব MCQ ডেটাও মুছে যাবে।')) return;
-    try {
-        const r = await fetch(`${SUPABASE_URL}/rest/v1/book_pdfs?id=eq.${id}`, {
-            method: 'DELETE',
-            headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }
-        });
-        if (!r.ok) throw new Error();
-        mbToast('🗑️ PDF মুছে গেছে');
-        mb2LoadChapterPdfs();
-        if (typeof mbLoadAllPdfs === 'function') mbLoadAllPdfs();
-    } catch { mbToast('মুছতে ব্যর্থ'); }
-}
-
-
-
-/* ═══ Auto-init: wrap loadMulboiSubjects to also call mb2LoadSubjects ═══ */
-(function mb2PatchLoader() {
-    const orig = window.loadMulboiSubjects;
-    if (typeof orig !== 'function') { setTimeout(mb2PatchLoader, 200); return; }
-    window.loadMulboiSubjects = async function () {
-        const r = orig.apply(this, arguments);
-        mb2LoadSubjects();
-        return r;
-    };
-})();
-
+});
