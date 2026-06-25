@@ -133,16 +133,54 @@ function mbInjectStyles() {
     const style = document.createElement('style');
     style.id = 'mbMcqStyles';
     style.textContent = `
-        #mbMcqOverlay input, #mbMcqOverlay textarea, #mbMcqOverlay select {
-            padding:9px 11px;border:1px solid var(--border);border-radius:8px;
-            background:var(--bg);color:var(--text);font-size:13px;font-family:inherit;
-            outline:none;transition:all .2s;width:100%;box-sizing:border-box;
+        #mbMcqOverlay .type-selector { display: flex; gap: 8px; margin-bottom: 14px; }
+        #mbMcqOverlay .type-opt {
+            flex: 1; padding: 8px 6px; border-radius: var(--radius-sm);
+            border: 1.5px solid var(--border); background: var(--bg2);
+            text-align: center; font-size: 11px; font-weight: 700;
+            cursor: pointer; transition: all 0.2s; color: var(--text3);
+            font-family: inherit;
         }
-        #mbMcqOverlay input:focus, #mbMcqOverlay textarea:focus, #mbMcqOverlay select:focus {
-            border-color:var(--accent);
+        #mbMcqOverlay .type-opt.selected {
+            background: rgba(108,99,255,0.12); border-color: var(--primary); color: #9C8BFF;
         }
-        #mbMcqOverlay input[type="file"] { padding:7px; }
-        #mbMcqOverlay input[type="number"] { width:60px; }
+        #mbMcqOverlay .tab-btn {
+            flex: 1; padding: 11px 6px; text-align: center;
+            font-size: 12px; font-weight: 700; cursor: pointer;
+            background: transparent; color: var(--text3);
+            border: none; border-right: 1px solid var(--border);
+            font-family: inherit; transition: all 0.2s; white-space: nowrap;
+        }
+        #mbMcqOverlay .tab-btn:last-child { border-right: none; }
+        #mbMcqOverlay .tab-btn.active { background: var(--primary); color: white; }
+        #mbMcqOverlay .option-badge {
+            width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%;
+            background: rgba(108,99,255,0.12); border: 1.5px solid rgba(108,99,255,0.3);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 700; color: #9C8BFF;
+            cursor: pointer; transition: all 0.2s;
+        }
+        #mbMcqOverlay .option-badge.correct-sel {
+            background: var(--green); border-color: var(--green); color: white;
+        }
+        #mbMcqOverlay .mcq-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius); overflow: hidden; transition: border-color 0.2s;
+            margin-bottom: 10px;
+        }
+        #mbMcqOverlay .mcq-num {
+            width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%;
+            background: rgba(108,99,255,0.12); border: 1px solid rgba(108,99,255,0.3);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: 700; color: #9C8BFF; margin-top: 2px;
+        }
+        #mbMcqOverlay .type-badge {
+            font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+            text-transform: uppercase;
+        }
+        #mbMcqOverlay .badge-standard { background: rgba(108,99,255,0.1); color: #9C8BFF; }
+        #mbMcqOverlay .badge-true_false { background: rgba(16,185,129,0.1); color: var(--green); }
+        #mbMcqOverlay .badge-hard { background: rgba(239,68,68,0.1); color: var(--red); }
     `;
     document.head.appendChild(style);
 }
@@ -173,20 +211,20 @@ function mbBuildMcqPanelDom() {
                 <span class="page-nav-count" id="mbMcqPageCount">০ টি MCQ</span>
             </div>
 
-            <div id="mbPageGridWrap" style="display:none;background:var(--hover);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:14px;max-height:160px;overflow-y:auto;">
+            <div id="mbPageGridWrap" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:14px;max-height:160px;overflow-y:auto;">
                 <div id="mbPageGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:6px;"></div>
             </div>
 
-            <div class="type-selector-alt">
-                <div class="type-opt-alt selected" id="mbTypeBtn_standard" onclick="mbSwitchType('standard')">📚 Standard</div>
-                <div class="type-opt-alt" id="mbTypeBtn_true_false" onclick="mbSwitchType('true_false')">✅ True-False</div>
-                <div class="type-opt-alt" id="mbTypeBtn_hard" onclick="mbSwitchType('hard')">🔥 Hard</div>
+            <div class="type-selector">
+                <div class="type-opt selected" id="mbTypeBtn_standard" onclick="mbSwitchType('standard')">📚 Standard</div>
+                <div class="type-opt" id="mbTypeBtn_true_false" onclick="mbSwitchType('true_false')">✅ True-False</div>
+                <div class="type-opt" id="mbTypeBtn_hard" onclick="mbSwitchType('hard')">🔥 Hard</div>
             </div>
 
             <div class="tab-bar">
-                <button class="tab-btn-alt active" id="mbTabBtn_manual" onclick="mbSwitchTab('manual')">📝 ম্যানুয়াল</button>
-                <button class="tab-btn-alt" id="mbTabBtn_csv" onclick="mbSwitchTab('csv')">📊 CSV</button>
-                <button class="tab-btn-alt" id="mbTabBtn_ai" onclick="mbSwitchTab('ai')">🤖 AI</button>
+                <button class="tab-btn active" id="mbTabBtn_manual" onclick="mbSwitchTab('manual')">📝 ম্যানুয়াল</button>
+                <button class="tab-btn" id="mbTabBtn_csv" onclick="mbSwitchTab('csv')">📊 CSV</button>
+                <button class="tab-btn" id="mbTabBtn_ai" onclick="mbSwitchTab('ai')">🤖 AI</button>
             </div>
 
             <!-- MANUAL TAB -->
@@ -333,7 +371,7 @@ function mbRenderOptionInputs() {
     const labels = isTF ? ['সত্য','মিথ্যা'] : ['ক','খ','গ','ঘ'];
     wrap.innerHTML = labels.map((lbl, i) => `
         <div style="display:flex;align-items:center;gap:10px;">
-            <div class="option-badge-alt" id="mbAnsBadge_${i}" onclick="mbSelectAnswer(${i})">${lbl}</div>
+            <div class="option-badge" id="mbAnsBadge_${i}" onclick="mbSelectAnswer(${i})">${lbl}</div>
             <input class="form-input" id="mbOpt_${i}" placeholder="${isTF ? lbl : 'বিকল্প ' + lbl}" value="${isTF ? lbl : ''}" ${isTF ? 'readonly' : ''} style="flex:1;">
         </div>`).join('');
     mbMcq._selectedAnswer = null;
@@ -532,32 +570,33 @@ function mbRenderManualList() {
     listEl.innerHTML = mbMcq.pageQuestions.map((q, i) => {
         const isDisabled = q.is_active === false;
         const typeLabels = { standard: 'Standard', true_false: 'True-False', hard: 'Hard' };
-        const typeBadgeClass = `badge-${q.type || mbMcq.currentType}-alt`;
+        const typeKey = q.type || mbMcq.currentType;
+        const typeBadgeClass = `badge-${typeKey}`;
         
         return `
-        <div class="mcq-card-alt" style="${isDisabled ? 'opacity:0.6;' : ''}">
-            <div style="padding:12px 14px; display:flex; align-items:flex-start; gap:10px;">
-                <div class="mcq-num-alt">${i + 1}</div>
-                <div style="flex:1; font-size:13px; line-height:1.5; color:var(--text);">
+        <div class="mcq-card" style="${isDisabled ? 'opacity:0.6;' : ''}">
+            <div class="mcq-card-header">
+                <div class="mcq-num">${i + 1}</div>
+                <div class="mcq-question">
                     ${escMb(q.question)}
                     ${isDisabled ? ' <span style="font-size:10px;color:var(--red);">(নিষ্ক্রিয়)</span>' : ''}
                 </div>
-                <div style="display:flex; gap:6px; flex-shrink:0;">
+                <div class="mcq-actions">
                     <button class="act-btn act-edit" onclick="mbEditManualMcq(${i})" title="সম্পাদনা">✏️</button>
                     <button class="act-btn act-delete" onclick="mbDeleteManualMcq(${i})" title="মুছে ফেলুন">🗑️</button>
                 </div>
             </div>
             ${q.image_url ? `<div style="padding:0 14px 12px 46px;"><img src="${q.image_url}" style="max-width:100%;border-radius:8px;border:1px solid var(--border);"></div>` : ''}
-            <div style="padding:0 14px 12px 46px; display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+            <div class="mcq-options">
                 ${(q.options || []).map((o, oi) => `
-                    <div class="mcq-opt-alt ${oi === q.answer_index ? 'correct' : ''}">
-                        <div class="opt-key-alt">${['ক', 'খ', 'গ', 'ঘ'][oi] || (oi + 1)}</div>
+                    <div class="mcq-opt ${oi === q.answer_index ? 'correct' : ''}" style="${oi === q.answer_index ? 'border-color:var(--green);background:rgba(16,185,129,0.05);color:var(--green);font-weight:700;' : ''}">
+                        <div style="width:18px;height:18px;border-radius:50%;background:${oi === q.answer_index ? 'var(--green)' : 'var(--border)'};color:${oi === q.answer_index ? '#fff' : 'var(--text3)'};display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">${['ক', 'খ', 'গ', 'ঘ'][oi] || (oi + 1)}</div>
                         <div style="overflow:hidden;text-overflow:ellipsis;">${escMb(o)}</div>
                     </div>
                 `).join('')}
             </div>
             <div style="padding:8px 14px 12px 46px; border-top:1px solid var(--border); display:flex; align-items:center; gap:10px;">
-                <span class="type-badge-alt ${typeBadgeClass}">${typeLabels[q.type || mbMcq.currentType]}</span>
+                <span class="type-badge ${typeBadgeClass}">${typeLabels[typeKey]}</span>
                 <div style="font-size:10px; color:var(--text3); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
                     ${q.explanation ? 'ব্যাখ্যা: ' + escMb(q.explanation) : 'ব্যাখ্যা নেই'}
                 </div>
@@ -565,8 +604,8 @@ function mbRenderManualList() {
                     ${isDisabled ? '👁️‍🗨️' : '👁️'}
                 </button>
                 <div style="display:flex;gap:4px;">
-                    <button onclick="mbMoveMcq(${i},-1)" style="width:20px;height:20px;border-radius:4px;border:1px solid var(--border);background:var(--card);font-size:9px;cursor:pointer;" ${i === 0 ? 'disabled' : ''}>▲</button>
-                    <button onclick="mbMoveMcq(${i},1)" style="width:20px;height:20px;border-radius:4px;border:1px solid var(--border);background:var(--card);font-size:9px;cursor:pointer;" ${i === mbMcq.pageQuestions.length - 1 ? 'disabled' : ''}>▼</button>
+                    <button class="act-btn" style="width:24px;height:24px;font-size:10px;" onclick="mbMoveMcq(${i},-1)" ${i === 0 ? 'disabled' : ''}>▲</button>
+                    <button class="act-btn" style="width:24px;height:24px;font-size:10px;" onclick="mbMoveMcq(${i},1)" ${i === mbMcq.pageQuestions.length - 1 ? 'disabled' : ''}>▼</button>
                 </div>
             </div>
         </div>`;

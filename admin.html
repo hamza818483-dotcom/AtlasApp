@@ -67,6 +67,19 @@
         ══════════════════════════════════════════════ */
         .admin-container { max-width: 860px; margin: 0 auto; }
 
+        /* ── AtlasPro Admin Vars ── */
+        #secMulboi {
+            --primary: #6C63FF;
+            --primary-light: rgba(108,99,255,0.15);
+            --amber: #F59E0B;
+            --radius: 14px;
+            --radius-sm: 8px;
+            --bg2: #12121F;
+        }
+        body.light-mode #secMulboi {
+            --bg2: #E8EAFF;
+        }
+
         /* ── Admin Header  (Flutter: AppBar) ── */
         .admin-header {
             background: linear-gradient(135deg, var(--card), rgba(124,131,255,.06));
@@ -125,9 +138,9 @@
             content: ''; position: absolute;
             top: 0; left: 0; right: 0; height: 3px;
         }
-        .card-purple::before { background: linear-gradient(90deg, var(--accent), #9C8BFF); }
+        .card-purple::before { background: linear-gradient(90deg, var(--primary), #9C8BFF); }
         .card-green::before { background: linear-gradient(90deg, var(--green), #34D399); }
-        .card-amber::before { background: linear-gradient(90deg, var(--yellow), #FCD34D); }
+        .card-amber::before { background: linear-gradient(90deg, var(--amber), #FCD34D); }
         .card-body { padding: 16px; }
         .card-title {
             font-size: 13px; font-weight: 700; margin-bottom: 14px;
@@ -147,7 +160,7 @@
             outline: none; transition: border-color 0.2s; font-family: inherit;
             box-sizing: border-box;
         }
-        .form-select:focus, .form-input:focus, .form-textarea:focus { border-color: var(--accent); }
+        .form-select:focus, .form-input:focus, .form-textarea:focus { border-color: var(--primary); }
         .form-select:disabled { opacity: 0.5; cursor: not-allowed; }
         .form-textarea { resize: vertical; min-height: 76px; line-height: 1.5; }
 
@@ -159,7 +172,7 @@
         .inline-add.show { display: block; }
         .inline-add-row { display: flex; gap: 8px; }
         .link-btn {
-            background: none; border: none; color: var(--accent);
+            background: none; border: none; color: var(--primary);
             font-size: 12px; font-weight: 600; cursor: pointer;
             padding: 6px 0; display: inline-flex; align-items: center;
             gap: 4px; font-family: inherit; text-decoration: none;
@@ -230,7 +243,7 @@
             transition: all 0.2s; flex-shrink: 0;
         }
         .act-btn:hover { transform: scale(1.08); }
-        .act-edit:hover { border-color: var(--accent); background: rgba(124,131,255,0.12); }
+        .act-edit:hover { border-color: var(--primary); background: rgba(108,99,255,0.12); }
         .act-delete:hover { border-color: var(--red); background: rgba(248,81,73,0.1); }
 
         .section-heading {
