@@ -1271,7 +1271,7 @@ async function mb2UploadPdf() {
         } else {
             const f = mb2State.pdfFile;
             if (!f) throw new Error('PDF ফাইল নির্বাচন করুন');
-            if (f.size > 50 * 1024 * 1024) throw new Error('ফাইল ৫০ MB এর বেশি হতে পারবে না');
+            if (f.size > 500 * 1024 * 1024) throw new Error('ফাইল ৫০০ MB এর বেশি হতে পারবে না');
 
             if (typeof detectMbPageCount === 'function') {
                 if (labelEl) labelEl.textContent = 'পেইজ সংখ্যা শনাক্ত হচ্ছে...';
@@ -1340,7 +1340,7 @@ async function mb2UploadPdf() {
     } catch (e) {
         const isBucketMissing = e.message.startsWith('STORAGE_BUCKET_MISSING');
         const display = isBucketMissing
-            ? '⚠️ Supabase Storage bucket "pdfs" নেই।\n\nসমাধান:\n1. Supabase Dashboard → Storage → New Bucket\n2. Name: pdfs | Public: ON | Size: 50 MB\n3. আবার চেষ্টা করুন — অথবা 🔗 URL মোড ব্যবহার করুন।'
+            ? '⚠️ Supabase Storage bucket "pdfs" নেই।\n\nসমাধান:\n1. Supabase Dashboard → Storage → New Bucket\n2. Name: pdfs | Public: ON\n3. আবার চেষ্টা করুন — অথবা 🔗 URL মোড ব্যবহার করুন।'
             : '❌ ' + e.message;
         if (errEl) {
             errEl.style.display = 'block';
