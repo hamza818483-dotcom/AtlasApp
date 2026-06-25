@@ -930,60 +930,81 @@
     <!-- ══════════════ TAB: মূলবই পেইজভিত্তিক প্রস্তুতি ══════════════ -->
     <div class="admin-section" id="secMulboi">
 
-        <!-- UNIFIED: Subject + Chapter + PDF Upload in ONE form -->
+        <!-- Subject & Chapter Cascade -->
         <div class="section-card card-purple">
             <div class="card-body">
-                <div class="card-title">📚 বিষয় → অধ্যায় → PDF একসাথে যোগ করো</div>
-                
+                <div class="card-title">📚 বিষয় ও অধ্যায় নির্বাচন</div>
                 <div class="form-group">
-                    <label class="form-label">বিষয়ের নাম (নতুন বা বিদ্যমান)</label>
-                    <input class="form-input" id="quickSubjectName" placeholder="যেমন: জীববিজ্ঞান">
+                    <label class="form-label">বিষয়</label>
+                    <select class="form-select" id="mbSelSubject" onchange="mbOnSubjectChange()">
+                        <option value="">-- বিষয় বেছে নিন --</option>
+                    </select>
                 </div>
-
-                <div class="form-group">
-                    <label class="form-label">বিষয়ের আইকন (ঐচ্ছিক)</label>
-                    <input class="form-input" id="quickSubjectIcon" placeholder="যেমন: 🧬" style="max-width:100px;">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">অধ্যায়ের নাম</label>
-                    <input class="form-input" id="quickChapterName" placeholder="যেমন: কোষ বিভাজন">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">PDF ফাইল</label>
-                    <div class="drop-zone" id="quickDropZone" ondragover="quickDzOver(event)" ondragleave="quickDzLeave()" ondrop="quickDzDrop(event)">
-                        <input type="file" id="quickPdfFileInput" accept=".pdf" onchange="quickOnFileSelect(event)">
-                        <div class="drop-zone-icon">📄</div>
-                        <div class="drop-zone-text">PDF ফাইল এখানে টানুন বা ক্লিক করুন</div>
+                <button class="link-btn" onclick="mbToggleNewSubject()">+ নতুন বিষয় যোগ করো</button>
+                <div class="inline-add" id="mbNewSubjectBox">
+                    <div class="inline-add-row">
+                        <input class="form-input" id="mbNewSubjectName" placeholder="বিষয়ের নাম (যেমন: পদার্থবিজ্ঞান)" style="flex:1">
+                        <input class="form-input" id="mbNewSubjectIcon" placeholder="Icon (যেমন: ⚗️)" style="width:70px">
+                        <button class="btn btn-primary btn-sm" onclick="mbCreateSubject()">যোগ করো</button>
+                        <button class="btn btn-sm btn-outline" onclick="mbToggleNewSubject()">✕</button>
                     </div>
-                    <div class="file-chosen" id="quickFileChosen"></div>
                 </div>
-
-                <div class="form-group">
-                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
-                        <input type="checkbox" id="quickIsPremium" style="width:auto;height:auto;"> ⭐ Premium PDF
-                    </label>
+                <div class="form-group" style="margin-bottom:6px;margin-top:10px">
+                    <label class="form-label">অধ্যায়</label>
+                    <select class="form-select" id="mbSelChapter" disabled onchange="mbOnChapterChange()">
+                        <option value="">-- অধ্যায় বেছে নিন --</option>
+                    </select>
                 </div>
-
-                <div class="progress-wrap" id="quickProgressWrap" style="display:none;">
-                    <div class="progress-label" id="quickProgressLabel">প্রক্রিয়া করছে...</div>
-                    <div class="progress-bar-bg"><div class="progress-bar-fill" id="quickProgressFill"></div></div>
+                <button class="link-btn" onclick="mbToggleNewChapter()">+ নতুন অধ্যায় যোগ করো</button>
+                <div class="inline-add" id="mbNewChapterBox">
+                    <div class="inline-add-row">
+                        <input class="form-input" id="mbNewChapterName" placeholder="অধ্যায়ের নাম" style="flex:1">
+                        <button class="btn btn-primary btn-sm" onclick="mbCreateChapter()">যোগ করো</button>
+                        <button class="btn btn-sm btn-outline" onclick="mbToggleNewChapter()">✕</button>
+                    </div>
                 </div>
-
-                <button class="btn btn-primary btn-full" id="quickSaveBtn" onclick="quickSaveAll()" style="margin-top:14px;">💾 একসাথে সংরক্ষণ করো</button>
             </div>
         </div>
 
-        <!-- All Saved PDFs List -->
+        <!-- PDF Upload Section (shown after chapter selected) -->
+        <div class="section-card card-green" id="mbUploadSection" style="display:none">
+            <div class="card-body">
+                <div class="card-title">📤 PDF আপলোড</div>
+                <div class="drop-zone" id="mbDropZone"
+                    ondragover="mbDzOver(event)" ondragleave="mbDzLeave()" ondrop="mbDzDrop(event)">
+                    <input type="file" id="mbPdfFileInput" accept=".pdf" onchange="mbOnFileSelect(event)">
+                    <div class="drop-zone-icon">📄</div>
+                    <div class="drop-zone-text">PDF ফাইল এখানে টানুন বা ক্লিক করুন</div>
+                    <div class="drop-zone-hint" style="font-size:11px;color:var(--text2);margin-top:4px">শুধুমাত্র .pdf ফাইল গ্রহণযোগ্য</div>
+                </div>
+                <div class="file-chosen" id="mbFileChosen"></div>
+                <div class="form-group" style="margin-top:12px;margin-bottom:12px">
+                    <label class="form-label">PDF শিরোনাম</label>
+                    <input class="form-input" id="mbPdfTitle" placeholder="PDF এর নাম লিখুন">
+                </div>
+                <div class="progress-wrap" id="mbProgressWrap" style="display:none">
+                    <div class="progress-label" id="mbProgressLabel">আপলোড হচ্ছে...</div>
+                    <div class="progress-bar-bg"><div class="progress-bar-fill" id="mbProgressFill"></div></div>
+                </div>
+                <div id="mbUploadSuccess" style="display:none;padding:10px 14px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:var(--radius-sm);font-size:13px;color:var(--green);font-weight:600;margin-bottom:10px">✅ আপলোড সম্পন্ন! PDF তালিকা আপডেট হচ্ছে...</div>
+                <button class="btn btn-primary btn-full" id="mbUploadBtn" onclick="mbUploadPdf()">আপলোড করো</button>
+            </div>
+        </div>
+
+        <!-- Chapter PDF List (shown after chapter selected) -->
+        <div id="mbPdfListSection" style="display:none">
+            <div id="mbSelectedContext" style="display:none;padding:6px 14px;font-size:11px;font-weight:600;color:var(--text2);background:rgba(124,131,255,0.05);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:10px"></div>
+            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">এই অধ্যায়ের PDF সমূহ</div>
+            <div class="pdf-list" id="mbPdfList"></div>
+        </div>
+
+        <!-- All Saved PDFs -->
         <div class="section-card card-amber" style="margin-top:14px">
             <div class="card-body">
                 <div class="card-title">📂 সংরক্ষিত সকল PDF</div>
                 <div class="pdf-list" id="mbAllPdfsList"></div>
             </div>
         </div>
-
-
 
     </div><!-- end secMulboi -->
 
@@ -3212,6 +3233,185 @@ document.addEventListener('DOMContentLoaded', () => {
      ফোন নম্বর/ID কপি করার দরকার হয়) -->
 <script src="global-nav.js"></script>
 <script src="atlas-admin-zoom.js"></script>
+<!-- ══════════════ মূলবই MCQ Slide Panel ══════════════ -->
+<div class="mcq-panel" id="mbMcqPanel">
+    <div class="mcq-panel-header">
+        <button class="btn btn-outline btn-sm" onclick="mbCloseMcqPanel()" style="padding:6px 12px;font-size:12px">← ফিরে যাও</button>
+        <div class="mcq-panel-title" id="mbMcqPanelTitle">MCQ সম্পাদনা</div>
+    </div>
+    <div class="mcq-panel-context" id="mbMcqPanelContext"></div>
+    <div class="mcq-panel-body">
+
+        <!-- PDF page preview -->
+        <div class="page-preview" id="mbPagePreview" style="min-height:150px">
+            <canvas id="mbPreviewCanvas"></canvas>
+            <div class="page-preview-loading" id="mbPreviewLoading">PDF পেইজ লোড হচ্ছে...</div>
+        </div>
+
+        <!-- Page summary pills -->
+        <div id="mbPageSummary" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
+
+        <!-- Page navigation -->
+        <div class="page-nav">
+            <span class="page-nav-label">পেইজ নং:</span>
+            <button class="page-nav-btn" onclick="mbPageStep(-1)">‹</button>
+            <input type="number" class="page-nav-input" id="mbPageInput" value="1" min="1" onchange="mbOnPageChange()">
+            <button class="page-nav-btn" onclick="mbPageStep(1)">›</button>
+            <span class="page-nav-count" id="mbPageCount">০ টি MCQ</span>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tab-bar">
+            <button class="tab-btn-alt active" id="mbTabBtnManual" onclick="mbSwitchTab('manual')">📝 ম্যানুয়াল</button>
+            <button class="tab-btn-alt" id="mbTabBtnCsv" onclick="mbSwitchTab('csv')">📊 CSV</button>
+            <button class="tab-btn-alt" id="mbTabBtnAi" onclick="mbSwitchTab('ai')">🤖 AI</button>
+        </div>
+
+        <!-- ── Tab: Manual ── -->
+        <div class="tab-panel active" id="mbTabManual">
+            <div class="section-card" style="margin-bottom:14px">
+                <div class="card-body">
+                    <div class="card-title" id="mbManualFormTitle">➕ নতুন প্রশ্ন যোগ</div>
+                    <form id="mbMcqForm" onsubmit="mbSaveMcq(event)">
+                        <input type="hidden" id="mbMcqEditId">
+                        <div class="form-group">
+                            <label class="form-label">প্রশ্ন *</label>
+                            <textarea class="form-input" id="mbMcqQuestion" placeholder="প্রশ্নটি লিখুন..." rows="3" required style="resize:vertical;min-height:70px;width:100%"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">বিকল্পসমূহ *</label>
+                            <div style="display:flex;flex-direction:column;gap:8px">
+                                <div style="display:flex;align-items:center;gap:8px">
+                                    <div class="option-badge-alt" id="mbBadgeK" onclick="mbSelectAnswer('k')">ক</div>
+                                    <input class="form-input option-input" id="mbOptK" placeholder="বিকল্প ক" required style="flex:1">
+                                </div>
+                                <div style="display:flex;align-items:center;gap:8px">
+                                    <div class="option-badge-alt" id="mbBadgeKh" onclick="mbSelectAnswer('kh')">খ</div>
+                                    <input class="form-input option-input" id="mbOptKh" placeholder="বিকল্প খ" required style="flex:1">
+                                </div>
+                                <div style="display:flex;align-items:center;gap:8px">
+                                    <div class="option-badge-alt" id="mbBadgeG" onclick="mbSelectAnswer('g')">গ</div>
+                                    <input class="form-input option-input" id="mbOptG" placeholder="বিকল্প গ" required style="flex:1">
+                                </div>
+                                <div style="display:flex;align-items:center;gap:8px">
+                                    <div class="option-badge-alt" id="mbBadgeGh" onclick="mbSelectAnswer('gh')">ঘ</div>
+                                    <input class="form-input option-input" id="mbOptGh" placeholder="বিকল্প ঘ" required style="flex:1">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">সঠিক উত্তর *</label>
+                            <div style="display:flex;gap:10px;margin-top:6px">
+                                <div class="type-opt-alt" id="mbAnsK" onclick="mbSelectAnswer('k')">ক</div>
+                                <div class="type-opt-alt" id="mbAnsKh" onclick="mbSelectAnswer('kh')">খ</div>
+                                <div class="type-opt-alt" id="mbAnsG" onclick="mbSelectAnswer('g')">গ</div>
+                                <div class="type-opt-alt" id="mbAnsGh" onclick="mbSelectAnswer('gh')">ঘ</div>
+                            </div>
+                            <input type="hidden" id="mbMcqCorrect">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">প্রশ্নের ধরন</label>
+                            <div class="type-selector-alt">
+                                <button type="button" class="type-opt-alt selected" id="mbTypeStandard" onclick="mbSelectType('standard')">📚 Standard</button>
+                                <button type="button" class="type-opt-alt" id="mbTypeTrueFalse" onclick="mbSelectType('true_false')">✅ True-False</button>
+                                <button type="button" class="type-opt-alt" id="mbTypeHard" onclick="mbSelectType('hard')">🔥 Hard</button>
+                            </div>
+                            <input type="hidden" id="mbMcqType" value="standard">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">ব্যাখ্যা (ঐচ্ছিক)</label>
+                            <textarea class="form-input" id="mbMcqExplanation" placeholder="সঠিক উত্তরের ব্যাখ্যা..." rows="2" style="resize:vertical;width:100%"></textarea>
+                        </div>
+                        <div style="display:flex;gap:10px">
+                            <button type="button" class="btn btn-outline" id="mbMcqCancelBtn" style="display:none" onclick="mbCancelMcqEdit()">বাতিল</button>
+                            <button type="submit" class="btn btn-primary btn-full" id="mbMcqSaveBtn">✓ প্রশ্ন সংরক্ষণ</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div id="mbManualMcqList"></div>
+        </div>
+
+        <!-- ── Tab: CSV ── -->
+        <div class="tab-panel" id="mbTabCsv">
+            <div class="section-card" style="margin-bottom:14px">
+                <div class="card-body">
+                    <div class="card-title">📊 CSV থেকে আমদানি</div>
+                    <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.25);border-radius:var(--radius-sm);padding:10px 12px;font-size:11px;line-height:1.7;margin-bottom:12px">
+                        <strong style="color:var(--green)">ফরম্যাট (হেডার সহ):</strong><br>
+                        <code style="font-size:10px">question,option_k,option_kh,option_g,option_gh,correct,explanation,type</code><br>
+                        <span style="color:var(--text2)">correct: k/kh/g/gh • type: standard/hard/true_false (ঐচ্ছিক)</span>
+                    </div>
+                    <div style="border:2px dashed var(--border);border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative" id="mbCsvFileDrop"
+                        ondragover="mbCsvDragOver(event)" ondragleave="mbCsvDragLeave()" ondrop="mbCsvDrop(event)"
+                        onclick="document.getElementById('mbCsvFileInput').click()">
+                        <input type="file" id="mbCsvFileInput" accept=".csv,text/csv" style="display:none" onchange="mbCsvFileSelect(event)">
+                        <div style="font-size:28px;margin-bottom:6px">📊</div>
+                        <div style="font-size:12px;color:var(--text2)">CSV ফাইল এখানে ড্র্যাগ করুন বা ক্লিক করুন</div>
+                    </div>
+                    <div id="mbCsvPreviewInfo" style="display:none;font-size:11px;color:var(--text3);margin-top:8px"></div>
+                    <div id="mbCsvProgressWrap" style="display:none;margin-top:8px">
+                        <div style="font-size:11px;color:var(--text2);margin-bottom:4px" id="mbCsvProgressLabel">আমদানি হচ্ছে...</div>
+                        <div style="background:var(--border);border-radius:3px;height:5px;overflow:hidden">
+                            <div id="mbCsvProgressFill" style="background:var(--accent);height:100%;width:0%;transition:width 0.3s;border-radius:3px"></div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-full" id="mbCsvImportBtn" style="display:none;margin-top:12px" onclick="mbImportCsv()">📥 আমদানি করুন</button>
+                    <div id="mbCsvResult" style="display:none;margin-top:10px;padding:10px 14px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:var(--radius-sm);font-size:13px;color:var(--green);font-weight:600"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Tab: AI ── -->
+        <div class="tab-panel" id="mbTabAi">
+            <div class="section-card" style="margin-bottom:14px">
+                <div class="card-body">
+                    <div class="card-title">🤖 AI দিয়ে MCQ তৈরি</div>
+                    <div style="background:rgba(108,99,255,0.06);border:1px solid rgba(108,99,255,0.2);border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;line-height:1.6;margin-bottom:12px;color:var(--text2)">
+                        বর্তমান পেইজের content বিশ্লেষণ করে AI স্বয়ংক্রিয়ভাবে MCQ তৈরি করবে।
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">প্রশ্ন সংখ্যা</label>
+                        <input type="number" class="form-input" id="mbAiCount" value="10" min="1" max="20" style="max-width:100px">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">MCQ ধরন</label>
+                        <div class="type-selector-alt">
+                            <button type="button" class="type-opt-alt selected" id="mbAiTypeStandard" onclick="mbSelectAiType('standard')">📚 Standard</button>
+                            <button type="button" class="type-opt-alt" id="mbAiTypeTrueFalse" onclick="mbSelectAiType('true_false')">✅ True-False</button>
+                            <button type="button" class="type-opt-alt" id="mbAiTypeHard" onclick="mbSelectAiType('hard')">🔥 Hard</button>
+                        </div>
+                        <input type="hidden" id="mbAiType" value="standard">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">কাস্টম প্রম্পট (ঐচ্ছিক)</label>
+                        <textarea class="form-input" id="mbAiPrompt" rows="3" placeholder="ডিফল্ট: এই PDF পেইজ থেকে MCQ তৈরি করো। Content যে ভাষায় আছে সেই ভাষায়।" style="resize:vertical;width:100%"></textarea>
+                    </div>
+                    <div id="mbAiSpinner" style="display:none;text-align:center;padding:20px">
+                        <div style="width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 10px"></div>
+                        <div style="font-size:12px;color:var(--text2)">AI MCQ তৈরি করছে...</div>
+                    </div>
+                    <button class="btn btn-primary btn-full" id="mbAiGenBtn" onclick="mbAiGenerate()">🤖 AI দিয়ে MCQ তৈরি করো</button>
+                    <div id="mbAiResult" style="display:none;margin-top:14px">
+                        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px" id="mbAiResultHeader"></div>
+                        <div id="mbAiPreviewList"></div>
+                        <div style="display:flex;gap:10px;margin-top:10px">
+                            <button class="btn btn-outline" onclick="mbDiscardAi()">✕ বাতিল</button>
+                            <button class="btn btn-primary btn-full" onclick="mbSaveAiMcqs()">✓ সব সংরক্ষণ করো</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MCQ List for current page -->
+        <div id="mbMcqListWrap">
+            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;margin-top:4px">এই পেইজের প্রশ্নসমূহ</div>
+            <div id="mbMcqList"></div>
+        </div>
+
+    </div>
+</div>
 <!-- মূলবই MCQ panel — new isolated feature, copied/adapted from AtlasPro's admin/pdf.html -->
 <script src="mulboi-mcq-admin.js"></script>
 </body>
