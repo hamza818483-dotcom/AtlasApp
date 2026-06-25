@@ -1015,7 +1015,7 @@
             <div class="pdf-list" id="mb2ChapterPdfList"></div>
         </div>
 
-        <!-- All Saved PDFs (AtlasPro style) -->
+        <!-- All Saved PDFs (AtlasPro style) - REPLACES old accordion list -->
         <div class="section-card card-amber" style="margin-top:14px">
             <div class="card-body">
                 <div class="card-title">📂 সংরক্ষিত সকল PDF</div>
@@ -1024,6 +1024,9 @@
                 </div>
             </div>
         </div>
+
+        <!-- Old accordion-style subject/chapter list is hidden (doubling fix) -->
+        <div id="mbSubjectsList" style="display:none;"></div>
 
     </div><!-- end secMulboi -->
 
@@ -2225,68 +2228,19 @@ function editMbSubject(id) {
 }
 
 async function loadMulboiSubjects() {
-    const box = document.getElementById('mbSubjectsList');
-    box.innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">লোড হচ্ছে...</p>';
-    try {
-        const subjects = await safeFetch(`${SUPABASE_URL}/rest/v1/book_subjects?select=*&order=sort_order.asc,created_at.asc`);
-        if (!subjects?.length) { box.innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">কোনো বিষয় নেই — উপরে থেকে যোগ করো</p>'; return; }
-        box.innerHTML = subjects.map(s => `
-            <div class="form-card" style="margin-bottom:8px;padding:0;overflow:hidden;">
-                <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;" onclick="toggleMbSubject('${s.id}')">
-                    <span style="font-size:22px;">${s.icon || '📘'}</span>
-                    <div style="flex:1;min-width:0;">
-                        <div style="font-weight:700;font-size:13px;">${escMb(s.name)}</div>
-                        <div style="font-size:10px;color:var(--text2);">${escMb(s.description || (MB_COLOR_NAMES[s.color_idx]||'') )}</div>
-                    </div>
-                    <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();editMbSubject('${s.id}')">✏️</button>
-                    <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteItem('book_subjects','${s.id}',loadMulboiSubjects)">🗑️</button>
-                    <span style="font-size:12px;color:var(--text2);transform:${mbOpenSubject===s.id?'rotate(90deg)':'rotate(0)'};transition:transform .2s;">▶</span>
-                </div>
-                <div id="mbChapBox_${s.id}" style="display:${mbOpenSubject===s.id?'block':'none'};border-top:1px solid var(--border);padding:12px 14px;background:var(--hover);">
-                    <div id="mbChapInner_${s.id}"><p style="color:var(--text2);font-size:11px;">লোড হচ্ছে...</p></div>
-                </div>
-            </div>`).join('');
-        if (mbOpenSubject) loadMbChapters(mbOpenSubject);
-    } catch (e) { box.innerHTML = '<p style="color:var(--red);">লোড এরর</p>'; }
-    // All-PDFs flat list (feature lives in mulboi-mcq-admin.js, guarded in case it hasn't loaded)
+    // Load only the flat AtlasPro-style PDF list (doubling fix)
+    // The old accordion-style subject/chapter list is hidden
     if (typeof mbLoadAllPdfs === 'function') mbLoadAllPdfs();
 }
 
 function toggleMbSubject(id) {
-    mbOpenSubject = (mbOpenSubject === id) ? null : id;
-    mbOpenChapters.clear();
-    loadMulboiSubjects();
+    // Old accordion toggle - deprecated (doubling fix)
+    // All PDF management now uses AtlasPro-style flat list
 }
 
 async function loadMbChapters(subjectId) {
-    const inner = document.getElementById('mbChapInner_' + subjectId);
-    if (!inner) return;
-    try {
-        const chapters = await safeFetch(`${SUPABASE_URL}/rest/v1/book_chapters?subject_id=eq.${subjectId}&select=*&order=sort_order.asc,created_at.asc`);
-        let html = `
-            <div style="display:flex;gap:6px;margin-bottom:10px;">
-                <input type="text" id="mbNewChapName_${subjectId}" placeholder="নতুন অধ্যায়ের নাম" style="flex:1;">
-                <button class="btn btn-sm btn-primary" onclick="addMbChapter('${subjectId}')">+ যোগ</button>
-            </div>`;
-        if (!chapters?.length) {
-            html += '<p style="color:var(--text2);font-size:11px;text-align:center;padding:8px;">কোনো অধ্যায় নেই</p>';
-        } else {
-            html += chapters.map(ch => `
-                <div style="border:1px solid var(--border);border-radius:8px;margin-bottom:6px;overflow:hidden;background:var(--card-bg,var(--bg));">
-                    <div style="display:flex;align-items:center;gap:8px;padding:9px 10px;cursor:pointer;" onclick="toggleMbChapter('${ch.id}','${subjectId}')">
-                        <span style="flex:1;font-size:12px;font-weight:600;">📑 ${escMb(ch.name)}</span>
-                        <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();renameMbChapter('${ch.id}','${escMb(ch.name).replace(/'/g,"\\'")}',  '${subjectId}')">✏️</button>
-                        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteItem('book_chapters','${ch.id}',()=>loadMbChapters('${subjectId}'))">🗑️</button>
-                        <span style="font-size:10px;color:var(--text2);">${mbOpenChapters.has(ch.id)?'▼':'▶'}</span>
-                    </div>
-                    <div id="mbPdfBox_${ch.id}" style="display:${mbOpenChapters.has(ch.id)?'block':'none'};border-top:1px solid var(--border);padding:10px;">
-                        <div id="mbPdfInner_${ch.id}"><p style="color:var(--text2);font-size:11px;">লোড হচ্ছে...</p></div>
-                    </div>
-                </div>`).join('');
-        }
-        inner.innerHTML = html;
-        mbOpenChapters.forEach(chId => loadMbPdfs(chId));
-    } catch (e) { inner.innerHTML = '<p style="color:var(--red);font-size:11px;">লোড এরর</p>'; }
+    // Old chapter loader - deprecated (doubling fix)
+    // All PDF management now uses AtlasPro-style flat list in mbLoadAllPdfs()
 }
 
 function addMbChapter(subjectId) {
@@ -2309,52 +2263,8 @@ function toggleMbChapter(chapterId, subjectId) {
 }
 
 async function loadMbPdfs(chapterId) {
-    const inner = document.getElementById('mbPdfInner_' + chapterId);
-    if (!inner) return;
-    try {
-        const pdfs = await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdfs?chapter_id=eq.${chapterId}&select=*&order=sort_order.asc,created_at.asc`);
-        let html = `
-            <div style="background:var(--hover);border-radius:8px;padding:8px;margin-bottom:8px;">
-                <input type="text" id="mbPdfTitle_${chapterId}" placeholder="PDF শিরোনাম" style="margin-bottom:6px;">
-                <div style="display:flex;gap:6px;margin-bottom:6px;">
-                    <button class="btn btn-sm" id="mbModeUploadBtn_${chapterId}" onclick="setMbPdfMode('${chapterId}','upload')" style="flex:1;">📤 ফাইল আপলোড</button>
-                    <button class="btn btn-sm btn-outline" id="mbModeUrlBtn_${chapterId}" onclick="setMbPdfMode('${chapterId}','url')" style="flex:1;">🔗 URL দাও</button>
-                </div>
-                <div id="mbUploadModeBox_${chapterId}">
-                    <input type="file" id="mbPdfFile_${chapterId}" accept="application/pdf" style="margin-bottom:6px;">
-                </div>
-                <div id="mbUrlModeBox_${chapterId}" style="display:none;">
-                    <input type="url" id="mbPdfUrl_${chapterId}" placeholder="https://example.com/file.pdf" style="margin-bottom:6px;">
-                </div>
-                <input type="number" id="mbPdfPageCount_${chapterId}" placeholder="পেইজ সংখ্যা (ফাইল আপলোডে স্বয়ংক্রিয়)" min="1" style="margin-bottom:6px;">
-                <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);margin-bottom:6px;">
-                    <input type="checkbox" id="mbPdfPremium_${chapterId}" style="width:auto;"> ⭐ Premium PDF (শুধু Premium user দেখবে)
-                </label>
-                <div id="mbUploadProgress_${chapterId}" style="display:none;font-size:11px;color:var(--accent);margin-bottom:6px;">
-                    <div style="background:var(--border);border-radius:6px;height:6px;overflow:hidden;margin-bottom:3px;">
-                        <div id="mbUploadBar_${chapterId}" style="background:var(--accent);height:100%;width:0%;transition:width .2s;"></div>
-                    </div>
-                    <span id="mbUploadPct_${chapterId}">0%</span>
-                </div>
-                <button class="btn btn-sm btn-primary" style="width:100%;" onclick="uploadMbPdf('${chapterId}')" id="mbUploadBtn_${chapterId}">📤 PDF সংরক্ষণ করো</button>
-            </div>`;
-        if (!pdfs?.length) {
-            html += '<p style="color:var(--text2);font-size:11px;text-align:center;">কোনো PDF নেই</p>';
-        } else {
-            html += pdfs.map(p => `
-                <div style="display:flex;align-items:center;gap:8px;padding:7px 8px;border:1px solid var(--border);border-radius:6px;margin-bottom:5px;">
-                    <span style="font-size:16px;">📕</span>
-                    <div style="flex:1;min-width:0;">
-                        <div style="font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escMb(p.title)}</div>
-                        <div style="font-size:9.5px;color:var(--text2);">${p.page_count ? p.page_count + ' পেইজ' : 'PDF'}</div>
-                    </div>
-                    <button class="btn btn-sm" style="font-size:9px;padding:4px 7px;background:rgba(124,131,255,0.12);color:var(--accent);border:1px solid var(--accent);" onclick="openMbMcqPanel('${p.id}','${escMb(p.title).replace(/'/g,"\\'")}',${p.page_count||0},'${(p.file_url||'').replace(/'/g,"\\'")}')">❓ MCQ</button>
-                    <button class="btn btn-sm ${p.is_premium?'btn-outline':'btn-success'}" style="font-size:9px;padding:4px 7px;" onclick="toggleMbPdfPremium('${p.id}',${!p.is_premium},'${chapterId}')">${p.is_premium?'⭐ Premium':'🆓 Free'}</button>
-                    <button class="btn btn-sm btn-danger" style="font-size:9px;padding:4px 7px;" onclick="deleteMbPdf('${p.id}','${chapterId}')">🗑️</button>
-                </div>`).join('');
-        }
-        inner.innerHTML = html;
-    } catch (e) { inner.innerHTML = '<p style="color:var(--red);font-size:11px;">লোড এরর</p>'; }
+    // Old PDF loader - deprecated (doubling fix)
+    // All PDF management now uses AtlasPro-style flat list in mbLoadAllPdfs()
 }
 
 function setMbPdfMode(chapterId, mode) {

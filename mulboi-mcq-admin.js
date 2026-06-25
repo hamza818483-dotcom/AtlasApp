@@ -116,6 +116,7 @@ function openMbMcqPanel(pdfId, pdfTitle, pageCount, fileUrl) {
     overlay.classList.add('active');
     document.body.style.overflow = 'hidden';
 
+    mbRenderOptionInputs();
     mbSwitchTab('manual');
     mbLoadPagePreview();
     mbLoadPageQuestions();
@@ -125,6 +126,7 @@ function closeMbMcqPanel() {
     const overlay = document.getElementById('mbMcqOverlay');
     if (overlay) overlay.classList.remove('active');
     document.body.style.overflow = '';
+    mbCancelEdit();
 }
 
 /* ---------- BUILD DOM (once) ---------- */
@@ -133,6 +135,12 @@ function mbInjectStyles() {
     const style = document.createElement('style');
     style.id = 'mbMcqStyles';
     style.textContent = `
+        /* MCQ Panel visibility */
+        .mcq-panel { display: none; }
+        .mcq-panel.active { display: flex; }
+        #mbMcqOverlay { display: flex; }
+        #mbMcqOverlay.active { display: flex; }
+        
         #mbMcqOverlay .type-selector { display: flex; gap: 8px; margin-bottom: 14px; }
         #mbMcqOverlay .type-opt {
             flex: 1; padding: 8px 6px; border-radius: var(--radius-sm);
@@ -163,6 +171,8 @@ function mbInjectStyles() {
         #mbMcqOverlay .option-badge.correct-sel {
             background: var(--green); border-color: var(--green); color: white;
         }
+        #mbMcqOverlay .tab-panel { display: none; }
+        #mbMcqOverlay .tab-panel.active { display: block; }
         #mbMcqOverlay .mcq-card {
             background: var(--card); border: 1px solid var(--border);
             border-radius: var(--radius); overflow: hidden; transition: border-color 0.2s;
@@ -359,8 +369,8 @@ function mbSwitchTab(tab) {
     ['manual','csv','ai'].forEach(t => {
         const panel = document.getElementById('mbTabPanel_' + t);
         const btn = document.getElementById('mbTabBtn_' + t);
-        if (panel) panel.style.display = (t === tab) ? 'block' : 'none';
-        if (btn) btn.className = 'btn btn-sm' + (t === tab ? '' : ' btn-outline');
+        if (panel) panel.classList.toggle('active', t === tab);
+        if (btn) btn.classList.toggle('active', t === tab);
     });
 }
 
