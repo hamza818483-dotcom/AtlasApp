@@ -135,12 +135,30 @@ function mbInjectStyles() {
     const style = document.createElement('style');
     style.id = 'mbMcqStyles';
     style.textContent = `
-        /* MCQ Panel visibility */
-        .mcq-panel { display: none; }
-        .mcq-panel.active { display: flex; }
+        /* MCQ Panel visibility (AtlasPro 100% same style) */
+        .mcq-panel {
+            position: fixed; inset: 0; background: var(--bg);
+            z-index: 1000; transform: translateX(100%);
+            transition: transform 0.32s cubic-bezier(.4,0,.2,1);
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+        .mcq-panel.active { transform: translateX(0); }
         #mbMcqOverlay { display: flex; }
-        #mbMcqOverlay.active { display: flex; }
         
+        #mbMcqOverlay .mcq-panel-header {
+            height: 56px; background: var(--bg2);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 10px;
+            padding: 0 14px; flex-shrink: 0;
+        }
+        #mbMcqOverlay .mcq-panel-title { flex: 1; font-size: 13px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        #mbMcqOverlay .mcq-panel-body { flex: 1; overflow-y: auto; padding: 14px; }
+        #mbMcqOverlay .mcq-panel-context {
+            padding: 6px 14px; font-size: 11px; font-weight: 600;
+            color: var(--text3); background: rgba(108,99,255,0.05);
+            border-bottom: 1px solid var(--border);
+        }
+
         #mbMcqOverlay .type-selector { display: flex; gap: 8px; margin-bottom: 14px; }
         #mbMcqOverlay .type-opt {
             flex: 1; padding: 8px 6px; border-radius: var(--radius-sm);
@@ -191,6 +209,48 @@ function mbInjectStyles() {
         #mbMcqOverlay .badge-standard { background: rgba(108,99,255,0.1); color: #9C8BFF; }
         #mbMcqOverlay .badge-true_false { background: rgba(16,185,129,0.1); color: var(--green); }
         #mbMcqOverlay .badge-hard { background: rgba(239,68,68,0.1); color: var(--red); }
+
+        /* Page Preview & Nav (AtlasPro Style) */
+        #mbMcqOverlay .page-preview {
+            background: #111120; border: 1px solid var(--border);
+            border-radius: var(--radius); margin-bottom: 14px;
+            overflow: hidden; position: relative;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #mbMcqOverlay .page-nav {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 12px 14px;
+            margin-bottom: 14px;
+        }
+        #mbMcqOverlay .page-nav-input {
+            width: 64px; background: var(--bg2); border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm); color: var(--text);
+            font-size: 15px; font-weight: 700; padding: 8px 10px;
+            outline: none; text-align: center; font-family: inherit;
+        }
+        #mbMcqOverlay .page-nav-btn {
+            width: 36px; height: 36px; border-radius: var(--radius-sm);
+            border: 1.5px solid var(--border); background: var(--card);
+            color: var(--text2); font-size: 16px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s; flex-shrink: 0;
+        }
+        #mbMcqOverlay .page-nav-count {
+            margin-left: auto; font-size: 11px; font-weight: 700;
+            padding: 3px 10px; border-radius: 20px;
+            background: rgba(108,99,255,0.12); color: #9C8BFF;
+            border: 1px solid rgba(108,99,255,0.25); white-space: nowrap;
+        }
+        #mbMcqOverlay .back-btn {
+            display: flex; align-items: center; gap: 6px;
+            padding: 7px 12px; border-radius: var(--radius-sm);
+            background: var(--card); border: 1px solid var(--border);
+            font-size: 13px; font-weight: 600; color: var(--text2);
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+            white-space: nowrap;
+        }
+        #mbMcqOverlay .back-btn:hover { border-color: var(--primary); color: var(--primary); }
     `;
     document.head.appendChild(style);
 }
@@ -201,7 +261,7 @@ function mbBuildMcqPanelDom() {
     div.innerHTML = `
     <div class="mcq-panel" id="mbMcqOverlay">
         <div class="mcq-panel-header">
-            <button class="act-btn" onclick="closeMbMcqPanel()">←</button>
+            <button class="back-btn" onclick="closeMbMcqPanel()">← ফিরে যাও</button>
             <div class="mcq-panel-title" id="mbMcqTitle">MCQ ব্যবস্থাপনা</div>
         </div>
         <div class="mcq-panel-context" id="mbMcqContext" style="display:block;"></div>
@@ -217,7 +277,7 @@ function mbBuildMcqPanelDom() {
                 <button class="page-nav-btn" onclick="mbPageStep(-1)">‹</button>
                 <input type="number" class="page-nav-input" id="mbMcqPageInput" value="1" min="1" onchange="mbOnPageChange()">
                 <button class="page-nav-btn" onclick="mbPageStep(1)">›</button>
-                <button class="act-btn" id="mbPageGridToggleBtn" onclick="mbTogglePageGrid()" style="margin-left:8px;width:auto;padding:0 10px;font-size:12px;">▦ সব পেইজ</button>
+                <button class="act-btn" id="mbPageGridToggleBtn" onclick="mbTogglePageGrid()" style="margin-left:8px;width:auto;padding:0 10px;font-size:12px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);">▦ সব পেইজ</button>
                 <span class="page-nav-count" id="mbMcqPageCount">০ টি MCQ</span>
             </div>
 
