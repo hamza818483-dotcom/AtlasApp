@@ -28,14 +28,23 @@
 .subj-banner-t{font-size:16px;font-weight:900;margin-bottom:4px}
 .subj-banner-s{font-size:12px;opacity:.85}
 .subj-list{padding:0 14px 24px;display:flex;flex-direction:column;gap:10px}
-.subj-card{
-  border-radius:14px;padding:18px 16px;display:flex;align-items:center;gap:14px;
-  cursor:pointer;border:1px solid rgba(255,255,255,0.12);color:#fff;position:relative;overflow:hidden;
-}
-.subj-icon{
-  font-size:24px;width:48px;height:48px;display:flex;align-items:center;justify-content:center;
-  background:rgba(255,255,255,0.2);border-radius:14px;flex-shrink:0;border:1px solid rgba(255,255,255,0.15);
-}
+	.subj-card{
+	  border-radius:14px;padding:18px 16px;display:flex;align-items:center;gap:14px;
+	  cursor:pointer;border:1px solid rgba(255,255,255,0.12);color:#fff;position:relative;overflow:hidden;
+	  transition:transform .2s,box-shadow .2s;
+	}
+	.subj-card::before{
+	  content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+	  background:linear-gradient(45deg,transparent 30%,rgba(255,255,255,0.08) 50%,transparent 70%);
+	  animation:cardShimmer 3s ease-in-out infinite;pointer-events:none;
+	}
+	@keyframes cardShimmer{0%{transform:translateX(-100%) rotate(45deg)}100%{transform:translateX(100%) rotate(45deg)}}
+	.subj-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+	.subj-icon{
+	  font-size:22px;width:48px;height:48px;display:flex;align-items:center;justify-content:center;
+	  background:rgba(255,255,255,0.2);backdrop-filter:blur(8px);border-radius:14px;flex-shrink:0;border:1px solid rgba(255,255,255,0.15);
+	  font-weight:900;
+	}
 .subj-info{flex:1}
 .subj-name{font-size:15px;font-weight:700}
 .subj-desc{font-size:11px;opacity:.78;margin-top:2px}
@@ -51,11 +60,12 @@
 
 /* Lists (chapters/pdfs) */
 .item-list{padding:10px 14px 24px;display:flex;flex-direction:column;gap:8px}
-.list-item{
-  background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:14px 16px;
-  display:flex;align-items:center;gap:10px;cursor:pointer;
-}
-.list-item:active{transform:scale(.98)}
+	.list-item{
+	  background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:14px 16px;
+	  display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .15s;
+	}
+	.list-item:hover{border-color:var(--accent);transform:translateX(3px)}
+	.list-item:active{transform:scale(.98)}
 .list-num{
   width:28px;height:28px;border-radius:8px;background:var(--accent-light);color:var(--accent);
   font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;
@@ -342,8 +352,14 @@ async function openChapter(id, name) {
         // premium-access check passes.
         const pdfs = await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdfs?chapter_id=eq.${id}&select=id,title,page_count,is_premium,sort_order&order=sort_order.asc`);
         if (!pdfs?.length) { c.innerHTML = '<div class="ctr">কোনো PDF পাওয়া যায়নি</div>'; return; }
+        
+        // Instant open if only one PDF exists in chapter
+        if (pdfs.length === 1) {
+            openPdf(pdfs[0].id, pdfs[0].title, pdfs[0].is_premium);
+            return;
+        }
+
         document.getElementById('pdfs-title').textContent = name + ' (' + pdfs.length + ' টি PDF)';
-        if (pdfs.length === 1) { openPdf(pdfs[0].id, pdfs[0].title, pdfs[0].is_premium); return; }
         c.innerHTML = '<div class="item-list">' + pdfs.map(p => `
             <div class="list-item" onclick="openPdf(${p.id},'${esc(p.title)}',${!!p.is_premium})">
                 <div style="font-size:26px">📕</div>
@@ -371,9 +387,17 @@ async function openPdf(id, title, isPremium) {
     wrap.innerHTML = '<div class="ctr"><div class="sp"></div><div>PDF লোড হচ্ছে...</div></div>';
     try {
         const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdfs?id=eq.${id}&select=file_url`);
-        const fileUrl = rows?.[0]?.file_url;
+        let fileUrl = rows?.[0]?.file_url;
         if (!fileUrl) throw new Error('URL পাওয়া যায়নি');
-        pdfDoc = await pdfjsLib.getDocument({ url: fileUrl }).promise;
+        
+        // Handle potential invalid structure or CORS issues by ensuring proper loading
+        pdfDoc = await pdfjsLib.getDocument({
+            url: fileUrl,
+            cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+            cMapPacked: true,
+            disableAutoFetch: true,
+            disableStream: true
+        }).promise;
         const n = pdfDoc.numPages;
         wrap.innerHTML = '';
         for (let i = 1; i <= n; i++) wrap.appendChild(makePage(i, n));
