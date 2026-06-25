@@ -116,6 +116,256 @@
         /* ══════════════════════════════════════════════
            CARDS & FORMS  (Flutter: Card / Form)
         ══════════════════════════════════════════════ */
+        .section-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius); margin-bottom: 14px;
+            overflow: hidden; position: relative;
+        }
+        .section-card::before {
+            content: ''; position: absolute;
+            top: 0; left: 0; right: 0; height: 3px;
+        }
+        .card-purple::before { background: linear-gradient(90deg, var(--accent), #9C8BFF); }
+        .card-green::before { background: linear-gradient(90deg, var(--green), #34D399); }
+        .card-amber::before { background: linear-gradient(90deg, var(--yellow), #FCD34D); }
+        .card-body { padding: 16px; }
+        .card-title {
+            font-size: 13px; font-weight: 700; margin-bottom: 14px;
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        .form-group { margin-bottom: 12px; }
+        .form-label {
+            display: block; font-size: 11px; font-weight: 700;
+            color: var(--text2); text-transform: uppercase;
+            letter-spacing: 0.6px; margin-bottom: 6px;
+        }
+        .form-select, .form-input, .form-textarea {
+            width: 100%; background: var(--hover);
+            border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+            color: var(--text); font-size: 14px; padding: 10px 12px;
+            outline: none; transition: border-color 0.2s; font-family: inherit;
+            box-sizing: border-box;
+        }
+        .form-select:focus, .form-input:focus, .form-textarea:focus { border-color: var(--accent); }
+        .form-select:disabled { opacity: 0.5; cursor: not-allowed; }
+        .form-textarea { resize: vertical; min-height: 76px; line-height: 1.5; }
+
+        .inline-add {
+            display: none; margin-top: 10px;
+            background: var(--hover); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 12px;
+        }
+        .inline-add.show { display: block; }
+        .inline-add-row { display: flex; gap: 8px; }
+        .link-btn {
+            background: none; border: none; color: var(--accent);
+            font-size: 12px; font-weight: 600; cursor: pointer;
+            padding: 6px 0; display: inline-flex; align-items: center;
+            gap: 4px; font-family: inherit; text-decoration: none;
+            transition: opacity 0.2s;
+        }
+        .link-btn:hover { opacity: 0.75; }
+
+        .drop-zone {
+            border: 2px dashed var(--border); border-radius: var(--radius-sm);
+            padding: 28px 16px; text-align: center; cursor: pointer;
+            transition: all 0.25s; position: relative;
+            background: var(--hover);
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--green); background: rgba(63,185,80,0.05);
+        }
+        .drop-zone input[type=file] {
+            position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+        }
+        .drop-zone-icon { font-size: 32px; margin-bottom: 8px; }
+        .drop-zone-text { font-size: 13px; color: var(--text2); line-height: 1.5; }
+        .drop-zone-hint { font-size: 11px; color: var(--text2); margin-top: 4px; }
+        .file-chosen {
+            margin-top: 10px; font-size: 12px; color: var(--green); font-weight: 600;
+            word-break: break-all; display: none;
+        }
+
+        .progress-wrap { margin-top: 10px; display: none; }
+        .progress-label { font-size: 11px; color: var(--text2); margin-bottom: 5px; }
+        .progress-bar-bg {
+            height: 6px; background: var(--border);
+            border-radius: 3px; overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%; background: linear-gradient(90deg, var(--green), #34D399);
+            width: 0%; transition: width 0.3s; border-radius: 3px;
+        }
+
+        .selected-context {
+            display: none; margin-bottom: 12px; padding: 8px 14px;
+            background: rgba(124,131,255,0.08); border: 1px solid rgba(124,131,255,0.2);
+            border-radius: var(--radius-sm); font-size: 12px; font-weight: 600;
+            color: #9C8BFF;
+        }
+
+        .pdf-list { display: flex; flex-direction: column; gap: 10px; }
+        .pdf-card {
+            background: var(--hover); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 12px 14px;
+            transition: border-color 0.2s;
+        }
+        .pdf-card:hover { border-color: rgba(124,131,255,0.25); }
+        .pdf-card-top { display: flex; align-items: flex-start; gap: 10px; }
+        .pdf-card-icon { font-size: 24px; flex-shrink: 0; margin-top: 2px; }
+        .pdf-card-info { flex: 1; min-width: 0; }
+        .pdf-card-title {
+            font-size: 13px; font-weight: 700; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .pdf-card-meta { font-size: 11px; color: var(--text2); margin-top: 3px; }
+        .pdf-card-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+        .act-btn {
+            width: 32px; height: 32px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; cursor: pointer;
+            border: 1px solid var(--border); background: var(--card);
+            transition: all 0.2s; flex-shrink: 0;
+        }
+        .act-btn:hover { transform: scale(1.08); }
+        .act-edit:hover { border-color: var(--accent); background: rgba(124,131,255,0.12); }
+        .act-delete:hover { border-color: var(--red); background: rgba(248,81,73,0.1); }
+
+        .section-heading {
+            font-size: 11px; font-weight: 700; color: var(--text2);
+            text-transform: uppercase; letter-spacing: 1px;
+            margin-bottom: 12px; padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* ── MCQ Panel (Slide-in) ── */
+        .mcq-panel {
+            position: fixed; inset: 0; background: var(--bg);
+            z-index: 1000; transform: translateX(100%);
+            transition: transform 0.32s cubic-bezier(.4,0,.2,1);
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+        .mcq-panel.open { transform: translateX(0); }
+        .mcq-panel-header {
+            height: 56px; background: var(--card);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 10px;
+            padding: 0 14px; flex-shrink: 0;
+        }
+        .mcq-panel-title { flex: 1; font-size: 13px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .mcq-panel-body { flex: 1; overflow-y: auto; padding: 14px; }
+        .mcq-panel-context {
+            display: none; padding: 6px 14px; font-size: 11px; font-weight: 600;
+            color: var(--text2); background: rgba(124,131,255,0.05);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .page-preview {
+            background: #111120; border: 1px solid var(--border);
+            border-radius: var(--radius); margin-bottom: 14px;
+            overflow: hidden; position: relative;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .page-preview canvas { max-width: 100%; display: block; }
+        .page-preview-loading {
+            position: absolute; inset: 0;
+            display: none; align-items: center; justify-content: center;
+            font-size: 12px; color: var(--text2); background: rgba(17,17,32,0.85);
+        }
+        .page-preview-loading.show { display: flex; }
+
+        .page-nav {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 12px 14px;
+            margin-bottom: 14px;
+        }
+        .page-nav-label { font-size: 12px; font-weight: 700; color: var(--text); white-space: nowrap; }
+        .page-nav-input {
+            width: 64px; background: var(--hover); border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm); color: var(--text);
+            font-size: 15px; font-weight: 700; padding: 8px 10px;
+            outline: none; text-align: center; font-family: inherit;
+        }
+        .page-nav-btn {
+            width: 36px; height: 36px; border-radius: var(--radius-sm);
+            border: 1.5px solid var(--border); background: var(--card);
+            color: var(--text); font-size: 16px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s; flex-shrink: 0;
+        }
+        .page-nav-count {
+            margin-left: auto; font-size: 11px; font-weight: 700;
+            padding: 3px 10px; border-radius: 20px;
+            background: rgba(124,131,255,0.12); color: #9C8BFF;
+            border: 1px solid rgba(124,131,255,0.25); white-space: nowrap;
+        }
+
+        .tab-bar {
+            display: flex; background: var(--card);
+            border: 1px solid var(--border); border-radius: var(--radius);
+            overflow: hidden; margin-bottom: 14px;
+        }
+        .tab-btn-alt {
+            flex: 1; padding: 11px 6px; text-align: center;
+            font-size: 12px; font-weight: 700; cursor: pointer;
+            background: transparent; color: var(--text2);
+            border: none; border-right: 1px solid var(--border);
+            font-family: inherit; transition: all 0.2s; white-space: nowrap;
+        }
+        .tab-btn-alt:last-child { border-right: none; }
+        .tab-btn-alt.active { background: var(--accent); color: white; }
+
+        .option-badge-alt {
+            width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%;
+            background: rgba(124,131,255,0.12); border: 1.5px solid rgba(124,131,255,0.3);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 700; color: #9C8BFF;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .option-badge-alt.correct-sel { background: var(--green); border-color: var(--green); color: white; }
+
+        .type-selector-alt { display: flex; gap: 8px; margin-bottom: 14px; }
+        .type-opt-alt {
+            flex: 1; padding: 8px 6px; border-radius: var(--radius-sm);
+            border: 1.5px solid var(--border); background: var(--hover);
+            text-align: center; font-size: 11px; font-weight: 700;
+            cursor: pointer; transition: all 0.2s; color: var(--text2);
+            font-family: inherit;
+        }
+        .type-opt-alt.selected { background: rgba(124,131,255,0.12); border-color: var(--accent); color: #9C8BFF; }
+
+        .mcq-card-alt {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius); overflow: hidden; transition: border-color 0.2s;
+            margin-bottom: 10px;
+        }
+        .mcq-card-alt:hover { border-color: rgba(124,131,255,0.25); }
+        .mcq-num-alt {
+            width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%;
+            background: rgba(124,131,255,0.12); border: 1px solid rgba(124,131,255,0.3);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: 700; color: #9C8BFF; margin-top: 2px;
+        }
+        .mcq-opt-alt {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 11px; color: var(--text2); padding: 5px 8px;
+            border-radius: 6px; border: 1px solid var(--border); background: var(--hover);
+        }
+        .mcq-opt-alt.correct { border-color: rgba(63,185,80,0.4); background: rgba(63,185,80,0.08); color: var(--green); }
+        .opt-key-alt {
+            width: 18px; height: 18px; border-radius: 50%;
+            background: rgba(255,255,255,0.08); display: flex; align-items: center;
+            justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0;
+        }
+        .mcq-opt-alt.correct .opt-key-alt { background: var(--green); color: white; }
+        .type-badge-alt { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 700; }
+        .badge-standard-alt { background: rgba(124,131,255,0.12); color: #9C8BFF; border: 1px solid rgba(124,131,255,0.3); }
+        .badge-hard-alt { background: rgba(248,81,73,0.12); color: var(--red); border: 1px solid rgba(248,81,73,0.3); }
+        .badge-tf-alt { background: rgba(63,185,80,0.12); color: var(--green); border: 1px solid rgba(63,185,80,0.3); }
+
         .form-card {
             background: var(--card); border: 1px solid var(--border);
             border-radius: var(--radius); padding: 18px;
@@ -667,97 +917,89 @@
     <!-- ══════════════ TAB: মূলবই পেইজভিত্তিক প্রস্তুতি ══════════════ -->
     <div class="admin-section" id="secMulboi">
 
-        <!-- ══ Card 1: বিষয় → অধ্যায় → Upload ══ -->
-        <div class="form-card" style="border-top:3px solid var(--accent);">
-            <h3 style="margin-bottom:16px;">📁 PDF ও MCQ ব্যবস্থাপনা</h3>
-
-            <!-- বিষয় -->
-            <div style="margin-bottom:12px;">
-                <label style="display:block;font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.5px;margin-bottom:5px;">বিষয়</label>
-                <div style="display:flex;gap:6px;">
-                    <select id="mb2SelSubject" onchange="mb2OnSubjectChange()" style="flex:1;background:var(--hover);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;padding:9px 11px;outline:none;font-family:inherit;">
+        <div class="section-card card-purple">
+            <div class="card-body">
+                <div class="card-title">📚 বিষয় ও অধ্যায় নির্বাচন</div>
+                <div class="form-group">
+                    <label class="form-label">বিষয়</label>
+                    <select class="form-select" id="mb2SelSubject" onchange="mb2OnSubjectChange()">
                         <option value="">-- বিষয় বেছে নিন --</option>
                     </select>
-                    <button onclick="mb2ToggleNewSubject()" class="btn btn-sm btn-outline" title="নতুন বিষয়">＋ বিষয়</button>
                 </div>
-                <div id="mb2NewSubjectBox" style="display:none;background:var(--hover);border:1px solid var(--border);border-radius:8px;padding:10px;margin-top:6px;">
-                    <div style="display:flex;gap:6px;align-items:center;">
-                        <input id="mb2NewSubjectName" placeholder="বিষয়ের নাম" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;padding:8px 10px;outline:none;font-family:inherit;">
-                        <input id="mb2NewSubjectIcon" placeholder="📚" maxlength="4" style="width:46px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:15px;padding:8px 6px;outline:none;font-family:inherit;text-align:center;">
-                        <button class="btn btn-sm btn-primary" onclick="mb2CreateSubject()">যোগ করো</button>
+                <button class="link-btn" onclick="mb2ToggleNewSubject()">+ নতুন বিষয় যোগ করো</button>
+                <div class="inline-add" id="mb2NewSubjectBox">
+                    <div class="inline-add-row">
+                        <input class="form-input" id="mb2NewSubjectName" placeholder="বিষয়ের নাম" style="flex:1">
+                        <input class="form-input" id="mb2NewSubjectIcon" placeholder="Icon (যেমন: 📚)" style="width:70px">
+                        <button class="btn btn-primary btn-sm" onclick="mb2CreateSubject()">যোগ করো</button>
+                        <button class="btn btn-sm btn-outline" onclick="mb2ToggleNewSubject()">✕</button>
                     </div>
                 </div>
-            </div>
-
-            <!-- অধ্যায় -->
-            <div style="margin-bottom:16px;">
-                <label style="display:block;font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.5px;margin-bottom:5px;">অধ্যায়</label>
-                <div style="display:flex;gap:6px;">
-                    <select id="mb2SelChapter" onchange="mb2OnChapterChange()" disabled style="flex:1;background:var(--hover);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;padding:9px 11px;outline:none;font-family:inherit;">
+                <div class="form-group" style="margin-bottom:6px;margin-top:10px">
+                    <label class="form-label">অধ্যায়</label>
+                    <select class="form-select" id="mb2SelChapter" disabled onchange="mb2OnChapterChange()">
                         <option value="">-- অধ্যায় বেছে নিন --</option>
                     </select>
-                    <button id="mb2NewChapterBtn" onclick="mb2ToggleNewChapter()" class="btn btn-sm btn-outline" style="display:none;" title="নতুন অধ্যায়">＋ অধ্যায়</button>
                 </div>
-                <div id="mb2NewChapterBox" style="display:none;background:var(--hover);border:1px solid var(--border);border-radius:8px;padding:10px;margin-top:6px;">
-                    <div style="display:flex;gap:6px;align-items:center;">
-                        <input id="mb2NewChapterName" placeholder="অধ্যায়ের নাম" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;padding:8px 10px;outline:none;font-family:inherit;">
-                        <button class="btn btn-sm btn-primary" onclick="mb2CreateChapter()">যোগ করো</button>
+                <button class="link-btn" id="mb2NewChapterBtn" onclick="mb2ToggleNewChapter()" style="display:none;">+ নতুন অধ্যায় যোগ করো</button>
+                <div class="inline-add" id="mb2NewChapterBox">
+                    <div class="inline-add-row">
+                        <input class="form-input" id="mb2NewChapterName" placeholder="অধ্যায়ের নাম" style="flex:1">
+                        <button class="btn btn-primary btn-sm" onclick="mb2CreateChapter()">যোগ করো</button>
+                        <button class="btn btn-sm btn-outline" onclick="mb2ToggleNewChapter()">✕</button>
                     </div>
                 </div>
-            </div>
-
-            <!-- Upload form — visible after chapter selected -->
-            <div id="mb2UploadForm" style="display:none;border-top:1px solid var(--border);padding-top:14px;">
-                <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">📤 নতুন PDF যোগ করো</div>
-
-                <input id="mb2PdfTitle" placeholder="PDF এর শিরোনাম *" style="width:100%;background:var(--hover);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;padding:9px 11px;outline:none;font-family:inherit;box-sizing:border-box;margin-bottom:10px;">
-
-                <!-- Tab: file / url -->
-                <div style="display:flex;gap:5px;margin-bottom:10px;">
-                    <button class="btn btn-sm" id="mb2TabFile" onclick="mb2SetMode('file')" style="flex:1;">📂 ফাইল</button>
-                    <button class="btn btn-sm btn-outline" id="mb2TabUrl" onclick="mb2SetMode('url')" style="flex:1;">🔗 URL</button>
-                </div>
-
-                <!-- file drop zone -->
-                <div id="mb2DropZone" ondragover="mb2DzOver(event)" ondragleave="mb2DzLeave()" ondrop="mb2DzDrop(event)"
-                    style="border:2px dashed var(--border);border-radius:10px;padding:22px 12px;text-align:center;cursor:pointer;background:var(--hover);position:relative;margin-bottom:8px;transition:all .2s;">
-                    <input type="file" id="mb2PdfFileInput" accept="application/pdf" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;" onchange="mb2OnFileSelect(event)">
-                    <div style="font-size:26px;margin-bottom:6px;">📄</div>
-                    <div style="font-size:12px;color:var(--text2);">PDF ড্র্যাগ করুন বা ক্লিক করুন</div>
-                </div>
-                <div id="mb2FileChosen" style="display:none;font-size:11.5px;color:var(--green);font-weight:600;padding:6px 10px;background:rgba(16,185,129,.08);border-radius:6px;border:1px solid rgba(16,185,129,.2);margin-bottom:8px;"></div>
-
-                <!-- url input -->
-                <div id="mb2UrlBox" style="display:none;margin-bottom:8px;">
-                    <input id="mb2PdfUrl" type="url" placeholder="https://... (PDF public URL)" style="width:100%;background:var(--hover);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 11px;outline:none;font-family:inherit;box-sizing:border-box;">
-                </div>
-
-                <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text2);margin-bottom:10px;cursor:pointer;">
-                    <input type="checkbox" id="mb2PdfPremium" style="width:auto;"> ⭐ Premium PDF
-                </label>
-
-                <!-- progress -->
-                <div id="mb2UploadProgress" style="display:none;margin-bottom:8px;">
-                    <div style="background:var(--border);border-radius:4px;height:5px;overflow:hidden;margin-bottom:4px;">
-                        <div id="mb2UploadBar" style="height:100%;background:var(--green);width:0;transition:width .3s;"></div>
-                    </div>
-                    <div id="mb2UploadLabel" style="font-size:11px;color:var(--text2);"></div>
-                </div>
-
-                <!-- error box -->
-                <div id="mb2UploadError" style="display:none;padding:9px 11px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:7px;font-size:11.5px;color:#f87171;margin-bottom:8px;line-height:1.5;"></div>
-
-                <button class="btn btn-primary" id="mb2UploadBtn" onclick="mb2UploadPdf()" style="width:100%;">💾 সংরক্ষণ করো</button>
             </div>
         </div>
 
-        <!-- ══ Card 2: Chapter PDF list ══ -->
-        <div class="form-card" id="mb2PdfListCard" style="display:none;">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-                <span style="flex:1;font-size:13px;font-weight:700;">📕 PDF তালিকা</span>
-                <span id="mb2PdfListContext" style="font-size:10px;color:var(--text2);"></span>
+        <div class="section-card card-green" id="mb2UploadForm" style="display:none">
+            <div class="card-body">
+                <div class="card-title">📤 PDF আপলোড</div>
+                <div class="form-group">
+                    <label class="form-label">PDF শিরোনাম</label>
+                    <input class="form-input" id="mb2PdfTitle" placeholder="PDF এর নাম লিখুন">
+                </div>
+                
+                <div style="display:flex;gap:6px;margin-bottom:12px;">
+                    <button class="btn btn-sm" id="mb2TabFile" onclick="mb2SetMode('file')" style="flex:1;">📂 ফাইল আপলোড</button>
+                    <button class="btn btn-sm btn-outline" id="mb2TabUrl" onclick="mb2SetMode('url')" style="flex:1;">🔗 URL দাও</button>
+                </div>
+
+                <div class="drop-zone" id="mb2DropZone" ondragover="mb2DzOver(event)" ondragleave="mb2DzLeave()" ondrop="mb2DzDrop(event)">
+                    <input type="file" id="mb2PdfFileInput" accept=".pdf" onchange="mb2OnFileSelect(event)">
+                    <div class="drop-zone-icon">📄</div>
+                    <div class="drop-zone-text">PDF ফাইল এখানে টানুন বা ক্লিক করুন</div>
+                </div>
+                <div class="file-chosen" id="mb2FileChosen"></div>
+
+                <div id="mb2UrlBox" style="display:none;margin-top:12px;">
+                    <div class="form-group">
+                        <label class="form-label">PDF URL</label>
+                        <input class="form-input" id="mb2PdfUrl" placeholder="https://... (Public PDF URL)">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top:12px;">
+                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                        <input type="checkbox" id="mb2PdfPremium" style="width:auto;height:auto;"> ⭐ Premium PDF (শুধুমাত্র সাবস্ক্রাইবাররা দেখবে)
+                    </label>
+                </div>
+
+                <div class="progress-wrap" id="mb2UploadProgress">
+                    <div class="progress-label" id="mb2UploadLabel">আপলোড হচ্ছে...</div>
+                    <div class="progress-bar-bg"><div class="progress-bar-fill" id="mb2UploadBar"></div></div>
+                </div>
+
+                <div id="mb2UploadError" style="display:none;margin-top:10px;padding:10px;background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.3);border-radius:8px;font-size:12px;color:var(--red);"></div>
+
+                <button class="btn btn-primary btn-full" id="mb2UploadBtn" onclick="mb2UploadPdf()" style="margin-top:14px;">💾 সংরক্ষণ করো</button>
             </div>
-            <div id="mb2ChapterPdfList"></div>
+        </div>
+
+        <div id="mb2PdfListCard" style="display:none;margin-top:16px;">
+            <div class="selected-context" id="mb2PdfListContext" style="display:block;"></div>
+            <div class="section-heading">এই অধ্যায়ের PDF সমূহ</div>
+            <div class="pdf-list" id="mb2ChapterPdfList"></div>
         </div>
 
         <!-- ══ Card 3: ⚙️ Management (collapsible, keeps existing IDs) ══ -->

@@ -35,15 +35,22 @@ async function mbLoadAllPdfs() {
         box.innerHTML = pdfs.map(p => {
             const chapterName = p.book_chapters?.name || '';
             const subjectName = p.book_chapters?.book_subjects?.name || '';
-            return `
-            <div style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;">
-                <span style="font-size:20px;">📕</span>
-                <div style="flex:1;min-width:0;">
-                    <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escMb(p.title)}</div>
-                    <div style="font-size:9.5px;color:var(--text2);">${subjectName ? '📚 '+escMb(subjectName) : ''}${chapterName ? ' › 📖 '+escMb(chapterName) : ''}${p.page_count ? ' · '+p.page_count+' পেইজ' : ''}</div>
+            const st = escMb(p.title).replace(/'/g, "\\'");
+            const su = (p.file_url || '').replace(/'/g, "\\'");
+            return `<div class="pdf-card">
+                <div class="pdf-card-top">
+                    <div class="pdf-card-icon">📕</div>
+                    <div class="pdf-card-info">
+                        <div class="pdf-card-title">${escMb(p.title)}</div>
+                        <div class="pdf-card-meta">
+                            ${subjectName ? '📚 ' + escMb(subjectName) : ''}${chapterName ? ' › 📖 ' + escMb(chapterName) : ''}${p.page_count ? ' · ' + p.page_count + ' পেইজ' : ''}
+                        </div>
+                    </div>
+                    <div class="pdf-card-actions">
+                        <button class="act-btn act-edit" onclick="openMbMcqPanel('${p.id}','${st}',${p.page_count||0},'${su}')" title="MCQ ব্যবস্থাপনা">❓</button>
+                        <button class="act-btn act-delete" onclick="mbDeletePdfFromFlatList('${p.id}')" title="মুছে ফেলুন">🗑️</button>
+                    </div>
                 </div>
-                <button class="btn btn-sm" style="font-size:9px;padding:4px 7px;background:rgba(124,131,255,0.12);color:var(--accent);border:1px solid var(--accent);" onclick="openMbMcqPanel('${p.id}','${escMb(p.title).replace(/'/g,"\\'")}',${p.page_count||0},'${(p.file_url||'').replace(/'/g,"\\'")}')">❓ MCQ</button>
-                <button class="btn btn-sm btn-danger" style="font-size:9px;padding:4px 7px;" onclick="mbDeletePdfFromFlatList('${p.id}')">🗑️</button>
             </div>`;
         }).join('');
     } catch (e) {
@@ -144,59 +151,74 @@ function mbBuildMcqPanelDom() {
     mbInjectStyles();
     const div = document.createElement('div');
     div.innerHTML = `
-    <div class="modal-overlay" id="mbMcqOverlay" style="z-index:600;align-items:flex-start;">
-        <div class="modal-box" style="max-width:680px;margin:14px auto;max-height:94vh;">
-            <button class="modal-close" onclick="closeMbMcqPanel()">✕</button>
-            <h3 id="mbMcqTitle" style="font-size:13px;text-align:left;">❓ MCQ ব্যবস্থাপনা</h3>
-
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
-                <span style="font-size:11px;color:var(--text2);">পেইজ:</span>
-                <button class="btn btn-sm btn-outline" onclick="mbPageStep(-1)" style="padding:4px 10px;">‹</button>
-                <input type="number" id="mbMcqPageInput" value="1" min="1" onchange="mbOnPageChange()" style="width:60px;text-align:center;padding:5px;">
-                <button class="btn btn-sm btn-outline" onclick="mbPageStep(1)" style="padding:4px 10px;">›</button>
-                <button class="btn btn-sm btn-outline" id="mbPageGridToggleBtn" onclick="mbTogglePageGrid()" style="padding:4px 10px;">▦ সব পেইজ</button>
-                <span id="mbMcqPageCount" style="font-size:10.5px;color:var(--text2);margin-left:auto;">০ MCQ (standard)</span>
+    <div class="mcq-panel" id="mbMcqOverlay">
+        <div class="mcq-panel-header">
+            <button class="act-btn" onclick="closeMbMcqPanel()">←</button>
+            <div class="mcq-panel-title" id="mbMcqTitle">MCQ ব্যবস্থাপনা</div>
+        </div>
+        <div class="mcq-panel-context" id="mbMcqContext" style="display:block;"></div>
+        <div class="mcq-panel-body">
+            
+            <div class="page-preview" id="mbMcqPagePreviewWrap">
+                <canvas id="mbMcqPreviewCanvas"></canvas>
+                <div class="page-preview-loading" id="mbMcqPreviewLoading">PDF পেইজ লোড হচ্ছে...</div>
             </div>
 
-            <!-- Page grid: shows every page as a button, with a count-badge on pages that already have MCQs -->
-            <div id="mbPageGridWrap" style="display:none;background:var(--hover);border-radius:8px;padding:8px;margin-bottom:8px;max-height:160px;overflow-y:auto;">
-                <div id="mbPageGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:5px;"></div>
+            <div class="page-nav">
+                <span class="page-nav-label">পেইজ নং:</span>
+                <button class="page-nav-btn" onclick="mbPageStep(-1)">‹</button>
+                <input type="number" class="page-nav-input" id="mbMcqPageInput" value="1" min="1" onchange="mbOnPageChange()">
+                <button class="page-nav-btn" onclick="mbPageStep(1)">›</button>
+                <button class="act-btn" id="mbPageGridToggleBtn" onclick="mbTogglePageGrid()" style="margin-left:8px;width:auto;padding:0 10px;font-size:12px;">▦ সব পেইজ</button>
+                <span class="page-nav-count" id="mbMcqPageCount">০ টি MCQ</span>
             </div>
 
-            <div id="mbMcqPagePreviewWrap" style="text-align:center;margin-bottom:10px;background:var(--hover);border-radius:8px;padding:6px;min-height:60px;position:relative;">
-                <canvas id="mbMcqPreviewCanvas" style="max-width:100%;border-radius:6px;"></canvas>
-                <div id="mbMcqPreviewLoading" style="font-size:11px;color:var(--text2);padding:14px;">পেইজ লোড হচ্ছে...</div>
+            <div id="mbPageGridWrap" style="display:none;background:var(--hover);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:14px;max-height:160px;overflow-y:auto;">
+                <div id="mbPageGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:6px;"></div>
             </div>
 
-            <div style="display:flex;gap:6px;margin-bottom:10px;">
-                <button class="btn btn-sm" id="mbTypeBtn_standard" onclick="mbSwitchType('standard')" style="flex:1;">📚 Standard</button>
-                <button class="btn btn-sm btn-outline" id="mbTypeBtn_true_false" onclick="mbSwitchType('true_false')" style="flex:1;">✅ সত্য/মিথ্যা</button>
-                <button class="btn btn-sm btn-outline" id="mbTypeBtn_hard" onclick="mbSwitchType('hard')" style="flex:1;">🔥 Hard</button>
+            <div class="type-selector-alt">
+                <div class="type-opt-alt selected" id="mbTypeBtn_standard" onclick="mbSwitchType('standard')">📚 Standard</div>
+                <div class="type-opt-alt" id="mbTypeBtn_true_false" onclick="mbSwitchType('true_false')">✅ True-False</div>
+                <div class="type-opt-alt" id="mbTypeBtn_hard" onclick="mbSwitchType('hard')">🔥 Hard</div>
             </div>
 
-            <div style="display:flex;gap:6px;margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:8px;">
-                <button class="btn btn-sm" id="mbTabBtn_manual" onclick="mbSwitchTab('manual')" style="flex:1;">📝 ম্যানুয়াল</button>
-                <button class="btn btn-sm btn-outline" id="mbTabBtn_csv" onclick="mbSwitchTab('csv')" style="flex:1;">📊 CSV</button>
-                <button class="btn btn-sm btn-outline" id="mbTabBtn_ai" onclick="mbSwitchTab('ai')" style="flex:1;">🤖 AI</button>
+            <div class="tab-bar">
+                <button class="tab-btn-alt active" id="mbTabBtn_manual" onclick="mbSwitchTab('manual')">📝 ম্যানুয়াল</button>
+                <button class="tab-btn-alt" id="mbTabBtn_csv" onclick="mbSwitchTab('csv')">📊 CSV</button>
+                <button class="tab-btn-alt" id="mbTabBtn_ai" onclick="mbSwitchTab('ai')">🤖 AI</button>
             </div>
 
             <!-- MANUAL TAB -->
             <div id="mbTabPanel_manual">
-                <div style="background:var(--hover);border-radius:8px;padding:10px;margin-bottom:10px;">
-                    <div style="font-size:11px;font-weight:700;margin-bottom:8px;" id="mbManualFormTitle">➕ নতুন প্রশ্ন যোগ</div>
-                    <textarea id="mbMcqQuestion" placeholder="প্রশ্ন লিখুন..." rows="2" style="margin-bottom:8px;"></textarea>
-                    <div id="mbMcqOptionsWrap" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
-                    <textarea id="mbMcqExplanation" placeholder="ব্যাখ্যা (ঐচ্ছিক)" rows="2" style="margin-bottom:8px;"></textarea>
-                    <label style="display:block;font-size:10.5px;font-weight:600;color:var(--text2);margin-bottom:4px;">ছবি (ঐচ্ছিক — ডায়াগ্রাম/চিত্র যুক্ত প্রশ্নের জন্য)</label>
-                    <input type="file" id="mbMcqImage" accept="image/*" onchange="mbMcqImageSelect(event)" style="margin-bottom:6px;">
-                    <div id="mbMcqImagePreviewWrap" style="display:none;margin-bottom:8px;position:relative;">
-                        <img id="mbMcqImagePreview" style="max-width:100%;max-height:120px;border-radius:6px;display:block;">
-                        <button type="button" onclick="mbRemoveMcqImage()" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;">✕</button>
-                    </div>
-                    <div id="mbMcqImageUploading" style="display:none;font-size:10.5px;color:var(--accent);margin-bottom:6px;">⏳ ছবি আপলোড হচ্ছে...</div>
-                    <div style="display:flex;gap:8px;">
-                        <button class="btn btn-sm btn-outline" id="mbMcqCancelBtn" style="display:none;flex:1;" onclick="mbCancelEdit()">বাতিল</button>
-                        <button class="btn btn-sm btn-primary" id="mbMcqSaveBtn" style="flex:1;" onclick="mbSaveManualMcq()">✓ সংরক্ষণ করো</button>
+                <div class="section-card" style="margin-bottom:14px;border-top:none;">
+                    <div class="card-body" style="background:var(--hover);">
+                        <div class="card-title" id="mbManualFormTitle">➕ নতুন প্রশ্ন যোগ</div>
+                        <div class="form-group">
+                            <label class="form-label">প্রশ্ন *</label>
+                            <textarea class="form-textarea" id="mbMcqQuestion" placeholder="প্রশ্নটি লিখুন..." rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">বিকল্পসমূহ *</label>
+                            <div id="mbMcqOptionsWrap" style="display:flex;flex-direction:column;gap:8px;"></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">ব্যাখ্যা (ঐচ্ছিক)</label>
+                            <textarea class="form-textarea" id="mbMcqExplanation" placeholder="সঠিক উত্তরের ব্যাখ্যা..." rows="2"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">ছবি (ঐচ্ছিক)</label>
+                            <input type="file" id="mbMcqImage" accept="image/*" onchange="mbMcqImageSelect(event)" style="font-size:12px;">
+                            <div id="mbMcqImagePreviewWrap" style="display:none;margin-top:10px;position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--border);">
+                                <img id="mbMcqImagePreview" style="max-width:100%;display:block;">
+                                <button type="button" onclick="mbRemoveMcqImage()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;">✕</button>
+                            </div>
+                            <div id="mbMcqImageUploading" style="display:none;font-size:11px;color:var(--accent);margin-top:6px;">⏳ ছবি আপলোড হচ্ছে...</div>
+                        </div>
+                        <div style="display:flex;gap:10px;margin-top:16px;">
+                            <button class="btn btn-outline" id="mbMcqCancelBtn" style="display:none;flex:1;" onclick="mbCancelEdit()">বাতিল</button>
+                            <button class="btn btn-primary" id="mbMcqSaveBtn" style="flex:1;" onclick="mbSaveManualMcq()">✓ সংরক্ষণ করো</button>
+                        </div>
                     </div>
                 </div>
                 <div id="mbManualMcqList"></div>
@@ -204,70 +226,74 @@ function mbBuildMcqPanelDom() {
 
             <!-- CSV TAB -->
             <div id="mbTabPanel_csv" style="display:none;">
-                <div style="background:var(--hover);border-radius:8px;padding:10px;margin-bottom:10px;font-size:10.5px;color:var(--text2);line-height:1.6;">
-                    <b style="color:var(--green);">ফরম্যাট:</b><br>
-                    <code style="font-size:9.5px;">question,option1,option2,option3,option4,answer,explanation</code><br>
-                    answer: 1/2/3/4 (যেটা সঠিক অপশনের নম্বর)
+                <div class="section-card" style="border-top:none;">
+                    <div class="card-body" style="background:var(--hover);">
+                        <div style="font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:12px;">
+                            <b style="color:var(--green);">CSV ফরম্যাট:</b> <code>question,option1,option2,option3,option4,answer,explanation</code><br>
+                            সঠিক উত্তর (answer) হিসেবে ১, ২, ৩ বা ৪ ব্যবহার করুন।
+                        </div>
+                        <button class="btn btn-outline btn-full" style="margin-bottom:12px;" onclick="mbDownloadCsvTemplate()">⬇️ টেমপ্লেট ডাউনলোড</button>
+                        <div class="drop-zone" id="mbCsvDropZone" onclick="document.getElementById('mbCsvFileInput').click()"
+                            ondragover="mbCsvDragOver(event)" ondragleave="mbCsvDragLeave(event)" ondrop="mbCsvDrop(event)">
+                            <div class="drop-zone-icon">📊</div>
+                            <div class="drop-zone-text">CSV ফাইল এখানে ড্র্যাগ করুন বা ক্লিক করুন</div>
+                            <input type="file" id="mbCsvFileInput" accept=".csv" onchange="mbCsvFileSelect(event)" style="display:none;">
+                        </div>
+                        <div id="mbCsvPreviewInfo" style="display:none;font-size:12px;color:var(--text2);margin-top:12px;font-weight:600;"></div>
+                        <div id="mbCsvPreviewTableWrap" style="display:none;overflow-x:auto;margin-top:10px;border:1px solid var(--border);border-radius:8px;background:var(--card);">
+                            <table style="width:100%;border-collapse:collapse;font-size:11px;">
+                                <thead style="background:var(--hover);border-bottom:1px solid var(--border);">
+                                    <tr><th style="padding:8px;">#</th><th style="padding:8px;text-align:left;">প্রশ্ন</th><th style="padding:8px;">উত্তর</th></tr>
+                                </thead>
+                                <tbody id="mbCsvPreviewBody"></tbody>
+                            </table>
+                        </div>
+                        <button class="btn btn-primary btn-full" id="mbCsvImportBtn" style="display:none;margin-top:14px;" onclick="mbImportCsv()">📥 আমদানি সম্পন্ন করো</button>
+                    </div>
                 </div>
-                <button class="btn btn-sm btn-outline" style="width:100%;margin-bottom:8px;" onclick="mbDownloadCsvTemplate()">⬇️ টেমপ্লেট ডাউনলোড করো</button>
-                <div id="mbCsvDropZone" ondragover="mbCsvDragOver(event)" ondragleave="mbCsvDragLeave(event)" ondrop="mbCsvDrop(event)"
-                    style="border:2px dashed var(--border);border-radius:8px;padding:18px 10px;text-align:center;cursor:pointer;margin-bottom:8px;transition:all .2s;"
-                    onclick="document.getElementById('mbCsvFileInput').click()">
-                    <div style="font-size:24px;margin-bottom:4px;">📊</div>
-                    <div style="font-size:11px;color:var(--text2);">CSV ফাইল এখানে ড্র্যাগ করো বা ক্লিক করো</div>
-                    <input type="file" id="mbCsvFileInput" accept=".csv,text/csv" onchange="mbCsvFileSelect(event)" style="display:none;">
-                </div>
-                <div id="mbCsvPreviewInfo" style="display:none;font-size:11px;color:var(--text2);margin-bottom:8px;"></div>
-                <div id="mbCsvPreviewTableWrap" style="display:none;overflow-x:auto;margin-bottom:8px;border:1px solid var(--border);border-radius:8px;">
-                    <table style="width:100%;border-collapse:collapse;font-size:10px;white-space:nowrap;">
-                        <thead><tr style="background:var(--hover);">
-                            <th style="padding:6px 8px;text-align:left;">#</th>
-                            <th style="padding:6px 8px;text-align:left;">প্রশ্ন</th>
-                            <th style="padding:6px 8px;">১</th><th style="padding:6px 8px;">২</th><th style="padding:6px 8px;">৩</th><th style="padding:6px 8px;">৪</th>
-                            <th style="padding:6px 8px;">উত্তর</th>
-                        </tr></thead>
-                        <tbody id="mbCsvPreviewBody"></tbody>
-                    </table>
-                </div>
-                <button class="btn btn-sm btn-primary" id="mbCsvImportBtn" style="display:none;width:100%;" onclick="mbImportCsv()">📥 আমদানি করো</button>
-                <div id="mbCsvImportResult" style="display:none;margin-top:8px;padding:8px 10px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:6px;font-size:11.5px;color:var(--green);font-weight:600;"></div>
             </div>
 
             <!-- AI TAB -->
             <div id="mbTabPanel_ai" style="display:none;">
-                <div style="background:var(--hover);border-radius:8px;padding:10px;margin-bottom:10px;font-size:10.5px;color:var(--text2);line-height:1.6;">
-                    🤖 AI (Gemini) দিয়ে এই পেইজের ছবি থেকে স্বয়ংক্রিয় MCQ তৈরি হবে।
-                </div>
-                <div style="display:flex;gap:8px;margin-bottom:10px;">
-                    <div style="flex:1;">
-                        <label style="display:block;font-size:10.5px;font-weight:600;color:var(--text2);margin-bottom:4px;">প্রশ্ন সংখ্যা</label>
-                        <input type="number" id="mbAiCount" value="5" min="1" max="20">
-                    </div>
-                    <div style="flex:1;">
-                        <label style="display:block;font-size:10.5px;font-weight:600;color:var(--text2);margin-bottom:4px;">ধরন</label>
-                        <select id="mbAiTypeSelect">
-                            <option value="current">বর্তমান টাইপ অনুযায়ী</option>
-                            <option value="mixed">🎯 Mixed (সব ধরন একসাথে)</option>
-                        </select>
-                    </div>
-                </div>
-                <div style="margin-bottom:10px;">
-                    <label style="display:block;font-size:10.5px;font-weight:600;color:var(--text2);margin-bottom:4px;">কাস্টম প্রম্পট (ঐচ্ছিক)</label>
-                    <textarea id="mbAiPrompt" rows="3" placeholder="ফাঁকা রাখলে ডিফল্ট প্রম্পট ব্যবহার হবে"></textarea>
-                    <div style="display:flex;gap:6px;margin-top:6px;">
-                        <button class="btn btn-sm btn-outline" style="flex:1;" id="mbSavePromptBtn" onclick="mbSaveAiPrompt()">💾 প্রম্পট সেভ করো</button>
-                        <button class="btn btn-sm btn-outline" style="flex:1;" id="mbLoadPromptBtn" onclick="mbLoadAiPrompt()">📂 সেভ করা প্রম্পট</button>
-                    </div>
-                    <div id="mbPromptSaveStatus" style="display:none;font-size:10px;margin-top:4px;color:var(--green);font-weight:600;"></div>
-                </div>
-                <button class="btn btn-sm" style="width:100%;background:rgba(251,191,36,0.12);color:#FBBF24;border:1px solid #FBBF24;" id="mbAiGenBtn" onclick="mbAiGenerate()">🤖 AI দিয়ে MCQ তৈরি করো</button>
-                <div id="mbAiSpinner" style="display:none;text-align:center;padding:14px;font-size:11.5px;color:var(--accent);">⏳ AI প্রশ্ন তৈরি করছে...</div>
-                <div id="mbAiPreviewWrap" style="display:none;margin-top:10px;">
-                    <div style="font-size:11px;color:var(--text2);margin-bottom:8px;" id="mbAiResultHeader"></div>
-                    <div id="mbAiPreviewList"></div>
-                    <div style="display:flex;gap:8px;margin-top:8px;">
-                        <button class="btn btn-sm btn-outline" style="flex:1;" onclick="mbDiscardAi()">✕ বাতিল</button>
-                        <button class="btn btn-sm" style="flex:1;background:var(--green);color:#fff;" onclick="mbSaveAiMcqs()">✓ সব সংরক্ষণ করো</button>
+                <div class="section-card" style="border-top:none;">
+                    <div class="card-body" style="background:var(--hover);">
+                        <div style="font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:14px;">
+                            🤖 AI এই পেইজের ছবি থেকে স্বয়ংক্রিয়ভাবে MCQ তৈরি করবে।
+                        </div>
+                        <div style="display:flex;gap:10px;margin-bottom:14px;">
+                            <div style="flex:1;">
+                                <label class="form-label">প্রশ্ন সংখ্যা</label>
+                                <input type="number" class="form-input" id="mbAiCount" value="5" min="1" max="20">
+                            </div>
+                            <div style="flex:1;">
+                                <label class="form-label">ধরন</label>
+                                <select class="form-select" id="mbAiTypeSelect">
+                                    <option value="current">বর্তমান টাইপ</option>
+                                    <option value="mixed">🎯 Mixed</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">কাস্টম প্রম্পট (ঐচ্ছিক)</label>
+                            <textarea class="form-textarea" id="mbAiPrompt" rows="3" placeholder="AI-কে বিশেষ কোনো নির্দেশনা দিতে চাইলে এখানে লিখুন..."></textarea>
+                        </div>
+                        <div style="display:flex;gap:8px;margin-bottom:14px;">
+                            <button class="btn btn-sm btn-outline" style="flex:1;" onclick="mbSaveAiPrompt()">💾 সেভ প্রম্পট</button>
+                            <button class="btn btn-sm btn-outline" style="flex:1;" onclick="mbLoadAiPrompt()">📂 লোড প্রম্পট</button>
+                        </div>
+                        <button class="btn btn-primary btn-full" id="mbAiGenBtn" onclick="mbAiGenerate()" style="background:linear-gradient(90deg, #6366F1, #8B5CF6);border:none;">🤖 AI দিয়ে MCQ তৈরি করো</button>
+                        <div id="mbAiSpinner" style="display:none;text-align:center;padding:20px;">
+                            <div style="width:30px;height:30px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 10px;"></div>
+                            <div style="font-size:12px;color:var(--accent);font-weight:600;">AI প্রশ্ন তৈরি করছে...</div>
+                        </div>
+                        <div id="mbAiPreviewWrap" style="display:none;margin-top:16px;">
+                            <div class="section-heading" id="mbAiResultHeader">AI ফলাফল</div>
+                            <div id="mbAiPreviewList"></div>
+                            <div style="display:flex;gap:10px;margin-top:14px;">
+                                <button class="btn btn-outline" style="flex:1;" onclick="mbDiscardAi()">✕ বাতিল</button>
+                                <button class="btn btn-primary" style="flex:1;background:var(--green);border-color:var(--green);" onclick="mbSaveAiMcqs()">✓ সব সেভ করো</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -306,10 +332,9 @@ function mbRenderOptionInputs() {
     const isTF = mbMcq.currentType === 'true_false';
     const labels = isTF ? ['সত্য','মিথ্যা'] : ['ক','খ','গ','ঘ'];
     wrap.innerHTML = labels.map((lbl, i) => `
-        <div style="display:flex;align-items:center;gap:6px;">
-            <button type="button" class="mb-ans-badge" id="mbAnsBadge_${i}" onclick="mbSelectAnswer(${i})"
-                style="width:28px;height:28px;border-radius:6px;border:1.5px solid var(--border);background:var(--card);font-size:11px;font-weight:700;flex-shrink:0;cursor:pointer;">${lbl[0]}</button>
-            <input class="mb-opt-input" id="mbOpt_${i}" placeholder="${isTF ? lbl : 'বিকল্প ' + lbl}" value="${isTF ? lbl : ''}" ${isTF ? 'readonly' : ''} style="flex:1;">
+        <div style="display:flex;align-items:center;gap:10px;">
+            <div class="option-badge-alt" id="mbAnsBadge_${i}" onclick="mbSelectAnswer(${i})">${lbl}</div>
+            <input class="form-input" id="mbOpt_${i}" placeholder="${isTF ? lbl : 'বিকল্প ' + lbl}" value="${isTF ? lbl : ''}" ${isTF ? 'readonly' : ''} style="flex:1;">
         </div>`).join('');
     mbMcq._selectedAnswer = null;
 }
@@ -320,9 +345,8 @@ function mbSelectAnswer(i) {
     for (let k = 0; k < count; k++) {
         const b = document.getElementById('mbAnsBadge_' + k);
         if (!b) continue;
-        b.style.background = (k === i) ? 'var(--green)' : 'var(--card)';
-        b.style.color = (k === i) ? '#fff' : 'var(--text)';
-        b.style.borderColor = (k === i) ? 'var(--green)' : 'var(--border)';
+        if (k === i) b.classList.add('correct-sel');
+        else b.classList.remove('correct-sel');
     }
 }
 
@@ -502,28 +526,48 @@ function mbRenderManualList() {
     const listEl = document.getElementById('mbManualMcqList');
     if (!listEl) return;
     if (!mbMcq.pageQuestions.length) {
-        listEl.innerHTML = '<p style="font-size:11px;color:var(--text2);text-align:center;padding:10px;">এই পেইজে এখনো কোনো প্রশ্ন নেই</p>';
+        listEl.innerHTML = '<div style="text-align:center;padding:30px 10px;color:var(--text3);font-size:12px;">এই পেইজে এখনো কোনো প্রশ্ন যোগ করা হয়নি।</div>';
         return;
     }
     listEl.innerHTML = mbMcq.pageQuestions.map((q, i) => {
-        const isDisabled = q.is_active === false; // undefined/true = active (default active, matches AtlasPro)
+        const isDisabled = q.is_active === false;
+        const typeLabels = { standard: 'Standard', true_false: 'True-False', hard: 'Hard' };
+        const typeBadgeClass = `badge-${q.type || mbMcq.currentType}-alt`;
+        
         return `
-        <div style="border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;${isDisabled?'opacity:0.55;':''}">
-            <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;">
-                <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;">
-                    <button title="উপরে" onclick="mbMoveMcq(${i},-1)" style="width:22px;height:18px;border-radius:4px;border:1px solid var(--border);background:var(--card);font-size:9px;cursor:pointer;color:var(--text2);" ${i===0?'disabled':''}>▲</button>
-                    <button title="নিচে" onclick="mbMoveMcq(${i},1)" style="width:22px;height:18px;border-radius:4px;border:1px solid var(--border);background:var(--card);font-size:9px;cursor:pointer;color:var(--text2);" ${i===mbMcq.pageQuestions.length-1?'disabled':''}>▼</button>
+        <div class="mcq-card-alt" style="${isDisabled ? 'opacity:0.6;' : ''}">
+            <div style="padding:12px 14px; display:flex; align-items:flex-start; gap:10px;">
+                <div class="mcq-num-alt">${i + 1}</div>
+                <div style="flex:1; font-size:13px; line-height:1.5; color:var(--text);">
+                    ${escMb(q.question)}
+                    ${isDisabled ? ' <span style="font-size:10px;color:var(--red);">(নিষ্ক্রিয়)</span>' : ''}
                 </div>
-                <div style="font-size:12px;font-weight:600;flex:1;">${i+1}. ${escMb(q.question)}${isDisabled?' <span style="font-size:9px;color:var(--text2);font-weight:400;">(নিষ্ক্রিয়)</span>':''}</div>
-                <button title="${isDisabled?'সক্রিয় করুন':'নিষ্ক্রিয় করুন'}" onclick="mbToggleMcqActive(${i})" style="font-size:13px;background:none;border:none;cursor:pointer;color:${isDisabled?'var(--text2)':'var(--green)'};flex-shrink:0;">${isDisabled?'👁️':'✓'}</button>
+                <div style="display:flex; gap:6px; flex-shrink:0;">
+                    <button class="act-btn act-edit" onclick="mbEditManualMcq(${i})" title="সম্পাদনা">✏️</button>
+                    <button class="act-btn act-delete" onclick="mbDeleteManualMcq(${i})" title="মুছে ফেলুন">🗑️</button>
+                </div>
             </div>
-            ${q.image_url ? `<img src="${q.image_url}" style="max-width:100%;max-height:100px;border-radius:6px;margin-bottom:8px;display:block;">` : ''}
-            <div style="font-size:10.5px;color:var(--text2);margin-bottom:8px;">
-                ${(q.options||[]).map((o,oi)=>`<div style="${oi===q.answer_index?'color:var(--green);font-weight:700;':''}">${oi===q.answer_index?'✅':'◽'} ${escMb(o)}</div>`).join('')}
+            ${q.image_url ? `<div style="padding:0 14px 12px 46px;"><img src="${q.image_url}" style="max-width:100%;border-radius:8px;border:1px solid var(--border);"></div>` : ''}
+            <div style="padding:0 14px 12px 46px; display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                ${(q.options || []).map((o, oi) => `
+                    <div class="mcq-opt-alt ${oi === q.answer_index ? 'correct' : ''}">
+                        <div class="opt-key-alt">${['ক', 'খ', 'গ', 'ঘ'][oi] || (oi + 1)}</div>
+                        <div style="overflow:hidden;text-overflow:ellipsis;">${escMb(o)}</div>
+                    </div>
+                `).join('')}
             </div>
-            <div style="display:flex;gap:6px;">
-                <button class="btn btn-sm btn-outline" style="flex:1;font-size:10px;padding:5px;" onclick="mbEditManualMcq(${i})">✏️ সম্পাদনা</button>
-                <button class="btn btn-sm btn-danger" style="flex:1;font-size:10px;padding:5px;" onclick="mbDeleteManualMcq(${i})">🗑️ মুছো</button>
+            <div style="padding:8px 14px 12px 46px; border-top:1px solid var(--border); display:flex; align-items:center; gap:10px;">
+                <span class="type-badge-alt ${typeBadgeClass}">${typeLabels[q.type || mbMcq.currentType]}</span>
+                <div style="font-size:10px; color:var(--text3); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                    ${q.explanation ? 'ব্যাখ্যা: ' + escMb(q.explanation) : 'ব্যাখ্যা নেই'}
+                </div>
+                <button onclick="mbToggleMcqActive(${i})" style="background:none;border:none;font-size:12px;cursor:pointer;color:${isDisabled ? 'var(--text3)' : 'var(--green)'};" title="${isDisabled ? 'সক্রিয় করুন' : 'নিষ্ক্রিয় করুন'}">
+                    ${isDisabled ? '👁️‍🗨️' : '👁️'}
+                </button>
+                <div style="display:flex;gap:4px;">
+                    <button onclick="mbMoveMcq(${i},-1)" style="width:20px;height:20px;border-radius:4px;border:1px solid var(--border);background:var(--card);font-size:9px;cursor:pointer;" ${i === 0 ? 'disabled' : ''}>▲</button>
+                    <button onclick="mbMoveMcq(${i},1)" style="width:20px;height:20px;border-radius:4px;border:1px solid var(--border);background:var(--card);font-size:9px;cursor:pointer;" ${i === mbMcq.pageQuestions.length - 1 ? 'disabled' : ''}>▼</button>
+                </div>
             </div>
         </div>`;
     }).join('');
@@ -1381,16 +1425,20 @@ async function mb2LoadChapterPdfs() {
         listEl.innerHTML = pdfs.map(p => {
             const st = escMb(p.title).replace(/'/g, "\\'");
             const su = (p.file_url || '').replace(/'/g, "\\'");
-            return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;margin-bottom:7px;background:var(--card-bg,var(--bg));">
-                <div style="font-size:22px;flex-shrink:0;">📕</div>
-                <div style="flex:1;min-width:0;">
-                    <div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escMb(p.title)}</div>
-                    <div style="font-size:10px;color:var(--text2);margin-top:1px;">${p.page_count ? p.page_count + ' পৃষ্ঠা · ' : ''}${p.is_premium ? '⭐ Premium' : '🆓 Free'}</div>
-                </div>
-                <div style="display:flex;gap:4px;flex-shrink:0;">
-                    <button class="btn btn-sm" style="font-size:10px;padding:5px 8px;background:rgba(124,131,255,.12);color:var(--accent);border:1px solid var(--accent);" onclick="openMbMcqPanel('${p.id}','${st}',${p.page_count||0},'${su}')">✏️ MCQ</button>
-                    <button class="btn btn-sm btn-outline" style="font-size:10px;padding:5px 7px;" onclick="mb2TogglePremium('${p.id}',${!p.is_premium})">${p.is_premium ? '⭐' : '🆓'}</button>
-                    <button class="btn btn-sm btn-danger" style="font-size:10px;padding:5px 7px;" onclick="mb2DeletePdf('${p.id}','${st}')">🗑️</button>
+            return `<div class="pdf-card">
+                <div class="pdf-card-top">
+                    <div class="pdf-card-icon">📕</div>
+                    <div class="pdf-card-info">
+                        <div class="pdf-card-title">${escMb(p.title)}</div>
+                        <div class="pdf-card-meta">
+                            ${p.page_count ? p.page_count + ' পৃষ্ঠা · ' : ''}${p.is_premium ? '⭐ Premium' : '🆓 Free'}
+                        </div>
+                    </div>
+                    <div class="pdf-card-actions">
+                        <button class="act-btn act-edit" onclick="openMbMcqPanel('${p.id}','${st}',${p.page_count||0},'${su}')" title="MCQ ব্যবস্থাপনা">❓</button>
+                        <button class="act-btn" onclick="mb2TogglePremium('${p.id}',${!p.is_premium})" title="${p.is_premium ? 'ফ্রি করুন' : 'প্রিমিয়াম করুন'}">${p.is_premium ? '⭐' : '🆓'}</button>
+                        <button class="act-btn act-delete" onclick="mb2DeletePdf('${p.id}','${st}')" title="মুছে ফেলুন">🗑️</button>
+                    </div>
                 </div>
             </div>`;
         }).join('');
