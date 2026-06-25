@@ -85,7 +85,7 @@ function mbToast(msg) {
 
 /* ---------- OPEN / CLOSE PANEL ---------- */
 function openMbMcqPanel(pdfId, pdfTitle, pageCount, fileUrl) {
-    mbMcq.pdfId = pdfId;
+    mbMcq.pdfId = parseInt(pdfId);
     mbMcq.pdfTitle = pdfTitle;
     mbMcq.pageCount = pageCount || 0;
     mbMcq.fileUrl = fileUrl || '';

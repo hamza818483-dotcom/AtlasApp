@@ -1401,7 +1401,7 @@ async function saveItem(table, data, editId, clearFn, loadFn) {
         }
         if (clearFn) clearFn();
         if (loadFn)  loadFn();
-    } catch(e) { showToast('❌ এরর: ' + e.message, 4000); console.error(e); alert('DEBUG — saveItem failed for table "' + table + '": ' + e.message); }
+    } catch(e) { showToast('❌ এরর: ' + e.message, 4000); console.error(e); }
 }
 
 async function editItem(table, id, fillFn) {
@@ -1941,7 +1941,7 @@ async function loadMulboiSubjects() {
                 </div>
             </div>`).join('');
         if (mbOpenSubject) loadMbChapters(mbOpenSubject);
-    } catch (e) { box.innerHTML = '<p style="color:var(--red);">লোড এরর</p>'; alert('DEBUG — loadMulboiSubjects failed: ' + e.message); }
+    } catch (e) { box.innerHTML = '<p style="color:var(--red);">লোড এরর</p>'; }
     // All-PDFs flat list (feature lives in mulboi-mcq-admin.js, guarded in case it hasn't loaded)
     if (typeof mbLoadAllPdfs === 'function') mbLoadAllPdfs();
 }
@@ -1987,7 +1987,7 @@ function addMbChapter(subjectId) {
     const input = document.getElementById('mbNewChapName_' + subjectId);
     const name = input.value.trim();
     if (!name) { showToast('⚠️ অধ্যায়ের নাম দিন'); return; }
-    saveItem('book_chapters', { subject_id: subjectId, name }, null, () => { input.value = ''; }, () => loadMbChapters(subjectId));
+    saveItem('book_chapters', { subject_id: parseInt(subjectId), name }, null, () => { input.value = ''; }, () => loadMbChapters(subjectId));
 }
 
 function renameMbChapter(id, oldName, subjectId) {
@@ -2142,7 +2142,7 @@ async function uploadMbPdf(chapterId) {
         await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdfs`, {
             method: 'POST',
             body: JSON.stringify({
-                chapter_id: chapterId,
+                chapter_id: parseInt(chapterId),
                 title,
                 file_url: publicUrl,
                 page_count: pageCount,
