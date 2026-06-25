@@ -1002,48 +1002,15 @@
             <div class="pdf-list" id="mb2ChapterPdfList"></div>
         </div>
 
-        <!-- ══ Card 3: ⚙️ Management (collapsible, keeps existing IDs) ══ -->
-        <div class="form-card" style="padding:0;overflow:hidden;">
-            <div style="display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer;" onclick="mb2ToggleMgmt()">
-                <span style="flex:1;font-size:13px;font-weight:700;">⚙️ বিষয় ও অধ্যায় ব্যবস্থাপনা</span>
-                <span id="mb2MgmtChevron" style="font-size:11px;color:var(--text2);transition:transform .25s;">▶</span>
-            </div>
-            <div id="mb2MgmtBody" style="display:none;border-top:1px solid var(--border);padding:14px;">
-                <input type="hidden" id="mbSubjectEditId">
-                <div class="input-row">
-                    <div class="input-group">
-                        <label>বিষয়ের নাম</label>
-                        <input type="text" id="mbSubjectName" placeholder="যেমন: জীববিজ্ঞান ১ম পত্র">
-                    </div>
-                    <div class="input-group" style="max-width:90px;">
-                        <label>আইকন</label>
-                        <input type="text" id="mbSubjectIcon" placeholder="📘" maxlength="4">
-                    </div>
+        <!-- All Saved PDFs (AtlasPro style) -->
+        <div class="section-card card-amber" style="margin-top:14px">
+            <div class="card-body">
+                <div class="card-title">📂 সংরক্ষিত সকল PDF</div>
+                <div class="pdf-list" id="mbAllPdfsList">
+                    <!-- Loaded by mbLoadAllPdfs in mulboi-mcq-admin.js -->
                 </div>
-                <div class="input-group">
-                    <label>বর্ণনা (ঐচ্ছিক)</label>
-                    <input type="text" id="mbSubjectDesc" placeholder="ছোট বর্ণনা">
-                </div>
-                <div class="input-group">
-                    <label>কালার থিম</label>
-                    <select id="mbSubjectColor">
-                        <option value="0">🟣 Indigo</option><option value="1">🟢 Emerald</option>
-                        <option value="2">🔴 Red</option><option value="3">🟡 Gold</option>
-                        <option value="4">🔵 Sky</option><option value="5">🩷 Rose</option>
-                        <option value="6">🟪 Violet</option><option value="7">🩵 Pink</option>
-                    </select>
-                </div>
-                <div style="display:flex;gap:8px;margin-bottom:16px;">
-                    <button class="btn btn-primary" onclick="saveMbSubject()" style="flex:1;">💾 সেভ</button>
-                    <button class="btn btn-outline" onclick="clearMbSubjectForm()">✕</button>
-                </div>
-                <h3 style="margin-bottom:8px;">📖 বিষয় তালিকা</h3>
-                <div id="mbSubjectsList"></div>
             </div>
         </div>
-
-        <!-- hidden anchor for mbAllPdfsList (used by mbLoadAllPdfs in mulboi-mcq-admin.js) -->
-        <div id="mbAllPdfsList" style="display:none;"></div>
 
     </div><!-- end secMulboi -->
 

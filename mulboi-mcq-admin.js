@@ -1475,16 +1475,7 @@ async function mb2DeletePdf(id, title) {
     } catch { mbToast('মুছতে ব্যর্থ'); }
 }
 
-/* ═══ Management section toggle ═══ */
-function mb2ToggleMgmt() {
-    const body    = document.getElementById('mb2MgmtBody');
-    const chevron = document.getElementById('mb2MgmtChevron');
-    if (!body) return;
-    const open = body.style.display !== 'none';
-    body.style.display = open ? 'none' : 'block';
-    if (chevron) chevron.style.transform = open ? 'rotate(0deg)' : 'rotate(90deg)';
-    if (!open && typeof loadMulboiSubjects === 'function') loadMulboiSubjects();
-}
+
 
 /* ═══ Auto-init: wrap loadMulboiSubjects to also call mb2LoadSubjects ═══ */
 (function mb2PatchLoader() {
