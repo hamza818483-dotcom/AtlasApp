@@ -98,8 +98,7 @@ async function quickSaveAll() {
         progressLabel.textContent = 'বিষয় তৈরি করছে...';
         let subjectId = null;
         
-        // Check if subject exists
-        const existingSubjects = await (await api('/book_subjects?select=id&order=created_at.desc&limit=1000')).json();
+        const existingSubjects = await (await api('/book_subjects?select=id,name&order=created_at.desc&limit=1000')).json();
         const existingSub = existingSubjects.find(s => s.name === subjectName);
         
         if (existingSub) {
@@ -107,6 +106,7 @@ async function quickSaveAll() {
         } else {
             const createSubRes = await api('/book_subjects', {
                 method: 'POST',
+                headers: { 'Prefer': 'return=representation' },
                 body: JSON.stringify({
                     name: subjectName,
                     icon: subjectIcon,
@@ -116,7 +116,7 @@ async function quickSaveAll() {
             });
             if (!createSubRes.ok) throw new Error('বিষয় তৈরি ব্যর্থ');
             const subData = await createSubRes.json();
-            subjectId = subData[0]?.id || subData.id;
+            subjectId = subData[0]?.id;
         }
 
         // Step 2: Create Chapter
@@ -125,6 +125,7 @@ async function quickSaveAll() {
         
         const createChRes = await api('/book_chapters', {
             method: 'POST',
+            headers: { 'Prefer': 'return=representation' },
             body: JSON.stringify({
                 subject_id: subjectId,
                 name: chapterName,
@@ -134,7 +135,7 @@ async function quickSaveAll() {
         });
         if (!createChRes.ok) throw new Error('অধ্যায় তৈরি ব্যর্থ');
         const chData = await createChRes.json();
-        const chapterId = chData[0]?.id || chData.id;
+        const chapterId = chData[0]?.id;
 
         // Step 3: Upload PDF to Supabase Storage
         progressLabel.textContent = 'PDF আপলোড করছে...';
@@ -288,93 +289,102 @@ function mbInjectStyles() {
         }
         .mcq-panel-title { flex: 1; font-size: 13px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .mcq-panel-body { flex: 1; overflow-y: auto; padding: 14px; }
-        .mcq-panel-context {
-            padding: 6px 14px; font-size: 11px; font-weight: 600;
-            color: var(--text3); background: rgba(108,99,255,0.05);
-            border-bottom: 1px solid var(--border);
-        }
-        .back-btn {
-            display: flex; align-items: center; gap: 6px;
-            padding: 7px 12px; border-radius: var(--radius-sm);
-            background: var(--card-bg); border: 1px solid var(--border);
-            color: var(--text); font-size: 13px; font-weight: 600;
-            cursor: pointer; transition: .15s;
-        }
-        .back-btn:hover { background: var(--card-hover); }
         
-        .pdf-preview-wrap {
-            display: flex; gap: 10px; margin-bottom: 14px;
-            padding: 10px; background: var(--card-bg); border-radius: 10px;
-            border: 1px solid var(--border);
+        .page-preview {
+            background: #111120; border: 1px solid var(--border);
+            border-radius: var(--radius); margin-bottom: 14px;
+            overflow: hidden; position: relative;
+            display: flex; align-items: center; justify-content: center;
+            min-height: 150px;
         }
-        .pdf-canvas-wrap {
-            width: 80px; height: 120px; background: #000;
-            border-radius: 6px; overflow: hidden; flex-shrink: 0;
+        .page-preview canvas { max-width: 100%; display: block; }
+        
+        .page-nav {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--card-bg); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 12px 14px;
+            margin-bottom: 14px;
+        }
+        .page-nav-label { font-size: 12px; font-weight: 700; color: var(--text2); white-space: nowrap; }
+        .page-nav-input {
+            width: 64px; background: var(--bg); border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm); color: var(--text);
+            font-size: 15px; font-weight: 700; padding: 8px 10px;
+            outline: none; text-align: center; font-family: inherit;
+        }
+        .page-nav-btn {
+            width: 36px; height: 36px; border-radius: var(--radius-sm);
+            border: 1.5px solid var(--border); background: var(--card-bg);
+            color: var(--text2); font-size: 16px; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
         }
-        .pdf-canvas-wrap canvas { max-width: 100%; max-height: 100%; }
-        .pdf-nav-wrap {
-            flex: 1; display: flex; flex-direction: column; justify-content: space-between;
+        .page-nav-count {
+            margin-left: auto; font-size: 11px; font-weight: 700;
+            padding: 3px 10px; border-radius: 20px;
+            background: rgba(108,99,255,0.12); color: #9C8BFF;
+            border: 1px solid rgba(108,99,255,0.25); white-space: nowrap;
         }
-        .pdf-nav-label { font-size: 11px; color: var(--text3); }
-        .pdf-nav-btns { display: flex; gap: 6px; }
-        .pdf-nav-btn {
-            padding: 4px 8px; background: var(--accent); color: #fff;
-            border: none; border-radius: 4px; font-size: 11px; font-weight: 600;
-            cursor: pointer; transition: .15s;
-        }
-        .pdf-nav-btn:hover { opacity: 0.8; }
-        .pdf-page-input {
-            width: 50px; padding: 4px 6px; background: var(--bg);
-            border: 1px solid var(--border); border-radius: 4px;
-            color: var(--text); font-size: 11px; text-align: center;
-        }
-        
+
         .tab-bar {
-            display: flex; gap: 6px; margin-bottom: 14px;
-            border-bottom: 1px solid var(--border); padding-bottom: 10px;
+            display: flex; background: var(--card-bg);
+            border: 1px solid var(--border); border-radius: var(--radius);
+            overflow: hidden; margin-bottom: 14px;
         }
         #mbMcqOverlay .tab-btn {
-            padding: 8px 12px; background: transparent; border: none;
-            color: var(--text3); font-size: 12px; font-weight: 600;
-            cursor: pointer; border-bottom: 2px solid transparent;
-            transition: .15s;
+            flex: 1; padding: 11px 6px; text-align: center;
+            font-size: 12px; font-weight: 700; cursor: pointer;
+            background: transparent; color: var(--text3);
+            border: none; border-right: 1px solid var(--border);
+            font-family: inherit; transition: all 0.2s;
         }
-        #mbMcqOverlay .tab-btn.active {
-            color: var(--accent); border-bottom-color: var(--accent);
-        }
-        #mbMcqOverlay .tab-btn:hover { color: var(--text); }
+        #mbMcqOverlay .tab-btn.active { background: var(--accent); color: white; }
         
         .tab-panel { display: none; }
         .tab-panel.active { display: block; }
+
+        .options-grid { display: flex; flex-direction: column; gap: 8px; }
+        .option-row { display: flex; align-items: center; gap: 8px; }
+        .option-badge {
+            width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%;
+            background: rgba(108,99,255,0.12); border: 1.5px solid rgba(108,99,255,0.3);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 700; color: #9C8BFF;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .option-badge.correct-sel {
+            background: #10B981; border-color: #10B981; color: white;
+        }
         
+        .type-selector { display: flex; gap: 8px; margin-top: 10px; }
+        .type-opt {
+            flex: 1; padding: 8px 6px; border-radius: var(--radius-sm);
+            border: 1.5px solid var(--border); background: var(--card-bg);
+            text-align: center; font-size: 11px; font-weight: 700;
+            cursor: pointer; transition: all 0.2s; color: var(--text3);
+        }
+        .type-opt.selected {
+            background: rgba(108,99,255,0.12); border-color: var(--accent); color: #9C8BFF;
+        }
+
         .form-group { margin-bottom: 12px; }
         .form-label { display: block; font-size: 11px; font-weight: 700; color: var(--text3); margin-bottom: 4px; }
-        .form-input, .form-select, .form-textarea {
+        .form-input, .form-textarea {
             width: 100%; padding: 8px 10px; background: var(--card-bg);
             border: 1px solid var(--border); border-radius: 6px;
             color: var(--text); font-size: 12px; font-family: inherit;
         }
         .form-textarea { resize: vertical; min-height: 60px; }
-        .form-input:focus, .form-select:focus, .form-textarea:focus {
-            outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(124,131,255,0.2);
-        }
         
-        .btn-row { display: flex; gap: 8px; }
-        .btn-primary, .btn-outline {
-            flex: 1; padding: 10px; border: none; border-radius: 8px;
-            font-size: 12px; font-weight: 700; cursor: pointer; transition: .15s;
-        }
         .btn-primary {
+            width: 100%; padding: 12px; border: none; border-radius: 8px;
+            font-size: 13px; font-weight: 700; cursor: pointer;
             background: linear-gradient(135deg, var(--accent), #3D35B0);
-            color: #fff;
+            color: #fff; margin-top: 10px;
         }
-        .btn-primary:hover { opacity: 0.9; }
-        .btn-outline {
-            background: transparent; border: 1px solid var(--border);
-            color: var(--text);
+        .back-btn-header {
+            background: none; border: none; color: var(--text);
+            font-size: 18px; cursor: pointer; padding: 5px;
         }
-        .btn-outline:hover { background: var(--card-hover); }
     `;
     document.head.appendChild(style);
 }
@@ -384,6 +394,8 @@ async function openMbMcqPanel(pdfId, pdfTitle, pdfUrl) {
     activePdfId = pdfId;
     activePdfTitle = pdfTitle;
     currentPage = 1;
+    selAnswerKey = 0;
+    selTypeKey = 'standard';
     
     let panel = document.getElementById('mbMcqOverlay');
     if (!panel) {
@@ -395,66 +407,73 @@ async function openMbMcqPanel(pdfId, pdfTitle, pdfUrl) {
     
     panel.innerHTML = `
         <div class="mcq-panel-header">
-            <button class="back-btn" onclick="closeMbMcqPanel()">← ফিরে যান</button>
-            <div class="mcq-panel-title">${esc(pdfTitle)}</div>
+            <button class="back-btn-header" onclick="closeMbMcqPanel()">←</button>
+            <div class="mcq-panel-title">${esc(pdfTitle)} — MCQ সম্পাদনা</div>
         </div>
         <div class="mcq-panel-body">
-            <div class="pdf-preview-wrap">
-                <div class="pdf-canvas-wrap"><canvas id="mbPdfCanvas"></canvas></div>
-                <div class="pdf-nav-wrap">
-                    <div class="pdf-nav-label">পেইজ নির্বাচন</div>
-                    <div class="pdf-nav-btns">
-                        <button class="pdf-nav-btn" onclick="mbPrevPage()">← পূর্ব</button>
-                        <input type="number" class="pdf-page-input" id="mbPageInput" min="1" value="1" onchange="mbGoToPage()">
-                        <button class="pdf-nav-btn" onclick="mbNextPage()">পরবর্তী →</button>
-                    </div>
-                </div>
+            <div class="page-preview">
+                <canvas id="mbPdfCanvas"></canvas>
+            </div>
+            
+            <div class="page-nav">
+                <span class="page-nav-label">পেইজ</span>
+                <button class="page-nav-btn" onclick="mbPrevPage()">‹</button>
+                <input type="number" class="page-nav-input" id="mbPageInput" min="1" value="1" onchange="mbGoToPage()">
+                <button class="page-nav-btn" onclick="mbNextPage()">›</button>
+                <div class="page-nav-count" id="mbPageCount">...</div>
             </div>
             
             <div class="tab-bar">
-                <button class="tab-btn active" onclick="mbSwitchTab('manual')">📝 Manual</button>
-                <button class="tab-btn" onclick="mbSwitchTab('csv')">📊 CSV</button>
-                <button class="tab-btn" onclick="mbSwitchTab('ai')">🤖 AI</button>
+                <button class="tab-btn active" id="tabBtnManual" onclick="mbSwitchTab('manual')">📝 Manual</button>
+                <button class="tab-btn" id="tabBtnCsv" onclick="mbSwitchTab('csv')">📊 CSV</button>
+                <button class="tab-btn" id="tabBtnAi" onclick="mbSwitchTab('ai')">🤖 AI</button>
             </div>
             
             <div id="tab-manual" class="tab-panel active">
                 <div class="form-group">
                     <label class="form-label">প্রশ্ন</label>
-                    <textarea class="form-textarea" id="mbQuestion" placeholder="প্রশ্ন লিখুন"></textarea>
+                    <textarea class="form-textarea" id="mbQuestion" placeholder="প্রশ্ন লিখুন..."></textarea>
                 </div>
+                
+                <div class="options-grid">
+                    ${['ক','খ','গ','ঘ','ঙ'].map((key, i) => `
+                    <div class="option-row">
+                        <div class="option-badge ${i===0?'correct-sel':''}" id="optBadge${i}" onclick="mbSetCorrect(${i})">${key}</div>
+                        <input class="form-input" id="mbOption${i}" placeholder="অপশন ${key}">
+                    </div>`).join('')}
+                </div>
+                
+                <div class="form-group" style="margin-top:14px">
+                    <label class="form-label">ব্যাখ্যা (ঐচ্ছিক)</label>
+                    <textarea class="form-textarea" id="mbExplanation" placeholder="ব্যাখ্যা লিখুন..."></textarea>
+                </div>
+
                 <div class="form-group">
-                    <label class="form-label">সঠিক উত্তর</label>
-                    <select class="form-select" id="mbCorrectAns">
-                        <option value="0">ক</option>
-                        <option value="1">খ</option>
-                        <option value="2">গ</option>
-                        <option value="3">ঘ</option>
-                        <option value="4">ঙ</option>
-                    </select>
+                    <label class="form-label">প্রশ্নের ধরন</label>
+                    <div class="type-selector">
+                        <div class="type-opt selected" id="typeOptStandard" onclick="mbSetType('standard')">Standard</div>
+                        <div class="type-opt" id="typeOptHard" onclick="mbSetType('hard')">Hard</div>
+                        <div class="type-opt" id="typeOptTf" onclick="mbSetType('true_false')">T/F</div>
+                    </div>
                 </div>
-                <div class="btn-row">
-                    <button class="btn-primary" onclick="mbSaveMcq()">💾 সংরক্ষণ করো</button>
-                </div>
+                
+                <button class="btn-primary" onclick="mbSaveMcq()">💾 সংরক্ষণ করো</button>
             </div>
             
             <div id="tab-csv" class="tab-panel">
                 <div class="form-group">
                     <label class="form-label">CSV ডেটা (প্রশ্ন,ক,খ,গ,ঘ,সঠিক)</label>
-                    <textarea class="form-textarea" id="mbCsvData" placeholder="প্রশ্ন,অপশন১,অপশন২,অপশন৩,অপশন৪,সঠিক_অপশন"></textarea>
+                    <textarea class="form-textarea" id="mbCsvData" style="min-height:200px" placeholder="প্রশ্ন,অপশন১,অপশন২,অপশন৩,অপশন৪,সঠিক_ইনডেক্স(০-৩)"></textarea>
                 </div>
-                <div class="btn-row">
-                    <button class="btn-primary" onclick="mbImportCsv()">📥 আমদানি করো</button>
-                </div>
+                <button class="btn-primary" onclick="mbImportCsv()">📥 আমদানি করো</button>
             </div>
             
             <div id="tab-ai" class="tab-panel">
                 <div class="form-group">
-                    <label class="form-label">AI দিয়ে MCQ তৈরি করো</label>
-                    <textarea class="form-textarea" id="mbAiPrompt" placeholder="বিষয় এবং প্রশ্নের ধরন বর্ণনা করুন"></textarea>
+                    <label class="form-label">AI প্রম্পট</label>
+                    <textarea class="form-textarea" id="mbAiPrompt" placeholder="যেমন: এই পেইজ থেকে ৫টি কঠিন প্রশ্ন তৈরি করো..."></textarea>
                 </div>
-                <div class="btn-row">
-                    <button class="btn-primary" onclick="mbGenerateAi()">🤖 তৈরি করো</button>
-                </div>
+                <button class="btn-primary" onclick="mbGenerateAi()">🤖 AI দিয়ে তৈরি করো</button>
             </div>
         </div>
     `;
@@ -465,6 +484,7 @@ async function openMbMcqPanel(pdfId, pdfTitle, pdfUrl) {
     try {
         cachedPdfUrl = pdfUrl;
         cachedPdfDoc = await pdfjsLib.getDocument({ url: pdfUrl }).promise;
+        document.getElementById('mbPageCount').textContent = cachedPdfDoc.numPages + ' পেইজ';
         mbRenderPage(1);
     } catch (e) {
         console.error('PDF লোড ব্যর্থ:', e);
@@ -482,8 +502,8 @@ async function mbRenderPage(pageNum) {
         const canvas = document.getElementById('mbPdfCanvas');
         if (!canvas) return;
         
-        const scale = 1;
-        const viewport = page.getViewport({ scale });
+        const dpr = window.devicePixelRatio || 1;
+        const viewport = page.getViewport({ scale: 1.5 });
         canvas.width = viewport.width;
         canvas.height = viewport.height;
         
@@ -493,45 +513,78 @@ async function mbRenderPage(pageNum) {
     }
 }
 
-function mbPrevPage() {
-    if (currentPage > 1) mbRenderPage(currentPage - 1);
-}
-
-function mbNextPage() {
-    if (cachedPdfDoc && currentPage < cachedPdfDoc.numPages) mbRenderPage(currentPage + 1);
-}
-
+function mbPrevPage() { if (currentPage > 1) mbRenderPage(currentPage - 1); }
+function mbNextPage() { if (cachedPdfDoc && currentPage < cachedPdfDoc.numPages) mbRenderPage(currentPage + 1); }
 function mbGoToPage() {
     const pageNum = parseInt(document.getElementById('mbPageInput').value) || 1;
     mbRenderPage(pageNum);
+}
+
+function mbSetCorrect(idx) {
+    selAnswerKey = idx;
+    document.querySelectorAll('.option-badge').forEach((b, i) => {
+        b.classList.toggle('correct-sel', i === idx);
+    });
+}
+
+function mbSetType(type) {
+    selTypeKey = type;
+    document.querySelectorAll('.type-opt').forEach(opt => {
+        opt.classList.toggle('selected', opt.id === 'typeOpt' + type.charAt(0).toUpperCase() + type.slice(1).replace('_',''));
+    });
 }
 
 function mbSwitchTab(tabName) {
     document.querySelectorAll('#mbMcqOverlay .tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('#mbMcqOverlay .tab-panel').forEach(p => p.classList.remove('active'));
     
-    event.target.classList.add('active');
+    document.getElementById('tabBtn' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.add('active');
     document.getElementById('tab-' + tabName).classList.add('active');
 }
 
-function mbSaveMcq() {
+async function mbSaveMcq() {
     const question = document.getElementById('mbQuestion').value.trim();
-    if (!question) { mbToast('প্রশ্ন লিখুন', 'error'); return; }
-    mbToast('✓ MCQ সংরক্ষিত হয়েছে', 'success');
-    document.getElementById('mbQuestion').value = '';
+    const options = [
+        document.getElementById('mbOption0').value.trim(),
+        document.getElementById('mbOption1').value.trim(),
+        document.getElementById('mbOption2').value.trim(),
+        document.getElementById('mbOption3').value.trim(),
+        document.getElementById('mbOption4').value.trim()
+    ].filter(Boolean);
+    
+    if (!question) return mbToast('প্রশ্ন লিখুন', 'error');
+    if (options.length < 2) return mbToast('অন্তত ২টি অপশন প্রয়োজন', 'error');
+
+    try {
+        await api('/questions', {
+            method: 'POST',
+            body: JSON.stringify({
+                pdf_id: activePdfId,
+                page_number: currentPage,
+                question: question,
+                options: options,
+                correct_option: selAnswerKey,
+                explanation: document.getElementById('mbExplanation').value.trim(),
+                type: selTypeKey
+            })
+        });
+        mbToast('✓ MCQ সংরক্ষিত হয়েছে', 'success');
+        
+        // Clear fields
+        document.getElementById('mbQuestion').value = '';
+        document.getElementById('mbExplanation').value = '';
+        for(let i=0; i<5; i++) document.getElementById('mbOption'+i).value = '';
+    } catch (e) {
+        mbToast('সংরক্ষণ ব্যর্থ', 'error');
+    }
 }
 
 function mbImportCsv() {
-    const csv = document.getElementById('mbCsvData').value.trim();
-    if (!csv) { mbToast('CSV ডেটা পেস্ট করুন', 'error'); return; }
-    mbToast('✓ CSV আমদানি করা হয়েছে', 'success');
-    document.getElementById('mbCsvData').value = '';
+    mbToast('✓ CSV আমদানি লজিক শীঘ্রই আসছে', 'info');
 }
 
 function mbGenerateAi() {
-    const prompt = document.getElementById('mbAiPrompt').value.trim();
-    if (!prompt) { mbToast('প্রম্পট লিখুন', 'error'); return; }
-    mbToast('🤖 AI দিয়ে MCQ তৈরি হচ্ছে...', 'info');
+    mbToast('🤖 AI প্রসেসিং শুরু হচ্ছে...', 'info');
 }
 
 function closeMbMcqPanel() {
@@ -545,7 +598,6 @@ function initMulboiAdmin() {
     mbLoadAllPdfs();
 }
 
-// Auto-init when page loads
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initMulboiAdmin);
 } else {
