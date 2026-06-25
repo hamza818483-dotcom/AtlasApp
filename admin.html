@@ -1401,7 +1401,7 @@ async function saveItem(table, data, editId, clearFn, loadFn) {
         }
         if (clearFn) clearFn();
         if (loadFn)  loadFn();
-    } catch(e) { showToast('❌ এরর: ' + e.message, 4000); console.error(e); }
+    } catch(e) { showToast('❌ এরর: ' + e.message, 4000); console.error(e); alert('DEBUG — saveItem failed for table "' + table + '": ' + e.message); }
 }
 
 async function editItem(table, id, fillFn) {
@@ -1941,7 +1941,7 @@ async function loadMulboiSubjects() {
                 </div>
             </div>`).join('');
         if (mbOpenSubject) loadMbChapters(mbOpenSubject);
-    } catch (e) { box.innerHTML = '<p style="color:var(--red);">লোড এরর</p>'; }
+    } catch (e) { box.innerHTML = '<p style="color:var(--red);">লোড এরর</p>'; alert('DEBUG — loadMulboiSubjects failed: ' + e.message); }
     // All-PDFs flat list (feature lives in mulboi-mcq-admin.js, guarded in case it hasn't loaded)
     if (typeof mbLoadAllPdfs === 'function') mbLoadAllPdfs();
 }
