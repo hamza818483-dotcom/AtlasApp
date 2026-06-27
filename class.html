@@ -1544,21 +1544,12 @@ function cpFullscreen() {
 }
 
 function _enterFsLandscape() {
-    // screen.width/height always gives physical pixels regardless of browser chrome
-    const SW = screen.width;   // physical narrow side (portrait)
-    const SH = screen.height;  // physical tall side (portrait)
-    // After rotate(90deg): cssWidth→visual height, cssHeight→visual width
-    // So inner fills screen: cssWidth=SH, cssHeight=SW
-    const cssW = Math.max(SW, SH); // landscape visual width
-    const cssH = Math.min(SW, SH); // landscape visual height
-
     const fo = document.createElement('div');
     fo.id = 'fsOverlay';
     fo.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:2147483647;overflow:hidden;';
 
     const inner = document.createElement('div');
     inner.id = 'fsInner';
-    inner.style.cssText = `position:absolute;top:50%;left:50%;width:${cssW}px;height:${cssH}px;transform:translate(-50%,-50%) rotate(90deg);transform-origin:center center;display:flex;flex-direction:column;background:#000;overflow:hidden;`;
 
     // Video slot — fills remaining space after controls
     const slot = document.createElement('div');
@@ -1580,13 +1571,38 @@ function _enterFsLandscape() {
     fo.appendChild(inner);
     document.body.appendChild(fo);
 
+    _layoutFsInner();
+    window.addEventListener('resize', _layoutFsInner);
+    window.addEventListener('orientationchange', _layoutFsInner);
+
     _buildFsControls(inner);
     _startFsRaf();
     _showFsControls();
 }
 
+// দরকার অনুযায়ী fsInner-কে size/rotate করে — device নিজে থেকে landscape-এ
+// auto-rotate করে ফেললে (innerWidth > innerHeight) আর কোনো manual rotate লাগে না,
+// সরাসরি আসল viewport পূরণ করলেই হয়। শুধু device এখনো portrait-এ আটকে থাকলে
+// (orientation lock/no auto-rotate) CSS rotate(90deg) দিয়ে landscape simulate করা হয় —
+// double-rotation এড়াতেই এই check, যেটা আগে দুই পাশে কালো বর্ডার রেখে দিতো।
+function _layoutFsInner() {
+    const inner = document.getElementById('fsInner');
+    if (!inner) return;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    if (vw >= vh) {
+        // Device/browser already in landscape — no rotation needed, fill viewport as-is
+        inner.style.cssText = `position:absolute;top:0;left:0;width:${vw}px;height:${vh}px;display:flex;flex-direction:column;background:#000;overflow:hidden;`;
+    } else {
+        // Still portrait — simulate landscape via rotated box sized to the real viewport
+        const cssW = vh, cssH = vw; // swapped so the rotated visual footprint = vw × vh
+        inner.style.cssText = `position:absolute;top:50%;left:50%;width:${cssW}px;height:${cssH}px;transform:translate(-50%,-50%) rotate(90deg);transform-origin:center center;display:flex;flex-direction:column;background:#000;overflow:hidden;`;
+    }
+}
+
 function _exitFsLandscape() {
     _stopFsRaf();
+    window.removeEventListener('resize', _layoutFsInner);
+    window.removeEventListener('orientationchange', _layoutFsInner);
 
     // Return iframe
     const ytEl = document.getElementById('ytPlayerEl');
