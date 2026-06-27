@@ -1,300 +1,1116 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATLAS APP · Focus Timer</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        .focus-container { max-width: 560px; margin: 0 auto; padding: 0 0 80px; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATLAS APP · Focus Timer</title>
+<link rel="stylesheet" href="style.css">
+<style>
+/* ═══════════════════════════════════════════
+   FOCUS TIMER — FULL REDESIGN
+═══════════════════════════════════════════ */
+* { box-sizing: border-box; }
 
-        /* ── Intro screen ── */
-        .intro-wrap { padding: 14px 14px 24px; }
-        .intro-hero { text-align: center; padding: 10px 0; }
-        .intro-icon { font-size: 38px; margin-bottom: 6px; animation: focusFloat 3s ease-in-out infinite; }
-        @keyframes focusFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
-        .intro-title { font-size: 19px; font-weight: 900; color: var(--accent); }
-        .intro-sub { font-size: 11.5px; color: var(--text-secondary); margin-top: 3px; }
+.focus-container { max-width: 560px; margin: 0 auto; padding: 0 0 80px; }
 
-        .premium-box {
-            background: var(--accent-light); border: 1.5px solid var(--accent);
-            border-radius: var(--radius); padding: 12px 14px; margin: 14px 0 10px;
-        }
-        .premium-box-title { font-size: 12px; font-weight: 800; color: var(--accent); margin-bottom: 8px; }
-        .feature-list { list-style: none; display: flex; flex-direction: column; gap: 5px; }
-        .feature-list li { font-size: 11.5px; color: var(--text); display: flex; gap: 6px; line-height: 1.4; }
-        .feature-list li::before { content:'✅'; flex-shrink:0; font-size:10px; }
+/* ═══ BREAK/SLEEP MOOD OVERLAY ═══ */
+.mood-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: var(--bg);
+  display: none; flex-direction: column;
+  overflow-y: auto;
+}
+.mood-overlay.show { display: flex; }
+.mood-overlay-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  background: var(--card-bg); position: sticky; top: 0; z-index: 1;
+}
+.mood-overlay-back {
+  background: none; border: none; color: var(--text); cursor: pointer;
+  padding: 4px; display: flex; align-items: center;
+}
+.mood-overlay-title { font-size: 15px; font-weight: 900; flex: 1; }
+.mood-overlay-title.break { color: #F59E0B; }
+.mood-overlay-title.sleep { color: #818CF8; }
+.mood-overlay-count {
+  font-size: 10px; font-weight: 800; color: var(--text-secondary);
+  background: rgba(255,255,255,.07); padding: 2px 8px; border-radius: 10px;
+}
+.mood-overlay-timer {
+  margin: 12px 16px 8px; padding: 10px 16px;
+  border-radius: 12px; text-align: center;
+  background: var(--card-bg); border: 1px solid var(--border);
+}
+.mot-label { font-size: 9px; font-weight: 800; letter-spacing: 1px; color: var(--text-secondary); }
+.mot-label.break { color: #F59E0B; }
+.mot-label.sleep { color: #818CF8; }
+.mot-time { font-size: 32px; font-weight: 900; font-family: 'Courier New', monospace; color: var(--text); margin-top: 4px; }
+.mood-overlay-list { padding: 0 16px 80px; display: flex; flex-direction: column; gap: 5px; margin-top: 4px; }
 
-        .how-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 14px; }
-        .how-title { font-size: 11px; font-weight: 800; color: var(--text-secondary); margin-bottom: 8px; }
-        .how-step { font-size: 11.5px; color: var(--text); display: flex; gap: 6px; align-items: flex-start; line-height: 1.3; margin-bottom: 5px; }
-        .how-step-num {
-            width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
-            background: var(--accent-light); border: 1px solid var(--accent);
-            color: var(--accent); font-size: 9px; font-weight: 900;
-            display: flex; align-items: center; justify-content: center;
-        }
+/* ── Intro screen ── */
+.intro-wrap { padding: 14px 14px 24px; }
+.intro-hero { text-align: center; padding: 10px 0; }
+.intro-icon { font-size: 38px; margin-bottom: 6px; animation: focusFloat 3s ease-in-out infinite; }
+@keyframes focusFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+.intro-title { font-size: 19px; font-weight: 900; color: var(--accent); }
+.intro-sub { font-size: 11.5px; color: var(--text-secondary); margin-top: 3px; }
+.premium-box {
+  background: var(--accent-light); border: 1.5px solid var(--accent);
+  border-radius: var(--radius); padding: 12px 14px; margin: 14px 0 10px;
+}
+.premium-box-title { font-size: 12px; font-weight: 800; color: var(--accent); margin-bottom: 8px; }
+.feature-list { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+.feature-list li { font-size: 11.5px; color: var(--text); display: flex; gap: 6px; line-height: 1.4; }
+.feature-list li::before { content:''; display:inline-block; width:10px; height:10px; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M5 12l5 5L20 7' stroke='%2310B981' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center/contain; flex-shrink:0; margin-top:1px; }
+.how-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 14px; }
+.how-title { font-size: 11px; font-weight: 800; color: var(--text-secondary); margin-bottom: 8px; }
+.how-step { font-size: 11.5px; color: var(--text); display: flex; gap: 6px; align-items: flex-start; line-height: 1.3; margin-bottom: 5px; }
+.how-step-num {
+  width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+  background: var(--accent-light); border: 1px solid var(--accent);
+  color: var(--accent); font-size: 9px; font-weight: 900;
+  display: flex; align-items: center; justify-content: center;
+}
+.intro-start-btn {
+  width: 100%; padding: 14px; background: var(--accent); border: none;
+  border-radius: var(--radius); color: #fff; font-size: 15px; font-weight: 900;
+  cursor: pointer; font-family: inherit; box-shadow: var(--shadow-md);
+}
+.intro-start-btn:active { transform: scale(.98); }
 
-        .intro-start-btn {
-            width: 100%; padding: 14px; background: var(--accent); border: none;
-            border-radius: var(--radius); color: #fff; font-size: 15px; font-weight: 900;
-            cursor: pointer; font-family: inherit; box-shadow: var(--shadow-md);
-        }
-        .intro-start-btn:active { transform: scale(.98); }
+/* ── Timer screen ── */
+.timer-screen { display: none; }
+.timer-screen.show { display: block; }
 
-        /* ── Timer screen ── */
-        .timer-screen { display: none; }
-        .timer-screen.show { display: block; }
+/* USER NAME + BATCH in header area */
+.user-header-box {
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 14px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.uhb-left { display: flex; align-items: center; gap: 11px; }
+.uhb-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #818CF8);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 900; color: #fff; flex-shrink: 0;
+  position: relative; overflow: hidden;
+}
+.uhb-avatar-glow {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255,255,255,.3), transparent);
+  animation: avatarGlow 2s ease-in-out infinite alternate;
+}
+@keyframes avatarGlow {
+  0% { opacity: 0.3; }
+  100% { opacity: 0.8; }
+}
+.uhb-name { font-size: 13px; font-weight: 900; color: var(--text); transition: color .3s; line-height: 1.15; }
+.uhb-name.timer-active {
+  background: linear-gradient(90deg, var(--text), #10B981, var(--text));
+  background-size: 200% auto;
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  animation: nameGlow 2.5s linear infinite;
+}
+@keyframes nameGlow {
+  0% { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+.uhb-batch-pill.timer-active {
+  box-shadow: 0 0 8px 2px rgba(99,102,241,.35);
+}
+@keyframes batchPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0); }
+  50% { box-shadow: 0 0 8px 2px rgba(99,102,241,.4); }
+}
+.uhb-batch-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 7px; border-radius: 10px;
+  background: rgba(99,102,241,.15); border: 1px solid rgba(99,102,241,.3);
+  font-size: 9.5px; font-weight: 800; color: #818CF8;
+  position: relative;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+@keyframes batchShimmer {
+  0% { left: -100%; } 100% { left: 200%; }
+}
+.uhb-right { display: flex; align-items: center; gap: 6px; }
+.history-btn {
+  display: flex; align-items: center; gap: 4px;
+  padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--card-bg); color: var(--text-secondary);
+  font-size: 9px; font-weight: 800; cursor: pointer; font-family: inherit;
+  white-space: nowrap;
+}
+.history-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-        .live-summary {
-            display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 14px;
-            background: var(--card-bg); border-bottom: 1px solid var(--border); font-size: 11px;
-        }
-        .ls-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 16px; font-weight: 700; font-size: 10px; }
-        .ls-reading { background: rgba(16,185,129,.12); color: #10B981; }
-        .ls-break { background: rgba(245,158,11,.12); color: #F59E0B; }
-        .ls-name { font-weight: 800; font-size: 10px; max-width: 60px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .ls-dot { width: 5px; height: 5px; border-radius: 50%; animation: focusBlink 1.2s ease-in-out infinite; }
-        .ls-dot-g { background: #10B981; }
-        .ls-dot-a { background: #F59E0B; }
-        @keyframes focusBlink { 0%,100%{opacity:1} 50%{opacity:.3} }
+/* ═══ MOOD BUTTONS ═══ */
+.mood-row {
+  display: flex; gap: 6px; padding: 10px 14px 6px;
+  position: relative; z-index: 2;
+}
+.mood-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  gap: 3px; padding: 8px 4px; border-radius: 12px; border: 1.5px solid transparent;
+  cursor: pointer; font-family: inherit; font-size: 9px; font-weight: 900;
+  letter-spacing: .3px; position: relative; overflow: hidden;
+  transition: all .3s; color: #fff;
+}
+.mood-btn .mood-icon { font-size: 16px; }
+.mood-btn .mood-label { font-size: 9px; font-weight: 800; }
+.mood-btn .mood-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(255,255,255,.5);
+  transition: all .3s;
+}
+.mood-btn.active .mood-dot { background: #fff; box-shadow: 0 0 6px rgba(255,255,255,.8); }
 
-        .timer-main { display: flex; flex-direction: column; align-items: center; padding: 16px 14px 8px; position: relative; }
-        .timer-fab-row { position: absolute; top: 12px; right: 14px; display: flex; flex-direction: column; gap: 6px; }
-        .fab { display: flex; align-items: center; gap: 4px; padding: 7px 10px; border-radius: 8px; font-size: 10px; font-weight: 800; cursor: pointer; border: none; font-family: inherit; white-space: nowrap; }
-        .fab-break { background: linear-gradient(135deg,#F59E0B,#D97706); color: #fff; }
-        .fab-break:disabled { opacity: .4; cursor: not-allowed; }
-        .fab-end { background: var(--card-bg); color: var(--text-secondary); border: 1.5px solid var(--border); }
+/* Pulse animation for active mood */
+.mood-btn.active::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 12px;
+  animation: moodPulse 2s ease-in-out infinite;
+}
+@keyframes moodPulse {
+  0%,100% { box-shadow: inset 0 0 0 0 rgba(255,255,255,.2); }
+  50% { box-shadow: inset 0 0 20px 2px rgba(255,255,255,.1); }
+}
 
-        .timer-ring-wrap { position: relative; width: 170px; height: 170px; margin-bottom: 8px; }
-        .timer-svg { transform: rotate(-90deg); }
-        .t-track { fill:none; stroke:var(--border); stroke-width:10; }
-        .t-ring { fill:none; stroke:var(--accent); stroke-width:10; stroke-linecap:round; stroke-dasharray:502; stroke-dashoffset:502; transition: stroke-dashoffset .9s linear, stroke .4s; }
-        .timer-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; }
-        .t-display { font-size: 38px; font-weight: 900; font-family: 'Inter',monospace; letter-spacing: 2px; color: var(--text); }
-        .t-label { font-size: 10px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+/* Study Mood */
+.mood-study {
+  background: linear-gradient(135deg, #0f4c2a, #166534, #15803d);
+  border-color: rgba(16,185,129,.4);
+}
+.mood-study.active {
+  background: linear-gradient(135deg, #10B981, #059669, #047857);
+  border-color: #10B981;
+  box-shadow: 0 4px 16px rgba(16,185,129,.4);
+  animation: moodGlow 2s ease-in-out infinite alternate;
+}
+@keyframes moodGlow {
+  0% { box-shadow: 0 4px 16px rgba(16,185,129,.3); }
+  100% { box-shadow: 0 4px 24px rgba(16,185,129,.6); }
+}
 
-        .break-track { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-        .break-dots { display: flex; gap: 6px; }
-        .bd { width: 10px; height: 10px; border-radius: 50%; background: var(--border); transition: all .3s; }
-        .bd.used { background: #F59E0B; }
-        .bd.avail { background: rgba(245,158,11,.2); border: 1.5px solid #F59E0B; }
-        .break-lbl { font-size: 9px; color: var(--text-secondary); }
+/* Break Mood */
+.mood-break {
+  background: linear-gradient(135deg, #5c3a00, #92400e, #b45309);
+  border-color: rgba(245,158,11,.3);
+}
+.mood-break.active {
+  background: linear-gradient(135deg, #F59E0B, #D97706, #B45309);
+  border-color: #F59E0B;
+  box-shadow: 0 4px 16px rgba(245,158,11,.4);
+  animation: breakGlow 2s ease-in-out infinite alternate;
+}
+@keyframes breakGlow {
+  0% { box-shadow: 0 4px 16px rgba(245,158,11,.3); }
+  100% { box-shadow: 0 4px 24px rgba(245,158,11,.6); }
+}
 
-        .break-warn-bar { margin: 0 14px 6px; padding: 6px 12px; background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.35); border-radius: 8px; font-size: 11px; color: #F59E0B; text-align: center; font-weight: 600; display: none; }
-        .break-warn-bar.show { display: block; }
+/* Sleep Mood */
+.mood-sleep {
+  background: linear-gradient(135deg, #1e1b4b, #312e81, #3730a3);
+  border-color: rgba(99,102,241,.3);
+}
+.mood-sleep.active {
+  background: linear-gradient(135deg, #6366F1, #4F46E5, #4338CA);
+  border-color: #6366F1;
+  box-shadow: 0 4px 16px rgba(99,102,241,.4);
+  animation: sleepGlow 2s ease-in-out infinite alternate;
+}
+@keyframes sleepGlow {
+  0% { box-shadow: 0 4px 16px rgba(99,102,241,.3); }
+  100% { box-shadow: 0 4px 24px rgba(99,102,241,.6); }
+}
 
-        .resume-btn { display: none; margin: 0 14px 8px; width: calc(100% - 28px); padding: 12px; background: #10B981; border: none; border-radius: var(--radius); color: #fff; font-size: 14px; font-weight: 800; cursor: pointer; font-family: inherit; }
-        .resume-btn.show { display: block; }
+/* ═══ TIMER UNIFIED BOX ═══ */
+.timer-unified-box {
+  margin: 4px 14px 6px;
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  background: var(--card-bg);
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,.18);
+}
 
-        .live-stats-box { margin: 8px 14px; padding: 10px 12px; background: var(--card-bg); border: 1.5px solid var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: space-around; }
-        .lsb-item { text-align: center; flex: 1; }
-        .lsb-val { font-size: 18px; font-weight: 900; }
-        .lsb-val.green { color: #10B981; }
-        .lsb-val.amber { color: #F59E0B; }
-        .lsb-lbl { font-size: 9px; color: var(--text-secondary); font-weight: 600; }
-        .lsb-divider { width: 1px; height: 28px; background: var(--border); flex-shrink: 0; }
-        .lsb-top-name { font-size: 11px; font-weight: 900; color: #F59E0B; max-width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* ── mood row inside box ── */
+.timer-unified-box .mood-row {
+  padding: 6px 8px 5px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,.02);
+}
 
-        .batch-filter { display: flex; gap: 6px; padding: 6px 14px; overflow-x: auto; }
-        .bf-chip { padding: 4px 10px; border-radius: 14px; font-size: 10px; font-weight: 700; white-space: nowrap; cursor: pointer; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-secondary); flex-shrink: 0; }
-        .bf-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+/* ═══ DIGITAL TIMER ═══ */
+.timer-digital-wrap {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 8px 10px 6px; width: 100%;
+}
+.timer-clock-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 6px; width: 100%; padding: 0;
+}
+.timer-unit {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  flex: 1;
+}
+.timer-unit-box {
+  width: 100%; padding: 6px 0;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.07);
+  transition: background .4s, border-color .4s;
+}
+.mood-study .timer-unit-box { background: linear-gradient(145deg,#0d2a1a,#0f3d22); border: 1px solid rgba(16,185,129,.3); }
+.mood-break .timer-unit-box { background: linear-gradient(145deg,#2a1800,#3d2200); border: 1px solid rgba(245,158,11,.3); }
+.mood-sleep .timer-unit-box { background: linear-gradient(145deg,#0e0d2a,#17163d); border: 1px solid rgba(129,140,248,.3); }
+.timer-unit-digit {
+  font-size: 36px; font-weight: 900; color: #fff;
+  font-family: 'Courier New', Courier, monospace;
+  letter-spacing: 2px; line-height: 1;
+  text-shadow: 0 0 12px rgba(255,255,255,.25);
+}
+.timer-unit-label {
+  font-size: 7px; font-weight: 800; color: var(--text-secondary);
+  letter-spacing: 1.5px; font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+}
+#tHours, #tMins, #tSecs { display: inline; }
+.timer-colon-wrap {
+  display: flex; flex-direction: column; align-items: center;
+  padding-bottom: 14px; flex: 0 0 8px;
+}
+.t-colon {
+  font-size: 18px; font-weight: 900; color: var(--text-secondary);
+  animation: colonBlink 1s step-end infinite; line-height: 1;
+  opacity: .6;
+}
+@keyframes colonBlink { 0%,100%{opacity:1} 50%{opacity:.15} }
 
-        .students-section { padding: 0 0 10px; }
-        .students-header { padding: 6px 14px; display: flex; align-items: center; justify-content: space-between; }
-        .sh-title { font-size: 12px; font-weight: 800; }
-        .students-list { display: flex; flex-direction: column; gap: 3px; padding: 0 14px; }
-        .s-card { display: flex; align-items: center; gap: 8px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 6px 8px; }
-        .s-card:first-child { border-color: rgba(245,158,11,.35); background: rgba(245,158,11,.04); }
-        .s-rank { font-size: 14px; flex-shrink: 0; width: 20px; text-align: center; }
-        .s-photo { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; background: var(--accent-light); display: flex; align-items: center; justify-content: center; font-size: 14px; overflow: hidden; }
-        .s-photo img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-        .s-info { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; }
-        .s-name { font-size: 11px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; }
-        .s-time { font-size: 10px; font-weight: 700; color: #10B981; white-space: nowrap; }
-        .s-breaks { font-size: 9px; color: var(--text-secondary); white-space: nowrap; }
-        .s-right { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
-        .status-indicator { display: inline-flex; align-items: center; gap: 3px; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 10px; }
-        .status-reading { background: rgba(16,185,129,.12); color: #10B981; }
-        .status-break { background: rgba(245,158,11,.12); color: #F59E0B; }
-        .status-dot { width: 5px; height: 5px; border-radius: 50%; animation: focusBlink 1.2s ease-in-out infinite; }
-        .status-reading .status-dot { background: #10B981; }
-        .status-break .status-dot { background: #F59E0B; }
+/* Mood name label */
+.t-mood-name-row {
+  display: flex; align-items: center; gap: 5px; margin-top: 6px;
+}
+.t-mood-icon-big { display: flex; align-items: center; }
+.t-mood-name-text {
+  font-size: 11px; font-weight: 900; letter-spacing: .3px;
+  text-transform: uppercase; transition: color .4s;
+}
+.t-mood-name-study { color: #10B981; }
+.t-mood-name-break { color: #F59E0B; }
+.t-mood-name-sleep { color: #818CF8; }
+/* compat — old classes no longer used but keep */
+.timer-digit-box { display:none; }
+.timer-digital-display { display:none; }
+.t-hours,.t-mins,.t-secs { font-size:32px; font-weight:900; font-family:'Courier New',monospace; letter-spacing:2px; }
 
-        /* ── End modal ── */
-        .focus-modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 500; display: none; align-items: center; justify-content: center; padding: 20px; }
-        .focus-modal-bg.show { display: flex; }
-        .focus-modal { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; width: 100%; max-width: 300px; text-align: center; }
-        .focus-modal h3 { font-size: 16px; font-weight: 900; margin-bottom: 6px; }
-        .focus-modal p { font-size: 11px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 14px; }
-        .focus-modal-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 14px; background: var(--bg); border-radius: 8px; padding: 10px; }
-        .fms-val { font-size: 20px; font-weight: 900; color: var(--accent); }
-        .fms-lbl { font-size: 9px; color: var(--text-secondary); margin-top: 1px; }
-        .focus-modal-row { display: flex; gap: 8px; }
-        .focus-modal-row button { flex: 1; }
-    </style>
+/* Thin accent bar under mood name */
+.t-mood-bar {
+  height: 2px; width: 40px; border-radius: 2px; margin-top: 3px;
+  transition: background .4s, width .4s;
+}
+.t-mood-bar-study { background: linear-gradient(90deg,#10B981,#059669); width: 50px; }
+.t-mood-bar-break { background: linear-gradient(90deg,#F59E0B,#D97706); width: 44px; }
+.t-mood-bar-sleep { background: linear-gradient(90deg,#818CF8,#6366F1); width: 38px; }
+
+/* ── controls inside box ── */
+.timer-controls-inner {
+  display: flex; gap: 0; border-top: 1px solid var(--border);
+}
+.ctrl-btn {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px;
+  padding: 8px 8px; border: none; border-right: 1px solid var(--border);
+  background: var(--card-bg); color: var(--text); font-size: 11px; font-weight: 800;
+  cursor: pointer; font-family: inherit; transition: background .2s;
+}
+.ctrl-btn:last-child { border-right: none; }
+.ctrl-btn:active { transform: scale(.97); }
+.ctrl-pause { color: #F59E0B; }
+.ctrl-pause:hover { background: rgba(245,158,11,.08); }
+.ctrl-resume { color: #10B981; background: rgba(16,185,129,.05); }
+.ctrl-resume:hover { background: rgba(16,185,129,.12); }
+.ctrl-stop { color: #EF4444; }
+.ctrl-stop:hover { background: rgba(239,68,68,.08); }
+.ctrl-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+/* timer color theming per mood */
+.timer-unified-box.mood-study { border-color: rgba(16,185,129,.35); }
+.timer-unified-box.mood-break { border-color: rgba(245,158,11,.35); }
+.timer-unified-box.mood-sleep { border-color: rgba(99,102,241,.35); }
+.timer-unified-box.mood-study .t-hours,
+.timer-unified-box.mood-study .t-mins { color: #10B981; }
+.timer-unified-box.mood-break .t-hours,
+.timer-unified-box.mood-break .t-mins { color: #F59E0B; }
+.timer-unified-box.mood-sleep .t-hours,
+.timer-unified-box.mood-sleep .t-mins { color: #818CF8; }
+
+/* ═══ LIVE STATS ROW ═══ */
+.live-stats-row {
+  display: flex; gap: 5px; padding: 0 14px 5px;
+}
+.lsr-card {
+  flex: 1; padding: 3px 4px; background: var(--card-bg);
+  border: 1px solid var(--border); border-radius: 7px; text-align: center;
+  transition: border-color .2s;
+}
+.lsr-val { font-size: 13px; font-weight: 900; }
+.lsr-val.green { color: #10B981; }
+.lsr-val.amber { color: #F59E0B; }
+.lsr-val.purple { color: #818CF8; }
+.lsr-lbl { font-size: 7px; color: var(--text-secondary); font-weight: 600; margin-top: 1px; display: flex; align-items: center; justify-content: center; gap: 2px; }
+
+/* Break People List */
+.break-people-box {
+  margin: 0 14px 6px;
+  padding: 8px 12px;
+  background: rgba(245,158,11,.06);
+  border: 1px solid rgba(245,158,11,.2);
+  border-radius: 10px;
+  display: none;
+}
+.break-people-box.show { display: block; }
+.bpb-title { font-size: 10px; font-weight: 800; color: #F59E0B; margin-bottom: 5px; }
+.bpb-list { display: flex; flex-wrap: wrap; gap: 4px; }
+.bpb-chip {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 8px; border-radius: 10px;
+  background: rgba(245,158,11,.12); font-size: 10px; font-weight: 700; color: #F59E0B;
+}
+.sleep-people-box {
+  margin: 0 14px 6px;
+  padding: 8px 12px;
+  background: rgba(99,102,241,.06);
+  border: 1px solid rgba(99,102,241,.2);
+  border-radius: 10px;
+  display: none;
+}
+.sleep-people-box.show { display: block; }
+.spb-title { font-size: 10px; font-weight: 800; color: #818CF8; margin-bottom: 5px; }
+.spb-list { display: flex; flex-wrap: wrap; gap: 4px; }
+.spb-chip {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 8px; border-radius: 10px;
+  background: rgba(99,102,241,.12); font-size: 10px; font-weight: 700; color: #818CF8;
+}
+
+/* ═══ LEADERBOARD CATEGORIES ═══ */
+.leaderboard-section { padding: 6px 14px; }
+.lb-title { font-size: 13px; font-weight: 900; color: var(--text); margin-bottom: 8px; }
+
+.lb-period-row {
+  display: flex; gap: 6px; margin-bottom: 6px; flex-wrap: wrap;
+}
+.lb-period-row2 {
+  display: flex; gap: 6px; margin-bottom: 8px;
+}
+.period-btn {
+  flex: 1; padding: 7px 6px; border-radius: 10px; border: 1.5px solid var(--border);
+  background: var(--card-bg); color: var(--text-secondary); font-size: 10px; font-weight: 800;
+  cursor: pointer; font-family: inherit; text-align: center; transition: all .2s;
+  white-space: nowrap;
+}
+.period-btn.active {
+  border-color: var(--accent); background: var(--accent-light); color: var(--accent);
+}
+.period-btn2 {
+  flex: 1; padding: 9px 6px; border-radius: 10px; border: 1.5px solid var(--border);
+  background: var(--card-bg); color: var(--text-secondary); font-size: 10px; font-weight: 800;
+  cursor: pointer; font-family: inherit; text-align: center; transition: all .2s;
+}
+.period-btn2.active {
+  border-color: var(--accent); background: var(--accent-light); color: var(--accent);
+}
+
+/* TOP 3 PODIUM */
+.top3-section {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px; margin-bottom: 8px;
+}
+.top3-card {
+  padding: 10px 6px; border-radius: 12px;
+  border: 1.5px solid var(--border); background: var(--card-bg);
+  text-align: center; position: relative; overflow: hidden;
+}
+.top3-card.rank1 {
+  border-color: rgba(245,158,11,.5);
+  background: linear-gradient(135deg, rgba(245,158,11,.08), var(--card-bg));
+}
+.top3-card.rank2 {
+  border-color: rgba(156,163,175,.4);
+  background: linear-gradient(135deg, rgba(156,163,175,.06), var(--card-bg));
+}
+.top3-card.rank3 {
+  border-color: rgba(180,83,9,.4);
+  background: linear-gradient(135deg, rgba(180,83,9,.06), var(--card-bg));
+}
+.top3-crown { font-size: 20px; margin-bottom: 3px; }
+.top3-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--accent-light); margin: 0 auto 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; border: 2px solid var(--border); overflow: hidden;
+}
+.top3-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.top3-name { font-size: 10px; font-weight: 900; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top3-batch { font-size: 9px; color: var(--text-secondary); }
+.top3-college { font-size: 8px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top3-time { font-size: 12px; font-weight: 900; color: var(--accent); margin-top: 2px; }
+.top3-breaks { font-size: 8px; color: var(--text-secondary); }
+.rank1-badge {
+  position: absolute; top: 4px; right: 4px;
+  font-size: 8px; font-weight: 900; padding: 1px 5px; border-radius: 6px;
+  background: linear-gradient(90deg, #F59E0B, #FBBF24); color: #000;
+}
+
+/* ═══ RANK LIST ═══ */
+.rank-list { display: flex; flex-direction: column; gap: 3px; }
+
+/* ── GLASS CARD ── */
+.r-card {
+  display: flex; align-items: center; gap: 7px;
+  background: rgba(255,255,255,.04);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 10px; padding: 4px 8px; width: 100%;
+  position: relative; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.07);
+  transition: border-color .2s, box-shadow .2s;
+}
+/* subtle glass sheen */
+.r-card::after {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.12), transparent);
+  pointer-events: none;
+}
+.r-card.is-live { border-color: rgba(16,185,129,.28); box-shadow: 0 2px 8px rgba(0,0,0,.18), 0 0 0 1px rgba(16,185,129,.1), inset 0 1px 0 rgba(255,255,255,.07); }
+.r-card.rank1-card {
+  border-color: rgba(245,158,11,.35);
+  background: linear-gradient(135deg, rgba(245,158,11,.07), rgba(255,255,255,.03));
+  box-shadow: 0 2px 10px rgba(245,158,11,.12), inset 0 1px 0 rgba(255,255,255,.1);
+}
+.rank1-card::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0; width: 2.5px;
+  background: linear-gradient(180deg, #FBBF24, #F59E0B, #D97706);
+  border-radius: 3px 0 0 3px;
+}
+
+/* rank number / medal */
+.r-rank {
+  font-size: 12px; flex-shrink: 0; width: 28px; text-align: center;
+  font-weight: 900; font-family: 'Courier New', monospace;
+  color: var(--text-secondary);
+}
+
+/* avatar */
+.r-photo {
+  width: 42px; height: 42px; border-radius: 8px; flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(99,102,241,.2), rgba(16,185,129,.15));
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.12);
+}
+.r-photo img { width: 100%; height: 100%; object-fit: cover; border-radius: 7px; }
+.r-photo svg { width: 22px; height: 22px; }
+
+/* info block */
+.r-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+.r-name {
+  font-size: 12px; font-weight: 900;
+  letter-spacing: .2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  color: var(--text);
+}
+/* batch tag — same style as .uhb-batch-pill */
+.r-batch-tag {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 1px 6px; border-radius: 8px; margin-top: 2px;
+  background: rgba(99,102,241,.15); border: 1px solid rgba(99,102,241,.3);
+  font-size: 8.5px; font-weight: 800; color: #818CF8;
+  font-family: 'Courier New', monospace; letter-spacing: .3px;
+  position: relative; overflow: hidden;
+}
+.r-batch-tag::before {
+  content: '';
+  position: absolute; top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.15), transparent);
+  animation: batchShimmer 3s ease-in-out infinite;
+}
+
+/* right column */
+.r-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; }
+.r-time {
+  font-size: 12px; font-weight: 900; color: #10B981;
+  font-family: 'Courier New', Courier, monospace;
+  letter-spacing: .5px;
+}
+.r-breaks { font-size: 8px; color: var(--text-secondary); font-family: 'Courier New', monospace; }
+
+/* status pill */
+.r-status {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 7.5px; font-weight: 800; padding: 1px 5px; border-radius: 6px;
+  font-family: 'Courier New', monospace; letter-spacing: .3px;
+}
+.r-status-study { background: rgba(16,185,129,.12); color: #10B981; border: 1px solid rgba(16,185,129,.2); }
+.r-status-break { background: rgba(245,158,11,.12); color: #F59E0B; border: 1px solid rgba(245,158,11,.2); }
+.r-status-sleep { background: rgba(99,102,241,.12); color: #818CF8; border: 1px solid rgba(99,102,241,.2); }
+.r-status-dot { width: 4px; height: 4px; border-radius: 50%; animation: focusBlink 1.2s ease-in-out infinite; }
+.r-status-study .r-status-dot { background: #10B981; }
+.r-status-break .r-status-dot { background: #F59E0B; }
+.r-status-sleep .r-status-dot { background: #818CF8; }
+
+/* Compare button */
+.compare-btn {
+  display: flex; align-items: center; gap: 3px;
+  padding: 3px 8px; border-radius: 6px;
+  border: 1px solid rgba(255,255,255,.1);
+  background: rgba(255,255,255,.04);
+  color: var(--text-secondary); font-size: 9px; font-weight: 800;
+  cursor: pointer; font-family: inherit;
+  white-space: nowrap; letter-spacing: .2px;
+  transition: border-color .2s, color .2s;
+}
+.compare-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* 1st place glow overlay */
+.rank1-glow {
+  position: absolute; top: 0; right: 0; bottom: 0;
+  width: 50px; border-radius: 0 10px 10px 0;
+  background: linear-gradient(90deg, transparent, rgba(245,158,11,.05));
+  pointer-events: none;
+}
+
+/* Paused card — dim + red border */
+.r-card.is-paused {
+  opacity: 0.5;
+  border-color: rgba(239,68,68,.4) !important;
+  box-shadow: 0 0 0 1px rgba(239,68,68,.15), inset 0 1px 0 rgba(255,255,255,.04) !important;
+}
+.r-status-paused {
+  background: rgba(239,68,68,.12); color: #EF4444; border: 1px solid rgba(239,68,68,.25);
+}
+
+/* Today's LIVE section */
+.live-today-section { padding: 0 14px 6px; }
+.live-today-title {
+  font-size: 11px; font-weight: 800; color: #10B981;
+  display: flex; align-items: center; gap: 5px; margin-bottom: 8px;
+  background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.25);
+  border-radius: 10px; padding: 7px 10px;
+}
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: #10B981; animation: livePulse 1.5s ease-in-out infinite; }
+@keyframes livePulse {
+  0%,100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: .6; }
+}
+
+/* All Students Grid */
+.all-students-section { padding: 0 14px 6px; }
+.as-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.as-title { font-size: 11px; font-weight: 800; color: var(--text); }
+.as-count { font-size: 10px; color: var(--text-secondary); }
+
+/* Batch filter */
+.batch-filter { display: flex; gap: 6px; padding: 6px 14px; overflow-x: auto; }
+.bf-chip { padding: 4px 10px; border-radius: 14px; font-size: 10px; font-weight: 700; white-space: nowrap; cursor: pointer; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-secondary); flex-shrink: 0; }
+.bf-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+@keyframes focusBlink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ═══ MOOD POPUP ═══ */
+.mood-popup-bg {
+  position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 600;
+  display: none; align-items: center; justify-content: center; padding: 20px;
+}
+.mood-popup-bg.show { display: flex; }
+.mood-popup {
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: 16px; padding: 20px; width: 100%; max-width: 300px;
+}
+.mood-popup h3 { font-size: 16px; font-weight: 900; margin-bottom: 6px; }
+.mood-popup p { font-size: 12px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px; }
+.mood-popup-toggle {
+  width: 100%; padding: 12px; border-radius: 10px; border: none;
+  font-size: 13px; font-weight: 800; cursor: pointer; font-family: inherit;
+  margin-bottom: 8px;
+}
+.popup-toggle-off { background: rgba(239,68,68,.15); color: #EF4444; border: 1.5px solid rgba(239,68,68,.3); }
+.popup-toggle-off:hover { background: rgba(239,68,68,.25); }
+.popup-cancel { background: var(--card-bg); color: var(--text-secondary); border: 1.5px solid var(--border); }
+
+/* ═══ COMPARE MODAL ═══ */
+.compare-modal-bg {
+  position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 600;
+  display: none; align-items: flex-start; justify-content: center; padding: 20px;
+  overflow-y: auto;
+}
+.compare-modal-bg.show { display: flex; }
+.compare-modal {
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: 16px; padding: 16px; width: 100%; max-width: 340px; margin: auto;
+}
+.cm-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.cm-title { font-size: 14px; font-weight: 900; }
+.cm-close { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border); background: none; color: var(--text-secondary); cursor: pointer; font-size: 14px; }
+.cm-vs-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; margin-bottom: 14px; }
+.cm-person { text-align: center; }
+.cm-avatar {
+  width: 48px; height: 48px; border-radius: 50%; margin: 0 auto 4px;
+  background: var(--accent-light); display: flex; align-items: center;
+  justify-content: center; font-size: 22px; border: 2px solid var(--border);
+}
+.cm-pname { font-size: 12px; font-weight: 900; }
+.cm-pmeta { font-size: 9px; color: var(--text-secondary); }
+.cm-vs { font-size: 14px; font-weight: 900; color: var(--text-secondary); text-align: center; }
+.cm-period-row { display: flex; gap: 4px; margin-bottom: 10px; overflow-x: auto; }
+.cm-period-btn {
+  padding: 4px 10px; border-radius: 10px; border: 1px solid var(--border);
+  background: var(--card-bg); color: var(--text-secondary); font-size: 9px; font-weight: 800;
+  cursor: pointer; font-family: inherit; white-space: nowrap; flex-shrink: 0;
+}
+.cm-period-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.cm-stats { background: var(--bg); border-radius: 10px; padding: 10px; margin-bottom: 10px; }
+.cm-stat-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.cm-stat-label { font-size: 9px; color: var(--text-secondary); width: 55px; flex-shrink: 0; text-align: right; }
+.cm-bar-wrap { flex: 1; display: flex; align-items: center; gap: 4px; }
+.cm-bar { height: 8px; border-radius: 6px; min-width: 4px; transition: width .5s; }
+.cm-bar-me { background: var(--accent); }
+.cm-bar-them { background: #818CF8; }
+.cm-bar-val { font-size: 9px; font-weight: 800; flex-shrink: 0; }
+.cm-verdict {
+  padding: 10px 12px; border-radius: 10px;
+  background: rgba(16,185,129,.08); border: 1px solid rgba(16,185,129,.2);
+  font-size: 11px; line-height: 1.6; color: var(--text);
+}
+.cm-verdict.behind { background: rgba(239,68,68,.08); border-color: rgba(239,68,68,.2); }
+
+/* ═══ END MODAL ═══ */
+.focus-modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 500; display: none; align-items: center; justify-content: center; padding: 20px; }
+.focus-modal-bg.show { display: flex; }
+.focus-modal { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; width: 100%; max-width: 300px; text-align: center; }
+.focus-modal h3 { font-size: 16px; font-weight: 900; margin-bottom: 6px; }
+.focus-modal p { font-size: 11px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 14px; }
+.focus-modal-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; background: var(--bg); border-radius: 8px; padding: 10px; }
+.fms-val { font-size: 20px; font-weight: 900; color: var(--accent); }
+.fms-lbl { font-size: 9px; color: var(--text-secondary); margin-top: 1px; }
+.focus-modal-row { display: flex; gap: 8px; }
+.focus-modal-row button { flex: 1; }
+
+/* ── Icon tiles (shared with home page) ── */
+.si-tile{width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 2px 6px rgba(0,0,0,.25)}
+.si-tile svg{width:16px;height:16px}
+.tile-indigo{background:linear-gradient(150deg,#7B7FFF 0%,#5A5FE0 45%,#322B96 100%)}
+.tile-amber{background:linear-gradient(150deg,#FFD166 0%,#F5A524 45%,#A8650A 100%)}
+.tile-violet{background:linear-gradient(150deg,#A78BFA 0%,#8B5CF6 45%,#4C1D95 100%)}
+.tile-rose{background:linear-gradient(150deg,#FB7AAE 0%,#F43F8E 45%,#9D174D 100%)}
+.tile-emerald{background:linear-gradient(150deg,#34D9A0 0%,#10B981 45%,#065F46 100%)}
+.tile-sky{background:linear-gradient(150deg,#7DD3FC 0%,#38BDF8 45%,#075985 100%)}
+.tile-orange{background:linear-gradient(150deg,#FDBA74 0%,#FB923C 45%,#9A3412 100%)}
+.tile-teal{background:linear-gradient(150deg,#5EEAD4 0%,#14B8A6 45%,#115E59 100%)}
+.tile-red{background:linear-gradient(150deg,#FCA5A5 0%,#F87171 45%,#991B1B 100%)}
+.tile-gold{background:linear-gradient(150deg,#FDE68A 0%,#FBBF24 45%,#92400E 100%)}
+.tile-plum{background:linear-gradient(150deg,#D8B4FE 0%,#A855F7 45%,#581C87 100%)}
+.ni-tile{width:26px;height:26px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:2px;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 2px 5px rgba(0,0,0,.2)}
+.ni-tile svg{width:14px;height:14px}
+
+/* Warn bar */
+.break-warn-bar { margin: 0 14px 6px; padding: 6px 12px; background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.35); border-radius: 8px; font-size: 11px; color: #F59E0B; text-align: center; font-weight: 600; display: none; }
+.break-warn-bar.show { display: block; }
+
+
+/* ═══ LEADERBOARD FULL VIEW ═══ */
+.lb-full-screen { display: none; padding: 0 0 80px; }
+.lb-full-screen.show { display: block; }
+.lb-full-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  background: var(--card-bg); position: sticky; top: 56px; z-index: 10;
+}
+.lb-back-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border);
+  background: none; color: var(--text-secondary); font-size: 11px;
+  font-weight: 800; cursor: pointer; font-family: inherit;
+}
+.lb-back-btn:active { opacity: .7; }
+.lb-full-title { font-size: 13px; font-weight: 900; color: var(--text); }
+.lb-full-period-row {
+  display: flex; gap: 6px; padding: 10px 14px 0; overflow-x: auto;
+}
+.lb-full-period-row::-webkit-scrollbar { display: none; }
+.lb-full-body { padding: 10px 14px 0; }
+
+/* Section divider */
+.sec-divider { height: 1px; background: var(--border); margin: 8px 14px; opacity: .5; }
+
+</style>
 </head>
-<body class="dark-mode">
 
+<body class="dark-mode">
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header"><div class="sidebar-logo">ATLAS APP</div></div>
-    <div class="sidebar-menu">
-        <button class="sidebar-item" onclick="navigateTo('profile');closeSidebar();">👤 প্রোফাইল</button>
-        <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();">🏠 হোম</button>
-        <button class="sidebar-item" onclick="goTo('study-aid.html');closeSidebar();">🧩 Study Aid</button>
-        <button class="sidebar-item" onclick="goTo('study.html');closeSidebar();">📖 মূলবই</button>
-        <div class="sidebar-divider"></div>
-        <button class="sidebar-item" onclick="toggleTheme()">🌙 ডার্ক মোড</button>
-    </div>
-    <div class="sidebar-footer">
-        <button class="sidebar-item logout-btn" onclick="logout()">🚪 লগআউট</button>
-    </div>
+  <div class="sidebar-header"><div class="sidebar-logo">ATLAS APP</div></div>
+  <div class="sidebar-menu">
+    <button class="sidebar-item" onclick="navigateTo('profile');closeSidebar();"><span class="si-tile tile-sky"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="#fff" stroke-width="1.8"/><path d="M4.5 20c0-3.6 3.4-6.5 7.5-6.5s7.5 2.9 7.5 6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></span> প্রোফাইল</button>
+    <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();"><span class="si-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none"><path d="M3 10L12 3l9 7v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" fill="rgba(255,255,255,0.15)"/><path d="M9 21V12h6v9" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg></span> হোম</button>
+    <button class="sidebar-item" onclick="goTo('study-aid.html');closeSidebar();"><span class="si-tile tile-teal"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3h5a2 2 0 012 2v3a2 2 0 000 4v3a2 2 0 01-2 2h-3a2 2 0 01-4 0H7a2 2 0 01-2-2v-3a2 2 0 000-4V5a2 2 0 012-2h5z" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.08)"/></svg></span> Study Aid</button>
+    <button class="sidebar-item" onclick="goTo('study.html');closeSidebar();"><span class="si-tile tile-violet"><svg viewBox="0 0 24 24" fill="none"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z" stroke="#fff" stroke-width="1.8"/><path d="M12 5.5v13.4" stroke="#fff" stroke-width="1.8"/></svg></span> মূলবই</button>
+    <div class="sidebar-divider"></div>
+    <button class="sidebar-item" onclick="toggleTheme()"><span class="si-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="#fff" stroke-width="1.8" fill="rgba(255,255,255,0.12)"/></svg></span> ডার্ক মোড</button>
+  </div>
+  <div class="sidebar-footer">
+    <button class="sidebar-item logout-btn" onclick="logout()"><span class="si-tile tile-red"><svg viewBox="0 0 24 24" fill="none"><path d="M14 3H6a1 1 0 00-1 1v16a1 1 0 001 1h8" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><path d="M18 7l4 5-4 5M22 12H10" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span> লগআউট</button>
+  </div>
 </aside>
 
 <header class="header">
-    <div class="header-left">
-        <button class="hamburger" onclick="toggleSidebar()">☰</button>
-        <div class="atlas-brand-box" onclick="goTo('index.html')">
-            <img src="https://cdn.phototourl.com/free/2026-05-15-b45df560-6dc8-4cb7-9040-238612c8a161.png" class="atlas-logo-img" alt="ATLAS">
-            <span class="atlas-brand-text">ATLAS APP</span>
-        </div>
+  <div class="header-left">
+    <button class="hamburger" onclick="toggleSidebar()">☰</button>
+    <div class="atlas-brand-box" onclick="goTo('index.html')">
+      <img src="https://cdn.phototourl.com/free/2026-05-15-b45df560-6dc8-4cb7-9040-238612c8a161.png" class="atlas-logo-img" alt="ATLAS">
+      <span class="atlas-brand-text">ATLAS APP</span>
     </div>
-    <div class="header-right">
-        <button class="header-icon" onclick="toggleTheme()" id="themeToggle">🌙</button>
-        <button class="header-icon" onclick="navigateTo('profile')">👤</button>
-    </div>
+  </div>
+  <div class="header-right">
+    <button class="header-icon" onclick="toggleTheme()" id="themeToggle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.8" fill="rgba(255,255,255,0.1)"/></svg></button>
+    <button class="header-icon" onclick="navigateTo('profile')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 20c0-3.6 3.4-6.5 7.5-6.5s7.5 2.9 7.5 6.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+  </div>
 </header>
 
-<!-- End Confirm Modal -->
+<!-- ═══════════ END CONFIRM MODAL ═══════════ -->
 <div class="focus-modal-bg" id="endModal">
-    <div class="focus-modal">
-        <h3>⏹ Session শেষ করবে?</h3>
-        <p>Timer বন্ধ হবে এবং পড়াশোনার সময় সেভ হবে।</p>
-        <div class="focus-modal-stats">
-            <div><div class="fms-val" id="ms-time">0:00</div><div class="fms-lbl">পড়ার সময়</div></div>
-            <div><div class="fms-val" id="ms-breaks">0/3</div><div class="fms-lbl">বিরতি ব্যবহার</div></div>
-        </div>
-        <div class="focus-modal-row">
-            <button class="btn btn-outline" onclick="closeModal()" style="flex:1">← ফিরে যাও</button>
-            <button class="btn btn-primary" onclick="confirmEnd()" style="flex:1;background:var(--error)">শেষ করো</button>
-        </div>
+  <div class="focus-modal">
+    <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:4px"><rect x="4" y="4" width="16" height="16" rx="2" fill="#EF4444"/></svg>Session শেষ করবে?</h3>
+    <p style="font-size:11px;color:var(--text-secondary);line-height:1.5;margin-bottom:12px">এই session টি record হবে এবং তোমার rank ও future study count-এ যোগ হবে।</p>
+    <div class="focus-modal-stats">
+      <div><div class="fms-val" id="ms-time">0:00</div><div class="fms-lbl"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:2px"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z" stroke="currentColor" stroke-width="2"/><path d="M12 5.5v13.4" stroke="currentColor" stroke-width="2"/></svg>পড়ার সময়</div></div>
+      <div><div class="fms-val" id="ms-breaks">0</div><div class="fms-lbl"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:2px"><path d="M6 2v3M10 2v3M14 2v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 5h12l-1.5 9H5.5L4 5z" stroke="currentColor" stroke-width="1.8"/><path d="M16 8c2 0 4 1 4 3s-2 3-4 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>বিরতি</div></div>
+      <div><div class="fms-val" id="ms-sleep">0:00</div><div class="fms-lbl"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:2px"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="2"/></svg>ঘুম</div></div>
+      <div><div class="fms-val" id="ms-total">0:00</div><div class="fms-lbl"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:2px"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>মোট সময়</div></div>
     </div>
+    <div id="ms-rank-info" style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:11px;color:#10B981;display:none"></div>
+    <div class="focus-modal-row">
+      <button class="btn btn-outline" onclick="closeModal()" style="flex:1">← চালিয়ে যাও</button>
+      <button class="btn btn-primary" onclick="confirmEnd()" style="flex:1;background:#EF4444;border-color:#EF4444"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:3px"><path d="M5 12l5 5L20 7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>সেভ করো</button>
+    </div>
+  </div>
 </div>
 
+<!-- ═══════════ MOOD SWITCH POPUP ═══════════ -->
+<div class="mood-popup-bg" id="moodPopup">
+  <div class="mood-popup">
+    <h3 id="moodPopupTitle">⚠️ মোড পরিবর্তন</h3>
+    <p id="moodPopupMsg">Study Timer চলছে। Break / Sleep Mode on করতে হলে আগে বন্ধ করো। এই সময়গুলো Top Focused rank এ count হয়।</p>
+    <button class="mood-popup-toggle popup-toggle-off" id="moodPopupConfirm" onclick="confirmMoodSwitch()">এই Mood বন্ধ করো</button>
+    <button class="mood-popup-toggle popup-cancel" onclick="closeMoodPopup()">বাতিল</button>
+  </div>
+</div>
+
+<!-- ═══════════ COMPARE MODAL ═══════════ -->
+<div class="compare-modal-bg" id="compareModal">
+  <div class="compare-modal">
+    <div class="cm-header">
+      <div class="cm-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:4px"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="#818CF8" stroke-width="1.8" stroke-linejoin="round" fill="rgba(129,140,248,.15)"/></svg>তুলনা</div>
+      <button class="cm-close" onclick="closeCompare()">✕</button>
+    </div>
+    <div class="cm-vs-row">
+      <div class="cm-person">
+        <div class="cm-avatar" id="cmMeAvatar">😊</div>
+        <div class="cm-pname" id="cmMeName">তুমি</div>
+        <div class="cm-pmeta" id="cmMeMeta"></div>
+      </div>
+      <div class="cm-vs">VS</div>
+      <div class="cm-person">
+        <div class="cm-avatar" id="cmThemAvatar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" fill="rgba(99,102,241,.4)"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="rgba(99,102,241,.3)"/></svg></div>
+        <div class="cm-pname" id="cmThemName">—</div>
+        <div class="cm-pmeta" id="cmThemMeta"></div>
+      </div>
+    </div>
+    <div class="cm-period-row">
+      <button class="cm-period-btn active" onclick="setCmpPeriod(1,this)">আজকে</button>
+      <button class="cm-period-btn" onclick="setCmpPeriod(3,this)">৩ দিন</button>
+      <button class="cm-period-btn" onclick="setCmpPeriod(7,this)">৭ দিন</button>
+      <button class="cm-period-btn" onclick="setCmpPeriod(15,this)">১৫ দিন</button>
+      <button class="cm-period-btn" onclick="setCmpPeriod(30,this)">৩০ দিন</button>
+    </div>
+    <div class="cm-stats" id="cmStats">
+      <div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:11px">তুলনা লোড হচ্ছে...</div>
+    </div>
+    <div class="cm-verdict" id="cmVerdict"></div>
+  </div>
+</div>
+
+<!-- ═══════════ MAIN ═══════════ -->
 <main class="focus-container">
 
-    <!-- ═══ INTRO SCREEN ═══ -->
-    <div id="introScreen">
-        <div class="intro-wrap">
-            <div class="intro-hero">
-                <div class="intro-icon">⏱️</div>
-                <div class="intro-title">ATLAS Focus Timer</div>
-                <div class="intro-sub">মনোযোগী পড়াশোনার জন্য বাংলাদেশের সেরা টাইমার</div>
-            </div>
+  <!-- ═══ INTRO SCREEN ═══ -->
+  <div id="introScreen">
+    <div class="intro-wrap">
+      <div class="intro-hero">
+        <div class="intro-icon"><svg width="38" height="38" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="var(--accent)" stroke-width="1.8" fill="rgba(99,102,241,.08)"/><path d="M12 7v5l3 3" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <div class="intro-title">ATLAS Focus Timer</div>
+        <div class="intro-sub">মনোযোগী পড়াশোনার জন্য বাংলাদেশের সেরা টাইমার</div>
+      </div>
+      <div class="premium-box">
+        <div class="premium-box-title"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:4px"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" stroke="var(--accent)" stroke-width="1.5" fill="rgba(99,102,241,.2)"/></svg>কেন ব্যবহার করবে?</div>
+        <ul class="feature-list">
+          <li>পড়াশোনার সময় track করো এবং নিজেকে motivate রাখো</li>
+          <li>Live দেখো কতজন student এই মুহূর্তে পড়ছে</li>
+          <li>Top Focused Student হওয়ার সুযোগ পাও</li>
+          <li>Study, Break ও Sleep Mood আলাদাভাবে track হবে</li>
+        </ul>
+      </div>
+      <div class="how-box">
+        <div class="how-title"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:4px"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>কীভাবে ব্যবহার করবে?</div>
+        <div class="how-step"><div class="how-step-num">১</div><span>"পড়াশোনা শুরু করো" বাটনে চাপো — Study Mood timer শুরু হবে</span></div>
+        <div class="how-step"><div class="how-step-num">২</div><span>ক্লান্ত হলে Break Mood চাপো — Study pause হয়ে Break timer শুরু হবে</span></div>
+        <div class="how-step"><div class="how-step-num">৩</div><span>Sleep Mood on থাকলে phone off করলেও timer চলতে থাকবে</span></div>
+        <div class="how-step"><div class="how-step-num">৪</div><span>পড়া শেষে Stop — সময় সেভ হবে এবং rank update হবে</span></div>
+      </div>
+      <button class="intro-start-btn" onclick="startSession()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:6px"><path d="M6 4l14 8-14 8V4z" fill="#fff"/></svg>পড়াশোনা শুরু করো</button>
+    </div>
+  </div>
 
-            <div class="premium-box">
-                <div class="premium-box-title">✨ কেন ব্যবহার করবে?</div>
-                <ul class="feature-list">
-                    <li>পড়াশোনার সময় track করো এবং নিজেকে motivate রাখো</li>
-                    <li>Live দেখো কতজন student এই মুহূর্তে পড়ছে</li>
-                    <li>Top Focused Student হওয়ার সুযোগ পাও</li>
-                    <li>Break নিলেও study time count হতে থাকে সঠিকভাবে</li>
-                </ul>
-            </div>
+  <!-- ═══ TIMER SCREEN ═══ -->
+  <div class="timer-screen" id="timerScreen">
 
-            <div class="how-box">
-                <div class="how-title">📋 কীভাবে ব্যবহার করবে?</div>
-                <div class="how-step"><div class="how-step-num">১</div><span>"পড়াশোনা শুরু করো" বাটনে চাপো — timer শুরু হবে</span></div>
-                <div class="how-step"><div class="how-step-num">২</div><span>ক্লান্ত হলে "Break নাও" — সর্বোচ্চ ১ ঘণ্টা, মোট ৩ বার</span></div>
-                <div class="how-step"><div class="how-step-num">৩</div><span>পড়া শেষে "বন্ধ" — সময় সেভ হবে</span></div>
-            </div>
-
-            <button class="intro-start-btn" onclick="startSession()">▶ পড়াশোনা শুরু করো</button>
+    <!-- User Header -->
+    <div class="user-header-box">
+      <div class="uhb-left">
+        <div class="uhb-avatar" id="uhbAvatar">
+          <div class="uhb-avatar-glow"></div>
+          <span id="uhbInitial">?</span>
         </div>
+        <div style="display:flex;flex-direction:column;gap:1px;justify-content:center;align-items:flex-start">
+          <div class="uhb-name" id="uhbName">লোড হচ্ছে...</div>
+          <div class="uhb-batch-pill" id="uhbBatch">HSC ২৬</div>
+        </div>
+      </div>
+      <div class="uhb-right">
+        <button class="history-btn" onclick="goTo('study-history.html')">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="2"/><path d="M7 15l3-3 2 2 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Study Time History
+        </button>
+      </div>
     </div>
 
-    <!-- ═══ TIMER SCREEN ═══ -->
-    <div class="timer-screen" id="timerScreen">
-
-        <div class="live-summary" id="liveSummary"></div>
-
-        <div class="timer-main">
-            <div class="timer-fab-row">
-                <button class="fab fab-break" id="fabBreak" onclick="takeBreak()">★ Break</button>
-                <button class="fab fab-end" onclick="showModal()">⏹ বন্ধ</button>
-            </div>
-
-            <div class="timer-ring-wrap">
-                <svg class="timer-svg" width="170" height="170" viewBox="0 0 170 170">
-                    <circle class="t-track" cx="85" cy="85" r="80"/>
-                    <circle class="t-ring" cx="85" cy="85" r="80" id="tRing"/>
-                </svg>
-                <div class="timer-center">
-                    <div class="t-display" id="tDisplay">00:00</div>
-                    <div class="t-label" id="tLabel">পড়াশোনা</div>
-                </div>
-            </div>
-
-            <div class="break-track">
-                <div class="break-dots" id="breakDots"></div>
-                <div class="break-lbl">বিরতি ৩টি পর্যন্ত</div>
-            </div>
-        </div>
-
-        <div class="break-warn-bar" id="breakWarn"></div>
-        <button class="resume-btn" id="resumeBtn" onclick="resumeStudy()">▶ আবার শুরু করো</button>
-
-        <div class="live-stats-box">
-            <div class="lsb-item">
-                <div class="lsb-val green" id="lsbActive">0</div>
-                <div class="lsb-lbl">📖 পড়ছে</div>
-            </div>
-            <div class="lsb-divider"></div>
-            <div class="lsb-item">
-                <div class="lsb-val amber" id="lsbBreak">0</div>
-                <div class="lsb-lbl">☕ বিরতিতে</div>
-            </div>
-            <div class="lsb-divider"></div>
-            <div class="lsb-item">
-                <div class="lsb-val gold" style="color:#F59E0B">🏆</div>
-                <div class="lsb-top-name" id="lsbTopName">—</div>
-                <div class="lsb-lbl">Top Focused</div>
-            </div>
-        </div>
-
-        <div class="batch-filter" id="batchFilter"></div>
-
-        <div class="students-section">
-            <div class="students-header">
-                <div class="sh-title" id="shTitle">🟢 সকল ছাত্র-ছাত্রী — <span id="shCount">0</span> জন</div>
-            </div>
-            <div class="students-list" id="studentsList"></div>
-        </div>
-
+    <!-- ═══ ATLAS FOCUS TIMER BANNER ═══ -->
+    <div style="margin:6px 14px 4px;padding:8px 14px;border-radius:10px;background:linear-gradient(135deg,rgba(245,158,11,.12) 0%,rgba(251,191,36,.06) 50%,rgba(99,102,241,.1) 100%);border:1.5px solid rgba(245,158,11,.35);display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 2px 12px rgba(245,158,11,.08)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 2h12v8a6 6 0 01-12 0V2z" stroke="#F59E0B" stroke-width="1.8" fill="rgba(245,158,11,.2)"/><path d="M6 5H3a3 3 0 003 3M18 5h3a3 3 0 01-3 3" stroke="#F59E0B" stroke-width="1.8" stroke-linecap="round"/><path d="M12 16v4M8 20h8" stroke="#F59E0B" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span style="font-size:13px;font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,#F59E0B,#FBBF24,#F59E0B);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-family:inherit">ATLAS Focus Timer</span>
+      <span style="font-size:7px;font-weight:900;padding:2px 6px;border-radius:5px;background:linear-gradient(90deg,#F59E0B,#FBBF24);color:#000;letter-spacing:.8px">PREMIUM</span>
     </div>
 
+    <!-- ═══ UNIFIED TIMER BOX (Mood + Digital Timer + Controls) ═══ -->
+    <div class="timer-unified-box mood-study" id="timerUnifiedBox">
+
+      <!-- 3 Mood Buttons (top row) -->
+      <div class="mood-row">
+        <button class="mood-btn mood-study active" id="btnStudy" onclick="switchMood('study')">
+          <span class="mood-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z" stroke="#fff" stroke-width="1.8"/><path d="M12 5.5v13.4" stroke="#fff" stroke-width="1.8"/></svg></span>
+          <span class="mood-label">Study</span>
+          <span class="mood-dot"></span>
+        </button>
+        <button class="mood-btn mood-break" id="btnBreak" onclick="switchMood('break')">
+          <span class="mood-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 2v4M10 2v4M14 2v4" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><path d="M4 6h12l-1.5 9H5.5L4 6z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/><path d="M16 9c2 0 4 1 4 3s-2 3-4 3" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+          <span class="mood-label">Break</span>
+          <span class="mood-dot"></span>
+        </button>
+        <button class="mood-btn mood-sleep" id="btnSleep" onclick="switchMood('sleep')">
+          <span class="mood-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="#fff" stroke-width="1.8" fill="rgba(255,255,255,0.1)"/></svg></span>
+          <span class="mood-label">Sleep</span>
+          <span class="mood-dot"></span>
+        </button>
+      </div>
+
+      <!-- Digital Timer Display -->
+      <div class="timer-digital-wrap">
+        <div class="timer-clock-row">
+          <!-- HRS -->
+          <div class="timer-unit">
+            <div class="timer-unit-box">
+              <span class="timer-unit-digit" id="tHours">00</span>
+            </div>
+            <span class="timer-unit-label">HRS</span>
+          </div>
+          <!-- colon -->
+          <div class="timer-colon-wrap"><span class="t-colon">:</span></div>
+          <!-- MIN -->
+          <div class="timer-unit">
+            <div class="timer-unit-box">
+              <span class="timer-unit-digit" id="tMins">00</span>
+            </div>
+            <span class="timer-unit-label">MIN</span>
+          </div>
+          <!-- colon -->
+          <div class="timer-colon-wrap"><span class="t-colon">:</span></div>
+          <!-- SEC -->
+          <div class="timer-unit">
+            <div class="timer-unit-box">
+              <span class="timer-unit-digit" id="tSecs">00</span>
+            </div>
+            <span class="timer-unit-label">SEC</span>
+          </div>
+        </div>
+        <!-- Mood Name -->
+        <div class="t-mood-name-row">
+          <span class="t-mood-icon-big" id="tMoodIcon">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z" stroke="currentColor" stroke-width="1.8"/><path d="M12 5.5v13.4" stroke="currentColor" stroke-width="1.8"/></svg>
+          </span>
+          <span class="t-mood-name-text t-mood-name-study" id="tMoodNameText">Study Mode</span>
+        </div>
+        <div class="t-mood-bar t-mood-bar-study" id="tMoodBar"></div>
+      </div>
+
+      <!-- Pause / Resume / Stop controls (inside box bottom) -->
+      <!-- Study mood controls: Pause / Resume / Stop -->
+      <div class="timer-controls-inner" id="ctrlStudy">
+        <button class="ctrl-btn ctrl-pause" id="ctrlPause" onclick="pauseTimer()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="6" y="4" width="4" height="16" rx="1" fill="currentColor"/><rect x="14" y="4" width="4" height="16" rx="1" fill="currentColor"/></svg> Pause
+        </button>
+        <button class="ctrl-btn ctrl-resume" id="ctrlResume" onclick="resumeTimer()" style="display:none">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 4l14 8-14 8V4z" fill="currentColor"/></svg> Resume
+        </button>
+        <button class="ctrl-btn ctrl-stop" onclick="showModal()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="2" fill="currentColor"/></svg> Stop
+        </button>
+      </div>
+      <!-- Session শেষের পর নতুন session শুরুর button -->
+      <div class="timer-controls-inner" id="ctrlStartNew" style="display:none">
+        <button class="ctrl-btn ctrl-resume" style="flex:1;justify-content:center;gap:6px" onclick="startSession()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 4l14 8-14 8V4z" fill="currentColor"/></svg>
+          নতুন Session শুরু করো
+        </button>
+      </div>
+
+      <!-- Break/Sleep mood controls: Start / Stop only -->
+      <div class="timer-controls-inner" id="ctrlBreakSleep" style="display:none">
+        <button class="ctrl-btn ctrl-resume" id="ctrlBSStart" onclick="startBreakSleepTimer()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 4l14 8-14 8V4z" fill="currentColor"/></svg> Start
+        </button>
+        <button class="ctrl-btn ctrl-stop" id="ctrlBSStop" onclick="stopBreakSleepTimer()" style="display:none">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="2" fill="currentColor"/></svg> Stop
+        </button>
+      </div>
+    </div>
+
+    <!-- Warn bar -->
+    <div class="break-warn-bar" id="breakWarn"></div>
+
+    <div class="sec-divider"></div>
+
+    <!-- ═══ LEADERBOARD TRIGGER ═══ -->
+    <div class="leaderboard-section">
+      <div class="lb-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:5px"><path d="M6 2h12v8a6 6 0 01-12 0V2z" stroke="#F59E0B" stroke-width="1.8" fill="rgba(245,158,11,.12)"/><path d="M6 5H3a3 3 0 003 3M18 5h3a3 3 0 01-3 3" stroke="#F59E0B" stroke-width="1.8" stroke-linecap="round"/><path d="M12 16v4M8 20h8" stroke="#F59E0B" stroke-width="1.8" stroke-linecap="round"/></svg>Leaderboard</div>
+      <div class="lb-period-row">
+        <button class="period-btn active" onclick="openLbView(3,this)">বিগত ৩ দিন</button>
+        <button class="period-btn" onclick="openLbView(7,this)">বিগত ৭ দিন</button>
+        <button class="period-btn" onclick="openLbView(15,this)">বিগত ১৫ দিন</button>
+        <button class="period-btn" onclick="openLbView(30,this)">বিগত ৩০ দিন</button>
+      </div>
+    </div>
+
+    <div class="sec-divider"></div>
+
+    <!-- ═══ LIVE STATS (above live list) ═══ -->
+    <div class="live-stats-row">
+      <div class="lsr-card" id="lsrCardStudy" onclick="filterLiveByMood('study')" style="cursor:pointer">
+        <div class="lsr-val green" id="lsrStudy">0</div>
+        <div class="lsr-lbl"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:2px"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z" stroke="#10B981" stroke-width="2"/><path d="M12 5.5v13.4" stroke="#10B981" stroke-width="2"/></svg>পড়ছে</div>
+      </div>
+      <div class="lsr-card" id="lsrCardBreak" onclick="filterLiveByMood('break')" style="cursor:pointer">
+        <div class="lsr-val amber" id="lsrBreak">0</div>
+        <div class="lsr-lbl"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:2px"><path d="M6 2v3M10 2v3M14 2v3" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"/><path d="M4 5h12l-1.5 9H5.5L4 5z" stroke="#F59E0B" stroke-width="1.8"/><path d="M16 8c2 0 4 1 4 3s-2 3-4 3" stroke="#F59E0B" stroke-width="1.8" stroke-linecap="round"/></svg>বিরতিতে</div>
+      </div>
+      <div class="lsr-card" id="lsrCardSleep" onclick="filterLiveByMood('sleep')" style="cursor:pointer">
+        <div class="lsr-val purple" id="lsrSleep">0</div>
+        <div class="lsr-lbl"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:2px"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="#818CF8" stroke-width="2" fill="rgba(129,140,248,.1)"/></svg>ঘুমাচ্ছে</div>
+      </div>
+    </div>
+
+    <!-- ═══ TODAY LIVE ═══ -->
+    <div class="live-today-section">
+      <div class="live-today-title">
+        <div class="live-dot"></div>
+        <span id="liveTitleText">এখন Live পড়ছে</span>
+        <button id="liveMoodClearBtn" onclick="clearLiveMoodFilter()" style="display:none;margin-left:auto;font-size:9px;font-weight:800;color:var(--text-secondary);background:none;border:1px solid var(--border);border-radius:6px;padding:2px 7px;cursor:pointer;font-family:inherit">সব দেখো ✕</button>
+      </div>
+      <div class="batch-filter" id="batchFilter"></div>
+      <div class="rank-list" id="liveStudentsList"></div>
+    </div>
+
+  </div><!-- end timer-screen -->
+
+  <!-- ═══ BREAK/SLEEP MOOD OVERLAY ═══ -->
+  <div class="mood-overlay" id="moodOverlay">
+    <div class="mood-overlay-header">
+      <button class="mood-overlay-back" onclick="closeMoodOverlay()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="mood-overlay-title" id="moodOverlayTitle">বিরতিতে আছে</div>
+      <div class="mood-overlay-count" id="moodOverlayCount">0 জন</div>
+    </div>
+    <div class="mood-overlay-timer" id="moodOverlayTimer">
+      <div class="mot-label" id="motLabel">Break Timer</div>
+      <div class="mot-time" id="motTime">00:00</div>
+    </div>
+    <div class="mood-overlay-list" id="moodOverlayList">
+      <div style="text-align:center;padding:24px;color:var(--text-secondary);font-size:12px">লোড হচ্ছে...</div>
+    </div>
+  </div>
 </main>
 
+<!-- ═══ LEADERBOARD FULL VIEW ═══ -->
+<div class="lb-full-screen" id="lbFullScreen">
+  <div class="lb-full-header">
+    <button class="lb-back-btn" onclick="closeLbView()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      ফিরে যাও
+    </button>
+    <div class="lb-full-title" id="lbFullTitle">Leaderboard</div>
+  </div>
+  <div class="lb-full-period-row">
+    <button class="period-btn" onclick="switchLbPeriod(3,this)">বিগত ৩ দিন</button>
+    <button class="period-btn" onclick="switchLbPeriod(7,this)">বিগত ৭ দিন</button>
+    <button class="period-btn" onclick="switchLbPeriod(15,this)">বিগত ১৫ দিন</button>
+    <button class="period-btn" onclick="switchLbPeriod(30,this)">বিগত ৩০ দিন</button>
+  </div>
+  <div class="lb-full-body">
+    <div id="lbTop3Graph" style="display:none;margin-bottom:10px"></div>
+    <div class="rank-list" id="rankList"></div>
+  </div>
+</div>
+
 <nav class="bottom-nav">
-    <button class="nav-item" onclick="goTo('index.html')"><span class="nav-icon">🏠</span>হোম</button>
-    <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon">📚</span>ক্লাস</button>
-    <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon">📝</span>এক্সাম</button>
-    <button class="nav-item" onclick="goTo('mock-test.html')"><span class="nav-icon">🎯</span>মক</button>
-    <button class="nav-item active" onclick="goTo('study-aid.html')"><span class="nav-icon">🧩</span>Study Aid</button>
-    <button class="nav-item" onclick="navigateTo('profile')"><span class="nav-icon">👤</span>প্রোফাইল</button>
+  <button class="nav-item" onclick="goTo('index.html')"><span class="nav-icon"><span class="ni-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none"><path d="M3 10L12 3l9 7v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" fill="rgba(255,255,255,0.15)"/><path d="M9 21V12h6v9" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg></span></span>হোম</button>
+  <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon"><span class="ni-tile tile-violet"><svg viewBox="0 0 24 24" fill="none"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z" stroke="#fff" stroke-width="1.8"/><path d="M12 5.5v13.4" stroke="#fff" stroke-width="1.8"/></svg></span></span>ক্লাস</button>
+  <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon"><span class="ni-tile tile-orange"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="#fff" stroke-width="1.8" fill="rgba(255,255,255,0.12)"/><path d="M8 8h8M8 12h8M8 16h5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></span></span>এক্সাম</button>
+  <button class="nav-item" onclick="goTo('mock-test.html')"><span class="nav-icon"><span class="ni-tile tile-rose"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="#fff" stroke-width="1.8"/><circle cx="12" cy="12" r="4.5" stroke="#fff" stroke-width="1.6"/><circle cx="12" cy="12" r="1.5" fill="#fff"/></svg></span></span>মক</button>
+  <button class="nav-item active" onclick="goTo('study-aid.html')"><span class="nav-icon"><span class="ni-tile tile-teal"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3h5a2 2 0 012 2v3a2 2 0 000 4v3a2 2 0 01-2 2h-3a2 2 0 01-4 0H7a2 2 0 01-2-2v-3a2 2 0 000-4V5a2 2 0 012-2h5z" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.08)"/></svg></span></span>Study Aid</button>
+  <button class="nav-item" onclick="navigateTo('profile')"><span class="nav-icon"><span class="ni-tile tile-sky"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="#fff" stroke-width="1.8"/><path d="M4.5 20c0-3.6 3.4-6.5 7.5-6.5s7.5 2.9 7.5 6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></span></span>প্রোফাইল</button>
 </nav>
 
 <div class="toast" id="toast"></div>
 
 <script>
+/* ═══════════════════════════════════════
+   ATLAS FOCUS TIMER — FULL JS
+═══════════════════════════════════════ */
 const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
 
+/* ── Helpers ── */
 let isDarkMode = true, isSidebarOpen = false, currentUser = null;
 
-function showToast(m,d=2000){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
-function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'☀️':'🌙';localStorage.setItem('atlas-theme',isDarkMode?'dark':'light');}
+function showToast(m,d=2500){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
+function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').innerHTML=isDarkMode?'<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.8"/></svg>':'☀️';localStorage.setItem('atlas-theme',isDarkMode?'dark':'light');}
 function toggleSidebar(){isSidebarOpen=!isSidebarOpen;document.getElementById('sidebarOverlay').classList.toggle('active',isSidebarOpen);document.getElementById('sidebar').classList.toggle('active',isSidebarOpen);}
 function closeSidebar(){isSidebarOpen=false;document.getElementById('sidebarOverlay').classList.remove('active');document.getElementById('sidebar').classList.remove('active');}
 function goTo(u){location.href=u;}
@@ -302,291 +1118,1203 @@ function navigateTo(p){const r={home:'index.html',profile:'profile.html',class:'
 function logout(){localStorage.removeItem('atlas-session');goTo('index.html');}
 function escHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
-async function safeFetch(url, opts = {}) {
-    opts.headers = Object.assign({ apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }, opts.headers || {});
-    if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') opts.headers['Content-Type'] = 'application/json';
-    if (opts.method === 'POST' || opts.method === 'PATCH') opts.headers['Prefer'] = 'return=representation';
-    try {
-        const res = await fetch(url, opts);
-        const text = await res.text();
-        if (!text?.trim()) return [];
-        const data = JSON.parse(text);
-        if (!res.ok) throw new Error(data.message || 'API Error');
-        return data;
-    } catch (e) { console.error('❌', e.message); return []; }
+async function safeFetch(url, opts={}) {
+  opts.headers = Object.assign({ apikey: SUPABASE_KEY, Authorization: 'Bearer '+SUPABASE_KEY }, opts.headers||{});
+  if(!opts.headers['Content-Type'] && opts.method!=='DELETE') opts.headers['Content-Type']='application/json';
+  if(opts.method==='POST'||opts.method==='PATCH') opts.headers['Prefer']='return=representation';
+  if(!opts.cache) opts.cache='no-store'; // live data — never let the browser serve a stale cached response
+  try {
+    const res = await fetch(url, opts);
+    const text = await res.text();
+    if(!text?.trim()) return [];
+    const data = JSON.parse(text);
+    if(!res.ok) throw new Error(data.message||'API Error');
+    return data;
+  } catch(e){ console.error('❌', e.message); return []; }
 }
 
-/* ── Constants ── */
-const MAX_BREAKS = 3;
+/* ═══ CONSTANTS ═══ */
 const MAX_BREAK_SEC = 3600;
-const CIRC = 2 * Math.PI * 80;
-let state = 'idle';       // idle | active | break
+/* ═══ STATE ═══ */
+let mood = 'study';          // 'study' | 'break' | 'sleep'
+let timerRunning = false;
+let paused = false;
 let sessionId = null;
-let studySecs = 0, breakSecs = 0, breaksUsed = 0;
+let studySecs = 0, breakSecs = 0, sleepSecs = 0, breaksUsed = 0;
 let ticker = null, pollInterval = null;
 let allStudents = [], selectedBatch = 'all';
+let currentPeriod = 3;       // leaderboard days — matches default-active "৩ দিন" button in HTML
+let bsRunning = false;        // break/sleep timer running
+let pendingMood = null;       // mood awaiting popup confirm
 
-function fmtSmart(s) {
-    const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
-    if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-    return `${m}:${String(sec).padStart(2,'0')}`;
+/* ═══ FORMAT ═══ */
+function fmtHMS(s) {
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+  return { h: String(h).padStart(2,'0'), m: String(m).padStart(2,'0'), s: String(sec).padStart(2,'0') };
+}
+function fmtCompact(s) {
+  const h=Math.floor(s/3600),m=Math.floor((s%3600)/60);
+  if(h>0) return `${h}h ${m}m`;
+  return `${m}m ${s%60}s`;
+}
+function fmtDisplay(s){
+  const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;
+  if(h>0) return `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+  return `0:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
 }
 
-/* ── localStorage persistence (so a refresh / tab close doesn't lose state) ── */
-const STATE_KEY = 'focus_state';
-function saveState() {
-    localStorage.setItem(STATE_KEY, JSON.stringify({ state, sessionId, studySecs, breakSecs, breaksUsed, savedAt: Date.now() }));
+/* ═══ PERSISTENCE ═══ */
+const STATE_KEY = 'focus_state_v2';
+function saveState(){
+  localStorage.setItem(STATE_KEY, JSON.stringify({mood,paused,sessionId,studySecs,breakSecs,sleepSecs,breaksUsed,savedAt:Date.now()}));
 }
-function loadState() { try { return JSON.parse(localStorage.getItem(STATE_KEY)); } catch(_) { return null; } }
-function clearState() { localStorage.removeItem(STATE_KEY); }
+function loadState(){try{return JSON.parse(localStorage.getItem(STATE_KEY));}catch(_){return null;}}
+function clearState(){localStorage.removeItem(STATE_KEY);}
 
-/* ── Start / Break / Resume / End ── */
-async function startSession() {
-    if (!currentUser) { showToast('⚠️ লগইন করো'); goTo('auth.html'); return; }
-    state = 'active'; studySecs = 0; breakSecs = 0; breaksUsed = 0;
-    const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions`, {
-        method: 'POST',
-        body: JSON.stringify({ user_phone: currentUser.phone, status: 'active' })
+/* ═══ SESSION START ═══ */
+async function startSession(){
+  if(!currentUser){ showToast('⚠️ লগইন করো'); goTo('auth.html'); return; }
+  mood='study'; timerRunning=true; paused=false;
+  studySecs=0; breakSecs=0; sleepSecs=0; breaksUsed=0;
+
+  // Controls reset — instant UI
+  document.getElementById('ctrlStartNew').style.display='none';
+  document.getElementById('ctrlStudy').style.display='flex';
+  document.getElementById('ctrlBreakSleep').style.display='none';
+  document.getElementById('ctrlPause').style.display='flex';
+  document.getElementById('ctrlResume').style.display='none';
+
+  showTimerScreen();
+  renderTimer();
+  saveState();
+  setHeaderGlow(true);
+
+  injectSelfToLive();
+
+  ticker = setInterval(tick, 1000);
+
+  // Close out any old session(s) for this user still marked live (e.g. crashed
+  // tab, lost connection) so they don't keep showing as ghost/duplicate entries
+  // for everyone in the live list.
+  closeStaleSessions(currentUser.phone).catch(()=>{});
+
+  const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions`,{
+    method:'POST',
+    body:JSON.stringify({user_phone:currentUser.phone, status:'study'})
+  });
+  sessionId = rows?.[0]?.id || null;
+
+  // DB insert হয়ে গেছে — এখন fresh fetch করলে নিজেকে পাবো
+  // Filter reset করে নিজেকে দেখাও
+  activeLiveMoodFilter = null;
+  selectedBatch = 'all';
+  await renderLive();
+  startPolling();
+}
+
+// নতুন session শুরুর আগে এই ফোনের পুরনো অসমাপ্ত session(গুলো) বন্ধ করে দেয়
+async function closeStaleSessions(phone){
+  const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?user_phone=eq.${encodeURIComponent(phone)}&status=in.(study,break,sleep,paused,active)&select=id`);
+  if(!rows||!rows.length) return;
+  for(const r of rows){
+    await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${r.id}`,{
+      method:'PATCH',
+      body:JSON.stringify({status:'ended',ended_at:new Date().toISOString()})
     });
-    sessionId = rows?.[0]?.id || null;
-    showTimerScreen();
-    renderTimer();
-    saveState();
-    ticker = setInterval(tick, 1000);
-    renderStudents();
-    startPolling();
+  }
 }
 
-function showTimerScreen() {
-    document.getElementById('introScreen').style.display = 'none';
-    document.getElementById('timerScreen').classList.add('show');
+// Current user-ke instantly live list-e dekhano (DB respond korar age)
+function injectSelfToLive(){
+  if(!currentUser) return;
+  if(!allStudents) allStudents=[];
+  // Remove stale self entry first
+  allStudents = allStudents.filter(s=>s.phone!==currentUser.phone);
+  // Add fresh self entry with current live state
+  allStudents.unshift({
+    name: currentUser.name||'তুমি',
+    batch: currentUser.batch||null,
+    college: currentUser.college||null,
+    premium: currentUser.premium||false,
+    photo_url: currentUser.photo_url||null,
+    status: paused ? 'paused' : mood,
+    study_seconds: studySecs,
+    break_seconds: breakSecs,
+    sleep_seconds: sleepSecs,
+    breaks_used: breaksUsed,
+    phone: currentUser.phone,
+    _isSelf: true
+  });
+  renderBatchFilter(allStudents);
+  renderLiveStudents(allStudents);
 }
 
-function tick() {
-    if (state === 'active') studySecs++;
-    else if (state === 'break') {
-        breakSecs++;
-        if (breakSecs >= MAX_BREAK_SEC) { doEnd(true); return; }
-    }
-    renderTimer();
-    if (studySecs % 15 === 0 || breakSecs % 15 === 0) { saveState(); syncSession(); }
+// allStudents এ নিজের data live update (rank real-time shift এর জন্য)
+function updateSelfInList(){
+  if(!currentUser||!allStudents) return;
+  const idx=allStudents.findIndex(s=>s.phone===currentUser.phone);
+  if(idx===-1) return;
+  allStudents[idx].study_seconds=studySecs;
+  allStudents[idx].break_seconds=breakSecs;
+  allStudents[idx].sleep_seconds=sleepSecs;
+  allStudents[idx].breaks_used=breaksUsed;
+  allStudents[idx].status=paused?'paused':mood;
+  allStudents[idx]._isSelf=true;
 }
 
-async function syncSession() {
-    if (!sessionId) return;
-    await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${sessionId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status: state, study_seconds: studySecs, break_seconds: breakSecs, breaks_used: breaksUsed, updated_at: new Date().toISOString() })
+function setHeaderGlow(on){
+  const nm=document.getElementById('uhbName');
+  const bt=document.getElementById('uhbBatch');
+  if(nm) nm.classList.toggle('timer-active', on);
+  if(bt) bt.classList.toggle('timer-active', on);
+}
+
+function showTimerScreen(){
+  document.getElementById('introScreen').style.display='none';
+  document.getElementById('timerScreen').classList.add('show');
+  renderUserHeader();
+}
+
+/* ═══ TICK ═══ */
+function tick(){
+  // study mood: respect paused flag
+  // break/sleep mood: only bsRunning matters, ignore paused (study is "paused" but bs can run)
+  if(mood==='study'){
+    if(paused) return;
+    studySecs++;
+  } else if(mood==='break'){
+    if(bsRunning){ breakSecs++; if(breakSecs>=MAX_BREAK_SEC){ autoEndBreak(); return; } }
+  } else if(mood==='sleep'){
+    if(bsRunning) sleepSecs++;
+  } else return;
+  renderTimer();
+  const total=studySecs+breakSecs+sleepSecs;
+  // DB sync প্রতি সেকেন্ডে — আগে ৫ সেকেন্ডে একবার sync হতো, তাই অন্য কেউ দেখলে সবসময়
+  // তোমার আসল সময়ের চেয়ে নির্দিষ্টভাবে ৫ সেকেন্ড কম দেখাতো (DB-র মান stale থাকতো)
+  updateSelfInList();
+  syncSession();
+  // পুরো list re-render (rank recompute + DOM rebuild) ৫ সেকেন্ডে একবার — flicker এড়াতে
+  if(total%5===0){ renderLiveStudents(allStudents); saveState(); }
+}
+
+function autoEndBreak(){
+  showToast('⏰ বিরতির সময় শেষ — Study Mood এ ফিরে এলে');
+  mood='study'; breakSecs=0; breaksUsed++;
+  renderTimer(); updateMoodButtons(); saveState(); syncSession();
+}
+
+async function syncSession(){
+  if(!sessionId) return;
+  await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${sessionId}`,{
+    method:'PATCH',
+    body:JSON.stringify({status:mood,study_seconds:studySecs,break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,updated_at:new Date().toISOString()})
+  });
+}
+
+/* ═══ RENDER TIMER ═══ */
+function renderTimer(){
+  let displaySecs, moodIcon, moodNameText, moodNameClass, moodBarClass, boxMoodClass;
+  if(mood==='study'){
+    displaySecs=studySecs;
+    moodIcon=`<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z" stroke="currentColor" stroke-width="1.8"/><path d="M12 5.5v13.4" stroke="currentColor" stroke-width="1.8"/></svg>`;
+    moodNameText='Study Mode';
+    moodNameClass='t-mood-name-study'; moodBarClass='t-mood-bar-study'; boxMoodClass='mood-study';
+  } else if(mood==='break'){
+    displaySecs=breakSecs;
+    moodIcon=`<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 2v3M10 2v3M14 2v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M4 5h12l-1.5 9H5.5L4 5z" stroke="currentColor" stroke-width="1.8"/><path d="M16 8c2 0 4 1 4 3s-2 3-4 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+    moodNameText='Break Mode';
+    moodNameClass='t-mood-name-break'; moodBarClass='t-mood-bar-break'; boxMoodClass='mood-break';
+    const remain=MAX_BREAK_SEC-breakSecs;
+    const wb=document.getElementById('breakWarn');
+    if(remain<=300){ wb.textContent=`⚠️ বিরতি শেষ হতে ${fmtDisplay(remain)} বাকি`; wb.classList.add('show'); }
+    else wb.classList.remove('show');
+  } else {
+    displaySecs=sleepSecs;
+    moodIcon=`<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.8" fill="rgba(255,255,255,.08)"/></svg>`;
+    moodNameText='Sleep Mode';
+    moodNameClass='t-mood-name-sleep'; moodBarClass='t-mood-bar-sleep'; boxMoodClass='mood-sleep';
+    document.getElementById('breakWarn').classList.remove('show');
+  }
+  if(mood!=='break') document.getElementById('breakWarn').classList.remove('show');
+
+  // Digital time
+  const f=fmtHMS(displaySecs);
+  document.getElementById('tHours').textContent=f.h;
+  document.getElementById('tMins').textContent=f.m;
+  document.getElementById('tSecs').textContent=f.s;
+
+  // Mood name + icon
+  document.getElementById('tMoodIcon').innerHTML=moodIcon;
+  const nameEl=document.getElementById('tMoodNameText');
+  nameEl.textContent=moodNameText;
+  nameEl.className='t-mood-name-text '+moodNameClass;
+  const barEl=document.getElementById('tMoodBar');
+  barEl.className='t-mood-bar '+moodBarClass;
+
+  // Unified box border color
+  const box=document.getElementById('timerUnifiedBox');
+  box.className='timer-unified-box '+boxMoodClass;
+}
+
+/* ═══ MOOD SWITCH ═══ */
+function switchMood(newMood){
+  if(!timerRunning){ showToast('⚠️ আগে পড়াশোনা শুরু করো'); return; }
+  if(newMood===mood) return; // already active
+
+  // Break/Sleep → Study: directly switch, no popup
+  if(newMood==='study' && (mood==='break'||mood==='sleep')){
+    applyMoodSwitch(newMood);
+    return;
+  }
+
+  // If switching TO break/sleep while study active → directly apply (no popup needed)
+  if((newMood==='break'||newMood==='sleep') && mood==='study'){
+    applyMoodSwitch(newMood);
+    return;
+  }
+
+  // break → sleep or sleep → break direct
+  applyMoodSwitch(newMood);
+}
+
+function confirmMoodSwitch(){
+  closeMoodPopup();
+  if(pendingMood) applyMoodSwitch(pendingMood);
+  pendingMood=null;
+}
+
+function applyMoodSwitch(newMood){
+  const prevMood=mood;
+  if(newMood==='break' && prevMood==='study') breaksUsed++;
+  mood=newMood;
+
+  if(newMood==='study'){
+    // Break/Sleep → Study: auto-stop break/sleep timer, resume study
+    breakSecs=0; sleepSecs=0;
+    bsRunning=false;
+    paused=false;
+    setHeaderGlow(true);
+    document.getElementById('ctrlStudy').style.display='flex';
+    document.getElementById('ctrlBreakSleep').style.display='none';
+    document.getElementById('ctrlPause').style.display='flex';
+    document.getElementById('ctrlResume').style.display='none';
+  } else {
+    // Study → Break/Sleep: auto-pause study, show start/stop controls
+    paused=true; // study timer paused
+    bsRunning=false;
+    setHeaderGlow(false);
+    document.getElementById('ctrlStudy').style.display='none';
+    document.getElementById('ctrlBreakSleep').style.display='flex';
+    document.getElementById('ctrlBSStart').style.display='flex';
+    document.getElementById('ctrlBSStop').style.display='none';
+  }
+
+  updateMoodButtons(); renderTimer(); saveState(); syncSession();
+  updateSelfInList(); renderLiveStudents(allStudents);
+  const names={study:'📚 Study Mood',break:'☕ Break Mood',sleep:'😴 Sleep Mood'};
+  showToast(`${names[newMood]} শুরু হলো`);
+  // Open overlay for break/sleep
+  if(newMood==='break'||newMood==='sleep'){
+    setTimeout(()=>openMoodOverlay(newMood),200);
+  } else {
+    closeMoodOverlay();
+  }
+}
+
+/* ═══ BREAK/SLEEP MOOD OVERLAY ═══ */
+let moodOverlayTicker=null;
+
+function openMoodOverlay(m){
+  const overlay=document.getElementById('moodOverlay');
+  const titleEl=document.getElementById('moodOverlayTitle');
+  const labelEl=document.getElementById('motLabel');
+  titleEl.textContent=m==='break'?'বিরতিতে আছে':'ঘুমাচ্ছে';
+  titleEl.className='mood-overlay-title '+(m==='break'?'break':'sleep');
+  labelEl.textContent=m==='break'?'Break Timer':'Sleep Timer';
+  labelEl.className='mot-label '+(m==='break'?'break':'sleep');
+  overlay.classList.add('show');
+  history.pushState({moodOverlay:true},'');
+  updateMoodOverlayList(m);
+  // start overlay timer ticker
+  if(moodOverlayTicker) clearInterval(moodOverlayTicker);
+  moodOverlayTicker=setInterval(()=>{
+    const secs=m==='break'?breakSecs:sleepSecs;
+    const h=Math.floor(secs/3600),mn=Math.floor((secs%3600)/60),s=secs%60;
+    document.getElementById('motTime').textContent=
+      h>0?`${String(h).padStart(2,'0')}:${String(mn).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+         :`${String(mn).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    updateMoodOverlayList(m);
+  },1000);
+}
+
+function closeMoodOverlay(){
+  document.getElementById('moodOverlay').classList.remove('show');
+  if(moodOverlayTicker){ clearInterval(moodOverlayTicker); moodOverlayTicker=null; }
+}
+
+function updateMoodOverlayList(m){
+  const peers=allStudents.filter(s=>s.status===m && !s._isSelf);
+  document.getElementById('moodOverlayCount').textContent=`${peers.length+1} জন`;
+  const cards=peers.map((s,i)=>buildRankCard(s,i+2,true)).join('');
+  // self at top
+  const selfSecs=m==='break'?breakSecs:sleepSecs;
+  const mn=Math.floor(selfSecs/60),sc=selfSecs%60;
+  const selfCard=`<div class="r-card is-live rank1-card" data-phone="${escHtml(currentUser?.phone||'')}">
+    <div class="r-rank"><svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#F59E0B"/><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="900" fill="#000" font-family="monospace">1</text></svg></div>
+    <div class="r-photo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" fill="rgba(99,102,241,.5)"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="rgba(99,102,241,.35)"/></svg></div>
+    <div class="r-info">
+      <div class="r-name" style="font-weight:900">${escHtml(currentUser?.name||'তুমি')}</div>
+      ${currentUser?.batch?`<div class="r-batch-tag">HSC ${escHtml(currentUser.batch)}</div>`:''}
+    </div>
+    <div class="r-right">
+      <span class="r-status ${m==='break'?'r-status-break':'r-status-sleep'}"><span class="r-status-dot"></span>${m==='break'?'বিরতি':'ঘুম'}</span>
+      <div class="r-time">${String(mn).padStart(2,'0')}:${String(sc).padStart(2,'0')}</div>
+    </div>
+  </div>`;
+  document.getElementById('moodOverlayList').innerHTML=selfCard+cards;
+}
+
+// Back button closes overlay
+window.addEventListener('popstate',e=>{
+  if(document.getElementById('moodOverlay').classList.contains('show')){
+    closeMoodOverlay();
+  }
+});
+function startBreakSleepTimer(){
+  if(mood==='study') return;
+  bsRunning=true;
+  document.getElementById('ctrlBSStart').style.display='none';
+  document.getElementById('ctrlBSStop').style.display='flex';
+  saveState(); syncSession();
+}
+
+// Break/Sleep এ Stop button — zero reset
+function stopBreakSleepTimer(){
+  bsRunning=false;
+  if(mood==='break') breakSecs=0;
+  if(mood==='sleep') sleepSecs=0;
+  document.getElementById('ctrlBSStart').style.display='flex';
+  document.getElementById('ctrlBSStop').style.display='none';
+  renderTimer(); saveState(); syncSession();
+}
+
+function closeMoodPopup(){ document.getElementById('moodPopup').classList.remove('show'); pendingMood=null; }
+
+function updateMoodButtons(){
+  document.getElementById('btnStudy').classList.toggle('active',mood==='study');
+  document.getElementById('btnBreak').classList.toggle('active',mood==='break');
+  document.getElementById('btnSleep').classList.toggle('active',mood==='sleep');
+}
+
+/* ═══ PAUSE / RESUME ═══ */
+function pauseTimer(){
+  paused=true;
+  document.getElementById('ctrlPause').style.display='none';
+  document.getElementById('ctrlResume').style.display='flex';
+  saveState();
+  // pause হলে status 'paused' করো — list-এ dim/red দেখাবে
+  updateSelfInList(); renderLiveStudents(allStudents); // instant local update
+  if(sessionId){
+    safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${sessionId}`,{
+      method:'PATCH',
+      body:JSON.stringify({status:'paused',study_seconds:studySecs,break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,updated_at:new Date().toISOString()})
     });
+  }
+  showToast('⏸ Timer pause হলো');
+  setHeaderGlow(false);
 }
 
-function renderTimer() {
-    const display = state === 'break' ? breakSecs : studySecs;
-    document.getElementById('tDisplay').textContent = fmtSmart(display);
-    document.getElementById('tLabel').textContent = state === 'break' ? 'বিরতি' : 'পড়াশোনা';
+function resumeTimer(){
+  paused=false;
+  document.getElementById('ctrlPause').style.display='flex';
+  document.getElementById('ctrlResume').style.display='none';
+  saveState();
+  // resume হলে আবার study/break/sleep status — instant list update
+  updateSelfInList(); renderLiveStudents(allStudents);
+  if(sessionId){
+    safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${sessionId}`,{
+      method:'PATCH',
+      body:JSON.stringify({status:mood,study_seconds:studySecs,break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,updated_at:new Date().toISOString()})
+    });
+  }
+  showToast('▶ Timer চালু হলো');
+  setHeaderGlow(true);
+}
 
-    const ring = document.getElementById('tRing');
-    if (state === 'break') {
-        const progress = Math.min(breakSecs / MAX_BREAK_SEC, 1);
-        ring.style.strokeDashoffset = CIRC * (1 - progress);
-        ring.style.stroke = '#F59E0B';
-        const remain = MAX_BREAK_SEC - breakSecs;
-        if (remain <= 300) {
-            document.getElementById('breakWarn').textContent = `⚠️ বিরতি শেষ হতে ${fmtSmart(remain)} বাকি`;
-            document.getElementById('breakWarn').classList.add('show');
-        } else {
-            document.getElementById('breakWarn').classList.remove('show');
-        }
-        document.getElementById('resumeBtn').classList.add('show');
-        document.getElementById('fabBreak').disabled = true;
+/* ═══ STOP ═══ */
+function showModal(){
+  document.getElementById('ms-time').textContent=fmtDisplay(studySecs);
+  document.getElementById('ms-breaks').textContent=breaksUsed;
+  document.getElementById('ms-sleep').textContent=fmtDisplay(sleepSecs);
+  document.getElementById('ms-total').textContent=fmtDisplay(studySecs+breakSecs+sleepSecs);
+  // rank hint
+  const rankEl=document.getElementById('ms-rank-info');
+  if(studySecs>=600){
+    rankEl.style.display='block';
+    rankEl.textContent=`★ ${fmtCompact(studySecs)} পড়েছো — এটি তোমার rank-এ যোগ হবে!`;
+  } else {
+    rankEl.style.display='none';
+  }
+  document.getElementById('endModal').classList.add('show');
+}
+function closeModal(){ document.getElementById('endModal').classList.remove('show'); }
+function confirmEnd(){ closeModal(); doEnd(false); }
+
+async function doEnd(auto){
+  clearInterval(ticker); stopPolling(); stopLiveSecTicker(); timerRunning=false;
+  setHeaderGlow(false);
+  // নিজেকে সাথে সাথে list থেকে সরাও
+  if(currentUser) allStudents = allStudents.filter(s=>s.phone!==currentUser.phone);
+  renderBatchFilter(allStudents); renderLiveStudents(allStudents);
+  const doneMsg = auto?'⏹ Auto ended':`✅ সম্পন্ন! ${fmtDisplay(studySecs)} পড়েছো`;
+  if(sessionId){
+    await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${sessionId}`,{
+      method:'PATCH',
+      body:JSON.stringify({status:'ended',study_seconds:studySecs,break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,ended_at:new Date().toISOString()})
+    });
+    await upsertDailyTotal(studySecs);
+  }
+  // Reset state for new session — stay on timer screen
+  studySecs=0; breakSecs=0; sleepSecs=0; breaksUsed=0;
+  sessionId=null; mood='study'; paused=false; bsRunning=false;
+  clearState();
+  // Stop হলে Start button দেখাবে — নতুন session শুরু করতে
+  document.getElementById('ctrlStudy').style.display='none';
+  document.getElementById('ctrlBreakSleep').style.display='none';
+  document.getElementById('ctrlPause').style.display='none';
+  document.getElementById('ctrlResume').style.display='none';
+  document.getElementById('ctrlStartNew').style.display='flex';
+  // Reset mood buttons
+  document.getElementById('timerUnifiedBox').className='timer-unified-box mood-study';
+  document.getElementById('btnStudy').classList.add('active');
+  document.getElementById('btnBreak').classList.remove('active');
+  document.getElementById('btnSleep').classList.remove('active');
+  renderTimer();
+  // Restart polling for live list
+  renderLive(); startIdlePolling();
+  showToast(doneMsg, 3500);
+}
+
+async function upsertDailyTotal(addSecs){
+  if(!currentUser||!addSecs) return;
+  const today=new Date().toISOString().slice(0,10);
+  try {
+    const ex=await safeFetch(`${SUPABASE_URL}/rest/v1/study_tracker_daily?user_phone=eq.${encodeURIComponent(currentUser.phone)}&study_date=eq.${today}&select=*`);
+    if(ex?.length){
+      await safeFetch(`${SUPABASE_URL}/rest/v1/study_tracker_daily?id=eq.${ex[0].id}`,{method:'PATCH',body:JSON.stringify({total_seconds:(ex[0].total_seconds||0)+addSecs})});
     } else {
-        const progress = (studySecs % 1500) / 1500; // visual ring cycles every 25 min
-        ring.style.strokeDashoffset = CIRC * (1 - progress);
-        ring.style.stroke = 'var(--accent)';
-        document.getElementById('breakWarn').classList.remove('show');
-        document.getElementById('resumeBtn').classList.remove('show');
-        document.getElementById('fabBreak').disabled = breaksUsed >= MAX_BREAKS;
+      await safeFetch(`${SUPABASE_URL}/rest/v1/study_tracker_daily`,{method:'POST',body:JSON.stringify({user_phone:currentUser.phone,study_date:today,total_seconds:addSecs})});
+    }
+  } catch(_){}
+}
+
+/* ═══ USER HEADER ═══ */
+function renderUserHeader(){
+  if(!currentUser) return;
+  const name=currentUser.name||'Student';
+  const batch=currentUser.batch||'HSC ২৬';
+  const initial=name.charAt(0).toUpperCase();
+  const avatarEl=document.getElementById('uhbAvatar');
+  const initialEl=document.getElementById('uhbInitial');
+  if(currentUser.photo_url){
+    let img=avatarEl.querySelector('img.uhb-photo');
+    if(!img){
+      img=document.createElement('img');
+      img.className='uhb-photo';
+      img.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:50%;position:relative;z-index:1';
+      avatarEl.appendChild(img);
+    }
+    img.src=currentUser.photo_url;
+    initialEl.style.display='none';
+  } else {
+    initialEl.textContent=initial;
+    initialEl.style.display='';
+  }
+  document.getElementById('uhbName').textContent=name;
+  document.getElementById('uhbBatch').textContent=`HSC ${batch}`;
+}
+
+/* ═══ TICKER ═══ */
+function updateTicker(students){
+  const el=document.getElementById('tickerInner');
+  if(!students.length){ el.innerHTML='<span style="font-size:10px;color:var(--text-secondary)">কেউ পড়ছে না এখন</span>'; return; }
+  const svgStudy=`<svg width="9" height="9" viewBox="0 0 24 24" fill="none"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z" stroke="currentColor" stroke-width="2.2"/><path d="M12 5.5v13.4" stroke="currentColor" stroke-width="2.2"/></svg>`;
+  const svgBreak=`<svg width="9" height="9" viewBox="0 0 24 24" fill="none"><path d="M6 2v3M10 2v3M14 2v3" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M4 5h12l-1.5 9H5.5L4 5z" stroke="currentColor" stroke-width="1.8"/><path d="M16 8c2 0 4 1 4 3s-2 3-4 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+  const svgSleep=`<svg width="9" height="9" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="2" fill="rgba(255,255,255,.1)"/></svg>`;
+  const chips=students.map(s=>{
+    const cls=s.status==='break'?'tc-break':s.status==='sleep'?'tc-sleep':'tc-study';
+    const dot=s.status==='break'?'ticker-dot-a':s.status==='sleep'?'ticker-dot-p':'ticker-dot-g';
+    const icon=s.status==='break'?svgBreak:s.status==='sleep'?svgSleep:svgStudy;
+    return `<span class="ticker-chip ${cls}"><span class="ticker-dot ${dot}"></span>${icon} ${escHtml(s.name)}</span>`;
+  }).join('');
+  // Duplicate for seamless scroll
+  el.innerHTML=chips+chips;
+}
+
+/* ═══ LIVE POLLING ═══ */
+let idlePollInterval=null;
+let liveSecTicker=null;
+
+function startLiveSecTicker(){
+  if(liveSecTicker) clearInterval(liveSecTicker);
+  liveSecTicker=setInterval(()=>{
+    // Sync self into allStudents every tick (same studySecs as main timer)
+    if(timerRunning && currentUser && !paused){
+      const selfIdx=allStudents.findIndex(s=>s.phone===currentUser.phone);
+      if(selfIdx!==-1){
+        allStudents[selfIdx].study_seconds=studySecs;
+        allStudents[selfIdx].break_seconds=breakSecs;
+        allStudents[selfIdx].sleep_seconds=sleepSecs;
+      }
+    }
+    // Non-self users: fetchedAt থেকে elapsed time হিসাব করো — flicker বন্ধ
+    const nowMs = Date.now();
+    allStudents.forEach(s=>{
+      if(s._isSelf) return;
+      if(s.status==='study' && s._fetchedAt){
+        s.study_seconds = (s._baseSeconds||0) + Math.floor((nowMs - s._fetchedAt) / 1000);
+      }
+    });
+    // Update only .r-time elements in DOM without full re-render
+    document.querySelectorAll('.r-card[data-phone]').forEach(card=>{
+      const phone=card.dataset.phone;
+      const s=allStudents.find(x=>x.phone===phone);
+      if(!s) return;
+      const timeEl=card.querySelector('.r-time');
+      if(timeEl) timeEl.textContent=fmtCompact(s.study_seconds||0);
+    });
+  },1000);
+}
+
+function stopLiveSecTicker(){ if(liveSecTicker){clearInterval(liveSecTicker);liveSecTicker=null;} }
+
+function startPolling(){
+  stopPolling();
+  if(idlePollInterval){ clearInterval(idlePollInterval); idlePollInterval=null; }
+  pollInterval=setInterval(renderLive,1000);
+  startLiveSecTicker();
+}
+function stopPolling(){ if(pollInterval){clearInterval(pollInterval);pollInterval=null;} }
+function startIdlePolling(){ if(idlePollInterval) return; idlePollInterval=setInterval(renderLive,1000); startLiveSecTicker(); }
+
+const MEDALS=[
+  `<svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#F59E0B"/><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="900" fill="#000" font-family="monospace">1</text></svg>`,
+  `<svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#9CA3AF"/><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="900" fill="#000" font-family="monospace">2</text></svg>`,
+  `<svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#B45309"/><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="900" fill="#fff" font-family="monospace">3</text></svg>`
+];
+
+async function renderLive(){
+  try {
+    // users LEFT JOIN — user না থাকলেও session দেখাবে
+    const rows=await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?status=in.(study,break,sleep,paused,active)&select=user_phone,status,study_seconds,break_seconds,sleep_seconds,breaks_used,updated_at,users(name,batch,college,photo_url)&order=updated_at.desc&limit=200`);
+    const rawRows=(rows||[]).map(r=>{
+      const u=Array.isArray(r.users)?r.users[0]:(r.users||{});
+      // নিজের session হলে currentUser থেকে নাম নাও
+      const isSelf = currentUser && r.user_phone===currentUser.phone;
+      // _fetchedAt + _baseSeconds দিয়ে smooth timer হিসাব হবে
+      const now = Date.now();
+      return {
+        name: isSelf ? (currentUser.name||'তুমি') : ((u&&u.name)||r.user_phone||'Student'),
+        batch: isSelf ? currentUser.batch : ((u&&u.batch)||null),
+        college: isSelf ? currentUser.college : ((u&&u.college)||null),
+        premium: isSelf ? currentUser.premium : false,
+        photo_url: isSelf ? currentUser.photo_url : ((u&&u.photo_url)||null),
+        status:r.status||'study',
+        study_seconds:r.study_seconds||0,
+        break_seconds:r.break_seconds||0,
+        sleep_seconds:r.sleep_seconds||0,
+        breaks_used:r.breaks_used||0,
+        phone:r.user_phone,
+        _isSelf: isSelf,
+        _fetchedAt: now,
+        _baseSeconds: r.study_seconds||0
+      };
+    });
+    // Dedupe: keep only the most recently-updated row per phone — guards against
+    // old crashed/ghost sessions that never got marked 'ended'.
+    const seenPhones=new Set();
+    const dedupedStudents=[];
+    for(const s of rawRows){
+      if(seenPhones.has(s.phone)) continue;
+      seenPhones.add(s.phone);
+      dedupedStudents.push(s);
     }
 
-    const dotsEl = document.getElementById('breakDots');
-    dotsEl.innerHTML = Array.from({length: MAX_BREAKS}, (_, i) =>
-        `<div class="bd ${i < breaksUsed ? 'used' : 'avail'}"></div>`).join('');
-}
-
-function takeBreak() {
-    if (breaksUsed >= MAX_BREAKS) { showToast('⚠️ সর্বোচ্চ ৩ বার বিরতি নেওয়া হয়ে গেছে'); return; }
-    state = 'break'; breaksUsed++; breakSecs = 0;
-    renderTimer(); saveState(); syncSession();
-    showToast('☕ বিরতি শুরু হলো — সর্বোচ্চ ১ ঘণ্টা');
-}
-
-function resumeStudy() {
-    state = 'active'; breakSecs = 0;
-    renderTimer(); saveState(); syncSession();
-    showToast('▶ পড়াশোনা আবার শুরু হলো');
-}
-
-function showModal() {
-    document.getElementById('ms-time').textContent = fmtSmart(studySecs);
-    document.getElementById('ms-breaks').textContent = `${breaksUsed}/${MAX_BREAKS}`;
-    document.getElementById('endModal').classList.add('show');
-}
-function closeModal() { document.getElementById('endModal').classList.remove('show'); }
-function confirmEnd() { closeModal(); doEnd(false); }
-
-async function doEnd(autoEnded) {
-    clearInterval(ticker); stopPolling();
-    if (sessionId) {
-        await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${sessionId}`, {
-            method: 'PATCH',
-            body: JSON.stringify({ status: 'ended', study_seconds: studySecs, break_seconds: breakSecs, breaks_used: breaksUsed, ended_at: new Date().toISOString() })
-        });
-        // Roll into today's Study Tracker total
-        await upsertDailyTotal(studySecs);
+    // Merge: existing local seconds যদি DB এর চেয়ে বেশি হয়, keep করো
+    dedupedStudents.forEach(s=>{
+      const existing = allStudents.find(x=>x.phone===s.phone);
+      if(existing && !s._isSelf && existing.study_seconds > s.study_seconds){
+        s.study_seconds = existing.study_seconds;
+        s._baseSeconds = existing.study_seconds;
+        s._fetchedAt = Date.now();
+      }
+    });
+    allStudents=dedupedStudents;
+    // If session active, override self's entry with local live data (more up-to-date than DB)
+    if(timerRunning && currentUser){
+      const selfIdx=allStudents.findIndex(s=>s.phone===currentUser.phone);
+      const selfData={
+        name:currentUser.name||'তুমি',batch:currentUser.batch||null,
+        college:currentUser.college||null,premium:currentUser.premium||false,
+        photo_url:currentUser.photo_url||null,
+        status:paused?'paused':mood,study_seconds:studySecs,
+        break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,
+        phone:currentUser.phone,_isSelf:true
+      };
+      if(selfIdx===-1) allStudents.unshift(selfData);
+      else allStudents[selfIdx]=selfData;
     }
-    clearState();
-    showToast(autoEnded ? '⏹ বিরতির সময় শেষ — সেশন বন্ধ হলো' : `✅ সম্পন্ন! মোট পড়েছো ${fmtSmart(studySecs)}`, 3500);
-    setTimeout(() => goTo('study-aid.html'), 1200);
+
+    // Stats — count from allStudents (includes self)
+    document.getElementById('lsrStudy').textContent=allStudents.filter(s=>s.status==='study').length;
+    document.getElementById('lsrBreak').textContent=allStudents.filter(s=>s.status==='break').length;
+    document.getElementById('lsrSleep').textContent=allStudents.filter(s=>s.status==='sleep').length;
+
+    // Live students section
+    renderBatchFilter(allStudents);
+    renderLiveStudents(allStudents);
+
+  } catch(e){ console.error('❌ renderLive error:', e); }
 }
 
-async function upsertDailyTotal(addSecs) {
-    if (!currentUser || !addSecs) return;
-    const today = new Date().toISOString().slice(0,10);
-    try {
-        const existing = await safeFetch(`${SUPABASE_URL}/rest/v1/study_tracker_daily?user_phone=eq.${encodeURIComponent(currentUser.phone)}&study_date=eq.${today}&select=*`);
-        if (existing?.length) {
-            await safeFetch(`${SUPABASE_URL}/rest/v1/study_tracker_daily?id=eq.${existing[0].id}`, {
-                method: 'PATCH', body: JSON.stringify({ total_seconds: (existing[0].total_seconds||0) + addSecs })
-            });
-        } else {
-            await safeFetch(`${SUPABASE_URL}/rest/v1/study_tracker_daily`, {
-                method: 'POST', body: JSON.stringify({ user_phone: currentUser.phone, study_date: today, total_seconds: addSecs })
-            });
-        }
-    } catch(_) {}
+/* ═══ LIVE MOOD FILTER ═══ */
+let activeLiveMoodFilter = null;
+
+function filterLiveByMood(mood){
+  const labels={study:'পড়ছে',break:'বিরতিতে',sleep:'ঘুমাচ্ছে'};
+  const colors={study:'#10B981',break:'#F59E0B',sleep:'#818CF8'};
+  if(activeLiveMoodFilter===mood){ clearLiveMoodFilter(); return; }
+  activeLiveMoodFilter=mood;
+  ['study','break','sleep'].forEach(m=>{
+    const c=document.getElementById(`lsrCard${m.charAt(0).toUpperCase()+m.slice(1)}`);
+    if(c) c.style.borderColor=m===mood?colors[m]:'var(--border)';
+  });
+  document.getElementById('liveTitleText').textContent=`${labels[mood]} — সবাই`;
+  document.getElementById('liveMoodClearBtn').style.display='flex';
+  const filtered=allStudents.filter(s=>s.status===mood);
+  renderLiveStudents(filtered);
+  setTimeout(()=>document.querySelector('.live-today-section')?.scrollIntoView({behavior:'smooth',block:'start'}),100);
 }
 
-/* ── Live polling ── */
-function startPolling() { stopPolling(); pollInterval = setInterval(renderStudents, 8000); }
-function stopPolling() { if (pollInterval) { clearInterval(pollInterval); pollInterval = null; } }
-
-const MEDALS = ['🥇','🥈','🥉'];
-
-async function renderStudents() {
-    try {
-        const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?status=in.(active,break)&select=*,users(name,batch)&order=study_seconds.desc&limit=50`);
-        const students = (rows || []).map(r => ({
-            name: r.users?.name || 'Student',
-            batch: r.users?.batch || null,
-            status: r.status,
-            study_seconds: r.study_seconds || 0,
-            breaks_used: r.breaks_used || 0
-        }));
-        allStudents = students;
-        const active = students.filter(s => s.status === 'active').length;
-        const onBreak = students.filter(s => s.status === 'break').length;
-        const top = students[0]?.name || null;
-
-        document.getElementById('lsbActive').textContent = active;
-        document.getElementById('lsbBreak').textContent = onBreak;
-        document.getElementById('lsbTopName').textContent = top || '—';
-        document.getElementById('shCount').textContent = active + onBreak;
-
-        renderLiveSummary(students);
-        renderBatchFilter(students);
-        renderStudentList(students);
-    } catch (_) {}
+function clearLiveMoodFilter(){
+  activeLiveMoodFilter=null;
+  ['study','break','sleep'].forEach(m=>{
+    const c=document.getElementById(`lsrCard${m.charAt(0).toUpperCase()+m.slice(1)}`);
+    if(c) c.style.borderColor='var(--border)';
+  });
+  document.getElementById('liveTitleText').textContent='এখন Live পড়ছে';
+  document.getElementById('liveMoodClearBtn').style.display='none';
+  renderLiveStudents(allStudents);
 }
 
-function renderLiveSummary(students) {
-    const el = document.getElementById('liveSummary');
-    if (!students.length) { el.innerHTML = '<span style="font-size:10px;color:var(--text-secondary)">কেউ পড়ছে না এখন</span>'; return; }
-    el.innerHTML = students.slice(0,8).map(s => {
-        const isBreak = s.status === 'break';
-        return `<span class="ls-chip ${isBreak?'ls-break':'ls-reading'}">
-            <span class="ls-dot ${isBreak?'ls-dot-a':'ls-dot-g'}"></span>
-            <span class="ls-name">${escHtml(s.name)}</span>
-            ${s.batch ? `<span style="font-size:9px;opacity:.8">'${escHtml(String(s.batch).slice(-2))}</span>` : ''}
-        </span>`;
+/* Rank formula: study_seconds / (1 + breaks_used * 0.5) */
+function computeRank(students){
+  return [...students].sort((a,b)=>{
+    const scoreA=a.study_seconds/(1+(a.breaks_used||0)*0.5);
+    const scoreB=b.study_seconds/(1+(b.breaks_used||0)*0.5);
+    return scoreB-scoreA;
+  });
+}
+
+/* ═══ LEADERBOARD ═══ */
+function setPeriod(days, btn){
+  currentPeriod=days;
+  document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  loadLeaderboard(days);
+}
+
+function openLbView(days, btn){
+  // Hide main timer content, show lb full screen
+  document.getElementById('timerScreen').style.display='none';
+  document.getElementById('lbFullScreen').classList.add('show');
+  // Mark active button in full view
+  document.querySelectorAll('#lbFullScreen .period-btn').forEach(b=>b.classList.remove('active'));
+  // find matching button in full view
+  const fullBtns=document.querySelectorAll('#lbFullScreen .period-btn');
+  const map={3:0,7:1,15:2,30:3};
+  if(fullBtns[map[days]]) fullBtns[map[days]].classList.add('active');
+  // also sync the inline buttons under the main leaderboard section so they
+  // don't stay visually stuck on the initial "৩ দিন" default forever
+  document.querySelectorAll('.leaderboard-section .period-btn').forEach(b=>b.classList.remove('active'));
+  const inlineBtns=document.querySelectorAll('.leaderboard-section .period-btn');
+  if(inlineBtns[map[days]]) inlineBtns[map[days]].classList.add('active');
+  currentPeriod=days;
+  const labels={3:'বিগত ৩ দিন',7:'বিগত ৭ দিন',15:'বিগত ১৫ দিন',30:'বিগত ৩০ দিন'};
+  document.getElementById('lbFullTitle').textContent=`Leaderboard — ${labels[days]||''}`;
+  loadLeaderboard(days);
+}
+
+function closeLbView(){
+  document.getElementById('lbFullScreen').classList.remove('show');
+  document.getElementById('timerScreen').style.display='';
+}
+
+function switchLbPeriod(days, btn){
+  document.querySelectorAll('#lbFullScreen .period-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const map={3:0,7:1,15:2,30:3};
+  document.querySelectorAll('.leaderboard-section .period-btn').forEach(b=>b.classList.remove('active'));
+  const inlineBtns=document.querySelectorAll('.leaderboard-section .period-btn');
+  if(inlineBtns[map[days]]) inlineBtns[map[days]].classList.add('active');
+  currentPeriod=days;
+  const labels={3:'বিগত ৩ দিন',7:'বিগত ৭ দিন',15:'বিগত ১৫ দিন',30:'বিগত ৩০ দিন'};
+  document.getElementById('lbFullTitle').textContent=`Leaderboard — ${labels[days]||''}`;
+  loadLeaderboard(days);
+}
+
+async function loadInlineLb(days, btn){
+  // update button state
+  document.querySelectorAll('.leaderboard-section .period-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const el=document.getElementById('inlineLbList');
+  el.innerHTML='<div style="text-align:center;padding:10px;color:var(--text-secondary);font-size:11px">লোড হচ্ছে...</div>';
+  const since=new Date(Date.now()-days*86400000).toISOString().slice(0,10);
+  try {
+    const dailyRows=await safeFetch(
+      `${SUPABASE_URL}/rest/v1/study_tracker_daily?study_date=gte.${since}` +
+      `&select=user_phone,total_seconds,users(name,batch,college,is_premium,photo_url)` +
+      `&order=total_seconds.desc&limit=200`
+    );
+    const grouped={};
+    (dailyRows||[]).forEach(r=>{
+      const p=r.user_phone; if(!p) return;
+      const u=Array.isArray(r.users)?r.users[0]:(r.users||{});
+      if(!grouped[p]) grouped[p]={phone:p,name:u.name||null,batch:u.batch||null,college:u.college||null,premium:u.is_premium||false,photo_url:u.photo_url||null,total_seconds:0};
+      grouped[p].total_seconds+=(r.total_seconds||0);
+    });
+    // Merge live session seconds (not yet saved to daily)
+    allStudents.forEach(s=>{
+      if(!s.phone) return;
+      if(!grouped[s.phone]){
+        grouped[s.phone]={phone:s.phone,name:s.name,batch:s.batch,college:s.college,premium:s.premium,photo_url:s.photo_url,total_seconds:0};
+      }
+      if(!grouped[s.phone].name) grouped[s.phone].name=s.name;
+      grouped[s.phone].total_seconds=Math.max(grouped[s.phone].total_seconds, (grouped[s.phone].total_seconds||0)+(s._isSelf?0:0));
+      // For self: use live studySecs
+      if(s._isSelf) grouped[s.phone].total_seconds=(grouped[s.phone].total_seconds||0);
+    });
+    // Override self with live studySecs
+    if(currentUser && grouped[currentUser.phone]){
+      grouped[currentUser.phone].total_seconds=Math.max(grouped[currentUser.phone].total_seconds||0, studySecs);
+    }
+    const list=Object.values(grouped).filter(g=>g.total_seconds>0).sort((a,b)=>b.total_seconds-a.total_seconds);
+    if(!list.length){ el.innerHTML='<div style="text-align:center;padding:10px;color:var(--text-secondary);font-size:11px">আজকে এখনো কেউ পড়েনি</div>'; return; }
+    el.innerHTML=list.map((s,i)=>buildRankCard(s,i+1,false)).join('');
+  } catch(e){ el.innerHTML='<div style="text-align:center;padding:10px;color:#EF4444;font-size:11px">লোড হয়নি</div>'; }
+}
+
+async function loadLeaderboard(days){
+  const rankList=document.getElementById('rankList');
+  rankList.innerHTML='<div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:11px">লোড হচ্ছে...</div>';
+  const since=new Date(Date.now()-days*86400000).toISOString().slice(0,10);
+  try {
+    const dailyRows=await safeFetch(
+      `${SUPABASE_URL}/rest/v1/study_tracker_daily?study_date=gte.${since}` +
+      `&select=user_phone,total_seconds,users(name,batch,college,is_premium,photo_url)` +
+      `&order=total_seconds.desc&limit=500`
+    );
+
+    const grouped={};
+    (dailyRows||[]).forEach(r=>{
+      const p=r.user_phone; if(!p) return;
+      const u=Array.isArray(r.users)?r.users[0]:(r.users||{});
+      if(!grouped[p]){
+        grouped[p]={
+          phone:p,
+          name:u.name||null,
+          batch:u.batch||null,
+          college:u.college||null,
+          premium:u.is_premium||false,
+          photo_url:u.photo_url||null,
+          total_seconds:0
+        };
+      }
+      grouped[p].total_seconds+=(r.total_seconds||0);
+    });
+
+    // Supplement with focus_sessions for name/photo if daily had no user join
+    if(Object.values(grouped).some(g=>!g.name)){
+      const sessRows=await safeFetch(
+        `${SUPABASE_URL}/rest/v1/focus_sessions?updated_at=gte.${since}T00:00:00Z` +
+        `&select=user_phone,users(name,batch,college,is_premium,photo_url)&limit=500`
+      );
+      (sessRows||[]).forEach(r=>{
+        const p=r.user_phone; if(!p||!grouped[p]) return;
+        const u=r.users||{};
+        if(!grouped[p].name && u.name){ grouped[p].name=u.name; grouped[p].batch=u.batch||null; grouped[p].college=u.college||null; grouped[p].photo_url=u.photo_url||null; }
+      });
+    }
+
+    // Fill missing names from allStudents live cache
+    Object.values(grouped).forEach(g=>{
+      if(!g.name){
+        const live=allStudents.find(s=>s.phone===g.phone);
+        if(live){ g.name=live.name; g.batch=live.batch; g.photo_url=live.photo_url; }
+      }
+      if(!g.name) g.name='Student';
+    });
+
+    const list=Object.values(grouped).sort((a,b)=>b.total_seconds-a.total_seconds);
+    if(!list.length){ renderLeaderboard([]); return; }
+    renderLeaderboard(list);
+  } catch(e){
+    console.error('Leaderboard error',e);
+    renderLeaderboard([]);
+  }
+}
+
+function renderLeaderboard(list){
+  const graphEl=document.getElementById('lbTop3Graph');
+  const rankList=document.getElementById('rankList');
+  if(!list.length){
+    if(graphEl) graphEl.style.display='none';
+    rankList.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:11px">এখনো কোনো ডেটা নেই</div>';
+    return;
+  }
+  // Winner graph — top 3 podium bars
+  if(graphEl && list.length>=1){
+    const top=list.slice(0,3);
+    const maxS=Math.max(1,...top.map(s=>s.total_seconds));
+    const colors=['#F59E0B','#9CA3AF','#B45309'];
+    const crowns=['👑','🥈','🥉'];
+    const rankNames=['১ম','২য়','৩য়'];
+    const bars=top.map((s,i)=>{
+      const pct=Math.round((s.total_seconds/maxS)*72);
+      return `<div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:3px">
+        <div style="font-size:14px">${crowns[i]}</div>
+        <div style="width:100%;display:flex;justify-content:center">
+          <div style="width:32px;height:${Math.max(10,pct)}px;border-radius:4px 4px 0 0;background:${colors[i]};box-shadow:0 0 8px ${colors[i]}55"></div>
+        </div>
+        <div style="font-size:10px;font-weight:900;color:${colors[i]}">${rankNames[i]}</div>
+        <div style="font-size:10px;font-weight:800;color:var(--text);max-width:70px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(s.name)}</div>
+        <div style="font-size:9px;color:var(--text-secondary)">${fmtCompact(s.total_seconds)}</div>
+      </div>`;
     }).join('');
+    graphEl.style.display='block';
+    graphEl.innerHTML=`
+      <div style="background:linear-gradient(135deg,rgba(245,158,11,.06),rgba(99,102,241,.06));border:1px solid rgba(245,158,11,.2);border-radius:12px;padding:12px 8px 8px;margin-bottom:8px">
+        <div style="font-size:10px;font-weight:800;color:#F59E0B;text-align:center;margin-bottom:10px;letter-spacing:.5px">🏆 TOP PERFORMERS</div>
+        <div style="display:flex;gap:6px;align-items:flex-end;justify-content:center">${bars}</div>
+      </div>`;
+  }
+
+  // Full rank list — glass cards
+  rankList.innerHTML=list.map((s,i)=>buildRankCard(s,i+1,false)).join('');
 }
 
-function renderBatchFilter(students) {
-    const batches = {};
-    students.forEach(s => { const b = s.batch || 'অন্যান্য'; batches[b] = (batches[b]||0)+1; });
-    const el = document.getElementById('batchFilter');
-    const keys = Object.keys(batches).sort();
-    if (keys.length <= 1) { el.innerHTML = ''; return; }
-    el.innerHTML = `<div class="bf-chip ${selectedBatch==='all'?'active':''}" onclick="filterBatch('all')">সবাই (${students.length})</div>` +
-        keys.map(k => `<div class="bf-chip ${selectedBatch===k?'active':''}" onclick="filterBatch('${escHtml(k)}')">${escHtml(k)} (${batches[k]})</div>`).join('');
+/* ═══ LIVE STUDENTS ═══ */
+function renderBatchFilter(students){
+  const batches={};
+  students.forEach(s=>{ const b=s.batch||'অন্যান্য'; batches[b]=(batches[b]||0)+1; });
+  const el=document.getElementById('batchFilter');
+  const keys=Object.keys(batches).sort();
+  if(keys.length<=1){ el.innerHTML=''; return; }
+  el.innerHTML=`<div class="bf-chip ${selectedBatch==='all'?'active':''}" onclick="filterBatch('all')">সবাই (${students.length})</div>`+
+    keys.map(k=>`<div class="bf-chip ${selectedBatch===k?'active':''}" onclick="filterBatch('${escHtml(k)}')">${escHtml(k)} (${batches[k]})</div>`).join('');
 }
 
-function filterBatch(b) { selectedBatch = b; renderBatchFilter(allStudents); renderStudentList(allStudents); }
+function filterBatch(b){ selectedBatch=b; renderBatchFilter(allStudents); renderLiveStudents(allStudents); }
 
-function renderStudentList(students) {
-    const filtered = selectedBatch === 'all' ? students : students.filter(s => (s.batch||'অন্যান্য') === selectedBatch);
-    const list = document.getElementById('studentsList');
-    if (!filtered.length) { list.innerHTML = `<div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:11px">এই মুহূর্তে কেউ পড়ছে না</div>`; return; }
-    list.innerHTML = filtered.map((s,i) => {
-        const isBreak = s.status === 'break';
-        return `<div class="s-card">
-            <div class="s-rank">${i<3?MEDALS[i]:`<span style="font-size:10px;font-weight:800;color:var(--text-secondary)">${i+1}</span>`}</div>
-            <div class="s-photo">👤</div>
-            <div class="s-info">
-                <div class="s-name">${escHtml(s.name)}</div>
-                <span class="s-time">${fmtSmart(s.study_seconds)}</span>
-                <span class="s-breaks">· ☕${s.breaks_used}</span>
-            </div>
-            <div class="s-right">
-                <span class="status-indicator ${isBreak?'status-break':'status-reading'}"><span class="status-dot"></span>${isBreak?'বিরতি':'LIVE'}</span>
-            </div>
-        </div>`;
-    }).join('');
+function renderLiveStudents(students){
+  const selfEntry = students.find(s=>s._isSelf || s.phone===currentUser?.phone);
+  let filtered = activeLiveMoodFilter
+    ? students.filter(s=>s.status===activeLiveMoodFilter)
+    : (selectedBatch==='all'?students:students.filter(s=>(s.batch||'অন্যান্য')===selectedBatch));
+  // মুড filter (status ভিত্তিক) এ থাকলেই নিজেকে force-include করো — ব্যাচ filter এ না,
+  // কারণ ব্যাচ filter-এর মূল কাজই হলো শুধু সেই ব্যাচ দেখানো, নিজের ব্যাচ ভিন্ন হলেও।
+  if(activeLiveMoodFilter && selfEntry && !filtered.find(s=>s.phone===selfEntry.phone)){
+    filtered = [selfEntry, ...filtered];
+  }
+  const ranked=computeRank(filtered);
+  const list=document.getElementById('liveStudentsList');
+  if(!ranked.length){
+    list.innerHTML=`<div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:11px">এই মুহূর্তে কেউ নেই</div>`;
+    return;
+  }
+  list.innerHTML=ranked.map((s,i)=>buildRankCard(s,i+1,true)).join('');
 }
 
-/* ── Restore session on reload ── */
-function restoreSession() {
-    const saved = loadState();
-    if (!saved || (saved.state !== 'active' && saved.state !== 'break')) return false;
-    const elapsed = Math.floor((Date.now() - saved.savedAt) / 1000);
-    state = saved.state; sessionId = saved.sessionId; breaksUsed = saved.breaksUsed || 0;
-    if (state === 'active') { studySecs = (saved.studySecs||0) + elapsed; breakSecs = saved.breakSecs||0; }
-    else { studySecs = saved.studySecs||0; breakSecs = (saved.breakSecs||0) + elapsed; if (breakSecs >= MAX_BREAK_SEC) { clearState(); return false; } }
-    showTimerScreen(); renderTimer(); saveState();
-    ticker = setInterval(tick, 1000);
-    renderStudents(); startPolling();
-    return true;
-}
+function buildRankCard(s,rank,showStatus){
+  const isPaused=s.status==='paused';
+  const isLive=s.status&&s.status!=='ended'&&!isPaused;
 
-document.addEventListener('visibilitychange', () => {
-    if (document.hidden) { saveState(); }
-    else {
-        const saved = loadState();
-        if (saved && (state === 'active' || state === 'break')) {
-            const elapsed = Math.floor((Date.now() - saved.savedAt) / 1000);
-            if (state === 'active') studySecs = (saved.studySecs||0) + elapsed;
-            else { breakSecs = (saved.breakSecs||0) + elapsed; if (breakSecs >= MAX_BREAK_SEC) { doEnd(true); return; } }
-            renderTimer(); renderStudents();
-        }
+  // Status pill
+  let statusHtml='';
+  if(showStatus){
+    if(isPaused){
+      statusHtml=`<span class="r-status r-status-paused"><span class="r-status-dot" style="background:#EF4444"></span>Pause</span>`;
+    } else if(isLive){
+      const sc=s.status==='break'?'r-status-break':s.status==='sleep'?'r-status-sleep':'r-status-study';
+      const sl=s.status==='break'?'বিরতি':s.status==='sleep'?'ঘুম':'Live';
+      statusHtml=`<span class="r-status ${sc}"><span class="r-status-dot"></span>${sl}</span>`;
     }
+  }
+
+  const rankIcon=rank<=3?MEDALS[rank-1]:`<span style="font-size:18px;font-weight:800;color:var(--text-secondary);font-family:'Courier New',monospace">#${rank}</span>`;
+  const batchLabel=s.batch?`HSC ${escHtml(s.batch)}`:'';
+  const premiumBadge=s.premium?`<span style="display:inline-flex;align-items:center;gap:2px;padding:1px 5px;border-radius:6px;background:linear-gradient(90deg,rgba(251,191,36,.18),rgba(245,158,11,.1));border:1px solid rgba(251,191,36,.3);font-size:7px;font-weight:900;color:#FBBF24;letter-spacing:.3px;margin-left:3px">PRO</span>`:'';
+
+  // Photo from profile or SVG fallback
+  const avatarSvg=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" fill="rgba(99,102,241,.5)"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="rgba(99,102,241,.35)"/></svg>`;
+  const avatarHtml=s.photo_url
+    ?`<img src="${escHtml(s.photo_url)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
+    :avatarSvg;
+
+  const timeVal=s.total_seconds||s.study_seconds||0;
+
+  const safeData=JSON.stringify({name:s.name||'',batch:s.batch||'',college:s.college||'',secs:timeVal,breaks:s.breaks_used||0,phone:s.phone||'',photo:s.photo_url||''}).replace(/'/g,"&#39;");
+  return `
+    <div class="r-card ${rank===1?'rank1-card':''} ${isLive?'is-live':''} ${isPaused?'is-paused':''}" data-phone="${escHtml(s.phone||'')}">
+      ${rank===1?'<div class="rank1-glow"></div>':''}
+      <div class="r-rank">${rankIcon}</div>
+      <div class="r-photo">${avatarHtml}</div>
+      <div class="r-info">
+        <div class="r-name" style="font-weight:900;font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(s.name)}${premiumBadge}</div>
+        ${batchLabel?`<div class="r-batch-tag" style="font-weight:600">${batchLabel}</div>`:''}
+      </div>
+      <div class="r-right">
+        ${statusHtml}
+        <div class="r-time">${fmtCompact(timeVal)}</div>
+        <button class="compare-btn" data-cmp='${safeData}' onclick="openCompare(this)">তুলনা করো</button>
+      </div>
+    </div>
+  `;
+}
+
+/* ═══ COMPARE ═══ */
+let cmpTarget=null, cmpPeriod=1;
+
+function openCompare(btn){
+  let d;
+  try{ d=JSON.parse(btn.dataset.cmp); }catch(e){ return; }
+  cmpTarget={name:d.name,batch:d.batch,college:d.college,secs:d.secs,breaks:d.breaks,phone:d.phone,photoUrl:d.photo};
+  cmpPeriod=1;
+  document.getElementById('cmMeName').textContent=currentUser?.name||'তুমি';
+  document.getElementById('cmMeMeta').textContent=currentUser?.batch?`HSC ${currentUser.batch}`:'';
+  const meAvatar=document.getElementById('cmMeAvatar');
+  meAvatar.innerHTML=currentUser?.photo_url
+    ?`<img src="${escHtml(currentUser.photo_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
+    :'😊';
+  document.getElementById('cmThemName').textContent=d.name||'—';
+  document.getElementById('cmThemMeta').textContent=[d.batch?`HSC ${d.batch}`:'',d.college].filter(Boolean).join(' · ');
+  const themAvatar=document.getElementById('cmThemAvatar');
+  themAvatar.innerHTML=d.photo
+    ?`<img src="${escHtml(d.photo)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
+    :`<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" fill="rgba(99,102,241,.4)"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="rgba(99,102,241,.3)"/></svg>`;
+  document.querySelectorAll('.cm-period-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
+  buildCompare(1);
+  document.getElementById('compareModal').classList.add('show');
+}
+
+function closeCompare(){ document.getElementById('compareModal').classList.remove('show'); }
+
+function setCmpPeriod(days,btn){
+  cmpPeriod=days;
+  document.querySelectorAll('.cm-period-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  buildCompare(days);
+}
+
+async function buildCompare(days){
+  if(!cmpTarget) return;
+  const statsEl=document.getElementById('cmStats');
+  statsEl.innerHTML=`<div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:11px">তুলনা লোড হচ্ছে...</div>`;
+
+  let myStudy=0, myBreaks=0, theirStudy=0, theirBreaks=0, myDaily={}, theirDaily={};
+
+  // If no phone available, use only live snapshot data
+  const theirPhone=cmpTarget.phone||null;
+  const myPhone=currentUser?.phone||null;
+
+  if(days===1 && currentUser && theirPhone===myPhone){
+    // edge case: comparing self with self
+    myStudy=theirStudy=studySecs; myBreaks=theirBreaks=breaksUsed;
+  } else if(days===1){
+    // "today" — use live session data for me, and the live snapshot for them
+    myStudy=studySecs; myBreaks=breaksUsed;
+    theirStudy=cmpTarget.secs; theirBreaks=cmpTarget.breaks;
+  }
+
+  // Always pull real day-by-day history for the graph (and for days>1 totals)
+  try {
+    const since=new Date(Date.now()-days*86400000).toISOString().slice(0,10);
+    const phoneList=[myPhone,theirPhone].filter(Boolean).map(p=>`"${p}"`).join(',');
+    const rows=phoneList?await safeFetch(`${SUPABASE_URL}/rest/v1/study_tracker_daily?user_phone=in.(${phoneList})&study_date=gte.${since}&select=user_phone,study_date,total_seconds`):[];
+    (rows||[]).forEach(r=>{
+      if(myPhone && r.user_phone===myPhone){ myDaily[r.study_date]=(myDaily[r.study_date]||0)+(r.total_seconds||0); }
+      if(theirPhone && r.user_phone===theirPhone){ theirDaily[r.study_date]=(theirDaily[r.study_date]||0)+(r.total_seconds||0); }
+    });
+    if(days>1){
+      myStudy=Object.values(myDaily).reduce((a,b)=>a+b,0);
+      theirStudy=Object.values(theirDaily).reduce((a,b)=>a+b,0);
+      // include today's live session for me if it's running and not yet flushed to DB
+      if(timerRunning && currentUser){
+        const today=new Date().toISOString().slice(0,10);
+        if(!(today in myDaily)) myStudy+=studySecs;
+      }
+      myBreaks=breaksUsed; theirBreaks=cmpTarget.breaks;
+    } else {
+      // for "today" also fold in today's row from study_tracker_daily as a baseline if present
+      const today=new Date().toISOString().slice(0,10);
+      if(theirDaily[today]) theirStudy=Math.max(theirStudy,theirDaily[today]);
+    }
+  } catch(_){ /* fall back to whatever totals we already had */ }
+
+  renderCompareStats(myStudy,myBreaks,theirStudy,theirBreaks,myDaily,theirDaily,days);
+}
+
+function renderCompareStats(myStudy,myBreaks,theirStudy,theirBreaks,myDaily,theirDaily,days){
+  const maxSec=Math.max(myStudy,theirStudy,1);
+  const meW=Math.round((myStudy/maxSec)*100);
+  const thW=Math.round((theirStudy/maxSec)*100);
+  const ahead=myStudy>=theirStudy;
+  const diff=Math.abs(myStudy-theirStudy);
+
+  // Build a small day-wise graph (only meaningful when days>1)
+  let graphHtml='';
+  if(days>1){
+    const dayKeys=[];
+    for(let i=days-1;i>=0;i--){ dayKeys.push(new Date(Date.now()-i*86400000).toISOString().slice(0,10)); }
+    const graphMax=Math.max(1,...dayKeys.map(d=>Math.max(myDaily[d]||0,theirDaily[d]||0)));
+    const bars=dayKeys.map(d=>{
+      const mv=myDaily[d]||0, tv=theirDaily[d]||0;
+      const mh=Math.max(2,Math.round((mv/graphMax)*36));
+      const th=Math.max(2,Math.round((tv/graphMax)*36));
+      const lbl=d.slice(5).replace('-','/');
+      return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;min-width:0">
+        <div style="display:flex;align-items:flex-end;gap:1.5px;height:36px">
+          <div style="width:5px;border-radius:2px 2px 0 0;background:var(--accent);height:${mh}px"></div>
+          <div style="width:5px;border-radius:2px 2px 0 0;background:#818CF8;height:${th}px"></div>
+        </div>
+        <div style="font-size:6.5px;color:var(--text-secondary);white-space:nowrap">${lbl}</div>
+      </div>`;
+    }).join('');
+    graphHtml=`<div style="display:flex;gap:3px;padding:8px 2px 2px;border-top:1px solid var(--border);margin-top:8px">${bars}</div>
+    <div style="display:flex;gap:12px;justify-content:center;font-size:8px;color:var(--text-secondary);margin-top:4px">
+      <span><span style="display:inline-block;width:7px;height:7px;border-radius:2px;background:var(--accent);margin-right:3px;vertical-align:middle"></span>তুমি</span>
+      <span><span style="display:inline-block;width:7px;height:7px;border-radius:2px;background:#818CF8;margin-right:3px;vertical-align:middle"></span>${escHtml(cmpTarget.name)}</span>
+    </div>`;
+  }
+
+  document.getElementById('cmStats').innerHTML=`
+    <div class="cm-stat-row">
+      <div class="cm-stat-label">পড়ার সময়</div>
+      <div class="cm-bar-wrap">
+        <div class="cm-bar cm-bar-me" style="width:${meW}%"></div>
+        <div class="cm-bar-val" style="color:var(--accent)">${fmtCompact(myStudy)}</div>
+      </div>
+    </div>
+    <div class="cm-stat-row">
+      <div class="cm-stat-label">${escHtml(cmpTarget.name)}</div>
+      <div class="cm-bar-wrap">
+        <div class="cm-bar cm-bar-them" style="width:${thW}%"></div>
+        <div class="cm-bar-val" style="color:#818CF8">${fmtCompact(theirStudy)}</div>
+      </div>
+    </div>
+    <div class="cm-stat-row">
+      <div class="cm-stat-label">বিরতি (আজ)</div>
+      <div class="cm-bar-wrap" style="font-size:10px;font-weight:700;color:var(--text)">
+        তুমি: ${myBreaks}টি &nbsp;|&nbsp; ${escHtml(cmpTarget.name)}: ${theirBreaks}টি
+      </div>
+    </div>
+    ${graphHtml}
+  `;
+
+  const verdict=document.getElementById('cmVerdict');
+  if(ahead && diff===0){
+    verdict.className='cm-verdict';
+    verdict.innerHTML=`= সমান সমান! এখন একটু বেশি পড়লেই এগিয়ে যাবে।`;
+  } else if(ahead){
+    verdict.className='cm-verdict';
+    verdict.innerHTML=`↑ তুমি <b>${fmtCompact(diff)}</b> এগিয়ে আছো! এই ধারা বজায় রাখো — বিরতি কম নিলে rank আরো ভালো হবে।`;
+  } else {
+    verdict.className='cm-verdict behind';
+    verdict.innerHTML=`↓ <b>${fmtCompact(diff)}</b> পিছিয়ে আছো। বিরতি কমাও এবং একটানা পড়ার session বাড়াও — তাহলে দ্রুত এগিয়ে যাবে।`;
+  }
+}
+
+/* ═══ RESTORE SESSION ═══ */
+function restoreSession(){
+  const saved=loadState();
+  if(!saved||(saved.mood!=='study'&&saved.mood!=='break'&&saved.mood!=='sleep')) return false;
+  const elapsed=Math.floor((Date.now()-saved.savedAt)/1000);
+  mood=saved.mood; paused=saved.paused||false; sessionId=saved.sessionId;
+  breaksUsed=saved.breaksUsed||0;
+  studySecs=saved.studySecs||0;
+  breakSecs=saved.breakSecs||0;
+  sleepSecs=saved.sleepSecs||0;
+  // Add elapsed to active mood (unless paused)
+  if(!paused){
+    if(mood==='study') studySecs+=elapsed;
+    else if(mood==='break'){ breakSecs+=elapsed; if(breakSecs>=MAX_BREAK_SEC){breakSecs=MAX_BREAK_SEC;} }
+    else if(mood==='sleep') sleepSecs+=elapsed;
+  }
+  timerRunning=true;
+  showTimerScreen();
+  updateMoodButtons(); renderTimer(); saveState();
+
+  // Inject self instantly with restored timer data
+  injectSelfToLive();
+
+  if(paused){
+    document.getElementById('ctrlPause').style.display='none';
+    document.getElementById('ctrlResume').style.display='flex';
+    setHeaderGlow(false);
+  } else {
+    setHeaderGlow(true);
+  }
+  ticker=setInterval(tick,1000);
+  renderLive(); startPolling();
+  return true;
+}
+
+/* ═══ VISIBILITY CHANGE — Tab hidden হলে Study timer auto-pause ═══ */
+// Note: on reload, 'visibilitychange' (hidden) usually fires BEFORE
+// 'pagehide'/'beforeunload' in most browsers — so we can't reliably tell
+// "real unload" apart from "tab switch" at the moment of hiding. Instead,
+// wait briefly: if the page is still here and still hidden after the delay,
+// it's a genuine tab-switch/app-background, so pause. A reload/close will
+// have already torn the page down by then, so the pause never gets applied
+// (and never gets written to localStorage to bite the next page load).
+let visHideTimer=null;
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){
+    saveState(); // persist latest counters immediately regardless of cause
+    if(visHideTimer) clearTimeout(visHideTimer);
+    visHideTimer=setTimeout(()=>{
+      if(document.hidden && timerRunning && !paused && mood==='study'){
+        pauseTimer();
+        sessionStorage.setItem('atlas_auto_paused','1');
+      }
+    }, 800);
+  } else {
+    if(visHideTimer){ clearTimeout(visHideTimer); visHideTimer=null; }
+    // Tab ফিরে আসলে — auto-pause হয়ে থাকলে user-কে জানানো
+    if(sessionStorage.getItem('atlas_auto_paused')==='1'){
+      sessionStorage.removeItem('atlas_auto_paused');
+      if(timerRunning && paused){
+        showToast('⏸ অন্য ট্যাবে গিয়েছিলে, timer pause আছে — Resume করো', 3000);
+      }
+    }
+  }
 });
 
-document.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('atlas-theme');
-    if (saved === 'light') { isDarkMode = false; document.body.classList.add('light-mode'); document.body.classList.remove('dark-mode'); document.getElementById('themeToggle').textContent = '🌙'; }
-
-    try { currentUser = JSON.parse(localStorage.getItem('atlas-session')); } catch(_) { currentUser = null; }
-    if (!currentUser) { location.replace('auth.html'); return; }
-
-    const restored = restoreSession();
-    if (!restored) renderStudents();
-    setInterval(renderStudents, 30000);
+/* ═══ INIT ═══ */
+document.addEventListener('DOMContentLoaded',()=>{
+  const saved=localStorage.getItem('atlas-theme');
+  if(saved==='light'){isDarkMode=false;document.body.classList.add('light-mode');document.body.classList.remove('dark-mode');}
+  try{currentUser=JSON.parse(localStorage.getItem('atlas-session'));}catch(_){currentUser=null;}
+  if(!currentUser){location.replace('auth.html');return;}
+  const restored=restoreSession();
+  if(!restored) renderLive();
+  startIdlePolling();
 });
-history.pushState(null, '', location.href);
-window.addEventListener('popstate', () => history.back());
+
+history.pushState(null,'',location.href);
+window.addEventListener('popstate',()=>history.back());
 </script>
 
-<!-- ══════════════ গ্লোবাল নেভিগেশন + UI কন্ট্রোল (নতুন, আলাদা ফাইল) ══════════════ -->
 <script src="global-nav.js"></script>
 <script src="atlas-ui.js"></script>
 </body>

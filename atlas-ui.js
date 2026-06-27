@@ -182,6 +182,64 @@
         headerLeft.insertBefore(btn, headerLeft.firstChild);
     }
 
+    // ---------- ৫. Refresh করলে একই পেজে থাকা (hash + page persistence) ----------
+    // browser naturally same page-e thake refresh-e (HTML file serve hoy directly),
+    // kintu internal hash-based screens (profile-er #pomoScreen etc) khali hash diye
+    // restore hoy na jodi page-er JS seta handle na kore।
+    // Ei function ta: hash change hole sessionStorage-e save, r page load-e
+    // hash thakle visible kore dey (jodi page-er nijer JS age na kore thake)।
+    function setupPagePersistence() {
+        // Hash change hole save — page-er internal screen switch track korte
+        window.addEventListener('hashchange', function () {
+            try {
+                sessionStorage.setItem('atlas_last_hash_' + location.pathname, location.hash);
+            } catch (e) { /* ignore */ }
+        });
+
+        // ai.html-e pushState nai — add kori jate back button browser-er baire na jay
+        if (!location.pathname.includes('ai.html')) return;
+        if (!history.state) {
+            history.pushState(null, '', location.href);
+        }
+        window.addEventListener('popstate', function () {
+            history.pushState(null, '', location.href);
+        });
+    }
+
+    // ---------- ৫. Auth redirect-e current page save (return URL) ----------
+    // Jei page-e session expire hoye auth.html-e redirect hoy, age
+    // current URL sessionStorage-e save kora hoy jate login-er por
+    // same page-e fire asha jay (auth.html ei URL read kore navigate kore)
+    function setupReturnUrl() {
+        const authPages = ['auth.html'];
+        const currentPage = location.pathname.split('/').pop() || '';
+        if (authPages.includes(currentPage)) return; // auth page-e nijerai handle kore
+        if (window.__atlasReturnUrlSetup) return; // idempotency guard — prevents "Cannot redefine property: replace" if init() ever runs twice
+        window.__atlasReturnUrlSetup = true;
+
+        // location.replace/href override — auth-e jawar age URL save
+        try {
+            const _origReplace = location.replace.bind(location);
+            Object.defineProperty(location, 'replace', {
+                get: function() {
+                    return function(url) {
+                        if (typeof url === 'string' && url.includes('auth.html')) {
+                            try {
+                                sessionStorage.setItem('atlas_return_url',
+                                    location.pathname.split('/').pop() + location.search + location.hash);
+                            } catch(e) {}
+                        }
+                        _origReplace(url);
+                    };
+                },
+                configurable: true
+            });
+        } catch (e) {
+            // location.replace couldn't be overridden in this browser/context — fail silently,
+            // the return-URL convenience feature is skipped but nothing else breaks.
+        }
+    }
+
     // ---------- ইনিশিয়ালাইজ ----------
     function init() {
         injectVisibilityStyle();
@@ -189,6 +247,8 @@
         injectShimmerStyle();
         applyZoomAndCopyLock();
         ensureBackButton();
+        setupPagePersistence();
+        setupReturnUrl();
     }
 
     if (document.readyState === 'loading') {

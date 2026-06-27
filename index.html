@@ -121,7 +121,7 @@
             display: flex; align-items: center; gap: 7px;
             background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 8px; padding: 4px 10px;
+            border-radius: 8px; padding: 4px 18px;
             cursor: pointer; transition: border-color .2s ease;
         }
         .atlas-brand-box:active { border-color: var(--accent); }
@@ -160,12 +160,12 @@
         }
         .notif-dropdown.open { display: block; }
         .notif-dropdown-header {
-            padding: 10px 14px; font-size: 12px; font-weight: 700;
+            padding: 4px 18px; font-size: 12px; font-weight: 700;
             color: var(--accent); border-bottom: 1px solid var(--border);
             display: flex; justify-content: space-between; align-items: center;
         }
         .notif-dropdown-item {
-            padding: 10px 14px; border-bottom: 1px solid var(--border);
+            padding: 4px 18px; border-bottom: 1px solid var(--border);
             cursor: pointer; transition: .15s;
         }
         .notif-dropdown-item:hover { background: var(--card-hover); }
@@ -177,7 +177,7 @@
             background: var(--accent); display: inline-block; margin-right: 4px;
         }
         .notif-dropdown-footer {
-            padding: 8px 14px; text-align: center; font-size: 11px;
+            padding: 4px 18px; text-align: center; font-size: 11px;
             color: var(--accent); cursor: pointer; font-weight: 600;
         }
         .notif-dropdown-footer:hover { opacity: .75; }
@@ -207,7 +207,7 @@
 
         .sidebar-header {
             background: linear-gradient(135deg,rgba(124,131,255,.15),rgba(88,166,255,.06));
-            padding: 20px 16px; border-bottom: 1px solid var(--border);
+            padding: 4px 18px; border-bottom: 1px solid var(--border);
             text-align: center; flex-shrink: 0;
         }
         .sidebar-logo { font-size: 18px; font-weight: 800; color: var(--accent); }
@@ -217,7 +217,7 @@
 
         .sidebar-item {
             display: flex; align-items: center; gap: 10px;
-            padding: 11px 18px; color: var(--text-secondary);
+            padding: 4px 18px; color: var(--text-secondary);
             border: none; background: none; width: 100%;
             text-align: left; font-size: 13px; cursor: pointer;
             transition: .18s; font-family: inherit;
@@ -272,7 +272,7 @@
         /* Clickable link — center, animated  (Flutter: AnimatedButton) */
         .special-link-wrap { display: flex; justify-content: center; margin-top: 6px; }
         .special-link {
-            display: inline-block; padding: 9px 24px;
+            display: inline-block; padding: 4px 18px;
             background: linear-gradient(135deg,var(--accent),var(--blue));
             color: #fff; border-radius: var(--radius-full);
             font-size: 12px; font-weight: 700; text-decoration: none;
@@ -320,8 +320,8 @@
         .countdown-card {
             background: linear-gradient(140deg,var(--bg) 0%,var(--card-bg) 100%);
             border: 1.5px solid var(--atlas-border, var(--border));
-            border-radius: var(--radius); padding: 16px 14px;
-            margin: 0 auto 14px; max-width: 320px; text-align: center;
+            border-radius: var(--radius); padding: 8px 40px !important;
+            margin: 0 auto 14px; max-width: 98% !important;
             position: relative; animation: pulseGlow 3s ease-in-out infinite;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             overflow: hidden;
@@ -336,7 +336,7 @@
         /* Serial box — per spec: thin box inside card, left corner */
         .timer-serial-box {
             position: absolute; top: 0; left: 0;
-            padding: 3px 10px;
+            padding: 4px 18px;
             border-radius: 0 0 8px 0;
             font-size: 9px; font-weight: 700; color: #fff; letter-spacing: .5px;
         }
@@ -346,24 +346,23 @@
         .timer-4 .timer-serial-box { background: var(--t4); }
         .timer-5 .timer-serial-box { background: var(--t5); }
 
-        .timer-main-topic { font-size: 19px; font-weight: 900; color: var(--text); margin-top: 10px; }
-        .timer-subtopic { font-size: 13px; color: var(--text-secondary); margin-bottom: 10px; }
+        .timer-main-topic { font-size: 25px; font-weight: 900; color: var(--text); margin-top: 14px; margin-bottom: 0px; line-height: 1.25; }
+        .timer-subtopic { font-size: 13px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; margin-top: 1px; }
 
-        /* Inner premium clock card — clock icon + digits live in their own
-           contained card inside the outer timer card, per spec. */
+        /* Inner premium clock card */
         .timer-clock-card {
             width: 100%;
             background: linear-gradient(155deg, var(--card-bg) 0%, var(--card-hover) 100%);
             border: 1px solid var(--border); border-radius: 12px;
-            padding: 10px 8px;
+            padding: 4px 18px;
             box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 2px 10px rgba(0,0,0,.15);
         }
         .timer-row { display: flex; align-items: center; justify-content: center; gap: 6px; }
-        .timer-clock-icon { font-size: 26px; flex-shrink: 0; }
+        .timer-clock-icon { font-size: 32px; flex-shrink: 0; }
         .timer-values { display: flex; align-items: center; gap: 3px; }
-        .timer-block { display: flex; flex-direction: column; align-items: center; min-width: 26px; }
-        .timer-number { font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: .5px; font-variant-numeric: tabular-nums; }
-        .timer-separator { font-size: 13px; font-weight: 700; color: var(--text-secondary); margin-top: -6px; }
+        .timer-block { display: flex; flex-direction: column; align-items: center; min-width: 30px; }
+        .timer-number { font-size: 26px; font-weight: 900; color: var(--text); letter-spacing: .5px; font-variant-numeric: tabular-nums; }
+        .timer-separator { font-size: 16px; font-weight: 800; color: var(--text-secondary); margin-top: -6px; }
         .timer-label { font-size: 8px; color: var(--text-secondary); opacity: .7; margin-top: 1px; }
 
         /* ─────────────────────────────────────────────
@@ -387,7 +386,7 @@
             position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
             background: linear-gradient(135deg, var(--accent), #3D35B0);
             color: #fff; font-size: 8.5px; font-weight: 800; letter-spacing: .2px;
-            padding: 3px 10px; border-radius: 8px; white-space: nowrap;
+            padding: 4px 18px; border-radius: 8px; white-space: nowrap;
             box-shadow: 0 2px 10px rgba(108,99,255,.35);
         }
 
@@ -401,7 +400,7 @@
             background: linear-gradient(155deg, var(--card-bg) 0%, var(--card-hover) 100%);
             color: var(--text);
             border: 1px solid var(--border); border-radius: 14px;
-            padding: 12px 6px; font-family: 'Noto Sans Bengali','Inter',sans-serif;
+            padding: 4px 18px; font-family: 'Noto Sans Bengali','Inter',sans-serif;
             font-size: 11px; font-weight: 700; text-align: center; cursor: pointer;
             transition: all .2s ease; box-shadow: var(--shadow-sm);
             display: flex; flex-direction: column; align-items: center; gap: 7px;
@@ -432,7 +431,7 @@
         /* Hero style — bigger tile, now column layout (icon top, text bottom) like small buttons */
         .home-btn-hero {
             flex-direction: column; align-items: center; justify-content: center;
-            padding: 16px 10px; gap: 9px; text-align: center;
+            padding: 4px 18px; gap: 9px; text-align: center;
         }
         .home-btn-hero .btn-icon-tile { width: 46px; height: 46px; font-size: 23px; border-radius: 14px; }
         .home-btn-hero .btn-text { font-size: 12px; line-height: 1.3; margin-top: 0; }
@@ -511,8 +510,8 @@
             position: relative; z-index: 2;
             background: linear-gradient(145deg, #110E2A 0%, #1C1040 40%, #0F0C24 100%);
             border-radius: 16px; overflow: hidden;
-            padding: 18px 18px; display: flex; align-items: center; justify-content: center;
-            flex-direction: column; gap: 4px; text-align: center;
+            padding: 2px 18px; text-align: center;
+            flex-direction: column; gap: 0px;
         }
 
         /* Sweep shine on inner card */
@@ -572,7 +571,7 @@
         }
         .social-chip {
             display: inline-flex; align-items: center; gap: 5px;
-            padding: 7px 14px; border-radius: var(--radius-full);
+            padding: 4px 18px; border-radius: var(--radius-full);
             font-size: 11px; font-weight: 600;
             background: var(--card-bg); border: 1px solid var(--border);
             color: var(--text-secondary); text-decoration: none;
@@ -915,7 +914,23 @@
         ───────────────────────────────────────────── */
         .empty-state { text-align:center; padding:30px 20px; color:var(--text-secondary); }
         .empty-icon  { font-size:36px; margin-bottom:8px; display:block; }
-    </style>
+    
+        .si-tile{width:26px;height:26px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 2px 5px rgba(0,0,0,.2)}
+        .si-tile svg{width:15px;height:15px}
+        .ni-tile{width:24px;height:24px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 2px 4px rgba(0,0,0,.2)}
+        .ni-tile svg{width:13px;height:13px}
+        .tile-indigo{background:linear-gradient(150deg,#7B7FFF 0%,#5A5FE0 45%,#322B96 100%)}
+        .tile-amber{background:linear-gradient(150deg,#FFD166 0%,#F5A524 45%,#A8650A 100%)}
+        .tile-violet{background:linear-gradient(150deg,#A78BFA 0%,#8B5CF6 45%,#4C1D95 100%)}
+        .tile-rose{background:linear-gradient(150deg,#FB7AAE 0%,#F43F8E 45%,#9D174D 100%)}
+        .tile-emerald{background:linear-gradient(150deg,#34D9A0 0%,#10B981 45%,#065F46 100%)}
+        .tile-sky{background:linear-gradient(150deg,#7DD3FC 0%,#38BDF8 45%,#075985 100%)}
+        .tile-orange{background:linear-gradient(150deg,#FDBA74 0%,#FB923C 45%,#9A3412 100%)}
+        .tile-teal{background:linear-gradient(150deg,#5EEAD4 0%,#14B8A6 45%,#115E59 100%)}
+        .tile-red{background:linear-gradient(150deg,#FCA5A5 0%,#F87171 45%,#991B1B 100%)}
+        .tile-gold{background:linear-gradient(150deg,#FDE68A 0%,#FBBF24 45%,#92400E 100%)}
+        .tile-plum{background:linear-gradient(150deg,#D8B4FE 0%,#A855F7 45%,#581C87 100%)}
+        </style>
 </head>
 <body class="dark-mode">
 
@@ -933,55 +948,55 @@
     <div class="sidebar-menu">
         <!-- Navigation links -->
         <button class="sidebar-item" onclick="navigateTo('profile');closeSidebar();">
-            <span class="si-icon">👤</span> প্রোফাইল
+            <span class="si-icon"><span class="si-tile tile-sky"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="#fff" stroke-width="1.8"/><path d="M4.5 20c0-3.6 3.4-6.5 7.5-6.5s7.5 2.9 7.5 6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></span></span> প্রোফাইল
         </button>
         <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();">
-            <span class="si-icon">🏠</span> হোম
+            <span class="si-icon"><span class="si-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none"><path d="M3 10L12 3l9 7v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" fill="rgba(255,255,255,0.15)"/><path d="M9 21V12h6v9" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg></span></span> হোম
         </button>
         <button class="sidebar-item" onclick="goTo('class.html');closeSidebar();">
-            <span class="si-icon">📚</span> ফ্রি ক্লাস
+            <span class="si-icon"><span class="si-tile tile-violet"><svg viewBox="0 0 24 24" fill="none"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z" stroke="#fff" stroke-width="1.8"/><path d="M12 5.5v13.4" stroke="#fff" stroke-width="1.8"/></svg></span></span> ফ্রি ক্লাস
         </button>
         <button class="sidebar-item" onclick="goTo('study.html');closeSidebar();">
-            <span class="si-icon">📖</span> মূলবই পেইজভিত্তিক প্রস্তুতি
+            <span class="si-icon"><span class="si-tile tile-violet"><svg viewBox="0 0 24 24" fill="none"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z" stroke="#fff" stroke-width="1.8"/><path d="M12 5.5v13.4" stroke="#fff" stroke-width="1.8"/></svg></span></span> মূলবই পেইজভিত্তিক প্রস্তুতি
         </button>
         <button class="sidebar-item" onclick="goTo('focus.html');closeSidebar();">
-            <span class="si-icon">⏱️</span> Focus Timer
+            <span class="si-icon"><span class="si-tile tile-emerald"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" stroke="#fff" stroke-width="1.8"/><path d="M12 9v4l2.5 2.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 3h4M12 3v2" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></span></span> Focus Timer
         </button>
         <button class="sidebar-item" onclick="showToast('শীঘ্রই আসছে! 🚧');closeSidebar();">
-            <span class="si-icon">📊</span> Study Tracker
+            <span class="si-icon"><span class="si-tile tile-sky"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19V11M9.5 19V6M15 19V13.5M20 19V8.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></span></span> Study Tracker
         </button>
         <button class="sidebar-item" onclick="goTo('profile.html#pomoScreen');closeSidebar();">
-            <span class="si-icon">🍅</span> Pomodoro
+            <span class="si-icon"><span class="si-tile tile-rose"><svg viewBox="0 0 24 24" fill="none"><path d="M12 4.2V2.5M9.8 2.5h4.4" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="13.5" r="8" stroke="#fff" stroke-width="1.8" fill="rgba(255,255,255,0.1)"/><path d="M12 9.5v4l3 2" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span> Pomodoro
         </button>
         <button class="sidebar-item" onclick="openGpaCalculatorModal();closeSidebar();">
-            <span class="si-icon">🎯</span> GPA Calculator
+            <span class="si-icon"><span class="si-tile tile-gold"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="#fff" stroke-width="1.8"/><circle cx="12" cy="12" r="4.5" stroke="#fff" stroke-width="1.6"/><circle cx="12" cy="12" r="1.5" fill="#fff"/></svg></span></span> GPA Calculator
         </button>
         <button class="sidebar-item" onclick="goTo('exam.html?cat=board');closeSidebar();">
-            <span class="si-icon">🎓</span> HSC
+            <span class="si-icon"><span class="si-tile tile-sky"><svg viewBox="0 0 24 24" fill="none"><path d="M3.5 9.5L12 4l8.5 5.5M4.5 9.5v9.5h15V9.5M9.5 19v-5h5v5" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.1)"/></svg></span></span> HSC
         </button>
         <button class="sidebar-item" onclick="openAdmissionModal();closeSidebar();">
-            <span class="si-icon">🏛️</span> এডমিশন
+            <span class="si-icon"><span class="si-tile tile-teal"><svg viewBox="0 0 24 24" fill="none"><path d="M3 21h18M5 21V10l7-7 7 7v11" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.1)"/></svg></span></span> এডমিশন
         </button>
         <button class="sidebar-item" onclick="goTo('exam.html?cat=onushiloni');closeSidebar();">
-            <span class="si-icon">📋</span> অনুশীলনী
+            <span class="si-icon"><span class="si-tile tile-orange"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.1)"/><path d="M8 8h8M8 12h8M8 16h5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span></span> অনুশীলনী
         </button>
         <button class="sidebar-item" onclick="goTo('exam.html');closeSidebar();">
-            <span class="si-icon">📝</span> ফ্রি এক্সাম
+            <span class="si-icon"><span class="si-tile tile-orange"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.1)"/><path d="M8 8h8M8 12h8M8 16h5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span></span> ফ্রি এক্সাম
         </button>
         <button class="sidebar-item" onclick="goTo('mock-test.html');closeSidebar();">
-            <span class="si-icon">🎯</span> মক টেস্ট
+            <span class="si-icon"><span class="si-tile tile-rose"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="#fff" stroke-width="1.8"/><circle cx="12" cy="12" r="4.5" stroke="#fff" stroke-width="1.6"/><circle cx="12" cy="12" r="1.5" fill="#fff"/></svg></span></span> মক টেস্ট
         </button>
-        <button class="sidebar-item" onclick="openModelTestModal();closeSidebar();">
-            <span class="si-icon">🧪</span> Model Test
+        <button class="sidebar-item" onclick="goTo('model-test.html');closeSidebar();">
+            <span class="si-icon"><span class="si-tile tile-amber"><svg viewBox="0 0 24 24" fill="none"><path d="M9.5 3.5h5M10.2 3.5v6.3L5.3 18c-.7 1.2.2 2.7 1.6 2.7h10.2c1.4 0 2.3-1.5 1.6-2.7l-4.9-8.2V3.5" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.1)"/></svg></span></span> Model Test
         </button>
         <button class="sidebar-item" onclick="openMistakesModal();closeSidebar();">
-            <span class="si-icon">⚠️</span> My Mistakes
+            <span class="si-icon"><span class="si-tile tile-red"><svg viewBox="0 0 24 24" fill="none"><path d="M10.3 4L2 18h20L13.7 4a2 2 0 00-3.4 0z" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.12)"/><path d="M12 9v5M12 17h.01" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/></svg></span></span> My Mistakes
         </button>
         <button class="sidebar-item" onclick="goTo('ai.html');closeSidebar();">
-            <span class="si-icon">✨</span> ATLAS AI
+            <span class="si-icon"><span class="si-tile tile-plum"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="8" width="18" height="12" rx="3" stroke="#fff" stroke-width="1.8" fill="rgba(255,255,255,0.1)"/><path d="M12 3v5M9.5 3h5" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/><circle cx="9" cy="14" r="1.5" fill="#fff"/><circle cx="15" cy="14" r="1.5" fill="#fff"/><path d="M9 18h6" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span></span> ATLAS AI
         </button>
         <button class="sidebar-item admin-sidebar" id="adminSidebarBtn" onclick="goTo('admin.html');closeSidebar();" style="display:none;">
-            <span class="si-icon">👑</span> Admin Control
+            <span class="si-icon"><span class="si-tile tile-gold"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" stroke="#FFD700" stroke-width="1.6" fill="rgba(255,215,0,0.15)"/></svg></span></span> Admin Control
         </button>
 
         <div class="sidebar-divider"></div>
@@ -1006,13 +1021,13 @@
 
         <div class="sidebar-divider"></div>
         <button class="sidebar-item" onclick="toggleTheme()">
-            <span class="si-icon" id="sidebarThemeIcon">🌙</span> থিম পরিবর্তন
+            <span class="si-icon" id="sidebarThemeIcon"><span class="si-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="#fff" stroke-width="1.8" fill="rgba(255,255,255,0.12)"/></svg></span></span> থিম পরিবর্তন
         </button>
     </div>
 
     <div class="sidebar-footer">
         <button class="sidebar-item logout-btn" onclick="logout()">
-            <span class="si-icon">🚪</span> লগআউট
+            <span class="si-icon"><span class="si-tile tile-red"><svg viewBox="0 0 24 24" fill="none"><path d="M14 3H6a1 1 0 00-1 1v16a1 1 0 001 1h8" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><path d="M18 7l4 5-4 5M22 12H10" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span> লগআউট
         </button>
     </div>
 </aside>
@@ -1155,7 +1170,7 @@
             <span class="btn-icon-tile tile-orange"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4L3 11.5l6.5 2.5"/><path d="M9.5 14l2 6 3-4.5L21 4 9.5 14z"/></svg></span>
             <span class="btn-text">Telegram Support</span>
         </button>
-        <button class="home-btn home-btn-hero" onclick="openModelTestModal()">
+        <button class="home-btn home-btn-hero" onclick="goTo('model-test.html')">
             <span class="btn-icon-tile tile-amber"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 3.5h5"/><path d="M10.2 3.5v6.3L5.3 18c-.7 1.2.2 2.7 1.6 2.7h10.2c1.4 0 2.3-1.5 1.6-2.7l-4.9-8.2V3.5"/><path d="M7.5 15.5h9"/></svg></span>
             <span class="btn-text">Model Test</span>
         </button>
@@ -1224,12 +1239,12 @@
      BOTTOM NAV  (Flutter: BottomNavigationBar)
 ════════════════════════════════════════════ -->
 <nav class="bottom-nav">
-    <button class="nav-item active" onclick="goTo('index.html')"><span class="nav-icon">🏠</span>হোম</button>
-    <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon">📚</span>ক্লাস</button>
-    <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon">📝</span>এক্সাম</button>
-    <button class="nav-item" onclick="goTo('mock-test.html')"><span class="nav-icon">🎯</span>মক</button>
-    <button class="nav-item" onclick="goTo('study-aid.html')"><span class="nav-icon">🧩</span>Study Aid</button>
-    <button class="nav-item" onclick="navigateTo('profile')"><span class="nav-icon">👤</span>প্রোফাইল</button>
+    <button class="nav-item active" onclick="goTo('index.html')"><span class="nav-icon"><span class="ni-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none"><path d="M3 10L12 3l9 7v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" fill="rgba(255,255,255,0.15)"/><path d="M9 21V12h6v9" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg></span></span>হোম</button>
+    <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon"><span class="ni-tile tile-violet"><svg viewBox="0 0 24 24" fill="none"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z" stroke="#fff" stroke-width="1.8"/><path d="M12 5.5v13.4" stroke="#fff" stroke-width="1.8"/></svg></span></span>ক্লাস</button>
+    <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon"><span class="ni-tile tile-orange"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.1)"/><path d="M8 8h8M8 12h8M8 16h5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span></span>এক্সাম</button>
+    <button class="nav-item" onclick="goTo('mock-test.html')"><span class="nav-icon"><span class="ni-tile tile-rose"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="#fff" stroke-width="1.8"/><circle cx="12" cy="12" r="4.5" stroke="#fff" stroke-width="1.6"/><circle cx="12" cy="12" r="1.5" fill="#fff"/></svg></span></span>মক</button>
+    <button class="nav-item" onclick="goTo('study-aid.html')"><span class="nav-icon"><span class="ni-tile tile-teal"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3h5a2 2 0 012 2v3a2 2 0 000 4v3a2 2 0 01-2 2h-3a2 2 0 01-4 0H7a2 2 0 01-2-2v-3a2 2 0 000-4V5a2 2 0 012-2h5z" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.08)"/></svg></span></span>Study Aid</button>
+    <button class="nav-item" onclick="navigateTo('profile')"><span class="nav-icon"><span class="ni-tile tile-sky"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="#fff" stroke-width="1.8"/><path d="M4.5 20c0-3.6 3.4-6.5 7.5-6.5s7.5 2.9 7.5 6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></span></span>প্রোফাইল</button>
 </nav>
 
 <!-- Floating Buttons  (Flutter: SpeedDial FAB) -->

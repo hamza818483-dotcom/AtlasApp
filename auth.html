@@ -122,8 +122,11 @@ async function handleLogin(){
         if(!data?.length){showToast('❌ রেজিস্টার্ড নয়');btn.disabled=false;btn.textContent='লগইন করুন';return;}
         const user=data[0];
         if(user.password_hash!==pass){showToast('❌ ভুল পাসওয়ার্ড');btn.disabled=false;btn.textContent='লগইন করুন';return;}
-        localStorage.setItem('atlas-session',JSON.stringify({phone:user.phone,name:user.name,batch:user.batch,college:user.college,father_name:user.father_name,mother_name:user.mother_name,ssc_gpa:user.ssc_gpa,hsc_gpa:user.hsc_gpa,timer_type:user.timer_type,role:user.role}));
-        showToast('✅ লগইন সফল!');setTimeout(()=>location.href='index.html',800);
+        localStorage.setItem('atlas-session',JSON.stringify({phone:user.phone,name:user.name,batch:user.batch,college:user.college,father_name:user.father_name,mother_name:user.mother_name,ssc_gpa:user.ssc_gpa,hsc_gpa:user.hsc_gpa,timer_type:user.timer_type,role:user.role,photo_url:user.photo_url,premium:user.is_premium}));
+        showToast('✅ লগইন সফল!');
+        const returnUrl = sessionStorage.getItem('atlas_return_url') || 'index.html';
+        sessionStorage.removeItem('atlas_return_url');
+        setTimeout(()=>location.href=returnUrl,800);
     }catch(e){showToast('❌ এরর');btn.disabled=false;btn.textContent='লগইন করুন';}
 }
 
@@ -140,7 +143,10 @@ async function handleRegister(){
         if(exist?.length){showToast('❌ ফোন আগেই রেজিস্টার্ড');btn.disabled=false;btn.textContent='রেজিস্টার করুন';return;}
         await safeFetch(`${SUPABASE_URL}/rest/v1/users`,{method:'POST',body:JSON.stringify({phone,name,batch,college,father_name:father||null,mother_name:mother||null,ssc_gpa:parseFloat(ssc),hsc_gpa:parseFloat(hsc),timer_type:timer,password_hash:pass})});
         localStorage.setItem('atlas-session',JSON.stringify({phone,name,batch,college,father_name:father,mother_name:mother,ssc_gpa:ssc,hsc_gpa:hsc,timer_type:timer}));
-        showToast('✅ রেজিস্ট্রেশন সফল!');setTimeout(()=>location.href='index.html',800);
+        showToast('✅ রেজিস্ট্রেশন সফল!');
+        const returnUrl2 = sessionStorage.getItem('atlas_return_url') || 'index.html';
+        sessionStorage.removeItem('atlas_return_url');
+        setTimeout(()=>location.href=returnUrl2,800);
     }catch(e){showToast('❌ এরর');btn.disabled=false;btn.textContent='রেজিস্টার করুন';}
 }
 
@@ -189,7 +195,7 @@ window.addEventListener('error',function(e){showError('💥 সমস্যা',
 window.addEventListener('unhandledrejection',function(e){showError('⚠️ প্রসেসিং সমস্যা','অনুরোধ সম্পূর্ণ করা যায়নি',e.reason?.message,null);});
 
 document.addEventListener('keydown',e=>{if(e.key==='Enter'){if(currentTab==='login')handleLogin();else if(currentTab==='register')handleRegister();else if(currentTab==='forget')handleForget();}});
-document.addEventListener('DOMContentLoaded',()=>{const sess=localStorage.getItem('atlas-session');if(sess){try{JSON.parse(sess);showToast('👋 ইতিমধ্যে লগইন');setTimeout(()=>location.href='index.html',600);}catch(e){}}});
+document.addEventListener('DOMContentLoaded',()=>{const sess=localStorage.getItem('atlas-session');if(sess){try{JSON.parse(sess);showToast('👋 ইতিমধ্যে লগইন');const ru=sessionStorage.getItem('atlas_return_url')||'index.html';sessionStorage.removeItem('atlas_return_url');setTimeout(()=>location.href=ru,600);}catch(e){}}});
 </script>
 </body>
 </html>

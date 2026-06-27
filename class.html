@@ -565,30 +565,40 @@
         /* Progress bar */
         .cplayer-progress-wrap {
             position: relative;
-            height: 4px;
+            height: 5px;
             background: var(--cl-card2);
             border-radius: 4px;
             cursor: pointer;
             touch-action: none;
             margin-bottom: 8px;
+            /* Bigger touch target */
+            padding: 8px 0;
+            margin-top: -8px;
+            box-sizing: content-box;
         }
         .cplayer-progress-fill {
-            height: 100%;
+            height: 5px;
             background: linear-gradient(90deg, var(--cl-primary), var(--cl-secondary));
             border-radius: 4px;
             width: 0%;
             pointer-events: none;
+            position: absolute;
+            top: 8px; left: 0;
         }
         .cplayer-progress-thumb {
             position: absolute;
             top: 50%;
-            width: 12px; height: 12px;
+            width: 16px; height: 16px;
             background: #fff;
             border-radius: 50%;
             transform: translate(-50%, -50%);
             left: 0%;
             pointer-events: none;
-            box-shadow: 0 0 5px rgba(108,99,255,0.6);
+            box-shadow: 0 0 6px rgba(108,99,255,0.7);
+            transition: transform 0.1s;
+        }
+        .cplayer-progress-wrap:active .cplayer-progress-thumb {
+            transform: translate(-50%, -50%) scale(1.3);
         }
         /* Controls row - single line, compact */
         .cplayer-row {
@@ -808,7 +818,26 @@
             font-size: 20px; cursor: pointer; padding: 6px 4px 6px 2px; line-height:1;
         }
         .global-back-btn:active { opacity:0.6; }
-    </style>
+    
+        /* ── Icon tiles (shared with home page) ── */
+        .si-tile{width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 2px 6px rgba(0,0,0,.25)}
+        .si-tile svg{width:16px;height:16px}
+        .tile-indigo{background:linear-gradient(150deg,#7B7FFF 0%,#5A5FE0 45%,#322B96 100%)}
+        .tile-amber{background:linear-gradient(150deg,#FFD166 0%,#F5A524 45%,#A8650A 100%)}
+        .tile-violet{background:linear-gradient(150deg,#A78BFA 0%,#8B5CF6 45%,#4C1D95 100%)}
+        .tile-rose{background:linear-gradient(150deg,#FB7AAE 0%,#F43F8E 45%,#9D174D 100%)}
+        .tile-emerald{background:linear-gradient(150deg,#34D9A0 0%,#10B981 45%,#065F46 100%)}
+        .tile-sky{background:linear-gradient(150deg,#7DD3FC 0%,#38BDF8 45%,#075985 100%)}
+        .tile-orange{background:linear-gradient(150deg,#FDBA74 0%,#FB923C 45%,#9A3412 100%)}
+        .tile-teal{background:linear-gradient(150deg,#5EEAD4 0%,#14B8A6 45%,#115E59 100%)}
+        .tile-red{background:linear-gradient(150deg,#FCA5A5 0%,#F87171 45%,#991B1B 100%)}
+        .tile-gold{background:linear-gradient(150deg,#FDE68A 0%,#FBBF24 45%,#92400E 100%)}
+        .tile-plum{background:linear-gradient(150deg,#D8B4FE 0%,#A855F7 45%,#581C87 100%)}
+        /* nav icon tile */
+        .ni-tile{width:26px;height:26px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:2px;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 2px 5px rgba(0,0,0,.2)}
+        .ni-tile svg{width:14px;height:14px}
+
+        </style>
     
 </head>
 <body class="dark-mode">
@@ -818,18 +847,18 @@
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-header"><div class="sidebar-logo">ATLAS APP</div></div>
     <div class="sidebar-menu">
-        <button class="sidebar-item" onclick="navigateTo('profile');closeSidebar();">👤 প্রোফাইল</button>
-        <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();">🏠 হোম</button>
-        <button class="sidebar-item active" onclick="goTo('class.html');closeSidebar();">📚 ক্লাস+গাইডলাইন</button>
-        <button class="sidebar-item" onclick="goTo('exam.html');closeSidebar();">📝 ফ্রি এক্সাম</button>
-        <button class="sidebar-item" onclick="goTo('mock-test.html');closeSidebar();">🎯 মক টেস্ট</button>
-        <button class="sidebar-item" onclick="goTo('profile.html#mistakes');closeSidebar();">⚠️ My Mistakes</button>
-        <button class="sidebar-item" onclick="goTo('ai.html');closeSidebar();">🤖 ATLAS AI</button>
+        <button class="sidebar-item" onclick="navigateTo('profile');closeSidebar();"><span class="si-tile tile-sky"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="#fff" stroke-width="1.8"/><path d="M4.5 20c0-3.6 3.4-6.5 7.5-6.5s7.5 2.9 7.5 6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></span> প্রোফাইল</button>
+        <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();"><span class="si-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none"><path d="M3 10L12 3l9 7v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" fill="rgba(255,255,255,0.15)"/><path d="M9 21V12h6v9" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg></span> হোম</button>
+        <button class="sidebar-item active" onclick="goTo('class.html');closeSidebar();"><span class="si-tile tile-violet"><svg viewBox="0 0 24 24" fill="none"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z" stroke="#fff" stroke-width="1.8"/><path d="M12 5.5v13.4" stroke="#fff" stroke-width="1.8"/></svg></span> ক্লাস+গাইডলাইন</button>
+        <button class="sidebar-item" onclick="goTo('exam.html');closeSidebar();"><span class="si-tile tile-orange"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="#fff" stroke-width="1.8" fill="rgba(255,255,255,0.12)"/><path d="M8 8h8M8 12h8M8 16h5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></span> ফ্রি এক্সাম</button>
+        <button class="sidebar-item" onclick="goTo('mock-test.html');closeSidebar();"><span class="si-tile tile-rose"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="#fff" stroke-width="1.8"/><circle cx="12" cy="12" r="4.5" stroke="#fff" stroke-width="1.6"/><circle cx="12" cy="12" r="1.5" fill="#fff"/></svg></span> মক টেস্ট</button>
+        <button class="sidebar-item" onclick="goTo('profile.html#mistakes');closeSidebar();"><span class="si-tile tile-gold"><svg viewBox="0 0 24 24" fill="none"><path d="M10.3 4L2 18h20L13.7 4a2 2 0 00-3.4 0z" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.12)"/><path d="M12 9v5M12 17h.01" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></span> My Mistakes</button>
+        <button class="sidebar-item" onclick="goTo('ai.html');closeSidebar();"><span class="si-tile tile-plum"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="8" width="18" height="12" rx="3" stroke="#fff" stroke-width="1.8" fill="rgba(255,255,255,0.1)"/><path d="M12 3v5M9.5 3h5" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/><circle cx="9" cy="14" r="1.5" fill="#fff"/><circle cx="15" cy="14" r="1.5" fill="#fff"/><path d="M9 18h6" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span> ATLAS AI</button>
         <div class="sidebar-divider"></div>
-        <button class="sidebar-item" onclick="toggleTheme()">🌙 ডার্ক মোড</button>
+        <button class="sidebar-item" onclick="toggleTheme()"><span class="si-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="#fff" stroke-width="1.8" fill="rgba(255,255,255,0.12)"/></svg></span> ডার্ক মোড</button>
     </div>
     <div class="sidebar-footer">
-        <button class="sidebar-item logout-btn" onclick="logout()">🚪 লগআউট</button>
+        <button class="sidebar-item logout-btn" onclick="logout()"><span class="si-tile tile-red"><svg viewBox="0 0 24 24" fill="none"><path d="M14 3H6a1 1 0 00-1 1v16a1 1 0 001 1h8" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><path d="M18 7l4 5-4 5M22 12H10" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span> লগআউট</button>
     </div>
 </aside>
 
@@ -844,8 +873,8 @@
         </div>
     </div>
     <div class="header-right">
-        <button class="header-icon" onclick="toggleTheme()" id="themeToggle">🌙</button>
-        <button class="header-icon" onclick="navigateTo('profile')">👤</button>
+        <button class="header-icon" onclick="toggleTheme()" id="themeToggle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.8" fill="rgba(255,255,255,0.1)"/></svg></button>
+        <button class="header-icon" onclick="navigateTo('profile')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 20c0-3.6 3.4-6.5 7.5-6.5s7.5 2.9 7.5 6.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
     </div>
 </header>
 
@@ -1013,12 +1042,12 @@
 
 <!-- ===== BOTTOM NAV ===== -->
 <nav class="bottom-nav">
-    <button class="nav-item" onclick="goTo('index.html')"><span class="nav-icon">🏠</span>হোম</button>
-    <button class="nav-item active" onclick="goTo('class.html')"><span class="nav-icon">📚</span>ক্লাস</button>
-    <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon">📝</span>এক্সাম</button>
-    <button class="nav-item" onclick="goTo('mock-test.html')"><span class="nav-icon">🎯</span>মক</button>
-    <button class="nav-item" onclick="goTo('study-aid.html')"><span class="nav-icon">🧩</span>Study Aid</button>
-    <button class="nav-item" onclick="navigateTo('profile')"><span class="nav-icon">👤</span>প্রোফাইল</button>
+    <button class="nav-item" onclick="goTo('index.html')"><span class="nav-icon"><span class="ni-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none"><path d="M3 10L12 3l9 7v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" fill="rgba(255,255,255,0.15)"/><path d="M9 21V12h6v9" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg></span></span>হোম</button>
+    <button class="nav-item active" onclick="goTo('class.html')"><span class="nav-icon"><span class="ni-tile tile-violet"><svg viewBox="0 0 24 24" fill="none"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z" stroke="#fff" stroke-width="1.8"/><path d="M12 5.5v13.4" stroke="#fff" stroke-width="1.8"/></svg></span></span>ক্লাস</button>
+    <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon"><span class="ni-tile tile-orange"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="#fff" stroke-width="1.8" fill="rgba(255,255,255,0.12)"/><path d="M8 8h8M8 12h8M8 16h5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></span></span>এক্সাম</button>
+    <button class="nav-item" onclick="goTo('mock-test.html')"><span class="nav-icon"><span class="ni-tile tile-rose"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="#fff" stroke-width="1.8"/><circle cx="12" cy="12" r="4.5" stroke="#fff" stroke-width="1.6"/><circle cx="12" cy="12" r="1.5" fill="#fff"/></svg></span></span>মক</button>
+    <button class="nav-item" onclick="goTo('study-aid.html')"><span class="nav-icon"><span class="ni-tile tile-teal"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3h5a2 2 0 012 2v3a2 2 0 000 4v3a2 2 0 01-2 2h-3a2 2 0 01-4 0H7a2 2 0 01-2-2v-3a2 2 0 000-4V5a2 2 0 012-2h5z" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.08)"/></svg></span></span>Study Aid</button>
+    <button class="nav-item" onclick="navigateTo('profile')"><span class="nav-icon"><span class="ni-tile tile-sky"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="#fff" stroke-width="1.8"/><path d="M4.5 20c0-3.6 3.4-6.5 7.5-6.5s7.5 2.9 7.5 6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></span></span>প্রোফাইল</button>
 </nav>
 
 <!-- ===== FLOATING BUTTONS ===== -->
@@ -1515,34 +1544,33 @@ function cpFullscreen() {
 }
 
 function _enterFsLandscape() {
-    // After fullscreen, get actual screen dimensions
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    // For CSS rotate(90deg): inner width=vh, height=vw so it fills screen exactly
-    const iW = vh;  // becomes screen width after 90deg rotate
-    const iH = vw;  // becomes screen height after 90deg rotate
+    // screen.width/height always gives physical pixels regardless of browser chrome
+    const SW = screen.width;   // physical narrow side (portrait)
+    const SH = screen.height;  // physical tall side (portrait)
+    // After rotate(90deg): cssWidth→visual height, cssHeight→visual width
+    // So inner fills screen: cssWidth=SH, cssHeight=SW
+    const cssW = Math.max(SW, SH); // landscape visual width
+    const cssH = Math.min(SW, SH); // landscape visual height
 
     const fo = document.createElement('div');
     fo.id = 'fsOverlay';
-    fo.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;z-index:2147483647;overflow:hidden;';
+    fo.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:2147483647;overflow:hidden;';
 
     const inner = document.createElement('div');
     inner.id = 'fsInner';
-    inner.style.cssText = `position:absolute;top:50%;left:50%;width:${iW}px;height:${iH}px;transform:translate(-50%,-50%) rotate(90deg);transform-origin:center center;display:flex;flex-direction:column;background:#000;overflow:hidden;`;
+    inner.style.cssText = `position:absolute;top:50%;left:50%;width:${cssW}px;height:${cssH}px;transform:translate(-50%,-50%) rotate(90deg);transform-origin:center center;display:flex;flex-direction:column;background:#000;overflow:hidden;`;
 
-    // Video slot
+    // Video slot — fills remaining space after controls
     const slot = document.createElement('div');
     slot.id = 'fsSlot';
-    slot.style.cssText = 'flex:1;position:relative;overflow:hidden;background:#000;';
+    slot.style.cssText = 'flex:1;position:relative;overflow:hidden;background:#000;min-height:0;';
 
-    // Move YT iframe into slot
     const ytEl = document.getElementById('ytPlayerEl');
     if (ytEl) {
         ytEl.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:none;';
         slot.appendChild(ytEl);
     }
 
-    // Blocker — prevents all YT UI interaction
     const blocker = document.createElement('div');
     blocker.style.cssText = 'position:absolute;inset:0;z-index:20;background:transparent;';
     blocker.addEventListener('click', () => { ytTogglePlay(); _showFsControls(); });
@@ -1654,8 +1682,11 @@ function _fsMoveSeek(e) {
     const bar = document.getElementById('fsProgress');
     if (!bar || !ytPlayer) return;
     const rect = bar.getBoundingClientRect();
-    // In rotated landscape, pointer X maps to bar position
-    const clientX = e.clientX !== undefined ? e.clientX : (e.touches ? e.touches[0].clientX : 0);
+    // Progress bar is inside rotated container.
+    // getBoundingClientRect() gives screen coordinates (post-rotation).
+    // The bar is horizontal in the rotated view = vertical on physical screen.
+    // So we use clientX (which maps to the bar's visual left→right direction).
+    const clientX = e.clientX !== undefined ? e.clientX : 0;
     const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     try {
         const dur = ytPlayer.getDuration() || 0;

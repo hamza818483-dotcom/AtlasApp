@@ -126,7 +126,13 @@
         .toast.show { opacity:1; }
 
         /* ===== MAIN CONTAINER ===== */
-        .dash-container { max-width:580px;margin:0 auto;padding:12px 14px 20px; }
+        .dash-container { max-width:580px;margin:0 auto;padding:12px 14px 20px;display:flex;flex-direction:column; }
+        #profileCard { order:1; }
+        #mainGrid { order:2; }
+        #pomoSuccessGraphCard { order:3; }
+        #examGraphCard { order:4; }
+        #classGraphCard { order:5; }
+        #tabContent { order:6; }
 
         /* ===== PROFILE CARD ===== */
         .profile-card { background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:14px;text-align:center;box-shadow:var(--shadow);position:relative;overflow:hidden; }
@@ -722,7 +728,26 @@
             font-size: 20px; cursor: pointer; padding: 6px 4px 6px 2px; line-height:1;
         }
         .global-back-btn:active { opacity:0.6; }
-    </style>
+    
+        /* ── Icon tiles (shared with home page) ── */
+        .si-tile{width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 2px 6px rgba(0,0,0,.25)}
+        .si-tile svg{width:16px;height:16px}
+        .tile-indigo{background:linear-gradient(150deg,#7B7FFF 0%,#5A5FE0 45%,#322B96 100%)}
+        .tile-amber{background:linear-gradient(150deg,#FFD166 0%,#F5A524 45%,#A8650A 100%)}
+        .tile-violet{background:linear-gradient(150deg,#A78BFA 0%,#8B5CF6 45%,#4C1D95 100%)}
+        .tile-rose{background:linear-gradient(150deg,#FB7AAE 0%,#F43F8E 45%,#9D174D 100%)}
+        .tile-emerald{background:linear-gradient(150deg,#34D9A0 0%,#10B981 45%,#065F46 100%)}
+        .tile-sky{background:linear-gradient(150deg,#7DD3FC 0%,#38BDF8 45%,#075985 100%)}
+        .tile-orange{background:linear-gradient(150deg,#FDBA74 0%,#FB923C 45%,#9A3412 100%)}
+        .tile-teal{background:linear-gradient(150deg,#5EEAD4 0%,#14B8A6 45%,#115E59 100%)}
+        .tile-red{background:linear-gradient(150deg,#FCA5A5 0%,#F87171 45%,#991B1B 100%)}
+        .tile-gold{background:linear-gradient(150deg,#FDE68A 0%,#FBBF24 45%,#92400E 100%)}
+        .tile-plum{background:linear-gradient(150deg,#D8B4FE 0%,#A855F7 45%,#581C87 100%)}
+        /* nav icon tile */
+        .ni-tile{width:26px;height:26px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:2px;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 2px 5px rgba(0,0,0,.2)}
+        .ni-tile svg{width:14px;height:14px}
+
+        </style>
 </head>
 <body>
 
@@ -734,25 +759,25 @@
         <div class="sidebar-logo-sub">মেডিকেল প্রস্তুতি</div>
     </div>
     <!-- FIX #1: All sidebar buttons work independently, no page redirect for profile options -->
-    <button class="sidebar-item" onclick="closeSidebar();showTab('main');">👤 প্রোফাইল</button>
-    <button class="sidebar-item" onclick="goTo('index.html')">🏠 হোম</button>
-    <button class="sidebar-item" onclick="goTo('class.html')">📚 ফ্রি ক্লাস</button>
-    <button class="sidebar-item" onclick="goTo('exam.html')">📝 ফ্রি এক্সাম</button>
-    <button class="sidebar-item" onclick="goTo('mock-test.html')">🎯 মক টেস্ট</button>
-    <button class="sidebar-item" onclick="closeSidebar();openScreen('mistakesScreen');loadMistakesFullscreen();">⚠️ My Mistakes</button>
-    <button class="sidebar-item" onclick="closeSidebar();showTab('leaderboard');">🏆 Leaderboard</button>
-    <button class="sidebar-item" onclick="closeSidebar();showTab('weaklist');">📋 Weak List</button>
-    <button class="sidebar-item" onclick="closeSidebar();openScreen('todoScreen');renderTodoList();startTodoCountdowns();">✅ To-Do List</button>
-    <button class="sidebar-item" onclick="closeSidebar();openScreen('pomoScreen');updatePomoDisplay();renderPomoHistory();">⏱️ Pomodoro Clock</button>
-    <button class="sidebar-item" onclick="goTo('ai.html')">🤖 ATLAS AI</button>
+    <button class="sidebar-item" onclick="closeSidebar();showTab('main');"><span class="si-tile tile-sky"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="#fff" stroke-width="1.8"/><path d="M4.5 20c0-3.6 3.4-6.5 7.5-6.5s7.5 2.9 7.5 6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></span> প্রোফাইল</button>
+    <button class="sidebar-item" onclick="goTo('index.html')"><span class="si-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none"><path d="M3 10L12 3l9 7v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" fill="rgba(255,255,255,0.15)"/><path d="M9 21V12h6v9" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg></span> হোম</button>
+    <button class="sidebar-item" onclick="goTo('class.html')"><span class="si-tile tile-violet"><svg viewBox="0 0 24 24" fill="none"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z" stroke="#fff" stroke-width="1.8"/><path d="M12 5.5v13.4" stroke="#fff" stroke-width="1.8"/></svg></span> ফ্রি ক্লাস</button>
+    <button class="sidebar-item" onclick="goTo('exam.html')"><span class="si-tile tile-orange"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="#fff" stroke-width="1.8" fill="rgba(255,255,255,0.12)"/><path d="M8 8h8M8 12h8M8 16h5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></span> ফ্রি এক্সাম</button>
+    <button class="sidebar-item" onclick="goTo('mock-test.html')"><span class="si-tile tile-rose"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="#fff" stroke-width="1.8"/><circle cx="12" cy="12" r="4.5" stroke="#fff" stroke-width="1.6"/><circle cx="12" cy="12" r="1.5" fill="#fff"/></svg></span> মক টেস্ট</button>
+    <button class="sidebar-item" onclick="closeSidebar();openScreen('mistakesScreen');loadMistakesFullscreen();"><span class="si-tile tile-gold"><svg viewBox="0 0 24 24" fill="none"><path d="M10.3 4L2 18h20L13.7 4a2 2 0 00-3.4 0z" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.12)"/><path d="M12 9v5M12 17h.01" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></span> My Mistakes</button>
+    <button class="sidebar-item" onclick="closeSidebar();showTab('leaderboard');"><span class="si-tile tile-gold"><svg viewBox="0 0 24 24" fill="none"><path d="M8 21h8M12 17v4M7 4H4v4a5 5 0 005 5h6a5 5 0 005-5V4h-3M7 4h10v4a5 5 0 01-10 0V4z" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.12)"/></svg></span> Leaderboard</button>
+    <button class="sidebar-item" onclick="closeSidebar();showTab('weaklist');"><span class="si-tile tile-teal"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.1)"/><path d="M8 8h8M8 12h8M8 16h5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span> Weak List</button>
+    <button class="sidebar-item" onclick="closeSidebar();openScreen('todoScreen');renderTodoList();startTodoCountdowns();"><span class="si-tile tile-emerald"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.1)"/><path d="M9 12l2 2 4-4" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span> To-Do List</button>
+    <button class="sidebar-item" onclick="closeSidebar();openScreen('pomoScreen');updatePomoDisplay();renderPomoHistory();"><span class="si-tile tile-rose"><svg viewBox="0 0 24 24" fill="none"><path d="M12 4.2V2.5M9.8 2.5h4.4" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="13.5" r="8" stroke="#fff" stroke-width="1.8" fill="rgba(255,255,255,0.08)"/><path d="M12 9.5v4l3 2" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Pomodoro Clock</button>
+    <button class="sidebar-item" onclick="goTo('ai.html')"><span class="si-tile tile-plum"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="8" width="18" height="12" rx="3" stroke="#fff" stroke-width="1.8" fill="rgba(255,255,255,0.1)"/><path d="M12 3v5M9.5 3h5" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/><circle cx="9" cy="14" r="1.5" fill="#fff"/><circle cx="15" cy="14" r="1.5" fill="#fff"/><path d="M9 18h6" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span> ATLAS AI</button>
     <div class="sidebar-divider"></div>
-    <button class="sidebar-item" onclick="toggleTheme()">🌙 থিম পরিবর্তন</button>
-    <button class="sidebar-item" onclick="openWA()">💬 WhatsApp</button>
-    <button class="sidebar-item" onclick="openTG()">✈️ Telegram</button>
+    <button class="sidebar-item" onclick="toggleTheme()"><span class="si-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="#fff" stroke-width="1.8" fill="rgba(255,255,255,0.12)"/></svg></span> থিম পরিবর্তন</button>
+    <button class="sidebar-item" onclick="openWA()"><span class="si-tile tile-emerald"><svg viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.1)"/></svg></span> WhatsApp</button>
+    <button class="sidebar-item" onclick="openTG()"><span class="si-tile tile-sky"><svg viewBox="0 0 24 24" fill="none"><path d="M21 4L3 11.5l6.5 2.5"/><path d="M9.5 14l2 6 3-4.5L21 4 9.5 14z" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.1)"/></svg></span> Telegram</button>
     <div class="sidebar-spacer"></div>
     <div class="sidebar-divider"></div>
     <!-- FIX #4: Logout instant -->
-    <button class="sidebar-item danger" onclick="closeSidebar();confirmLogout();">🚪 লগআউট</button>
+    <button class="sidebar-item danger" onclick="closeSidebar();confirmLogout();"><span class="si-tile tile-red"><svg viewBox="0 0 24 24" fill="none"><path d="M14 3H6a1 1 0 00-1 1v16a1 1 0 001 1h8" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><path d="M18 7l4 5-4 5M22 12H10" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span> লগআউট</button>
 </aside>
 
 <!-- ========== HEADER ========== -->
@@ -766,8 +791,8 @@
         </div>
     </div>
     <div class="header-right">
-        <button class="header-icon" onclick="toggleTheme()" id="themeBtn">🌙</button>
-        <button class="header-icon" onclick="showTab('notifications')">🔔</button>
+        <button class="header-icon" onclick="toggleTheme()" id="themeBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.8" fill="rgba(255,255,255,0.1)"/></svg></button>
+        <button class="header-icon" onclick="showTab('notifications')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     </div>
 </header>
 
@@ -777,9 +802,9 @@
     <div id="profileMainSection">
     <!-- PROFILE CARD -->
     <div class="profile-card" id="profileCard">
-        <button class="profile-edit-corner-btn" onclick="showTab('edit')" title="প্রোফাইল এডিট">✏️ এডিট</button>
+        <button class="profile-edit-corner-btn" onclick="showTab('edit')" title="প্রোফাইল এডিট"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 3 21l.5-4.5L17 3z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg> এডিট</button>
         <div class="profile-avatar-wrap" onclick="document.getElementById('avatarInput').click()">
-            <img class="profile-avatar" id="profileAvatar" src="" onerror="this.style.display='none';document.getElementById('profileAvatarFallback').style.display='flex';" alt="Photo">
+            <img class="profile-avatar" id="profileAvatar" src="" style="display:none" onerror="this.style.display='none';document.getElementById('profileAvatarFallback').style.display='flex';" alt="Photo">
             <div class="profile-avatar" id="profileAvatarFallback" style="display:flex;align-items:center;justify-content:center;font-size:32px;position:absolute;top:0;left:0;">👤</div>
             <div class="profile-avatar-upload">📷</div>
             <input type="file" id="avatarInput" accept="image/*" onchange="uploadAvatar(this)" style="display:none;">
@@ -798,30 +823,30 @@
         <!-- Row 1: Leaderboard | Weak List (restored — full function, just needed an entry point) -->
         <div class="profile-actions-row1">
             <button class="profile-action-btn lb-btn" onclick="showTab('leaderboard')">
-                <span class="btn-icon">🏆</span><span class="btn-label">Leaderboard</span>
+                <span class="btn-icon"><span class="si-tile tile-gold" style="width:28px;height:28px;border-radius:7px"><svg viewBox="0 0 24 24" fill="none"><path d='M8 21h8M12 17v4M7 4H4v4a5 5 0 005 5h6a5 5 0 005-5V4h-3M7 4h10v4a5 5 0 01-10 0V4z' stroke='#FFD700' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' fill='rgba(255,215,0,0.12)'/></svg></span> </span><span class="btn-label">Leaderboard</span>
             </button>
             <button class="profile-action-btn weak-btn" onclick="showTab('weaklist')">
-                <span class="btn-icon">📋</span><span class="btn-label">Weak List</span>
+                <span class="btn-icon"><span class="si-tile tile-teal" style="width:28px;height:28px;border-radius:7px"><svg viewBox="0 0 24 24" fill="none"><rect x='4' y='3' width='16' height='18' rx='2' stroke='#fff' stroke-width='1.7' fill='rgba(255,255,255,0.1)'/><path d='M8 8h8M8 12h6M8 16h4' stroke='#fff' stroke-width='1.5' stroke-linecap='round'/></svg></span> </span><span class="btn-label">Weak List</span>
             </button>
         </div>
         <!-- Row 2: ToDo | Pomo | Logout (Edit moved to top corner) -->
         <div class="profile-actions-row2">
             <button class="profile-action-btn todo-btn" onclick="openScreen('todoScreen');renderTodoList();startTodoCountdowns();">
-                <span class="btn-icon">✅</span><span class="btn-label">To-Do</span>
+                <span class="btn-icon"><span class="si-tile tile-emerald" style="width:28px;height:28px;border-radius:7px"><svg viewBox="0 0 24 24" fill="none"><rect x='4' y='3' width='16' height='18' rx='2' stroke='#fff' stroke-width='1.7' fill='rgba(255,255,255,0.1)'/><path d='M9 12l2.5 2.5 4-5' stroke='#fff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg></span> </span><span class="btn-label">To-Do</span>
             </button>
             <button class="profile-action-btn pomodoro-btn" onclick="openScreen('pomoScreen');updatePomoDisplay();renderPomoHistory();">
-                <span class="btn-icon">🕐</span><span class="btn-label">Pomodoro</span>
+                <span class="btn-icon"><span class="si-tile tile-rose" style="width:28px;height:28px;border-radius:7px"><svg viewBox="0 0 24 24" fill="none"><path d='M12 4.2V2.5M9.8 2.5h4.4' stroke='#fff' stroke-width='1.8' stroke-linecap='round'/><circle cx='12' cy='13.5' r='8' stroke='#fff' stroke-width='1.8' fill='rgba(255,255,255,0.1)'/><path d='M12 9.5v4l3 2' stroke='#fff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg></span> </span><span class="btn-label">Pomodoro</span>
             </button>
             <!-- FIX #4: logout button instant -->
             <button class="profile-action-btn logout-btn" onclick="confirmLogout()">
-                <span class="btn-icon">🚪</span><span class="btn-label">লগআউট</span>
+                <span class="btn-icon"><span class="si-tile tile-red" style="width:28px;height:28px;border-radius:7px"><svg viewBox="0 0 24 24" fill="none"><path d='M14 3H6a1 1 0 00-1 1v16a1 1 0 001 1h8' stroke='#fff' stroke-width='1.8' stroke-linecap='round'/><path d='M18 7l4 5-4 5M22 12H10' stroke='#fff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg></span> </span><span class="btn-label">লগআউট</span>
             </button>
         </div>
     </div>
 
     <!-- POMODORO SUCCESS GRAPH (3-Day) -->
     <div class="graph-card" id="pomoSuccessGraphCard" style="display:none;">
-        <div class="graph-title">🎯 Pomodoro সফলতার হার <span class="graph-title-badge">শেষ ৩ দিন</span></div>
+        <div class="graph-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" style="vertical-align:middle"><path d="M12 4.2V2.5M9.8 2.5h4.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="13.5" r="8" stroke="currentColor" stroke-width="1.7"/><path d="M12 9.5v4l3 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg> Pomodoro সফলতার হার <span class="graph-title-badge">শেষ ৩ দিন</span></div>
         <div id="pomoSuccessChartBars" style="display:flex;align-items:flex-end;gap:12px;height:100px;padding:10px 0;"></div>
         <div class="graph-stats">
             <div class="graph-stat"><div class="graph-stat-val" id="pomoAvgRate">—</div><div class="graph-stat-lbl">📈 গড়</div></div>
@@ -863,22 +888,22 @@
     <!-- 4 DASH BOXES -->
     <div class="dash-grid" id="mainGrid">
         <div class="dash-box" onclick="showTab('history')">
-            <span class="dash-box-icon">📚</span>
+            <span class="dash-box-icon"><span class="si-tile tile-indigo" style="width:36px;height:36px;border-radius:9px"><svg viewBox="0 0 24 24" fill="none"><path d='M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z' stroke='#fff' stroke-width='1.8'/><path d='M12 5.5v13.4' stroke='#fff' stroke-width='1.8'/></svg></span></span>
             <div class="dash-box-title">Exam History</div>
             <div class="dash-box-count" id="countExams">০ এক্সাম</div>
         </div>
         <div class="dash-box" onclick="showTab('classhistory')">
-            <span class="dash-box-icon">🎥</span>
+            <span class="dash-box-icon"><span class="si-tile tile-violet" style="width:36px;height:36px;border-radius:9px"><svg viewBox="0 0 24 24" fill="none"><rect x='2' y='5' width='15' height='14' rx='2' stroke='#fff' stroke-width='1.7' fill='rgba(255,255,255,0.1)'/><path d='M17 9l5-3v12l-5-3V9z' stroke='#fff' stroke-width='1.7' stroke-linejoin='round'/></svg></span></span>
             <div class="dash-box-title">Class History</div>
             <div class="dash-box-count" id="countClasses">০ ক্লাস</div>
         </div>
         <div class="dash-box" onclick="showTab('bookmarks')">
-            <span class="dash-box-icon">🔖</span>
+            <span class="dash-box-icon"><span class="si-tile tile-rose" style="width:36px;height:36px;border-radius:9px"><svg viewBox="0 0 24 24" fill="none"><path d='M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z' stroke='#fff' stroke-width='1.8' fill='rgba(255,255,255,0.1)'/></svg></span></span>
             <div class="dash-box-title">Bookmarks</div>
             <div class="dash-box-count" id="countBookmarks">০ বুকমার্ক</div>
         </div>
         <div class="dash-box" onclick="showTab('notifications')" style="position:relative;">
-            <span class="dash-box-icon">🔔</span>
+            <span class="dash-box-icon"><span class="si-tile tile-amber" style="width:36px;height:36px;border-radius:9px"><svg viewBox="0 0 24 24" fill="none"><path d='M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0' stroke='#fff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg></span></span>
             <div class="dash-box-title">Notifications</div>
             <div class="dash-box-count" id="countNotifs">০ নতুন</div>
             <div class="dash-box-badge" id="unreadBadge" style="display:none;"></div>
@@ -897,7 +922,7 @@
             <!-- FIX #5: back goes to main only -->
             <button class="back-btn" onclick="showTab('main')">← ফিরে যান</button>
             <div class="section-header">
-                <div class="section-title">📚 Exam History</div>
+                <div class="section-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z" stroke="currentColor" stroke-width="1.8"/><path d="M12 5.5v13.4" stroke="currentColor" stroke-width="1.8"/></svg> Exam History</div>
                 <div class="section-sub" id="historySubtitle"></div>
             </div>
             <div class="filter-row">
@@ -917,7 +942,7 @@
         <div class="tab-content" id="tabClasshistoryContent">
             <button class="back-btn" onclick="showTab('main')">← ফিরে যান</button>
             <div class="section-header">
-                <div class="section-title">🎥 Class History</div>
+                <div class="section-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="15" height="14" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M17 9l5-3v12l-5-3V9z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg> Class History</div>
                 <div class="section-sub" id="classHistorySubtitle"></div>
             </div>
             <!-- FIX #9: Class filter buttons -->
@@ -935,7 +960,7 @@
         <div class="tab-content" id="tabBookmarksContent">
             <button class="back-btn" onclick="showTab('main')">← ফিরে যান</button>
             <div class="section-header">
-                <div class="section-title">🔖 Bookmarks</div>
+                <div class="section-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" stroke="currentColor" stroke-width="1.8"/></svg> Bookmarks</div>
                 <div class="section-sub" id="bookmarksSubtitle"></div>
             </div>
             <div id="bookmarksList"></div>
@@ -944,14 +969,14 @@
         <!-- NOTIFICATIONS -->
         <div class="tab-content" id="tabNotificationsContent">
             <button class="back-btn" onclick="showTab('main')">← ফিরে যান</button>
-            <div class="section-header"><div class="section-title">🔔 Notifications</div></div>
+            <div class="section-header"><div class="section-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Notifications</div></div>
             <div id="notifList"></div>
         </div>
 
         <!-- EDIT PROFILE -->
         <div class="tab-content" id="tabEditContent">
             <button class="back-btn" onclick="showTab('main')">← ফিরে যান</button>
-            <div class="section-header"><div class="section-title">✏️ প্রোফাইল এডিট</div></div>
+            <div class="section-header"><div class="section-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 3 21l.5-4.5L17 3z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg> প্রোফাইল এডিট</div></div>
             <div class="card-item">
                 <div class="input-group"><label>নাম</label><input type="text" id="editName" placeholder="আপনার নাম"></div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
@@ -981,7 +1006,7 @@
         <div class="tab-content" id="tabWeaklistContent">
             <button class="back-btn" onclick="showTab('main')">← ফিরে যান</button>
             <div class="section-header">
-                <div class="section-title">📋 Weak List</div>
+                <div class="section-title"><span class="si-tile tile-teal"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.1)"/><path d="M8 8h8M8 12h8M8 16h5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span> Weak List</div>
                 <div class="section-sub">বিগত ৭ দিনের AI অ্যানালাইসিস (৩+৭ দিন তুলনা)</div>
             </div>
             <div id="weakListContent"></div>
@@ -991,7 +1016,7 @@
         <div class="tab-content" id="tabLeaderboardContent">
             <button class="back-btn" onclick="showTab('main')">← ফিরে যান</button>
             <div class="section-header">
-                <div class="section-title">🏆 Leaderboard</div>
+                <div class="section-title"><span class="si-tile tile-gold"><svg viewBox="0 0 24 24" fill="none"><path d="M8 21h8M12 17v4M7 4H4v4a5 5 0 005 5h6a5 5 0 005-5V4h-3M7 4h10v4a5 5 0 01-10 0V4z" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.12)"/></svg></span> Leaderboard</div>
                 <!-- FIX #7: user sees only their attempted exams -->
                 <div class="section-sub">আপনার দেওয়া এক্সামের Leaderboard</div>
             </div>
@@ -1046,7 +1071,7 @@
     <div class="fs-header">
         <!-- FIX #5: back goes only to previous page -->
         <button class="fs-back-btn" onclick="closeScreen('mistakesScreen')">← ফিরে যান</button>
-        <div class="fs-title">⚠️ My Mistakes</div>
+        <div class="fs-title"><span class="si-tile tile-gold"><svg viewBox="0 0 24 24" fill="none"><path d="M10.3 4L2 18h20L13.7 4a2 2 0 00-3.4 0z" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.12)"/><path d="M12 9v5M12 17h.01" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></span> My Mistakes</div>
         <button class="header-icon" onclick="clearAllMistakes()" style="font-size:12px;width:auto;padding:0 8px;border-radius:6px;">🗑️ সব</button>
     </div>
     <!-- FIX #7: Category-wise overall summary at top -->
@@ -1118,7 +1143,7 @@
 <div class="fs-screen" id="todoScreen" style="z-index:460;">
     <div class="fs-header">
         <button class="fs-back-btn" onclick="closeScreen('todoScreen')">← ফিরে যান</button>
-        <div class="fs-title">✅ To-Do List</div>
+        <div class="fs-title"><span class="si-tile tile-emerald"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.1)"/><path d="M9 12l2 2 4-4" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span> To-Do List</div>
     </div>
     <div class="fs-body">
         <div class="todo-add-card">
@@ -1161,7 +1186,7 @@
 <div class="fs-screen" id="pomoScreen" style="z-index:470;">
     <div class="fs-header">
         <button class="fs-back-btn" onclick="closeScreen('pomoScreen')">← ফিরে যান</button>
-        <div class="fs-title">⏱️ Pomodoro Clock</div>
+        <div class="fs-title"><span class="si-tile tile-rose"><svg viewBox="0 0 24 24" fill="none"><path d="M12 4.2V2.5M9.8 2.5h4.4" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="13.5" r="8" stroke="#fff" stroke-width="1.8" fill="rgba(255,255,255,0.08)"/><path d="M12 9.5v4l3 2" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Pomodoro Clock</div>
     </div>
     <div class="pomo-body-inner">
         <!-- SVG Ring Watch -->
@@ -1303,12 +1328,12 @@
 
 <!-- ========== BOTTOM NAV ========== -->
 <nav class="bottom-nav">
-    <button class="nav-item" onclick="goTo('index.html')"><span class="nav-icon">🏠</span>হোম</button>
-    <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon">📚</span>ক্লাস</button>
-    <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon">📝</span>এক্সাম</button>
-    <button class="nav-item" onclick="goTo('mock-test.html')"><span class="nav-icon">🎯</span>মক</button>
-    <button class="nav-item" onclick="goTo('study-aid.html')"><span class="nav-icon">🧩</span>Study Aid</button>
-    <button class="nav-item active"><span class="nav-icon">👤</span>প্রোফাইল</button>
+    <button class="nav-item" onclick="goTo('index.html')"><span class="nav-icon"><span class="ni-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none"><path d="M3 10L12 3l9 7v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" fill="rgba(255,255,255,0.15)"/><path d="M9 21V12h6v9" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg></span></span>হোম</button>
+    <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon"><span class="ni-tile tile-violet"><svg viewBox="0 0 24 24" fill="none"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z" stroke="#fff" stroke-width="1.8"/><path d="M12 5.5v13.4" stroke="#fff" stroke-width="1.8"/></svg></span></span>ক্লাস</button>
+    <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon"><span class="ni-tile tile-orange"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="#fff" stroke-width="1.8" fill="rgba(255,255,255,0.12)"/><path d="M8 8h8M8 12h8M8 16h5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></span></span>এক্সাম</button>
+    <button class="nav-item" onclick="goTo('mock-test.html')"><span class="nav-icon"><span class="ni-tile tile-rose"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="#fff" stroke-width="1.8"/><circle cx="12" cy="12" r="4.5" stroke="#fff" stroke-width="1.6"/><circle cx="12" cy="12" r="1.5" fill="#fff"/></svg></span></span>মক</button>
+    <button class="nav-item" onclick="goTo('study-aid.html')"><span class="nav-icon"><span class="ni-tile tile-teal"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3h5a2 2 0 012 2v3a2 2 0 000 4v3a2 2 0 01-2 2h-3a2 2 0 01-4 0H7a2 2 0 01-2-2v-3a2 2 0 000-4V5a2 2 0 012-2h5z" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.08)"/></svg></span></span>Study Aid</button>
+    <button class="nav-item active"><span class="nav-icon"><span class="ni-tile tile-sky"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="#fff" stroke-width="1.8"/><path d="M4.5 20c0-3.6 3.4-6.5 7.5-6.5s7.5 2.9 7.5 6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></span></span>প্রোফাইল</button>
 </nav>
 
 <div class="floating-buttons">
@@ -1535,8 +1560,12 @@ function openTG() { window.open('https://t.me/rafi_somc', '_blank'); }
 // FIX #4: Logout instant — no delay
 function confirmLogout() {
     showConfirm('লগআউট', 'আপনি কি সত্যিই লগআউট করতে চান?', '🚪 লগআউট', () => {
-        localStorage.removeItem('atlas-session');
-        location.replace('index.html');
+        document.body.style.transition = 'opacity 0.15s ease';
+        document.body.style.opacity = '0';
+        setTimeout(() => {
+            localStorage.removeItem('atlas-session');
+            location.replace('auth.html');
+        }, 150);
     });
 }
 function toBanglaNum(n) {
@@ -1647,7 +1676,7 @@ function showExamResultFullPage(resultData) {
     // Action Buttons
     html += `<div class="result-actions">
         ${allowSolveSheet ? `<button class="result-action-btn" onclick="generateSolveSheetPDF(resultData)">📚 Solve Sheet PDF</button>` : ''}
-        <button class="result-action-btn leaderboard-btn" onclick="openLeaderboard('${resultData.examId || 0}','${examName.replace(/'/g, '')}')">🏆 Leaderboard</button>
+        <button class="result-action-btn leaderboard-btn" onclick="openLeaderboard('${resultData.examId || 0}','${examName.replace(/'/g, '')}')"><span class="si-tile tile-gold"><svg viewBox="0 0 24 24" fill="none"><path d="M8 21h8M12 17v4M7 4H4v4a5 5 0 005 5h6a5 5 0 005-5V4h-3M7 4h10v4a5 5 0 01-10 0V4z" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.12)"/></svg></span> Leaderboard</button>
     </div>`;
     
     html += `<div class="practice-actions">
@@ -1801,13 +1830,47 @@ function uploadAvatar(input) {
     const file = input.files[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = e => {
-        const img = document.getElementById('profileAvatar');
-        img.src = e.target.result; img.style.display = 'block';
-        document.getElementById('profileAvatarFallback').style.display = 'none';
-        localStorage.setItem('avatar_' + currentUser.phone, e.target.result);
-        showToast('✅ ছবি আপলোড সফল');
+        const tempImg = new Image();
+        tempImg.onload = async () => {
+            const dataUrl = resizeImageToDataUrl(tempImg, 256, 0.88);
+            const img = document.getElementById('profileAvatar');
+            img.src = dataUrl; img.style.display = 'block';
+            document.getElementById('profileAvatarFallback').style.display = 'none';
+            // Keep local cache for instant load, but also persist to Supabase so
+            // photo shows up everywhere (focus.html avatar box, live list, leaderboard).
+            // Resized to a small thumbnail first — a full-res photo here was bloating
+            // every live-list/leaderboard query (multi-MB payloads), which made
+            // updates feel slow or like they never arrived for anyone watching.
+            localStorage.setItem('avatar_' + currentUser.phone, dataUrl);
+            try {
+                await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${currentUser.phone}`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ photo_url: dataUrl })
+                });
+                currentUser.photo_url = dataUrl;
+                localStorage.setItem('atlas-session', JSON.stringify(currentUser));
+                showToast('✅ ছবি আপলোড সফল');
+            } catch(err) {
+                showToast('⚠️ ছবি লোকালি সেইভ হয়েছে, সার্ভারে যায়নি');
+            }
+        };
+        tempImg.src = e.target.result;
     };
     reader.readAsDataURL(file);
+}
+
+// ছবিকে ছোট thumbnail (max dimension px) এ resize করে compressed JPEG data URL রিটার্ন করে
+function resizeImageToDataUrl(img, maxDim, quality) {
+    let w = img.width, h = img.height;
+    if (w > h) { if (w > maxDim) { h = Math.round(h * maxDim / w); w = maxDim; } }
+    else { if (h > maxDim) { w = Math.round(w * maxDim / h); h = maxDim; } }
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, w, h);
+    return canvas.toDataURL('image/jpeg', quality);
 }
 
 /* ======================================================
@@ -1824,11 +1887,14 @@ function loadProfile() {
     document.getElementById('profileMeta').innerHTML =
         `📱 <span>${currentUser.phone||'—'}</span> | 🏫 ${currentUser.college||'—'}<br>
          SSC: <span>${currentUser.ssc_gpa||'—'}</span> | HSC: <span>${currentUser.hsc_gpa||'—'}</span>`;
-    const avatar = localStorage.getItem('avatar_' + currentUser.phone);
+    const avatar = currentUser.photo_url || localStorage.getItem('avatar_' + currentUser.phone);
     if (avatar) {
         document.getElementById('profileAvatar').src = avatar;
         document.getElementById('profileAvatar').style.display = 'block';
         document.getElementById('profileAvatarFallback').style.display = 'none';
+    } else {
+        document.getElementById('profileAvatar').style.display = 'none';
+        document.getElementById('profileAvatarFallback').style.display = 'flex';
     }
     document.getElementById('editName').value = currentUser.name || '';
     document.getElementById('editBatch').value = currentUser.batch || '';
@@ -3629,6 +3695,11 @@ function buildExamGraph(results) {
         const d=new Date(r.submitted_at),label=(d.getMonth()+1)+'/'+d.getDate();
         return `<div class="bar-wrap"><div style="flex:1;display:flex;align-items:flex-end;width:100%;"><div class="bar ${cls}" style="height:${h}%" data-score="${pct.toFixed(0)}%"></div></div><div class="bar-label">${label}</div></div>`;
     }).join('');
+    const _egrid = document.getElementById('mainGrid');
+    const _etab = document.getElementById('tabContent');
+    if (_egrid && _etab && _etab.parentNode) {
+        _etab.parentNode.insertBefore(card, _etab);
+    }
     card.style.display='block';
 }
 
@@ -3659,6 +3730,13 @@ function buildClassGraph(history) {
         <path d="${areaD}" fill="url(#lineGrad)"/>
         <path d="${pathD}" fill="none" stroke="#58A6FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         ${points.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="3" fill="#58A6FF"/><text x="${p.x}" y="${H-1}" text-anchor="middle" font-size="6" fill="#8B949E">${dateKeys[i].split('/')[1]||''}</text>`).join('')}`;
+    const _cgExam = document.getElementById('examGraphCard');
+    const _cgTab = document.getElementById('tabContent');
+    if (_cgExam && _cgExam.parentNode) {
+        _cgExam.parentNode.insertBefore(card, _cgExam.nextSibling);
+    } else if (_cgTab && _cgTab.parentNode) {
+        _cgTab.parentNode.insertBefore(card, _cgTab);
+    }
     card.style.display='block';
 }
 

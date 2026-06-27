@@ -194,8 +194,9 @@
         .option-item:hover:not(.dimmed):not(.locked){ border-color:var(--accent); background:var(--option-selected-bg); }
         .option-item.selected { background-color:var(--option-selected-bg); border-color:var(--option-selected-border); cursor:default; }
         .option-item.dimmed { opacity:0.35; cursor:not-allowed; pointer-events:none; }
-        .option-item.correct-reveal { background-color:var(--success-light); border-color:var(--success); }
-        .option-item.wrong-reveal { background-color:var(--error-light); border-color:var(--error); }
+        .option-item.correct-reveal { background-color:var(--success-light); border-color:var(--success); pointer-events:none; cursor:default; }
+        .option-item.wrong-reveal { background-color:var(--error-light); border-color:var(--error); pointer-events:none; cursor:default; }
+        .solve-item .option-item { pointer-events:none; cursor:default; }
         .option-radio {
             width:20px; height:20px; border-radius:50%; border:2px solid var(--text-tertiary);
             display:flex; align-items:center; justify-content:center; flex-shrink:0;
@@ -283,8 +284,12 @@
         /* ── RESULT SCREEN ── */
         .result-score-card { background:linear-gradient(140deg,var(--atlas-bg) 0%,var(--atlas-card) 100%); border:1.5px solid var(--atlas-border); border-radius:var(--radius); padding:24px 18px; text-align:center; margin-bottom:14px; box-shadow:var(--shadow-md),0 0 24px var(--atlas-glow); width:100%; }
         .result-exam-name { font-size:18px; font-weight:800; color:#fff; margin-bottom:12px; font-family:'Noto Sans Bengali','Inter',sans-serif; }
-        .result-big-score { font-size:42px; font-weight:900; color:var(--atlas-text); text-shadow:0 0 20px var(--atlas-glow-strong); }
-        .result-total { font-size:14px; color:var(--atlas-text); opacity:0.75; margin-top:4px; }
+        .result-score-line { display:flex; align-items:center; justify-content:center; gap:6px; margin:8px 0 4px; }
+        .result-big-score { font-size:48px; font-weight:900; font-family:'Inter','Noto Sans Bengali',sans-serif; text-shadow:0 0 20px var(--atlas-glow-strong); letter-spacing:-1px; line-height:1; }
+        .result-big-score.score-positive { color:var(--success); }
+        .result-big-score.score-negative { color:var(--error); }
+        .result-big-score.score-zero { color:var(--atlas-text); }
+        .result-total { font-size:48px; font-weight:900; font-family:'Inter',sans-serif; color:var(--atlas-text); line-height:1; }
         .result-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:14px 0; }
         .result-stat { background:var(--card-bg); border-radius:var(--radius-sm); padding:12px 8px; text-align:center; border:1px solid var(--border); width:100%; }
         .result-stat-val { font-size:18px; font-weight:800; }
@@ -397,7 +402,26 @@
             font-size: 20px; cursor: pointer; padding: 6px 4px 6px 2px; line-height:1;
         }
         .global-back-btn:active { opacity:0.6; }
-    </style>
+    
+        /* ── Icon tiles (shared with home page) ── */
+        .si-tile{width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 2px 6px rgba(0,0,0,.25)}
+        .si-tile svg{width:16px;height:16px}
+        .tile-indigo{background:linear-gradient(150deg,#7B7FFF 0%,#5A5FE0 45%,#322B96 100%)}
+        .tile-amber{background:linear-gradient(150deg,#FFD166 0%,#F5A524 45%,#A8650A 100%)}
+        .tile-violet{background:linear-gradient(150deg,#A78BFA 0%,#8B5CF6 45%,#4C1D95 100%)}
+        .tile-rose{background:linear-gradient(150deg,#FB7AAE 0%,#F43F8E 45%,#9D174D 100%)}
+        .tile-emerald{background:linear-gradient(150deg,#34D9A0 0%,#10B981 45%,#065F46 100%)}
+        .tile-sky{background:linear-gradient(150deg,#7DD3FC 0%,#38BDF8 45%,#075985 100%)}
+        .tile-orange{background:linear-gradient(150deg,#FDBA74 0%,#FB923C 45%,#9A3412 100%)}
+        .tile-teal{background:linear-gradient(150deg,#5EEAD4 0%,#14B8A6 45%,#115E59 100%)}
+        .tile-red{background:linear-gradient(150deg,#FCA5A5 0%,#F87171 45%,#991B1B 100%)}
+        .tile-gold{background:linear-gradient(150deg,#FDE68A 0%,#FBBF24 45%,#92400E 100%)}
+        .tile-plum{background:linear-gradient(150deg,#D8B4FE 0%,#A855F7 45%,#581C87 100%)}
+        /* nav icon tile */
+        .ni-tile{width:26px;height:26px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:2px;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 2px 5px rgba(0,0,0,.2)}
+        .ni-tile svg{width:14px;height:14px}
+
+        </style>
 </head>
 <body class="dark-mode">
 
@@ -406,25 +430,25 @@
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-header"><div class="sidebar-logo">ATLAS APP</div></div>
     <div class="sidebar-menu">
-        <button class="sidebar-item" onclick="navigateTo('profile');closeSidebar();">👤 প্রোফাইল</button>
-        <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();">🏠 হোম</button>
-        <button class="sidebar-item" onclick="goTo('class.html');closeSidebar();">📚 ফ্রি ক্লাস</button>
-        <button class="sidebar-item" onclick="goTo('exam.html');closeSidebar();">📝 ফ্রি এক্সাম</button>
-        <button class="sidebar-item" onclick="goTo('mock-test.html');closeSidebar();">🎯 মক টেস্ট</button>
-        <button class="sidebar-item" onclick="openModelTest();closeSidebar();">📖 Model Test</button>
-        <button class="sidebar-item" onclick="openMistakes();closeSidebar();">⚠️ My Mistakes</button>
-        <button class="sidebar-item" onclick="goTo('ai.html');closeSidebar();">🤖 ATLAS AI</button>
-        <button class="sidebar-item" id="adminSidebarBtn" onclick="goTo('admin.html');closeSidebar();" style="display:none;">👑 Admin Control</button>
+        <button class="sidebar-item" onclick="navigateTo('profile');closeSidebar();"><span class="si-tile tile-sky"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="#fff" stroke-width="1.8"/><path d="M4.5 20c0-3.6 3.4-6.5 7.5-6.5s7.5 2.9 7.5 6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></span> প্রোফাইল</button>
+        <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();"><span class="si-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none"><path d="M3 10L12 3l9 7v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" fill="rgba(255,255,255,0.15)"/><path d="M9 21V12h6v9" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg></span> হোম</button>
+        <button class="sidebar-item" onclick="goTo('class.html');closeSidebar();"><span class="si-tile tile-violet"><svg viewBox="0 0 24 24" fill="none"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z" stroke="#fff" stroke-width="1.8"/><path d="M12 5.5v13.4" stroke="#fff" stroke-width="1.8"/></svg></span> ফ্রি ক্লাস</button>
+        <button class="sidebar-item" onclick="goTo('exam.html');closeSidebar();"><span class="si-tile tile-orange"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="#fff" stroke-width="1.8" fill="rgba(255,255,255,0.12)"/><path d="M8 8h8M8 12h8M8 16h5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></span> ফ্রি এক্সাম</button>
+        <button class="sidebar-item" onclick="goTo('mock-test.html');closeSidebar();"><span class="si-tile tile-rose"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="#fff" stroke-width="1.8"/><circle cx="12" cy="12" r="4.5" stroke="#fff" stroke-width="1.6"/><circle cx="12" cy="12" r="1.5" fill="#fff"/></svg></span> মক টেস্ট</button>
+        <button class="sidebar-item" onclick="openModelTest();closeSidebar();"><span class="si-tile tile-amber"><svg viewBox="0 0 24 24" fill="none"><path d="M9.5 3.5h5M10.2 3.5v6.3L5.3 18c-.7 1.2.2 2.7 1.6 2.7h10.2c1.4 0 2.3-1.5 1.6-2.7l-4.9-8.2V3.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.5 15.5h9" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></span> Model Test</button>
+        <button class="sidebar-item" onclick="openMistakes();closeSidebar();"><span class="si-tile tile-gold"><svg viewBox="0 0 24 24" fill="none"><path d="M10.3 4L2 18h20L13.7 4a2 2 0 00-3.4 0z" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.12)"/><path d="M12 9v5M12 17h.01" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></span> My Mistakes</button>
+        <button class="sidebar-item" onclick="goTo('ai.html');closeSidebar();"><span class="si-tile tile-plum"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="8" width="18" height="12" rx="3" stroke="#fff" stroke-width="1.8" fill="rgba(255,255,255,0.1)"/><path d="M12 3v5M9.5 3h5" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/><circle cx="9" cy="14" r="1.5" fill="#fff"/><circle cx="15" cy="14" r="1.5" fill="#fff"/><path d="M9 18h6" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span> ATLAS AI</button>
+        <button class="sidebar-item" id="adminSidebarBtn" onclick="goTo('admin.html');closeSidebar();" style="display:none;"><span class="si-tile tile-gold"><svg viewBox="0 0 24 24" fill="none"><path d="M3 18h18M3 9l4.5 6L12 5l4.5 10L21 9v9H3V9z" stroke="#fff" stroke-width="1.7" stroke-linejoin="round" fill="rgba(255,255,255,0.12)"/></svg></span> Admin Control</button>
         <div class="sidebar-divider"></div>
-        <button class="sidebar-item" onclick="openSocial('facebook')">📘 Facebook</button>
-        <button class="sidebar-item" onclick="openSocial('youtube')">▶️ YouTube</button>
-        <button class="sidebar-item" onclick="openSocial('telegram')">✈️ Telegram</button>
-        <button class="sidebar-item" onclick="openSocial('whatsapp')">💬 WhatsApp</button>
+        <button class="sidebar-item" onclick="openSocial('facebook')"><span class="si-tile tile-sky"><svg viewBox="0 0 24 24" fill="none"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.1)"/></svg></span> Facebook</button>
+        <button class="sidebar-item" onclick="openSocial('youtube')"><span class="si-tile tile-red"><svg viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="3" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.1)"/><path d="M10 8.5l6 3.5-6 3.5V8.5z" fill="#fff"/></svg></span> YouTube</button>
+        <button class="sidebar-item" onclick="openSocial('telegram')"><span class="si-tile tile-sky"><svg viewBox="0 0 24 24" fill="none"><path d="M21 4L3 11.5l6.5 2.5"/><path d="M9.5 14l2 6 3-4.5L21 4 9.5 14z" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.1)"/></svg></span> Telegram</button>
+        <button class="sidebar-item" onclick="openSocial('whatsapp')"><span class="si-tile tile-emerald"><svg viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.1)"/></svg></span> WhatsApp</button>
         <div class="sidebar-divider"></div>
-        <button class="sidebar-item" onclick="toggleTheme()">🌙 ডার্ক মোড</button>
+        <button class="sidebar-item" onclick="toggleTheme()"><span class="si-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="#fff" stroke-width="1.8" fill="rgba(255,255,255,0.12)"/></svg></span> ডার্ক মোড</button>
     </div>
     <div class="sidebar-footer">
-        <button class="sidebar-item logout-btn" onclick="logout()">🚪 লগআউট</button>
+        <button class="sidebar-item logout-btn" onclick="logout()"><span class="si-tile tile-red"><svg viewBox="0 0 24 24" fill="none"><path d="M14 3H6a1 1 0 00-1 1v16a1 1 0 001 1h8" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><path d="M18 7l4 5-4 5M22 12H10" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span> লগআউট</button>
     </div>
 </aside>
 
@@ -439,8 +463,8 @@
         </div>
     </div>
     <div class="header-right">
-        <button class="header-icon" onclick="toggleTheme()" id="themeToggle">🌙</button>
-        <button class="header-icon" onclick="navigateTo('profile')">👤</button>
+        <button class="header-icon" onclick="toggleTheme()" id="themeToggle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.8" fill="rgba(255,255,255,0.1)"/></svg></button>
+        <button class="header-icon" onclick="navigateTo('profile')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 20c0-3.6 3.4-6.5 7.5-6.5s7.5 2.9 7.5 6.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
     </div>
 </header>
 
@@ -454,10 +478,10 @@
         </div>
         <!-- Req #8: 6 boxes: Board, Medical, Varsity, Onushiloni, Model Test, My Mistakes -->
         <div class="main-cat-grid" id="mainCatGrid">
-            <div class="main-cat-card" onclick="showCategory('board')"><span class="cat-icon">🔵</span><span class="cat-name">বোর্ড প্রস্তুতি</span><span class="cat-count" id="cnt-board">...</span></div>
-            <div class="main-cat-card" onclick="showCategory('medical')"><span class="cat-icon">🟢</span><span class="cat-name">মেডিকেল+ডেন্টাল</span><span class="cat-count" id="cnt-medical">...</span></div>
-            <div class="main-cat-card" onclick="showCategory('varsity')"><span class="cat-icon">🟣</span><span class="cat-name">ভার্সিটি প্রস্তুতি</span><span class="cat-count" id="cnt-varsity">...</span></div>
-            <div class="main-cat-card" onclick="showCategory('onushiloni')"><span class="cat-icon">🟠</span><span class="cat-name">অনুশীলনী এক্সাম</span><span class="cat-count" id="cnt-onushiloni">...</span></div>
+            <div class="main-cat-card" onclick="showCategory('board')"><span class="cat-icon"><span class="si-tile tile-sky" style="width:34px;height:34px;border-radius:9px"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.1)"/><path d="M8 8h8M8 12h8M8 16h6" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span></span><span class="cat-name">বোর্ড প্রস্তুতি</span><span class="cat-count" id="cnt-board">...</span></div>
+            <div class="main-cat-card" onclick="showCategory('medical')"><span class="cat-icon"><span class="si-tile tile-emerald" style="width:34px;height:34px;border-radius:9px"><svg viewBox="0 0 24 24" fill="none"><path d="M12 4.5L2.5 9 12 13.5 21.5 9z" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.15)"/><path d="M6.5 11.2v5c0 1.4 2.5 2.5 5.5 2.5s5.5-1.1 5.5-2.5v-5" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/></svg></span></span><span class="cat-name">মেডিকেল+ডেন্টাল</span><span class="cat-count" id="cnt-medical">...</span></div>
+            <div class="main-cat-card" onclick="showCategory('varsity')"><span class="cat-icon"><span class="si-tile tile-plum" style="width:34px;height:34px;border-radius:9px"><svg viewBox="0 0 24 24" fill="none"><path d="M3.5 9.5L12 4l8.5 5.5M4.5 9.5v9.5h15V9.5M9.5 19v-5h5v5" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.1)"/></svg></span></span><span class="cat-name">ভার্সিটি প্রস্তুতি</span><span class="cat-count" id="cnt-varsity">...</span></div>
+            <div class="main-cat-card" onclick="showCategory('onushiloni')"><span class="cat-icon"><span class="si-tile tile-orange" style="width:34px;height:34px;border-radius:9px"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.1)"/><path d="M8 8h8M8 12h8M8 16h5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span></span><span class="cat-name">অনুশীলনী এক্সাম</span><span class="cat-count" id="cnt-onushiloni">...</span></div>
             <!-- Req #9: Model Test box opens modal directly -->
             <div class="main-cat-card" onclick="openModelTest()"><span class="cat-icon">📖</span><span class="cat-name">Model Test</span><span class="cat-count">মেডিকেল/ভার্সিটি</span></div>
             <!-- Req #10: My Mistakes box -->
@@ -556,7 +580,7 @@
 <div class="leaderboard-overlay" id="leaderboardOverlay">
     <div class="leaderboard-modal">
         <div class="lb-header">
-            <div class="lb-title">🏆 Leaderboard</div>
+            <div class="lb-title"><span class="si-tile tile-gold"><svg viewBox="0 0 24 24" fill="none"><path d="M8 21h8M12 17v4M7 4H4v4a5 5 0 005 5h6a5 5 0 005-5V4h-3M7 4h10v4a5 5 0 01-10 0V4z" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.12)"/></svg></span> Leaderboard</div>
             <div class="lb-subtitle" id="lbSubtitle">—</div>
         </div>
         <div class="lb-body" id="lbBody"><div class="lb-loading">⏳ লোড হচ্ছে...</div></div>
@@ -593,13 +617,13 @@
 
 <!-- Bottom Nav (req #3: fully independent, each button navigates separately) -->
 <nav class="bottom-nav">
-    <button class="nav-item" onclick="goTo('index.html')"><span class="nav-icon">🏠</span>হোম</button>
-    <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon">📚</span>ক্লাস</button>
+    <button class="nav-item" onclick="goTo('index.html')"><span class="nav-icon"><span class="ni-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none"><path d="M3 10L12 3l9 7v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" fill="rgba(255,255,255,0.15)"/><path d="M9 21V12h6v9" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg></span></span>হোম</button>
+    <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon"><span class="ni-tile tile-violet"><svg viewBox="0 0 24 24" fill="none"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z" stroke="#fff" stroke-width="1.8"/><path d="M12 5.5v13.4" stroke="#fff" stroke-width="1.8"/></svg></span></span>ক্লাস</button>
     <!-- Req #3: Exam nav button goes to exam.html (fresh), not exam list mode -->
-    <button class="nav-item active" onclick="goTo('exam.html')"><span class="nav-icon">📝</span>এক্সাম</button>
-    <button class="nav-item" onclick="goTo('mock-test.html')"><span class="nav-icon">🎯</span>মক</button>
-    <button class="nav-item" onclick="goTo('study-aid.html')"><span class="nav-icon">🧩</span>Study Aid</button>
-    <button class="nav-item" onclick="navigateTo('profile')"><span class="nav-icon">👤</span>প্রোফাইল</button>
+    <button class="nav-item active" onclick="goTo('exam.html')"><span class="nav-icon"><span class="ni-tile tile-orange"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="#fff" stroke-width="1.8" fill="rgba(255,255,255,0.12)"/><path d="M8 8h8M8 12h8M8 16h5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></span></span>এক্সাম</button>
+    <button class="nav-item" onclick="goTo('mock-test.html')"><span class="nav-icon"><span class="ni-tile tile-rose"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="#fff" stroke-width="1.8"/><circle cx="12" cy="12" r="4.5" stroke="#fff" stroke-width="1.6"/><circle cx="12" cy="12" r="1.5" fill="#fff"/></svg></span></span>মক</button>
+    <button class="nav-item" onclick="goTo('study-aid.html')"><span class="nav-icon"><span class="ni-tile tile-teal"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3h5a2 2 0 012 2v3a2 2 0 000 4v3a2 2 0 01-2 2h-3a2 2 0 01-4 0H7a2 2 0 01-2-2v-3a2 2 0 000-4V5a2 2 0 012-2h5z" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.08)"/></svg></span></span>Study Aid</button>
+    <button class="nav-item" onclick="navigateTo('profile')"><span class="nav-icon"><span class="ni-tile tile-sky"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="#fff" stroke-width="1.8"/><path d="M4.5 20c0-3.6 3.4-6.5 7.5-6.5s7.5 2.9 7.5 6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></span></span>প্রোফাইল</button>
 </nav>
 
 <!-- Floating Buttons -->
@@ -1003,7 +1027,13 @@ function showPreExamFromData(exam,questions){
             ${exam.writer?`<div class="info-row"><span class="info-label">রাইটার</span><span class="info-value">${exam.writer}</span></div>`:''}
             ${exam.unit?`<div class="info-row"><span class="info-label">ইউনিট</span><span class="info-value">${exam.unit}</span></div>`:''}
             ${exam.pages?`<div class="info-row"><span class="info-label">নির্বাচিত পেইজ</span><span class="info-value">${exam.pages}</span></div>`:''}
-        </div>`;
+        </div>
+        ${(exam._pageImages&&exam._pageImages.length)?`<div class="pre-exam-card" style="padding:10px 12px;">
+            <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">📄 পেইজ প্রিভিউ</div>
+            <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;">
+                ${exam._pageImages.map(img=>`<div style="flex-shrink:0;text-align:center;"><img src="${img.src}" style="height:110px;border-radius:6px;border:1px solid var(--border);display:block;"><div style="font-size:9px;color:var(--text2);margin-top:3px;">পেইজ ${img.page}</div></div>`).join('')}
+            </div></div>`:''}
+        `;
     document.getElementById('preExamContent').innerHTML=html;
     switchMode('PreExam');
 }
@@ -1045,7 +1075,7 @@ function renderPreviewQuestions(showAnswers){
             html+=`<div class="explanation-box csv-box preview-exp" id="preExp${q.id}" style="display:${showAnswers?'block':'none'};"><div class="exp-header">📋 ব্যাখ্যা</div><div class="exp-content">${q.explanation}</div></div>`;
         }
         html+=`<div class="explanation-box ai-box preview-ai-box" id="preAiBox${q.id}" style="display:${showAnswers?'block':'none'};">
-            <div class="exp-header" onclick="toggleAIBox(this,${q.id})">🤖 ATLAS AI ব্যাখ্যা <span class="exp-arrow">▼</span></div>
+            <div class="exp-header" onclick="toggleAIBox(this,'${q.id}')">🤖 ATLAS AI ব্যাখ্যা <span class="exp-arrow">▼</span></div>
             <div class="exp-content" id="aiExp${q.id}"></div>
         </div></div>`;
     });
@@ -1121,7 +1151,7 @@ function selectMockCount(count,time){
 // =============================================================
 function openModelTest(){
     document.getElementById('guestModalContent').innerHTML=`
-        <div class="modal-title">📖 Model Test</div>
+        <div class="modal-title"><span class="si-tile tile-amber"><svg viewBox="0 0 24 24" fill="none"><path d="M9.5 3.5h5M10.2 3.5v6.3L5.3 18c-.7 1.2.2 2.7 1.6 2.7h10.2c1.4 0 2.3-1.5 1.6-2.7l-4.9-8.2V3.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.5 15.5h9" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></span> Model Test</div>
         <div style="font-size:11px;color:var(--accent);font-weight:700;margin:8px 0 4px;">🏥 Medical / Dental</div>
         <button class="btn btn-outline" onclick="closeModal();loadModelExams('medical','subject')" style="width:100%;margin-bottom:5px;">📗 Subject Final</button>
         <button class="btn btn-outline" onclick="closeModal();loadModelExams('medical','paper')" style="width:100%;margin-bottom:5px;">📘 Paper Final</button>
@@ -1172,7 +1202,7 @@ async function startModelExam(modelId){
         if(m.link){window.open(m.link,'_blank');return;}
         if(!m.questions_json){showNoQuestions();return;}
         examQuestions=JSON.parse(m.questions_json).map((q,i)=>({
-            id:i+1,question_text:q.questions||q.question_text||'',
+            id:`mt_${i+1}`,question_text:q.questions||q.question_text||'',
             option1:q.option1||'',option2:q.option2||'',option3:q.option3||'',
             option4:q.option4||'',option5:q.option5||null,
             answer_index:parseInt(q.answer)||1,explanation:q.explanation||''
@@ -1192,6 +1222,14 @@ function openMistakes(){
 // EXAM HALL
 // =============================================================
 function startExamHall(){
+    // Normalize all q.id to clean unique strings — fixes int/float/undefined id from all sources
+    examQuestions = examQuestions.map((q, i) => ({
+        ...q,
+        id: (q.id !== undefined && q.id !== null && String(q.id).match(/^[a-zA-Z0-9_-]+$/))
+            ? String(q.id)
+            : `q_${i}_${Date.now()}`
+    }));
+
     userAnswers={};isExamSubmitted=false;bookmarkedQuestions={};
     totalSeconds=(currentExam.duration_minutes||Math.ceil(examQuestions.length/1.5))*60;
     examSeconds=totalSeconds;
@@ -1209,15 +1247,15 @@ function startExamHall(){
                 <span class="q-number">প্রশ্ন ${i+1}/${examQuestions.length}</span>
                 <div class="q-actions">
                     <!-- Req #1: ATLAS AI Chat icon per MCQ -->
-                    <button class="icon-btn bookmark${bmClass}" id="bmBtn${q.id}" title="বুকমার্ক" onclick="toggleBookmark(${q.id})">🔖</button>
-                    <button class="icon-btn" title="রিপোর্ট" onclick="openReportModal(${q.id})">🚩</button>
+                    <button class="icon-btn bookmark${bmClass}" id="bmBtn${q.id}" title="বুকমার্ক" onclick="toggleBookmark('${q.id}')">🔖</button>
+                    <button class="icon-btn" title="রিপোর্ট" onclick="openReportModal('${q.id}')">🚩</button>
                 </div>
             </div>
             <div class="q-text">${q.question_text}</div>`;
         [q.option1,q.option2,q.option3,q.option4,q.option5].forEach((opt,oi)=>{
             if(opt&&opt!=='—'){
                 const labels=['ক','খ','গ','ঘ','ঙ'];
-                qHTML+=`<div class="option-item" id="opt${q.id}_${oi+1}" onclick="selectOption(${q.id},${oi+1},this)" data-qid="${q.id}">
+                qHTML+=`<div class="option-item" id="opt${q.id}_${oi+1}" onclick="selectOption('${q.id}',${oi+1},this)" data-qid="${q.id}">
                     <span class="option-radio">${labels[oi]}</span>
                     <span class="option-text">${opt}</span>
                     <span class="lock-icon" id="lock${q.id}_${oi+1}" style="display:none;">🔒</span>
@@ -1244,10 +1282,12 @@ function selectOption(qid,oid,el){
 // Auto-scroll to the next unanswered question so the user doesn't have to
 // manually scroll after every answer — jumps to the next card after current.
 function scrollToNextQuestion(qid){
-    const idx=examQuestions.findIndex(q=>q.id===qid);
+    // eslint-disable-next-line eqeqeq
+    const idx=examQuestions.findIndex(q=>q.id==qid); // == not === (DB returns int, onclick passes string)
     if(idx===-1)return;
     let nextQ=null;
     for(let i=idx+1;i<examQuestions.length;i++){
+        // eslint-disable-next-line eqeqeq
         if(!userAnswers[examQuestions[i].id]){nextQ=examQuestions[i];break;}
     }
     if(!nextQ){
@@ -1258,8 +1298,8 @@ function scrollToNextQuestion(qid){
     if(nextQ){
         setTimeout(()=>{
             const el=document.getElementById('qCard'+nextQ.id);
-            if(el)el.scrollIntoView({behavior:'smooth',block:'center'});
-        },350);
+            if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+        },100);
     }
 }
 
@@ -1492,10 +1532,13 @@ function showResult(correct,wrong,skipped,negMark,finalScore,withGpa,gpaScore,de
     const allowSolveSheet=currentExam?.allow_solve_sheet!==false;
     let html='';
 
+    const scoreClass = finalScore > 0 ? 'score-positive' : finalScore < 0 ? 'score-negative' : 'score-zero';
     html+=`<div class="result-score-card">
         <div class="result-exam-name">📝 ${examName}</div>
-        <div class="result-big-score">${finalScore.toFixed(2)}</div>
-        <div class="result-total">/ ${totalQ}</div>
+        <div class="result-score-line">
+            <span class="result-big-score ${scoreClass}">${finalScore.toFixed(2)}</span>
+            <span class="result-total">/ ${totalQ}</span>
+        </div>
     </div>`;
 
     html+=`<div class="result-grid">
@@ -1524,7 +1567,7 @@ function showResult(correct,wrong,skipped,negMark,finalScore,withGpa,gpaScore,de
     // Req #2: Solve Sheet PDF + Leaderboard buttons
     html+=`<div class="result-actions">
         ${allowSolveSheet?`<button class="result-action-btn" onclick="openSolveSheetPDF()">📚 Solve Sheet PDF</button>`:''}
-        <button class="result-action-btn leaderboard-btn" onclick="openLeaderboard('${currentExam?.id}','${examName.replace(/'/g,'')}')">🏆 Leaderboard</button>
+        <button class="result-action-btn leaderboard-btn" onclick="openLeaderboard(${JSON.stringify(safeNumericExamId(currentExam?.id))},'${examName.replace(/'/g,'')}')"><span class="si-tile tile-gold"><svg viewBox="0 0 24 24" fill="none"><path d="M8 21h8M12 17v4M7 4H4v4a5 5 0 005 5h6a5 5 0 005-5V4h-3M7 4h10v4a5 5 0 01-10 0V4z" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.12)"/></svg></span> Leaderboard</button>
     </div>`;
 
     html+=`<div class="practice-actions">
@@ -1554,10 +1597,10 @@ function showResult(correct,wrong,skipped,negMark,finalScore,withGpa,gpaScore,de
             <div class="q-header" style="margin-top:4px;">
                 <span class="q-number">প্রশ্ন ${i+1}/${examQuestions.length}</span>
                 <div class="q-actions">
-                    <button class="icon-btn bookmark${bmClassR}" id="bmBtn${q.id}" title="বুকমার্ক" onclick="toggleBookmark(${q.id})">🔖</button>
+                    <button class="icon-btn bookmark${bmClassR}" id="bmBtn${q.id}" title="বুকমার্ক" onclick="toggleBookmark('${q.id}')">🔖</button>
                     <!-- Req #1: AI Chat in result too -->
-                    <button class="icon-btn ai-chat-btn" title="ATLAS AI" onclick="openAIChat(${q.id})">🤖 AI</button>
-                    <button class="icon-btn" title="রিপোর্ট" onclick="openReportModal(${q.id})">🚩</button>
+                    <button class="icon-btn ai-chat-btn" title="ATLAS AI" onclick="openAIChat('${q.id}')">🤖 AI</button>
+                    <button class="icon-btn" title="রিপোর্ট" onclick="openReportModal('${q.id}')">🚩</button>
                 </div>
             </div>
             <div class="q-text">${q.question_text}</div>`;
@@ -1576,7 +1619,7 @@ function showResult(correct,wrong,skipped,negMark,finalScore,withGpa,gpaScore,de
         });
         if(q.explanation) html+=`<div class="explanation-box csv-box"><div class="exp-header">📋 ব্যাখ্যা</div><div class="exp-content">${q.explanation}</div></div>`;
         html+=`<div class="explanation-box ai-box">
-            <div class="exp-header" onclick="toggleAIBox(this,${q.id})">🤖 ATLAS AI ব্যাখ্যা <span class="exp-arrow">▼</span></div>
+            <div class="exp-header" onclick="toggleAIBox(this,'${q.id}')">🤖 ATLAS AI ব্যাখ্যা <span class="exp-arrow">▼</span></div>
             <div class="exp-content" id="aiExp${q.id}"></div>
         </div></div>`;
     });
@@ -1640,6 +1683,10 @@ async function openLeaderboard(examId,examName){
     document.getElementById('lbSubtitle').textContent=examName||'—';
     document.getElementById('lbBody').innerHTML='<div class="lb-loading">⏳ লোড হচ্ছে...</div>';
     document.getElementById('leaderboardOverlay').classList.add('active');
+    if(!examId){
+        document.getElementById('lbBody').innerHTML='<div class="lb-loading">এই ধরনের এক্সামের Leaderboard পাওয়া যায় না।</div>';
+        return;
+    }
     try{
         const data=await safeFetch(`${SUPABASE_URL}/rest/v1/leaderboard?exam_id=eq.${examId}&select=*&order=score.desc&limit=100`);
         if(!data?.length){document.getElementById('lbBody').innerHTML='<div class="lb-loading">এখনো কেউ এই এক্সাম দেয়নি।</div>';return;}
@@ -1868,12 +1915,13 @@ if(practice==='mock'){
     if(qData){
         try{
             examQuestions=JSON.parse(qData);
+            const practiceImgs = JSON.parse(sessionStorage.getItem('practicePageImages')||'[]');
             currentExam={
                 title,subject:'Mock',chapter:'Mock',
                 exam_type:'mock',total_marks:examQuestions.length,
                 duration_minutes:time||Math.ceil(examQuestions.length/1.5),
                 id:'mock_'+Date.now(),allow_preview:false,allow_solve_sheet:true,
-                pages
+                pages, _pageImages: practiceImgs
             };
             showPreExamFromData(currentExam,examQuestions);
         }catch(e){showToast('❌ প্রশ্ন লোড করতে সমস্যা');}
@@ -1910,8 +1958,8 @@ if (source === 'dashboard') {
         const examData = JSON.parse(localStorage.getItem('pending_exam_data'));
         
         if (examData && examData.questions) {
-            examQuestions = examData.questions.map(q => ({
-                id: q.id || Math.random(),
+            examQuestions = examData.questions.map((q, i) => ({
+                id: q.id ? String(q.id) : `dash_${i}_${Date.now()}`,
                 question_text: q.question || q.question_text || '',
                 option1: q.optionA || q.option1 || '',
                 option2: q.optionB || q.option2 || '',

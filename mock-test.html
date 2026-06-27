@@ -6,29 +6,44 @@
     <title>ATLAS APP · মক টেস্ট</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        .mock-container{max-width:560px;margin:0 auto;padding:12px 14px 20px;}
+        .mock-container{max-width:560px;margin:0 auto;padding:12px 14px 80px;}
         .input-group{margin-bottom:10px;}
         .input-group label{display:block;font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px;}
         .input-group select,.input-group input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--input-bg);color:var(--text);font-size:13px;font-family:inherit;transition:0.2s;outline:none;}
         .input-group select:focus,.input-group input:focus{border-color:var(--border-focus);box-shadow:var(--shadow-glow);}
         .chip-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
-        .chip{padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;color:var(--text-secondary);background:var(--option-bg);transition:0.2s;}
+        .chip{padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;color:var(--text-secondary);background:var(--option-bg);transition:.2s;}
         .chip.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent);}
         .chip:hover:not(.active){border-color:var(--accent);}
-        .btn{display:block;width:100%;padding:12px;border-radius:var(--radius-sm);font-weight:700;cursor:pointer;border:none;font-size:14px;transition:0.2s;font-family:inherit;text-align:center;}
+        .btn{display:block;width:100%;padding:12px;border-radius:var(--radius-sm);font-weight:700;cursor:pointer;border:none;font-size:14px;transition:.2s;font-family:inherit;text-align:center;}
         .btn-primary{background:var(--accent);color:#fff;}
         .btn-primary:hover{background:var(--accent-hover);transform:translateY(-1px);}
         .mock-custom-row{display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap;}
         .mock-custom-input{flex:1;min-width:100px;padding:10px 12px;background:var(--option-bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:'Noto Sans Bengali','Inter',sans-serif;outline:none;}
         .mock-custom-input:focus{border-color:var(--accent);}
         .mock-custom-btn{padding:10px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
-    /* Global back button — always navigates exactly one step back in real browser history */
-        .global-back-btn {
-            background: none; border: none; color: var(--text);
-            font-size: 20px; cursor: pointer; padding: 6px 4px 6px 2px; line-height:1;
-        }
-        .global-back-btn:active { opacity:0.6; }
-    </style>
+        .global-back-btn{background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;padding:6px 4px 6px 2px;line-height:1;}
+        .global-back-btn:active{opacity:.6;}
+    
+        /* ── Icon tiles (shared with home page) ── */
+        .si-tile{width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 2px 6px rgba(0,0,0,.25)}
+        .si-tile svg{width:16px;height:16px}
+        .tile-indigo{background:linear-gradient(150deg,#7B7FFF 0%,#5A5FE0 45%,#322B96 100%)}
+        .tile-amber{background:linear-gradient(150deg,#FFD166 0%,#F5A524 45%,#A8650A 100%)}
+        .tile-violet{background:linear-gradient(150deg,#A78BFA 0%,#8B5CF6 45%,#4C1D95 100%)}
+        .tile-rose{background:linear-gradient(150deg,#FB7AAE 0%,#F43F8E 45%,#9D174D 100%)}
+        .tile-emerald{background:linear-gradient(150deg,#34D9A0 0%,#10B981 45%,#065F46 100%)}
+        .tile-sky{background:linear-gradient(150deg,#7DD3FC 0%,#38BDF8 45%,#075985 100%)}
+        .tile-orange{background:linear-gradient(150deg,#FDBA74 0%,#FB923C 45%,#9A3412 100%)}
+        .tile-teal{background:linear-gradient(150deg,#5EEAD4 0%,#14B8A6 45%,#115E59 100%)}
+        .tile-red{background:linear-gradient(150deg,#FCA5A5 0%,#F87171 45%,#991B1B 100%)}
+        .tile-gold{background:linear-gradient(150deg,#FDE68A 0%,#FBBF24 45%,#92400E 100%)}
+        .tile-plum{background:linear-gradient(150deg,#D8B4FE 0%,#A855F7 45%,#581C87 100%)}
+        /* nav icon tile */
+        .ni-tile{width:26px;height:26px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:2px;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 2px 5px rgba(0,0,0,.2)}
+        .ni-tile svg{width:14px;height:14px}
+
+        </style>
 </head>
 <body class="dark-mode">
 
@@ -36,24 +51,24 @@
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-header"><div class="sidebar-logo">ATLAS APP</div></div>
     <div class="sidebar-menu">
-        <button class="sidebar-item" onclick="navigateTo('profile');closeSidebar();">👤 প্রোফাইল</button>
-        <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();">🏠 হোম</button>
-        <button class="sidebar-item" onclick="goTo('class.html');closeSidebar();">📚 ফ্রি ক্লাস</button>
-        <button class="sidebar-item" onclick="goTo('exam.html');closeSidebar();">📝 ফ্রি এক্সাম</button>
-        <button class="sidebar-item" onclick="goTo('mock-test.html');closeSidebar();">🎯 মক টেস্ট</button>
-        <button class="sidebar-item" onclick="goTo('profile.html#mistakes');closeSidebar();">⚠️ My Mistakes</button>
-        <button class="sidebar-item" onclick="goTo('ai.html');closeSidebar();">🤖 ATLAS AI</button>
+        <button class="sidebar-item" onclick="navigateTo('profile');closeSidebar();"><span class="si-tile tile-sky"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="#fff" stroke-width="1.8"/><path d="M4.5 20c0-3.6 3.4-6.5 7.5-6.5s7.5 2.9 7.5 6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></span> প্রোফাইল</button>
+        <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();"><span class="si-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none"><path d="M3 10L12 3l9 7v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" fill="rgba(255,255,255,0.15)"/><path d="M9 21V12h6v9" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg></span> হোম</button>
+        <button class="sidebar-item" onclick="goTo('class.html');closeSidebar();"><span class="si-tile tile-violet"><svg viewBox="0 0 24 24" fill="none"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z" stroke="#fff" stroke-width="1.8"/><path d="M12 5.5v13.4" stroke="#fff" stroke-width="1.8"/></svg></span> ফ্রি ক্লাস</button>
+        <button class="sidebar-item" onclick="goTo('exam.html');closeSidebar();"><span class="si-tile tile-orange"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="#fff" stroke-width="1.8" fill="rgba(255,255,255,0.12)"/><path d="M8 8h8M8 12h8M8 16h5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></span> ফ্রি এক্সাম</button>
+        <button class="sidebar-item" onclick="goTo('mock-test.html');closeSidebar();"><span class="si-tile tile-rose"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="#fff" stroke-width="1.8"/><circle cx="12" cy="12" r="4.5" stroke="#fff" stroke-width="1.6"/><circle cx="12" cy="12" r="1.5" fill="#fff"/></svg></span> মক টেস্ট</button>
+        <button class="sidebar-item" onclick="goTo('profile.html#mistakes');closeSidebar();"><span class="si-tile tile-gold"><svg viewBox="0 0 24 24" fill="none"><path d="M10.3 4L2 18h20L13.7 4a2 2 0 00-3.4 0z" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.12)"/><path d="M12 9v5M12 17h.01" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></span> My Mistakes</button>
+        <button class="sidebar-item" onclick="goTo('ai.html');closeSidebar();"><span class="si-tile tile-plum"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="8" width="18" height="12" rx="3" stroke="#fff" stroke-width="1.8" fill="rgba(255,255,255,0.1)"/><path d="M12 3v5M9.5 3h5" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/><circle cx="9" cy="14" r="1.5" fill="#fff"/><circle cx="15" cy="14" r="1.5" fill="#fff"/><path d="M9 18h6" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span> ATLAS AI</button>
         <div class="sidebar-divider"></div>
-        <button class="sidebar-item" onclick="toggleTheme()">🌙 ডার্ক মোড</button>
+        <button class="sidebar-item" onclick="toggleTheme()"><span class="si-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="#fff" stroke-width="1.8" fill="rgba(255,255,255,0.12)"/></svg></span> ডার্ক মোড</button>
     </div>
     <div class="sidebar-footer">
-        <button class="sidebar-item logout-btn" onclick="logout()">🚪 লগআউট</button>
+        <button class="sidebar-item logout-btn" onclick="logout()"><span class="si-tile tile-red"><svg viewBox="0 0 24 24" fill="none"><path d="M14 3H6a1 1 0 00-1 1v16a1 1 0 001 1h8" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><path d="M18 7l4 5-4 5M22 12H10" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span> লগআউট</button>
     </div>
 </aside>
 
 <header class="header">
     <div class="header-left">
-        <button class="global-back-btn" onclick="goBackGlobal()" title="ফিরে যান" aria-label="ফিরে যান">←</button>
+        <button class="global-back-btn" onclick="goBackGlobal()" title="ফিরে যান">←</button>
         <button class="hamburger" onclick="toggleSidebar()">☰</button>
         <div class="atlas-brand-box" onclick="goTo('index.html')">
             <img src="https://cdn.phototourl.com/free/2026-05-15-b45df560-6dc8-4cb7-9040-238612c8a161.png" class="atlas-logo-img" alt="ATLAS">
@@ -61,51 +76,49 @@
         </div>
     </div>
     <div class="header-right">
-        <button class="header-icon" onclick="toggleTheme()" id="themeToggle">🌙</button>
-        <button class="header-icon" onclick="navigateTo('profile')">👤</button>
+        <button class="header-icon" onclick="toggleTheme()" id="themeToggle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.8" fill="rgba(255,255,255,0.1)"/></svg></button>
+        <button class="header-icon" onclick="navigateTo('profile')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 20c0-3.6 3.4-6.5 7.5-6.5s7.5 2.9 7.5 6.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
     </div>
 </header>
 
 <main class="mock-container">
-
-<div class="section-header"><div class="section-title">🎯 আনলিমিটেড মক টেস্ট</div></div>
-<div class="input-group"><label>📘 সাবজেক্ট</label><select id="mockSubject" onchange="loadChapters()"><option value="">— নির্বাচন —</option></select></div>
-<div class="input-group"><label>📖 চ্যাপ্টার</label><select id="mockChapter" onchange="loadTopics()"><option value="">— প্রথমে সাবজেক্ট —</option></select></div>
-<div class="input-group"><label>📋 টপিক (ঐচ্ছিক)</label><select id="mockTopic"><option value="">— ঐচ্ছিক —</option></select></div>
-<label style="font-size:11px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">🏷️ স্ট্যান্ডার্ড</label>
-<div class="chip-row" id="stdChips">
-    <span class="chip active" onclick="selectStd('medical',this)">🏥 Medical</span>
-    <span class="chip" onclick="selectStd('varsity',this)">🎓 Varsity</span>
-    <span class="chip" onclick="selectStd('onushiloni',this)">🟠 Onushiloni</span>
-</div>
-<label style="font-size:11px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">❓ প্রশ্ন সংখ্যা</label>
-<div class="chip-row" id="cntChips">
-    <span class="chip" onclick="selectCnt(25,this)">২৫</span>
-    <span class="chip" onclick="selectCnt(35,this)">৩৫</span>
-    <span class="chip active" onclick="selectCnt(50,this)">৫০</span>
-    <span class="chip" onclick="selectCnt(75,this)">৭৫</span>
-    <span class="chip" onclick="selectCnt(100,this)">১০০</span>
-</div>
-<div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;">
-    <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:6px;">✏️ কাস্টম সেটিং</div>
-    <div class="mock-custom-row">
-        <input class="mock-custom-input" id="customQCount" type="number" min="5" max="200" placeholder="প্রশ্ন সংখ্যা">
-        <input class="mock-custom-input" id="customMinutes" type="number" min="1" max="300" placeholder="মিনিট (ফাঁকা=auto)">
-        <button class="mock-custom-btn" onclick="startCustomMock()">শুরু</button>
+    <div class="section-header"><div class="section-title">🎯 আনলিমিটেড মক টেস্ট</div></div>
+    <div class="input-group"><label>📘 সাবজেক্ট</label><select id="mockSubject" onchange="loadChapters()"><option value="">— নির্বাচন —</option></select></div>
+    <div class="input-group"><label>📖 চ্যাপ্টার</label><select id="mockChapter" onchange="loadTopics()"><option value="">— প্রথমে সাবজেক্ট —</option></select></div>
+    <div class="input-group"><label>📋 টপিক (ঐচ্ছিক)</label><select id="mockTopic"><option value="">— ঐচ্ছিক —</option></select></div>
+    <label style="font-size:11px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">🏷️ স্ট্যান্ডার্ড</label>
+    <div class="chip-row" id="stdChips">
+        <span class="chip active" onclick="selectStd('medical',this)">🏥 Medical</span>
+        <span class="chip" onclick="selectStd('varsity',this)">🎓 Varsity</span>
+        <span class="chip" onclick="selectStd('onushiloni',this)">🟠 Onushiloni</span>
     </div>
-    <div style="font-size:10px;color:var(--text-secondary);margin-top:4px;">মিনিট ফাঁকা রাখলে: প্রশ্ন÷1.5 = সময়</div>
-</div>
-<button class="btn btn-primary" onclick="startMock()">▶️ এক্সাম শুরু করুন</button>
-
+    <label style="font-size:11px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">❓ প্রশ্ন সংখ্যা</label>
+    <div class="chip-row" id="cntChips">
+        <span class="chip" onclick="selectCnt(25,this)">২৫</span>
+        <span class="chip" onclick="selectCnt(35,this)">৩৫</span>
+        <span class="chip active" onclick="selectCnt(50,this)">৫০</span>
+        <span class="chip" onclick="selectCnt(75,this)">৭৫</span>
+        <span class="chip" onclick="selectCnt(100,this)">১০০</span>
+    </div>
+    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;">
+        <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:6px;">✏️ কাস্টম সেটিং</div>
+        <div class="mock-custom-row">
+            <input class="mock-custom-input" id="customQCount" type="number" min="5" max="200" placeholder="প্রশ্ন সংখ্যা">
+            <input class="mock-custom-input" id="customMinutes" type="number" min="1" max="300" placeholder="মিনিট (ফাঁকা=auto)">
+            <button class="mock-custom-btn" onclick="startCustomMock()">শুরু</button>
+        </div>
+        <div style="font-size:10px;color:var(--text-secondary);margin-top:4px;">মিনিট ফাঁকা রাখলে: প্রশ্ন÷1.5 = সময়</div>
+    </div>
+    <button class="btn btn-primary" onclick="startMock()">▶️ এক্সাম শুরু করুন</button>
 </main>
 
 <nav class="bottom-nav">
-    <button class="nav-item" onclick="goTo('index.html')"><span class="nav-icon">🏠</span>হোম</button>
-    <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon">📚</span>ক্লাস</button>
-    <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon">📝</span>এক্সাম</button>
-    <button class="nav-item active" onclick="goTo('mock-test.html')"><span class="nav-icon">🎯</span>মক</button>
-    <button class="nav-item" onclick="goTo('study-aid.html')"><span class="nav-icon">🧩</span>Study Aid</button>
-    <button class="nav-item" onclick="navigateTo('profile')"><span class="nav-icon">👤</span>প্রোফাইল</button>
+    <button class="nav-item" onclick="goTo('index.html')"><span class="nav-icon"><span class="ni-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none"><path d="M3 10L12 3l9 7v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" fill="rgba(255,255,255,0.15)"/><path d="M9 21V12h6v9" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg></span></span>হোম</button>
+    <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon"><span class="ni-tile tile-violet"><svg viewBox="0 0 24 24" fill="none"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z" stroke="#fff" stroke-width="1.8"/><path d="M12 5.5v13.4" stroke="#fff" stroke-width="1.8"/></svg></span></span>ক্লাস</button>
+    <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon"><span class="ni-tile tile-orange"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="#fff" stroke-width="1.8" fill="rgba(255,255,255,0.12)"/><path d="M8 8h8M8 12h8M8 16h5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></span></span>এক্সাম</button>
+    <button class="nav-item active" onclick="goTo('mock-test.html')"><span class="nav-icon"><span class="ni-tile tile-rose"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="#fff" stroke-width="1.8"/><circle cx="12" cy="12" r="4.5" stroke="#fff" stroke-width="1.6"/><circle cx="12" cy="12" r="1.5" fill="#fff"/></svg></span></span>মক</button>
+    <button class="nav-item" onclick="goTo('study-aid.html')"><span class="nav-icon"><span class="ni-tile tile-teal"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3h5a2 2 0 012 2v3a2 2 0 000 4v3a2 2 0 01-2 2h-3a2 2 0 01-4 0H7a2 2 0 01-2-2v-3a2 2 0 000-4V5a2 2 0 012-2h5z" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.08)"/></svg></span></span>Study Aid</button>
+    <button class="nav-item" onclick="navigateTo('profile')"><span class="nav-icon"><span class="ni-tile tile-sky"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="#fff" stroke-width="1.8"/><path d="M4.5 20c0-3.6 3.4-6.5 7.5-6.5s7.5 2.9 7.5 6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></span></span>প্রোফাইল</button>
 </nav>
 
 <div class="floating-buttons">
@@ -121,24 +134,19 @@ let isDarkMode=true,isSidebarOpen=false,selectedStd='medical',selectedCnt=50;
 
 function showToast(m,d=2000){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
 function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'☀️':'🌙';}
-// Global back button — always goes exactly one step back in real browser history (never further, never to a different page)
-function goBackGlobal() {
-    if (window.history.length > 1) { history.back(); }
-    else { location.href = 'index.html'; }
-}
+function goBackGlobal(){if(window.history.length>1)history.back();else location.href='index.html';}
 function toggleSidebar(){isSidebarOpen=!isSidebarOpen;document.getElementById('sidebarOverlay').classList.toggle('active',isSidebarOpen);document.getElementById('sidebar').classList.toggle('active',isSidebarOpen);}
 function closeSidebar(){isSidebarOpen=false;document.getElementById('sidebarOverlay').classList.remove('active');document.getElementById('sidebar').classList.remove('active');}
 function goTo(u){location.href=u;}
-function navigateTo(p){const r={home:'index.html',profile:'profile.html',class:'class.html',exam:'exam.html'};goTo(r[p]||'index.html');}
+function navigateTo(p){const r={home:'index.html',profile:'profile.html'};goTo(r[p]||'index.html');}
 function openWA(){window.open('https://wa.me/8801999681290','_blank');}
 function openTG(){window.open('https://t.me/rafi_somc','_blank');}
 function logout(){localStorage.removeItem('atlas-session');goTo('index.html');}
 
 async function safeFetch(url,opts={}){
     opts.headers=Object.assign({apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY},opts.headers||{});
-    if(!opts.headers['Content-Type']&&opts.method!=='DELETE')opts.headers['Content-Type']='application/json';
-    try{const res=await fetch(url,opts);const text=await res.text();if(!text?.trim())return[];const data=JSON.parse(text);if(!res.ok)throw new Error(data.message);return data;}
-    catch(e){console.error('❌',e.message);return[];}
+    try{const res=await fetch(url,opts);const text=await res.text();if(!text?.trim())return[];return JSON.parse(text);}
+    catch(e){return[];}
 }
 
 function selectStd(s,el){selectedStd=s;document.querySelectorAll('#stdChips .chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');}
@@ -157,15 +165,12 @@ async function loadTopics(){
     if(!s||!c){sel.innerHTML='<option value="">— ঐচ্ছিক —</option>';return;}
     try{const data=await safeFetch(`${SUPABASE_URL}/rest/v1/mock_questions?subject=eq.${encodeURIComponent(s)}&chapter=eq.${encodeURIComponent(c)}&select=topic`);const topics=[...new Set(data.map(d=>d.topic).filter(Boolean))];sel.innerHTML='<option value="">— ঐচ্ছিক —</option>'+topics.map(t=>`<option>${t}</option>`).join('');}catch(e){}
 }
-
 function startCustomMock(){
     const count=parseInt(document.getElementById('customQCount').value);
     if(!count||count<1){showToast('⚠️ প্রশ্ন সংখ্যা দিন');return;}
     const mins=parseInt(document.getElementById('customMinutes').value)||Math.ceil(count/1.5);
-    selectedCnt=count;
-    startMock(mins);
+    selectedCnt=count;startMock(mins);
 }
-
 async function startMock(customMins){
     const s=document.getElementById('mockSubject').value,c=document.getElementById('mockChapter').value,t=document.getElementById('mockTopic').value;
     if(!s||!c){showToast('⚠️ সাবজেক্ট ও চ্যাপ্টার নির্বাচন করুন');return;}
@@ -176,16 +181,13 @@ async function startMock(customMins){
         if(!data?.length){showToast('⚠️ প্রশ্ন পাওয়া যায়নি');return;}
         let all=[];data.forEach(d=>{all=all.concat(JSON.parse(d.questions_json||'[]'));});
         all.sort(()=>Math.random()-0.5);
-        const questions = all.slice(0, selectedCnt).map(q => ({
-    id: q.id || Math.random(),
-    question_text: q.questions || q.question_text || '',
-    option1: q.option1 || '', option2: q.option2 || '', option3: q.option3 || '',
-    option4: q.option4 || '', option5: q.option5 || null,
-    answer_index: q.answer || q.answer_index || 1,
-    explanation: q.explanation || '',
-    image_url: q.image_url || null
-}));
-        const time = customMins || Math.ceil(selectedCnt/1.5);
+        const questions=all.slice(0,selectedCnt).map((q,i)=>({
+            id:q.id?String(q.id):`mock_${i}_${Date.now()}`,question_text:q.questions||q.question_text||'',
+            option1:q.option1||'',option2:q.option2||'',option3:q.option3||'',
+            option4:q.option4||'',option5:q.option5||null,
+            answer_index:q.answer||q.answer_index||1,explanation:q.explanation||'',image_url:q.image_url||null
+        }));
+        const time=customMins||Math.ceil(selectedCnt/1.5);
         sessionStorage.setItem('practiceQuestions',JSON.stringify(questions));
         sessionStorage.setItem('practiceTitle',s+' - '+c+' (Mock Test)');
         sessionStorage.setItem('practiceSource','mock');
@@ -195,43 +197,10 @@ async function startMock(customMins){
     }catch(e){showToast('❌ লোড করতে সমস্যা');}
 }
 
-function showError(title, message, details, retryFn) {
-    const existing = document.querySelector('.error-popup-overlay');
-    if (existing) existing.remove();
-    const overlay = document.createElement('div');
-    overlay.className = 'error-popup-overlay';
-    overlay.innerHTML = `
-        <div class="error-popup" onclick="event.stopPropagation()">
-            <div class="error-popup-icon">⚠️</div>
-            <div class="error-popup-title">${title || 'কিছু সমস্যা হয়েছে'}</div>
-            <div class="error-popup-message">${message || 'পরে আবার চেষ্টা করুন'}</div>
-            ${details ? `<div class="error-popup-details">${details}</div>` : ''}
-            <div style="display:flex;justify-content:center;gap:8px;" id="errorPopupBtnRow">
-                <button class="error-popup-btn" id="errorPopupCloseBtn">✕ বন্ধ</button>
-            </div>
-        </div>
-    `;
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
-    document.body.appendChild(overlay);
-    overlay.querySelector('#errorPopupCloseBtn').addEventListener('click', () => overlay.remove());
-    // Attach retry handler directly (preserves closure — toString()+onclick would lose it, causing "X is not defined" errors)
-    if (retryFn) {
-        const retryBtn = document.createElement('button');
-        retryBtn.className = 'error-popup-retry';
-        retryBtn.textContent = '🔄 আবার চেষ্টা';
-        retryBtn.addEventListener('click', () => { overlay.remove(); retryFn(); });
-        overlay.querySelector('#errorPopupBtnRow').prepend(retryBtn);
-    }
-}
-window.addEventListener('error',function(e){showError('💥 সমস্যা','পৃষ্ঠাটি রিলোড করুন',e.error?.message,()=>location.reload());});
-window.addEventListener('unhandledrejection',function(e){showError('⚠️ প্রসেসিং সমস্যা','অনুরোধ সম্পূর্ণ করা যায়নি',e.reason?.message,null);});
-
 document.addEventListener('DOMContentLoaded',()=>{loadSubjects();});
-history.pushState(null, '', location.href);
-window.addEventListener('popstate', () => history.back());
+history.pushState(null,'',location.href);
+window.addEventListener('popstate',()=>history.back());
 </script>
-
-<!-- ══════════════ গ্লোবাল নেভিগেশন + UI কন্ট্রোল (নতুন, আলাদা ফাইল) ══════════════ -->
 <script src="global-nav.js"></script>
 <script src="atlas-ui.js"></script>
 </body>
