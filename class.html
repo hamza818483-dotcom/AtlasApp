@@ -1551,10 +1551,12 @@ function _enterFsLandscape() {
     const inner = document.createElement('div');
     inner.id = 'fsInner';
 
-    // Video slot — fills remaining space after controls
+    // Video slot — fills the ENTIRE rotated/landscape box; controls float on top
+    // as an overlay instead of reserving their own flex row, so the video always
+    // uses the full screen regardless of whether controls are visible or faded out.
     const slot = document.createElement('div');
     slot.id = 'fsSlot';
-    slot.style.cssText = 'flex:1;position:relative;overflow:hidden;background:#000;min-height:0;';
+    slot.style.cssText = 'position:absolute;inset:0;overflow:hidden;background:#000;';
 
     const ytEl = document.getElementById('ytPlayerEl');
     if (ytEl) {
@@ -1591,11 +1593,11 @@ function _layoutFsInner() {
     const vw = window.innerWidth, vh = window.innerHeight;
     if (vw >= vh) {
         // Device/browser already in landscape — no rotation needed, fill viewport as-is
-        inner.style.cssText = `position:absolute;top:0;left:0;width:${vw}px;height:${vh}px;display:flex;flex-direction:column;background:#000;overflow:hidden;`;
+        inner.style.cssText = `position:absolute;top:0;left:0;width:${vw}px;height:${vh}px;background:#000;overflow:hidden;`;
     } else {
         // Still portrait — simulate landscape via rotated box sized to the real viewport
         const cssW = vh, cssH = vw; // swapped so the rotated visual footprint = vw × vh
-        inner.style.cssText = `position:absolute;top:50%;left:50%;width:${cssW}px;height:${cssH}px;transform:translate(-50%,-50%) rotate(90deg);transform-origin:center center;display:flex;flex-direction:column;background:#000;overflow:hidden;`;
+        inner.style.cssText = `position:absolute;top:50%;left:50%;width:${cssW}px;height:${cssH}px;transform:translate(-50%,-50%) rotate(90deg);transform-origin:center center;background:#000;overflow:hidden;`;
     }
 }
 
@@ -1628,10 +1630,11 @@ function _buildFsControls(container) {
     const fc = document.createElement('div');
     fc.id = 'fsControls';
     fc.style.cssText = `
-        width:100%;
-        flex-shrink:0;
-        background:rgba(0,0,0,0.92);
-        padding:8px 16px 16px;
+        position:absolute;
+        left:0; right:0; bottom:0;
+        z-index:30;
+        background:linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.92) 60%, transparent 100%);
+        padding:24px 16px 16px;
         opacity:1;
         transition:opacity 0.3s;
     `;
@@ -1698,11 +1701,7 @@ function _fsMoveSeek(e) {
     const bar = document.getElementById('fsProgress');
     if (!bar || !ytPlayer) return;
     const rect = bar.getBoundingClientRect();
-    // Progress bar is inside rotated container.
-    // getBoundingClientRect() gives screen coordinates (post-rotation).
-    // The bar is horizontal in the rotated view = vertical on physical screen.
-    // So we use clientX (which maps to the bar's visual left→right direction).
-    const clientX = e.clientX !== undefined ? e.clientX : 0;
+    const clientX = e.clientX !== undefined ? e.clientX : (e.touches ? e.touches[0].clientX : 0);
     const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     try {
         const dur = ytPlayer.getDuration() || 0;
