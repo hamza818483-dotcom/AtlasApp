@@ -1626,8 +1626,6 @@ async function doEnd(auto){
   // বাকি সব render/list-update কাজ — এর মধ্যে কোনো একটায় error হলেও
   // উপরের critical বাটন-আপডেট ইতিমধ্যে হয়ে গেছে, তাই UI আটকে থাকবে না
   try{
-    // Keep self visible in the live list with accumulated total, marked idle
-    // (not removed) — only a fresh Start truly creates a new live DB session.
     if(currentUser){
       const idx=allStudents.findIndex(s=>s.phone===currentUser.phone);
       const selfData={
@@ -1640,6 +1638,9 @@ async function doEnd(auto){
       };
       if(idx===-1) allStudents.unshift(selfData); else allStudents[idx]=selfData;
     }
+    // timerScreen explicitly show করো — intro screen এ যেন না যায়
+    document.getElementById('timerScreen').classList.add('show');
+    document.getElementById('introScreen').style.display='none';
     renderBatchFilter(allStudents); renderLiveStudents(allStudents);
     renderTimer();
     renderLive(); startIdlePolling();
@@ -1814,7 +1815,9 @@ const MEDALS=[
 async function renderLive(){
   try {
     // users LEFT JOIN — user না থাকলেও session দেখাবে
-    const rows=await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?status=in.(study,break,sleep,paused,active)&select=user_phone,status,study_seconds,break_seconds,sleep_seconds,breaks_used,updated_at,users(name,batch,college,photo_url)&order=updated_at.desc&limit=200`);
+    const todayMidnight=new Date(); todayMidnight.setHours(0,0,0,0);
+    const todayISO=todayMidnight.toISOString();
+    const rows=await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?status=in.(study,break,sleep,paused,active)&started_at=gte.${encodeURIComponent(todayISO)}&select=user_phone,status,study_seconds,break_seconds,sleep_seconds,breaks_used,updated_at,users(name,batch,college,photo_url)&order=study_seconds.desc&limit=200`);
     const rawRows=(rows||[]).map(r=>{
       const u=Array.isArray(r.users)?r.users[0]:(r.users||{});
       // নিজের session হলে currentUser থেকে নাম নাও
