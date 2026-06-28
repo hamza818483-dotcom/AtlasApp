@@ -775,6 +775,7 @@
         <button class="tab-btn" onclick="switchSection('slideshow',this)">🖼️ Slideshow</button>
         <button class="tab-btn" onclick="switchSection('telegram',this)">🔗 Telegram Support</button>
         <button class="tab-btn" onclick="switchSection('serial',this)">🔢 Serial</button>
+        <button class="tab-btn" onclick="switchSection('studytracker',this)">📚 Study Tracker</button>
     </div>
 
     <!-- ══════════════ TAB 1: CLASS ══════════════ -->
@@ -1564,6 +1565,49 @@
         </div>
     </div>
 
+    <!-- ══════════════ TAB: STUDY TRACKER ══════════════ -->
+    <div class="admin-section" id="secStudytracker">
+        <div class="form-card">
+            <h3>📚 Study Tracker — বিষয় ব্যবস্থাপনা</h3>
+            <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+                <button class="btn btn-outline tab-btn-alt active" id="stTabHsc" onclick="stSwitchMode('hsc')">⚡ HSC</button>
+                <button class="btn btn-outline tab-btn-alt" id="stTabMed" onclick="stSwitchMode('medical')">🏥 Medical</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+                <div>
+                    <input id="stSubjName" class="form-input" placeholder="বিষয়ের নাম (যেমন: পদার্থবিজ্ঞান ১ম পত্র)" style="width:100%;margin-bottom:6px;">
+                    <input id="stSubjShort" class="form-input" placeholder="সংক্ষিপ্ত নাম (যেমন: Physics 1)" style="width:100%;margin-bottom:6px;">
+                    <button class="btn btn-primary" onclick="stAddSubject()" style="width:100%">+ বিষয় যোগ করুন</button>
+                </div>
+                <div id="stSubjList" style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:6px;font-size:12px;">
+                    <div style="color:var(--text2)">লোড হচ্ছে...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-card" id="stChapCard" style="display:none">
+            <h3 id="stChapCardTitle">📂 অধ্যায় সমূহ</h3>
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
+                <input id="stChapName" class="form-input" placeholder="অধ্যায়ের নাম" style="flex:1">
+                <button class="btn btn-primary" onclick="stAddChapter()" style="white-space:nowrap">+ যোগ</button>
+            </div>
+            <div id="stChapList" style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:6px;font-size:12px;">
+                <div style="color:var(--text2)">বিষয় নির্বাচন করুন</div>
+            </div>
+        </div>
+
+        <div class="form-card" id="stTopicCard" style="display:none">
+            <h3 id="stTopicCardTitle">📝 টপিক সমূহ</h3>
+            <p style="font-size:11px;color:var(--text2);margin-bottom:10px;">টপিক % সমান ভাগে auto-divide হবে। weight দিয়ে adjust করা যাবে।</p>
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
+                <input id="stTopicName" class="form-input" placeholder="টপিকের নাম" style="flex:1">
+                <input id="stTopicWeight" class="form-input" placeholder="Weight (default:1)" style="width:90px">
+                <button class="btn btn-primary" onclick="stAddTopic()" style="white-space:nowrap">+ যোগ</button>
+            </div>
+            <div id="stTopicList" style="max-height:260px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:6px;font-size:12px;"></div>
+        </div>
+    </div>
+
 </main><!-- end admin-container -->
 
 <!-- ══════════════════════════════════════════════
@@ -1735,9 +1779,173 @@ function switchSection(sec, el) {
         special:   loadSpecials,
         slideshow: loadSlideshowAdmin,
         telegram:  loadTelegramAdmin,
-        serial:    () => {}
+        serial:    () => {},
+        studytracker: stLoadSubjects
     };
     if (loaders[sec]) loaders[sec]();
+}
+
+/* ═══════════════════════════════════════════════
+   STUDY TRACKER ADMIN  (Subject / Chapter / Topic CRUD)
+═══════════════════════════════════════════════ */
+let stMode = 'hsc';
+let stSelSubjId = null, stSelChapId = null;
+let stSelSubjName = '', stSelChapName = '';
+
+function stSwitchMode(mode) {
+    stMode = mode;
+    stSelSubjId = null; stSelChapId = null;
+    document.getElementById('stTabHsc').classList.toggle('active', mode==='hsc');
+    document.getElementById('stTabMed').classList.toggle('active', mode==='medical');
+    document.getElementById('stChapCard').style.display='none';
+    document.getElementById('stTopicCard').style.display='none';
+    stLoadSubjects();
+}
+
+async function stLoadSubjects() {
+    const list = document.getElementById('stSubjList');
+    list.innerHTML = '<div style="color:var(--text2)">লোড হচ্ছে...</div>';
+    const data = await sbGet(`/rest/v1/st_subjects?mode=eq.${stMode}&order=sort_order.asc&select=id,name,short_name`);
+    if (!data.length) { list.innerHTML = '<div style="color:var(--text2)">কোনো বিষয় নেই। যোগ করুন।</div>'; return; }
+    list.innerHTML = data.map(s => `
+        <div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border)">
+            <span style="flex:1;cursor:pointer;font-weight:600" onclick="stSelectSubj(${s.id},'${s.name.replace(/'/g,"\'")}')">📘 ${s.name}</span>
+            <button class="btn btn-sm" style="padding:2px 8px;font-size:10px;color:var(--error);border-color:var(--error)" onclick="stDelSubject(${s.id})">🗑</button>
+        </div>`).join('');
+}
+
+async function stAddSubject() {
+    const name = document.getElementById('stSubjName').value.trim();
+    const short = document.getElementById('stSubjShort').value.trim();
+    if (!name) return showAdminToast('বিষয়ের নাম দিন', 'error');
+    const existing = await sbGet(`/rest/v1/st_subjects?mode=eq.${stMode}&order=sort_order.desc&select=sort_order&limit=1`);
+    const sort = existing.length ? existing[0].sort_order + 1 : 1;
+    await sbPost('/rest/v1/st_subjects', {name, short_name: short||name, mode: stMode, sort_order: sort});
+    document.getElementById('stSubjName').value = '';
+    document.getElementById('stSubjShort').value = '';
+    showAdminToast('বিষয় যোগ হয়েছে ✅');
+    stLoadSubjects();
+}
+
+async function stDelSubject(id) {
+    if (!confirm('এই বিষয় এবং সব অধ্যায়+টপিক মুছে যাবে। নিশ্চিত?')) return;
+    // Delete topics → chapters → subject
+    const chaps = await sbGet(`/rest/v1/st_chapters?subject_id=eq.${id}&select=id`);
+    for (const ch of chaps) {
+        await sbDel(`/rest/v1/st_topics?chapter_id=eq.${ch.id}`);
+    }
+    await sbDel(`/rest/v1/st_chapters?subject_id=eq.${id}`);
+    await sbDel(`/rest/v1/st_subjects?id=eq.${id}`);
+    showAdminToast('বিষয় মুছে গেছে');
+    stLoadSubjects();
+    document.getElementById('stChapCard').style.display='none';
+    document.getElementById('stTopicCard').style.display='none';
+}
+
+function stSelectSubj(id, name) {
+    stSelSubjId = id; stSelSubjName = name;
+    stSelChapId = null;
+    document.getElementById('stChapCardTitle').textContent = '📂 ' + name + ' — অধ্যায় সমূহ';
+    document.getElementById('stChapCard').style.display='block';
+    document.getElementById('stTopicCard').style.display='none';
+    stLoadChapters();
+}
+
+async function stLoadChapters() {
+    const list = document.getElementById('stChapList');
+    list.innerHTML = '<div style="color:var(--text2)">লোড হচ্ছে...</div>';
+    const data = await sbGet(`/rest/v1/st_chapters?subject_id=eq.${stSelSubjId}&order=sort_order.asc&select=id,name`);
+    if (!data.length) { list.innerHTML = '<div style="color:var(--text2)">কোনো অধ্যায় নেই। যোগ করুন।</div>'; return; }
+    list.innerHTML = data.map(c => `
+        <div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border)">
+            <span style="flex:1;cursor:pointer" onclick="stSelectChap(${c.id},'${c.name.replace(/'/g,"\'")}')">📂 ${c.name}</span>
+            <button class="btn btn-sm" style="padding:2px 8px;font-size:10px;color:var(--error);border-color:var(--error)" onclick="stDelChapter(${c.id})">🗑</button>
+        </div>`).join('');
+}
+
+async function stAddChapter() {
+    const name = document.getElementById('stChapName').value.trim();
+    if (!name || !stSelSubjId) return showAdminToast('অধ্যায়ের নাম দিন', 'error');
+    const existing = await sbGet(`/rest/v1/st_chapters?subject_id=eq.${stSelSubjId}&order=sort_order.desc&select=sort_order&limit=1`);
+    const sort = existing.length ? existing[0].sort_order + 1 : 1;
+    await sbPost('/rest/v1/st_chapters', {name, subject_id: stSelSubjId, sort_order: sort});
+    document.getElementById('stChapName').value = '';
+    showAdminToast('অধ্যায় যোগ হয়েছে ✅');
+    stLoadChapters();
+}
+
+async function stDelChapter(id) {
+    if (!confirm('অধ্যায় ও সব টপিক মুছে যাবে?')) return;
+    await sbDel(`/rest/v1/st_topics?chapter_id=eq.${id}`);
+    await sbDel(`/rest/v1/st_chapters?id=eq.${id}`);
+    showAdminToast('অধ্যায় মুছে গেছে');
+    stLoadChapters();
+    document.getElementById('stTopicCard').style.display='none';
+}
+
+function stSelectChap(id, name) {
+    stSelChapId = id; stSelChapName = name;
+    document.getElementById('stTopicCardTitle').textContent = '📝 ' + name + ' — টপিক সমূহ';
+    document.getElementById('stTopicCard').style.display='block';
+    stLoadTopics();
+}
+
+async function stLoadTopics() {
+    const list = document.getElementById('stTopicList');
+    list.innerHTML = '<div style="color:var(--text2)">লোড হচ্ছে...</div>';
+    const data = await sbGet(`/rest/v1/st_topics?chapter_id=eq.${stSelChapId}&order=sort_order.asc&select=id,name,weight`);
+    if (!data.length) { list.innerHTML = '<div style="color:var(--text2)">কোনো টপিক নেই। যোগ করুন।</div>'; return; }
+    // Auto % calculation
+    const totalW = data.reduce((s,t) => s + (t.weight||1), 0);
+    list.innerHTML = data.map(t => {
+        const pct = Math.round((t.weight||1)/totalW*100);
+        return `<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border)">
+            <span style="flex:1">${t.name}</span>
+            <span style="font-size:10px;color:var(--accent);min-width:30px">${pct}%</span>
+            <input type="number" value="${t.weight||1}" min="1" max="10" style="width:44px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-size:11px" onchange="stUpdateWeight(${t.id},this.value)">
+            <button class="btn btn-sm" style="padding:2px 8px;font-size:10px;color:var(--error);border-color:var(--error)" onclick="stDelTopic(${t.id})">🗑</button>
+        </div>`;
+    }).join('');
+}
+
+async function stAddTopic() {
+    const name = document.getElementById('stTopicName').value.trim();
+    const weight = parseInt(document.getElementById('stTopicWeight').value)||1;
+    if (!name || !stSelChapId) return showAdminToast('টপিকের নাম দিন', 'error');
+    const existing = await sbGet(`/rest/v1/st_topics?chapter_id=eq.${stSelChapId}&order=sort_order.desc&select=sort_order&limit=1`);
+    const sort = existing.length ? existing[0].sort_order + 1 : 1;
+    await sbPost('/rest/v1/st_topics', {name, chapter_id: stSelChapId, weight, sort_order: sort});
+    document.getElementById('stTopicName').value = '';
+    document.getElementById('stTopicWeight').value = '';
+    showAdminToast('টপিক যোগ হয়েছে ✅');
+    stLoadTopics();
+}
+
+async function stUpdateWeight(id, val) {
+    await sbPatch(`/rest/v1/st_topics?id=eq.${id}`, {weight: parseInt(val)||1});
+    showAdminToast('Weight আপডেট হয়েছে');
+    stLoadTopics();
+}
+
+async function stDelTopic(id) {
+    await sbDel(`/rest/v1/st_topics?id=eq.${id}`);
+    showAdminToast('টপিক মুছে গেছে');
+    stLoadTopics();
+}
+
+// ── Generic Supabase helpers (reuse if not defined) ──
+async function sbGet(path) {
+    const r = await fetch(SUPABASE_URL+path, {headers:{apikey:SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+    return r.ok ? r.json() : [];
+}
+async function sbPost(path, body) {
+    return fetch(SUPABASE_URL+path, {method:'POST', headers:{apikey:SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'}, body:JSON.stringify(body)});
+}
+async function sbPatch(path, body) {
+    return fetch(SUPABASE_URL+path, {method:'PATCH', headers:{apikey:SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'}, body:JSON.stringify(body)});
+}
+async function sbDel(path) {
+    return fetch(SUPABASE_URL+path, {method:'DELETE', headers:{apikey:SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
 }
 
 /* ═══════════════════════════════════════════════
