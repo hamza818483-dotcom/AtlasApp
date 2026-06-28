@@ -146,27 +146,48 @@
 
 .global-back-btn { background: none; border: none; color: var(--text); font-size: 20px; cursor: pointer; padding: 6px 4px 6px 2px; line-height:1; }
 .global-back-btn:active { opacity:0.6; }
+
+/* Premium enhancements */
+.sh-hero { padding: 10px 0 18px; }
+.sh-hero-icon { display: flex; justify-content: center; margin-bottom: 8px; }
+.sh-chart-card { box-shadow: 0 2px 16px rgba(0,0,0,.15); }
+.sh-session-card { box-shadow: 0 2px 12px rgba(0,0,0,.12); }
+.sh-summary-card {
+  border-radius: 14px;
+  box-shadow: 0 1px 8px rgba(0,0,0,.1);
+}
+.sh-summary-val { font-size: 17px; }
+.sh-today-box { box-shadow: 0 2px 10px rgba(0,0,0,.1); transition: transform .15s; }
+.sh-today-box:active { transform: scale(.97); }
+.global-back-btn { display: flex; align-items: center; }
 </style>
 </head>
 <body class="dark-mode">
 
 <header class="header">
     <div class="header-left">
-        <button class="global-back-btn" onclick="goBackGlobal()" title="ফিরে যান" aria-label="ফিরে যান">←</button>
+        <button class="global-back-btn" onclick="goBackGlobal()" title="ফিরে যান" aria-label="ফিরে যান"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 5l-7 7 7 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <div class="atlas-brand-box" onclick="goTo('index.html')">
             <span class="atlas-brand-text">ATLAS APP</span>
         </div>
     </div>
     <div class="header-right">
-        <button class="header-icon" onclick="toggleTheme()" id="themeToggle">🌙</button>
+        <button class="header-icon" onclick="toggleTheme()" id="themeToggle"><svg id="themeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
     </div>
 </header>
 
 <main class="sh-container">
 
     <div class="sh-hero">
-        <div class="sh-hero-icon">📊</div>
-        <div class="sh-hero-title">Study Time History</div>
+        <div class="sh-hero-icon">
+  <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+    <rect x="3" y="12" width="4" height="9" rx="1.5" fill="#6366F1" opacity=".8"/>
+    <rect x="10" y="7" width="4" height="14" rx="1.5" fill="#6366F1"/>
+    <rect x="17" y="3" width="4" height="18" rx="1.5" fill="#10B981"/>
+    <path d="M3 21h18" stroke="var(--border)" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>
+</div>
+        <div class="sh-hero-title" style="font-size:18px;letter-spacing:.5px">Study Time History</div>
         <div class="sh-hero-sub">তোমার পড়াশোনার সম্পূর্ণ ইতিহাস</div>
     </div>
 
@@ -190,24 +211,36 @@
     <div class="sh-today-row">
       <div class="sh-today-box sh-today-study">
         <div class="sh-today-val" id="todayStudyBox">—</div>
-        <div class="sh-today-lbl">📚 পড়েছে</div>
+        <div class="sh-today-lbl" style="display:flex;align-items:center;justify-content:center;gap:3px">
+  <svg width="9" height="9" viewBox="0 0 24 24" fill="none"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" stroke="#10B981" stroke-width="2" stroke-linejoin="round"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" stroke="#10B981" stroke-width="2" stroke-linejoin="round"/></svg>
+  পড়েছে</div>
       </div>
       <div class="sh-today-box sh-today-break">
         <div class="sh-today-val" id="todayBreakBox">—</div>
-        <div class="sh-today-lbl">☕ Break</div>
+        <div class="sh-today-lbl" style="display:flex;align-items:center;justify-content:center;gap:3px">
+  <svg width="9" height="9" viewBox="0 0 24 24" fill="none"><path d="M17 8h1a4 4 0 010 8h-1" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"/><path d="M3 8h14v9a4 4 0 01-4 4H7a4 4 0 01-4-4V8z" stroke="#F59E0B" stroke-width="2"/></svg>
+  Break</div>
       </div>
       <div class="sh-today-box sh-today-sleep">
         <div class="sh-today-val" id="todaySleepBox">—</div>
-        <div class="sh-today-lbl">😴 Sleep</div>
+        <div class="sh-today-lbl" style="display:flex;align-items:center;justify-content:center;gap:3px">
+  <svg width="9" height="9" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="#818CF8" stroke-width="2" stroke-linecap="round"/></svg>
+  Sleep</div>
       </div>
     </div>
 
     <div class="sh-chart-card">
-        <div class="sh-chart-title">📈 গত ৭ দিনের পড়াশোনা</div>
+        <div class="sh-chart-title" style="display:flex;align-items:center;gap:6px">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><polyline points="16 7 22 7 22 13" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  গত ৭ দিনের পড়াশোনা
+</div>
         <div class="sh-chart-row" id="shChartRow"><div class="sh-loading">লোড হচ্ছে...</div></div>
     </div>
 
-    <div class="sh-list-title">🗓️ সেশন তালিকা</div>
+    <div class="sh-list-title" style="display:flex;align-items:center;gap:6px">
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="18" rx="3" stroke="var(--accent)" stroke-width="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/></svg>
+  সেশন তালিকা
+</div>
     <div id="shSessionList"><div class="sh-loading">লোড হচ্ছে...</div></div>
 
 </main>
@@ -465,19 +498,19 @@ function buildSessionCard({dateLabel, dayLabel, dateKey, studySecs, breakSecs, s
     <div class="sh-stat-row">
       <div class="sh-stat-item">
         <div class="sh-stat-val" style="color:#10B981">${studyFmt}</div>
-        <div class="sh-stat-lbl">📚 পড়া</div>
+        <div class="sh-stat-lbl"><svg width="8" height="8" viewBox="0 0 24 24" fill="none"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" stroke="#10B981" stroke-width="2.5" stroke-linejoin="round"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" stroke="#10B981" stroke-width="2.5" stroke-linejoin="round"/></svg> পড়া</div>
       </div>
       <div class="sh-stat-item">
         <div class="sh-stat-val" style="color:#F59E0B">${breakFmt}</div>
-        <div class="sh-stat-lbl">☕ Break</div>
+        <div class="sh-stat-lbl"><svg width="8" height="8" viewBox="0 0 24 24" fill="none"><path d="M17 8h1a4 4 0 010 8h-1" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round"/><path d="M3 8h14v9a4 4 0 01-4 4H7a4 4 0 01-4-4V8z" stroke="#F59E0B" stroke-width="2.5"/></svg> Break</div>
       </div>
       <div class="sh-stat-item">
         <div class="sh-stat-val" style="color:#818CF8">${sleepFmt}</div>
-        <div class="sh-stat-lbl">😴 Sleep</div>
+        <div class="sh-stat-lbl"><svg width="8" height="8" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="#818CF8" stroke-width="2.5" stroke-linecap="round"/></svg> Sleep</div>
       </div>
       <div class="sh-stat-item">
         <div class="sh-stat-val" style="color:var(--text-secondary)">${restFmt}</div>
-        <div class="sh-stat-lbl">⏳ বাকি</div>
+        <div class="sh-stat-lbl"><svg width="8" height="8" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="var(--text-secondary)" stroke-width="2.5"/><path d="M12 7v5l3 3" stroke="var(--text-secondary)" stroke-width="2.5" stroke-linecap="round"/></svg> বাকি</div>
       </div>
     </div>
   </div>`;
