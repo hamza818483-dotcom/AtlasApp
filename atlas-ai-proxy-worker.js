@@ -155,7 +155,7 @@ async function callGroq(env, question, systemPrompt, image) {
     const key = env.GROQ_API_KEY;
     if (!key) return { error: "GROQ_API_KEY not set" };
 
-    const model = image ? "llama-3.2-90b-vision-preview" : "llama-3.3-70b-versatile";
+    const model = image ? "meta-llama/llama-4-maverick-17b-128e-instruct" : "openai/gpt-oss-120b";
     let messages;
     if (image) {
         messages = [
@@ -197,7 +197,7 @@ async function callCerebras(env, question, systemPrompt, image) {
         method: "POST",
         headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-            model: "llama-3.3-70b",
+            model: "gpt-oss-120b",
             messages: [
                 { role: "system", content: systemPrompt },
                 { role: "user", content: question },
