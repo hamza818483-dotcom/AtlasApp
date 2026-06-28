@@ -266,3 +266,4 @@ function base64ToBytes(base64) {
    None of these ever appear in client-side code — only this
    worker's environment can read them.
    ════════════════════════════════════════════════════════════ */
+// auto-deploy test Sun Jun 28 21:41:51 UTC 2026
