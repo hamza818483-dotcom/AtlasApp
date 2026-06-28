@@ -9,7 +9,7 @@
 
 // All AI calls (CSV-free MCQ generation, etc.) go through this single proxy
 // worker — no provider API key ever lives in this file or admin.html.
-const AI_PROXY_URL = 'https://atlas-ai-proxy.YOUR_SUBDOMAIN.workers.dev/';
+const AI_PROXY_URL = 'https://atlas-ai-proxy.hamza818483.workers.dev/';
 
 /* ════════════════════════════════════════════════════
    1. HELPERS
