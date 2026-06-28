@@ -325,6 +325,7 @@ async function loadAllData(){
   updateTodayBoxes();
   updatePeriodSummary(currentPeriodDays);
   renderSessionList(allSessions, allDaily);
+  scheduleAutoRefresh();
 }
 
 let currentPeriodDays = 1;
@@ -427,15 +428,15 @@ function renderSessionList(sessions, daily){
     return;
   }
 
-  // sessions গুলোকে date অনুযায়ী group করো
+  // started_at দিয়ে group করো — session যেদিন শুরু সেটাই সেদিনের
   const byDate = {};
   (sessions||[]).forEach(s=>{
-    const dt = s.updated_at||s.started_at;
+    const dt = s.started_at||s.updated_at;
     if(!dt) return;
     const dateKey = dt.slice(0,10);
     if(!byDate[dateKey]) byDate[dateKey]={
       dateKey, studySecs:0, breakSecs:0, sleepSecs:0, breaksUsed:0,
-      sessionCount:0, latestStatus:'ended'
+      sessionCount:0, latestStatus:'ended', latestUpdated:''
     };
     const g = byDate[dateKey];
     g.studySecs  += s.study_seconds||0;
@@ -443,23 +444,27 @@ function renderSessionList(sessions, daily){
     g.sleepSecs  += s.sleep_seconds||0;
     g.breaksUsed += s.breaks_used||0;
     g.sessionCount++;
-    // latest status — ongoing থাকলে সেটাই দেখাও
-    if(s.status && s.status!=='ended') g.latestStatus = s.status;
+    // latest updated_at track করো — সবচেয়ে নতুন session এর status নাও
+    const upd = s.updated_at||'';
+    if(upd > g.latestUpdated){
+      g.latestUpdated = upd;
+      if(s.status && s.status!=='ended') g.latestStatus = s.status;
+      else if(s.status==='ended') g.latestStatus = 'ended';
+    }
   });
 
-  // daily থেকে যে date নেই সেটা add করো (backfill data)
+  // daily backfill
   (daily||[]).forEach(d=>{
     if(!byDate[d.study_date]){
       byDate[d.study_date]={
         dateKey:d.study_date,
         studySecs:d.total_seconds||0,
         breakSecs:0, sleepSecs:0, breaksUsed:0,
-        sessionCount:1, latestStatus:'ended'
+        sessionCount:1, latestStatus:'ended', latestUpdated:''
       };
     }
   });
 
-  // date descending sort
   const sorted = Object.values(byDate).sort((a,b)=>b.dateKey.localeCompare(a.dateKey));
 
   list.innerHTML = sorted.map(g=>{
@@ -469,6 +474,18 @@ function renderSessionList(sessions, daily){
     const isOngoing = g.latestStatus!=='ended';
     return buildSessionCard({dateLabel, dayLabel, ...g, isOngoing});
   }).join('');
+}
+
+// Ongoing session থাকলে 30s এ auto-refresh
+let autoRefreshTimer = null;
+function scheduleAutoRefresh(){
+  if(autoRefreshTimer) clearInterval(autoRefreshTimer);
+  const hasOngoing = (allSessions||[]).some(s=>s.status && s.status!=='ended');
+  if(hasOngoing){
+    autoRefreshTimer = setInterval(async()=>{
+      await loadAllData();
+    }, 30000);
+  }
 }
 
 function buildSessionCard({dateLabel, dayLabel, dateKey, studySecs, breakSecs, sleepSecs, breaksUsed, sessionCount, isOngoing}){
