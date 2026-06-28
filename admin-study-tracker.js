@@ -3,15 +3,13 @@
    Uses: SUPABASE_URL, SUPABASE_KEY, safeFetch, showToast (from admin.html)
 */
 
-/* ═══════════════════════════════════════════════
-   STUDY TRACKER ADMIN  (Subject / Chapter / Topic CRUD)
-═══════════════════════════════════════════════ */
 let stMode = 'hsc';
 let stSelSubjId = null, stSelChapId = null;
 let stSelSubjName = '', stSelChapName = '';
-let stEditSubjId = null, stEditChapId = null, stEditTopicId = null;
 
-// ── Dashboard box nav ──
+// ══════════════════════════════════════
+// DASHBOARD BOX NAV
+// ══════════════════════════════════════
 function stOpenBox(box) {
     document.getElementById('stDash').style.display = 'none';
     ['syllabus','routine','progress','revision'].forEach(b =>
@@ -20,6 +18,8 @@ function stOpenBox(box) {
     const el = document.getElementById('stBox'+box.charAt(0).toUpperCase()+box.slice(1));
     if (el) el.style.display = 'block';
     if (box === 'syllabus') { stMode='hsc'; stLoadSubjects(); stUpdateModeBtns(); }
+    if (box === 'progress') stAdminLoadProgress();
+    if (box === 'revision') { stRevMode='hsc'; stAdminLoadRevision(); stUpdateRevBtns(); }
 }
 function stCloseBox() {
     ['syllabus','routine','progress','revision'].forEach(b =>
@@ -31,18 +31,16 @@ function stCloseBox() {
 function stCloseChap() {
     document.getElementById('stChapCard').style.display='none';
     document.getElementById('stTopicCard').style.display='none';
-    stSelSubjId=null;
+    stSelSubjId = null;
 }
 function stCloseTopic() {
     document.getElementById('stTopicCard').style.display='none';
-    stSelChapId=null;
+    stSelChapId = null;
 }
-function stUpdateModeBtns() {
-    document.getElementById('stTabHsc').className = stMode==='hsc' ? 'btn btn-primary' : 'btn btn-outline';
-    document.getElementById('stTabMed').className = stMode==='medical' ? 'btn btn-primary' : 'btn btn-outline';
-    document.getElementById('stTabHsc').style = 'font-size:12px;padding:6px 16px';
-    document.getElementById('stTabMed').style = 'font-size:12px;padding:6px 16px';
-}
+
+// ══════════════════════════════════════
+// DASH COUNTS
+// ══════════════════════════════════════
 async function stLoadDashCounts() {
     const hsc = await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects?mode=eq.hsc&select=id`) || [];
     const med = await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects?mode=eq.medical&select=id`) || [];
@@ -52,6 +50,9 @@ async function stLoadDashCounts() {
     if(rev) rev.textContent = `HSC: ${hsc.length} বিষয় · Medical: ${med.length} বিষয়`;
 }
 
+// ══════════════════════════════════════
+// SYLLABUS — MODE SWITCH
+// ══════════════════════════════════════
 function stSwitchMode(mode) {
     stMode = mode;
     stSelSubjId = null; stSelChapId = null;
@@ -60,7 +61,16 @@ function stSwitchMode(mode) {
     document.getElementById('stTopicCard').style.display='none';
     stLoadSubjects();
 }
+function stUpdateModeBtns() {
+    document.getElementById('stTabHsc').className = stMode==='hsc' ? 'btn btn-primary' : 'btn btn-outline';
+    document.getElementById('stTabMed').className = stMode==='medical' ? 'btn btn-primary' : 'btn btn-outline';
+    document.getElementById('stTabHsc').style = 'font-size:12px;padding:6px 16px';
+    document.getElementById('stTabMed').style = 'font-size:12px;padding:6px 16px';
+}
 
+// ══════════════════════════════════════
+// SUBJECTS
+// ══════════════════════════════════════
 async function stLoadSubjects() {
     const list = document.getElementById('stSubjList');
     list.innerHTML = '<div style="color:var(--text2);font-size:12px">লোড হচ্ছে...</div>';
@@ -70,37 +80,36 @@ async function stLoadSubjects() {
     if (!data.length) { list.innerHTML = '<div style="color:var(--text2);font-size:12px">কোনো বিষয় নেই। উপরে যোগ করুন।</div>'; return; }
     list.innerHTML = data.map(s => `
         <div style="display:flex;align-items:center;gap:6px;padding:8px 4px;border-bottom:1px solid var(--border)">
-            <div style="flex:1;cursor:pointer" onclick="stSelectSubj(${s.id},'${s.name.replace(/'/g,"\'")}')">
+            <div style="flex:1;cursor:pointer" onclick="stSelectSubj(${s.id},'${s.name.replace(/'/g,"\\'")}')">
                 <div style="font-weight:600;font-size:13px">📘 ${s.name}</div>
                 <div style="font-size:10px;color:var(--text2)">${s.short_name||''}</div>
             </div>
-            <button class="btn btn-sm" onclick="stEditSubjPrompt(${s.id},'${s.name.replace(/'/g,"\'")}','${(s.short_name||'').replace(/'/g,"\'")}');event.stopPropagation()" style="padding:3px 8px;font-size:10px">✏️</button>
+            <button class="btn btn-sm" onclick="stEditSubjPrompt(${s.id},'${s.name.replace(/'/g,"\\'")}','${(s.short_name||'').replace(/'/g,"\\'")}');event.stopPropagation()" style="padding:3px 8px;font-size:10px">✏️</button>
             <button class="btn btn-sm" onclick="stDelSubject(${s.id});event.stopPropagation()" style="padding:3px 8px;font-size:10px;color:var(--error);border-color:var(--error)">🗑</button>
         </div>`).join('');
 }
-
+async function stAddSubject() {
+    const name = document.getElementById('stSubjName').value.trim();
+    const short = document.getElementById('stSubjShort').value.trim();
+    if (!name) { showToast('⚠️ বিষয়ের নাম দিন'); return; }
+    try {
+        const existing = await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects?mode=eq.${stMode}&order=sort_order.desc&select=sort_order&limit=1`) || [];
+        const sort = existing.length ? existing[0].sort_order + 1 : 1;
+        await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects`, {method:'POST', body:JSON.stringify({name, short_name:short||name, mode:stMode, sort_order:sort})});
+        document.getElementById('stSubjName').value = '';
+        document.getElementById('stSubjShort').value = '';
+        showToast('✅ বিষয় যোগ হয়েছে');
+        stLoadSubjects();
+        stLoadDashCounts();
+    } catch(e) { showToast('❌ Error: ' + e.message); }
+}
 async function stEditSubjPrompt(id, name, short) {
     const newName = prompt('বিষয়ের নতুন নাম:', name);
     if (!newName || newName === name) return;
     const newShort = prompt('সংক্ষিপ্ত নাম:', short) || short;
     await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects?id=eq.${id}`, {method:'PATCH', body:JSON.stringify({name:newName.trim(), short_name:newShort.trim()})});
-    showToast('✅ আপডেট হয়েছে');
-    stLoadSubjects();
+    showToast('✅ আপডেট হয়েছে'); stLoadSubjects();
 }
-
-async function stAddSubject() {
-    const name = document.getElementById('stSubjName').value.trim();
-    const short = document.getElementById('stSubjShort').value.trim();
-    if (!name) { showToast('⚠️ বিষয়ের নাম দিন'); return; }
-    const existing = await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects?mode=eq.${stMode}&order=sort_order.desc&select=sort_order&limit=1`) || [];
-    const sort = existing.length ? existing[0].sort_order + 1 : 1;
-    await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects`, {method:'POST', body:JSON.stringify({name, short_name:short||name, mode:stMode, sort_order:sort})});
-    document.getElementById('stSubjName').value = '';
-    document.getElementById('stSubjShort').value = '';
-    showToast('✅ বিষয় যোগ হয়েছে');
-    stLoadSubjects();
-}
-
 async function stDelSubject(id) {
     if (!confirm('এই বিষয় এবং সব অধ্যায়+টপিক মুছে যাবে। নিশ্চিত?')) return;
     const chaps = await safeFetch(`${SUPABASE_URL}/rest/v1/st_chapters?subject_id=eq.${id}&select=id`) || [];
@@ -108,20 +117,21 @@ async function stDelSubject(id) {
     await safeFetch(`${SUPABASE_URL}/rest/v1/st_chapters?subject_id=eq.${id}`, {method:'DELETE'});
     await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects?id=eq.${id}`, {method:'DELETE'});
     showToast('🗑 বিষয় মুছে গেছে');
-    stLoadSubjects();
+    stLoadSubjects(); stLoadDashCounts();
     document.getElementById('stChapCard').style.display='none';
     document.getElementById('stTopicCard').style.display='none';
 }
 
+// ══════════════════════════════════════
+// CHAPTERS
+// ══════════════════════════════════════
 function stSelectSubj(id, name) {
-    stSelSubjId = id; stSelSubjName = name;
-    stSelChapId = null;
+    stSelSubjId = id; stSelSubjName = name; stSelChapId = null;
     document.getElementById('stChapCardTitle').textContent = '📂 ' + name + ' — অধ্যায় সমূহ';
     document.getElementById('stChapCard').style.display='block';
     document.getElementById('stTopicCard').style.display='none';
     stLoadChapters();
 }
-
 async function stLoadChapters() {
     const list = document.getElementById('stChapList');
     list.innerHTML = '<div style="color:var(--text2);font-size:12px">লোড হচ্ছে...</div>';
@@ -130,47 +140,45 @@ async function stLoadChapters() {
     list.innerHTML = data.map((ch,i) => `
         <div style="display:flex;align-items:center;gap:6px;padding:8px 4px;border-bottom:1px solid var(--border)">
             <span style="font-size:11px;color:var(--text2);min-width:20px">${i+1}.</span>
-            <span style="flex:1;cursor:pointer;font-size:13px" onclick="stSelectChap(${ch.id},'${ch.name.replace(/'/g,"\'")}')">📂 ${ch.name}</span>
-            <button class="btn btn-sm" onclick="stEditChapPrompt(${ch.id},'${ch.name.replace(/'/g,"\'")}');event.stopPropagation()" style="padding:3px 8px;font-size:10px">✏️</button>
+            <span style="flex:1;cursor:pointer;font-size:13px" onclick="stSelectChap(${ch.id},'${ch.name.replace(/'/g,"\\'")}')">📂 ${ch.name}</span>
+            <button class="btn btn-sm" onclick="stEditChapPrompt(${ch.id},'${ch.name.replace(/'/g,"\\'")}');event.stopPropagation()" style="padding:3px 8px;font-size:10px">✏️</button>
             <button class="btn btn-sm" onclick="stDelChapter(${ch.id});event.stopPropagation()" style="padding:3px 8px;font-size:10px;color:var(--error);border-color:var(--error)">🗑</button>
         </div>`).join('');
 }
-
+async function stAddChapter() {
+    const name = document.getElementById('stChapName').value.trim();
+    if (!name || !stSelSubjId) { showToast('⚠️ অধ্যায়ের নাম দিন'); return; }
+    try {
+        const existing = await safeFetch(`${SUPABASE_URL}/rest/v1/st_chapters?subject_id=eq.${stSelSubjId}&order=sort_order.desc&select=sort_order&limit=1`) || [];
+        const sort = existing.length ? existing[0].sort_order + 1 : 1;
+        await safeFetch(`${SUPABASE_URL}/rest/v1/st_chapters`, {method:'POST', body:JSON.stringify({name, subject_id:stSelSubjId, sort_order:sort})});
+        document.getElementById('stChapName').value = '';
+        showToast('✅ অধ্যায় যোগ হয়েছে'); stLoadChapters();
+    } catch(e) { showToast('❌ Error: ' + e.message); }
+}
 async function stEditChapPrompt(id, name) {
     const newName = prompt('অধ্যায়ের নতুন নাম:', name);
     if (!newName || newName === name) return;
     await safeFetch(`${SUPABASE_URL}/rest/v1/st_chapters?id=eq.${id}`, {method:'PATCH', body:JSON.stringify({name:newName.trim()})});
-    showToast('✅ আপডেট হয়েছে');
-    stLoadChapters();
+    showToast('✅ আপডেট হয়েছে'); stLoadChapters();
 }
-
-async function stAddChapter() {
-    const name = document.getElementById('stChapName').value.trim();
-    if (!name || !stSelSubjId) { showToast('⚠️ অধ্যায়ের নাম দিন'); return; }
-    const existing = await safeFetch(`${SUPABASE_URL}/rest/v1/st_chapters?subject_id=eq.${stSelSubjId}&order=sort_order.desc&select=sort_order&limit=1`) || [];
-    const sort = existing.length ? existing[0].sort_order + 1 : 1;
-    await safeFetch(`${SUPABASE_URL}/rest/v1/st_chapters`, {method:'POST', body:JSON.stringify({name, subject_id:stSelSubjId, sort_order:sort})});
-    document.getElementById('stChapName').value = '';
-    showToast('✅ অধ্যায় যোগ হয়েছে');
-    stLoadChapters();
-}
-
 async function stDelChapter(id) {
     if (!confirm('অধ্যায় ও সব টপিক মুছে যাবে?')) return;
     await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics?chapter_id=eq.${id}`, {method:'DELETE'});
     await safeFetch(`${SUPABASE_URL}/rest/v1/st_chapters?id=eq.${id}`, {method:'DELETE'});
-    showToast('🗑 অধ্যায় মুছে গেছে');
-    stLoadChapters();
+    showToast('🗑 অধ্যায় মুছে গেছে'); stLoadChapters();
     document.getElementById('stTopicCard').style.display='none';
 }
 
+// ══════════════════════════════════════
+// TOPICS
+// ══════════════════════════════════════
 function stSelectChap(id, name) {
     stSelChapId = id; stSelChapName = name;
     document.getElementById('stTopicCardTitle').textContent = '📝 ' + name + ' — টপিক সমূহ';
     document.getElementById('stTopicCard').style.display='block';
     stLoadTopics();
 }
-
 async function stLoadTopics() {
     const list = document.getElementById('stTopicList');
     list.innerHTML = '<div style="color:var(--text2);font-size:12px">লোড হচ্ছে...</div>';
@@ -186,42 +194,150 @@ async function stLoadTopics() {
             <input type="number" value="${t.weight||1}" min="1" max="20" title="Weight"
                 style="width:40px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-size:11px;text-align:center"
                 onchange="stUpdateWeight(${t.id},this.value)">
-            <button class="btn btn-sm" onclick="stEditTopicPrompt(${t.id},'${t.name.replace(/'/g,"\'")}',${t.weight||1})" style="padding:3px 7px;font-size:10px">✏️</button>
+            <button class="btn btn-sm" onclick="stEditTopicPrompt(${t.id},'${t.name.replace(/'/g,"\\'")}',${t.weight||1})" style="padding:3px 7px;font-size:10px">✏️</button>
             <button class="btn btn-sm" onclick="stDelTopic(${t.id})" style="padding:3px 7px;font-size:10px;color:var(--error);border-color:var(--error)">🗑</button>
         </div>`;
     }).join('');
 }
-
+async function stAddTopic() {
+    const name = document.getElementById('stTopicName').value.trim();
+    const weight = parseInt(document.getElementById('stTopicWeight').value)||1;
+    if (!name || !stSelChapId) { showToast('⚠️ টপিকের নাম দিন'); return; }
+    try {
+        const existing = await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics?chapter_id=eq.${stSelChapId}&order=sort_order.desc&select=sort_order&limit=1`) || [];
+        const sort = existing.length ? existing[0].sort_order + 1 : 1;
+        await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics`, {method:'POST', body:JSON.stringify({name, chapter_id:stSelChapId, weight, sort_order:sort})});
+        document.getElementById('stTopicName').value = '';
+        document.getElementById('stTopicWeight').value = '';
+        showToast('✅ টপিক যোগ হয়েছে'); stLoadTopics();
+    } catch(e) { showToast('❌ Error: ' + e.message); }
+}
 async function stEditTopicPrompt(id, name, weight) {
     const newName = prompt('টপিকের নতুন নাম:', name);
     if (!newName) return;
     const newW = parseInt(prompt('Weight (১ = সমান):', weight))||1;
     await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics?id=eq.${id}`, {method:'PATCH', body:JSON.stringify({name:newName.trim(), weight:newW})});
-    showToast('✅ আপডেট হয়েছে');
-    stLoadTopics();
+    showToast('✅ আপডেট হয়েছে'); stLoadTopics();
 }
-
-async function stAddTopic() {
-    const name = document.getElementById('stTopicName').value.trim();
-    const weight = parseInt(document.getElementById('stTopicWeight').value)||1;
-    if (!name || !stSelChapId) { showToast('⚠️ টপিকের নাম দিন'); return; }
-    const existing = await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics?chapter_id=eq.${stSelChapId}&order=sort_order.desc&select=sort_order&limit=1`) || [];
-    const sort = existing.length ? existing[0].sort_order + 1 : 1;
-    await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics`, {method:'POST', body:JSON.stringify({name, chapter_id:stSelChapId, weight, sort_order:sort})});
-    document.getElementById('stTopicName').value = '';
-    document.getElementById('stTopicWeight').value = '';
-    showToast('✅ টপিক যোগ হয়েছে');
-    stLoadTopics();
-}
-
 async function stUpdateWeight(id, val) {
     await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics?id=eq.${id}`, {method:'PATCH', body:JSON.stringify({weight:parseInt(val)||1})});
-    showToast('✅ Weight আপডেট');
-    stLoadTopics();
+    showToast('✅ Weight আপডেট'); stLoadTopics();
 }
-
 async function stDelTopic(id) {
     await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics?id=eq.${id}`, {method:'DELETE'});
-    showToast('🗑 টপিক মুছে গেছে');
-    stLoadTopics();
+    showToast('🗑 টপিক মুছে গেছে'); stLoadTopics();
 }
+
+// ══════════════════════════════════════
+// WEAK & PROGRESS BOX — Admin View
+// ══════════════════════════════════════
+let stProgMode = 'hsc';
+async function stAdminLoadProgress() {
+    const wrap = document.getElementById('stAdminProgWrap');
+    if (!wrap) return;
+    wrap.innerHTML = '<div style="color:var(--text2);font-size:12px;text-align:center;padding:24px">লোড হচ্ছে...</div>';
+
+    // Load leaderboard data
+    const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/st_user_progress?mode=eq.${stProgMode}&order=pct.desc&limit=100&select=user_phone,pct,done_topics,total_topics`) || [];
+    
+    // Get user names
+    let userMap = {};
+    if (rows.length) {
+        const phones = rows.map(r => `"${r.user_phone}"`).join(',');
+        try {
+            const users = await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=in.(${phones})&select=phone,name,batch`) || [];
+            users.forEach(u => userMap[u.phone] = u);
+        } catch(e) {}
+    }
+
+    if (!rows.length) {
+        wrap.innerHTML = '<div style="color:var(--text2);font-size:12px;text-align:center;padding:32px">কোনো Student এখনো Progress sync করেনি।</div>';
+        return;
+    }
+
+    const rankColors = ['','#F5B800','#94A3B8','#CD7C3A'];
+    const html = rows.map((r, i) => {
+        const rank = i + 1;
+        const u = userMap[r.user_phone] || {};
+        const name = u.name || r.user_phone;
+        const batch = u.batch || '';
+        const initial = (name[0] || '?').toUpperCase();
+        const rc = rank <= 3 ? rankColors[rank] : 'rgba(255,255,255,.3)';
+        const medal = rank <= 3 ? ['🥇','🥈','🥉'][rank-1] : rank;
+        return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border)">
+            <span style="width:24px;font-size:12px;font-weight:700;color:${rc};flex-shrink:0;text-align:center">${medal}</span>
+            <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#7C83FF,#38BDF8);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">${initial}</div>
+            <div style="flex:1;min-width:0">
+                <div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</div>
+                <div style="font-size:10px;color:var(--text2)">${batch} · ${r.done_topics||0}/${r.total_topics||0} টপিক</div>
+                <div style="margin-top:4px;height:3px;background:var(--bg);border-radius:999px;overflow:hidden">
+                    <div style="width:${r.pct||0}%;height:100%;background:linear-gradient(90deg,#7C83FF,#38BDF8);border-radius:999px"></div>
+                </div>
+            </div>
+            <span style="font-size:13px;font-weight:800;flex-shrink:0;color:${rank===1?'#F5B800':rank===2?'#94A3B8':rank===3?'#CD7C3A':'var(--text)'}">${(+r.pct).toFixed(1)}%</span>
+        </div>`;
+    }).join('');
+
+    wrap.innerHTML = `<div style="border:1px solid var(--border);border-radius:10px;overflow:hidden">${html}</div>`;
+}
+
+function stProgSwitchMode(mode, btn) {
+    stProgMode = mode;
+    document.querySelectorAll('#stBoxProgress .st-prog-tab').forEach(b => {
+        b.className = 'btn btn-outline st-prog-tab';
+        b.style = 'font-size:11px;padding:5px 14px';
+    });
+    btn.className = 'btn btn-primary st-prog-tab';
+    btn.style = 'font-size:11px;padding:5px 14px';
+    stAdminLoadProgress();
+}
+
+// ══════════════════════════════════════
+// REVISION BOX — Admin Preview
+// ══════════════════════════════════════
+let stRevMode = 'hsc';
+async function stAdminLoadRevision() {
+    const grid = document.getElementById('stRevSubjGrid');
+    if (!grid) return;
+    grid.innerHTML = '<div style="color:var(--text2);font-size:12px;padding:16px">লোড হচ্ছে...</div>';
+
+    const subjects = await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects?mode=eq.${stRevMode}&order=sort_order.asc&select=id,name,short_name`) || [];
+    if (!subjects.length) {
+        grid.innerHTML = '<div style="color:var(--text2);font-size:12px;padding:16px">কোনো বিষয় নেই। Syllabus Tracker এ বিষয় যোগ করুন।</div>';
+        return;
+    }
+
+    // Load topic counts
+    const cards = await Promise.all(subjects.map(async s => {
+        const chaps = await safeFetch(`${SUPABASE_URL}/rest/v1/st_chapters?subject_id=eq.${s.id}&select=id,name`) || [];
+        let topicCount = 0;
+        for (const c of chaps) {
+            const topics = await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics?chapter_id=eq.${c.id}&select=id`) || [];
+            topicCount += topics.length;
+        }
+        return `<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;border-top:2px solid #A855F7">
+            <div style="font-size:12px;font-weight:700;margin-bottom:6px">${s.name}</div>
+            <div style="display:flex;align-items:center;gap:8px">
+                <div style="flex:1;height:4px;background:var(--bg);border-radius:999px"><div style="width:0%;height:100%;background:linear-gradient(90deg,#A855F7,#F43F5E);border-radius:999px"></div></div>
+                <span style="font-size:10px;color:var(--text2)">${chaps.length} অধ্যায় · ${topicCount} টপিক</span>
+            </div>
+        </div>`;
+    }));
+    grid.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${cards.join('')}</div>
+        <div style="margin-top:12px;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:10px">
+            <div style="font-size:12px;color:var(--text2);text-align:center">Revision Tracker, User এর Syllabus Progress এর উপর ভিত্তি করে কাজ করে।<br>আলাদা content ম্যানেজমেন্ট শীঘ্রই আসছে।</div>
+        </div>`;
+}
+
+function stUpdateRevBtns() {
+    const hBtn = document.getElementById('stRevTabHsc');
+    const mBtn = document.getElementById('stRevTabMed');
+    if(hBtn) hBtn.className = stRevMode==='hsc' ? 'btn btn-primary' : 'btn btn-outline';
+    if(mBtn) mBtn.className = stRevMode==='medical' ? 'btn btn-primary' : 'btn btn-outline';
+    if(hBtn) hBtn.style = 'font-size:11px;padding:5px 14px';
+    if(mBtn) mBtn.style = 'font-size:11px;padding:5px 14px';
+}
+function stRevSwitchMode(mode, btn) {
+    stRevMode = mode; stUpdateRevBtns(); stAdminLoadRevision();
+}
+

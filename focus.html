@@ -364,6 +364,20 @@
 .lsr-val.purple { color: #818CF8; }
 .lsr-lbl { font-size: 7px; color: var(--text-secondary); font-weight: 600; margin-top: 1px; display: flex; align-items: center; justify-content: center; gap: 2px; }
 
+.mood-inline-list {
+  margin: 0 14px 8px; padding: 8px 10px; border-radius: 10px;
+  background: var(--card-bg); border: 1px solid var(--border);
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+}
+.mil-chip {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 3px 9px; border-radius: 20px; font-size: 10.5px; font-weight: 700;
+}
+.mil-chip.break { background: rgba(245,158,11,.12); color: #F59E0B; }
+.mil-chip.sleep { background: rgba(129,140,248,.12); color: #818CF8; }
+.mil-chip.is-self { font-weight: 900; box-shadow: 0 0 0 1.5px currentColor inset; }
+.mil-empty { font-size: 11px; color: var(--text-secondary); }
+
 /* Break People List */
 .break-people-box {
   margin: 0 14px 6px;
@@ -991,15 +1005,6 @@
         </button>
       </div>
 
-      <!-- Break/Sleep mood controls: Start / Stop only -->
-      <div class="timer-controls-inner" id="ctrlBreakSleep" style="display:none">
-        <button class="ctrl-btn ctrl-resume" id="ctrlBSStart" onclick="startBreakSleepTimer()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 4l14 8-14 8V4z" fill="currentColor"/></svg> Start
-        </button>
-        <button class="ctrl-btn ctrl-stop" id="ctrlBSStop" onclick="stopBreakSleepTimer()" style="display:none">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="2" fill="currentColor"/></svg> Stop
-        </button>
-      </div>
     </div>
 
     <!-- Warn bar -->
@@ -1035,6 +1040,10 @@
         <div class="lsr-lbl"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:2px"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="#818CF8" stroke-width="2" fill="rgba(129,140,248,.1)"/></svg>ঘুমাচ্ছে</div>
       </div>
     </div>
+
+    <!-- ═══ MOOD INLINE LIST — lsr-card এর ঠিক নিচে, নিজের mood অনুযায়ী
+         ওই mood-এর সবার ছোট তালিকা (overlay খোলার দরকার নেই) ═══ -->
+    <div class="mood-inline-list" id="moodInlineList" style="display:none"></div>
 
     <!-- ═══ TODAY LIVE ═══ -->
     <div class="live-today-section">
@@ -1170,6 +1179,7 @@ function fmtDisplay(s){
 const STATE_KEY = 'focus_state_v2';
 const DAILY_PROGRESS_KEY = 'focus_daily_progress_v1'; // survives Stop (clearState), resets daily
 function saveState(){
+  if(!timerRunning) return;  // session নেই — state save করব না, clearState এর effect নষ্ট হবে না
   localStorage.setItem(STATE_KEY, JSON.stringify({mood,paused,sessionId,studySecs,breakSecs,sleepSecs,breaksUsed,savedAt:Date.now()}));
   saveDailyProgress();
 }
@@ -1200,14 +1210,14 @@ function loadDailyProgress(){
 async function startSession(){
   if(!currentUser){ showToast('⚠️ লগইন করো'); goTo('auth.html'); return; }
   mood='study'; timerRunning=true; paused=false;
-  studySecs=0; breakSecs=0; sleepSecs=0; breaksUsed=0;
+  // accumulated থেকে শুরু — studySecs already set in doEnd
+  breakSecs=0; sleepSecs=0; breaksUsed=0;
   // accumulatedStudySecs ও sessionNumber এখানে reset হয় না — আগের session(গুলোর)
   // মোট সময় বজায় থাকে, নতুন session শুধু upore visible timer-কে শূন্য থেকে শুরু করায়।
 
   // Controls reset — instant UI
   document.getElementById('ctrlStartNew').style.display='none';
   document.getElementById('ctrlStudy').style.display='flex';
-  document.getElementById('ctrlBreakSleep').style.display='none';
   document.getElementById('ctrlPause').style.display='flex';
   document.getElementById('ctrlResume').style.display='none';
 
@@ -1227,9 +1237,14 @@ async function startSession(){
 
   const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions`,{
     method:'POST',
-    body:JSON.stringify({user_phone:currentUser.phone, status:'study'})
+    body:JSON.stringify({
+      user_phone:currentUser.phone,
+      status:'study',
+      study_seconds: accumulatedStudySecs  // আগের session-এর total থেকে শুরু
+    })
   });
   sessionId = rows?.[0]?.id || null;
+  saveState(); // sessionId পাওয়ার পর আবার সেইভ — শুরুর সাথে সাথেই রিফ্রেশ করলেও session হারাবে না
 
   // DB insert হয়ে গেছে — এখন fresh fetch করলে নিজেকে পাবো
   // Filter reset করে নিজেকে দেখাও
@@ -1413,24 +1428,30 @@ function applyMoodSwitch(newMood){
   mood=newMood;
 
   if(newMood==='study'){
-    // Break/Sleep → Study: auto-stop break/sleep timer, resume study
-    breakSecs=0; sleepSecs=0;
+    // Break/Sleep → Study: study আবার শুরু/resume হয়। আগে breakSecs/sleepSecs
+    // রিসেট হয়ে যেত (০ করে দেওয়া হতো) — কিন্তু পরে যদি ইউজার আবার Break/Sleep
+    // mood-এ যায়, তখন আগের সময়ের উপর নতুন সময় যুক্ত (accumulate) হওয়া উচিত,
+    // রিসেট না। তাই এখানে breakSecs/sleepSecs স্পর্শ করা হচ্ছে না — শুধু
+    // bsRunning বন্ধ করা হচ্ছে যাতে break/sleep টিক আর না বাড়ে study mode-এ।
     bsRunning=false;
     paused=false;
     setHeaderGlow(true);
     document.getElementById('ctrlStudy').style.display='flex';
-    document.getElementById('ctrlBreakSleep').style.display='none';
     document.getElementById('ctrlPause').style.display='flex';
     document.getElementById('ctrlResume').style.display='none';
   } else {
-    // Study → Break/Sleep: auto-pause study, show start/stop controls
+    // Study → Break/Sleep: study auto-pause হয়, এবং break/sleep timer
+    // এখন সাথে সাথেই auto-start হয়ে যায় — কোনো manual Start/Stop বাটন
+    // নেই, mood বাটন (উপরে) ক্লিক করাই যথেষ্ট। আগের breakSecs/sleepSecs
+    // (যদি আগে কোনো break/sleep সেশন চলিয়ে study-তে ফিরে থাকে) এখানেও
+    // রিসেট হয় না, তার উপর থেকেই আবার চলবে। Study-তে ফিরলে (mood বাটনে
+    // ক্লিক করেই) আবার auto-pause হয়ে যাবে এই mood-এর জন্য।
     paused=true; // study timer paused
-    bsRunning=false;
+    bsRunning=true;
     setHeaderGlow(false);
     document.getElementById('ctrlStudy').style.display='none';
-    document.getElementById('ctrlBreakSleep').style.display='flex';
-    document.getElementById('ctrlBSStart').style.display='flex';
-    document.getElementById('ctrlBSStop').style.display='none';
+    document.getElementById('ctrlPause').style.display='none';
+    document.getElementById('ctrlResume').style.display='none';
   }
 
   updateMoodButtons(); renderTimer(); updateLsrCardHighlight(); saveState(); syncSession();
@@ -1503,24 +1524,6 @@ window.addEventListener('popstate',e=>{
     closeMoodOverlay();
   }
 });
-function startBreakSleepTimer(){
-  if(mood==='study') return;
-  bsRunning=true;
-  document.getElementById('ctrlBSStart').style.display='none';
-  document.getElementById('ctrlBSStop').style.display='flex';
-  saveState(); syncSession();
-}
-
-// Break/Sleep এ Stop button — zero reset
-function stopBreakSleepTimer(){
-  bsRunning=false;
-  if(mood==='break') breakSecs=0;
-  if(mood==='sleep') sleepSecs=0;
-  document.getElementById('ctrlBSStart').style.display='flex';
-  document.getElementById('ctrlBSStop').style.display='none';
-  renderTimer(); saveState(); syncSession();
-}
-
 function closeMoodPopup(){ document.getElementById('moodPopup').classList.remove('show'); pendingMood=null; }
 
 function updateMoodButtons(){
@@ -1540,7 +1543,7 @@ function pauseTimer(){
   if(sessionId){
     safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${sessionId}`,{
       method:'PATCH',
-      body:JSON.stringify({status:'paused',study_seconds:studySecs,break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,updated_at:new Date().toISOString()})
+      body:JSON.stringify({status:'paused',study_seconds:accumulatedStudySecs+studySecs,break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,updated_at:new Date().toISOString()})
     });
   }
   showToast('⏸ Timer pause হলো');
@@ -1557,7 +1560,7 @@ function resumeTimer(){
   if(sessionId){
     safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${sessionId}`,{
       method:'PATCH',
-      body:JSON.stringify({status:mood,study_seconds:studySecs,break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,updated_at:new Date().toISOString()})
+      body:JSON.stringify({status:mood,study_seconds:accumulatedStudySecs+studySecs,break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,updated_at:new Date().toISOString()})
     });
   }
   showToast('▶ Timer চালু হলো');
@@ -1566,10 +1569,10 @@ function resumeTimer(){
 
 /* ═══ STOP ═══ */
 function showModal(){
-  document.getElementById('ms-time').textContent=fmtDisplay(studySecs);
+  document.getElementById('ms-time').textContent=fmtDisplay(accumulatedStudySecs+studySecs);
   document.getElementById('ms-breaks').textContent=breaksUsed;
   document.getElementById('ms-sleep').textContent=fmtDisplay(sleepSecs);
-  document.getElementById('ms-total').textContent=fmtDisplay(studySecs+breakSecs+sleepSecs);
+  document.getElementById('ms-total').textContent=fmtDisplay(accumulatedStudySecs+studySecs+breakSecs+sleepSecs);
   // rank hint
   const rankEl=document.getElementById('ms-rank-info');
   if(studySecs>=600){
@@ -1585,15 +1588,29 @@ function confirmEnd(){ closeModal(); doEnd(false); }
 
 async function doEnd(auto){
   clearInterval(ticker); stopPolling(); stopLiveSecTicker(); timerRunning=false;
+  clearState();
   setHeaderGlow(false);
+  // সবার আগে timer screen নিশ্চিত করো — intro screen এ থাকলেও চলে আসবে
+  showTimerScreen();
+
+  // ⚠️ UI update সবার আগে
+  // UI reset — individually safe
+  const _s = id => document.getElementById(id);
+  if(_s('ctrlStudy'))    _s('ctrlStudy').style.display='none';
+  if(_s('ctrlPause'))    _s('ctrlPause').style.display='none';
+  if(_s('ctrlResume'))   _s('ctrlResume').style.display='none';
+  if(_s('ctrlBreakSleep')) _s('ctrlBreakSleep').style.display='none';
+  if(_s('ctrlBSStart'))  _s('ctrlBSStart').style.display='none';
+  if(_s('ctrlBSStop'))   _s('ctrlBSStop').style.display='none';
+  if(_s('ctrlStartNew')) _s('ctrlStartNew').style.display='flex';
+  if(_s('timerUnifiedBox')) _s('timerUnifiedBox').className='timer-unified-box mood-study';
+  if(_s('btnStudy'))  _s('btnStudy').classList.add('active');
+  if(_s('btnBreak'))  _s('btnBreak').classList.remove('active');
+  if(_s('btnSleep'))  _s('btnSleep').classList.remove('active');
+
   const doneMsg = auto?'⏹ Auto ended':`✅ সম্পন্ন! ${fmtDisplay(studySecs)} পড়েছো`;
-  if(sessionId){
-    await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${sessionId}`,{
-      method:'PATCH',
-      body:JSON.stringify({status:'ended',study_seconds:studySecs,break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,ended_at:new Date().toISOString()})
-    });
-    await upsertDailyTotal(studySecs);
-  }
+  const endedSessionId=sessionId, endedBreakSecs=breakSecs, endedSleepSecs=sleepSecs, endedBreaksUsed=breaksUsed;
+
   // আগে সম্পন্ন হওয়া এই session-এর সময় accumulated total-এ যুক্ত করে রাখো —
   // user এখনো "Live পড়ছে" তে থাকবে এবং Total Pora Time শূন্য থেকে শুরু হবে না,
   // যতটুকু আগে count হয়েছিল সেখান থেকেই বাড়বে। শুধু upore main display timer
@@ -1601,39 +1618,46 @@ async function doEnd(auto){
   accumulatedStudySecs += studySecs;
   sessionNumber++;
   saveDailyProgress();
-  studySecs=0; breakSecs=0; sleepSecs=0; breaksUsed=0;
+  // accumulated time timer এ দেখাবে — নতুন session এ এখান থেকে যোগ হবে
+  studySecs=accumulatedStudySecs; breakSecs=0; sleepSecs=0; breaksUsed=0;
   sessionId=null; mood='study'; paused=false; bsRunning=false;
-  clearState();
-  // Keep self visible in the live list with accumulated total, marked idle
-  // (not removed) — only a fresh Start truly creates a new live DB session.
-  if(currentUser){
-    const idx=allStudents.findIndex(s=>s.phone===currentUser.phone);
-    const selfData={
-      name:currentUser.name||'তুমি',batch:currentUser.batch||null,
-      college:currentUser.college||null,premium:currentUser.premium||false,
-      photo_url:currentUser.photo_url||null,
-      status:'ended',study_seconds:accumulatedStudySecs,
-      break_seconds:0,sleep_seconds:0,breaks_used:0,
-      phone:currentUser.phone,_isSelf:true
-    };
-    if(idx===-1) allStudents.unshift(selfData); else allStudents[idx]=selfData;
-  }
-  renderBatchFilter(allStudents); renderLiveStudents(allStudents);
-  // Stop হলে Start button দেখাবে — নতুন session শুরু করতে
-  document.getElementById('ctrlStudy').style.display='none';
-  document.getElementById('ctrlBreakSleep').style.display='none';
-  document.getElementById('ctrlPause').style.display='none';
-  document.getElementById('ctrlResume').style.display='none';
-  document.getElementById('ctrlStartNew').style.display='flex';
-  // Reset mood buttons
-  document.getElementById('timerUnifiedBox').className='timer-unified-box mood-study';
-  document.getElementById('btnStudy').classList.add('active');
-  document.getElementById('btnBreak').classList.remove('active');
-  document.getElementById('btnSleep').classList.remove('active');
-  renderTimer();
-  // Restart polling for live list
-  renderLive(); startIdlePolling();
+
+  // বাকি সব render/list-update কাজ — এর মধ্যে কোনো একটায় error হলেও
+  // উপরের critical বাটন-আপডেট ইতিমধ্যে হয়ে গেছে, তাই UI আটকে থাকবে না
+  try{
+    if(currentUser){
+      const idx=allStudents.findIndex(s=>s.phone===currentUser.phone);
+      const selfData={
+        name:currentUser.name||'তুমি',batch:currentUser.batch||null,
+        college:currentUser.college||null,premium:currentUser.premium||false,
+        photo_url:currentUser.photo_url||null,
+        status:'resting',study_seconds:accumulatedStudySecs,
+        break_seconds:0,sleep_seconds:0,breaks_used:0,
+        phone:currentUser.phone,_isSelf:true
+      };
+      if(idx===-1) allStudents.unshift(selfData); else allStudents[idx]=selfData;
+    }
+    // timerScreen explicitly show করো — intro screen এ যেন না যায়
+    document.getElementById('timerScreen').classList.add('show');
+    document.getElementById('introScreen').style.display='none';
+    renderBatchFilter(allStudents); renderLiveStudents(allStudents);
+    renderTimer();
+    renderLive(); startIdlePolling();
+  }catch(e){ console.error('doEnd render error:', e); }
+
   showToast(doneMsg, 3500);
+
+  // ডাটাবেস sync — UI ইতিমধ্যে আপডেট হয়ে গেছে, এই অংশ ব্যর্থ হলেও
+  // ইউজার আটকে থাকবে না (try-catch দিয়ে সুরক্ষিত)
+  if(endedSessionId){
+    try{
+      await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${endedSessionId}`,{
+        method:'PATCH',
+        body:JSON.stringify({status:'ended',study_seconds:accumulatedStudySecs,break_seconds:endedBreakSecs,sleep_seconds:endedSleepSecs,breaks_used:endedBreaksUsed,ended_at:new Date().toISOString()})
+      });
+      await upsertDailyTotal(accumulatedStudySecs);
+    }catch(e){ console.error('doEnd sync error:', e); }
+  }
 }
 
 async function upsertDailyTotal(addSecs){
@@ -1703,7 +1727,7 @@ function startLiveSecTicker(){
     if(timerRunning && currentUser && !paused){
       const selfIdx=allStudents.findIndex(s=>s.phone===currentUser.phone);
       if(selfIdx!==-1){
-        allStudents[selfIdx].study_seconds=studySecs;
+        allStudents[selfIdx].study_seconds=accumulatedStudySecs+studySecs;
         allStudents[selfIdx].break_seconds=breakSecs;
         allStudents[selfIdx].sleep_seconds=sleepSecs;
       }
@@ -1746,6 +1770,30 @@ function updateLsrCardHighlight(){
     sleepCard.style.borderColor=isSleep?'#818CF8':'var(--border)';
     sleepCard.style.background=isSleep?'rgba(99,102,241,.08)':'var(--card-bg)';
   }
+  updateMoodInlineList();
+}
+
+// lsr-card এর ঠিক নিচে — নিজের mood break/sleep হলে সেই mood-এ থাকা
+// সবার একটা ছোট তালিকা দেখায় (overlay না খুলেই)। Study mood এ বা কেউ
+// break/sleep এ না থাকলে box হাইড থাকে।
+function updateMoodInlineList(){
+  const box=document.getElementById('moodInlineList');
+  if(!box) return;
+  if(mood!=='break' && mood!=='sleep'){ box.style.display='none'; return; }
+
+  const list=(allStudents||[]).filter(s=>s.status===mood);
+  box.style.display='flex';
+  box.className='mood-inline-list';
+
+  if(!list.length){
+    box.innerHTML=`<span class="mil-empty">${mood==='break'?'☕ এখন তুমি একাই বিরতিতে':'😴 এখন তুমি একাই ঘুমে'}</span>`;
+    return;
+  }
+  box.innerHTML=list.map(s=>{
+    const self=s._isSelf||s.phone===currentUser?.phone;
+    const icon=mood==='break'?'☕':'😴';
+    return `<span class="mil-chip ${mood}${self?' is-self':''}">${icon} ${escHtml(self?'তুমি':s.name)}</span>`;
+  }).join('');
 }
 
 function startPolling(){
@@ -1766,7 +1814,9 @@ const MEDALS=[
 async function renderLive(){
   try {
     // users LEFT JOIN — user না থাকলেও session দেখাবে
-    const rows=await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?status=in.(study,break,sleep,paused,active)&select=user_phone,status,study_seconds,break_seconds,sleep_seconds,breaks_used,updated_at,users(name,batch,college,photo_url)&order=updated_at.desc&limit=200`);
+    const todayMidnight=new Date(); todayMidnight.setHours(0,0,0,0);
+    const todayISO=todayMidnight.toISOString();
+    const rows=await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?status=in.(study,break,sleep,paused,active)&started_at=gte.${encodeURIComponent(todayISO)}&select=user_phone,status,study_seconds,break_seconds,sleep_seconds,breaks_used,updated_at,users(name,batch,college,photo_url)&order=study_seconds.desc&limit=200`);
     const rawRows=(rows||[]).map(r=>{
       const u=Array.isArray(r.users)?r.users[0]:(r.users||{});
       // নিজের session হলে currentUser থেকে নাম নাও
@@ -1831,7 +1881,7 @@ async function renderLive(){
         name:currentUser.name||'তুমি',batch:currentUser.batch||null,
         college:currentUser.college||null,premium:currentUser.premium||false,
         photo_url:currentUser.photo_url||null,
-        status:'ended',study_seconds:accumulatedStudySecs,
+        status:'resting',study_seconds:accumulatedStudySecs,
         break_seconds:0,sleep_seconds:0,breaks_used:0,
         phone:currentUser.phone,_isSelf:true
       };
@@ -2151,12 +2201,15 @@ function renderLiveStudents(students){
 
 function buildRankCard(s,rank,showStatus){
   const isPaused=s.status==='paused';
-  const isLive=s.status&&s.status!=='ended'&&!isPaused;
+  const isResting=s.status==='resting';
+  const isLive=s.status&&s.status!=='ended'&&s.status!=='resting'&&!isPaused;
 
   // Status pill
   let statusHtml='';
   if(showStatus){
-    if(isPaused){
+    if(isResting){
+      statusHtml=`<span class="r-status r-status-paused"><span class="r-status-dot" style="background:#6366F1;animation:none"></span>বিশ্রাম</span>`;
+    } else if(isPaused){
       statusHtml=`<span class="r-status r-status-paused"><span class="r-status-dot" style="background:#EF4444"></span>Pause</span>`;
     } else if(isLive){
       const sc=s.status==='break'?'r-status-break':s.status==='sleep'?'r-status-sleep':'r-status-study';
@@ -2351,7 +2404,9 @@ function renderCompareStats(myStudy,myBreaks,theirStudy,theirBreaks,myDaily,thei
 /* ═══ RESTORE SESSION ═══ */
 function restoreSession(){
   const saved=loadState();
-  if(!saved||(saved.mood!=='study'&&saved.mood!=='break'&&saved.mood!=='sleep')) return false;
+  if(!saved) return false;
+  if(!saved.sessionId) return false;  // Stop করা হয়েছে — auto-start করব না
+  if(saved.mood!=='study'&&saved.mood!=='break'&&saved.mood!=='sleep') return false;
   const elapsed=Math.floor((Date.now()-saved.savedAt)/1000);
   mood=saved.mood; paused=saved.paused||false; sessionId=saved.sessionId;
   breaksUsed=saved.breaksUsed||0;
