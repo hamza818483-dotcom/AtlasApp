@@ -1884,21 +1884,16 @@ async function loadInlineLb(days, btn){
       if(!grouped[p]) grouped[p]={phone:p,name:u.name||null,batch:u.batch||null,college:u.college||null,premium:u.is_premium||false,photo_url:u.photo_url||null,total_seconds:0};
       grouped[p].total_seconds+=(r.total_seconds||0);
     });
-    // Merge live session seconds (not yet saved to daily)
+    // Merge live session seconds (not yet saved to daily) — for everyone, not just self
     allStudents.forEach(s=>{
-      if(!s.phone) return;
+      if(!s.phone || !s.study_seconds) return;
       if(!grouped[s.phone]){
         grouped[s.phone]={phone:s.phone,name:s.name,batch:s.batch,college:s.college,premium:s.premium,photo_url:s.photo_url,total_seconds:0};
       }
       if(!grouped[s.phone].name) grouped[s.phone].name=s.name;
-      grouped[s.phone].total_seconds=Math.max(grouped[s.phone].total_seconds, (grouped[s.phone].total_seconds||0)+(s._isSelf?0:0));
-      // For self: use live studySecs
-      if(s._isSelf) grouped[s.phone].total_seconds=(grouped[s.phone].total_seconds||0);
+      const liveSecs = s._isSelf ? studySecs : (s.study_seconds||0);
+      grouped[s.phone].total_seconds += liveSecs;
     });
-    // Override self with live studySecs
-    if(currentUser && grouped[currentUser.phone]){
-      grouped[currentUser.phone].total_seconds=Math.max(grouped[currentUser.phone].total_seconds||0, studySecs);
-    }
     const list=Object.values(grouped).filter(g=>g.total_seconds>0).sort((a,b)=>b.total_seconds-a.total_seconds);
     if(!list.length){ el.innerHTML='<div style="text-align:center;padding:10px;color:var(--text-secondary);font-size:11px">আজকে এখনো কেউ পড়েনি</div>'; return; }
     el.innerHTML=list.map((s,i)=>buildRankCard(s,i+1,false)).join('');
@@ -1954,6 +1949,24 @@ async function loadLeaderboard(days){
         if(live){ g.name=live.name; g.batch=live.batch; g.photo_url=live.photo_url; }
       }
       if(!g.name) g.name='Student';
+    });
+
+    // Merge LIVE in-progress session seconds — study_tracker_daily only gets
+    // written when a session ENDS (upsertDailyTotal), so anyone currently
+    // mid-session has today's elapsed time missing from the daily table.
+    // Add that live elapsed time on top of whatever's already saved for today,
+    // for every active student (not just self), so 3/7/15/30 day totals
+    // reflect real-time progress instead of lagging until they stop.
+    allStudents.forEach(s=>{
+      if(!s.phone || !s.study_seconds) return;
+      const liveSecs = s._isSelf ? studySecs : (s.study_seconds||0);
+      if(!liveSecs) return;
+      if(!grouped[s.phone]){
+        grouped[s.phone]={phone:s.phone,name:s.name,batch:s.batch,college:s.college,premium:s.premium,photo_url:s.photo_url,total_seconds:0};
+      }
+      // today's live seconds haven't been flushed to daily yet, so add them
+      grouped[s.phone].total_seconds += liveSecs;
+      if(!grouped[s.phone].name) grouped[s.phone].name = s.name || 'Student';
     });
 
     const list=Object.values(grouped).sort((a,b)=>b.total_seconds-a.total_seconds);
