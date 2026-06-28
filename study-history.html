@@ -294,70 +294,79 @@ function renderChart(){
   }).join('');
 }
 
-/* ═══ RENDER SESSION LIST ═══ */
+/* ═══ RENDER SESSION LIST — একদিনে একটাই card ═══ */
 function renderSessionList(sessions, daily){
   const list = document.getElementById('shSessionList');
-
-  if(sessions?.length){
-    list.innerHTML = sessions.map(s=>{
-      const rawTime = s.started_at||s.created_at||s.updated_at;
-      const dt = rawTime ? new Date(rawTime) : null;
-      const dateLabel = dt
-        ? `${dt.getDate()} ${BN_MONTHS[dt.getMonth()]} ${dt.getFullYear()}`
-        : '—';
-      const studySecs = s.study_seconds||0;
-      const breakSecs = s.break_seconds||0;
-      const sleepSecs = s.sleep_seconds||0;
-      const usedSecs  = studySecs+breakSecs+sleepSecs;
-      const restSecs  = Math.max(0, 86400-usedSecs);
-      return buildSessionCard({
-        dateLabel, studySecs, breakSecs, sleepSecs,
-        breaksUsed: s.breaks_used||0,
-        restSecs, status: s.status||'ended'
-      });
-    }).join('');
+  if(!sessions?.length && !daily?.length){
+    list.innerHTML = `<div class="sh-empty">এখনো কোনো সেশন রেকর্ড নেই।<br><br>Focus Timer শুরু করো! 🚀</div>`;
     return;
   }
 
-  // Fallback: daily table (no break/sleep data available)
-  if(daily?.length){
-    list.innerHTML = daily.map(s=>{
-      const studySecs = s.study_seconds||0; // use study_seconds, NOT total_seconds
-      const d = new Date(s.study_date+'T00:00:00');
-      const dateLabel = `${d.getDate()} ${BN_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
-      const restSecs = Math.max(0, 86400-studySecs);
-      return buildSessionCard({ dateLabel, studySecs, breakSecs:0, sleepSecs:0, breaksUsed:0, restSecs, status:'ended' });
-    }).join('');
-    return;
-  }
+  // sessions গুলোকে date অনুযায়ী group করো
+  const byDate = {};
+  (sessions||[]).forEach(s=>{
+    const dt = s.updated_at||s.started_at;
+    if(!dt) return;
+    const dateKey = dt.slice(0,10);
+    if(!byDate[dateKey]) byDate[dateKey]={
+      dateKey, studySecs:0, breakSecs:0, sleepSecs:0, breaksUsed:0,
+      sessionCount:0, latestStatus:'ended'
+    };
+    const g = byDate[dateKey];
+    g.studySecs  += s.study_seconds||0;
+    g.breakSecs  += s.break_seconds||0;
+    g.sleepSecs  += s.sleep_seconds||0;
+    g.breaksUsed += s.breaks_used||0;
+    g.sessionCount++;
+    // latest status — ongoing থাকলে সেটাই দেখাও
+    if(s.status && s.status!=='ended') g.latestStatus = s.status;
+  });
 
-  list.innerHTML = `<div class="sh-empty">এখনো কোনো সেশন রেকর্ড নেই।<br><br>Focus Timer শুরু করো! 🚀</div>`;
+  // daily থেকে যে date নেই সেটা add করো (backfill data)
+  (daily||[]).forEach(d=>{
+    if(!byDate[d.study_date]){
+      byDate[d.study_date]={
+        dateKey:d.study_date,
+        studySecs:d.total_seconds||0,
+        breakSecs:0, sleepSecs:0, breaksUsed:0,
+        sessionCount:1, latestStatus:'ended'
+      };
+    }
+  });
+
+  // date descending sort
+  const sorted = Object.values(byDate).sort((a,b)=>b.dateKey.localeCompare(a.dateKey));
+
+  list.innerHTML = sorted.map(g=>{
+    const d = new Date(g.dateKey+'T00:00:00');
+    const dateLabel = `${d.getDate()} ${BN_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+    const dayLabel  = BN_DAYS[d.getDay()];
+    const isOngoing = g.latestStatus!=='ended';
+    return buildSessionCard({dateLabel, dayLabel, ...g, isOngoing});
+  }).join('');
 }
 
-function buildSessionCard({dateLabel, studySecs, breakSecs, sleepSecs, breaksUsed, restSecs, status}){
-  const isOngoing = status && status!=='ended' && status!=='completed';
-  const statusLabel = isOngoing
-    ? (status==='break'?'☕ বিরতিতে' : status==='sleep'?'😴 ঘুমে' : '🟢 চলছে')
-    : '✅ সেশন সম্পন্ন';
-
+function buildSessionCard({dateLabel, dayLabel, studySecs, breakSecs, sleepSecs, breaksUsed, sessionCount, isOngoing}){
+  const statusLabel = isOngoing ? '🟢 চলছে' : '✅ সম্পন্ন';
   const studyFmt = fmtHM(studySecs);
-  const breakFmt = breakSecs>0 ? fmtHM(breakSecs) : null;
-  const sleepFmt = sleepSecs>0 ? fmtHM(sleepSecs) : null;
-  const restFmt  = restSecs>0  ? fmtHM(restSecs)  : null;
-
-  const metaLines = [
-    breakFmt  ? `☕ Break: ${breakFmt}` : null,
-    sleepFmt  ? `😴 Sleep: ${sleepFmt}` : null,
-    breaksUsed>0 ? `🔁 ${breaksUsed}টি বিরতি` : null,
-    restFmt   ? `⏳ বাকি সময়: ${restFmt}` : null,
-  ].filter(Boolean);
+  const breakFmt = breakSecs>0 ? fmtHM(breakSecs) : '০m';
+  const sleepFmt = sleepSecs>0 ? fmtHM(sleepSecs) : '০m';
+  const totalUsed = studySecs+breakSecs+sleepSecs;
+  const restSecs  = Math.max(0, 86400-totalUsed);
+  const restFmt   = fmtHM(restSecs);
 
   return `<div class="sh-session-card">
     <div class="sh-session-icon">${isOngoing?'⏳':'📘'}</div>
     <div class="sh-session-info">
-      <div class="sh-session-date">${escHtml(dateLabel)}</div>
-      <div class="sh-session-meta">${statusLabel}</div>
-      ${metaLines.map(l=>`<div class="sh-session-meta" style="margin-top:2px">${escHtml(l)}</div>`).join('')}
+      <div class="sh-session-date">${escHtml(dateLabel)} <span style="font-size:9px;color:var(--text-secondary);font-weight:700">${escHtml(dayLabel)}</span></div>
+      <div class="sh-session-meta" style="margin-top:3px">${statusLabel} · ${sessionCount}টি সেশন</div>
+      <div class="sh-session-detail" style="margin-top:5px">
+        <span class="sh-detail-chip" style="color:#10B981">📚 ${studyFmt}</span>
+        <span class="sh-detail-chip" style="color:#F59E0B">☕ ${breakFmt}</span>
+        <span class="sh-detail-chip" style="color:#818CF8">😴 ${sleepFmt}</span>
+        <span class="sh-detail-chip">⏳ বাকি ${restFmt}</span>
+      </div>
+      ${breaksUsed>0?`<div style="font-size:9px;color:var(--text-secondary);margin-top:3px">🔁 ${breaksUsed}টি বিরতি নেওয়া হয়েছে</div>`:''}
     </div>
     <div style="text-align:right;flex-shrink:0">
       <div class="sh-session-time">${studyFmt}</div>
