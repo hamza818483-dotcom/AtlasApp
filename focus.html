@@ -1622,8 +1622,26 @@ async function doEnd(auto){
   // ভুলভাবে আগের (শেষ করা) session-টাই আবার চালু করে দিত।
   clearState();
   setHeaderGlow(false);
+
+  // ⚠️ সবচেয়ে গুরুত্বপূর্ণ UI পরিবর্তন (Pause/Resume বাটন হাইড করে
+  // "নতুন Session শুরু করো" বাটন দেখানো) একদম সবার আগে, কোনো render/data
+  // লজিকের আগেই করা হচ্ছে — যাতে নিচের কোনো কোডে (renderLiveStudents,
+  // computeRank ইত্যাদি) error হলেও Stop confirm করার পর ইউজার আটকে
+  // "pause" স্ক্রিনে থেকে না যায়, বাটন সবসময় নিশ্চিতভাবে আসবে।
+  try{
+    document.getElementById('ctrlStudy').style.display='none';
+    document.getElementById('ctrlBreakSleep').style.display='none';
+    document.getElementById('ctrlPause').style.display='none';
+    document.getElementById('ctrlResume').style.display='none';
+    document.getElementById('ctrlStartNew').style.display='flex';
+    document.getElementById('timerUnifiedBox').className='timer-unified-box mood-study';
+    document.getElementById('btnStudy').classList.add('active');
+    document.getElementById('btnBreak').classList.remove('active');
+    document.getElementById('btnSleep').classList.remove('active');
+  }catch(e){ console.error('doEnd UI critical update error:', e); }
+
   const doneMsg = auto?'⏹ Auto ended':`✅ সম্পন্ন! ${fmtDisplay(studySecs)} পড়েছো`;
-  const endedSessionId=sessionId, endedStudySecs=studySecs, endedBreakSecs=breakSecs, endedSleepSecs=sleepSecs, endedBreaksUsed=breaksUsed;
+  const endedSessionId=sessionId, endedBreakSecs=breakSecs, endedSleepSecs=sleepSecs, endedBreaksUsed=breaksUsed;
 
   // আগে সম্পন্ন হওয়া এই session-এর সময় accumulated total-এ যুক্ত করে রাখো —
   // user এখনো "Live পড়ছে" তে থাকবে এবং Total Pora Time শূন্য থেকে শুরু হবে না,
@@ -1634,39 +1652,29 @@ async function doEnd(auto){
   saveDailyProgress();
   studySecs=0; breakSecs=0; sleepSecs=0; breaksUsed=0;
   sessionId=null; mood='study'; paused=false; bsRunning=false;
-  // Keep self visible in the live list with accumulated total, marked idle
-  // (not removed) — only a fresh Start truly creates a new live DB session.
-  if(currentUser){
-    const idx=allStudents.findIndex(s=>s.phone===currentUser.phone);
-    const selfData={
-      name:currentUser.name||'তুমি',batch:currentUser.batch||null,
-      college:currentUser.college||null,premium:currentUser.premium||false,
-      photo_url:currentUser.photo_url||null,
-      status:'ended',study_seconds:accumulatedStudySecs,
-      break_seconds:0,sleep_seconds:0,breaks_used:0,
-      phone:currentUser.phone,_isSelf:true
-    };
-    if(idx===-1) allStudents.unshift(selfData); else allStudents[idx]=selfData;
-  }
-  renderBatchFilter(allStudents); renderLiveStudents(allStudents);
-  // Stop হলে Start button দেখাবে — নতুন session শুরু করতে
-  // (এই UI আপডেট গুলো এখন network sync-এর আগেই synchronously হয়ে যায়,
-  // তাই PATCH request slow/fail হলেও "নতুন Session শুরু করো" বাটন আসা
-  // আটকায় না — আগে এই বাটন network await এর পরে দেখানো হতো, তাই ধীর/ব্যর্থ
-  // রিকোয়েস্টে UI আটকে থাকত এবং বাটনই দেখা যেত না)
-  document.getElementById('ctrlStudy').style.display='none';
-  document.getElementById('ctrlBreakSleep').style.display='none';
-  document.getElementById('ctrlPause').style.display='none';
-  document.getElementById('ctrlResume').style.display='none';
-  document.getElementById('ctrlStartNew').style.display='flex';
-  // Reset mood buttons
-  document.getElementById('timerUnifiedBox').className='timer-unified-box mood-study';
-  document.getElementById('btnStudy').classList.add('active');
-  document.getElementById('btnBreak').classList.remove('active');
-  document.getElementById('btnSleep').classList.remove('active');
-  renderTimer();
-  // Restart polling for live list
-  renderLive(); startIdlePolling();
+
+  // বাকি সব render/list-update কাজ — এর মধ্যে কোনো একটায় error হলেও
+  // উপরের critical বাটন-আপডেট ইতিমধ্যে হয়ে গেছে, তাই UI আটকে থাকবে না
+  try{
+    // Keep self visible in the live list with accumulated total, marked idle
+    // (not removed) — only a fresh Start truly creates a new live DB session.
+    if(currentUser){
+      const idx=allStudents.findIndex(s=>s.phone===currentUser.phone);
+      const selfData={
+        name:currentUser.name||'তুমি',batch:currentUser.batch||null,
+        college:currentUser.college||null,premium:currentUser.premium||false,
+        photo_url:currentUser.photo_url||null,
+        status:'ended',study_seconds:accumulatedStudySecs,
+        break_seconds:0,sleep_seconds:0,breaks_used:0,
+        phone:currentUser.phone,_isSelf:true
+      };
+      if(idx===-1) allStudents.unshift(selfData); else allStudents[idx]=selfData;
+    }
+    renderBatchFilter(allStudents); renderLiveStudents(allStudents);
+    renderTimer();
+    renderLive(); startIdlePolling();
+  }catch(e){ console.error('doEnd render error:', e); }
+
   showToast(doneMsg, 3500);
 
   // ডাটাবেস sync — UI ইতিমধ্যে আপডেট হয়ে গেছে, এই অংশ ব্যর্থ হলেও
