@@ -2280,7 +2280,7 @@ function restoreSession(){
 let visHideTimer=null;
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden){
-    saveState(); // persist latest counters immediately regardless of cause
+    if(timerRunning) saveState(); // persist latest counters only if a session is actually active
     if(visHideTimer) clearTimeout(visHideTimer);
     visHideTimer=setTimeout(()=>{
       if(document.hidden && timerRunning && !paused && mood==='study'){
