@@ -650,17 +650,9 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 // ব্যবহার করে। top-level const এমনিতে window-এ attach হয় না, তাই এক্সপ্লিসিট সেট:
 window.SUPABASE_URL = SUPABASE_URL;
 window.SUPABASE_KEY = SUPABASE_KEY;
-const GEMINI_KEY = 'AIzaSyBHfdZwqQkrBWF2pp1hLCGZKaXKrinP9ew';
-const GROQ_KEY   = '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';
 const AUTH_URL   = 'https://atlasprep.pages.dev/auth';
-
-// AI Models — sequential fallback (→ Flutter: ai_service.dart)
-const AI_MODELS = [
-    { name:'Llama 3.3 70B',   provider:'groq',   model:'llama-3.3-70b-versatile', key:GROQ_KEY },
-    { name:'Llama 3.1 8B',    provider:'groq',   model:'llama-3.1-8b-instant',    key:GROQ_KEY },
-    { name:'Mixtral 8x7B',    provider:'groq',   model:'mixtral-8x7b-32768',      key:GROQ_KEY },
-    { name:'Gemini 2.0 Flash', provider:'google', model:'gemini-2.0-flash',        key:GEMINI_KEY }
-];
+// AI calls go through the centralized proxy worker — no provider key lives here.
+const AI_PROXY_URL = 'https://atlas-ai-proxy.YOUR_SUBDOMAIN.workers.dev/';
 
 // STATE (→ Flutter: ExamState / ChangeNotifier)
 let isDarkMode = true, isSidebarOpen = false;
@@ -1734,22 +1726,19 @@ async function toggleAIBox(header,qid){
 // AI CALL — Multiple Models Fallback (→ Flutter: ai_service.dart)
 // =============================================================
 async function callAIForMCQ(prompt){
-    for(const model of AI_MODELS){
-        try{
-            let answer;
-            if(model.provider==='groq'){
-                const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{'Authorization':'Bearer '+model.key,'Content-Type':'application/json'},body:JSON.stringify({model:model.model,messages:[{role:'system',content:'তুমি ATLAS APP-এর বিশেষজ্ঞ শিক্ষক। বাংলায় বিস্তারিত উত্তর দিবে।'},{role:'user',content:prompt}],temperature:0.7,max_tokens:1024})});
-                const data=await res.json();
-                answer=data.choices?.[0]?.message?.content;
-            } else {
-                const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model.model}:generateContent?key=${model.key}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})});
-                const data=await res.json();
-                answer=data.candidates?.[0]?.content?.parts?.[0]?.text;
-            }
-            if(answer&&!answer.includes('error')&&!answer.includes('rate_limit'))
-                return answer.replace(/\n/g,'<br>');
-        }catch(e){continue;}
-    }
+    try{
+        const res = await fetch(AI_PROXY_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                question: prompt,
+                image: null,
+                systemPrompt: 'তুমি ATLAS APP-এর বিশেষজ্ঞ শিক্ষক। বাংলায় বিস্তারিত উত্তর দিবে।'
+            })
+        });
+        const data = await res.json();
+        if (data.success && data.answer) return data.answer.replace(/\n/g,'<br>');
+    }catch(e){}
     return '❌ AI ব্যাখ্যা পাওয়া যায়নি। পরে চেষ্টা করুন।';
 }
 

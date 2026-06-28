@@ -1696,9 +1696,9 @@
 const SUPABASE_URL  = 'https://btezborkuiqfogykrjrn.supabase.co';
 const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
 const ADMIN_PHONE   = '01754365403';
-// Same keys as study.html — used by the মূলবই MCQ panel's AI-generate tab (kept in sync intentionally)
-const GROQ_KEY = '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';
-const GEMINI_KEYS = ['AIzaSyBHfdZwqQkrBWF2pp1hLCGZKaXKrinP9ew'];
+// AI provider keys (Gemini/Groq/OpenRouter/Cerebras) are no longer stored here —
+// all AI calls now go through the atlas-ai-proxy Worker (see mulboi-mcq-admin.js's
+// AI_PROXY_URL), which keeps every key as a server-side secret.
 
 // kakhacq/*.js ফাইলগুলো window.SUPABASE_URL ও window.safeFetch ব্যবহার করে
 // (এগুলো আলাদা <script src> ফাইল, এই ব্লকের lexical scope-এর বাইরে)।

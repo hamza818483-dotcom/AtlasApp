@@ -7,6 +7,10 @@
 (function () {
 'use strict';
 
+// All AI calls (CSV-free MCQ generation, etc.) go through this single proxy
+// worker — no provider API key ever lives in this file or admin.html.
+const AI_PROXY_URL = 'https://atlas-ai-proxy.YOUR_SUBDOMAIN.workers.dev/';
+
 /* ════════════════════════════════════════════════════
    1. HELPERS
    ════════════════════════════════════════════════════ */
@@ -1228,46 +1232,23 @@ async function mbAiGenerate() {
     }
 }
 
-async function mbCallAiApi(prompt) {
-    const geminiKeys = (typeof GEMINI_KEYS !== 'undefined' && Array.isArray(GEMINI_KEYS)) ? GEMINI_KEYS : [];
-    for (const key of geminiKeys) {
-        try {
-            const res = await fetch(
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + key,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: { temperature: 0.7, maxOutputTokens: 4096 }
-                    })
-                }
-            );
-            if (!res.ok) continue;
-            const d = await res.json();
-            const text = d.candidates?.[0]?.content?.parts?.[0]?.text || '';
-            if (text) return text;
-        } catch {}
-    }
-
-    const groqKey = (typeof GROQ_KEY !== 'undefined') ? GROQ_KEY : '';
-    if (groqKey) {
-        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + groqKey, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                model:       'llama-3.3-70b-versatile',
-                messages:    [{ role: 'user', content: prompt }],
-                temperature: 0.7,
-                max_tokens:  4096
-            })
-        });
-        if (!res.ok) throw new Error('Groq API ব্যর্থ (' + res.status + ')');
-        const d = await res.json();
-        return d.choices?.[0]?.message?.content || '';
-    }
-
-    throw new Error('কোনো AI API key পাওয়া যায়নি');
+// All AI calls now go through the centralized proxy worker — no API key lives in
+// this file or any client-side code. See atlas-ai-proxy-worker.js for the actual
+// provider fallback chain (Gemini → OpenRouter → Groq → Cerebras → Cloudflare AI).
+async function mbCallAiApi(prompt, image) {
+    const res = await fetch(AI_PROXY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            question: prompt,
+            image: image ? { base64: image.base64, mimeType: image.mimeType } : null,
+            systemPrompt: 'তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।'
+        })
+    });
+    if (!res.ok) throw new Error('AI প্রক্সি ব্যর্থ (' + res.status + ')');
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'AI থেকে কোনো উত্তর পাওয়া যায়নি');
+    return data.answer || '';
 }
 
 function mbParseAiJson(raw) {

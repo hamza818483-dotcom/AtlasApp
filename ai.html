@@ -614,41 +614,18 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ===== CONFIG =====
-const GROQ_KEY = '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';
-const GEMINI_KEYS = ['AIzaSyBHfdZwqQkrBWF2pp1hLCGZKaXKrinP9ew'];
+// ===== AI PROXY CONFIG =====
+// All API keys (Gemini, OpenRouter, Groq, Cerebras, Cloudflare AI) live ONLY as
+// secrets inside this Worker — never in client-side code. The worker tries each
+// provider in order and returns the first usable answer.
+const AI_PROXY_URL = 'https://atlas-ai-proxy.YOUR_SUBDOMAIN.workers.dev/';
 
 let isDarkMode = true;
 let isSidebarOpen = false;
 let chatHistory = [];
-let keyUsage = {};
 let currentImage = null;   // { base64, mimeType, name, size }
 let currentFile = null;    // { text, name, type }
 let isAIBusy = false;
-
-// ===== GEMINI KEY ROTATION =====
-function getNextGeminiKey() {
-    const today = new Date().toDateString();
-    if (keyUsage._date !== today) keyUsage = { _date: today };
-    let best = null, bestCnt = Infinity;
-    GEMINI_KEYS.forEach(k => {
-        const c = keyUsage[k] || 0;
-        if (c < 1450 && c < bestCnt) { best = k; bestCnt = c; }
-    });
-    if (best) { keyUsage[best] = (keyUsage[best] || 0) + 1; return best; }
-    return GEMINI_KEYS[GEMINI_KEYS.length - 1];
-}
-
-// ===== AI MODELS (sequential fallback) =====
-// NOTE: Model names are hidden from students — they just see "ATLAS AI"
-const ALL_MODELS = [
-    { id: 'llama70b',  provider: 'groq',   model: 'llama-3.3-70b-versatile',  key: () => GROQ_KEY,          vision: false },
-    { id: 'geminifl', provider: 'google', model: 'gemini-2.0-flash',           key: getNextGeminiKey,        vision: true  },
-    { id: 'llama90v', provider: 'groq',   model: 'llama-3.2-90b-vision-preview', key: () => GROQ_KEY,        vision: true  },
-    { id: 'mixtral',  provider: 'groq',   model: 'mixtral-8x7b-32768',         key: () => GROQ_KEY,          vision: false },
-    { id: 'gemma9b',  provider: 'groq',   model: 'gemma2-9b-it',               key: () => GROQ_KEY,          vision: false },
-    { id: 'llama8b',  provider: 'groq',   model: 'llama-3.1-8b-instant',       key: () => GROQ_KEY,          vision: false },
-];
 
 // ===== SUBJECT DETECTION =====
 function detectSubject(q) {
@@ -713,86 +690,29 @@ function getSystemPrompt(question) {
     return prompt;
 }
 
-// ===== API CALLS =====
-async function callGroq(model, question, systemPrompt, imageData) {
-    let messages;
-    if (imageData && model.vision) {
-        messages = [
-            { role: 'system', content: systemPrompt },
-            {
-                role: 'user',
-                content: [
-                    { type: 'image_url', image_url: { url: `data:${imageData.mimeType};base64,${imageData.base64}` } },
-                    { type: 'text', text: question || 'এই ছবিটি বিশ্লেষণ করো এবং বাংলায় ব্যাখ্যা দাও।' }
-                ]
-            }
-        ];
-    } else {
-        messages = [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: question }
-        ];
-    }
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + model.key(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            model: model.model,
-            messages,
-            temperature: 0.7,
-            max_tokens: 1200
-        })
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.choices?.[0]?.message?.content || null;
-}
-
-async function callGoogle(model, question, systemPrompt, imageData) {
-    const key = model.key();
-    let parts = [];
-    if (imageData) {
-        parts.push({ inline_data: { mime_type: imageData.mimeType, data: imageData.base64 } });
-    }
-    parts.push({ text: systemPrompt + '\n\nপ্রশ্ন: ' + (question || 'এই ছবিটি বিশ্লেষণ করো।') });
-
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model.model}:generateContent?key=${key}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts }] })
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
-}
-
-async function callModel(model, question, systemPrompt, imageData) {
-    try {
-        if (imageData && !model.vision) return null; // skip non-vision models for images
-        if (model.provider === 'groq') return await callGroq(model, question, systemPrompt, imageData);
-        if (model.provider === 'google') return await callGoogle(model, question, systemPrompt, imageData);
-        return null;
-    } catch (e) { return null; }
-}
-
-// ===== MAIN AI FUNCTION =====
+// ===== MAIN AI FUNCTION — calls the proxy worker, no keys/models exposed client-side =====
 async function askAI(question, imageData) {
     const systemPrompt = getSystemPrompt(question || 'ছবি বিশ্লেষণ করো');
-    const needsVision = !!imageData;
-
-    // For vision tasks, prioritize vision-capable models first
-    let modelOrder = needsVision
-        ? [...ALL_MODELS.filter(m => m.vision), ...ALL_MODELS.filter(m => !m.vision)]
-        : ALL_MODELS;
-
-    for (const model of modelOrder) {
-        const answer = await callModel(model, question, systemPrompt, imageData);
-        if (answer && answer.trim().length > 10) {
-            return { answer: answer.trim() };
+    try {
+        const res = await fetch(AI_PROXY_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                question: question || '',
+                image: imageData ? { base64: imageData.base64, mimeType: imageData.mimeType } : null,
+                systemPrompt
+            })
+        });
+        const data = await res.json();
+        if (data.success && data.answer && data.answer.trim().length > 5) {
+            return { answer: data.answer.trim() };
         }
+    } catch (e) {
+        console.error('ATLAS AI proxy error:', e);
     }
     return { answer: '❌ দুঃখিত! ATLAS AI এখন একটু busy আছে। কিছুক্ষণ পর আবার চেষ্টা করো। 🙏' };
 }
+
 
 // ===== IMAGE HANDLING =====
 function handleImageSelect(event) {

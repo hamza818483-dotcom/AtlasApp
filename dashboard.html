@@ -1358,6 +1358,8 @@
 ====================================================== */
 const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
+// AI calls go through the centralized proxy worker — no provider key lives here.
+const AI_PROXY_URL = 'https://atlas-ai-proxy.YOUR_SUBDOMAIN.workers.dev/';
 
 let isDarkMode = true;
 let isSidebarOpen = false;
@@ -2419,15 +2421,18 @@ async function loadAiExplain(btn, qId, questionText) {
     const resultDiv = btn.nextElementSibling;
     resultDiv.style.display = 'block';
     resultDiv.innerHTML = '<div style="font-size:11px;color:var(--text2);padding:6px;">🤖 AI ব্যাখ্যা লোড হচ্ছে...</div>';
-    const GROQ_KEY = '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';
     try {
-        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method:'POST',
-            headers:{'Authorization':'Bearer '+GROQ_KEY,'Content-Type':'application/json'},
-            body:JSON.stringify({ model:'llama-3.3-70b-versatile', max_tokens:600, messages:[{role:'system',content:'তুমি একজন বিশেষজ্ঞ শিক্ষক। বাংলায় সহজ ভাষায় উত্তর দাও।'},{role:'user',content:`এই MCQ প্রশ্নটি বিস্তারিত ব্যাখ্যা করো: "${questionText}"`}] })
+        const res = await fetch(AI_PROXY_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                question: `এই MCQ প্রশ্নটি বিস্তারিত ব্যাখ্যা করো: "${questionText}"`,
+                image: null,
+                systemPrompt: 'তুমি একজন বিশেষজ্ঞ শিক্ষক। বাংলায় সহজ ভাষায় উত্তর দাও।'
+            })
         });
         const data = await res.json();
-        const text = data.choices?.[0]?.message?.content || 'ব্যাখ্যা পাওয়া যায়নি।';
+        const text = (data.success && data.answer) ? data.answer : 'ব্যাখ্যা পাওয়া যায়নি।';
         resultDiv.innerHTML = `<div class="explanation-box" style="background:rgba(124,131,255,0.08);border-color:var(--accent);">🤖 <b>ATLAS AI ব্যাখ্যা:</b><br>${text.replace(/\n/g,'<br>')}</div>`;
     } catch(e) {
         resultDiv.innerHTML = `<div class="explanation-box" style="color:var(--red);">❌ AI ব্যাখ্যা লোড করা যায়নি।</div>`;

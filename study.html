@@ -289,8 +289,8 @@
 <script>
 const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
-const GROQ_KEY = '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';
-const GEMINI_KEYS = ['AIzaSyBHfdZwqQkrBWF2pp1hLCGZKaXKrinP9ew'];
+// All AI calls go through the centralized proxy worker — no provider key lives here.
+const AI_PROXY_URL = 'https://atlas-ai-proxy.YOUR_SUBDOMAIN.workers.dev/';
 
 let isDarkMode = true, isSidebarOpen = false, currentUser = null;
 
@@ -723,22 +723,7 @@ async function getPageImageBase64(p) {
     } catch (e) { return null; }
 }
 
-/* ── AI fallback chain: Gemini 2.5 Flash → Groq vision → Groq text-only (re-OCR fallback) ── */
-let keyUsage = {};
-function getNextGeminiKey() {
-    const today = new Date().toDateString();
-    if (keyUsage._date !== today) keyUsage = { _date: today };
-    let best = null, bestCnt = Infinity;
-    GEMINI_KEYS.forEach(k => { const c = keyUsage[k]||0; if (c < 1450 && c < bestCnt) { best = k; bestCnt = c; } });
-    if (best) { keyUsage[best] = (keyUsage[best]||0)+1; return best; }
-    return GEMINI_KEYS[GEMINI_KEYS.length-1];
-}
-
-const MCQ_VISION_MODELS = [
-    { id: 'gemini25', provider: 'google', model: 'gemini-2.5-flash', key: getNextGeminiKey },
-    { id: 'gemini20', provider: 'google', model: 'gemini-2.0-flash', key: getNextGeminiKey },
-    { id: 'llama90v', provider: 'groq',   model: 'llama-3.2-90b-vision-preview', key: () => GROQ_KEY }
-];
+/* ── AI fallback chain is now handled entirely by the atlas-ai-proxy worker — see generateMCQsFromImage() below ── */
 
 function mcqPrompt(type) {
     const typeInstructions = {
@@ -758,78 +743,28 @@ function mcqPrompt(type) {
 {"questions":[{"question":"...","options":["...","...","...","..."],"answer_index":0,"explanation":"..."}]}`;
 }
 
-// Parallel-race fallback chain — mirrors AtlasPro's server-side Worker
-// strategy (callAiVisionChain in workers/utils.js): try the fastest-priority
-// providers together and take whichever responds first with usable output,
-// instead of waiting on each one sequentially. Gemini 2.5 Flash leads the
-// first group per the agreed priority order.
+// All AI MCQ generation now goes through the centralized proxy worker, which
+// keeps every provider key (Gemini, OpenRouter, Groq, Cerebras, Cloudflare AI)
+// as a server-side secret and runs its own fallback chain internally — this
+// file no longer needs to know which provider actually answered.
 async function generateMCQsFromImage(imageData, type) {
-    // Group 1: Gemini 2.5 Flash + Gemini 2.0 Flash race together (fastest, highest priority)
-    const group1 = [
-        callGoogleVision(MCQ_VISION_MODELS[0], imageData, type).catch(() => null),
-        callGoogleVision(MCQ_VISION_MODELS[1], imageData, type).catch(() => null)
-    ];
-    let result = await raceForValidQuestions(group1);
-    if (result?.length) return result;
-
-    // Group 2: Groq vision fallback if both Gemini calls failed/empty
-    const group2 = [
-        callGroqVision(MCQ_VISION_MODELS[2], imageData, type).catch(() => null)
-    ];
-    result = await raceForValidQuestions(group2);
-    if (result?.length) return result;
-
-    return [];
-}
-
-// Waits for all promises in the group (Promise.allSettled) and returns the
-// first one that parses into a non-empty, quality-filtered question list —
-// matches the "for (r of results) if fulfilled && value) return" pattern
-// from the real Worker fallback chain.
-async function raceForValidQuestions(promises) {
-    const settled = await Promise.allSettled(promises);
-    for (const r of settled) {
-        if (r.status === 'fulfilled' && r.value) {
-            const parsed = parseQuestionsJSON(r.value);
-            if (parsed?.length) return parsed;
-        }
+    try {
+        const res = await fetch(AI_PROXY_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                question: '',
+                image: { base64: imageData.base64, mimeType: imageData.mimeType },
+                systemPrompt: mcqPrompt(type)
+            })
+        });
+        if (!res.ok) return [];
+        const data = await res.json();
+        if (!data.success || !data.answer) return [];
+        return parseQuestionsJSON(data.answer);
+    } catch (e) {
+        return [];
     }
-    return [];
-}
-
-async function callGoogleVision(model, imageData, type) {
-    const key = model.key();
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model.model}:generateContent?key=${key}`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            contents: [{ parts: [
-                { inline_data: { mime_type: imageData.mimeType, data: imageData.base64 } },
-                { text: mcqPrompt(type) }
-            ]}],
-            generationConfig: { temperature: 0.6, responseMimeType: 'application/json' }
-        })
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
-}
-
-async function callGroqVision(model, imageData, type) {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + model.key(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            model: model.model,
-            messages: [{ role: 'user', content: [
-                { type: 'image_url', image_url: { url: `data:${imageData.mimeType};base64,${imageData.base64}` } },
-                { type: 'text', text: mcqPrompt(type) }
-            ]}],
-            temperature: 0.6, max_tokens: 2000
-        })
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.choices?.[0]?.message?.content || null;
 }
 
 // Quality filtering — mirrors parseMcqJson() from AtlasPro's workers/utils.js:
