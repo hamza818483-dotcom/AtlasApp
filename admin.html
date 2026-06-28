@@ -1622,38 +1622,10 @@
                 <button class="btn btn-primary" onclick="stAddSubject()" style="width:100%">+ বিষয় যোগ করুন</button>
             </div>
 
-            <!-- Subject list -->
+            <!-- Subject list (প্রতিটা subject-এর নিচে chapter accordion inline expand হবে) -->
             <div class="form-card" style="margin-bottom:12px">
                 <div style="font-weight:700;font-size:13px;margin-bottom:10px">📘 বিষয় সমূহ <span id="stSubjCount" style="font-size:11px;color:var(--text2);font-weight:400"></span></div>
                 <div id="stSubjList"><div style="color:var(--text2);font-size:12px">লোড হচ্ছে...</div></div>
-            </div>
-
-            <!-- Chapter panel -->
-            <div class="form-card" id="stChapCard" style="display:none;margin-bottom:12px">
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-                    <span style="font-weight:700;font-size:13px;flex:1" id="stChapCardTitle">📂 অধ্যায় সমূহ</span>
-                    <button class="btn btn-outline" onclick="stCloseChap()" style="padding:3px 10px;font-size:11px">✕</button>
-                </div>
-                <div style="display:flex;gap:8px;margin-bottom:10px">
-                    <input id="stChapName" class="form-input" placeholder="অধ্যায়ের নাম" style="flex:1">
-                    <button class="btn btn-primary" onclick="stAddChapter()" style="white-space:nowrap;padding:0 14px">+ যোগ</button>
-                </div>
-                <div id="stChapList"><div style="color:var(--text2);font-size:12px">লোড হচ্ছে...</div></div>
-            </div>
-
-            <!-- Topic panel -->
-            <div class="form-card" id="stTopicCard" style="display:none">
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-                    <span style="font-weight:700;font-size:13px;flex:1" id="stTopicCardTitle">📝 টপিক সমূহ</span>
-                    <button class="btn btn-outline" onclick="stCloseTopic()" style="padding:3px 10px;font-size:11px">✕</button>
-                </div>
-                <p style="font-size:11px;color:var(--text2);margin-bottom:10px">Weight বাড়ালে ওই টপিকের % বেশি হবে। সব সমান রাখলে auto equal %।</p>
-                <div style="display:flex;gap:8px;margin-bottom:10px">
-                    <input id="stTopicName" class="form-input" placeholder="টপিকের নাম" style="flex:1">
-                    <input id="stTopicWeight" class="form-input" placeholder="Weight" style="width:72px">
-                    <button class="btn btn-primary" onclick="stAddTopic()" style="white-space:nowrap;padding:0 14px">+ যোগ</button>
-                </div>
-                <div id="stTopicList"></div>
             </div>
         </div>
 
