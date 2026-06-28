@@ -482,36 +482,36 @@ function buildSessionCard({dateLabel, dayLabel, dateKey, studySecs, breakSecs, s
     : '<span style="color:#10B981;font-size:9px">✓</span> সম্পন্ন';
   const safeData = encodeURIComponent(JSON.stringify({dateLabel,dayLabel,studySecs,breakSecs,sleepSecs,breaksUsed,sessionCount,restSecs,isOngoing}));
 
-  return \`<div class="sh-session-card \${isOngoing?'ongoing':''}" onclick="openCardPopup(decodeURIComponent('\${safeData}'))">
+  return `<div class="sh-session-card ${isOngoing?'ongoing':''}" onclick="openCardPopup(decodeURIComponent('${safeData}'))">
     <div class="sh-card-top">
       <div>
-        <div class="sh-session-date">\${escHtml(dateLabel)} <span style="font-size:8.5px;color:var(--text-secondary);font-weight:700">\${escHtml(dayLabel)}</span></div>
-        <div class="sh-session-meta">\${statusDot} · \${sessionCount}টি সেশন · \${breaksUsed}টি বিরতি</div>
+        <div class="sh-session-date">${escHtml(dateLabel)} <span style="font-size:8.5px;color:var(--text-secondary);font-weight:700">${escHtml(dayLabel)}</span></div>
+        <div class="sh-session-meta">${statusDot} · ${sessionCount}টি সেশন · ${breaksUsed}টি বিরতি</div>
       </div>
       <div class="sh-card-right">
-        <div class="sh-session-time">\${studyFmt}</div>
+        <div class="sh-session-time">${studyFmt}</div>
         <div class="sh-session-breaks">পড়েছে</div>
       </div>
     </div>
     <div class="sh-stat-row">
       <div class="sh-stat-item">
-        <div class="sh-stat-val" style="color:#10B981">\${studyFmt}</div>
+        <div class="sh-stat-val" style="color:#10B981">${studyFmt}</div>
         <div class="sh-stat-lbl"><svg width="8" height="8" viewBox="0 0 24 24" fill="none"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" stroke="#10B981" stroke-width="2.5" stroke-linejoin="round"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" stroke="#10B981" stroke-width="2.5" stroke-linejoin="round"/></svg> পড়া</div>
       </div>
       <div class="sh-stat-item">
-        <div class="sh-stat-val" style="color:#F59E0B">\${breakFmt}</div>
+        <div class="sh-stat-val" style="color:#F59E0B">${breakFmt}</div>
         <div class="sh-stat-lbl"><svg width="8" height="8" viewBox="0 0 24 24" fill="none"><path d="M17 8h1a4 4 0 010 8h-1" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round"/><path d="M3 8h14v9a4 4 0 01-4 4H7a4 4 0 01-4-4V8z" stroke="#F59E0B" stroke-width="2.5"/></svg> Break</div>
       </div>
       <div class="sh-stat-item">
-        <div class="sh-stat-val" style="color:#818CF8">\${sleepFmt}</div>
+        <div class="sh-stat-val" style="color:#818CF8">${sleepFmt}</div>
         <div class="sh-stat-lbl"><svg width="8" height="8" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="#818CF8" stroke-width="2.5" stroke-linecap="round"/></svg> Sleep</div>
       </div>
       <div class="sh-stat-item">
-        <div class="sh-stat-val" style="color:var(--text-secondary)">\${restFmt}</div>
+        <div class="sh-stat-val" style="color:var(--text-secondary)">${restFmt}</div>
         <div class="sh-stat-lbl"><svg width="8" height="8" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="var(--text-secondary)" stroke-width="2.5"/><path d="M12 7v5l3 3" stroke="var(--text-secondary)" stroke-width="2.5" stroke-linecap="round"/></svg> বাকি</div>
       </div>
     </div>
-  </div>\`;
+  </div>`;
 }
 
 /* ═══ CARD POPUP ═══ */
