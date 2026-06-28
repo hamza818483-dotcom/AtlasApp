@@ -40,6 +40,22 @@
 .sh-session-detail { font-size: 10px; color: var(--text-secondary); margin-top: 3px; display: flex; flex-wrap: wrap; gap: 6px; }
 .sh-detail-chip { display: inline-flex; align-items: center; gap: 3px; }
 
+/* আজকের ৩ box — chart এর উপরে */
+.sh-today-row { display: flex; gap: 6px; margin-bottom: 10px; }
+.sh-today-box {
+  flex: 1; padding: 10px 8px; border-radius: 12px;
+  border: 1.5px solid var(--border); text-align: center;
+  background: var(--card-bg);
+}
+.sh-today-study { border-color: rgba(16,185,129,.3); background: rgba(16,185,129,.05); }
+.sh-today-break { border-color: rgba(245,158,11,.3); background: rgba(245,158,11,.05); }
+.sh-today-sleep { border-color: rgba(129,140,248,.3); background: rgba(129,140,248,.05); }
+.sh-today-val { font-size: 16px; font-weight: 900; }
+.sh-today-study .sh-today-val { color: #10B981; }
+.sh-today-break .sh-today-val { color: #F59E0B; }
+.sh-today-sleep .sh-today-val { color: #818CF8; }
+.sh-today-lbl { font-size: 9px; color: var(--text-secondary); font-weight: 700; margin-top: 3px; }
+
 /* Bar chart — last 7 days */
 .sh-chart-card {
   background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px;
@@ -113,6 +129,22 @@
       <div class="sh-summary-card"><div class="sh-summary-val" id="shS3">—</div><div class="sh-summary-lbl" id="shL3">Sleep</div></div>
     </div>
 
+    <!-- আজকের ৩ box — chart এর উপরে -->
+    <div class="sh-today-row">
+      <div class="sh-today-box sh-today-study">
+        <div class="sh-today-val" id="todayStudyBox">—</div>
+        <div class="sh-today-lbl">📚 পড়েছে</div>
+      </div>
+      <div class="sh-today-box sh-today-break">
+        <div class="sh-today-val" id="todayBreakBox">—</div>
+        <div class="sh-today-lbl">☕ Break</div>
+      </div>
+      <div class="sh-today-box sh-today-sleep">
+        <div class="sh-today-val" id="todaySleepBox">—</div>
+        <div class="sh-today-lbl">😴 Sleep</div>
+      </div>
+    </div>
+
     <div class="sh-chart-card">
         <div class="sh-chart-title">📈 গত ৭ দিনের পড়াশোনা</div>
         <div class="sh-chart-row" id="shChartRow"><div class="sh-loading">লোড হচ্ছে...</div></div>
@@ -180,6 +212,7 @@ async function loadAllData(){
     safeFetch(`${SUPABASE_URL}/rest/v1/study_tracker_daily?user_phone=eq.${ph}&select=*&order=study_date.desc&limit=200`),
   ]);
   renderChart();
+  updateTodayBoxes();
   setPeriod(1, document.querySelector('.sh-period-btn.active'));
   renderSessionList(allSessions, allDaily);
 }
@@ -193,12 +226,10 @@ function setPeriod(days, btn){
   let since = null;
   if(days===1) since = today;
   else if(days>1) since = new Date(Date.now()-(days-1)*86400000).toISOString().slice(0,10);
-  // days===0 → all time, since=null
 
-  // Sum from focus_sessions (study_seconds is accurate)
   const filtered = allSessions.filter(s=>{
     if(!since) return true;
-    const dt = s.started_at||s.created_at||s.updated_at;
+    const dt = s.updated_at||s.started_at;
     if(!dt) return false;
     return dt.slice(0,10) >= since;
   });
@@ -208,11 +239,25 @@ function setPeriod(days, btn){
   const sleepTotal = filtered.reduce((a,s)=>a+(s.sleep_seconds||0),0);
 
   document.getElementById('shS1').textContent = fmtHM(studyTotal)||'0m';
-  document.getElementById('shL1').textContent = 'পড়েছে';
+  document.getElementById('shL1').textContent = days===1?'আজকে পড়েছে':'পড়েছে মোট';
   document.getElementById('shS2').textContent = fmtHM(breakTotal)||'0m';
   document.getElementById('shL2').textContent = 'Break';
   document.getElementById('shS3').textContent = fmtHM(sleepTotal)||'0m';
   document.getElementById('shL3').textContent = 'Sleep';
+}
+
+/* ═══ CHART TOP BOXES — আজকের live update ═══ */
+function updateTodayBoxes(){
+  const today = new Date().toISOString().slice(0,10);
+  const todaySess = allSessions.filter(s=>{
+    const dt = s.updated_at||s.started_at; return dt&&dt.slice(0,10)===today;
+  });
+  const study = todaySess.reduce((a,s)=>a+(s.study_seconds||0),0);
+  const brk   = todaySess.reduce((a,s)=>a+(s.break_seconds||0),0);
+  const slp   = todaySess.reduce((a,s)=>a+(s.sleep_seconds||0),0);
+  document.getElementById('todayStudyBox').textContent = fmtHM(study)||'0m';
+  document.getElementById('todayBreakBox').textContent = fmtHM(brk)||'0m';
+  document.getElementById('todaySleepBox').textContent = fmtHM(slp)||'0m';
 }
 
 /* ═══ CHART — last 7 days ═══ */
