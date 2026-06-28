@@ -1666,18 +1666,34 @@
             <div class="form-card" style="text-align:center;padding:32px;color:var(--text2)">শীঘ্রই এখানে Routine কন্টেন্ট ম্যানেজ করা যাবে।</div>
         </div>
         <div id="stBoxProgress" style="display:none">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
                 <button class="btn btn-outline" onclick="stCloseBox()" style="padding:5px 12px;font-size:12px">← Back</button>
-                <h3 style="font-size:15px">📊 Weak & Progress Analytics</h3>
+                <h3 style="flex:1;font-size:15px">📊 Weak &amp; Progress Analytics</h3>
             </div>
-            <div class="form-card" style="text-align:center;padding:32px;color:var(--text2)">Student progress analytics শীঘ্রই আসছে।</div>
+            <div style="display:flex;gap:8px;margin-bottom:14px">
+                <button class="btn btn-primary st-prog-tab" id="stProgTabHsc" onclick="stProgSwitchMode('hsc',this)" style="font-size:11px;padding:5px 14px">⚡ HSC</button>
+                <button class="btn btn-outline st-prog-tab" id="stProgTabMed" onclick="stProgSwitchMode('medical',this)" style="font-size:11px;padding:5px 14px">🏥 Medical</button>
+                <button class="btn btn-outline st-prog-tab" onclick="stProgSwitchMode('revision_hsc',this)" style="font-size:11px;padding:5px 14px">🔄 Rev HSC</button>
+                <button class="btn btn-outline st-prog-tab" onclick="stProgSwitchMode('revision_medical',this)" style="font-size:11px;padding:5px 14px">🔄 Rev Med</button>
+            </div>
+            <div class="form-card" style="padding:0;overflow:hidden">
+                <div style="padding:12px 14px;border-bottom:1px solid var(--border);font-weight:700;font-size:13px">🏆 Student Leaderboard</div>
+                <div id="stAdminProgWrap"><div style="color:var(--text2);font-size:12px;text-align:center;padding:32px">লোড হচ্ছে...</div></div>
+            </div>
         </div>
         <div id="stBoxRevision" style="display:none">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
                 <button class="btn btn-outline" onclick="stCloseBox()" style="padding:5px 12px;font-size:12px">← Back</button>
-                <h3 style="font-size:15px">🔄 Revision Planner</h3>
+                <h3 style="flex:1;font-size:15px">🔄 Revision Planner</h3>
             </div>
-            <div class="form-card" style="text-align:center;padding:32px;color:var(--text2)">Revision কন্টেন্ট ম্যানেজমেন্ট শীঘ্রই আসছে।</div>
+            <div style="display:flex;gap:8px;margin-bottom:14px">
+                <button class="btn btn-primary" id="stRevTabHsc" onclick="stRevSwitchMode('hsc',this)" style="font-size:11px;padding:5px 14px">⚡ HSC</button>
+                <button class="btn btn-outline" id="stRevTabMed" onclick="stRevSwitchMode('medical',this)" style="font-size:11px;padding:5px 14px">🏥 Medical</button>
+            </div>
+            <div class="form-card" style="padding:0">
+                <div style="padding:12px 14px;border-bottom:1px solid var(--border);font-weight:700;font-size:13px">📚 Syllabus Content Preview</div>
+                <div style="padding:12px" id="stRevSubjGrid"><div style="color:var(--text2);font-size:12px">লোড হচ্ছে...</div></div>
+            </div>
         </div>
 
     </div>
