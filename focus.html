@@ -1142,6 +1142,8 @@ let timerRunning = false;
 let paused = false;
 let sessionId = null;
 let studySecs = 0, breakSecs = 0, sleepSecs = 0, breaksUsed = 0;
+let sessionNumber = 1;          // increments each time Stop->Start happens same day, shown as (Session N)
+let accumulatedStudySecs = 0;   // total study time carried across stop/start cycles (for "Total Pora Time")
 let ticker = null, pollInterval = null;
 let allStudents = [], selectedBatch = 'all';
 let currentPeriod = 3;       // leaderboard days — matches default-active "৩ দিন" button in HTML
@@ -1166,17 +1168,41 @@ function fmtDisplay(s){
 
 /* ═══ PERSISTENCE ═══ */
 const STATE_KEY = 'focus_state_v2';
+const DAILY_PROGRESS_KEY = 'focus_daily_progress_v1'; // survives Stop (clearState), resets daily
 function saveState(){
   localStorage.setItem(STATE_KEY, JSON.stringify({mood,paused,sessionId,studySecs,breakSecs,sleepSecs,breaksUsed,savedAt:Date.now()}));
+  saveDailyProgress();
 }
 function loadState(){try{return JSON.parse(localStorage.getItem(STATE_KEY));}catch(_){return null;}}
 function clearState(){localStorage.removeItem(STATE_KEY);}
+
+// accumulatedStudySecs/sessionNumber — Stop করলেও থেকে যায়, কিন্তু দিন বদলালে রিসেট হয়
+function saveDailyProgress(){
+  if(!currentUser) return;
+  const today=new Date().toISOString().slice(0,10);
+  localStorage.setItem(DAILY_PROGRESS_KEY, JSON.stringify({phone:currentUser.phone,date:today,accumulatedStudySecs,sessionNumber}));
+}
+function loadDailyProgress(){
+  if(!currentUser) return;
+  try{
+    const d=JSON.parse(localStorage.getItem(DAILY_PROGRESS_KEY));
+    const today=new Date().toISOString().slice(0,10);
+    if(d && d.phone===currentUser.phone && d.date===today){
+      accumulatedStudySecs=d.accumulatedStudySecs||0;
+      sessionNumber=d.sessionNumber||1;
+    } else {
+      accumulatedStudySecs=0; sessionNumber=1;
+    }
+  }catch(_){ accumulatedStudySecs=0; sessionNumber=1; }
+}
 
 /* ═══ SESSION START ═══ */
 async function startSession(){
   if(!currentUser){ showToast('⚠️ লগইন করো'); goTo('auth.html'); return; }
   mood='study'; timerRunning=true; paused=false;
   studySecs=0; breakSecs=0; sleepSecs=0; breaksUsed=0;
+  // accumulatedStudySecs ও sessionNumber এখানে reset হয় না — আগের session(গুলোর)
+  // মোট সময় বজায় থাকে, নতুন session শুধু upore visible timer-কে শূন্য থেকে শুরু করায়।
 
   // Controls reset — instant UI
   document.getElementById('ctrlStartNew').style.display='none';
@@ -1239,7 +1265,7 @@ function injectSelfToLive(){
     premium: currentUser.premium||false,
     photo_url: currentUser.photo_url||null,
     status: (mood==='study' && paused) ? 'paused' : mood,
-    study_seconds: studySecs,
+    study_seconds: accumulatedStudySecs + studySecs,
     break_seconds: breakSecs,
     sleep_seconds: sleepSecs,
     breaks_used: breaksUsed,
@@ -1255,7 +1281,7 @@ function updateSelfInList(){
   if(!currentUser||!allStudents) return;
   const idx=allStudents.findIndex(s=>s.phone===currentUser.phone);
   if(idx===-1) return;
-  allStudents[idx].study_seconds=studySecs;
+  allStudents[idx].study_seconds=accumulatedStudySecs + studySecs;
   allStudents[idx].break_seconds=breakSecs;
   allStudents[idx].sleep_seconds=sleepSecs;
   allStudents[idx].breaks_used=breaksUsed;
@@ -1322,7 +1348,7 @@ function renderTimer(){
   if(mood==='study'){
     displaySecs=studySecs;
     moodIcon=`<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z" stroke="currentColor" stroke-width="1.8"/><path d="M12 5.5v13.4" stroke="currentColor" stroke-width="1.8"/></svg>`;
-    moodNameText='Study Mode';
+    moodNameText=sessionNumber>1?`Study Mode (Session ${sessionNumber})`:'Study Mode';
     moodNameClass='t-mood-name-study'; moodBarClass='t-mood-bar-study'; boxMoodClass='mood-study';
   } else if(mood==='break'){
     displaySecs=breakSecs;
@@ -1568,9 +1594,6 @@ function confirmEnd(){ closeModal(); doEnd(false); }
 async function doEnd(auto){
   clearInterval(ticker); stopPolling(); stopLiveSecTicker(); timerRunning=false;
   setHeaderGlow(false);
-  // নিজেকে সাথে সাথে list থেকে সরাও
-  if(currentUser) allStudents = allStudents.filter(s=>s.phone!==currentUser.phone);
-  renderBatchFilter(allStudents); renderLiveStudents(allStudents);
   const doneMsg = auto?'⏹ Auto ended':`✅ সম্পন্ন! ${fmtDisplay(studySecs)} পড়েছো`;
   if(sessionId){
     await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${sessionId}`,{
@@ -1579,10 +1602,31 @@ async function doEnd(auto){
     });
     await upsertDailyTotal(studySecs);
   }
-  // Reset state for new session — stay on timer screen
+  // আগে সম্পন্ন হওয়া এই session-এর সময় accumulated total-এ যুক্ত করে রাখো —
+  // user এখনো "Live পড়ছে" তে থাকবে এবং Total Pora Time শূন্য থেকে শুরু হবে না,
+  // যতটুকু আগে count হয়েছিল সেখান থেকেই বাড়বে। শুধু upore main display timer
+  // শূন্য থেকে শুরু হবে নতুন session-এর জন্য (Session No. দিয়ে চিহ্নিত)।
+  accumulatedStudySecs += studySecs;
+  sessionNumber++;
+  saveDailyProgress();
   studySecs=0; breakSecs=0; sleepSecs=0; breaksUsed=0;
   sessionId=null; mood='study'; paused=false; bsRunning=false;
   clearState();
+  // Keep self visible in the live list with accumulated total, marked idle
+  // (not removed) — only a fresh Start truly creates a new live DB session.
+  if(currentUser){
+    const idx=allStudents.findIndex(s=>s.phone===currentUser.phone);
+    const selfData={
+      name:currentUser.name||'তুমি',batch:currentUser.batch||null,
+      college:currentUser.college||null,premium:currentUser.premium||false,
+      photo_url:currentUser.photo_url||null,
+      status:'ended',study_seconds:accumulatedStudySecs,
+      break_seconds:0,sleep_seconds:0,breaks_used:0,
+      phone:currentUser.phone,_isSelf:true
+    };
+    if(idx===-1) allStudents.unshift(selfData); else allStudents[idx]=selfData;
+  }
+  renderBatchFilter(allStudents); renderLiveStudents(allStudents);
   // Stop হলে Start button দেখাবে — নতুন session শুরু করতে
   document.getElementById('ctrlStudy').style.display='none';
   document.getElementById('ctrlBreakSleep').style.display='none';
@@ -1762,8 +1806,22 @@ async function renderLive(){
         name:currentUser.name||'তুমি',batch:currentUser.batch||null,
         college:currentUser.college||null,premium:currentUser.premium||false,
         photo_url:currentUser.photo_url||null,
-        status:(mood==='study' && paused)?'paused':mood,study_seconds:studySecs,
+        status:(mood==='study' && paused)?'paused':mood,study_seconds:accumulatedStudySecs+studySecs,
         break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,
+        phone:currentUser.phone,_isSelf:true
+      };
+      if(selfIdx===-1) allStudents.unshift(selfData);
+      else allStudents[selfIdx]=selfData;
+    } else if(!timerRunning && currentUser && accumulatedStudySecs>0){
+      // Stop করার পরেও "Live পড়ছে" তে নাম+মোট সময় থাকবে (status 'ended' — dim/idle দেখাবে)
+      // যতক্ষণ না user আবার নতুন কোনো device থেকে actual নতুন session শুরু করে DB-তে নতুন row আসে।
+      const selfIdx=allStudents.findIndex(s=>s.phone===currentUser.phone);
+      const selfData={
+        name:currentUser.name||'তুমি',batch:currentUser.batch||null,
+        college:currentUser.college||null,premium:currentUser.premium||false,
+        photo_url:currentUser.photo_url||null,
+        status:'ended',study_seconds:accumulatedStudySecs,
+        break_seconds:0,sleep_seconds:0,breaks_used:0,
         phone:currentUser.phone,_isSelf:true
       };
       if(selfIdx===-1) allStudents.unshift(selfData);
@@ -2324,6 +2382,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(saved==='light'){isDarkMode=false;document.body.classList.add('light-mode');document.body.classList.remove('dark-mode');}
   try{currentUser=JSON.parse(localStorage.getItem('atlas-session'));}catch(_){currentUser=null;}
   if(!currentUser){location.replace('auth.html');return;}
+  loadDailyProgress();
   const restored=restoreSession();
   if(!restored) renderLive();
   startIdlePolling();
