@@ -1430,11 +1430,6 @@ function applyMoodSwitch(newMood){
   updateSelfInList(); renderLiveStudents(allStudents);
   const names={study:'📚 Study',break:'☕ বিরতি',sleep:'😴 ঘুম'};
   showToast(`${names[newMood]} শুরু হলো`);
-  if(newMood==='break'||newMood==='sleep'){
-    setTimeout(()=>openMoodOverlay(newMood),200);
-  } else {
-    closeMoodOverlay();
-  }
 }
 
 /* ═══ BREAK/SLEEP MOOD OVERLAY ═══ */
