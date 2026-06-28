@@ -1210,7 +1210,8 @@ function loadDailyProgress(){
 async function startSession(){
   if(!currentUser){ showToast('⚠️ লগইন করো'); goTo('auth.html'); return; }
   mood='study'; timerRunning=true; paused=false;
-  studySecs=0; breakSecs=0; sleepSecs=0; breaksUsed=0;
+  // accumulated থেকে শুরু — studySecs already set in doEnd
+  breakSecs=0; sleepSecs=0; breaksUsed=0;
   // accumulatedStudySecs ও sessionNumber এখানে reset হয় না — আগের session(গুলোর)
   // মোট সময় বজায় থাকে, নতুন session শুধু upore visible timer-কে শূন্য থেকে শুরু করায়।
 
@@ -1617,7 +1618,8 @@ async function doEnd(auto){
   accumulatedStudySecs += studySecs;
   sessionNumber++;
   saveDailyProgress();
-  studySecs=0; breakSecs=0; sleepSecs=0; breaksUsed=0;
+  // accumulated time timer এ দেখাবে — নতুন session এ এখান থেকে যোগ হবে
+  studySecs=accumulatedStudySecs; breakSecs=0; sleepSecs=0; breaksUsed=0;
   sessionId=null; mood='study'; paused=false; bsRunning=false;
 
   // বাকি সব render/list-update কাজ — এর মধ্যে কোনো একটায় error হলেও
@@ -1629,7 +1631,7 @@ async function doEnd(auto){
         name:currentUser.name||'তুমি',batch:currentUser.batch||null,
         college:currentUser.college||null,premium:currentUser.premium||false,
         photo_url:currentUser.photo_url||null,
-        status:'ended',study_seconds:accumulatedStudySecs,
+        status:'resting',study_seconds:accumulatedStudySecs,
         break_seconds:0,sleep_seconds:0,breaks_used:0,
         phone:currentUser.phone,_isSelf:true
       };
@@ -1879,7 +1881,7 @@ async function renderLive(){
         name:currentUser.name||'তুমি',batch:currentUser.batch||null,
         college:currentUser.college||null,premium:currentUser.premium||false,
         photo_url:currentUser.photo_url||null,
-        status:'ended',study_seconds:accumulatedStudySecs,
+        status:'resting',study_seconds:accumulatedStudySecs,
         break_seconds:0,sleep_seconds:0,breaks_used:0,
         phone:currentUser.phone,_isSelf:true
       };
@@ -2199,12 +2201,15 @@ function renderLiveStudents(students){
 
 function buildRankCard(s,rank,showStatus){
   const isPaused=s.status==='paused';
-  const isLive=s.status&&s.status!=='ended'&&!isPaused;
+  const isResting=s.status==='resting';
+  const isLive=s.status&&s.status!=='ended'&&s.status!=='resting'&&!isPaused;
 
   // Status pill
   let statusHtml='';
   if(showStatus){
-    if(isPaused){
+    if(isResting){
+      statusHtml=`<span class="r-status r-status-paused"><span class="r-status-dot" style="background:#6366F1;animation:none"></span>বিশ্রাম</span>`;
+    } else if(isPaused){
       statusHtml=`<span class="r-status r-status-paused"><span class="r-status-dot" style="background:#EF4444"></span>Pause</span>`;
     } else if(isLive){
       const sc=s.status==='break'?'r-status-break':s.status==='sleep'?'r-status-sleep':'r-status-study';
