@@ -1587,18 +1587,12 @@ function confirmEnd(){ closeModal(); doEnd(false); }
 
 async function doEnd(auto){
   clearInterval(ticker); stopPolling(); stopLiveSecTicker(); timerRunning=false;
-  // localStorage state সবার আগে মুছে ফেলা হচ্ছে (network call শুরুর আগেই) —
-  // আগে এটা নেটওয়ার্ক রিকোয়েস্ট শেষ হওয়ার পর হতো, তাই Stop চাপার ঠিক পরপরই
-  // কেউ পেজ রিফ্রেশ করলে পুরনো session state থেকে যেত এবং restoreSession()
-  // ভুলভাবে আগের (শেষ করা) session-টাই আবার চালু করে দিত।
   clearState();
   setHeaderGlow(false);
+  // সবার আগে timer screen নিশ্চিত করো — intro screen এ থাকলেও চলে আসবে
+  showTimerScreen();
 
-  // ⚠️ সবচেয়ে গুরুত্বপূর্ণ UI পরিবর্তন (Pause/Resume বাটন হাইড করে
-  // "নতুন Session শুরু করো" বাটন দেখানো) একদম সবার আগে, কোনো render/data
-  // লজিকের আগেই করা হচ্ছে — যাতে নিচের কোনো কোডে (renderLiveStudents,
-  // computeRank ইত্যাদি) error হলেও Stop confirm করার পর ইউজার আটকে
-  // "pause" স্ক্রিনে থেকে না যায়, বাটন সবসময় নিশ্চিতভাবে আসবে।
+  // ⚠️ UI update সবার আগে
   try{
     document.getElementById('ctrlStudy').style.display='none';
     document.getElementById('ctrlPause').style.display='none';
@@ -1608,7 +1602,7 @@ async function doEnd(auto){
     document.getElementById('btnStudy').classList.add('active');
     document.getElementById('btnBreak').classList.remove('active');
     document.getElementById('btnSleep').classList.remove('active');
-  }catch(e){ console.error('doEnd UI critical update error:', e); }
+  }catch(e){ console.error('doEnd UI error:', e); }
 
   const doneMsg = auto?'⏹ Auto ended':`✅ সম্পন্ন! ${fmtDisplay(studySecs)} পড়েছো`;
   const endedSessionId=sessionId, endedBreakSecs=breakSecs, endedSleepSecs=sleepSecs, endedBreaksUsed=breaksUsed;
