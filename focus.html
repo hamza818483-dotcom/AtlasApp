@@ -1253,6 +1253,7 @@ async function startSession(){
     })
   });
   sessionId = rows?.[0]?.id || null;
+  saveState(); // sessionId পাওয়ার পর আবার সেইভ — শুরুর সাথে সাথেই রিফ্রেশ করলেও session হারাবে না
 
   // DB insert হয়ে গেছে — এখন fresh fetch করলে নিজেকে পাবো
   // Filter reset করে নিজেকে দেখাও
@@ -1436,8 +1437,11 @@ function applyMoodSwitch(newMood){
   mood=newMood;
 
   if(newMood==='study'){
-    // Break/Sleep → Study: auto-stop break/sleep timer, resume study
-    breakSecs=0; sleepSecs=0;
+    // Break/Sleep → Study: study আবার শুরু/resume হয়। আগে breakSecs/sleepSecs
+    // রিসেট হয়ে যেত (০ করে দেওয়া হতো) — কিন্তু পরে যদি ইউজার আবার Break/Sleep
+    // mood-এ যায়, তখন আগের সময়ের উপর নতুন সময় যুক্ত (accumulate) হওয়া উচিত,
+    // রিসেট না। তাই এখানে breakSecs/sleepSecs স্পর্শ করা হচ্ছে না — শুধু
+    // bsRunning বন্ধ করা হচ্ছে যাতে break/sleep টিক আর না বাড়ে study mode-এ।
     bsRunning=false;
     paused=false;
     setHeaderGlow(true);
@@ -1446,14 +1450,18 @@ function applyMoodSwitch(newMood){
     document.getElementById('ctrlPause').style.display='flex';
     document.getElementById('ctrlResume').style.display='none';
   } else {
-    // Study → Break/Sleep: auto-pause study, show start/stop controls
+    // Study → Break/Sleep: study auto-pause হয়, এবং break/sleep timer
+    // এখন সাথে সাথেই auto-start হয়ে যায় — আগে আলাদা "Start" বাটনে চাপতে
+    // হতো, এখন mood select করলেই গণনা শুরু। আগের breakSecs/sleepSecs
+    // (যদি আগে কোনো break/sleep সেশন চলিয়ে study-তে ফিরে থাকে) এখানেও
+    // রিসেট হয় না, তার উপর থেকেই আবার চলবে।
     paused=true; // study timer paused
-    bsRunning=false;
+    bsRunning=true;
     setHeaderGlow(false);
     document.getElementById('ctrlStudy').style.display='none';
     document.getElementById('ctrlBreakSleep').style.display='flex';
-    document.getElementById('ctrlBSStart').style.display='flex';
-    document.getElementById('ctrlBSStop').style.display='none';
+    document.getElementById('ctrlBSStart').style.display='none';
+    document.getElementById('ctrlBSStop').style.display='flex';
   }
 
   updateMoodButtons(); renderTimer(); updateLsrCardHighlight(); saveState(); syncSession();
@@ -1608,15 +1616,15 @@ function confirmEnd(){ closeModal(); doEnd(false); }
 
 async function doEnd(auto){
   clearInterval(ticker); stopPolling(); stopLiveSecTicker(); timerRunning=false;
+  // localStorage state সবার আগে মুছে ফেলা হচ্ছে (network call শুরুর আগেই) —
+  // আগে এটা নেটওয়ার্ক রিকোয়েস্ট শেষ হওয়ার পর হতো, তাই Stop চাপার ঠিক পরপরই
+  // কেউ পেজ রিফ্রেশ করলে পুরনো session state থেকে যেত এবং restoreSession()
+  // ভুলভাবে আগের (শেষ করা) session-টাই আবার চালু করে দিত।
+  clearState();
   setHeaderGlow(false);
   const doneMsg = auto?'⏹ Auto ended':`✅ সম্পন্ন! ${fmtDisplay(studySecs)} পড়েছো`;
-  if(sessionId){
-    await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${sessionId}`,{
-      method:'PATCH',
-      body:JSON.stringify({status:'ended',study_seconds:accumulatedStudySecs+studySecs,break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,ended_at:new Date().toISOString()})
-    });
-    await upsertDailyTotal(accumulatedStudySecs+studySecs);
-  }
+  const endedSessionId=sessionId, endedStudySecs=studySecs, endedBreakSecs=breakSecs, endedSleepSecs=sleepSecs, endedBreaksUsed=breaksUsed;
+
   // আগে সম্পন্ন হওয়া এই session-এর সময় accumulated total-এ যুক্ত করে রাখো —
   // user এখনো "Live পড়ছে" তে থাকবে এবং Total Pora Time শূন্য থেকে শুরু হবে না,
   // যতটুকু আগে count হয়েছিল সেখান থেকেই বাড়বে। শুধু upore main display timer
@@ -1626,7 +1634,6 @@ async function doEnd(auto){
   saveDailyProgress();
   studySecs=0; breakSecs=0; sleepSecs=0; breaksUsed=0;
   sessionId=null; mood='study'; paused=false; bsRunning=false;
-  clearState();
   // Keep self visible in the live list with accumulated total, marked idle
   // (not removed) — only a fresh Start truly creates a new live DB session.
   if(currentUser){
@@ -1643,6 +1650,10 @@ async function doEnd(auto){
   }
   renderBatchFilter(allStudents); renderLiveStudents(allStudents);
   // Stop হলে Start button দেখাবে — নতুন session শুরু করতে
+  // (এই UI আপডেট গুলো এখন network sync-এর আগেই synchronously হয়ে যায়,
+  // তাই PATCH request slow/fail হলেও "নতুন Session শুরু করো" বাটন আসা
+  // আটকায় না — আগে এই বাটন network await এর পরে দেখানো হতো, তাই ধীর/ব্যর্থ
+  // রিকোয়েস্টে UI আটকে থাকত এবং বাটনই দেখা যেত না)
   document.getElementById('ctrlStudy').style.display='none';
   document.getElementById('ctrlBreakSleep').style.display='none';
   document.getElementById('ctrlPause').style.display='none';
@@ -1657,6 +1668,18 @@ async function doEnd(auto){
   // Restart polling for live list
   renderLive(); startIdlePolling();
   showToast(doneMsg, 3500);
+
+  // ডাটাবেস sync — UI ইতিমধ্যে আপডেট হয়ে গেছে, এই অংশ ব্যর্থ হলেও
+  // ইউজার আটকে থাকবে না (try-catch দিয়ে সুরক্ষিত)
+  if(endedSessionId){
+    try{
+      await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${endedSessionId}`,{
+        method:'PATCH',
+        body:JSON.stringify({status:'ended',study_seconds:accumulatedStudySecs,break_seconds:endedBreakSecs,sleep_seconds:endedSleepSecs,breaks_used:endedBreaksUsed,ended_at:new Date().toISOString()})
+      });
+      await upsertDailyTotal(accumulatedStudySecs);
+    }catch(e){ console.error('doEnd sync error:', e); }
+  }
 }
 
 async function upsertDailyTotal(addSecs){
