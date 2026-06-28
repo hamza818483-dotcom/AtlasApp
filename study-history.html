@@ -326,7 +326,10 @@ async function loadAllData(){
   ]);
   renderChart();
   updateTodayBoxes();
-  setPeriod(currentPeriodDays, document.querySelector('.sh-period-btn.active'));
+  // Session list সবসময় full history দেখাবে
+  renderSessionList(allSessions, allDaily);
+  // Summary only period অনুযায়ী
+  updatePeriodSummary(currentPeriodDays);
 }
 
 let currentPeriodDays = 1;
@@ -336,32 +339,31 @@ function setPeriod(days, btn){
   currentPeriodDays = days;
   document.querySelectorAll('.sh-period-btn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
+  updatePeriodSummary(days);
+  // Session list সবসময় full দেখাবে
+  renderSessionList(allSessions, allDaily);
+}
 
+function updatePeriodSummary(days){
   const today = new Date().toISOString().slice(0,10);
   let since = null;
   if(days===1) since = today;
   else if(days>1) since = new Date(Date.now()-(days-1)*86400000).toISOString().slice(0,10);
-
-  // Session filter for this period
   const filteredSess = allSessions.filter(s=>{
     if(!since) return true;
     const dt = s.updated_at||s.started_at;
     return dt && dt.slice(0,10) >= since;
   });
-  const filteredDaily = allDaily.filter(d=>{
-    if(!since) return true;
-    return d.study_date >= since;
-  });
-
-  // Summary cards
-  const studyTotal = filteredSess.reduce((a,s)=>a+(s.study_seconds||0),0);
-  const breakTotal = filteredSess.reduce((a,s)=>a+(s.break_seconds||0),0);
-  const sleepTotal = filteredSess.reduce((a,s)=>a+(s.sleep_seconds||0),0);
-
-
-
-  // Session list — period অনুযায়ী filter
-  renderSessionList(filteredSess, filteredDaily);
+  // today boxes update
+  const study = filteredSess.reduce((a,s)=>a+(s.study_seconds||0),0);
+  const brk   = filteredSess.reduce((a,s)=>a+(s.break_seconds||0),0);
+  const slp   = filteredSess.reduce((a,s)=>a+(s.sleep_seconds||0),0);
+  document.getElementById('todayStudyBox').textContent = fmtHM(study)||'0m';
+  document.getElementById('todayBreakBox').textContent = fmtHM(brk)||'0m';
+  document.getElementById('todaySleepBox').textContent = fmtHM(slp)||'0m';
+  // Label update
+  const lbl = days===1?'আজকে':days===0?'সবসময়':`বিগত ${days} দিন`;
+  document.getElementById('todayStudyBox').nextElementSibling.textContent = `📚 ${lbl}`;
 }
 
 /* ═══ CHART TOP BOXES — আজকের live update ═══ */
