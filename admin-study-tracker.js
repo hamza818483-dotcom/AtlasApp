@@ -92,14 +92,16 @@ async function stAddSubject() {
     const name = document.getElementById('stSubjName').value.trim();
     const short = document.getElementById('stSubjShort').value.trim();
     if (!name) { showToast('⚠️ বিষয়ের নাম দিন'); return; }
-    const existing = await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects?mode=eq.${stMode}&order=sort_order.desc&select=sort_order&limit=1`) || [];
-    const sort = existing.length ? existing[0].sort_order + 1 : 1;
-    await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects`, {method:'POST', body:JSON.stringify({name, short_name:short||name, mode:stMode, sort_order:sort})});
-    document.getElementById('stSubjName').value = '';
-    document.getElementById('stSubjShort').value = '';
-    showToast('✅ বিষয় যোগ হয়েছে');
-    stLoadSubjects();
-    stLoadDashCounts();
+    try {
+        const existing = await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects?mode=eq.${stMode}&order=sort_order.desc&select=sort_order&limit=1`) || [];
+        const sort = existing.length ? existing[0].sort_order + 1 : 1;
+        await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects`, {method:'POST', body:JSON.stringify({name, short_name:short||name, mode:stMode, sort_order:sort})});
+        document.getElementById('stSubjName').value = '';
+        document.getElementById('stSubjShort').value = '';
+        showToast('✅ বিষয় যোগ হয়েছে');
+        stLoadSubjects();
+        stLoadDashCounts();
+    } catch(e) { showToast('❌ Error: ' + e.message); }
 }
 async function stEditSubjPrompt(id, name, short) {
     const newName = prompt('বিষয়ের নতুন নাম:', name);
@@ -146,11 +148,13 @@ async function stLoadChapters() {
 async function stAddChapter() {
     const name = document.getElementById('stChapName').value.trim();
     if (!name || !stSelSubjId) { showToast('⚠️ অধ্যায়ের নাম দিন'); return; }
-    const existing = await safeFetch(`${SUPABASE_URL}/rest/v1/st_chapters?subject_id=eq.${stSelSubjId}&order=sort_order.desc&select=sort_order&limit=1`) || [];
-    const sort = existing.length ? existing[0].sort_order + 1 : 1;
-    await safeFetch(`${SUPABASE_URL}/rest/v1/st_chapters`, {method:'POST', body:JSON.stringify({name, subject_id:stSelSubjId, sort_order:sort})});
-    document.getElementById('stChapName').value = '';
-    showToast('✅ অধ্যায় যোগ হয়েছে'); stLoadChapters();
+    try {
+        const existing = await safeFetch(`${SUPABASE_URL}/rest/v1/st_chapters?subject_id=eq.${stSelSubjId}&order=sort_order.desc&select=sort_order&limit=1`) || [];
+        const sort = existing.length ? existing[0].sort_order + 1 : 1;
+        await safeFetch(`${SUPABASE_URL}/rest/v1/st_chapters`, {method:'POST', body:JSON.stringify({name, subject_id:stSelSubjId, sort_order:sort})});
+        document.getElementById('stChapName').value = '';
+        showToast('✅ অধ্যায় যোগ হয়েছে'); stLoadChapters();
+    } catch(e) { showToast('❌ Error: ' + e.message); }
 }
 async function stEditChapPrompt(id, name) {
     const newName = prompt('অধ্যায়ের নতুন নাম:', name);
@@ -199,12 +203,14 @@ async function stAddTopic() {
     const name = document.getElementById('stTopicName').value.trim();
     const weight = parseInt(document.getElementById('stTopicWeight').value)||1;
     if (!name || !stSelChapId) { showToast('⚠️ টপিকের নাম দিন'); return; }
-    const existing = await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics?chapter_id=eq.${stSelChapId}&order=sort_order.desc&select=sort_order&limit=1`) || [];
-    const sort = existing.length ? existing[0].sort_order + 1 : 1;
-    await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics`, {method:'POST', body:JSON.stringify({name, chapter_id:stSelChapId, weight, sort_order:sort})});
-    document.getElementById('stTopicName').value = '';
-    document.getElementById('stTopicWeight').value = '';
-    showToast('✅ টপিক যোগ হয়েছে'); stLoadTopics();
+    try {
+        const existing = await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics?chapter_id=eq.${stSelChapId}&order=sort_order.desc&select=sort_order&limit=1`) || [];
+        const sort = existing.length ? existing[0].sort_order + 1 : 1;
+        await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics`, {method:'POST', body:JSON.stringify({name, chapter_id:stSelChapId, weight, sort_order:sort})});
+        document.getElementById('stTopicName').value = '';
+        document.getElementById('stTopicWeight').value = '';
+        showToast('✅ টপিক যোগ হয়েছে'); stLoadTopics();
+    } catch(e) { showToast('❌ Error: ' + e.message); }
 }
 async function stEditTopicPrompt(id, name, weight) {
     const newName = prompt('টপিকের নতুন নাম:', name);
@@ -334,3 +340,4 @@ function stUpdateRevBtns() {
 function stRevSwitchMode(mode, btn) {
     stRevMode = mode; stUpdateRevBtns(); stAdminLoadRevision();
 }
+
