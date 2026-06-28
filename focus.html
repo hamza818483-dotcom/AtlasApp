@@ -1877,7 +1877,17 @@ function clearLiveMoodFilter(){
 
 /* Rank formula: study_seconds / (1 + breaks_used * 0.5) */
 function computeRank(students){
+  const statusPriority = s => {
+    if(s.status==='study') return 0;   // live — সবার আগে
+    if(s.status==='paused') return 1;  // paused — তারপর
+    if(s.status==='break') return 2;   // বিরতি — তারপর
+    if(s.status==='sleep') return 3;   // ঘুম — সবার পরে
+    return 4;
+  };
   return [...students].sort((a,b)=>{
+    const pa=statusPriority(a), pb=statusPriority(b);
+    if(pa!==pb) return pa-pb; // প্রথমে status priority
+    // same status-এ score দিয়ে sort
     const scoreA=a.study_seconds/(1+(a.breaks_used||0)*0.5);
     const scoreB=b.study_seconds/(1+(b.breaks_used||0)*0.5);
     return scoreB-scoreA;
@@ -2098,8 +2108,27 @@ function renderBatchFilter(students){
 function filterBatch(b){ selectedBatch=b; renderBatchFilter(allStudents); renderLiveStudents(allStudents); }
 
 function renderLiveStudents(students){
-  // পড়ছে = শুধু study + paused — break/sleep কখনো না
-  const pool=students.filter(s=>s.status==='study'||s.status==='paused');
+  const titleEl=document.getElementById('liveTitleText');
+
+  // Mood-based filtering
+  let pool, emptyMsg, titleText;
+  if(mood==='break'){
+    pool=students.filter(s=>s.status==='break');
+    titleText='☕ বিরতিতে আছে';
+    emptyMsg='এই মুহূর্তে কেউ বিরতিতে নেই';
+  } else if(mood==='sleep'){
+    pool=students.filter(s=>s.status==='sleep');
+    titleText='😴 ঘুমাচ্ছে';
+    emptyMsg='এই মুহূর্তে কেউ ঘুমাচ্ছে না';
+  } else {
+    // Study mood: সবাই দেখাবে — live (study) সবার আগে, তারপর paused, তারপর break/sleep
+    pool=students; // সব
+    titleText='এখন Live পড়ছে';
+    emptyMsg='এই মুহূর্তে কেউ নেই';
+  }
+
+  if(titleEl) titleEl.textContent=titleText;
+
   const filtered=selectedBatch==='all'
     ?pool
     :pool.filter(s=>(s.batch||'অন্যান্য')===selectedBatch);
@@ -2107,7 +2136,7 @@ function renderLiveStudents(students){
   const list=document.getElementById('liveStudentsList');
   if(!list) return;
   if(!ranked.length){
-    list.innerHTML=`<div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:11px">এই মুহূর্তে কেউ পড়ছে না</div>`;
+    list.innerHTML=`<div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:11px">${emptyMsg}</div>`;
     return;
   }
   list.innerHTML=ranked.map((s,i)=>buildRankCard(s,i+1,true)).join('');
