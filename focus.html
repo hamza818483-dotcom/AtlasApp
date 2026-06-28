@@ -1238,7 +1238,7 @@ function injectSelfToLive(){
     college: currentUser.college||null,
     premium: currentUser.premium||false,
     photo_url: currentUser.photo_url||null,
-    status: paused ? 'paused' : mood,
+    status: (mood==='study' && paused) ? 'paused' : mood,
     study_seconds: studySecs,
     break_seconds: breakSecs,
     sleep_seconds: sleepSecs,
@@ -1259,7 +1259,11 @@ function updateSelfInList(){
   allStudents[idx].break_seconds=breakSecs;
   allStudents[idx].sleep_seconds=sleepSecs;
   allStudents[idx].breaks_used=breaksUsed;
-  allStudents[idx].status=paused?'paused':mood;
+  // 'paused' status should ONLY apply while actually in Study Mood and paused.
+  // In break/sleep mode, `paused` is just an internal flag meaning "study timer
+  // frozen" — it must never override the real mood, or break/sleep sessions
+  // incorrectly show up as 'paused' (and disappear from their own list).
+  allStudents[idx].status=(mood==='study' && paused)?'paused':mood;
   allStudents[idx]._isSelf=true;
 }
 
@@ -1758,7 +1762,7 @@ async function renderLive(){
         name:currentUser.name||'তুমি',batch:currentUser.batch||null,
         college:currentUser.college||null,premium:currentUser.premium||false,
         photo_url:currentUser.photo_url||null,
-        status:paused?'paused':mood,study_seconds:studySecs,
+        status:(mood==='study' && paused)?'paused':mood,study_seconds:studySecs,
         break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,
         phone:currentUser.phone,_isSelf:true
       };
