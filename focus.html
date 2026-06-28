@@ -1338,7 +1338,14 @@ async function syncSession(){
   if(!sessionId) return;
   await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${sessionId}`,{
     method:'PATCH',
-    body:JSON.stringify({status:mood,study_seconds:studySecs,break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,updated_at:new Date().toISOString()})
+    body:JSON.stringify({
+      status:mood,
+      study_seconds: accumulatedStudySecs + studySecs,  // accumulated + current
+      break_seconds:breakSecs,
+      sleep_seconds:sleepSecs,
+      breaks_used:breaksUsed,
+      updated_at:new Date().toISOString()
+    })
   });
 }
 
@@ -1346,7 +1353,7 @@ async function syncSession(){
 function renderTimer(){
   let displaySecs, moodIcon, moodNameText, moodNameClass, moodBarClass, boxMoodClass;
   if(mood==='study'){
-    displaySecs=studySecs;
+    displaySecs = accumulatedStudySecs + studySecs;  // আগের session + current session একসাথে
     moodIcon=`<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z" stroke="currentColor" stroke-width="1.8"/><path d="M12 5.5v13.4" stroke="currentColor" stroke-width="1.8"/></svg>`;
     moodNameText=sessionNumber>1?`Study Mode (Session ${sessionNumber})`:'Study Mode';
     moodNameClass='t-mood-name-study'; moodBarClass='t-mood-bar-study'; boxMoodClass='mood-study';
