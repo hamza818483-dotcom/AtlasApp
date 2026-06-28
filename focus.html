@@ -1722,10 +1722,22 @@ function startLiveSecTicker(){
 
 function updateLsrCardHighlight(){
   const isStudy=mood==='study';
+  const isBreak=mood==='break';
+  const isSleep=mood==='sleep';
   const studyCard=document.getElementById('lsrCardStudy');
   if(studyCard){
     studyCard.style.borderColor=isStudy?'#10B981':'var(--border)';
     studyCard.style.background=isStudy?'rgba(16,185,129,.08)':'var(--card-bg)';
+  }
+  const breakCard=document.getElementById('lsrCardBreak');
+  if(breakCard){
+    breakCard.style.borderColor=isBreak?'#F59E0B':'var(--border)';
+    breakCard.style.background=isBreak?'rgba(245,158,11,.08)':'var(--card-bg)';
+  }
+  const sleepCard=document.getElementById('lsrCardSleep');
+  if(sleepCard){
+    sleepCard.style.borderColor=isSleep?'#818CF8':'var(--border)';
+    sleepCard.style.background=isSleep?'rgba(99,102,241,.08)':'var(--card-bg)';
   }
 }
 
