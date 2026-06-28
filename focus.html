@@ -1170,6 +1170,7 @@ function fmtDisplay(s){
 const STATE_KEY = 'focus_state_v2';
 const DAILY_PROGRESS_KEY = 'focus_daily_progress_v1'; // survives Stop (clearState), resets daily
 function saveState(){
+  if(!timerRunning) return;  // session নেই — state save করব না, clearState এর effect নষ্ট হবে না
   localStorage.setItem(STATE_KEY, JSON.stringify({mood,paused,sessionId,studySecs,breakSecs,sleepSecs,breaksUsed,savedAt:Date.now()}));
   saveDailyProgress();
 }
@@ -2355,7 +2356,9 @@ function renderCompareStats(myStudy,myBreaks,theirStudy,theirBreaks,myDaily,thei
 /* ═══ RESTORE SESSION ═══ */
 function restoreSession(){
   const saved=loadState();
-  if(!saved||(saved.mood!=='study'&&saved.mood!=='break'&&saved.mood!=='sleep')) return false;
+  if(!saved) return false;
+  if(!saved.sessionId) return false;  // Stop করা হয়েছে — auto-start করব না
+  if(saved.mood!=='study'&&saved.mood!=='break'&&saved.mood!=='sleep') return false;
   const elapsed=Math.floor((Date.now()-saved.savedAt)/1000);
   mood=saved.mood; paused=saved.paused||false; sessionId=saved.sessionId;
   breaksUsed=saved.breaksUsed||0;
