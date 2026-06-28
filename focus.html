@@ -1022,15 +1022,15 @@
 
     <!-- ═══ LIVE STATS (above live list) ═══ -->
     <div class="live-stats-row">
-      <div class="lsr-card" id="lsrCardStudy" onclick="filterLiveByMood('study')" style="cursor:pointer">
+      <div class="lsr-card" id="lsrCardStudy">
         <div class="lsr-val green" id="lsrStudy">0</div>
         <div class="lsr-lbl"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:2px"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z" stroke="#10B981" stroke-width="2"/><path d="M12 5.5v13.4" stroke="#10B981" stroke-width="2"/></svg>পড়ছে</div>
       </div>
-      <div class="lsr-card" id="lsrCardBreak" onclick="filterLiveByMood('break')" style="cursor:pointer">
+      <div class="lsr-card" id="lsrCardBreak" onclick="openMoodOverlay('break')" style="cursor:pointer">
         <div class="lsr-val amber" id="lsrBreak">0</div>
         <div class="lsr-lbl"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:2px"><path d="M6 2v3M10 2v3M14 2v3" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"/><path d="M4 5h12l-1.5 9H5.5L4 5z" stroke="#F59E0B" stroke-width="1.8"/><path d="M16 8c2 0 4 1 4 3s-2 3-4 3" stroke="#F59E0B" stroke-width="1.8" stroke-linecap="round"/></svg>বিরতিতে</div>
       </div>
-      <div class="lsr-card" id="lsrCardSleep" onclick="filterLiveByMood('sleep')" style="cursor:pointer">
+      <div class="lsr-card" id="lsrCardSleep" onclick="openMoodOverlay('sleep')" style="cursor:pointer">
         <div class="lsr-val purple" id="lsrSleep">0</div>
         <div class="lsr-lbl"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:2px"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="#818CF8" stroke-width="2" fill="rgba(129,140,248,.1)"/></svg>ঘুমাচ্ছে</div>
       </div>
@@ -1483,25 +1483,30 @@ function closeMoodOverlay(){
 }
 
 function updateMoodOverlayList(m){
-  const peers=allStudents.filter(s=>s.status===m && !s._isSelf);
-  document.getElementById('moodOverlayCount').textContent=`${peers.length+1} জন`;
-  const cards=peers.map((s,i)=>buildRankCard(s,i+2,true)).join('');
-  // self at top
-  const selfSecs=m==='break'?breakSecs:sleepSecs;
-  const mn=Math.floor(selfSecs/60),sc=selfSecs%60;
-  const selfCard=`<div class="r-card is-live rank1-card" data-phone="${escHtml(currentUser?.phone||'')}">
-    <div class="r-rank"><svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#F59E0B"/><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="900" fill="#000" font-family="monospace">1</text></svg></div>
-    <div class="r-photo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" fill="rgba(99,102,241,.5)"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="rgba(99,102,241,.35)"/></svg></div>
-    <div class="r-info">
-      <div class="r-name" style="font-weight:900">${escHtml(currentUser?.name||'তুমি')}</div>
-      ${currentUser?.batch?`<div class="r-batch-tag">HSC ${escHtml(currentUser.batch)}</div>`:''}
-    </div>
-    <div class="r-right">
-      <span class="r-status ${m==='break'?'r-status-break':'r-status-sleep'}"><span class="r-status-dot"></span>${m==='break'?'বিরতি':'ঘুম'}</span>
-      <div class="r-time">${String(mn).padStart(2,'0')}:${String(sc).padStart(2,'0')}</div>
-    </div>
-  </div>`;
-  document.getElementById('moodOverlayList').innerHTML=selfCard+cards;
+  // Strictly শুধু ওই mood — study/paused কখনো না
+  const peers=allStudents.filter(s=>s.status===m&&!s._isSelf);
+  const selfInMood=timerRunning&&mood===m&&bsRunning;
+  const totalCount=peers.length+(selfInMood?1:0);
+  document.getElementById('moodOverlayCount').textContent=totalCount+' জন';
+
+  let selfCard='';
+  if(selfInMood){
+    const selfSecs=m==='break'?breakSecs:sleepSecs;
+    const mn=Math.floor(selfSecs/60),sc=selfSecs%60;
+    const batchHtml=currentUser?.batch?('<div class="r-batch-tag" style="font-weight:600">HSC '+escHtml(currentUser.batch)+'</div>'):'';
+    selfCard='<div class="r-card is-live rank1-card" data-phone="'+escHtml(currentUser?.phone||'')+'">'+
+      '<div class="r-rank">'+MEDALS[0]+'</div>'+
+      '<div class="r-photo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" fill="rgba(99,102,241,.5)"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="rgba(99,102,241,.35)"/></svg></div>'+
+      '<div class="r-info"><div class="r-name" style="font-weight:900">'+escHtml(currentUser?.name||'তুমি')+'</div>'+batchHtml+'</div>'+
+      '<div class="r-right">'+
+        '<span class="r-status '+(m==='break'?'r-status-break':'r-status-sleep')+'"><span class="r-status-dot"></span>'+(m==='break'?'বিরতি':'ঘুম')+'</span>'+
+        '<div class="r-time">'+String(mn).padStart(2,'0')+':'+String(sc).padStart(2,'0')+'</div>'+
+      '</div></div>';
+  }
+  const peerCards=peers.map((s,i)=>buildRankCard(s,i+(selfInMood?2:1),true)).join('');
+  const content=selfCard+peerCards;
+  document.getElementById('moodOverlayList').innerHTML=content||
+    '<div style="text-align:center;padding:24px;color:var(--text-secondary);font-size:12px">এই মুহূর্তে কেউ নেই</div>';
 }
 
 // Back button closes overlay
@@ -2092,19 +2097,16 @@ function renderBatchFilter(students){
 function filterBatch(b){ selectedBatch=b; renderBatchFilter(allStudents); renderLiveStudents(allStudents); }
 
 function renderLiveStudents(students){
-  const selfEntry = students.find(s=>s._isSelf || s.phone===currentUser?.phone);
-  let filtered = activeLiveMoodFilter
-    ? students.filter(s=>s.status===activeLiveMoodFilter)
-    : (selectedBatch==='all'?students:students.filter(s=>(s.batch||'অন্যান্য')===selectedBatch));
-  // মুড filter (status ভিত্তিক) এ থাকলেই নিজেকে force-include করো — ব্যাচ filter এ না,
-  // কারণ ব্যাচ filter-এর মূল কাজই হলো শুধু সেই ব্যাচ দেখানো, নিজের ব্যাচ ভিন্ন হলেও।
-  if(activeLiveMoodFilter && selfEntry && !filtered.find(s=>s.phone===selfEntry.phone)){
-    filtered = [selfEntry, ...filtered];
-  }
+  // পড়ছে = শুধু study + paused — break/sleep কখনো না
+  const pool=students.filter(s=>s.status==='study'||s.status==='paused');
+  const filtered=selectedBatch==='all'
+    ?pool
+    :pool.filter(s=>(s.batch||'অন্যান্য')===selectedBatch);
   const ranked=computeRank(filtered);
   const list=document.getElementById('liveStudentsList');
+  if(!list) return;
   if(!ranked.length){
-    list.innerHTML=`<div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:11px">এই মুহূর্তে কেউ নেই</div>`;
+    list.innerHTML=`<div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:11px">এই মুহূর্তে কেউ পড়ছে না</div>`;
     return;
   }
   list.innerHTML=ranked.map((s,i)=>buildRankCard(s,i+1,true)).join('');
