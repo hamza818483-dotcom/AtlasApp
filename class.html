@@ -1495,6 +1495,7 @@ function cpSeekStart(e) {
     cpSeekMove(e);
 }
 
+let _cpSeekThrottle = 0;
 function cpSeekMove(e) {
     if (!cpSeeking && e.type === 'pointermove') return;
     const bar = document.getElementById('cpProgress');
@@ -1504,19 +1505,36 @@ function cpSeekMove(e) {
     const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     try {
         const dur = ytPlayer.getDuration() || 0;
-        ytPlayer.seekTo(pct * dur, true);
+        // Visual feedback updates every move — instant, cheap
         const fill = document.getElementById('cpFill');
         const thumb = document.getElementById('cpThumb');
         const ct = document.getElementById('cpCurTime');
         if(fill) fill.style.width = (pct * 100) + '%';
         if(thumb) thumb.style.left = (pct * 100) + '%';
         if(ct) ct.textContent = fmtTime(pct * dur);
+        // Actual seek is throttled — calling YouTube's seekTo on every single
+        // pointermove is the heavy part; ~12/sec is plenty smooth and far cheaper
+        const now = performance.now();
+        if (now - _cpSeekThrottle > 80) {
+            _cpSeekThrottle = now;
+            ytPlayer.seekTo(pct * dur, true);
+        }
     } catch(e2) {}
 }
 
 function cpSeekEnd(e) {
     cpSeeking = false;
     try { e.target.releasePointerCapture(e.pointerId); } catch(_) {}
+    // Final precise seek — the move-throttle above can leave the last move's seek
+    // un-applied if the drag ended inside the throttle window
+    try {
+        const fill = document.getElementById('cpFill');
+        if (fill && ytPlayer) {
+            const pct = parseFloat(fill.style.width) / 100;
+            const dur = ytPlayer.getDuration() || 0;
+            if (!isNaN(pct)) ytPlayer.seekTo(pct * dur, true);
+        }
+    } catch(_) {}
     try {
         if (ytPlayer && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) cpStartTimer();
     } catch(_) {}
@@ -1597,7 +1615,7 @@ function _layoutFsInner() {
     } else {
         // Still portrait — simulate landscape via rotated box sized to the real viewport
         const cssW = vh, cssH = vw; // swapped so the rotated visual footprint = vw × vh
-        inner.style.cssText = `position:absolute;top:50%;left:50%;width:${cssW}px;height:${cssH}px;transform:translate(-50%,-50%) rotate(90deg);transform-origin:center center;background:#000;overflow:hidden;`;
+        inner.style.cssText = `position:absolute;top:50%;left:50%;width:${cssW}px;height:${cssH}px;transform:translate(-50%,-50%) rotate(90deg);transform-origin:center center;background:#000;overflow:hidden;will-change:transform;`;
     }
 }
 
@@ -1678,6 +1696,14 @@ function _buildFsControls(container) {
     fsBar.addEventListener('pointerup', (e) => {
         fsSeeking = false;
         fsBar.releasePointerCapture(e.pointerId);
+        try {
+            const fill = document.getElementById('fsFill');
+            if (fill && ytPlayer) {
+                const pct = parseFloat(fill.style.width) / 100;
+                const dur = ytPlayer.getDuration() || 0;
+                if (!isNaN(pct)) ytPlayer.seekTo(pct * dur, true);
+            }
+        } catch(_) {}
     });
     fsBar.addEventListener('pointercancel', (e) => {
         fsSeeking = false;
@@ -1697,6 +1723,7 @@ function _showFsControls() {
     }, 3500);
 }
 
+let _fsSeekThrottle = 0;
 function _fsMoveSeek(e) {
     const bar = document.getElementById('fsProgress');
     if (!bar || !ytPlayer) return;
@@ -1705,13 +1732,20 @@ function _fsMoveSeek(e) {
     const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     try {
         const dur = ytPlayer.getDuration() || 0;
-        ytPlayer.seekTo(pct * dur, true);
+        // Visual feedback — instant on every move
         const fill = document.getElementById('fsFill');
         const thumb = document.getElementById('fsThumb');
         const ct = document.getElementById('fsCurTime');
         if(fill) fill.style.width = (pct*100)+'%';
         if(thumb) thumb.style.left = (pct*100)+'%';
         if(ct) ct.textContent = fmtTime(pct * dur);
+        // Actual seek throttled — same reasoning as the normal player's seek bar,
+        // and more important here since the rotated container is heavier to render
+        const now = performance.now();
+        if (now - _fsSeekThrottle > 80) {
+            _fsSeekThrottle = now;
+            ytPlayer.seekTo(pct * dur, true);
+        }
     } catch(er) {}
 }
 
