@@ -1329,7 +1329,7 @@ async function openAIChat(qid){
     let prompt=`তুমি ATLAS APP-এর বিশেষজ্ঞ শিক্ষক। MCQ-টি বিস্তারিতভাবে বাংলায় ব্যাখ্যা করো:\n\nপ্রশ্ন: ${q.question_text}\n\n`;
     opts.forEach((opt,i)=>{prompt+=`${labels[i]}) ${opt}\n`;});
     prompt+=`\nসঠিক উত্তর: ${labels[q.answer_index-1]}) ${opts[q.answer_index-1]}\n\n`;
-    prompt+=`বিষয়বস্তু:\n১. কেন ${labels[q.answer_index-1]} সঠিক (বিস্তারিত বৈজ্ঞানিক ব্যাখ্যা)\n২. প্রতিটি ভুল অপশন কেন ভুল\n৩. এই টপিকের গুরুত্বপূর্ণ তথ্য\n৪. মনে রাখার টিপস\n\nChatGPT/Gemini-এর মতো বিস্তারিত, সহজ বাংলায়।`;
+    prompt+=`সংক্ষেপে (মোট ১৫০-২০০ শব্দের মধ্যে) বাংলায় ব্যাখ্যা করো:\n১. কেন ${labels[q.answer_index-1]} সঠিক\n২. বাকি অপশনগুলো কেন ভুল (১ লাইনে প্রতিটি)\n৩. মনে রাখার একটি ছোট টিপস\n\nসহজ, পরিষ্কার ভাষায়, অপ্রয়োজনীয় বিস্তার এড়িয়ে।`;
 
     const answer=await callAIForMCQ(prompt);
     aiChatHistory.push({role:'assistant',content:answer});

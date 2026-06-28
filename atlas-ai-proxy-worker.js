@@ -101,7 +101,7 @@ async function callGemini(env, question, systemPrompt, image) {
         {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ contents: [{ parts }], generationConfig: { maxOutputTokens: 2048 } }),
+            body: JSON.stringify({ contents: [{ parts }], generationConfig: { maxOutputTokens: 4096 } }),
         }
     );
     if (!res.ok) return { error: `Gemini HTTP ${res.status}` };
@@ -140,12 +140,13 @@ async function callOpenRouter(env, question, systemPrompt, image) {
                 { role: "user", content: userContent },
             ],
             temperature: 0.7,
-            max_tokens: 2048,
+            max_tokens: 4096,
         }),
     });
     if (!res.ok) return { error: `OpenRouter HTTP ${res.status}` };
     const data = await res.json();
     const answer = data.choices?.[0]?.message?.content || null;
+    if (data.choices?.[0]?.finish_reason === "length") return { error: "OpenRouter: response truncated" };
     return answer ? { answer, provider: "openrouter" } : { error: "OpenRouter: empty response" };
 }
 
@@ -177,11 +178,12 @@ async function callGroq(env, question, systemPrompt, image) {
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 2048 }),
+        body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 4096 }),
     });
     if (!res.ok) return { error: `Groq HTTP ${res.status}` };
     const data = await res.json();
     const answer = data.choices?.[0]?.message?.content || null;
+    if (data.choices?.[0]?.finish_reason === "length") return { error: "Groq: response truncated" };
     return answer ? { answer, provider: "groq" } : { error: "Groq: empty response" };
 }
 
@@ -201,12 +203,13 @@ async function callCerebras(env, question, systemPrompt, image) {
                 { role: "user", content: question },
             ],
             temperature: 0.7,
-            max_tokens: 2048,
+            max_tokens: 4096,
         }),
     });
     if (!res.ok) return { error: `Cerebras HTTP ${res.status}` };
     const data = await res.json();
     const answer = data.choices?.[0]?.message?.content || null;
+    if (data.choices?.[0]?.finish_reason === "length") return { error: "Cerebras: response truncated" };
     return answer ? { answer, provider: "cerebras" } : { error: "Cerebras: empty response" };
 }
 
