@@ -703,12 +703,14 @@ async function askAI(question, imageData) {
                 systemPrompt
             })
         });
-        const data = await res.json();
-        if (data.success && data.answer && data.answer.trim().length > 5) {
+        const rawText = await res.text();
+        let data;
+        try { data = JSON.parse(rawText); } catch(e) { data = null; }
+        if (data && data.success && data.answer && data.answer.trim().length > 5) {
             return { answer: data.answer.trim() };
         }
-        console.error('ATLAS AI proxy returned failure:', data);
-        const debugDetails = data.details ? data.details.join(' | ') : (data.error || 'no details');
+        console.error('ATLAS AI proxy returned failure:', rawText);
+        const debugDetails = 'HTTP ' + res.status + ' | RAW: ' + rawText.slice(0, 300);
         return { answer: '❌ দুঃখিত! ATLAS AI এখন একটু busy আছে। কিছুক্ষণ পর আবার চেষ্টা করো। 🙏\n\n[DEBUG]: ' + debugDetails };
     } catch (e) {
         console.error('ATLAS AI proxy error:', e);
