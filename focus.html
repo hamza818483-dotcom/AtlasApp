@@ -1040,11 +1040,11 @@
         <div class="lsr-val green" id="lsrStudy">0</div>
         <div class="lsr-lbl"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:2px"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z" stroke="#10B981" stroke-width="2"/><path d="M12 5.5v13.4" stroke="#10B981" stroke-width="2"/></svg>পড়ছে</div>
       </div>
-      <div class="lsr-card" id="lsrCardBreak" onclick="openMoodOverlay('break')" style="cursor:pointer">
+      <div class="lsr-card" id="lsrCardBreak">
         <div class="lsr-val amber" id="lsrBreak">0</div>
         <div class="lsr-lbl"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:2px"><path d="M6 2v3M10 2v3M14 2v3" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"/><path d="M4 5h12l-1.5 9H5.5L4 5z" stroke="#F59E0B" stroke-width="1.8"/><path d="M16 8c2 0 4 1 4 3s-2 3-4 3" stroke="#F59E0B" stroke-width="1.8" stroke-linecap="round"/></svg>বিরতিতে</div>
       </div>
-      <div class="lsr-card" id="lsrCardSleep" onclick="openMoodOverlay('sleep')" style="cursor:pointer">
+      <div class="lsr-card" id="lsrCardSleep">
         <div class="lsr-val purple" id="lsrSleep">0</div>
         <div class="lsr-lbl"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:2px"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="#818CF8" stroke-width="2" fill="rgba(129,140,248,.1)"/></svg>ঘুমাচ্ছে</div>
       </div>
@@ -1188,6 +1188,7 @@ function fmtDisplay(s){
 const STATE_KEY = 'focus_state_v2';
 const DAILY_PROGRESS_KEY = 'focus_daily_progress_v1'; // survives Stop (clearState), resets daily
 function saveState(){
+  if(!timerRunning) return;  // session নেই — state save করব না, clearState এর effect নষ্ট হবে না
   localStorage.setItem(STATE_KEY, JSON.stringify({mood,paused,sessionId,studySecs,breakSecs,sleepSecs,breaksUsed,savedAt:Date.now()}));
   saveDailyProgress();
 }
@@ -1245,7 +1246,11 @@ async function startSession(){
 
   const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions`,{
     method:'POST',
-    body:JSON.stringify({user_phone:currentUser.phone, status:'study'})
+    body:JSON.stringify({
+      user_phone:currentUser.phone,
+      status:'study',
+      study_seconds: accumulatedStudySecs  // আগের session-এর total থেকে শুরু
+    })
   });
   sessionId = rows?.[0]?.id || null;
 
@@ -1356,7 +1361,14 @@ async function syncSession(){
   if(!sessionId) return;
   await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${sessionId}`,{
     method:'PATCH',
-    body:JSON.stringify({status:mood,study_seconds:studySecs,break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,updated_at:new Date().toISOString()})
+    body:JSON.stringify({
+      status:mood,
+      study_seconds: accumulatedStudySecs + studySecs,  // accumulated + current
+      break_seconds:breakSecs,
+      sleep_seconds:sleepSecs,
+      breaks_used:breaksUsed,
+      updated_at:new Date().toISOString()
+    })
   });
 }
 
@@ -1364,7 +1376,7 @@ async function syncSession(){
 function renderTimer(){
   let displaySecs, moodIcon, moodNameText, moodNameClass, moodBarClass, boxMoodClass;
   if(mood==='study'){
-    displaySecs=studySecs;
+    displaySecs = accumulatedStudySecs + studySecs;  // আগের session + current session একসাথে
     moodIcon=`<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z" stroke="currentColor" stroke-width="1.8"/><path d="M12 5.5v13.4" stroke="currentColor" stroke-width="1.8"/></svg>`;
     moodNameText=sessionNumber>1?`Study Mode (Session ${sessionNumber})`:'Study Mode';
     moodNameClass='t-mood-name-study'; moodBarClass='t-mood-bar-study'; boxMoodClass='mood-study';
@@ -1551,7 +1563,7 @@ function pauseTimer(){
   if(sessionId){
     safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${sessionId}`,{
       method:'PATCH',
-      body:JSON.stringify({status:'paused',study_seconds:studySecs,break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,updated_at:new Date().toISOString()})
+      body:JSON.stringify({status:'paused',study_seconds:accumulatedStudySecs+studySecs,break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,updated_at:new Date().toISOString()})
     });
   }
   showToast('⏸ Timer pause হলো');
@@ -1568,7 +1580,7 @@ function resumeTimer(){
   if(sessionId){
     safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${sessionId}`,{
       method:'PATCH',
-      body:JSON.stringify({status:mood,study_seconds:studySecs,break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,updated_at:new Date().toISOString()})
+      body:JSON.stringify({status:mood,study_seconds:accumulatedStudySecs+studySecs,break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,updated_at:new Date().toISOString()})
     });
   }
   showToast('▶ Timer চালু হলো');
@@ -1577,10 +1589,10 @@ function resumeTimer(){
 
 /* ═══ STOP ═══ */
 function showModal(){
-  document.getElementById('ms-time').textContent=fmtDisplay(studySecs);
+  document.getElementById('ms-time').textContent=fmtDisplay(accumulatedStudySecs+studySecs);
   document.getElementById('ms-breaks').textContent=breaksUsed;
   document.getElementById('ms-sleep').textContent=fmtDisplay(sleepSecs);
-  document.getElementById('ms-total').textContent=fmtDisplay(studySecs+breakSecs+sleepSecs);
+  document.getElementById('ms-total').textContent=fmtDisplay(accumulatedStudySecs+studySecs+breakSecs+sleepSecs);
   // rank hint
   const rankEl=document.getElementById('ms-rank-info');
   if(studySecs>=600){
@@ -1601,9 +1613,9 @@ async function doEnd(auto){
   if(sessionId){
     await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${sessionId}`,{
       method:'PATCH',
-      body:JSON.stringify({status:'ended',study_seconds:studySecs,break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,ended_at:new Date().toISOString()})
+      body:JSON.stringify({status:'ended',study_seconds:accumulatedStudySecs+studySecs,break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,ended_at:new Date().toISOString()})
     });
-    await upsertDailyTotal(studySecs);
+    await upsertDailyTotal(accumulatedStudySecs+studySecs);
   }
   // আগে সম্পন্ন হওয়া এই session-এর সময় accumulated total-এ যুক্ত করে রাখো —
   // user এখনো "Live পড়ছে" তে থাকবে এবং Total Pora Time শূন্য থেকে শুরু হবে না,
@@ -1714,7 +1726,7 @@ function startLiveSecTicker(){
     if(timerRunning && currentUser && !paused){
       const selfIdx=allStudents.findIndex(s=>s.phone===currentUser.phone);
       if(selfIdx!==-1){
-        allStudents[selfIdx].study_seconds=studySecs;
+        allStudents[selfIdx].study_seconds=accumulatedStudySecs+studySecs;
         allStudents[selfIdx].break_seconds=breakSecs;
         allStudents[selfIdx].sleep_seconds=sleepSecs;
       }
@@ -1919,7 +1931,17 @@ function clearLiveMoodFilter(){
 
 /* Rank formula: study_seconds / (1 + breaks_used * 0.5) */
 function computeRank(students){
+  const statusPriority = s => {
+    if(s.status==='study') return 0;   // live — সবার আগে
+    if(s.status==='paused') return 1;  // paused — তারপর
+    if(s.status==='break') return 2;   // বিরতি — তারপর
+    if(s.status==='sleep') return 3;   // ঘুম — সবার পরে
+    return 4;
+  };
   return [...students].sort((a,b)=>{
+    const pa=statusPriority(a), pb=statusPriority(b);
+    if(pa!==pb) return pa-pb; // প্রথমে status priority
+    // same status-এ score দিয়ে sort
     const scoreA=a.study_seconds/(1+(a.breaks_used||0)*0.5);
     const scoreB=b.study_seconds/(1+(b.breaks_used||0)*0.5);
     return scoreB-scoreA;
@@ -2140,8 +2162,27 @@ function renderBatchFilter(students){
 function filterBatch(b){ selectedBatch=b; renderBatchFilter(allStudents); renderLiveStudents(allStudents); }
 
 function renderLiveStudents(students){
-  // পড়ছে = শুধু study + paused — break/sleep কখনো না
-  const pool=students.filter(s=>s.status==='study'||s.status==='paused');
+  const titleEl=document.getElementById('liveTitleText');
+
+  // Mood-based filtering
+  let pool, emptyMsg, titleText;
+  if(mood==='break'){
+    pool=students.filter(s=>s.status==='break');
+    titleText='☕ বিরতিতে আছে';
+    emptyMsg='এই মুহূর্তে কেউ বিরতিতে নেই';
+  } else if(mood==='sleep'){
+    pool=students.filter(s=>s.status==='sleep');
+    titleText='😴 ঘুমাচ্ছে';
+    emptyMsg='এই মুহূর্তে কেউ ঘুমাচ্ছে না';
+  } else {
+    // Study mood: সবাই দেখাবে — live (study) সবার আগে, তারপর paused, তারপর break/sleep
+    pool=students; // সব
+    titleText='এখন Live পড়ছে';
+    emptyMsg='এই মুহূর্তে কেউ নেই';
+  }
+
+  if(titleEl) titleEl.textContent=titleText;
+
   const filtered=selectedBatch==='all'
     ?pool
     :pool.filter(s=>(s.batch||'অন্যান্য')===selectedBatch);
@@ -2149,7 +2190,7 @@ function renderLiveStudents(students){
   const list=document.getElementById('liveStudentsList');
   if(!list) return;
   if(!ranked.length){
-    list.innerHTML=`<div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:11px">এই মুহূর্তে কেউ পড়ছে না</div>`;
+    list.innerHTML=`<div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:11px">${emptyMsg}</div>`;
     return;
   }
   list.innerHTML=ranked.map((s,i)=>buildRankCard(s,i+1,true)).join('');
@@ -2357,7 +2398,9 @@ function renderCompareStats(myStudy,myBreaks,theirStudy,theirBreaks,myDaily,thei
 /* ═══ RESTORE SESSION ═══ */
 function restoreSession(){
   const saved=loadState();
-  if(!saved||(saved.mood!=='study'&&saved.mood!=='break'&&saved.mood!=='sleep')) return false;
+  if(!saved) return false;
+  if(!saved.sessionId) return false;  // Stop করা হয়েছে — auto-start করব না
+  if(saved.mood!=='study'&&saved.mood!=='break'&&saved.mood!=='sleep') return false;
   const elapsed=Math.floor((Date.now()-saved.savedAt)/1000);
   mood=saved.mood; paused=saved.paused||false; sessionId=saved.sessionId;
   breaksUsed=saved.breaksUsed||0;

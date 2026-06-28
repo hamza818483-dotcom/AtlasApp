@@ -2,884 +2,828 @@
 <html lang="bn">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <title>Study Tracker – ATLAS</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0D1117">
+<link rel="stylesheet" href="style.css">
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
+/* ── Site-consistent variables ── */
 :root{
-  --bg:#0d1117;--card:#161b22;--card2:#1c2230;--border:#30363d;
-  --accent:#4f8ef7;--green:#22c55e;--yellow:#f59e0b;--red:#ef4444;
-  --purple:#a855f7;--sky:#38bdf8;--rose:#f43f5e;
-  --text:#e6edf3;--sub:#8b949e;--radius:14px;
+  --bg:#0D1117;--card:#161B22;--card2:#1C2129;--border:#21262D;
+  --accent:#7C83FF;--accent2:#5A5FE0;--text:#E6EDF3;--sub:#8B949E;
+  --green:#22C55E;--yellow:#F59E0B;--red:#EF4444;--purple:#A855F7;
+  --sky:#38BDF8;--rose:#F43F5E;--teal:#14B8A6;
+  --r:16px;--rm:12px;--rs:8px;
+  --shadow:0 4px 18px rgba(0,0,0,.45);
 }
-body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;min-height:100vh;padding-bottom:80px}
 
-/* TOP BAR */
-.topbar{display:flex;align-items:center;gap:12px;padding:16px 16px 0;position:sticky;top:0;background:var(--bg);z-index:100;padding-bottom:12px}
-.back-btn{width:38px;height:38px;border-radius:10px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
-.back-btn svg{width:18px;height:18px;stroke:var(--text)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:'Inter','Noto Sans Bengali',sans-serif;min-height:100vh;overflow-x:hidden}
+
+/* ── TOPBAR ── */
+.st-topbar{display:flex;align-items:center;gap:12px;padding:16px 16px 12px;position:sticky;top:0;z-index:90;background:var(--bg);border-bottom:1px solid var(--border)}
+.back-btn{width:38px;height:38px;border-radius:var(--rs);background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background .15s}
+.back-btn:active{background:var(--card2)}
+.back-btn svg{width:18px;height:18px;stroke:var(--text);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .topbar-title{font-size:17px;font-weight:700;flex:1}
-.topbar-badge{background:linear-gradient(135deg,#4f8ef7,#a855f7);padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600}
+.topbar-badge{background:linear-gradient(135deg,var(--accent),var(--purple));padding:4px 12px;border-radius:999px;font-size:11px;font-weight:700;color:#fff;letter-spacing:.3px}
 
-/* DASHBOARD GRID */
-.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px 16px}
-.dash-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:transform .15s,border-color .15s;position:relative;overflow:hidden;min-height:140px;display:flex;flex-direction:column;justify-content:space-between}
-.dash-card:active{transform:scale(.97)}
-.dash-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
-.dash-card.c1::before{background:linear-gradient(90deg,#4f8ef7,#38bdf8)}
-.dash-card.c2::before{background:linear-gradient(90deg,#22c55e,#4ade80)}
-.dash-card.c3::before{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
-.dash-card.c4::before{background:linear-gradient(90deg,#a855f7,#ec4899)}
-.dash-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
-.dash-icon svg{width:22px;height:22px}
-.c1 .dash-icon{background:rgba(79,142,247,.15)}
-.c2 .dash-icon{background:rgba(34,197,94,.15)}
-.c3 .dash-icon{background:rgba(245,158,11,.15)}
-.c4 .dash-icon{background:rgba(168,85,247,.15)}
-.dash-label{font-size:13px;font-weight:700;margin-bottom:4px}
-.dash-sub{font-size:11px;color:var(--sub);line-height:1.4}
-.dash-pct{font-size:22px;font-weight:800;margin-top:8px}
-.c1 .dash-pct{color:#4f8ef7}
-.c2 .dash-pct{color:#22c55e}
-.c3 .dash-pct{color:#f59e0b}
-.c4 .dash-pct{color:#a855f7}
+/* ── DASHBOARD GRID ── */
+.dash-wrap{padding:16px}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dash-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;cursor:pointer;transition:transform .15s,border-color .2s,box-shadow .2s;position:relative;overflow:hidden;min-height:148px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:var(--shadow)}
+.dash-card:active{transform:scale(.96)}
+.dash-card:hover{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.dash-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:var(--r) var(--r) 0 0}
+.c1::after{background:linear-gradient(90deg,var(--accent),var(--sky))}
+.c2::after{background:linear-gradient(90deg,var(--green),#4ade80)}
+.c3::after{background:linear-gradient(90deg,var(--yellow),#fbbf24)}
+.c4::after{background:linear-gradient(90deg,var(--purple),var(--rose))}
+.di{width:42px;height:42px;border-radius:var(--rm);display:flex;align-items:center;justify-content:center;margin-bottom:10px;flex-shrink:0}
+.di svg{width:22px;height:22px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.c1 .di{background:rgba(124,131,255,.15);} .c1 .di svg{stroke:var(--accent)}
+.c2 .di{background:rgba(34,197,94,.15);} .c2 .di svg{stroke:var(--green)}
+.c3 .di{background:rgba(245,158,11,.15);} .c3 .di svg{stroke:var(--yellow)}
+.c4 .di{background:rgba(168,85,247,.15);} .c4 .di svg{stroke:var(--purple)}
+.dc-label{font-size:13px;font-weight:700;margin-bottom:3px}
+.dc-sub{font-size:11px;color:var(--sub);line-height:1.45}
+.dc-pct{font-size:24px;font-weight:800;margin-top:6px;letter-spacing:-.5px}
+.c1 .dc-pct{color:var(--accent)} .c2 .dc-pct{color:var(--green)}
+.c3 .dc-pct{color:var(--yellow)} .c4 .dc-pct{color:var(--purple)}
+.dc-arrow{font-size:20px;margin-top:6px;color:var(--sub)}
 
-/* SECTION TITLE */
-.section-sep{padding:4px 16px 10px;font-size:12px;color:var(--sub);font-weight:600;letter-spacing:.6px;text-transform:uppercase}
+/* ── FULL SCREEN PANELS ── */
+.panel{display:none;position:fixed;inset:0;background:var(--bg);z-index:100;overflow-y:auto;overflow-x:hidden;padding-bottom:84px;animation:slideUp .22s ease}
+.panel.open{display:block}
+@keyframes slideUp{from{transform:translateY(32px);opacity:0}to{transform:translateY(0);opacity:1}}
 
-/* === PANELS (full screen overlay) === */
-.panel{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto;padding-bottom:80px}
-.panel.active{display:block}
-.panel-topbar{display:flex;align-items:center;gap:12px;padding:16px;position:sticky;top:0;background:var(--bg);z-index:10;border-bottom:1px solid var(--border)}
-.panel-title{font-size:16px;font-weight:700;flex:1}
-
-/* SYLLABUS TRACKER */
-.tab-row{display:flex;gap:8px;padding:12px 16px;overflow-x:auto;scrollbar-width:none}
+/* ── TAB ROW ── */
+.tab-row{display:flex;gap:8px;padding:12px 16px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border)}
 .tab-row::-webkit-scrollbar{display:none}
-.tab-btn{padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--card);color:var(--sub);white-space:nowrap;cursor:pointer;transition:all .15s}
-.tab-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.tab-btn{padding:7px 18px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid var(--border);background:transparent;color:var(--sub);white-space:nowrap;cursor:pointer;transition:all .15s;font-family:inherit}
+.tab-btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
 
-/* STATS BAR */
-.stats-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 16px 12px}
-.stat-item{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center}
-.stat-val{font-size:18px;font-weight:800;color:var(--accent)}
-.stat-lbl{font-size:10px;color:var(--sub);margin-top:2px}
+/* ── STATS ROW ── */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:14px 16px 10px}
+.s-item{background:var(--card);border:1px solid var(--border);border-radius:var(--rm);padding:10px 8px;text-align:center}
+.s-val{font-size:18px;font-weight:800;color:var(--accent)}
+.s-lbl{font-size:10px;color:var(--sub);margin-top:2px}
 
-/* OVERALL PROGRESS */
-.overall-bar-wrap{padding:0 16px 16px}
-.overall-bar-label{display:flex;justify-content:space-between;font-size:12px;color:var(--sub);margin-bottom:6px}
-.bar-track{height:10px;background:var(--card2);border-radius:999px;overflow:hidden}
-.bar-fill{height:100%;border-radius:999px;transition:width .4s}
-.fill-blue{background:linear-gradient(90deg,#4f8ef7,#38bdf8)}
-.fill-green{background:linear-gradient(90deg,#22c55e,#4ade80)}
-.fill-purple{background:linear-gradient(90deg,#a855f7,#ec4899)}
+/* ── PROGRESS BAR ── */
+.pbar-wrap{padding:0 16px 14px}
+.pbar-head{display:flex;justify-content:space-between;font-size:11px;color:var(--sub);margin-bottom:5px}
+.pbar-track{height:8px;background:var(--card2);border-radius:999px;overflow:hidden}
+.pbar-fill{height:100%;border-radius:999px;transition:width .5s ease}
+.fill-blue{background:linear-gradient(90deg,var(--accent),var(--sky))}
+.fill-green{background:linear-gradient(90deg,var(--green),#4ade80)}
+.fill-purple{background:linear-gradient(90deg,var(--purple),var(--rose))}
 
-/* SUBJECT GRID */
-.subj-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px}
-.subj-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;transition:border-color .15s}
+/* ── SUBJECT GRID ── */
+.subj-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 16px}
+.subj-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rm);padding:14px;cursor:pointer;transition:border-color .15s,transform .1s;position:relative}
 .subj-card:active{transform:scale(.97)}
-.subj-card.selected{border-color:var(--accent)}
-.subj-name{font-size:13px;font-weight:700;margin-bottom:8px}
-.subj-prog{display:flex;align-items:center;gap:8px}
-.subj-pct{font-size:12px;font-weight:700;color:var(--accent);min-width:32px}
-.mini-bar{flex:1;height:5px;background:var(--card2);border-radius:999px;overflow:hidden}
-.mini-fill{height:100%;background:linear-gradient(90deg,#4f8ef7,#38bdf8);border-radius:999px;transition:width .3s}
-.subj-chap{font-size:10px;color:var(--sub);margin-top:5px}
+.subj-card.sel{border-color:var(--accent);background:rgba(124,131,255,.06)}
+.subj-name{font-size:12px;font-weight:700;margin-bottom:8px;line-height:1.35}
+.subj-pct-row{display:flex;align-items:center;gap:7px}
+.subj-pct{font-size:11px;font-weight:700;color:var(--accent);min-width:30px}
+.mini-track{flex:1;height:4px;background:var(--card2);border-radius:999px;overflow:hidden}
+.mini-fill{height:100%;border-radius:999px;transition:width .4s}
+.mini-blue{background:linear-gradient(90deg,var(--accent),var(--sky))}
+.mini-green{background:linear-gradient(90deg,var(--green),#4ade80)}
+.mini-purple{background:linear-gradient(90deg,var(--purple),var(--rose))}
+.subj-meta{font-size:10px;color:var(--sub);margin-top:5px}
+.subj-badge{position:absolute;top:10px;right:10px;font-size:9px;padding:2px 7px;border-radius:999px;font-weight:600}
+.badge-done{background:rgba(34,197,94,.15);color:var(--green)}
 
-/* CHAPTER LIST */
-.chapter-panel{display:none;position:fixed;inset:0;background:var(--bg);z-index:300;overflow-y:auto;padding-bottom:80px}
-.chapter-panel.active{display:block}
-.chap-item{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer}
+/* ── CHAPTER LIST ── */
+.chap-item{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
 .chap-item:active{background:var(--card)}
-.chap-num{width:32px;height:32px;border-radius:8px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent);flex-shrink:0}
-.chap-info{flex:1}
-.chap-name{font-size:13px;font-weight:600;margin-bottom:3px}
-.chap-stat{font-size:11px;color:var(--sub)}
-.chap-pct-badge{font-size:12px;font-weight:700;color:var(--green)}
+.chap-num{width:34px;height:34px;border-radius:var(--rs);background:rgba(124,131,255,.12);border:1px solid rgba(124,131,255,.2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent);flex-shrink:0}
+.chap-body{flex:1;min-width:0}
+.chap-name{font-size:13px;font-weight:600;margin-bottom:4px}
+.chap-stat{font-size:11px;color:var(--sub);margin-bottom:4px}
+.chap-bar-track{height:3px;background:var(--card2);border-radius:999px;overflow:hidden}
+.chap-bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--sky));transition:width .3s}
+.chap-pct{font-size:12px;font-weight:700;color:var(--green);flex-shrink:0;min-width:36px;text-align:right}
 
-/* TOPIC LIST */
-.topic-panel{display:none;position:fixed;inset:0;background:var(--bg);z-index:400;overflow-y:auto;padding-bottom:80px}
-.topic-panel.active{display:block}
-.topic-item{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border)}
-.topic-check{width:22px;height:22px;border-radius:6px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .15s}
-.topic-check.done{background:var(--green);border-color:var(--green)}
-.topic-check.done svg{display:block}
-.topic-check svg{display:none;width:13px;height:13px;stroke:#fff;stroke-width:2.5}
-.topic-name{flex:1;font-size:13px;line-height:1.4}
-.topic-weight{font-size:10px;color:var(--sub);min-width:28px;text-align:right}
+/* ── TOPIC LIST ── */
+.topic-item{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border);transition:background .1s}
+.topic-item:active{background:var(--card)}
+.t-check{width:22px;height:22px;border-radius:6px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;transition:all .15s}
+.t-check.done{background:var(--green);border-color:var(--green)}
+.t-check svg{width:12px;height:12px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;display:none}
+.t-check.done svg{display:block}
+.topic-name{flex:1;font-size:13px;line-height:1.5;transition:color .15s}
+.topic-name.done{color:var(--sub);text-decoration:line-through}
 
-/* ROUTINE */
-.routine-tab-row{display:flex;gap:8px;padding:12px 16px}
-.routine-tab{flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:600;border:1px solid var(--border);background:var(--card);color:var(--sub);cursor:pointer;text-align:center;transition:all .15s}
-.routine-tab.active{background:var(--green);border-color:var(--green);color:#fff}
-.routine-content{padding:0 16px}
-.routine-empty{text-align:center;padding:60px 20px;color:var(--sub)}
-.routine-empty .big-icon{font-size:48px;margin-bottom:12px}
-.add-btn{width:100%;padding:14px;background:linear-gradient(135deg,#22c55e,#4ade80);color:#000;font-weight:700;font-size:14px;border:none;border-radius:12px;cursor:pointer;margin-top:16px}
+/* ── ROUTINE PLACEHOLDER ── */
+.placeholder{text-align:center;padding:64px 24px;color:var(--sub)}
+.ph-icon{font-size:52px;margin-bottom:16px}
+.ph-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px}
+.ph-sub{font-size:12px;line-height:1.7}
+.soon-btn{margin-top:20px;padding:13px 24px;background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;font-size:13px;font-weight:700;border:none;border-radius:var(--rm);cursor:pointer;font-family:inherit;transition:opacity .15s}
+.soon-btn:active{opacity:.8}
 
-/* WEAK & PROGRESS */
-.progress-section{padding:0 16px}
-.prog-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
-.prog-card-title{font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px}
-.prog-card-title span{font-size:16px}
-.history-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
-.history-item:last-child{border-bottom:none}
-.hist-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.hist-text{flex:1;font-size:12px;color:var(--sub)}
-.hist-time{font-size:11px;color:var(--sub)}
-.weak-badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;margin:4px}
-.weak-badge.red{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
-.weak-badge.yellow{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
-.weak-badge.green{background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
+/* ── PROGRESS PANEL ── */
+.prog-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rm);padding:14px;margin:0 16px 12px}
+.pc-title{font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.weak-chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:4px 10px;border-radius:999px;font-size:11px;font-weight:600;border:1px solid}
+.chip-r{background:rgba(239,68,68,.1);color:var(--red);border-color:rgba(239,68,68,.25)}
+.chip-y{background:rgba(245,158,11,.1);color:var(--yellow);border-color:rgba(245,158,11,.25)}
+.chip-g{background:rgba(34,197,94,.1);color:var(--green);border-color:rgba(34,197,94,.25)}
+.hist-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)}
+.hist-row:last-child{border:none}
+.hist-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.hist-txt{flex:1;font-size:12px;color:var(--sub)}
+.suggest-txt{font-size:12px;color:var(--sub);line-height:1.8}
 
-/* COMING SOON */
-.coming-soon{text-align:center;padding:60px 20px;color:var(--sub)}
-.coming-soon .cs-icon{font-size:48px;margin-bottom:14px}
-.coming-soon h3{font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px}
-.coming-soon p{font-size:13px;line-height:1.6}
+/* ── LOADING ── */
+.loading{text-align:center;padding:40px 16px;color:var(--sub);font-size:13px}
+.spin{display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:10px}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-/* MODAL BACKDROP */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:flex-end;justify-content:center}
-.modal-bg.active{display:flex}
-.modal-sheet{background:var(--card);border-radius:20px 20px 0 0;padding:20px 16px 40px;width:100%;max-height:85vh;overflow-y:auto}
-.modal-handle{width:40px;height:4px;background:var(--border);border-radius:999px;margin:0 auto 16px}
-.modal-title{font-size:15px;font-weight:700;margin-bottom:16px}
-
-/* TOAST */
-.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#22c55e;color:#000;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:9999;opacity:0;pointer-events:none;transition:opacity .3s;white-space:nowrap}
+/* ── TOAST ── */
+.toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);color:var(--text);padding:10px 20px;border-radius:999px;font-size:12px;font-weight:600;z-index:9999;opacity:0;pointer-events:none;transition:opacity .25s;white-space:nowrap;box-shadow:var(--shadow)}
 .toast.show{opacity:1}
 
-/* Nav-safe bottom */
-.bottom-nav-placeholder{height:64px}
+/* ── BOTTOM NAV (copy from site) ── */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);display:flex;z-index:80;padding-bottom:env(safe-area-inset-bottom)}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px 6px;font-size:10px;color:var(--sub);background:none;border:none;cursor:pointer;gap:4px;font-family:inherit;transition:color .15s}
+.nav-item.active{color:var(--accent)}
+.nav-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center}
+.ni-tile{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center}
+.tile-indigo{background:linear-gradient(135deg,#6366f1,#818cf8)}
+.tile-violet{background:linear-gradient(135deg,#7c3aed,#a78bfa)}
+.tile-orange{background:linear-gradient(135deg,#ea580c,#fb923c)}
+.tile-rose{background:linear-gradient(135deg,#e11d48,#fb7185)}
+.tile-teal{background:linear-gradient(135deg,#0d9488,#2dd4bf)}
+.tile-sky{background:linear-gradient(135deg,#0284c7,#38bdf8)}
+
+/* ── SECTION LABEL ── */
+.sec-lbl{padding:12px 16px 6px;font-size:11px;color:var(--sub);font-weight:600;letter-spacing:.6px;text-transform:uppercase}
+
+/* ── EMPTY STATE ── */
+.empty{padding:24px 16px;text-align:center;color:var(--sub);font-size:12px}
 </style>
 </head>
 <body>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- MAIN DASHBOARD -->
-<div id="mainDash">
-  <div class="topbar">
-    <div class="back-btn" onclick="history.back()">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+<!-- ══════════════════════════════
+     MAIN DASHBOARD
+══════════════════════════════ -->
+<div id="dashMain">
+  <div class="st-topbar">
+    <div class="back-btn" onclick="goTo('index.html')">
+      <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
     </div>
     <span class="topbar-title">📚 Study Tracker</span>
     <span class="topbar-badge">ATLAS</span>
   </div>
 
-  <div class="section-sep">ড্যাশবোর্ড</div>
+  <div class="dash-wrap">
+    <div class="sec-lbl">ড্যাশবোর্ড</div>
+    <div class="dash-grid">
 
-  <div class="dash-grid">
-    <!-- 1. Syllabus Tracker -->
-    <div class="dash-card c1" onclick="openPanel('syllabusPanel')">
-      <div>
-        <div class="dash-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#4f8ef7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><path d="M8 7h8M8 11h5"/></svg>
+      <div class="dash-card c1" onclick="showPanel('pSyllabus')">
+        <div>
+          <div class="di"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><path d="M8 7h8M8 11h5"/></svg></div>
+          <div class="dc-label">Syllabus Tracker</div>
+          <div class="dc-sub">HSC ও Medical<br>টপিক মার্ক করুন</div>
         </div>
-        <div class="dash-label">Syllabus Tracker</div>
-        <div class="dash-sub">HSC &amp; Medical<br>অধ্যায় ও টপিক ট্র্যাক</div>
+        <div class="dc-pct" id="d-syl-pct">0%</div>
       </div>
-      <div class="dash-pct" id="dashSylPct">0%</div>
-    </div>
 
-    <!-- 2. Routine Maker -->
-    <div class="dash-card c2" onclick="openPanel('routinePanel')">
-      <div>
-        <div class="dash-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+      <div class="dash-card c2" onclick="showPanel('pRoutine')">
+        <div>
+          <div class="di"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg></div>
+          <div class="dc-label">Routine Maker</div>
+          <div class="dc-sub">Daily ও Target<br>রুটিন তৈরি করুন</div>
         </div>
-        <div class="dash-label">Routine Maker</div>
-        <div class="dash-sub">Daily &amp; Target<br>রুটিন তৈরি করুন</div>
+        <div class="dc-arrow">→</div>
       </div>
-      <div class="dash-pct">→</div>
-    </div>
 
-    <!-- 3. Weak & Progress -->
-    <div class="dash-card c3" onclick="openPanel('progressPanel')">
-      <div>
-        <div class="dash-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <div class="dash-card c3" onclick="showPanel('pProgress')">
+        <div>
+          <div class="di"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+          <div class="dc-label">Weak &amp; Progress</div>
+          <div class="dc-sub">ইতিহাস ও পরামর্শ<br>দুর্বল বিষয় বিশ্লেষণ</div>
         </div>
-        <div class="dash-label">Weak &amp; Progress</div>
-        <div class="dash-sub">ইতিহাস ও পরামর্শ<br>দুর্বল বিষয় বিশ্লেষণ</div>
+        <div class="dc-pct" id="d-prog-pct" style="color:var(--yellow)">—</div>
       </div>
-      <div class="dash-pct" id="dashProgPct">—</div>
-    </div>
 
-    <!-- 4. Revision Planner -->
-    <div class="dash-card c4" onclick="openPanel('revisionPanel')">
-      <div>
-        <div class="dash-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+      <div class="dash-card c4" onclick="showPanel('pRevision')">
+        <div>
+          <div class="di"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg></div>
+          <div class="dc-label">Revision Planner</div>
+          <div class="dc-sub">HSC ও Medical<br>রিভিশন ট্র্যাক</div>
         </div>
-        <div class="dash-label">Revision Planner</div>
-        <div class="dash-sub">HSC &amp; Medical<br>রিভিশন ট্র্যাক করুন</div>
+        <div class="dc-pct" id="d-rev-pct">0%</div>
       </div>
-      <div class="dash-pct" id="dashRevPct">0%</div>
+
     </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════
-     PANEL 1: SYLLABUS TRACKER
-═══════════════════════════════════════ -->
-<div class="panel" id="syllabusPanel">
-  <div class="panel-topbar">
-    <div class="back-btn" onclick="closePanel('syllabusPanel')">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-    </div>
-    <span class="panel-title">📖 Syllabus Tracker</span>
+<!-- ══════════════════════════════
+     PANEL: SYLLABUS TRACKER
+══════════════════════════════ -->
+<div class="panel" id="pSyllabus">
+  <div class="st-topbar">
+    <div class="back-btn" onclick="hidePanel('pSyllabus')"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></div>
+    <span class="panel-title" style="font-size:16px;font-weight:700;flex:1">📖 Syllabus Tracker</span>
   </div>
-
   <div class="tab-row">
-    <button class="tab-btn active" onclick="switchSyllabusTab('hsc',this)">⚡ HSC</button>
-    <button class="tab-btn" onclick="switchSyllabusTab('medical',this)">🏥 Medical Admission</button>
+    <button class="tab-btn on" onclick="switchSTab('hsc',this)">⚡ HSC সিলেবাস</button>
+    <button class="tab-btn" onclick="switchSTab('medical',this)">🏥 Medical Admission</button>
   </div>
-
-  <!-- Stats -->
-  <div class="stats-bar" id="sylStatsBar">
-    <div class="stat-item"><div class="stat-val" id="statTotalSubj">13</div><div class="stat-lbl">মোট বিষয়</div></div>
-    <div class="stat-item"><div class="stat-val" id="statTotalChap">—</div><div class="stat-lbl">মোট অধ্যায়</div></div>
-    <div class="stat-item"><div class="stat-val" id="statOverallPct">0%</div><div class="stat-lbl">সম্পন্ন</div></div>
+  <div class="stats-row">
+    <div class="s-item"><div class="s-val" id="syl-s-subj">—</div><div class="s-lbl">বিষয়</div></div>
+    <div class="s-item"><div class="s-val" id="syl-s-chap">—</div><div class="s-lbl">অধ্যায়</div></div>
+    <div class="s-item"><div class="s-val" id="syl-s-pct">0%</div><div class="s-lbl">সম্পন্ন</div></div>
   </div>
-
-  <!-- Overall bar -->
-  <div class="overall-bar-wrap">
-    <div class="overall-bar-label"><span>সামগ্রিক অগ্রগতি</span><span id="overallPctLabel">0%</span></div>
-    <div class="bar-track"><div class="bar-fill fill-blue" id="overallBar" style="width:0%"></div></div>
+  <div class="pbar-wrap">
+    <div class="pbar-head"><span>সামগ্রিক অগ্রগতি</span><span id="syl-overall-lbl">0%</span></div>
+    <div class="pbar-track"><div class="pbar-fill fill-blue" id="syl-overall-bar" style="width:0%"></div></div>
   </div>
-
-  <!-- Subject Grid -->
-  <div class="subj-grid" id="subjGrid"></div>
+  <div class="subj-grid" id="subjGrid">
+    <div class="loading" style="grid-column:1/-1"><div class="spin"></div><br>লোড হচ্ছে...</div>
+  </div>
 </div>
 
-<!-- ═══════════════════════════════════════
-     CHAPTER PANEL
-═══════════════════════════════════════ -->
-<div class="chapter-panel" id="chapterPanel">
-  <div class="panel-topbar">
-    <div class="back-btn" onclick="closePanel('chapterPanel')">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-    </div>
-    <span class="panel-title" id="chapterPanelTitle">অধ্যায় সমূহ</span>
+<!-- ── CHAPTER PANEL ── -->
+<div class="panel" id="pChapter">
+  <div class="st-topbar">
+    <div class="back-btn" onclick="hidePanel('pChapter')"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></div>
+    <span class="panel-title" id="chap-panel-title" style="font-size:15px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
   </div>
-  <div class="stats-bar">
-    <div class="stat-item"><div class="stat-val" id="chapStatTotal">—</div><div class="stat-lbl">মোট অধ্যায়</div></div>
-    <div class="stat-item"><div class="stat-val" id="chapStatDone">0</div><div class="stat-lbl">সম্পন্ন</div></div>
-    <div class="stat-item"><div class="stat-val" id="chapStatPct">0%</div><div class="stat-lbl">অগ্রগতি</div></div>
+  <div class="stats-row">
+    <div class="s-item"><div class="s-val" id="chap-s-total">—</div><div class="s-lbl">অধ্যায়</div></div>
+    <div class="s-item"><div class="s-val" id="chap-s-done">0</div><div class="s-lbl">সম্পন্ন</div></div>
+    <div class="s-item"><div class="s-val" id="chap-s-pct">0%</div><div class="s-lbl">অগ্রগতি</div></div>
   </div>
-  <div id="chapterList"></div>
+  <div id="chapList"></div>
 </div>
 
-<!-- ═══════════════════════════════════════
-     TOPIC PANEL
-═══════════════════════════════════════ -->
-<div class="topic-panel" id="topicPanel">
-  <div class="panel-topbar">
-    <div class="back-btn" onclick="closePanel('topicPanel')">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-    </div>
-    <span class="panel-title" id="topicPanelTitle">টপিক সমূহ</span>
+<!-- ── TOPIC PANEL ── -->
+<div class="panel" id="pTopic">
+  <div class="st-topbar">
+    <div class="back-btn" onclick="hidePanel('pTopic')"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></div>
+    <span class="panel-title" id="topic-panel-title" style="font-size:15px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
   </div>
-  <div class="stats-bar">
-    <div class="stat-item"><div class="stat-val" id="topicStatTotal">—</div><div class="stat-lbl">মোট টপিক</div></div>
-    <div class="stat-item"><div class="stat-val" id="topicStatDone">0</div><div class="stat-lbl">সম্পন্ন</div></div>
-    <div class="stat-item"><div class="stat-val" id="topicStatPct">0%</div><div class="stat-lbl">অগ্রগতি</div></div>
+  <div class="stats-row">
+    <div class="s-item"><div class="s-val" id="topic-s-total">—</div><div class="s-lbl">টপিক</div></div>
+    <div class="s-item"><div class="s-val" id="topic-s-done">0</div><div class="s-lbl">সম্পন্ন</div></div>
+    <div class="s-item"><div class="s-val" id="topic-s-pct">0%</div><div class="s-lbl">অগ্রগতি</div></div>
   </div>
   <div id="topicList"></div>
 </div>
 
-<!-- ═══════════════════════════════════════
-     PANEL 2: ROUTINE MAKER
-═══════════════════════════════════════ -->
-<div class="panel" id="routinePanel">
-  <div class="panel-topbar">
-    <div class="back-btn" onclick="closePanel('routinePanel')">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-    </div>
-    <span class="panel-title">📅 Routine Maker</span>
+<!-- ══════════════════════════════
+     PANEL: ROUTINE MAKER
+══════════════════════════════ -->
+<div class="panel" id="pRoutine">
+  <div class="st-topbar">
+    <div class="back-btn" onclick="hidePanel('pRoutine')"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></div>
+    <span style="font-size:16px;font-weight:700;flex:1">📅 Routine Maker</span>
   </div>
-  <div class="routine-tab-row">
-    <div class="routine-tab active" onclick="switchRoutineTab('daily',this)">📅 Daily Routine</div>
-    <div class="routine-tab" onclick="switchRoutineTab('target',this)">🎯 Target Based</div>
-  </div>
-  <div class="routine-content" id="routineContent">
-    <div class="routine-empty">
-      <div class="big-icon">📅</div>
-      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px">Daily Routine</div>
-      <div style="font-size:12px;line-height:1.6">আপনার পড়ার সময়সূচি তৈরি করুন।<br>বিষয় অনুযায়ী সময় ভাগ করুন।</div>
-      <button class="add-btn" onclick="showToastMsg('শীঘ্রই আসছে! 🚧')">+ নতুন রুটিন তৈরি করুন</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════
-     PANEL 3: WEAK & PROGRESS
-═══════════════════════════════════════ -->
-<div class="panel" id="progressPanel">
-  <div class="panel-topbar">
-    <div class="back-btn" onclick="closePanel('progressPanel')">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-    </div>
-    <span class="panel-title">📊 Weak &amp; Progress</span>
-  </div>
-  <div class="progress-section" id="progressContent">
-    <div style="height:12px"></div>
-
-    <!-- Syllabus Progress -->
-    <div class="prog-card">
-      <div class="prog-card-title"><span>📖</span> Syllabus অগ্রগতি</div>
-      <div class="overall-bar-label" style="font-size:11px;color:var(--sub);margin-bottom:6px"><span>HSC সিলেবাস</span><span id="progHscPct">0%</span></div>
-      <div class="bar-track" style="margin-bottom:10px"><div class="bar-fill fill-blue" id="progHscBar" style="width:0%"></div></div>
-      <div class="overall-bar-label" style="font-size:11px;color:var(--sub);margin-bottom:6px"><span>Medical Admission</span><span id="progMedPct">0%</span></div>
-      <div class="bar-track"><div class="bar-fill fill-green" id="progMedBar" style="width:0%"></div></div>
-    </div>
-
-    <!-- Weak Areas -->
-    <div class="prog-card">
-      <div class="prog-card-title"><span>⚠️</span> দুর্বল বিষয়সমূহ</div>
-      <div id="weakAreasList"><div style="font-size:12px;color:var(--sub)">পর্যাপ্ত ডেটা নেই। পড়া শুরু করলে দুর্বল বিষয় চিহ্নিত হবে।</div></div>
-    </div>
-
-    <!-- Activity History -->
-    <div class="prog-card">
-      <div class="prog-card-title"><span>🕐</span> সাম্প্রতিক কার্যক্রম</div>
-      <div id="activityHistory"><div style="font-size:12px;color:var(--sub)">এখনো কোনো কার্যক্রম নেই।</div></div>
-    </div>
-
-    <!-- Suggestion -->
-    <div class="prog-card" id="suggestionCard">
-      <div class="prog-card-title"><span>💡</span> পরামর্শ</div>
-      <div style="font-size:12px;color:var(--sub);line-height:1.7" id="suggestionText">পড়া শুরু করুন এবং টপিক মার্ক করুন। আপনার অগ্রগতি অনুযায়ী ব্যক্তিগতকৃত পরামর্শ দেওয়া হবে।</div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════
-     PANEL 4: REVISION PLANNER
-═══════════════════════════════════════ -->
-<div class="panel" id="revisionPanel">
-  <div class="panel-topbar">
-    <div class="back-btn" onclick="closePanel('revisionPanel')">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-    </div>
-    <span class="panel-title">🔄 Revision Planner</span>
-  </div>
-
   <div class="tab-row">
-    <button class="tab-btn active" onclick="switchRevisionTab('hsc',this)">⚡ HSC Revision</button>
-    <button class="tab-btn" onclick="switchRevisionTab('medical',this)">🏥 Medical Revision</button>
+    <button class="tab-btn on" onclick="switchRTab('daily',this)">📅 Daily Routine</button>
+    <button class="tab-btn" onclick="switchRTab('target',this)">🎯 Target Based</button>
   </div>
-
-  <div class="stats-bar">
-    <div class="stat-item"><div class="stat-val" id="revStatTotal">13</div><div class="stat-lbl">মোট বিষয়</div></div>
-    <div class="stat-item"><div class="stat-val" id="revStatDone">0</div><div class="stat-lbl">রিভিশন সম্পন্ন</div></div>
-    <div class="stat-item"><div class="stat-val" id="revStatPct">0%</div><div class="stat-lbl">অগ্রগতি</div></div>
+  <div id="routineBody">
+    <div class="placeholder">
+      <div class="ph-icon">📅</div>
+      <div class="ph-title">Daily Routine</div>
+      <div class="ph-sub">আপনার পড়ার সময়সূচি তৈরি করুন।<br>বিষয় অনুযায়ী সময় ভাগ করুন।</div>
+      <button class="soon-btn" onclick="toast('শীঘ্রই আসছে! 🚧')">+ নতুন রুটিন তৈরি</button>
+    </div>
   </div>
-
-  <div class="overall-bar-wrap">
-    <div class="overall-bar-label"><span>রিভিশন অগ্রগতি</span><span id="revOverallLabel">0%</span></div>
-    <div class="bar-track"><div class="bar-fill fill-purple" id="revOverallBar" style="width:0%"></div></div>
-  </div>
-
-  <div class="subj-grid" id="revSubjGrid"></div>
 </div>
+
+<!-- ══════════════════════════════
+     PANEL: WEAK & PROGRESS
+══════════════════════════════ -->
+<div class="panel" id="pProgress">
+  <div class="st-topbar">
+    <div class="back-btn" onclick="hidePanel('pProgress')"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></div>
+    <span style="font-size:16px;font-weight:700;flex:1">📊 Weak &amp; Progress</span>
+  </div>
+  <div style="height:12px"></div>
+
+  <div class="prog-card">
+    <div class="pc-title">📖 Syllabus অগ্রগতি</div>
+    <div class="pbar-head" style="font-size:11px;color:var(--sub);margin-bottom:5px"><span>HSC</span><span id="pg-hsc-lbl">0%</span></div>
+    <div class="pbar-track" style="margin-bottom:10px"><div class="pbar-fill fill-blue" id="pg-hsc-bar" style="width:0%"></div></div>
+    <div class="pbar-head" style="font-size:11px;color:var(--sub);margin-bottom:5px"><span>Medical</span><span id="pg-med-lbl">0%</span></div>
+    <div class="pbar-track"><div class="pbar-fill fill-green" id="pg-med-bar" style="width:0%"></div></div>
+  </div>
+
+  <div class="prog-card">
+    <div class="pc-title">⚠️ দুর্বল বিষয়সমূহ</div>
+    <div class="weak-chips" id="weakChips"><span style="font-size:12px;color:var(--sub)">পড়া শুরু করলে দুর্বল বিষয় চিহ্নিত হবে।</span></div>
+  </div>
+
+  <div class="prog-card">
+    <div class="pc-title">🕐 সাম্প্রতিক কার্যক্রম</div>
+    <div id="activityList"><div class="empty">এখনো কোনো কার্যক্রম নেই।</div></div>
+  </div>
+
+  <div class="prog-card">
+    <div class="pc-title">💡 পরামর্শ</div>
+    <div class="suggest-txt" id="suggestTxt">পড়া শুরু করুন এবং টপিক মার্ক করুন।</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     PANEL: REVISION PLANNER
+══════════════════════════════ -->
+<div class="panel" id="pRevision">
+  <div class="st-topbar">
+    <div class="back-btn" onclick="hidePanel('pRevision')"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></div>
+    <span style="font-size:16px;font-weight:700;flex:1">🔄 Revision Planner</span>
+  </div>
+  <div class="tab-row">
+    <button class="tab-btn on" onclick="switchRevTab('hsc',this)">⚡ HSC Revision</button>
+    <button class="tab-btn" onclick="switchRevTab('medical',this)">🏥 Medical Revision</button>
+  </div>
+  <div class="stats-row">
+    <div class="s-item"><div class="s-val" id="rev-s-subj">—</div><div class="s-lbl">বিষয়</div></div>
+    <div class="s-item"><div class="s-val" id="rev-s-done">0</div><div class="s-lbl">রিভিশন সম্পন্ন</div></div>
+    <div class="s-item"><div class="s-val" id="rev-s-pct">0%</div><div class="s-lbl">অগ্রগতি</div></div>
+  </div>
+  <div class="pbar-wrap">
+    <div class="pbar-head"><span>রিভিশন অগ্রগতি</span><span id="rev-overall-lbl">0%</span></div>
+    <div class="pbar-track"><div class="pbar-fill fill-purple" id="rev-overall-bar" style="width:0%"></div></div>
+  </div>
+  <div class="subj-grid" id="revSubjGrid">
+    <div class="loading" style="grid-column:1/-1"><div class="spin"></div><br>লোড হচ্ছে...</div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-item" onclick="goTo('index.html')"><span class="nav-icon"><span class="ni-tile tile-indigo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 10L12 3l9 7v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" fill="rgba(255,255,255,0.15)"/><path d="M9 21V12h6v9" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg></span></span>হোম</button>
+  <button class="nav-item" onclick="goTo('class.html')"><span class="nav-icon"><span class="ni-tile tile-violet"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5.5C10.3 4.4 7.7 4 5.5 4.3v13.4c2.2-.3 4.8.1 6.5 1.2 1.7-1.1 4.3-1.5 6.5-1.2V4.3C16.3 4 13.7 4.4 12 5.5z" stroke="#fff" stroke-width="1.8"/><path d="M12 5.5v13.4" stroke="#fff" stroke-width="1.8"/></svg></span></span>ক্লাস</button>
+  <button class="nav-item active" onclick="goTo('study-tracker.html')"><span class="nav-icon"><span class="ni-tile tile-sky"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 19V11M9.5 19V6M15 19V13.5M20 19V8.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></span></span>Tracker</button>
+  <button class="nav-item" onclick="goTo('exam.html')"><span class="nav-icon"><span class="ni-tile tile-orange"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.1)"/><path d="M8 8h8M8 12h8M8 16h5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span></span>এক্সাম</button>
+  <button class="nav-item" onclick="goTo('profile.html')"><span class="nav-icon"><span class="ni-tile tile-teal"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="#fff" stroke-width="1.8"/><path d="M4.5 20c0-3.6 3.4-6.5 7.5-6.5s7.5 2.9 7.5 6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></span></span>প্রোফাইল</button>
+</nav>
 
 <script>
-// ═══════════════════════
-// SYLLABUS DATA
-// ═══════════════════════
-const SYLLABUS = {
-  hsc: [
-    { id:'phy1', name:'পদার্থবিজ্ঞান ১ম পত্র', short:'Physics 1', chapters:[
-      {id:'p1c1',name:'ভৌত জগৎ ও পরিমাপ',topics:['ভৌত রাশি','একক পদ্ধতি','মাত্রা বিশ্লেষণ','পরিমাপের যন্ত্রপাতি','পরিমাপের ত্রুটি']},
-      {id:'p1c2',name:'ভেক্টর',topics:['ভেক্টর ও স্কেলার','ভেক্টর যোগ','ভেক্টর বিভাজন','ডট গুণফল','ক্রস গুণফল']},
-      {id:'p1c3',name:'গতিবিদ্যা',topics:['সরণ ও দূরত্ব','বেগ ও ত্বরণ','সমত্বরণ গতির সমীকরণ','প্রজেক্টাইল গতি','আপেক্ষিক গতি']},
-      {id:'p1c4',name:'নিউটনের গতিসূত্র',topics:['নিউটনের প্রথম সূত্র','নিউটনের দ্বিতীয় সূত্র','নিউটনের তৃতীয় সূত্র','ভরবেগ','ঘর্ষণ']},
-      {id:'p1c5',name:'কাজ, শক্তি ও ক্ষমতা',topics:['কাজের ধারণা','গতিশক্তি','বিভবশক্তি','শক্তির সংরক্ষণ','ক্ষমতা']},
-      {id:'p1c6',name:'মহাকর্ষ ও অভিকর্ষ',topics:['মহাকর্ষ সূত্র','অভিকর্ষজ ত্বরণ','উপগ্রহের গতি','মুক্তিবেগ','কেপলারের সূত্র']},
-      {id:'p1c7',name:'পদার্থের গাঠনিক ধর্ম',topics:['স্থিতিস্থাপকতা','হুকের সূত্র','প্রবাহীর চাপ','বার্নুলির উপপাদ্য','পৃষ্ঠটান']},
-      {id:'p1c8',name:'পর্যাবৃত্ত গতি',topics:['সরল দোলন গতি','পেন্ডুলাম','স্প্রিং-ভর সিস্টেম','অনুরণন','তরঙ্গ গতি']},
-      {id:'p1c9',name:'তরঙ্গ',topics:['তরঙ্গের বৈশিষ্ট্য','শব্দ তরঙ্গ','ডপলার প্রভাব','ব্যতিচার','অপবর্তন']},
-      {id:'p1c10',name:'আলোর প্রকৃতি',topics:['আলোর প্রতিফলন','আলোর প্রতিসরণ','পূর্ণ অভ্যন্তরীণ প্রতিফলন','লেন্স','অপটিক্যাল যন্ত্রপাতি']},
+// ═══════════════════
+// CONFIG
+// ═══════════════════
+const SB_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
+const SB_H = {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+const STORE = 'atlas_tracker_v2';
+
+// ═══════════════════
+// STATE
+// ═══════════════════
+let ST = {sylTab:'hsc',revTab:'hsc',progress:{},revision:{}};
+let CACHE = {hsc:[],medical:[]};
+let cur = {mode:'',subjId:'',chapId:''};
+
+function loadST(){try{const s=localStorage.getItem(STORE);if(s)ST=JSON.parse(s);}catch(e){}}
+function saveST(){try{localStorage.setItem(STORE,JSON.stringify(ST));}catch(e){}}
+
+// ═══════════════════
+// SUPABASE FETCH
+// ═══════════════════
+async function sbFetch(path){
+  const r=await fetch(SB_URL+path,{headers:SB_H});
+  if(!r.ok)throw new Error(r.status);
+  return r.json();
+}
+
+// Load subjects with chapters and topics
+async function loadSyllabus(mode){
+  if(CACHE[mode].length) return CACHE[mode];
+  // subjects table: id, name, short_name, mode ('hsc'|'medical'), sort_order
+  // chapters table: id, subject_id, name, sort_order
+  // topics table: id, chapter_id, name, weight, sort_order
+  try{
+    const subjects = await sbFetch(`/rest/v1/st_subjects?mode=eq.${mode}&order=sort_order.asc&select=id,name,short_name`);
+    for(const s of subjects){
+      const chapters = await sbFetch(`/rest/v1/st_chapters?subject_id=eq.${s.id}&order=sort_order.asc&select=id,name`);
+      for(const c of chapters){
+        const topics = await sbFetch(`/rest/v1/st_topics?chapter_id=eq.${c.id}&order=sort_order.asc&select=id,name,weight`);
+        c.topics = topics;
+      }
+      s.chapters = chapters;
+    }
+    CACHE[mode] = subjects;
+    return subjects;
+  }catch(e){
+    // Fallback to local data if Supabase tables not set up yet
+    return FALLBACK[mode]||[];
+  }
+}
+
+// ═══════════════════
+// PANEL NAV
+// ═══════════════════
+const panelStack=[];
+function showPanel(id){
+  const el=document.getElementById(id);
+  el.classList.add('open');
+  panelStack.push(id);
+  if(id==='pSyllabus') renderSubjects();
+  if(id==='pProgress') renderProgress();
+  if(id==='pRevision') renderRevSubjects();
+}
+function hidePanel(id){
+  document.getElementById(id).classList.remove('open');
+  panelStack.pop();
+}
+window.addEventListener('popstate',()=>{if(panelStack.length){hidePanel(panelStack[panelStack.length-1]);}});
+
+// ═══════════════════
+// SYLLABUS
+// ═══════════════════
+let sylMode='hsc';
+function switchSTab(mode,btn){
+  sylMode=mode;
+  document.querySelectorAll('#pSyllabus .tab-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderSubjects();
+}
+
+async function renderSubjects(){
+  const grid=document.getElementById('subjGrid');
+  grid.innerHTML='<div class="loading" style="grid-column:1/-1"><div class="spin"></div><br>লোড হচ্ছে...</div>';
+  const subjs=await loadSyllabus(sylMode);
+  if(!subjs.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1">কোনো বিষয় পাওয়া যায়নি।<br><small>Admin থেকে বিষয় যোগ করুন।</small></div>';return;}
+  let totalChaps=0,overallT=0,overallD=0;
+  const cards=subjs.map(s=>{
+    const [pct,t,d]=subjPct(sylMode,s);
+    overallT+=t;overallD+=d;
+    totalChaps+=s.chapters.length;
+    const full=pct===100;
+    return `<div class="subj-card${full?' sel':''}" onclick="openChapters('${sylMode}','${s.id}')">
+      ${full?'<span class="subj-badge badge-done">✓ সম্পন্ন</span>':''}
+      <div class="subj-name">${s.name}</div>
+      <div class="subj-pct-row">
+        <span class="subj-pct">${pct}%</span>
+        <div class="mini-track"><div class="mini-fill mini-blue" style="width:${pct}%"></div></div>
+      </div>
+      <div class="subj-meta">${s.chapters.length} অধ্যায় · ${t} টপিক</div>
+    </div>`;
+  });
+  const op=overallT?Math.round(overallD/overallT*100):0;
+  $('syl-s-subj').textContent=subjs.length;
+  $('syl-s-chap').textContent=totalChaps;
+  $('syl-s-pct').textContent=op+'%';
+  $('syl-overall-lbl').textContent=op+'%';
+  $('syl-overall-bar').style.width=op+'%';
+  grid.innerHTML=cards.join('');
+  updateDash();
+}
+
+function subjPct(mode,s){
+  let t=0,d=0;
+  for(const c of s.chapters) for(const tp of c.topics){t++;if(ST.progress[tk(mode,s.id,c.id,tp.id)])d++;}
+  return[t?Math.round(d/t*100):0,t,d];
+}
+function chapPct(mode,sId,c){
+  let t=c.topics.length,d=0;
+  for(const tp of c.topics) if(ST.progress[tk(mode,sId,c.id,tp.id)])d++;
+  return t?Math.round(d/t*100):0;
+}
+function overallPct(mode){
+  const subjs=CACHE[mode]||[];
+  let t=0,d=0;
+  for(const s of subjs) for(const c of s.chapters) for(const tp of c.topics){t++;if(ST.progress[tk(mode,s.id,c.id,tp.id)])d++;}
+  return t?Math.round(d/t*100):0;
+}
+function tk(mode,sId,cId,tpId){return`${mode}|${sId}|${cId}|${tpId}`;}
+
+// ═══════════════════
+// CHAPTERS
+// ═══════════════════
+async function openChapters(mode,subjId){
+  cur.mode=mode;cur.subjId=subjId;
+  const subjs=await loadSyllabus(mode);
+  const s=subjs.find(x=>x.id==subjId);
+  $('chap-panel-title').textContent=s.name;
+  let doneCh=0;
+  const rows=s.chapters.map((c,i)=>{
+    const pct=chapPct(mode,subjId,c);
+    const dd=c.topics.filter(tp=>ST.progress[tk(mode,subjId,c.id,tp.id)]).length;
+    if(pct===100)doneCh++;
+    return `<div class="chap-item" onclick="openTopics('${mode}','${subjId}','${c.id}')">
+      <div class="chap-num">${i+1}</div>
+      <div class="chap-body">
+        <div class="chap-name">${c.name}</div>
+        <div class="chap-stat">${dd}/${c.topics.length} টপিক সম্পন্ন</div>
+        <div class="chap-bar-track"><div class="chap-bar-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="chap-pct">${pct}%</div>
+    </div>`;
+  });
+  $('chap-s-total').textContent=s.chapters.length;
+  $('chap-s-done').textContent=doneCh;
+  $('chap-s-pct').textContent=subjPct(mode,s)[0]+'%';
+  $('chapList').innerHTML=rows.join('');
+  showPanel('pChapter');
+}
+
+// ═══════════════════
+// TOPICS
+// ═══════════════════
+async function openTopics(mode,subjId,chapId){
+  cur.chapId=chapId;
+  const subjs=await loadSyllabus(mode);
+  const s=subjs.find(x=>x.id==subjId);
+  const c=s.chapters.find(x=>x.id==chapId);
+  $('topic-panel-title').textContent=c.name;
+  renderTopics(mode,subjId,c);
+  showPanel('pTopic');
+}
+
+function renderTopics(mode,subjId,c){
+  let d=0;
+  const rows=c.topics.map(tp=>{
+    const key=tk(mode,subjId,c.id,tp.id);
+    const done=!!ST.progress[key];
+    if(done)d++;
+    return `<div class="topic-item">
+      <div class="t-check${done?' done':''}" onclick="toggleTopic('${mode}','${subjId}','${c.id}','${tp.id}')">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <span class="topic-name${done?' done':''}">${tp.name}</span>
+    </div>`;
+  });
+  const pct=c.topics.length?Math.round(d/c.topics.length*100):0;
+  $('topic-s-total').textContent=c.topics.length;
+  $('topic-s-done').textContent=d;
+  $('topic-s-pct').textContent=pct+'%';
+  $('topicList').innerHTML=rows.join('');
+}
+
+async function toggleTopic(mode,subjId,chapId,topicId){
+  const key=tk(mode,subjId,chapId,topicId);
+  ST.progress[key]=!ST.progress[key];
+  saveST();
+  const subjs=await loadSyllabus(mode);
+  const s=subjs.find(x=>x.id==subjId);
+  const c=s.chapters.find(x=>x.id==chapId);
+  renderTopics(mode,subjId,c);
+  toast(ST.progress[key]?'✅ সম্পন্ন!':'↩ পূর্বাবস্থায় ফিরল');
+  updateDash();
+  // live update chapter panel in background
+  const pct=chapPct(mode,subjId,c);
+  const dd=c.topics.filter(tp=>ST.progress[tk(mode,subjId,c.id,tp.id)]).length;
+  const chapEl=document.querySelector(`#chapList .chap-item:nth-child(${s.chapters.indexOf(c)+1})`);
+  if(chapEl){
+    chapEl.querySelector('.chap-pct').textContent=pct+'%';
+    chapEl.querySelector('.chap-stat').textContent=`${dd}/${c.topics.length} টপিক সম্পন্ন`;
+    chapEl.querySelector('.chap-bar-fill').style.width=pct+'%';
+  }
+}
+
+// ═══════════════════
+// ROUTINE
+// ═══════════════════
+function switchRTab(tab,btn){
+  document.querySelectorAll('#pRoutine .tab-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  const isD=tab==='daily';
+  $('routineBody').innerHTML=`<div class="placeholder">
+    <div class="ph-icon">${isD?'📅':'🎯'}</div>
+    <div class="ph-title">${isD?'Daily Routine':'Target Based Routine'}</div>
+    <div class="ph-sub">শীঘ্রই আসছে।</div>
+    <button class="soon-btn" onclick="toast('শীঘ্রই আসছে! 🚧')">+ নতুন রুটিন তৈরি</button>
+  </div>`;
+}
+
+// ═══════════════════
+// PROGRESS
+// ═══════════════════
+function renderProgress(){
+  const hp=overallPct('hsc'),mp=overallPct('medical');
+  $('pg-hsc-lbl').textContent=hp+'%';$('pg-hsc-bar').style.width=hp+'%';
+  $('pg-med-lbl').textContent=mp+'%';$('pg-med-bar').style.width=mp+'%';
+
+  // Weak areas
+  const weak=[];
+  for(const mode of['hsc','medical']){
+    for(const s of(CACHE[mode]||[])){
+      const [p]=subjPct(mode,s);
+      if(p>0&&p<40)weak.push({n:s.short_name||s.name,p,cl:'chip-r'});
+      else if(p>=40&&p<70)weak.push({n:s.short_name||s.name,p,cl:'chip-y'});
+    }
+  }
+  $('weakChips').innerHTML=weak.length?weak.map(w=>`<span class="chip ${w.cl}">${w.n} ${w.p}%</span>`).join(''):'<span style="font-size:12px;color:var(--sub)">পড়া শুরু করলে দুর্বল বিষয় চিহ্নিত হবে।</span>';
+
+  // Activity
+  const done=Object.values(ST.progress).filter(Boolean).length;
+  $('activityList').innerHTML=done?`<div class="hist-row"><div class="hist-dot" style="background:var(--green)"></div><div class="hist-txt">${done}টি টপিক সম্পন্ন করা হয়েছে</div></div>`:'<div class="empty">এখনো কোনো কার্যক্রম নেই।</div>';
+
+  // Suggestion
+  const avg=Math.round((hp+mp)/2);
+  let s='পড়া শুরু করুন এবং টপিক মার্ক করুন।';
+  if(avg>0&&avg<30) s='HSC সিলেবাসে আরও মনোযোগ দিন। প্রতিদিন ২-৩টি নতুন টপিক সম্পন্ন করুন।';
+  else if(avg>=30&&avg<60) s='ভালো অগ্রগতি! দুর্বল বিষয়গুলোতে বেশি সময় দিন এবং নিয়মিত রিভিশন করুন।';
+  else if(avg>=60) s='অসাধারণ! Revision Planner ব্যবহার করে পড়া শেষ করা বিষয়গুলো রিভাইস করুন।';
+  $('suggestTxt').textContent=s;
+  $('d-prog-pct').textContent=avg+'%';
+}
+
+// ═══════════════════
+// REVISION
+// ═══════════════════
+let revMode='hsc';
+function switchRevTab(mode,btn){
+  revMode=mode;
+  document.querySelectorAll('#pRevision .tab-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderRevSubjects();
+}
+async function renderRevSubjects(){
+  const grid=$('revSubjGrid');
+  grid.innerHTML='<div class="loading" style="grid-column:1/-1"><div class="spin"></div><br>লোড হচ্ছে...</div>';
+  const subjs=await loadSyllabus(revMode);
+  if(!subjs.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1">কোনো বিষয় নেই।</div>';return;}
+  let totalD=0,totalT=0;
+  const cards=subjs.map(s=>{
+    let st=0,sd=0;
+    for(const c of s.chapters) for(const tp of c.topics){
+      st++;totalT++;
+      if(ST.revision[`rev|${revMode}|${s.id}|${c.id}|${tp.id}`]){sd++;totalD++;}
+    }
+    const pct=st?Math.round(sd/st*100):0;
+    return `<div class="subj-card" onclick="toast('রিভিশন মার্কিং শীঘ্রই আসছে!')">
+      <div class="subj-name">${s.name}</div>
+      <div class="subj-pct-row">
+        <span class="subj-pct" style="color:var(--purple)">${pct}%</span>
+        <div class="mini-track"><div class="mini-fill mini-purple" style="width:${pct}%"></div></div>
+      </div>
+      <div class="subj-meta">${s.chapters.length} অধ্যায় · ${st} টপিক</div>
+    </div>`;
+  });
+  const op=totalT?Math.round(totalD/totalT*100):0;
+  $('rev-s-subj').textContent=subjs.length;
+  $('rev-s-done').textContent=totalD;
+  $('rev-s-pct').textContent=op+'%';
+  $('rev-overall-lbl').textContent=op+'%';
+  $('rev-overall-bar').style.width=op+'%';
+  $('d-rev-pct').textContent=op+'%';
+  grid.innerHTML=cards.join('');
+}
+
+// ═══════════════════
+// DASHBOARD
+// ═══════════════════
+function updateDash(){
+  const hp=overallPct('hsc'),mp=overallPct('medical');
+  $('d-syl-pct').textContent=Math.round((hp+mp)/2)+'%';
+  $('d-prog-pct').textContent=Math.round((hp+mp)/2)+'%';
+}
+
+// ═══════════════════
+// HELPERS
+// ═══════════════════
+function $(id){return document.getElementById(id);}
+function goTo(url){location.href=url;}
+function toast(msg){
+  const t=$('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ═══════════════════
+// FALLBACK DATA (যদি Supabase table না থাকে)
+// ═══════════════════
+const FALLBACK={
+  hsc:[
+    {id:1,name:'পদার্থবিজ্ঞান ১ম পত্র',short_name:'Physics 1',chapters:[
+      {id:101,name:'ভৌত জগৎ ও পরিমাপ',topics:[{id:1001,name:'ভৌত রাশি'},{id:1002,name:'একক পদ্ধতি'},{id:1003,name:'মাত্রা বিশ্লেষণ'},{id:1004,name:'পরিমাপের যন্ত্রপাতি'},{id:1005,name:'পরিমাপের ত্রুটি'}]},
+      {id:102,name:'ভেক্টর',topics:[{id:1006,name:'ভেক্টর ও স্কেলার'},{id:1007,name:'ভেক্টর যোগ'},{id:1008,name:'ডট গুণফল'},{id:1009,name:'ক্রস গুণফল'},{id:1010,name:'ভেক্টর বিভাজন'}]},
+      {id:103,name:'গতিবিদ্যা',topics:[{id:1011,name:'সরণ ও দূরত্ব'},{id:1012,name:'বেগ ও ত্বরণ'},{id:1013,name:'সমত্বরণ গতির সমীকরণ'},{id:1014,name:'প্রজেক্টাইল গতি'},{id:1015,name:'আপেক্ষিক গতি'}]},
+      {id:104,name:'নিউটনীয়ান বলবিদ্যা,topics:[{id:1016,name:'নিউটনের ১ম সূত্র'},{id:1017,name:'নিউটনের ২য় সূত্র'},{id:1018,name:'নিউটনের ৩য় সূত্র'},{id:1019,name:'ভরবেগ'},{id:1020,name:'ঘর্ষণ'}]},
+      {id:105,name:'কাজ, শক্তি ও ক্ষমতা',topics:[{id:1021,name:'কাজের ধারণা'},{id:1022,name:'গতিশক্তি'},{id:1023,name:'বিভবশক্তি'},{id:1024,name:'শক্তির সংরক্ষণ'},{id:1025,name:'ক্ষমতা'}]},
+      {id:106,name:'মহাকর্ষ ও অভিকর্ষ',topics:[{id:1026,name:'মহাকর্ষ সূত্র'},{id:1027,name:'অভিকর্ষজ ত্বরণ'},{id:1028,name:'উপগ্রহের গতি'},{id:1029,name:'মুক্তিবেগ'},{id:1030,name:'কেপলারের সূত্র'}]},
+      {id:107,name:'পদার্থের গাঠনিক ধর্ম',topics:[{id:1031,name:'স্থিতিস্থাপকতা'},{id:1032,name:'হুকের সূত্র'},{id:1033,name:'প্রবাহীর চাপ'},{id:1034,name:'বার্নুলির উপপাদ্য'},{id:1035,name:'পৃষ্ঠটান'}]},
+      {id:108,name:'পর্যাবৃত্ত গতি',topics:[{id:1036,name:'সরল দোলন গতি'},{id:1037,name:'পেন্ডুলাম'},{id:1038,name:'স্প্রিং সিস্টেম'},{id:1039,name:'অনুরণন'},{id:1040,name:'তরঙ্গ গতি'}]},
+      {id:109,name:'তরঙ্গ',topics:[{id:1041,name:'তরঙ্গের বৈশিষ্ট্য'},{id:1042,name:'শব্দ তরঙ্গ'},{id:1043,name:'ডপলার প্রভাব'},{id:1044,name:'ব্যতিচার'},{id:1045,name:'অপবর্তন'}]},
+      {id:110,name:'আদর্শ গ্যাস ও গ্যাসের গতিতত্ব',topics:[{id:1046,name:'আলোর প্রতিফলন'},{id:1047,name:'আলোর প্রতিসরণ'},{id:1048,name:'পূর্ণ অভ্যন্তরীণ প্রতিফলন'},{id:1049,name:'লেন্স'},{id:1050,name:'অপটিক্যাল যন্ত্র'}]},
     ]},
-    { id:'phy2', name:'পদার্থবিজ্ঞান ২য় পত্র', short:'Physics 2', chapters:[
-      {id:'p2c1',name:'তাপগতিবিদ্যা',topics:['তাপমাত্রা ও তাপ','তাপের পরিবহন','তাপগতিবিদ্যার সূত্র','এন্ট্রপি','কার্নো চক্র']},
-      {id:'p2c2',name:'স্থির তড়িৎ',topics:['কুলম্বের সূত্র','বৈদ্যুতিক ক্ষেত্র','বৈদ্যুতিক বিভব','ধারক','গাউসের সূত্র']},
-      {id:'p2c3',name:'চল তড়িৎ',topics:['ওহমের সূত্র','কির্শহফের সূত্র','তড়িৎশক্তি','বিদ্যুৎ কোষ','হুইটস্টোন ব্রিজ']},
-      {id:'p2c4',name:'তড়িৎ চুম্বক',topics:['চুম্বক','বায়োট-স্যাভার্ট সূত্র','অ্যাম্পিয়ারের সূত্র','ফ্যারাডের সূত্র','লেনজের সূত্র']},
-      {id:'p2c5',name:'পরিবর্তী প্রবাহ',topics:['AC বর্তনী','ট্রান্সফরমার','অনুরণন','শক্তি অপচয়','প্রবাহের মান']},
-      {id:'p2c6',name:'ইলেকট্রনিক্স',topics:['অর্ধপরিবাহী','ডায়োড','ট্রানজিস্টর','লজিক গেট','ডিজিটাল সার্কিট']},
-      {id:'p2c7',name:'পরমাণুর মডেল',topics:['রাদারফোর্ড মডেল','বোর মডেল','কোয়ান্টাম সংখ্যা','বর্ণালী','X-রশ্মি']},
-      {id:'p2c8',name:'নিউক্লিয়ার পদার্থবিজ্ঞান',topics:['নিউক্লিয়াসের গঠন','তেজস্ক্রিয়তা','ক্ষয় সূত্র','ফিশন ও ফিউশন','পারমাণবিক বিদ্যুৎ']},
+    {id:2,name:'পদার্থবিজ্ঞান ২য় পত্র',short_name:'Physics 2',chapters:[
+      {id:201,name:'তাপগতিবিদ্যা',topics:[{id:2001,name:'তাপমাত্রা ও তাপ'},{id:2002,name:'তাপের পরিবহন'},{id:2003,name:'তাপগতিবিদ্যার সূত্র'},{id:2004,name:'এন্ট্রপি'},{id:2005,name:'কার্নো চক্র'}]},
+      {id:202,name:'স্থির তড়িৎ',topics:[{id:2006,name:'কুলম্বের সূত্র'},{id:2007,name:'বৈদ্যুতিক ক্ষেত্র'},{id:2008,name:'বৈদ্যুতিক বিভব'},{id:2009,name:'ধারক'},{id:2010,name:'গাউসের সূত্র'}]},
+      {id:203,name:'চল তড়িৎ',topics:[{id:2011,name:'ওহমের সূত্র'},{id:2012,name:'কির্শহফের সূত্র'},{id:2013,name:'তড়িৎশক্তি'},{id:2014,name:'বিদ্যুৎ কোষ'},{id:2015,name:'হুইটস্টোন ব্রিজ'}]},
+      {id:204,name:'তড়িৎ চুম্বক',topics:[{id:2016,name:'চুম্বক'},{id:2017,name:'বায়োট-স্যাভার্ট'},{id:2018,name:'অ্যাম্পিয়ারের সূত্র'},{id:2019,name:'ফ্যারাডের সূত্র'},{id:2020,name:'লেনজের সূত্র'}]},
+      {id:205,name:'ইলেকট্রনিক্স',topics:[{id:2021,name:'অর্ধপরিবাহী'},{id:2022,name:'ডায়োড'},{id:2023,name:'ট্রানজিস্টর'},{id:2024,name:'লজিক গেট'},{id:2025,name:'ডিজিটাল সার্কিট'}]},
+      {id:206,name:'পরমাণুর মডেল',topics:[{id:2026,name:'রাদারফোর্ড মডেল'},{id:2027,name:'বোর মডেল'},{id:2028,name:'কোয়ান্টাম সংখ্যা'},{id:2029,name:'বর্ণালী'},{id:2030,name:'X-রশ্মি'}]},
+      {id:207,name:'নিউক্লিয়ার পদার্থবিজ্ঞান',topics:[{id:2031,name:'নিউক্লিয়াসের গঠন'},{id:2032,name:'তেজস্ক্রিয়তা'},{id:2033,name:'ক্ষয় সূত্র'},{id:2034,name:'ফিশন ও ফিউশন'},{id:2035,name:'পারমাণবিক বিদ্যুৎ'}]},
     ]},
-    { id:'chem1', name:'রসায়ন ১ম পত্র', short:'Chemistry 1', chapters:[
-      {id:'c1c1',name:'রসায়নের ধারণা',topics:['পদার্থের অবস্থা','বিশুদ্ধতা','মিশ্রণ পৃথকীকরণ','পরিমাপ','নিরাপত্তা']},
-      {id:'c1c2',name:'গুণগত রসায়ন',topics:['পর্যায় সারণি','পারমাণবিক গঠন','রাসায়নিক বন্ধন','আণবিক গঠন','জারণ-বিজারণ']},
-      {id:'c1c3',name:'মোলের ধারণা',topics:['মোল','মোলার ভর','আভোগাড্রো সংখ্যা','শতকরা সংযুতি','মূলানুপাতিক সংকেত']},
-      {id:'c1c4',name:'রাসায়নিক পরিবর্তন',topics:['বিক্রিয়ার হার','সক্রিয়করণ শক্তি','রাসায়নিক সাম্যাবস্থা','লা শাতেলিয়ে নীতি','কেমিক্যাল কাইনেটিক্স']},
-      {id:'c1c5',name:'কার্বন যৌগ',topics:['হাইড্রোকার্বন','অ্যালকেন','অ্যালকিন','অ্যালকাইন','বেনজিন']},
+    {id:3,name:'রসায়ন ১ম পত্র',short_name:'Chem 1',chapters:[
+      {id:301,name:'রসায়নের ধারণা',topics:[{id:3001,name:'পদার্থের অবস্থা'},{id:3002,name:'বিশুদ্ধতা'},{id:3003,name:'মিশ্রণ পৃথকীকরণ'},{id:3004,name:'পরিমাপ'},{id:3005,name:'নিরাপত্তা'}]},
+      {id:302,name:'গুণগত রসায়ন',topics:[{id:3006,name:'পর্যায় সারণি'},{id:3007,name:'পারমাণবিক গঠন'},{id:3008,name:'রাসায়নিক বন্ধন'},{id:3009,name:'আণবিক গঠন'},{id:3010,name:'জারণ-বিজারণ'}]},
+      {id:303,name:'মোলের ধারণা',topics:[{id:3011,name:'মোল'},{id:3012,name:'মোলার ভর'},{id:3013,name:'আভোগাড্রো সংখ্যা'},{id:3014,name:'শতকরা সংযুতি'},{id:3015,name:'মূলানুপাতিক সংকেত'}]},
+      {id:304,name:'রাসায়নিক পরিবর্তন',topics:[{id:3016,name:'বিক্রিয়ার হার'},{id:3017,name:'সক্রিয়করণ শক্তি'},{id:3018,name:'রাসায়নিক সাম্যাবস্থা'},{id:3019,name:'লা শাতেলিয়ে নীতি'},{id:3020,name:'কেমিক্যাল কাইনেটিক্স'}]},
+      {id:305,name:'কার্বন যৌগ',topics:[{id:3021,name:'হাইড্রোকার্বন'},{id:3022,name:'অ্যালকেন'},{id:3023,name:'অ্যালকিন'},{id:3024,name:'অ্যালকাইন'},{id:3025,name:'বেনজিন'}]},
     ]},
-    { id:'chem2', name:'রসায়ন ২য় পত্র', short:'Chemistry 2', chapters:[
-      {id:'c2c1',name:'পরিবেশ রসায়ন',topics:['বায়ু দূষণ','জল দূষণ','মাটি দূষণ','গ্রিন হাউস প্রভাব','ওজোন স্তর']},
-      {id:'c2c2',name:'জৈব যৌগ',topics:['অ্যালকোহল','কার্বক্সিলিক অ্যাসিড','এস্টার','অ্যামাইন','পলিমার']},
-      {id:'c2c3',name:'তড়িৎ রসায়ন',topics:['তড়িৎ বিশ্লেষণ','গ্যালভানিক কোষ','ফ্যারাডের সূত্র','pH','বাফার দ্রবণ']},
-      {id:'c2c4',name:'অর্থনৈতিক রসায়ন',topics:['সার','কীটনাশক','সাবান','প্লাস্টিক','জ্বালানি']},
+    {id:4,name:'রসায়ন ২য় পত্র',short_name:'Chem 2',chapters:[
+      {id:401,name:'পরিবেশ রসায়ন',topics:[{id:4001,name:'বায়ু দূষণ'},{id:4002,name:'জল দূষণ'},{id:4003,name:'গ্রিন হাউস প্রভাব'},{id:4004,name:'ওজোন স্তর'},{id:4005,name:'অ্যাসিড বৃষ্টি'}]},
+      {id:402,name:'জৈব যৌগ',topics:[{id:4006,name:'অ্যালকোহল'},{id:4007,name:'কার্বক্সিলিক অ্যাসিড'},{id:4008,name:'এস্টার'},{id:4009,name:'অ্যামাইন'},{id:4010,name:'পলিমার'}]},
+      {id:403,name:'তড়িৎ রসায়ন',topics:[{id:4011,name:'তড়িৎ বিশ্লেষণ'},{id:4012,name:'গ্যালভানিক কোষ'},{id:4013,name:'ফ্যারাডের সূত্র'},{id:4014,name:'pH'},{id:4015,name:'বাফার দ্রবণ'}]},
     ]},
-    { id:'bio1', name:'জীববিজ্ঞান ১ম পত্র', short:'Biology 1', chapters:[
-      {id:'b1c1',name:'কোষ ও এর গঠন',topics:['কোষ তত্ত্ব','প্রোক্যারিওটিক কোষ','ইউক্যারিওটিক কোষ','কোষ অঙ্গাণু','কোষ বিভাজন']},
-      {id:'b1c2',name:'কোষ রসায়ন',topics:['কার্বোহাইড্রেট','প্রোটিন','লিপিড','নিউক্লিক অ্যাসিড','এনজাইম']},
-      {id:'b1c3',name:'উদ্ভিদ শারীরতত্ত্ব',topics:['সালোকসংশ্লেষণ','শ্বসন','পানি পরিশোষণ','প্রস্বেদন','খনিজ পুষ্টি']},
-      {id:'b1c4',name:'উদ্ভিদের প্রজনন',topics:['অযৌন প্রজনন','যৌন প্রজনন','ফুলের গঠন','পরাগায়ন','নিষেক']},
-      {id:'b1c5',name:'জেনেটিক্স',topics:['মেন্ডেলের সূত্র','ডিএনএ গঠন','প্রোটিন সংশ্লেষণ','মিউটেশন','জিনতত্ত্ব']},
+    {id:5,name:'জীববিজ্ঞান ১ম পত্র',short_name:'Bio 1',chapters:[
+      {id:501,name:'কোষ ও এর গঠন',topics:[{id:5001,name:'কোষ তত্ত্ব'},{id:5002,name:'প্রোক্যারিওটিক কোষ'},{id:5003,name:'ইউক্যারিওটিক কোষ'},{id:5004,name:'কোষ অঙ্গাণু'},{id:5005,name:'কোষ বিভাজন'}]},
+      {id:502,name:'কোষ রসায়ন',topics:[{id:5006,name:'কার্বোহাইড্রেট'},{id:5007,name:'প্রোটিন'},{id:5008,name:'লিপিড'},{id:5009,name:'নিউক্লিক অ্যাসিড'},{id:5010,name:'এনজাইম'}]},
+      {id:503,name:'উদ্ভিদ শারীরতত্ত্ব',topics:[{id:5011,name:'সালোকসংশ্লেষণ'},{id:5012,name:'শ্বসন'},{id:5013,name:'পানি পরিশোষণ'},{id:5014,name:'প্রস্বেদন'},{id:5015,name:'খনিজ পুষ্টি'}]},
+      {id:504,name:'উদ্ভিদের প্রজনন',topics:[{id:5016,name:'অযৌন প্রজনন'},{id:5017,name:'যৌন প্রজনন'},{id:5018,name:'ফুলের গঠন'},{id:5019,name:'পরাগায়ন'},{id:5020,name:'নিষেক'}]},
+      {id:505,name:'জেনেটিক্স',topics:[{id:5021,name:'মেন্ডেলের সূত্র'},{id:5022,name:'ডিএনএ গঠন'},{id:5023,name:'প্রোটিন সংশ্লেষণ'},{id:5024,name:'মিউটেশন'},{id:5025,name:'জিনতত্ত্ব'}]},
     ]},
-    { id:'bio2', name:'জীববিজ্ঞান ২য় পত্র', short:'Biology 2', chapters:[
-      {id:'b2c1',name:'প্রাণী বৈচিত্র্য',topics:['শ্রেণিবিন্যাস','অমেরুদণ্ডী প্রাণী','মেরুদণ্ডী প্রাণী','মানব শারীরবিজ্ঞান','বিবর্তন']},
-      {id:'b2c2',name:'মানব শারীরতত্ত্ব',topics:['পাচনতন্ত্র','রক্ত সংবহনতন্ত্র','শ্বসনতন্ত্র','রেচনতন্ত্র','স্নায়ুতন্ত্র']},
-      {id:'b2c3',name:'অনুজীব',topics:['ব্যাকটেরিয়া','ভাইরাস','ছত্রাক','প্রোটোজোয়া','রোগজীবাণু']},
-      {id:'b2c4',name:'মানব রোগ',topics:['সংক্রামক রোগ','অসংক্রামক রোগ','রোগ প্রতিরোধ','টিকা','অ্যান্টিবায়োটিক']},
+    {id:6,name:'জীববিজ্ঞান ২য় পত্র',short_name:'Bio 2',chapters:[
+      {id:601,name:'প্রাণী বৈচিত্র্য',topics:[{id:6001,name:'শ্রেণিবিন্যাস'},{id:6002,name:'অমেরুদণ্ডী প্রাণী'},{id:6003,name:'মেরুদণ্ডী প্রাণী'},{id:6004,name:'মানব শারীরবিজ্ঞান'},{id:6005,name:'বিবর্তন'}]},
+      {id:602,name:'মানব শারীরতত্ত্ব',topics:[{id:6006,name:'পাচনতন্ত্র'},{id:6007,name:'রক্ত সংবহনতন্ত্র'},{id:6008,name:'শ্বসনতন্ত্র'},{id:6009,name:'রেচনতন্ত্র'},{id:6010,name:'স্নায়ুতন্ত্র'}]},
+      {id:603,name:'অনুজীব',topics:[{id:6011,name:'ব্যাকটেরিয়া'},{id:6012,name:'ভাইরাস'},{id:6013,name:'ছত্রাক'},{id:6014,name:'প্রোটোজোয়া'},{id:6015,name:'রোগজীবাণু'}]},
     ]},
-    { id:'ict', name:'তথ্য ও যোগাযোগ প্রযুক্তি', short:'ICT', chapters:[
-      {id:'ict1',name:'তথ্য ও যোগাযোগ প্রযুক্তি',topics:['ICT ধারণা','ইন্টারনেট','সোশ্যাল মিডিয়া','ই-কমার্স','সাইবার নিরাপত্তা']},
-      {id:'ict2',name:'কম্পিউটার',topics:['হার্ডওয়্যার','সফটওয়্যার','অপারেটিং সিস্টেম','ডেটা সংরক্ষণ','নেটওয়ার্ক']},
-      {id:'ict3',name:'সংখ্যা পদ্ধতি',topics:['বাইনারি','অক্টাল','হেক্সাডেসিমাল','রূপান্তর','বুলিয়ান অ্যালজেব্রা']},
-      {id:'ict4',name:'প্রোগ্রামিং',topics:['অ্যালগরিদম','ফ্লোচার্ট','C প্রোগ্রামিং','লুপ','ফাংশন']},
+    {id:7,name:'তথ্য ও যোগাযোগ প্রযুক্তি',short_name:'ICT',chapters:[
+      {id:701,name:'ICT ধারণা',topics:[{id:7001,name:'ICT সংজ্ঞা'},{id:7002,name:'ইন্টারনেট'},{id:7003,name:'সোশ্যাল মিডিয়া'},{id:7004,name:'সাইবার নিরাপত্তা'},{id:7005,name:'ই-কমার্স'}]},
+      {id:702,name:'কম্পিউটার',topics:[{id:7006,name:'হার্ডওয়্যার'},{id:7007,name:'সফটওয়্যার'},{id:7008,name:'অপারেটিং সিস্টেম'},{id:7009,name:'ডেটা সংরক্ষণ'},{id:7010,name:'নেটওয়ার্ক'}]},
+      {id:703,name:'সংখ্যা পদ্ধতি',topics:[{id:7011,name:'বাইনারি'},{id:7012,name:'অক্টাল'},{id:7013,name:'হেক্সাডেসিমাল'},{id:7014,name:'রূপান্তর'},{id:7015,name:'বুলিয়ান অ্যালজেব্রা'}]},
+      {id:704,name:'প্রোগ্রামিং',topics:[{id:7016,name:'অ্যালগরিদম'},{id:7017,name:'ফ্লোচার্ট'},{id:7018,name:'C প্রোগ্রামিং'},{id:7019,name:'লুপ'},{id:7020,name:'ফাংশন'}]},
     ]},
-    { id:'ban1', name:'বাংলা ১ম পত্র', short:'বাংলা ১', chapters:[
-      {id:'bn1c1',name:'গদ্য',topics:['বায়ান্নর দিনগুলো','অপরিচিতা','মাসি-পিসি','জীবন ও বৃক্ষ','চাষার দুক্ষু']},
-      {id:'bn1c2',name:'পদ্য',topics:['বিদ্রোহী','সোনার তরী','আঠারো বছর বয়স','ফেব্রুয়ারি ১৯৬৯','আমি কিংবদন্তির কথা বলছি']},
-      {id:'bn1c3',name:'নাটক',topics:['সিরাজউদ্দৌলা']},
-      {id:'bn1c4',name:'উপন্যাস',topics:['লালসালু']},
+    {id:8,name:'বাংলা ১ম পত্র',short_name:'বাংলা ১',chapters:[
+      {id:801,name:'গদ্য',topics:[{id:8001,name:'বায়ান্নর দিনগুলো'},{id:8002,name:'অপরিচিতা'},{id:8003,name:'মাসি-পিসি'},{id:8004,name:'জীবন ও বৃক্ষ'},{id:8005,name:'চাষার দুক্ষু'}]},
+      {id:802,name:'পদ্য',topics:[{id:8006,name:'বিদ্রোহী'},{id:8007,name:'সোনার তরী'},{id:8008,name:'আঠারো বছর বয়স'},{id:8009,name:'ফেব্রুয়ারি ১৯৬৯'},{id:8010,name:'আমি কিংবদন্তির কথা বলছি'}]},
+      {id:803,name:'নাটক',topics:[{id:8011,name:'সিরাজউদ্দৌলা - ১ম অঙ্ক'},{id:8012,name:'সিরাজউদ্দৌলা - ২য় অঙ্ক'},{id:8013,name:'সিরাজউদ্দৌলা - ৩য় অঙ্ক'},{id:8014,name:'চরিত্র বিশ্লেষণ'},{id:8015,name:'মূলভাব'}]},
+      {id:804,name:'উপন্যাস',topics:[{id:8016,name:'লালসালু - ১ম অধ্যায়'},{id:8017,name:'লালসালু - ২য় অধ্যায়'},{id:8018,name:'চরিত্র বিশ্লেষণ'},{id:8019,name:'মূলভাব'},{id:8020,name:'সামাজিক প্রেক্ষাপট'}]},
     ]},
-    { id:'ban2', name:'বাংলা ২য় পত্র', short:'বাংলা ২', chapters:[
-      {id:'bn2c1',name:'ব্যাকরণ',topics:['বাংলা ভাষার উদ্ভব','ধ্বনি ও বর্ণ','শব্দ','পদ প্রকরণ','বাক্য']},
-      {id:'bn2c2',name:'রচনা',topics:['প্রবন্ধ রচনা','সারাংশ','সারমর্ম','ভাবসম্প্রসারণ','অনুচ্ছেদ']},
+    {id:9,name:'বাংলা ২য় পত্র',short_name:'বাংলা ২',chapters:[
+      {id:901,name:'ব্যাকরণ',topics:[{id:9001,name:'বাংলা ভাষার উদ্ভব'},{id:9002,name:'ধ্বনি ও বর্ণ'},{id:9003,name:'শব্দ'},{id:9004,name:'পদ প্রকরণ'},{id:9005,name:'বাক্য'}]},
+      {id:902,name:'রচনা',topics:[{id:9006,name:'প্রবন্ধ রচনা'},{id:9007,name:'সারাংশ'},{id:9008,name:'সারমর্ম'},{id:9009,name:'ভাবসম্প্রসারণ'},{id:9010,name:'অনুচ্ছেদ'}]},
     ]},
-    { id:'eng1', name:'English 1st Paper', short:'English 1', chapters:[
-      {id:'en1c1',name:'Reading',topics:['Comprehension','Vocabulary','Summary Writing','Completing Story','Report Writing']},
-      {id:'en1c2',name:'Writing',topics:['Paragraph','Composition','Letter','Application','Email']},
+    {id:10,name:'English 1st Paper',short_name:'Eng 1',chapters:[
+      {id:1001,name:'Reading',topics:[{id:10001,name:'Comprehension'},{id:10002,name:'Vocabulary'},{id:10003,name:'Summary Writing'},{id:10004,name:'Completing Story'},{id:10005,name:'Report Writing'}]},
+      {id:1002,name:'Writing',topics:[{id:10006,name:'Paragraph'},{id:10007,name:'Composition'},{id:10008,name:'Letter'},{id:10009,name:'Application'},{id:10010,name:'Email'}]},
     ]},
-    { id:'eng2', name:'English 2nd Paper', short:'English 2', chapters:[
-      {id:'en2c1',name:'Grammar',topics:['Parts of Speech','Tense','Voice','Narration','Transformation']},
-      {id:'en2c2',name:'Composition',topics:['Completing Sentences','Gap Filling','Rearranging','Editing','Punctuation']},
+    {id:11,name:'English 2nd Paper',short_name:'Eng 2',chapters:[
+      {id:1101,name:'Grammar',topics:[{id:11001,name:'Parts of Speech'},{id:11002,name:'Tense'},{id:11003,name:'Voice'},{id:11004,name:'Narration'},{id:11005,name:'Transformation'}]},
+      {id:1102,name:'Composition',topics:[{id:11006,name:'Completing Sentences'},{id:11007,name:'Gap Filling'},{id:11008,name:'Rearranging'},{id:11009,name:'Editing'},{id:11010,name:'Punctuation'}]},
     ]},
-    { id:'hm1', name:'উচ্চতর গণিত ১ম পত্র', short:'H.Math 1', chapters:[
-      {id:'hm1c1',name:'ম্যাট্রিক্স ও নির্ণায়ক',topics:['ম্যাট্রিক্স','নির্ণায়ক','ক্র্যামারের নিয়ম','বিপরীত ম্যাট্রিক্স','সমীকরণ সমাধান']},
-      {id:'hm1c2',name:'ভেক্টর',topics:['ভেক্টরের ধারণা','স্কেলার গুণফল','ভেক্টর গুণফল','তলের সমীকরণ','রেখার সমীকরণ']},
-      {id:'hm1c3',name:'সরল রেখা',topics:['ঢাল','রেখার সমীকরণ','দুটি রেখার ছেদ','লম্ব দূরত্ব','কোণ']},
-      {id:'hm1c4',name:'বৃত্ত',topics:['বৃত্তের সমীকরণ','স্পর্শক','জ্যা','বৃত্তের অবস্থান','বৃত্তের সংযোগ']},
-      {id:'hm1c5',name:'কনিক',topics:['পরাবৃত্ত','উপবৃত্ত','অধিবৃত্ত','উৎকেন্দ্রিকতা','নিয়ামক']},
+    {id:12,name:'উচ্চতর গণিত ১ম পত্র',short_name:'H.Math 1',chapters:[
+      {id:1201,name:'ম্যাট্রিক্স ও নির্ণায়ক',topics:[{id:12001,name:'ম্যাট্রিক্স'},{id:12002,name:'নির্ণায়ক'},{id:12003,name:'ক্র্যামারের নিয়ম'},{id:12004,name:'বিপরীত ম্যাট্রিক্স'},{id:12005,name:'সমীকরণ সমাধান'}]},
+      {id:1202,name:'ভেক্টর',topics:[{id:12006,name:'ভেক্টরের ধারণা'},{id:12007,name:'স্কেলার গুণফল'},{id:12008,name:'ভেক্টর গুণফল'},{id:12009,name:'তলের সমীকরণ'},{id:12010,name:'রেখার সমীকরণ'}]},
+      {id:1203,name:'সরল রেখা',topics:[{id:12011,name:'ঢাল'},{id:12012,name:'রেখার সমীকরণ'},{id:12013,name:'দুটি রেখার ছেদ'},{id:12014,name:'লম্ব দূরত্ব'},{id:12015,name:'কোণ'}]},
+      {id:1204,name:'বৃত্ত',topics:[{id:12016,name:'বৃত্তের সমীকরণ'},{id:12017,name:'স্পর্শক'},{id:12018,name:'জ্যা'},{id:12019,name:'বৃত্তের অবস্থান'},{id:12020,name:'বৃত্তের সংযোগ'}]},
+      {id:1205,name:'কনিক',topics:[{id:12021,name:'পরাবৃত্ত'},{id:12022,name:'উপবৃত্ত'},{id:12023,name:'অধিবৃত্ত'},{id:12024,name:'উৎকেন্দ্রিকতা'},{id:12025,name:'নিয়ামক'}]},
     ]},
-    { id:'hm2', name:'উচ্চতর গণিত ২য় পত্র', short:'H.Math 2', chapters:[
-      {id:'hm2c1',name:'জটিল সংখ্যা',topics:['কাল্পনিক সংখ্যা','আর্গান্ড সমতল','মডুলাস','আর্গুমেন্ট','ডি মোয়াভরের সূত্র']},
-      {id:'hm2c2',name:'বহুপদী ও ভগ্নাংশ',topics:['বহুপদীর বিভাজন','অনুৎপাদ উপপাদ্য','আংশিক ভগ্নাংশ','বিন্যাস','সমাবেশ']},
-      {id:'hm2c3',name:'অনুক্রম ও ধারা',topics:['সমান্তর ধারা','গুণোত্তর ধারা','অসীম ধারা','দ্বিপদী উপপাদ্য','বিশেষ ধারা']},
-      {id:'hm2c4',name:'ত্রিকোণমিতি',topics:['ত্রিকোণমিতিক ফাংশন','যৌগিক কোণ','ব্যস্ত ত্রিকোণমিতিক ফাংশন','ত্রিভুজ সমাধান','সমীকরণ']},
-      {id:'hm2c5',name:'ক্যালকুলাস',topics:['সীমা','অবকলন','অবকলনের নিয়ম','যোগজীকরণ','নির্দিষ্ট যোগজ']},
+    {id:13,name:'উচ্চতর গণিত ২য় পত্র',short_name:'H.Math 2',chapters:[
+      {id:1301,name:'জটিল সংখ্যা',topics:[{id:13001,name:'কাল্পনিক সংখ্যা'},{id:13002,name:'আর্গান্ড সমতল'},{id:13003,name:'মডুলাস'},{id:13004,name:'আর্গুমেন্ট'},{id:13005,name:'ডি মোয়াভরের সূত্র'}]},
+      {id:1302,name:'বহুপদী ও ভগ্নাংশ',topics:[{id:13006,name:'বহুপদীর বিভাজন'},{id:13007,name:'অনুৎপাদ উপপাদ্য'},{id:13008,name:'আংশিক ভগ্নাংশ'},{id:13009,name:'বিন্যাস'},{id:13010,name:'সমাবেশ'}]},
+      {id:1303,name:'অনুক্রম ও ধারা',topics:[{id:13011,name:'সমান্তর ধারা'},{id:13012,name:'গুণোত্তর ধারা'},{id:13013,name:'অসীম ধারা'},{id:13014,name:'দ্বিপদী উপপাদ্য'},{id:13015,name:'বিশেষ ধারা'}]},
+      {id:1304,name:'ক্যালকুলাস',topics:[{id:13016,name:'সীমা'},{id:13017,name:'অবকলন'},{id:13018,name:'অবকলনের নিয়ম'},{id:13019,name:'যোগজীকরণ'},{id:13020,name:'নির্দিষ্ট যোগজ'}]},
     ]},
   ],
-  medical: [
-    { id:'mphy', name:'পদার্থবিজ্ঞান', short:'Physics', chapters:[
-      {id:'mp1',name:'ভৌত রাশি ও পরিমাপ',topics:['একক','মাত্রা','পরিমাপের যন্ত্র','ত্রুটি','গুরুত্বপূর্ণ সংখ্যা']},
-      {id:'mp2',name:'গতিবিদ্যা',topics:['সরণ','বেগ','ত্বরণ','প্রজেক্টাইল','আপেক্ষিক গতি']},
-      {id:'mp3',name:'বলবিদ্যা',topics:['নিউটনের সূত্র','ভরবেগ','ঘর্ষণ','কাজ-শক্তি','মহাকর্ষ']},
-      {id:'mp4',name:'পদার্থের অবস্থা',topics:['কঠিন','তরল','গ্যাস','তাপ','পৃষ্ঠটান']},
-      {id:'mp5',name:'তরঙ্গ ও আলো',topics:['তরঙ্গ','শব্দ','আলোর প্রকৃতি','লেন্স','আলোক যন্ত্র']},
-      {id:'mp6',name:'তড়িৎ ও চুম্বক',topics:['স্থির তড়িৎ','চল তড়িৎ','তড়িৎ চুম্বক','ইলেকট্রনিক্স','পারমাণবিক পদার্থবিজ্ঞান']},
+  medical:[
+    {id:101,name:'পদার্থবিজ্ঞান',short_name:'Physics',chapters:[
+      {id:10101,name:'ভৌত রাশি ও পরিমাপ',topics:[{id:101001,name:'একক'},{id:101002,name:'মাত্রা'},{id:101003,name:'পরিমাপের যন্ত্র'},{id:101004,name:'ত্রুটি'},{id:101005,name:'গুরুত্বপূর্ণ সংখ্যা'}]},
+      {id:10102,name:'গতিবিদ্যা',topics:[{id:101006,name:'সরণ'},{id:101007,name:'বেগ'},{id:101008,name:'ত্বরণ'},{id:101009,name:'প্রজেক্টাইল'},{id:101010,name:'আপেক্ষিক গতি'}]},
+      {id:10103,name:'বলবিদ্যা',topics:[{id:101011,name:'নিউটনের সূত্র'},{id:101012,name:'ভরবেগ'},{id:101013,name:'ঘর্ষণ'},{id:101014,name:'কাজ-শক্তি'},{id:101015,name:'মহাকর্ষ'}]},
+      {id:10104,name:'তরঙ্গ ও আলো',topics:[{id:101016,name:'তরঙ্গ'},{id:101017,name:'শব্দ'},{id:101018,name:'আলোর প্রকৃতি'},{id:101019,name:'লেন্স'},{id:101020,name:'আলোক যন্ত্র'}]},
+      {id:10105,name:'তড়িৎ ও চুম্বক',topics:[{id:101021,name:'স্থির তড়িৎ'},{id:101022,name:'চল তড়িৎ'},{id:101023,name:'তড়িৎ চুম্বক'},{id:101024,name:'ইলেকট্রনিক্স'},{id:101025,name:'পারমাণবিক পদার্থবিজ্ঞান'}]},
     ]},
-    { id:'mchem', name:'রসায়ন', short:'Chemistry', chapters:[
-      {id:'mc1',name:'পরমাণু ও অণু',topics:['পরমাণুর গঠন','ইলেকট্রন বিন্যাস','পর্যায় সারণি','রাসায়নিক বন্ধন','বিক্রিয়া']},
-      {id:'mc2',name:'জৈব রসায়ন',topics:['হাইড্রোকার্বন','অক্সিজেনযুক্ত যৌগ','নাইট্রোজেনযুক্ত যৌগ','পলিমার','জৈব বিক্রিয়া']},
-      {id:'mc3',name:'ভৌত রসায়ন',topics:['দ্রবণ','pH','তড়িৎ রসায়ন','তাপরসায়ন','সাম্যাবস্থা']},
-      {id:'mc4',name:'অজৈব রসায়ন',topics:['ধাতু','অধাতু','অম্ল-ক্ষার','লবণ','শিল্পে রসায়ন']},
+    {id:102,name:'রসায়ন',short_name:'Chemistry',chapters:[
+      {id:10201,name:'পরমাণু ও অণু',topics:[{id:102001,name:'পরমাণুর গঠন'},{id:102002,name:'ইলেকট্রন বিন্যাস'},{id:102003,name:'পর্যায় সারণি'},{id:102004,name:'রাসায়নিক বন্ধন'},{id:102005,name:'বিক্রিয়া'}]},
+      {id:10202,name:'জৈব রসায়ন',topics:[{id:102006,name:'হাইড্রোকার্বন'},{id:102007,name:'অক্সিজেনযুক্ত যৌগ'},{id:102008,name:'পলিমার'},{id:102009,name:'জৈব বিক্রিয়া'},{id:102010,name:'নাইট্রোজেনযুক্ত যৌগ'}]},
+      {id:10203,name:'ভৌত রসায়ন',topics:[{id:102011,name:'দ্রবণ'},{id:102012,name:'pH'},{id:102013,name:'তড়িৎ রসায়ন'},{id:102014,name:'তাপরসায়ন'},{id:102015,name:'সাম্যাবস্থা'}]},
     ]},
-    { id:'mbot', name:'উদ্ভিদবিজ্ঞান', short:'Botany', chapters:[
-      {id:'mb1',name:'কোষ ও কলা',topics:['কোষের গঠন','কোষ বিভাজন','উদ্ভিদ কলা','মেরিস্টেম','সংবহন কলা']},
-      {id:'mb2',name:'উদ্ভিদের শারীরস্থান',topics:['মূলের গঠন','কাণ্ডের গঠন','পাতার গঠন','ফুলের গঠন','বীজের গঠন']},
-      {id:'mb3',name:'উদ্ভিদের শারীরতত্ত্ব',topics:['সালোকসংশ্লেষণ','শ্বসন','প্রস্বেদন','পানি শোষণ','উদ্ভিদ হরমোন']},
-      {id:'mb4',name:'উদ্ভিদের প্রজনন',topics:['অযৌন প্রজনন','যৌন প্রজনন','পরাগায়ন','নিষেক','ফল ও বীজ']},
-      {id:'mb5',name:'উদ্ভিদ বিবর্তন',topics:['শ্রেণিবিন্যাস','ব্রায়োফাইটা','টেরিডোফাইটা','জিমনোস্পার্ম','অ্যাঞ্জিওস্পার্ম']},
+    {id:103,name:'উদ্ভিদবিজ্ঞান',short_name:'Botany',chapters:[
+      {id:10301,name:'কোষ ও কলা',topics:[{id:103001,name:'কোষের গঠন'},{id:103002,name:'কোষ বিভাজন'},{id:103003,name:'উদ্ভিদ কলা'},{id:103004,name:'মেরিস্টেম'},{id:103005,name:'সংবহন কলা'}]},
+      {id:10302,name:'উদ্ভিদের শারীরস্থান',topics:[{id:103006,name:'মূলের গঠন'},{id:103007,name:'কাণ্ডের গঠন'},{id:103008,name:'পাতার গঠন'},{id:103009,name:'ফুলের গঠন'},{id:103010,name:'বীজের গঠন'}]},
+      {id:10303,name:'উদ্ভিদের শারীরতত্ত্ব',topics:[{id:103011,name:'সালোকসংশ্লেষণ'},{id:103012,name:'শ্বসন'},{id:103013,name:'প্রস্বেদন'},{id:103014,name:'পানি শোষণ'},{id:103015,name:'উদ্ভিদ হরমোন'}]},
+      {id:10304,name:'উদ্ভিদের প্রজনন',topics:[{id:103016,name:'অযৌন প্রজনন'},{id:103017,name:'যৌন প্রজনন'},{id:103018,name:'পরাগায়ন'},{id:103019,name:'নিষেক'},{id:103020,name:'ফল ও বীজ'}]},
+      {id:10305,name:'উদ্ভিদ বিবর্তন',topics:[{id:103021,name:'শ্রেণিবিন্যাস'},{id:103022,name:'ব্রায়োফাইটা'},{id:103023,name:'টেরিডোফাইটা'},{id:103024,name:'জিমনোস্পার্ম'},{id:103025,name:'অ্যাঞ্জিওস্পার্ম'}]},
     ]},
-    { id:'mzoo', name:'প্রাণিবিজ্ঞান', short:'Zoology', chapters:[
-      {id:'mz1',name:'প্রাণী বৈচিত্র্য',topics:['শ্রেণিবিন্যাস','অমেরুদণ্ডী','মেরুদণ্ডী','মানবদেহ','বিবর্তন']},
-      {id:'mz2',name:'মানব শারীরবিজ্ঞান',topics:['পাচনতন্ত্র','রক্ত সংবহন','শ্বসনতন্ত্র','রেচনতন্ত্র','স্নায়ুতন্ত্র']},
-      {id:'mz3',name:'প্রজনন ও বিকাশ',topics:['যৌন প্রজনন','ভ্রূণ উন্নয়ন','হরমোন','জেনেটিক্স','DNA প্রযুক্তি']},
-      {id:'mz4',name:'অনুজীব ও রোগ',topics:['ব্যাকটেরিয়া','ভাইরাস','রোগ প্রতিরোধ','টিকা','মহামারী']},
+    {id:104,name:'প্রাণিবিজ্ঞান',short_name:'Zoology',chapters:[
+      {id:10401,name:'প্রাণী বৈচিত্র্য',topics:[{id:104001,name:'শ্রেণিবিন্যাস'},{id:104002,name:'অমেরুদণ্ডী'},{id:104003,name:'মেরুদণ্ডী'},{id:104004,name:'মানবদেহ'},{id:104005,name:'বিবর্তন'}]},
+      {id:10402,name:'মানব শারীরবিজ্ঞান',topics:[{id:104006,name:'পাচনতন্ত্র'},{id:104007,name:'রক্ত সংবহন'},{id:104008,name:'শ্বসনতন্ত্র'},{id:104009,name:'রেচনতন্ত্র'},{id:104010,name:'স্নায়ুতন্ত্র'}]},
+      {id:10403,name:'প্রজনন ও বিকাশ',topics:[{id:104011,name:'যৌন প্রজনন'},{id:104012,name:'ভ্রূণ উন্নয়ন'},{id:104013,name:'হরমোন'},{id:104014,name:'জেনেটিক্স'},{id:104015,name:'DNA প্রযুক্তি'}]},
     ]},
-    { id:'mban', name:'বাংলা', short:'বাংলা', chapters:[
-      {id:'mbn1',name:'গদ্য ও পদ্য',topics:['গদ্য পাঠ','পদ্য পাঠ','ব্যাকরণ','রচনা','ভাষার ব্যবহার']},
+    {id:105,name:'বাংলা',short_name:'বাংলা',chapters:[
+      {id:10501,name:'গদ্য ও পদ্য',topics:[{id:105001,name:'গদ্য পাঠ'},{id:105002,name:'পদ্য পাঠ'},{id:105003,name:'ব্যাকরণ'},{id:105004,name:'রচনা'},{id:105005,name:'ভাষার ব্যবহার'}]},
     ]},
-    { id:'meng', name:'English', short:'English', chapters:[
-      {id:'men1',name:'Grammar & Writing',topics:['Grammar','Vocabulary','Comprehension','Writing','Translation']},
+    {id:106,name:'English',short_name:'English',chapters:[
+      {id:10601,name:'Grammar & Writing',topics:[{id:106001,name:'Grammar'},{id:106002,name:'Vocabulary'},{id:106003,name:'Comprehension'},{id:106004,name:'Writing'},{id:106005,name:'Translation'}]},
     ]},
   ]
 };
 
-// ═══════════════════════
-// STATE
-// ═══════════════════════
-let state = {
-  syllabusTab: 'hsc',
-  revisionTab: 'hsc',
-  progress: {}, // key: topicKey → true/false
-  revision: {}  // key: topicKey → true/false
-};
+// Initialize: load fallback into cache
+CACHE.hsc=FALLBACK.hsc;
+CACHE.medical=FALLBACK.medical;
 
-const STORAGE_KEY = 'atlas_tracker_v1';
-
-function loadState() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) state = JSON.parse(saved);
-  } catch(e) {}
-}
-
-function saveState() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
-}
-
-// ═══════════════════════
-// CALC HELPERS
-// ═══════════════════════
-function getTopicKey(mode, subjId, chapId, topicIdx) {
-  return `${mode}_${subjId}_${chapId}_${topicIdx}`;
-}
-
-function calcSubjectPct(mode, subj) {
-  let total = 0, done = 0;
-  for (const ch of subj.chapters) {
-    for (let i = 0; i < ch.topics.length; i++) {
-      total++;
-      if (state.progress[getTopicKey(mode, subj.id, ch.id, i)]) done++;
-    }
-  }
-  return total ? Math.round((done / total) * 100) : 0;
-}
-
-function calcChapterPct(mode, subjId, chap) {
-  let total = chap.topics.length, done = 0;
-  for (let i = 0; i < chap.topics.length; i++) {
-    if (state.progress[getTopicKey(mode, subjId, chap.id, i)]) done++;
-  }
-  return total ? Math.round((done / total) * 100) : 0;
-}
-
-function calcOverallPct(mode) {
-  const subjects = SYLLABUS[mode];
-  let total = 0, done = 0;
-  for (const subj of subjects) {
-    for (const ch of subj.chapters) {
-      total += ch.topics.length;
-      for (let i = 0; i < ch.topics.length; i++) {
-        if (state.progress[getTopicKey(mode, subj.id, ch.id, i)]) done++;
-      }
-    }
-  }
-  return total ? Math.round((done / total) * 100) : 0;
-}
-
-function totalTopics(mode) {
-  return SYLLABUS[mode].reduce((a, s) => a + s.chapters.reduce((b, c) => b + c.topics.length, 0), 0);
-}
-
-function totalChapters(mode) {
-  return SYLLABUS[mode].reduce((a, s) => a + s.chapters.length, 0);
-}
-
-// ═══════════════════════
-// PANEL NAVIGATION
-// ═══════════════════════
-function openPanel(id) {
-  document.getElementById(id).classList.add('active');
-  if (id === 'syllabusPanel') renderSubjects();
-  if (id === 'progressPanel') renderProgress();
-  if (id === 'revisionPanel') renderRevisionSubjects();
-}
-
-function closePanel(id) {
-  document.getElementById(id).classList.remove('active');
-}
-
-// ═══════════════════════
-// SYLLABUS TRACKER
-// ═══════════════════════
-function switchSyllabusTab(tab, btn) {
-  state.syllabusTab = tab;
-  document.querySelectorAll('#syllabusPanel .tab-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderSubjects();
-}
-
-function renderSubjects() {
-  const mode = state.syllabusTab;
-  const subjects = SYLLABUS[mode];
-  const pct = calcOverallPct(mode);
-  const chaps = totalChapters(mode);
-
-  document.getElementById('statTotalSubj').textContent = subjects.length;
-  document.getElementById('statTotalChap').textContent = chaps;
-  document.getElementById('statOverallPct').textContent = pct + '%';
-  document.getElementById('overallPctLabel').textContent = pct + '%';
-  document.getElementById('overallBar').style.width = pct + '%';
-
-  const grid = document.getElementById('subjGrid');
-  grid.innerHTML = subjects.map(subj => {
-    const p = calcSubjectPct(mode, subj);
-    return `<div class="subj-card" onclick="openChapters('${mode}','${subj.id}')">
-      <div class="subj-name">${subj.name}</div>
-      <div class="subj-prog">
-        <span class="subj-pct">${p}%</span>
-        <div class="mini-bar"><div class="mini-fill" style="width:${p}%"></div></div>
-      </div>
-      <div class="subj-chap">${subj.chapters.length} অধ্যায় · ${subj.chapters.reduce((a,c)=>a+c.topics.length,0)} টপিক</div>
-    </div>`;
-  }).join('');
-
-  updateDashboard();
-}
-
-// ═══════════════════════
-// CHAPTER LIST
-// ═══════════════════════
-let currentSubjMeta = {};
-
-function openChapters(mode, subjId) {
-  const subj = SYLLABUS[mode].find(s => s.id === subjId);
-  currentSubjMeta = { mode, subjId, subj };
-
-  document.getElementById('chapterPanelTitle').textContent = subj.name;
-  document.getElementById('chapStatTotal').textContent = subj.chapters.length;
-
-  let doneCh = 0;
-  const list = subj.chapters.map((ch, idx) => {
-    const pct = calcChapterPct(mode, subjId, ch);
-    if (pct === 100) doneCh++;
-    const topicDone = ch.topics.filter((_, i) => state.progress[getTopicKey(mode, subjId, ch.id, i)]).length;
-    return `<div class="chap-item" onclick="openTopics('${mode}','${subjId}','${ch.id}')">
-      <div class="chap-num">${idx + 1}</div>
-      <div class="chap-info">
-        <div class="chap-name">${ch.name}</div>
-        <div class="chap-stat">${topicDone}/${ch.topics.length} টপিক সম্পন্ন</div>
-        <div class="bar-track" style="height:4px;margin-top:5px;border-radius:999px;overflow:hidden;background:var(--card2)">
-          <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#4f8ef7,#38bdf8);border-radius:999px;transition:width .3s"></div>
-        </div>
-      </div>
-      <div class="chap-pct-badge">${pct}%</div>
-    </div>`;
-  }).join('');
-
-  document.getElementById('chapStatDone').textContent = doneCh;
-  document.getElementById('chapStatPct').textContent = calcSubjectPct(mode, subj) + '%';
-  document.getElementById('chapterList').innerHTML = list;
-  document.getElementById('chapterPanel').classList.add('active');
-}
-
-// ═══════════════════════
-// TOPIC LIST
-// ═══════════════════════
-let currentChapMeta = {};
-
-function openTopics(mode, subjId, chapId) {
-  const subj = SYLLABUS[mode].find(s => s.id === subjId);
-  const chap = subj.chapters.find(c => c.id === chapId);
-  currentChapMeta = { mode, subjId, chapId, subj, chap };
-
-  document.getElementById('topicPanelTitle').textContent = chap.name;
-  document.getElementById('topicStatTotal').textContent = chap.topics.length;
-
-  renderTopicList();
-  document.getElementById('topicPanel').classList.add('active');
-}
-
-function renderTopicList() {
-  const { mode, subjId, chapId, chap } = currentChapMeta;
-  let done = 0;
-  const items = chap.topics.map((t, i) => {
-    const key = getTopicKey(mode, subjId, chapId, i);
-    const isDone = !!state.progress[key];
-    if (isDone) done++;
-    return `<div class="topic-item">
-      <div class="topic-check ${isDone ? 'done' : ''}" onclick="toggleTopic('${mode}','${subjId}','${chapId}',${i})">
-        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-      </div>
-      <span class="topic-name" style="${isDone ? 'color:var(--sub);text-decoration:line-through' : ''}">${t}</span>
-    </div>`;
-  }).join('');
-
-  document.getElementById('topicStatDone').textContent = done;
-  const pct = chap.topics.length ? Math.round((done / chap.topics.length) * 100) : 0;
-  document.getElementById('topicStatPct').textContent = pct + '%';
-  document.getElementById('topicList').innerHTML = items;
-}
-
-function toggleTopic(mode, subjId, chapId, idx) {
-  const key = getTopicKey(mode, subjId, chapId, idx);
-  state.progress[key] = !state.progress[key];
-  saveState();
-  renderTopicList();
-  // update parent panels live
-  if (document.getElementById('chapterPanel').classList.contains('active')) {
-    openChapters(mode, subjId);
-    document.getElementById('topicPanel').classList.add('active');
-  }
-  renderSubjects();
-  updateDashboard();
-  updateProgressPanel();
-  showToastMsg(state.progress[key] ? '✅ সম্পন্ন!' : '↩ পূর্বাবস্থায় ফিরল');
-}
-
-// ═══════════════════════
-// ROUTINE
-// ═══════════════════════
-function switchRoutineTab(tab, btn) {
-  document.querySelectorAll('.routine-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  const icon = tab === 'daily' ? '📅' : '🎯';
-  const name = tab === 'daily' ? 'Daily Routine' : 'Target Based Routine';
-  document.getElementById('routineContent').innerHTML = `
-    <div class="routine-empty">
-      <div class="big-icon">${icon}</div>
-      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px">${name}</div>
-      <div style="font-size:12px;color:var(--sub);line-height:1.6">শীঘ্রই আসছে।</div>
-      <button class="add-btn" onclick="showToastMsg('শীঘ্রই আসছে! 🚧')">+ নতুন রুটিন তৈরি করুন</button>
-    </div>`;
-}
-
-// ═══════════════════════
-// PROGRESS
-// ═══════════════════════
-function renderProgress() {
-  updateProgressPanel();
-}
-
-function updateProgressPanel() {
-  const hscPct = calcOverallPct('hsc');
-  const medPct = calcOverallPct('medical');
-  const el = (id) => document.getElementById(id);
-  if (el('progHscPct')) {
-    el('progHscPct').textContent = hscPct + '%';
-    el('progHscBar').style.width = hscPct + '%';
-    el('progMedPct').textContent = medPct + '%';
-    el('progMedBar').style.width = medPct + '%';
-  }
-
-  // Weak areas
-  const weakHtml = getWeakAreas();
-  if (el('weakAreasList')) el('weakAreasList').innerHTML = weakHtml;
-
-  // Activity
-  const acts = getRecentActivity();
-  if (el('activityHistory')) el('activityHistory').innerHTML = acts;
-
-  // Suggestion
-  if (el('suggestionText')) el('suggestionText').textContent = getSuggestion(hscPct, medPct);
-}
-
-function getWeakAreas() {
-  const weak = [];
-  for (const mode of ['hsc', 'medical']) {
-    for (const subj of SYLLABUS[mode]) {
-      const pct = calcSubjectPct(mode, subj);
-      if (pct > 0 && pct < 40) {
-        weak.push({ name: subj.short, pct, level: 'red' });
-      } else if (pct >= 40 && pct < 70) {
-        weak.push({ name: subj.short, pct, level: 'yellow' });
-      }
-    }
-  }
-  if (!weak.length) return '<div style="font-size:12px;color:var(--sub)">পড়া শুরু করলে দুর্বল বিষয় চিহ্নিত হবে।</div>';
-  return weak.map(w => `<span class="weak-badge ${w.level}">${w.name} ${w.pct}%</span>`).join('');
-}
-
-function getRecentActivity() {
-  const keys = Object.keys(state.progress).filter(k => state.progress[k]);
-  if (!keys.length) return '<div style="font-size:12px;color:var(--sub)">এখনো কোনো কার্যক্রম নেই।</div>';
-  const count = keys.length;
-  return `<div class="history-item">
-    <div class="hist-dot" style="background:var(--green)"></div>
-    <div class="hist-text">${count}টি টপিক সম্পন্ন করা হয়েছে</div>
-  </div>`;
-}
-
-function getSuggestion(hscPct, medPct) {
-  if (hscPct === 0 && medPct === 0) return 'পড়া শুরু করুন এবং টপিক মার্ক করুন। আপনার অগ্রগতি অনুযায়ী ব্যক্তিগতকৃত পরামর্শ দেওয়া হবে।';
-  if (hscPct < 30) return 'HSC সিলেবাসে আরও মনোযোগ দিন। প্রতিদিন অন্তত ২-৩টি নতুন টপিক সম্পন্ন করার চেষ্টা করুন।';
-  if (hscPct < 60) return 'ভালো অগ্রগতি! দুর্বল বিষয়গুলোতে বেশি সময় দিন এবং নিয়মিত রিভিশন করুন।';
-  return 'অসাধারণ! রিভিশন Planner ব্যবহার করে পড়া শেষ করা বিষয়গুলো রিভাইস করুন।';
-}
-
-// ═══════════════════════
-// REVISION PLANNER
-// ═══════════════════════
-function switchRevisionTab(tab, btn) {
-  state.revisionTab = tab;
-  document.querySelectorAll('#revisionPanel .tab-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderRevisionSubjects();
-}
-
-function renderRevisionSubjects() {
-  const mode = state.revisionTab;
-  const subjects = SYLLABUS[mode];
-  // Revision counts same subjects but separate state key prefix 'rev_'
-  let totalTopicCount = 0, doneTopicCount = 0;
-  const grid = document.getElementById('revSubjGrid');
-  grid.innerHTML = subjects.map(subj => {
-    let sTotal = 0, sDone = 0;
-    for (const ch of subj.chapters) {
-      for (let i = 0; i < ch.topics.length; i++) {
-        sTotal++; totalTopicCount++;
-        const key = `rev_${mode}_${subj.id}_${ch.id}_${i}`;
-        if (state.revision[key]) { sDone++; doneTopicCount++; }
-      }
-    }
-    const pct = sTotal ? Math.round((sDone / sTotal) * 100) : 0;
-    return `<div class="subj-card" onclick="showToastMsg('রিভিশন টপিক মার্কিং শীঘ্রই আসছে!')">
-      <div class="subj-name">${subj.name}</div>
-      <div class="subj-prog">
-        <span class="subj-pct" style="color:#a855f7">${pct}%</span>
-        <div class="mini-bar"><div class="mini-fill" style="width:${pct}%;background:linear-gradient(90deg,#a855f7,#ec4899)"></div></div>
-      </div>
-      <div class="subj-chap">${subj.chapters.length} অধ্যায় · ${sTotal} টপিক</div>
-    </div>`;
-  }).join('');
-
-  const overallPct = totalTopicCount ? Math.round((doneTopicCount / totalTopicCount) * 100) : 0;
-  document.getElementById('revStatTotal').textContent = subjects.length;
-  document.getElementById('revStatDone').textContent = doneTopicCount;
-  document.getElementById('revStatPct').textContent = overallPct + '%';
-  document.getElementById('revOverallLabel').textContent = overallPct + '%';
-  document.getElementById('revOverallBar').style.width = overallPct + '%';
-  document.getElementById('dashRevPct').textContent = overallPct + '%';
-}
-
-// ═══════════════════════
-// DASHBOARD UPDATE
-// ═══════════════════════
-function updateDashboard() {
-  const hscPct = calcOverallPct('hsc');
-  const medPct = calcOverallPct('medical');
-  const combined = Math.round((hscPct + medPct) / 2);
-  document.getElementById('dashSylPct').textContent = combined + '%';
-  document.getElementById('dashProgPct').textContent = combined + '%';
-}
-
-// ═══════════════════════
-// TOAST
-// ═══════════════════════
-function showToastMsg(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2000);
-}
-
-// ═══════════════════════
-// INIT
-// ═══════════════════════
-loadState();
-updateDashboard();
+loadST();
+updateDash();
 </script>
 </body>
 </html>
