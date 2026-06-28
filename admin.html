@@ -1567,45 +1567,119 @@
 
     <!-- ══════════════ TAB: STUDY TRACKER ══════════════ -->
     <div class="admin-section" id="secStudytracker">
-        <div class="form-card">
-            <h3>📚 Study Tracker — বিষয় ব্যবস্থাপনা</h3>
-            <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
-                <button class="btn btn-outline tab-btn-alt active" id="stTabHsc" onclick="stSwitchMode('hsc')">⚡ HSC</button>
-                <button class="btn btn-outline tab-btn-alt" id="stTabMed" onclick="stSwitchMode('medical')">🏥 Medical</button>
+
+        <!-- ── 4 DASHBOARD BOXES ── -->
+        <div id="stDash" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:4px 0 8px">
+
+            <div onclick="stOpenBox('syllabus')" style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;border-top:3px solid #7C83FF;transition:border-color .15s">
+                <div style="font-size:20px;margin-bottom:6px">📖</div>
+                <div style="font-weight:700;font-size:13px;margin-bottom:4px">Syllabus Tracker</div>
+                <div style="font-size:11px;color:var(--text2)">HSC ও Medical বিষয়, অধ্যায়, টপিক</div>
+                <div style="font-size:11px;color:#7C83FF;margin-top:8px" id="stBoxCountSyl">লোড হচ্ছে...</div>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
-                <div>
-                    <input id="stSubjName" class="form-input" placeholder="বিষয়ের নাম (যেমন: পদার্থবিজ্ঞান ১ম পত্র)" style="width:100%;margin-bottom:6px;">
-                    <input id="stSubjShort" class="form-input" placeholder="সংক্ষিপ্ত নাম (যেমন: Physics 1)" style="width:100%;margin-bottom:6px;">
-                    <button class="btn btn-primary" onclick="stAddSubject()" style="width:100%">+ বিষয় যোগ করুন</button>
+
+            <div onclick="stOpenBox('routine')" style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;border-top:3px solid #22C55E;transition:border-color .15s">
+                <div style="font-size:20px;margin-bottom:6px">📅</div>
+                <div style="font-weight:700;font-size:13px;margin-bottom:4px">Routine Maker</div>
+                <div style="font-size:11px;color:var(--text2)">Daily ও Target রুটিন কন্টেন্ট</div>
+                <div style="font-size:11px;color:#22C55E;margin-top:8px">শীঘ্রই আসছে</div>
+            </div>
+
+            <div onclick="stOpenBox('progress')" style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;border-top:3px solid #F59E0B;transition:border-color .15s">
+                <div style="font-size:20px;margin-bottom:6px">📊</div>
+                <div style="font-weight:700;font-size:13px;margin-bottom:4px">Weak & Progress</div>
+                <div style="font-size:11px;color:var(--text2)">Student activity analytics</div>
+                <div style="font-size:11px;color:#F59E0B;margin-top:8px">শীঘ্রই আসছে</div>
+            </div>
+
+            <div onclick="stOpenBox('revision')" style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;border-top:3px solid #A855F7;transition:border-color .15s">
+                <div style="font-size:20px;margin-bottom:6px">🔄</div>
+                <div style="font-weight:700;font-size:13px;margin-bottom:4px">Revision Planner</div>
+                <div style="font-size:11px;color:var(--text2)">HSC ও Medical রিভিশন কন্টেন্ট</div>
+                <div style="font-size:11px;color:#A855F7;margin-top:8px" id="stBoxCountRev">লোড হচ্ছে...</div>
+            </div>
+
+        </div>
+
+        <!-- ══ SYLLABUS BOX CONTENT ══ -->
+        <div id="stBoxSyllabus" style="display:none">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+                <button class="btn btn-outline" onclick="stCloseBox()" style="padding:5px 12px;font-size:12px">← Back</button>
+                <h3 style="flex:1;font-size:15px">📖 Syllabus Tracker</h3>
+            </div>
+
+            <!-- Mode tabs -->
+            <div style="display:flex;gap:8px;margin-bottom:14px">
+                <button class="btn btn-primary" id="stTabHsc" onclick="stSwitchMode('hsc')" style="font-size:12px;padding:6px 16px">⚡ HSC</button>
+                <button class="btn btn-outline" id="stTabMed" onclick="stSwitchMode('medical')" style="font-size:12px;padding:6px 16px">🏥 Medical</button>
+            </div>
+
+            <!-- Add Subject -->
+            <div class="form-card" style="margin-bottom:12px">
+                <div style="font-weight:700;font-size:13px;margin-bottom:10px">+ নতুন বিষয় যোগ</div>
+                <input id="stSubjName" class="form-input" placeholder="বিষয়ের নাম (যেমন: পদার্থবিজ্ঞান ১ম পত্র)" style="width:100%;margin-bottom:8px">
+                <input id="stSubjShort" class="form-input" placeholder="সংক্ষিপ্ত নাম (যেমন: Physics 1)" style="width:100%;margin-bottom:8px">
+                <button class="btn btn-primary" onclick="stAddSubject()" style="width:100%">+ বিষয় যোগ করুন</button>
+            </div>
+
+            <!-- Subject list -->
+            <div class="form-card" style="margin-bottom:12px">
+                <div style="font-weight:700;font-size:13px;margin-bottom:10px">📘 বিষয় সমূহ <span id="stSubjCount" style="font-size:11px;color:var(--text2);font-weight:400"></span></div>
+                <div id="stSubjList"><div style="color:var(--text2);font-size:12px">লোড হচ্ছে...</div></div>
+            </div>
+
+            <!-- Chapter panel -->
+            <div class="form-card" id="stChapCard" style="display:none;margin-bottom:12px">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                    <span style="font-weight:700;font-size:13px;flex:1" id="stChapCardTitle">📂 অধ্যায় সমূহ</span>
+                    <button class="btn btn-outline" onclick="stCloseChap()" style="padding:3px 10px;font-size:11px">✕</button>
                 </div>
-                <div id="stSubjList" style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:6px;font-size:12px;">
-                    <div style="color:var(--text2)">লোড হচ্ছে...</div>
+                <div style="display:flex;gap:8px;margin-bottom:10px">
+                    <input id="stChapName" class="form-input" placeholder="অধ্যায়ের নাম" style="flex:1">
+                    <button class="btn btn-primary" onclick="stAddChapter()" style="white-space:nowrap;padding:0 14px">+ যোগ</button>
                 </div>
+                <div id="stChapList"><div style="color:var(--text2);font-size:12px">লোড হচ্ছে...</div></div>
+            </div>
+
+            <!-- Topic panel -->
+            <div class="form-card" id="stTopicCard" style="display:none">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                    <span style="font-weight:700;font-size:13px;flex:1" id="stTopicCardTitle">📝 টপিক সমূহ</span>
+                    <button class="btn btn-outline" onclick="stCloseTopic()" style="padding:3px 10px;font-size:11px">✕</button>
+                </div>
+                <p style="font-size:11px;color:var(--text2);margin-bottom:10px">Weight বাড়ালে ওই টপিকের % বেশি হবে। সব সমান রাখলে auto equal %।</p>
+                <div style="display:flex;gap:8px;margin-bottom:10px">
+                    <input id="stTopicName" class="form-input" placeholder="টপিকের নাম" style="flex:1">
+                    <input id="stTopicWeight" class="form-input" placeholder="Weight" style="width:72px">
+                    <button class="btn btn-primary" onclick="stAddTopic()" style="white-space:nowrap;padding:0 14px">+ যোগ</button>
+                </div>
+                <div id="stTopicList"></div>
             </div>
         </div>
 
-        <div class="form-card" id="stChapCard" style="display:none">
-            <h3 id="stChapCardTitle">📂 অধ্যায় সমূহ</h3>
-            <div style="display:flex;gap:8px;margin-bottom:12px;">
-                <input id="stChapName" class="form-input" placeholder="অধ্যায়ের নাম" style="flex:1">
-                <button class="btn btn-primary" onclick="stAddChapter()" style="white-space:nowrap">+ যোগ</button>
+        <!-- ══ ROUTINE / PROGRESS / REVISION placeholder ══ -->
+        <div id="stBoxRoutine" style="display:none">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+                <button class="btn btn-outline" onclick="stCloseBox()" style="padding:5px 12px;font-size:12px">← Back</button>
+                <h3 style="font-size:15px">📅 Routine Maker</h3>
             </div>
-            <div id="stChapList" style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:6px;font-size:12px;">
-                <div style="color:var(--text2)">বিষয় নির্বাচন করুন</div>
+            <div class="form-card" style="text-align:center;padding:32px;color:var(--text2)">শীঘ্রই এখানে Routine কন্টেন্ট ম্যানেজ করা যাবে।</div>
+        </div>
+        <div id="stBoxProgress" style="display:none">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+                <button class="btn btn-outline" onclick="stCloseBox()" style="padding:5px 12px;font-size:12px">← Back</button>
+                <h3 style="font-size:15px">📊 Weak & Progress Analytics</h3>
             </div>
+            <div class="form-card" style="text-align:center;padding:32px;color:var(--text2)">Student progress analytics শীঘ্রই আসছে।</div>
+        </div>
+        <div id="stBoxRevision" style="display:none">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+                <button class="btn btn-outline" onclick="stCloseBox()" style="padding:5px 12px;font-size:12px">← Back</button>
+                <h3 style="font-size:15px">🔄 Revision Planner</h3>
+            </div>
+            <div class="form-card" style="text-align:center;padding:32px;color:var(--text2)">Revision কন্টেন্ট ম্যানেজমেন্ট শীঘ্রই আসছে।</div>
         </div>
 
-        <div class="form-card" id="stTopicCard" style="display:none">
-            <h3 id="stTopicCardTitle">📝 টপিক সমূহ</h3>
-            <p style="font-size:11px;color:var(--text2);margin-bottom:10px;">টপিক % সমান ভাগে auto-divide হবে। weight দিয়ে adjust করা যাবে।</p>
-            <div style="display:flex;gap:8px;margin-bottom:12px;">
-                <input id="stTopicName" class="form-input" placeholder="টপিকের নাম" style="flex:1">
-                <input id="stTopicWeight" class="form-input" placeholder="Weight (default:1)" style="width:90px">
-                <button class="btn btn-primary" onclick="stAddTopic()" style="white-space:nowrap">+ যোগ</button>
-            </div>
-            <div id="stTopicList" style="max-height:260px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:6px;font-size:12px;"></div>
-        </div>
     </div>
 
 </main><!-- end admin-container -->
@@ -1780,7 +1854,7 @@ function switchSection(sec, el) {
         slideshow: loadSlideshowAdmin,
         telegram:  loadTelegramAdmin,
         serial:    () => {},
-        studytracker: stLoadSubjects
+        studytracker: () => { stLoadDashCounts(); }
     };
     if (loaders[sec]) loaders[sec]();
 }
@@ -1791,12 +1865,53 @@ function switchSection(sec, el) {
 let stMode = 'hsc';
 let stSelSubjId = null, stSelChapId = null;
 let stSelSubjName = '', stSelChapName = '';
+let stEditSubjId = null, stEditChapId = null, stEditTopicId = null;
+
+// ── Dashboard box nav ──
+function stOpenBox(box) {
+    document.getElementById('stDash').style.display = 'none';
+    ['syllabus','routine','progress','revision'].forEach(b =>
+        document.getElementById('stBox'+b.charAt(0).toUpperCase()+b.slice(1)).style.display = 'none'
+    );
+    const el = document.getElementById('stBox'+box.charAt(0).toUpperCase()+box.slice(1));
+    if (el) el.style.display = 'block';
+    if (box === 'syllabus') { stMode='hsc'; stLoadSubjects(); stUpdateModeBtns(); }
+}
+function stCloseBox() {
+    ['syllabus','routine','progress','revision'].forEach(b =>
+        document.getElementById('stBox'+b.charAt(0).toUpperCase()+b.slice(1)).style.display = 'none'
+    );
+    document.getElementById('stDash').style.display = 'grid';
+    stLoadDashCounts();
+}
+function stCloseChap() {
+    document.getElementById('stChapCard').style.display='none';
+    document.getElementById('stTopicCard').style.display='none';
+    stSelSubjId=null;
+}
+function stCloseTopic() {
+    document.getElementById('stTopicCard').style.display='none';
+    stSelChapId=null;
+}
+function stUpdateModeBtns() {
+    document.getElementById('stTabHsc').className = stMode==='hsc' ? 'btn btn-primary' : 'btn btn-outline';
+    document.getElementById('stTabMed').className = stMode==='medical' ? 'btn btn-primary' : 'btn btn-outline';
+    document.getElementById('stTabHsc').style = 'font-size:12px;padding:6px 16px';
+    document.getElementById('stTabMed').style = 'font-size:12px;padding:6px 16px';
+}
+async function stLoadDashCounts() {
+    const hsc = await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects?mode=eq.hsc&select=id`) || [];
+    const med = await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects?mode=eq.medical&select=id`) || [];
+    const syl = document.getElementById('stBoxCountSyl');
+    const rev = document.getElementById('stBoxCountRev');
+    if(syl) syl.textContent = `HSC: ${hsc.length} বিষয় · Medical: ${med.length} বিষয়`;
+    if(rev) rev.textContent = `HSC: ${hsc.length} বিষয় · Medical: ${med.length} বিষয়`;
+}
 
 function stSwitchMode(mode) {
     stMode = mode;
     stSelSubjId = null; stSelChapId = null;
-    document.getElementById('stTabHsc').classList.toggle('active', mode==='hsc');
-    document.getElementById('stTabMed').classList.toggle('active', mode==='medical');
+    stUpdateModeBtns();
     document.getElementById('stChapCard').style.display='none';
     document.getElementById('stTopicCard').style.display='none';
     stLoadSubjects();
@@ -1804,14 +1919,29 @@ function stSwitchMode(mode) {
 
 async function stLoadSubjects() {
     const list = document.getElementById('stSubjList');
-    list.innerHTML = '<div style="color:var(--text2)">লোড হচ্ছে...</div>';
+    list.innerHTML = '<div style="color:var(--text2);font-size:12px">লোড হচ্ছে...</div>';
     const data = await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects?mode=eq.${stMode}&order=sort_order.asc&select=id,name,short_name`) || [];
-    if (!data.length) { list.innerHTML = '<div style="color:var(--text2)">কোনো বিষয় নেই। যোগ করুন।</div>'; return; }
+    const cnt = document.getElementById('stSubjCount');
+    if(cnt) cnt.textContent = `(${data.length}টি)`;
+    if (!data.length) { list.innerHTML = '<div style="color:var(--text2);font-size:12px">কোনো বিষয় নেই। উপরে যোগ করুন।</div>'; return; }
     list.innerHTML = data.map(s => `
-        <div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border)">
-            <span style="flex:1;cursor:pointer;font-weight:600" onclick="stSelectSubj(${s.id},'${s.name.replace(/'/g,"\'")}')">📘 ${s.name}</span>
-            <button class="btn btn-sm" style="padding:2px 8px;font-size:10px;color:var(--error);border-color:var(--error)" onclick="stDelSubject(${s.id})">🗑</button>
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 4px;border-bottom:1px solid var(--border)">
+            <div style="flex:1;cursor:pointer" onclick="stSelectSubj(${s.id},'${s.name.replace(/'/g,"\'")}')">
+                <div style="font-weight:600;font-size:13px">📘 ${s.name}</div>
+                <div style="font-size:10px;color:var(--text2)">${s.short_name||''}</div>
+            </div>
+            <button class="btn btn-sm" onclick="stEditSubjPrompt(${s.id},'${s.name.replace(/'/g,"\'")}','${(s.short_name||'').replace(/'/g,"\'")}');event.stopPropagation()" style="padding:3px 8px;font-size:10px">✏️</button>
+            <button class="btn btn-sm" onclick="stDelSubject(${s.id});event.stopPropagation()" style="padding:3px 8px;font-size:10px;color:var(--error);border-color:var(--error)">🗑</button>
         </div>`).join('');
+}
+
+async function stEditSubjPrompt(id, name, short) {
+    const newName = prompt('বিষয়ের নতুন নাম:', name);
+    if (!newName || newName === name) return;
+    const newShort = prompt('সংক্ষিপ্ত নাম:', short) || short;
+    await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects?id=eq.${id}`, {method:'PATCH', body:JSON.stringify({name:newName.trim(), short_name:newShort.trim()})});
+    showToast('✅ আপডেট হয়েছে');
+    stLoadSubjects();
 }
 
 async function stAddSubject() {
@@ -1850,14 +1980,24 @@ function stSelectSubj(id, name) {
 
 async function stLoadChapters() {
     const list = document.getElementById('stChapList');
-    list.innerHTML = '<div style="color:var(--text2)">লোড হচ্ছে...</div>';
+    list.innerHTML = '<div style="color:var(--text2);font-size:12px">লোড হচ্ছে...</div>';
     const data = await safeFetch(`${SUPABASE_URL}/rest/v1/st_chapters?subject_id=eq.${stSelSubjId}&order=sort_order.asc&select=id,name`) || [];
-    if (!data.length) { list.innerHTML = '<div style="color:var(--text2)">কোনো অধ্যায় নেই। যোগ করুন।</div>'; return; }
-    list.innerHTML = data.map(ch => `
-        <div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border)">
-            <span style="flex:1;cursor:pointer" onclick="stSelectChap(${ch.id},'${ch.name.replace(/'/g,"\'")}')">📂 ${ch.name}</span>
-            <button class="btn btn-sm" style="padding:2px 8px;font-size:10px;color:var(--error);border-color:var(--error)" onclick="stDelChapter(${ch.id})">🗑</button>
+    if (!data.length) { list.innerHTML = '<div style="color:var(--text2);font-size:12px">কোনো অধ্যায় নেই। উপরে যোগ করুন।</div>'; return; }
+    list.innerHTML = data.map((ch,i) => `
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 4px;border-bottom:1px solid var(--border)">
+            <span style="font-size:11px;color:var(--text2);min-width:20px">${i+1}.</span>
+            <span style="flex:1;cursor:pointer;font-size:13px" onclick="stSelectChap(${ch.id},'${ch.name.replace(/'/g,"\'")}')">📂 ${ch.name}</span>
+            <button class="btn btn-sm" onclick="stEditChapPrompt(${ch.id},'${ch.name.replace(/'/g,"\'")}');event.stopPropagation()" style="padding:3px 8px;font-size:10px">✏️</button>
+            <button class="btn btn-sm" onclick="stDelChapter(${ch.id});event.stopPropagation()" style="padding:3px 8px;font-size:10px;color:var(--error);border-color:var(--error)">🗑</button>
         </div>`).join('');
+}
+
+async function stEditChapPrompt(id, name) {
+    const newName = prompt('অধ্যায়ের নতুন নাম:', name);
+    if (!newName || newName === name) return;
+    await safeFetch(`${SUPABASE_URL}/rest/v1/st_chapters?id=eq.${id}`, {method:'PATCH', body:JSON.stringify({name:newName.trim()})});
+    showToast('✅ আপডেট হয়েছে');
+    stLoadChapters();
 }
 
 async function stAddChapter() {
@@ -1889,21 +2029,32 @@ function stSelectChap(id, name) {
 
 async function stLoadTopics() {
     const list = document.getElementById('stTopicList');
-    list.innerHTML = '<div style="color:var(--text2)">লোড হচ্ছে...</div>';
+    list.innerHTML = '<div style="color:var(--text2);font-size:12px">লোড হচ্ছে...</div>';
     const data = await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics?chapter_id=eq.${stSelChapId}&order=sort_order.asc&select=id,name,weight`) || [];
-    if (!data.length) { list.innerHTML = '<div style="color:var(--text2)">কোনো টপিক নেই। যোগ করুন।</div>'; return; }
+    if (!data.length) { list.innerHTML = '<div style="color:var(--text2);font-size:12px">কোনো টপিক নেই। উপরে যোগ করুন।</div>'; return; }
     const totalW = data.reduce((s,t) => s + (t.weight||1), 0);
-    list.innerHTML = data.map(t => {
+    list.innerHTML = data.map((t,i) => {
         const pct = Math.round((t.weight||1)/totalW*100);
-        return `<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border)">
-            <span style="flex:1">${t.name}</span>
-            <span style="font-size:10px;color:var(--accent);min-width:34px;text-align:right">${pct}%</span>
-            <input type="number" value="${t.weight||1}" min="1" max="10"
-                style="width:44px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-size:11px"
+        return `<div style="display:flex;align-items:center;gap:5px;padding:7px 2px;border-bottom:1px solid var(--border)">
+            <span style="font-size:11px;color:var(--text2);min-width:18px">${i+1}.</span>
+            <span style="flex:1;font-size:12px">${t.name}</span>
+            <span style="font-size:10px;color:var(--accent);min-width:30px;text-align:right;font-weight:700">${pct}%</span>
+            <input type="number" value="${t.weight||1}" min="1" max="20" title="Weight"
+                style="width:40px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-size:11px;text-align:center"
                 onchange="stUpdateWeight(${t.id},this.value)">
-            <button class="btn btn-sm" style="padding:2px 8px;font-size:10px;color:var(--error);border-color:var(--error)" onclick="stDelTopic(${t.id})">🗑</button>
+            <button class="btn btn-sm" onclick="stEditTopicPrompt(${t.id},'${t.name.replace(/'/g,"\'")}',${t.weight||1})" style="padding:3px 7px;font-size:10px">✏️</button>
+            <button class="btn btn-sm" onclick="stDelTopic(${t.id})" style="padding:3px 7px;font-size:10px;color:var(--error);border-color:var(--error)">🗑</button>
         </div>`;
     }).join('');
+}
+
+async function stEditTopicPrompt(id, name, weight) {
+    const newName = prompt('টপিকের নতুন নাম:', name);
+    if (!newName) return;
+    const newW = parseInt(prompt('Weight (১ = সমান):', weight))||1;
+    await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics?id=eq.${id}`, {method:'PATCH', body:JSON.stringify({name:newName.trim(), weight:newW})});
+    showToast('✅ আপডেট হয়েছে');
+    stLoadTopics();
 }
 
 async function stAddTopic() {
