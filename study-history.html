@@ -323,10 +323,8 @@ async function loadAllData(){
   ]);
   renderChart();
   updateTodayBoxes();
-  // Session list সবসময় full history দেখাবে
-  renderSessionList(allSessions, allDaily);
-  // Summary only period অনুযায়ী
   updatePeriodSummary(currentPeriodDays);
+  renderSessionList(allSessions, allDaily);
 }
 
 let currentPeriodDays = 1;
@@ -377,32 +375,41 @@ function updateTodayBoxes(){
   document.getElementById('todaySleepBox').textContent = fmtHM(slp)||'0m';
 }
 
-/* ═══ CHART — last 7 days ═══ */
+/* ═══ CHART — last 7 days (max 24h per bar) ═══ */
 function renderChart(){
   const today = new Date().toISOString().slice(0,10);
+  const MAX_DAY = 86400; // ২৪ ঘন্টা = 86400 সেকেন্ড
   const days = [];
+
   for(let i=6;i>=0;i--){
     const d = new Date(Date.now()-i*86400000).toISOString().slice(0,10);
 
-    // study_tracker_daily থেকে আগের দিনের data
+    // study_tracker_daily — backfill aggregated data
     const dailyRow = allDaily.find(r=>r.study_date===d);
+    const dailySecs = Math.min(dailyRow?.total_seconds||0, MAX_DAY);
 
-    // focus_sessions থেকে সেদিনের sessions (updated_at দিয়ে group করলে ভুল হয়,
-    // তাই session এর date হিসেবে updated_at এর date ব্যবহার করি — backfill এর সাথে মিলবে)
-    const sessSecs = allSessions
-      .filter(s=>{ const dt=s.updated_at||s.started_at; return dt&&dt.slice(0,10)===d; })
-      .reduce((a,s)=>a+(s.study_seconds||0),0);
+    // focus_sessions — সেই দিনের unique sessions, max study_seconds নাও (duplicate এড়াতে)
+    const daySessions = allSessions.filter(s=>{
+      const dt = s.updated_at||s.started_at;
+      return dt && dt.slice(0,10)===d;
+    });
+    // একই session duplicate থাকলে id দিয়ে dedupe করো
+    const seen = new Set();
+    const sessSecs = daySessions
+      .filter(s=>{ if(seen.has(s.id)) return false; seen.add(s.id); return true; })
+      .reduce((a,s)=>a+(s.study_seconds||0), 0);
+    const cappedSessSecs = Math.min(sessSecs, MAX_DAY);
 
-    // daily আর sessions — যেটা বেশি সেটা নাও (daily=aggregated, sessions=raw)
-    const secs = Math.max(dailyRow?.total_seconds||0, sessSecs);
+    // daily backfill আর sessions — সর্বোচ্চ নাও, তবে ২৪h cap
+    const secs = Math.min(Math.max(dailySecs, cappedSessSecs), MAX_DAY);
     days.push({ date:d, secs, isToday:d===today });
   }
 
   const maxSecs = Math.max(...days.map(d=>d.secs), 1);
   document.getElementById('shChartRow').innerHTML = days.map(d=>{
-    const heightPct = d.secs>0 ? Math.max(8, Math.round((d.secs/maxSecs)*92)) : 4;
+    const heightPct = d.secs>0 ? Math.max(8, Math.round((d.secs/maxSecs)*90)) : 4;
     const dow = BN_DAYS[new Date(d.date+'T00:00:00').getDay()];
-    const label = d.secs>0 ? fmtHM(d.secs) : '—'; // সব bar এ label দেখাবে
+    const label = d.secs>=60 ? fmtHM(d.secs) : (d.secs>0?`${d.secs}s`:'—');
     return `<div class="sh-bar-wrap">
       <div class="sh-bar-val">${label}</div>
       <div class="sh-bar ${d.isToday?'sh-bar-today':''} ${d.secs===0?'sh-bar-zero':''}" style="height:${heightPct}%"></div>
