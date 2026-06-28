@@ -216,15 +216,26 @@ async function callCloudflareAI(env, question, systemPrompt, image) {
 
     try {
         const model = image ? "@cf/meta/llama-3.2-11b-vision-instruct" : "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
-        const input = image
-            ? { messages: [{ role: "system", content: systemPrompt }, { role: "user", content: question || "এই ছবিটি বিশ্লেষণ করো।" }], image: [...base64ToBytes(image.base64)] }
-            : { messages: [{ role: "system", content: systemPrompt }, { role: "user", content: question }] };
+        let input;
+        if (image) {
+            input = {
+                messages: [{ role: "user", content: question || "এই ছবিটি বিশ্লেষণ করো।" }],
+                image: Array.from(base64ToBytes(image.base64)),
+            };
+        } else {
+            input = {
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: question },
+                ],
+            };
+        }
 
         const result = await env.AI.run(model, input);
         const answer = result?.response || result?.result?.response || null;
-        return answer ? { answer, provider: "cloudflare-ai" } : { error: "Cloudflare AI: empty response" };
+        return answer ? { answer, provider: "cloudflare-ai" } : { error: "Cloudflare AI: empty response — " + JSON.stringify(result).slice(0, 200) };
     } catch (e) {
-        return { error: `Cloudflare AI: ${e.message}` };
+        return { error: `Cloudflare AI exception: ${e?.message || JSON.stringify(e) || String(e)}` };
     }
 }
 
