@@ -48,10 +48,12 @@
 .sh-chart-title { font-size: 12px; font-weight: 800; color: var(--text); margin-bottom: 12px; }
 .sh-chart-row { display: flex; align-items: flex-end; gap: 6px; height: 110px; }
 .sh-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; gap: 4px; }
-.sh-bar { width: 100%; max-width: 26px; border-radius: 6px 6px 2px 2px; background: linear-gradient(180deg, var(--accent), #4338CA); min-height: 3px; transition: height .4s ease; }
+.sh-bar { width: 100%; max-width: 26px; border-radius: 6px 6px 2px 2px; background: linear-gradient(180deg, var(--accent), #4338CA); min-height: 4px; transition: height .5s ease; }
 .sh-bar-today { background: linear-gradient(180deg, #10B981, #047857); }
-.sh-bar-val { font-size: 8px; color: var(--text-secondary); font-weight: 700; }
-.sh-bar-day { font-size: 9px; color: var(--text-secondary); font-weight: 700; margin-top: 2px; }
+.sh-bar-zero { background: var(--border); opacity: .5; }
+.sh-bar-val { font-size: 7.5px; color: var(--text-secondary); font-weight: 800; text-align: center; white-space: nowrap; min-height: 12px; display: flex; align-items: flex-end; justify-content: center; }
+.sh-bar-day { font-size: 9px; color: var(--text-secondary); font-weight: 700; margin-top: 3px; }
+.sh-bar-day-today { color: #10B981; font-weight: 900; }
 
 /* Session list */
 .sh-list-title { font-size: 12.5px; font-weight: 900; color: var(--text); margin: 4px 0 8px; }
@@ -213,26 +215,36 @@ function setPeriod(days, btn){
   document.getElementById('shL3').textContent = 'Sleep';
 }
 
-/* ═══ CHART — last 7 days from daily table ═══ */
+/* ═══ CHART — last 7 days ═══ */
 function renderChart(){
   const today = new Date().toISOString().slice(0,10);
   const days = [];
   for(let i=6;i>=0;i--){
     const d = new Date(Date.now()-i*86400000).toISOString().slice(0,10);
-    // Use focus_sessions study_seconds sum for this date (accurate)
-    const dayStudy = allSessions
-      .filter(s=>{ const dt=s.started_at||s.created_at||s.updated_at; return dt&&dt.slice(0,10)===d; })
+
+    // study_tracker_daily থেকে আগের দিনের data
+    const dailyRow = allDaily.find(r=>r.study_date===d);
+
+    // focus_sessions থেকে সেদিনের sessions (updated_at দিয়ে group করলে ভুল হয়,
+    // তাই session এর date হিসেবে updated_at এর date ব্যবহার করি — backfill এর সাথে মিলবে)
+    const sessSecs = allSessions
+      .filter(s=>{ const dt=s.updated_at||s.started_at; return dt&&dt.slice(0,10)===d; })
       .reduce((a,s)=>a+(s.study_seconds||0),0);
-    days.push({ date:d, secs:dayStudy, isToday:d===today });
+
+    // daily আর sessions — যেটা বেশি সেটা নাও (daily=aggregated, sessions=raw)
+    const secs = Math.max(dailyRow?.total_seconds||0, sessSecs);
+    days.push({ date:d, secs, isToday:d===today });
   }
-  const maxSecs = Math.max(...days.map(d=>d.secs), 300);
+
+  const maxSecs = Math.max(...days.map(d=>d.secs), 1);
   document.getElementById('shChartRow').innerHTML = days.map(d=>{
-    const heightPct = Math.max(3, Math.round((d.secs/maxSecs)*100));
+    const heightPct = d.secs>0 ? Math.max(8, Math.round((d.secs/maxSecs)*92)) : 4;
     const dow = BN_DAYS[new Date(d.date+'T00:00:00').getDay()];
+    const label = d.secs>0 ? fmtHM(d.secs) : '—'; // সব bar এ label দেখাবে
     return `<div class="sh-bar-wrap">
-      <div class="sh-bar-val">${d.secs>60?fmtHM(d.secs):''}</div>
-      <div class="sh-bar ${d.isToday?'sh-bar-today':''}" style="height:${heightPct}%"></div>
-      <div class="sh-bar-day">${dow}</div>
+      <div class="sh-bar-val">${label}</div>
+      <div class="sh-bar ${d.isToday?'sh-bar-today':''} ${d.secs===0?'sh-bar-zero':''}" style="height:${heightPct}%"></div>
+      <div class="sh-bar-day ${d.isToday?'sh-bar-day-today':''}">${dow}</div>
     </div>`;
   }).join('');
 }
