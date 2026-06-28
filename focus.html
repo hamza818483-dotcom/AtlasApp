@@ -1177,7 +1177,7 @@ function fmtDisplay(s){
 
 /* ═══ PERSISTENCE ═══ */
 const STATE_KEY = 'focus_state_v2';
-const DAILY_PROGRESS_KEY = 'focus_daily_progress_v1'; // survives Stop (clearState), resets daily
+const STOPPED_KEY = 'focus_stopped_v1'; // Stop করার পর refresh-এ Start New Session দেখাবে
 function saveState(){
   if(!timerRunning) return;  // session নেই — state save করব না, clearState এর effect নষ্ট হবে না
   localStorage.setItem(STATE_KEY, JSON.stringify({mood,paused,sessionId,studySecs,breakSecs,sleepSecs,breaksUsed,savedAt:Date.now()}));
@@ -1210,8 +1210,8 @@ function loadDailyProgress(){
 async function startSession(){
   if(!currentUser){ showToast('⚠️ লগইন করো'); goTo('auth.html'); return; }
   mood='study'; timerRunning=true; paused=false;
-  // accumulated থেকে শুরু — studySecs already set in doEnd
-  breakSecs=0; sleepSecs=0; breaksUsed=0;
+  studySecs=0; breakSecs=0; sleepSecs=0; breaksUsed=0;  // নতুন session শুন্য থেকে, accumulated আলাদা আছে
+  localStorage.removeItem(STOPPED_KEY); // নতুন session — stopped state clear
   // accumulatedStudySecs ও sessionNumber এখানে reset হয় না — আগের session(গুলোর)
   // মোট সময় বজায় থাকে, নতুন session শুধু upore visible timer-কে শূন্য থেকে শুরু করায়।
 
@@ -1618,8 +1618,9 @@ async function doEnd(auto){
   accumulatedStudySecs += studySecs;
   sessionNumber++;
   saveDailyProgress();
-  // accumulated time timer এ দেখাবে — নতুন session এ এখান থেকে যোগ হবে
-  studySecs=accumulatedStudySecs; breakSecs=0; sleepSecs=0; breaksUsed=0;
+  localStorage.setItem(STOPPED_KEY, '1'); // refresh-এ Start New Session দেখাবে
+  // নতুন session শুন্য থেকে শুরু — accumulated আলাদা রাখা আছে, display-এ যোগ হবে
+  studySecs=0; breakSecs=0; sleepSecs=0; breaksUsed=0;
   sessionId=null; mood='study'; paused=false; bsRunning=false;
 
   // বাকি সব render/list-update কাজ — এর মধ্যে কোনো একটায় error হলেও
@@ -2477,7 +2478,19 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(!currentUser){location.replace('auth.html');return;}
   loadDailyProgress();
   const restored=restoreSession();
-  if(!restored) renderLive();
+  if(!restored){
+    // Stop করার পরে refresh — Start New Session দেখাও
+    if(localStorage.getItem(STOPPED_KEY)==='1' && accumulatedStudySecs>0){
+      showTimerScreen();
+      renderTimer(); // accumulated time দেখাবে
+      const _s=id=>document.getElementById(id);
+      if(_s('ctrlStartNew')) _s('ctrlStartNew').style.display='flex';
+      if(_s('ctrlStudy'))    _s('ctrlStudy').style.display='none';
+      if(_s('ctrlPause'))    _s('ctrlPause').style.display='none';
+      if(_s('ctrlResume'))   _s('ctrlResume').style.display='none';
+    }
+    renderLive();
+  }
   startIdlePolling();
 });
 
