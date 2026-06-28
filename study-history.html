@@ -293,17 +293,19 @@ async function loadAllData(){
   if(!currentUser) return;
   const ph = encodeURIComponent(currentUser.phone);
   [allSessions, allDaily] = await Promise.all([
-    safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?user_phone=eq.${ph}&select=*&order=updated_at.desc&limit=200`),
+    safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?user_phone=eq.${ph}&select=*&order=updated_at.desc&limit=500`),
     safeFetch(`${SUPABASE_URL}/rest/v1/study_tracker_daily?user_phone=eq.${ph}&select=*&order=study_date.desc&limit=200`),
   ]);
   renderChart();
   updateTodayBoxes();
-  setPeriod(1, document.querySelector('.sh-period-btn.active'));
-  renderSessionList(allSessions, allDaily);
+  setPeriod(currentPeriodDays, document.querySelector('.sh-period-btn.active'));
 }
+
+let currentPeriodDays = 1;
 
 /* ═══ PERIOD SUMMARY ═══ */
 function setPeriod(days, btn){
+  currentPeriodDays = days;
   document.querySelectorAll('.sh-period-btn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
 
@@ -312,23 +314,31 @@ function setPeriod(days, btn){
   if(days===1) since = today;
   else if(days>1) since = new Date(Date.now()-(days-1)*86400000).toISOString().slice(0,10);
 
-  const filtered = allSessions.filter(s=>{
+  // Session filter for this period
+  const filteredSess = allSessions.filter(s=>{
     if(!since) return true;
     const dt = s.updated_at||s.started_at;
-    if(!dt) return false;
-    return dt.slice(0,10) >= since;
+    return dt && dt.slice(0,10) >= since;
+  });
+  const filteredDaily = allDaily.filter(d=>{
+    if(!since) return true;
+    return d.study_date >= since;
   });
 
-  const studyTotal = filtered.reduce((a,s)=>a+(s.study_seconds||0),0);
-  const breakTotal = filtered.reduce((a,s)=>a+(s.break_seconds||0),0);
-  const sleepTotal = filtered.reduce((a,s)=>a+(s.sleep_seconds||0),0);
+  // Summary cards
+  const studyTotal = filteredSess.reduce((a,s)=>a+(s.study_seconds||0),0);
+  const breakTotal = filteredSess.reduce((a,s)=>a+(s.break_seconds||0),0);
+  const sleepTotal = filteredSess.reduce((a,s)=>a+(s.sleep_seconds||0),0);
 
   document.getElementById('shS1').textContent = fmtHM(studyTotal)||'0m';
-  document.getElementById('shL1').textContent = days===1?'আজকে পড়েছে':'পড়েছে মোট';
+  document.getElementById('shL1').textContent = days===1?'আজকে পড়েছে':`${days===0?'সব':'বিগত '+days+' দিন'}`;
   document.getElementById('shS2').textContent = fmtHM(breakTotal)||'0m';
   document.getElementById('shL2').textContent = 'Break';
   document.getElementById('shS3').textContent = fmtHM(sleepTotal)||'0m';
   document.getElementById('shL3').textContent = 'Sleep';
+
+  // Session list — period অনুযায়ী filter
+  renderSessionList(filteredSess, filteredDaily);
 }
 
 /* ═══ CHART TOP BOXES — আজকের live update ═══ */
