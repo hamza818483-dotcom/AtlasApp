@@ -200,12 +200,7 @@
       <button class="sh-period-btn" onclick="setPeriod(30,this)">বিগত ৩০ দিন</button>
       <button class="sh-period-btn" onclick="setPeriod(0,this)">সবসময়</button>
     </div>
-    <!-- Summary cards — filled by JS -->
-    <div class="sh-summary-row" id="shSummaryRow">
-      <div class="sh-summary-card"><div class="sh-summary-val" id="shS1">—</div><div class="sh-summary-lbl" id="shL1">পড়েছে</div></div>
-      <div class="sh-summary-card"><div class="sh-summary-val" id="shS2">—</div><div class="sh-summary-lbl" id="shL2">Break</div></div>
-      <div class="sh-summary-card"><div class="sh-summary-val" id="shS3">—</div><div class="sh-summary-lbl" id="shL3">Sleep</div></div>
-    </div>
+
 
     <!-- আজকের ৩ box — chart এর উপরে -->
     <div class="sh-today-row">
@@ -363,12 +358,7 @@ function setPeriod(days, btn){
   const breakTotal = filteredSess.reduce((a,s)=>a+(s.break_seconds||0),0);
   const sleepTotal = filteredSess.reduce((a,s)=>a+(s.sleep_seconds||0),0);
 
-  document.getElementById('shS1').textContent = fmtHM(studyTotal)||'0m';
-  document.getElementById('shL1').textContent = days===1?'আজকে পড়েছে':`${days===0?'সব':'বিগত '+days+' দিন'}`;
-  document.getElementById('shS2').textContent = fmtHM(breakTotal)||'0m';
-  document.getElementById('shL2').textContent = 'Break';
-  document.getElementById('shS3').textContent = fmtHM(sleepTotal)||'0m';
-  document.getElementById('shL3').textContent = 'Sleep';
+
 
   // Session list — period অনুযায়ী filter
   renderSessionList(filteredSess, filteredDaily);
