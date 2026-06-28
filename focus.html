@@ -1227,7 +1227,11 @@ async function startSession(){
 
   const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions`,{
     method:'POST',
-    body:JSON.stringify({user_phone:currentUser.phone, status:'study'})
+    body:JSON.stringify({
+      user_phone:currentUser.phone,
+      status:'study',
+      study_seconds: accumulatedStudySecs  // আগের session-এর total থেকে শুরু
+    })
   });
   sessionId = rows?.[0]?.id || null;
 
