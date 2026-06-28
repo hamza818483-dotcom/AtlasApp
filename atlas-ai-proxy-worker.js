@@ -101,12 +101,14 @@ async function callGemini(env, question, systemPrompt, image) {
         {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ contents: [{ parts }] }),
+            body: JSON.stringify({ contents: [{ parts }], generationConfig: { maxOutputTokens: 2048 } }),
         }
     );
     if (!res.ok) return { error: `Gemini HTTP ${res.status}` };
     const data = await res.json();
     const answer = data.candidates?.[0]?.content?.parts?.[0]?.text || null;
+    const finishReason = data.candidates?.[0]?.finishReason;
+    if (finishReason === "MAX_TOKENS") return { error: "Gemini: response truncated, increase maxOutputTokens" };
     return answer ? { answer, provider: "gemini" } : { error: "Gemini: empty response" };
 }
 
@@ -138,7 +140,7 @@ async function callOpenRouter(env, question, systemPrompt, image) {
                 { role: "user", content: userContent },
             ],
             temperature: 0.7,
-            max_tokens: 1200,
+            max_tokens: 2048,
         }),
     });
     if (!res.ok) return { error: `OpenRouter HTTP ${res.status}` };
@@ -175,7 +177,7 @@ async function callGroq(env, question, systemPrompt, image) {
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 1200 }),
+        body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 2048 }),
     });
     if (!res.ok) return { error: `Groq HTTP ${res.status}` };
     const data = await res.json();
@@ -199,7 +201,7 @@ async function callCerebras(env, question, systemPrompt, image) {
                 { role: "user", content: question },
             ],
             temperature: 0.7,
-            max_tokens: 1200,
+            max_tokens: 2048,
         }),
     });
     if (!res.ok) return { error: `Cerebras HTTP ${res.status}` };
