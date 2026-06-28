@@ -1540,7 +1540,7 @@ function pauseTimer(){
   if(sessionId){
     safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${sessionId}`,{
       method:'PATCH',
-      body:JSON.stringify({status:'paused',study_seconds:studySecs,break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,updated_at:new Date().toISOString()})
+      body:JSON.stringify({status:'paused',study_seconds:accumulatedStudySecs+studySecs,break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,updated_at:new Date().toISOString()})
     });
   }
   showToast('⏸ Timer pause হলো');
@@ -1557,7 +1557,7 @@ function resumeTimer(){
   if(sessionId){
     safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${sessionId}`,{
       method:'PATCH',
-      body:JSON.stringify({status:mood,study_seconds:studySecs,break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,updated_at:new Date().toISOString()})
+      body:JSON.stringify({status:mood,study_seconds:accumulatedStudySecs+studySecs,break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,updated_at:new Date().toISOString()})
     });
   }
   showToast('▶ Timer চালু হলো');
@@ -1566,10 +1566,10 @@ function resumeTimer(){
 
 /* ═══ STOP ═══ */
 function showModal(){
-  document.getElementById('ms-time').textContent=fmtDisplay(studySecs);
+  document.getElementById('ms-time').textContent=fmtDisplay(accumulatedStudySecs+studySecs);
   document.getElementById('ms-breaks').textContent=breaksUsed;
   document.getElementById('ms-sleep').textContent=fmtDisplay(sleepSecs);
-  document.getElementById('ms-total').textContent=fmtDisplay(studySecs+breakSecs+sleepSecs);
+  document.getElementById('ms-total').textContent=fmtDisplay(accumulatedStudySecs+studySecs+breakSecs+sleepSecs);
   // rank hint
   const rankEl=document.getElementById('ms-rank-info');
   if(studySecs>=600){
@@ -1590,9 +1590,9 @@ async function doEnd(auto){
   if(sessionId){
     await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${sessionId}`,{
       method:'PATCH',
-      body:JSON.stringify({status:'ended',study_seconds:studySecs,break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,ended_at:new Date().toISOString()})
+      body:JSON.stringify({status:'ended',study_seconds:accumulatedStudySecs+studySecs,break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,ended_at:new Date().toISOString()})
     });
-    await upsertDailyTotal(studySecs);
+    await upsertDailyTotal(accumulatedStudySecs+studySecs);
   }
   // আগে সম্পন্ন হওয়া এই session-এর সময় accumulated total-এ যুক্ত করে রাখো —
   // user এখনো "Live পড়ছে" তে থাকবে এবং Total Pora Time শূন্য থেকে শুরু হবে না,
@@ -1703,7 +1703,7 @@ function startLiveSecTicker(){
     if(timerRunning && currentUser && !paused){
       const selfIdx=allStudents.findIndex(s=>s.phone===currentUser.phone);
       if(selfIdx!==-1){
-        allStudents[selfIdx].study_seconds=studySecs;
+        allStudents[selfIdx].study_seconds=accumulatedStudySecs+studySecs;
         allStudents[selfIdx].break_seconds=breakSecs;
         allStudents[selfIdx].sleep_seconds=sleepSecs;
       }
