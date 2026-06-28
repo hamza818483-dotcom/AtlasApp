@@ -1593,16 +1593,19 @@ async function doEnd(auto){
   showTimerScreen();
 
   // ⚠️ UI update সবার আগে
-  try{
-    document.getElementById('ctrlStudy').style.display='none';
-    document.getElementById('ctrlPause').style.display='none';
-    document.getElementById('ctrlResume').style.display='none';
-    document.getElementById('ctrlStartNew').style.display='flex';
-    document.getElementById('timerUnifiedBox').className='timer-unified-box mood-study';
-    document.getElementById('btnStudy').classList.add('active');
-    document.getElementById('btnBreak').classList.remove('active');
-    document.getElementById('btnSleep').classList.remove('active');
-  }catch(e){ console.error('doEnd UI error:', e); }
+  // UI reset — individually safe
+  const _s = id => document.getElementById(id);
+  if(_s('ctrlStudy'))    _s('ctrlStudy').style.display='none';
+  if(_s('ctrlPause'))    _s('ctrlPause').style.display='none';
+  if(_s('ctrlResume'))   _s('ctrlResume').style.display='none';
+  if(_s('ctrlBreakSleep')) _s('ctrlBreakSleep').style.display='none';
+  if(_s('ctrlBSStart'))  _s('ctrlBSStart').style.display='none';
+  if(_s('ctrlBSStop'))   _s('ctrlBSStop').style.display='none';
+  if(_s('ctrlStartNew')) _s('ctrlStartNew').style.display='flex';
+  if(_s('timerUnifiedBox')) _s('timerUnifiedBox').className='timer-unified-box mood-study';
+  if(_s('btnStudy'))  _s('btnStudy').classList.add('active');
+  if(_s('btnBreak'))  _s('btnBreak').classList.remove('active');
+  if(_s('btnSleep'))  _s('btnSleep').classList.remove('active');
 
   const doneMsg = auto?'⏹ Auto ended':`✅ সম্পন্ন! ${fmtDisplay(studySecs)} পড়েছো`;
   const endedSessionId=sessionId, endedBreakSecs=breakSecs, endedSleepSecs=sleepSecs, endedBreaksUsed=breaksUsed;
