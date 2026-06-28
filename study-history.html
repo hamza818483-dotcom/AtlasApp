@@ -388,20 +388,21 @@ function renderChart(){
     const dailyRow = allDaily.find(r=>r.study_date===d);
     const dailySecs = Math.min(dailyRow?.total_seconds||0, MAX_DAY);
 
-    // focus_sessions — সেই দিনের unique sessions, max study_seconds নাও (duplicate এড়াতে)
+    // focus_sessions — started_at দিয়ে সেই দিনের sessions নাও
     const daySessions = allSessions.filter(s=>{
-      const dt = s.updated_at||s.started_at;
+      const dt = s.started_at||s.updated_at;
       return dt && dt.slice(0,10)===d;
     });
-    // একই session duplicate থাকলে id দিয়ে dedupe করো
     const seen = new Set();
-    const sessSecs = daySessions
-      .filter(s=>{ if(seen.has(s.id)) return false; seen.add(s.id); return true; })
-      .reduce((a,s)=>a+(s.study_seconds||0), 0);
-    const cappedSessSecs = Math.min(sessSecs, MAX_DAY);
+    const sessSecs = Math.min(
+      daySessions
+        .filter(s=>{ if(seen.has(s.id)) return false; seen.add(s.id); return true; })
+        .reduce((a,s)=>a+(s.study_seconds||0), 0),
+      MAX_DAY
+    );
 
     // daily backfill আর sessions — সর্বোচ্চ নাও, তবে ২৪h cap
-    const secs = Math.min(Math.max(dailySecs, cappedSessSecs), MAX_DAY);
+    const secs = Math.min(Math.max(dailySecs, sessSecs), MAX_DAY);
     days.push({ date:d, secs, isToday:d===today });
   }
 
