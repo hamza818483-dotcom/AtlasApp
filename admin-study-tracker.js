@@ -2,17 +2,18 @@
    Loaded by admin.html via <script src="admin-study-tracker.js">
    Uses: SUPABASE_URL, SUPABASE_KEY, safeFetch, showToast (from admin.html)
 
-   v2: Subject → Chapter → Topic এখন একটাই nested accordion/dropdown
-   সিস্টেম — Subject-এর নিচে ক্লিক করলে Chapter list inline expand
-   হয়, প্রতিটা Chapter-এর নিচে আবার ক্লিক করলে Topic list inline
-   expand হয়। আগে আলাদা card/panel খুলত (stChapCard/stTopicCard) —
-   এখন সবকিছু একই বিষয়-তালিকার ভিতরেই হয়।
+   v3: short_name ফিল্ড UI থেকে সরানো হয়েছে (save করার সময় name-ই
+   fallback হিসেবে পাঠানো হয়, কলাম খালি না থাকার জন্য)। Chapter/Topic
+   input box বড় করা হয়েছে, পাশে compact "+" আইকন বাটন। প্রতিটা
+   Chapter-এ "Apply to all" বাটন — একটাতে যত Topic আছে, একই Subject-এর
+   বাকি সব Chapter-এও কপি করে দেয় (existing topic থাকলে duplicate
+   skip করবে, নাম মিলিয়ে)।
 */
 
 let stMode = 'hsc';
-let stExpandedSubj = null;   // কোন subject-এর chapter dropdown খোলা আছে
-let stExpandedChap = null;   // কোন chapter-এর topic dropdown খোলা আছে
-let stSubjectsCache = [];    // বর্তমান mode-এর subject list (re-render এর জন্য)
+let stExpandedSubj = null;
+let stExpandedChap = null;
+let stSubjectsCache = [];
 
 // ══════════════════════════════════════
 // DASHBOARD BOX NAV
@@ -73,7 +74,7 @@ function escHtmlSt(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':
 async function stLoadSubjects() {
     const list = document.getElementById('stSubjList');
     list.innerHTML = '<div style="color:var(--text2);font-size:12px">লোড হচ্ছে...</div>';
-    const data = await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects?mode=eq.${stMode}&order=sort_order.asc&select=id,name,short_name`) || [];
+    const data = await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects?mode=eq.${stMode}&order=sort_order.asc&select=id,name`) || [];
     stSubjectsCache = data;
     const cnt = document.getElementById('stSubjCount');
     if(cnt) cnt.textContent = `(${data.length}টি)`;
@@ -91,9 +92,8 @@ function renderSubjList(data){
                 <span style="font-size:11px;color:var(--accent);transition:transform .2s;display:inline-block;transform:rotate(${isOpen?90:0}deg)">▶</span>
                 <div style="flex:1">
                     <div style="font-weight:600;font-size:13px">📘 ${escHtmlSt(s.name)}</div>
-                    <div style="font-size:10px;color:var(--text2)">${escHtmlSt(s.short_name||'')}</div>
                 </div>
-                <button class="btn btn-sm" onclick="stEditSubjPrompt(${s.id},'${escAttr(s.name)}','${escAttr(s.short_name||'')}');event.stopPropagation()" style="padding:3px 8px;font-size:10px">✏️</button>
+                <button class="btn btn-sm" onclick="stEditSubjPrompt(${s.id},'${escAttr(s.name)}');event.stopPropagation()" style="padding:3px 8px;font-size:10px">✏️</button>
                 <button class="btn btn-sm" onclick="stDelSubject(${s.id});event.stopPropagation()" style="padding:3px 8px;font-size:10px;color:var(--error);border-color:var(--error)">🗑</button>
             </div>
             <div id="stChapDrop_${s.id}" style="display:${isOpen?'block':'none'};padding:6px 4px 12px 22px;background:var(--bg)">
@@ -115,24 +115,22 @@ async function stToggleSubj(id){
 
 async function stAddSubject() {
     const name = document.getElementById('stSubjName').value.trim();
-    const short = document.getElementById('stSubjShort').value.trim();
     if (!name) { showToast('⚠️ বিষয়ের নাম দিন'); return; }
     try {
         const existing = await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects?mode=eq.${stMode}&order=sort_order.desc&select=sort_order&limit=1`) || [];
         const sort = existing.length ? existing[0].sort_order + 1 : 1;
-        await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects`, {method:'POST', body:JSON.stringify({name, short_name:short||name, mode:stMode, sort_order:sort})});
+        // short_name কলাম DB-তে এখনো আছে — UI-তে আলাদা ফিল্ড না রেখে name-কেই fallback হিসেবে পাঠানো হচ্ছে, যাতে কলাম খালি না থাকে।
+        await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects`, {method:'POST', body:JSON.stringify({name, short_name:name, mode:stMode, sort_order:sort})});
         document.getElementById('stSubjName').value = '';
-        document.getElementById('stSubjShort').value = '';
         showToast('✅ বিষয় যোগ হয়েছে');
         stLoadSubjects();
         stLoadDashCounts();
     } catch(e) { showToast('❌ Error: ' + e.message); }
 }
-async function stEditSubjPrompt(id, name, short) {
+async function stEditSubjPrompt(id, name) {
     const newName = prompt('বিষয়ের নতুন নাম:', name);
     if (!newName || newName === name) return;
-    const newShort = prompt('সংক্ষিপ্ত নাম:', short) || short;
-    await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects?id=eq.${id}`, {method:'PATCH', body:JSON.stringify({name:newName.trim(), short_name:newShort.trim()})});
+    await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects?id=eq.${id}`, {method:'PATCH', body:JSON.stringify({name:newName.trim(), short_name:newName.trim()})});
     showToast('✅ আপডেট হয়েছে'); stLoadSubjects();
 }
 async function stDelSubject(id) {
@@ -160,10 +158,13 @@ function renderChapDrop(subjId, data){
     const wrap = document.getElementById('stChapDrop_'+subjId);
     if (!wrap) return;
 
+    // ইনপুট বক্স বড় (flex:1, বেশি padding), পাশে compact circular "+" আইকন বাটন
     const addRowHtml = `
-        <div style="display:flex;gap:6px;margin-bottom:8px">
-            <input id="stChapName_${subjId}" class="form-input" placeholder="নতুন অধ্যায়ের নাম" style="flex:1;font-size:12px;padding:6px 8px">
-            <button class="btn btn-sm btn-primary" onclick="stAddChapter(${subjId})" style="white-space:nowrap;padding:0 12px">+ যোগ</button>
+        <div style="display:flex;gap:8px;margin-bottom:10px;align-items:stretch">
+            <input id="stChapName_${subjId}" class="form-input" placeholder="নতুন অধ্যায়ের নাম লিখুন..."
+                style="flex:1;font-size:13.5px;padding:10px 12px;min-width:0">
+            <button class="btn btn-primary" onclick="stAddChapter(${subjId})" title="অধ্যায় যোগ করুন"
+                style="width:40px;height:40px;flex-shrink:0;padding:0;font-size:18px;font-weight:900;border-radius:8px;display:flex;align-items:center;justify-content:center">+</button>
         </div>`;
 
     if (!data.length) {
@@ -189,7 +190,7 @@ function renderChapDrop(subjId, data){
     }).join('');
 
     wrap.innerHTML = addRowHtml + chaptersHtml;
-    if (stExpandedChap) stLoadTopics(stExpandedChap);
+    if (stExpandedChap) stLoadTopics(stExpandedChap, subjId);
 }
 
 async function stToggleChap(subjId, chapId){
@@ -228,24 +229,37 @@ async function stDelChapter(id, subjId) {
 // ══════════════════════════════════════
 // TOPICS  (Chapter dropdown এর ভেতরে inline রেন্ডার — dropdown system)
 // ══════════════════════════════════════
-async function stLoadTopics(chapId) {
+async function stLoadTopics(chapId, subjId) {
     const wrap = document.getElementById('stTopicDrop_'+chapId);
     if (!wrap) return;
     const data = await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics?chapter_id=eq.${chapId}&order=sort_order.asc&select=id,name,weight`) || [];
-    renderTopicDrop(chapId, data);
+    renderTopicDrop(chapId, subjId, data);
 }
 
-function renderTopicDrop(chapId, data){
+function renderTopicDrop(chapId, subjId, data){
     const wrap = document.getElementById('stTopicDrop_'+chapId);
     if (!wrap) return;
 
     const addRowHtml = `
         <p style="font-size:10px;color:var(--text2);margin:0 0 6px">Weight বাড়ালে ওই টপিকের % বেশি হবে। সব সমান রাখলে auto equal %।</p>
-        <div style="display:flex;gap:5px;margin-bottom:8px">
-            <input id="stTopicName_${chapId}" class="form-input" placeholder="নতুন টপিকের নাম" style="flex:1;font-size:11.5px;padding:5px 7px">
-            <input id="stTopicWeight_${chapId}" class="form-input" placeholder="Weight" style="width:60px;font-size:11.5px;padding:5px 7px">
-            <button class="btn btn-sm btn-primary" onclick="stAddTopic(${chapId})" style="white-space:nowrap;padding:0 10px">+ যোগ</button>
+        <div style="display:flex;gap:8px;margin-bottom:8px;align-items:stretch">
+            <input id="stTopicName_${chapId}" class="form-input" placeholder="নতুন টপিকের নাম লিখুন..."
+                style="flex:1;font-size:13px;padding:9px 11px;min-width:0">
+            <input id="stTopicWeight_${chapId}" class="form-input" placeholder="Wt" title="Weight"
+                style="width:48px;font-size:12px;padding:9px 4px;text-align:center;flex-shrink:0">
+            <button class="btn btn-primary" onclick="stAddTopic(${chapId},${subjId})" title="টপিক যোগ করুন"
+                style="width:38px;height:38px;flex-shrink:0;padding:0;font-size:17px;font-weight:900;border-radius:8px;display:flex;align-items:center;justify-content:center">+</button>
         </div>`;
+
+    // একই subject-এর অন্য chapter-গুলোতেও এই chapter-এর সব topic একসাথে
+    // কপি করার বাটন — যেহেতু একই subject-এর বিভিন্ন chapter-এ অনেক সময়
+    // একই রকম topic structure লাগে (যেমন প্রতি chapter-এ "সংক্ষিপ্ত প্রশ্ন",
+    // "সৃজনশীল" ইত্যাদি কমন টপিক)।
+    const applyAllHtml = data.length ? `
+        <button class="btn btn-sm" onclick="stApplyTopicsToAllChapters(${chapId},${subjId})"
+            style="width:100%;margin-bottom:8px;font-size:10.5px;padding:6px;background:rgba(124,131,255,.1);border-color:var(--accent);color:var(--accent);font-weight:700">
+            📋 এই ${data.length}টি টপিক একই বিষয়ের বাকি সব অধ্যায়ে Apply করুন
+        </button>` : '';
 
     if (!data.length) {
         wrap.innerHTML = addRowHtml + '<div style="color:var(--text2);font-size:11px">কোনো টপিক নেই। উপরে যোগ করুন।</div>';
@@ -261,16 +275,16 @@ function renderTopicDrop(chapId, data){
             <span style="font-size:9.5px;color:var(--accent);min-width:28px;text-align:right;font-weight:700">${pct}%</span>
             <input type="number" value="${t.weight||1}" min="1" max="20" title="Weight"
                 style="width:36px;padding:2px 3px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-size:10px;text-align:center"
-                onchange="stUpdateWeight(${t.id},this.value,${chapId})">
-            <button class="btn btn-sm" onclick="stEditTopicPrompt(${t.id},'${escAttr(t.name)}',${t.weight||1},${chapId})" style="padding:2px 6px;font-size:9.5px">✏️</button>
-            <button class="btn btn-sm" onclick="stDelTopic(${t.id},${chapId})" style="padding:2px 6px;font-size:9.5px;color:var(--error);border-color:var(--error)">🗑</button>
+                onchange="stUpdateWeight(${t.id},this.value,${chapId},${subjId})">
+            <button class="btn btn-sm" onclick="stEditTopicPrompt(${t.id},'${escAttr(t.name)}',${t.weight||1},${chapId},${subjId})" style="padding:2px 6px;font-size:9.5px">✏️</button>
+            <button class="btn btn-sm" onclick="stDelTopic(${t.id},${chapId},${subjId})" style="padding:2px 6px;font-size:9.5px;color:var(--error);border-color:var(--error)">🗑</button>
         </div>`;
     }).join('');
 
-    wrap.innerHTML = addRowHtml + topicsHtml;
+    wrap.innerHTML = addRowHtml + applyAllHtml + topicsHtml;
 }
 
-async function stAddTopic(chapId) {
+async function stAddTopic(chapId, subjId) {
     const nameInput = document.getElementById('stTopicName_'+chapId);
     const weightInput = document.getElementById('stTopicWeight_'+chapId);
     const name = nameInput.value.trim();
@@ -281,23 +295,56 @@ async function stAddTopic(chapId) {
         const sort = existing.length ? existing[0].sort_order + 1 : 1;
         await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics`, {method:'POST', body:JSON.stringify({name, chapter_id:chapId, weight, sort_order:sort})});
         showToast('✅ টপিক যোগ হয়েছে');
-        stLoadTopics(chapId);
+        stLoadTopics(chapId, subjId);
     } catch(e) { showToast('❌ Error: ' + e.message); }
 }
-async function stEditTopicPrompt(id, name, weight, chapId) {
+async function stEditTopicPrompt(id, name, weight, chapId, subjId) {
     const newName = prompt('টপিকের নতুন নাম:', name);
     if (!newName) return;
     const newW = parseInt(prompt('Weight (১ = সমান):', weight))||1;
     await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics?id=eq.${id}`, {method:'PATCH', body:JSON.stringify({name:newName.trim(), weight:newW})});
-    showToast('✅ আপডেট হয়েছে'); stLoadTopics(chapId);
+    showToast('✅ আপডেট হয়েছে'); stLoadTopics(chapId, subjId);
 }
-async function stUpdateWeight(id, val, chapId) {
+async function stUpdateWeight(id, val, chapId, subjId) {
     await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics?id=eq.${id}`, {method:'PATCH', body:JSON.stringify({weight:parseInt(val)||1})});
-    showToast('✅ Weight আপডেট'); stLoadTopics(chapId);
+    showToast('✅ Weight আপডেট'); stLoadTopics(chapId, subjId);
 }
-async function stDelTopic(id, chapId) {
+async function stDelTopic(id, chapId, subjId) {
     await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics?id=eq.${id}`, {method:'DELETE'});
-    showToast('🗑 টপিক মুছে গেছে'); stLoadTopics(chapId);
+    showToast('🗑 টপিক মুছে গেছে'); stLoadTopics(chapId, subjId);
+}
+
+// একই subject-এর সব chapter-এ এই chapter-এর topic গুলো কপি করে দেয়।
+// নাম মিলে গেলে (case-insensitive) সেই chapter-এ আর duplicate বানাবে না।
+async function stApplyTopicsToAllChapters(sourceChapId, subjId) {
+    if (!confirm('এই অধ্যায়ের সব টপিক কি একই বিষয়ের বাকি সব অধ্যায়ে যোগ করতে চান?')) return;
+    try {
+        const sourceTopics = await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics?chapter_id=eq.${sourceChapId}&select=name,weight`) || [];
+        if (!sourceTopics.length) { showToast('⚠️ এই অধ্যায়ে কোনো টপিক নেই'); return; }
+
+        const allChapters = await safeFetch(`${SUPABASE_URL}/rest/v1/st_chapters?subject_id=eq.${subjId}&select=id`) || [];
+        const targetChapters = allChapters.filter(c => c.id !== sourceChapId);
+        if (!targetChapters.length) { showToast('⚠️ এই বিষয়ে আর কোনো অধ্যায় নেই'); return; }
+
+        let addedCount = 0;
+        for (const ch of targetChapters) {
+            const existingTopics = await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics?chapter_id=eq.${ch.id}&select=name`) || [];
+            const existingNames = new Set(existingTopics.map(t => t.name.trim().toLowerCase()));
+            const existingSort = await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics?chapter_id=eq.${ch.id}&order=sort_order.desc&select=sort_order&limit=1`) || [];
+            let nextSort = existingSort.length ? existingSort[0].sort_order + 1 : 1;
+
+            for (const t of sourceTopics) {
+                if (existingNames.has(t.name.trim().toLowerCase())) continue; // ইতিমধ্যে আছে — skip
+                await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics`, {
+                    method:'POST',
+                    body:JSON.stringify({name:t.name, chapter_id:ch.id, weight:t.weight||1, sort_order:nextSort})
+                });
+                nextSort++; addedCount++;
+            }
+        }
+        showToast(`✅ ${targetChapters.length}টি অধ্যায়ে ${addedCount}টি টপিক যোগ হয়েছে`);
+        stLoadTopics(sourceChapId, subjId);
+    } catch(e) { showToast('❌ Error: ' + e.message); }
 }
 
 // ══════════════════════════════════════
@@ -371,7 +418,7 @@ async function stAdminLoadRevision() {
     if (!grid) return;
     grid.innerHTML = '<div style="color:var(--text2);font-size:12px;padding:16px">লোড হচ্ছে...</div>';
 
-    const subjects = await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects?mode=eq.${stRevMode}&order=sort_order.asc&select=id,name,short_name`) || [];
+    const subjects = await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects?mode=eq.${stRevMode}&order=sort_order.asc&select=id,name`) || [];
     if (!subjects.length) {
         grid.innerHTML = '<div style="color:var(--text2);font-size:12px;padding:16px">কোনো বিষয় নেই। Syllabus Tracker এ বিষয় যোগ করুন।</div>';
         return;
