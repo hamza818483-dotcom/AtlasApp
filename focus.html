@@ -1389,6 +1389,12 @@ function renderTimer(){
 
 /* ═══ MOOD SWITCH ═══ */
 function switchMood(newMood){
+  // Break/Sleep mood বাটনে ক্লিক করলে এখন নিজের mood/timer পরিবর্তন হবে না —
+  // বরং "Live পড়ছে" সেকশনের উপরের stat বক্সের (বিরতিতে/ঘুমাচ্ছে) ফিল্টার কাজটাই হবে।
+  if(newMood==='break'||newMood==='sleep'){
+    filterLiveByMood(newMood);
+    return;
+  }
   if(!timerRunning){ showToast('⚠️ আগে পড়াশোনা শুরু করো'); return; }
   if(newMood===mood) return; // already active
 
@@ -1398,13 +1404,6 @@ function switchMood(newMood){
     return;
   }
 
-  // If switching TO break/sleep while study active → directly apply (no popup needed)
-  if((newMood==='break'||newMood==='sleep') && mood==='study'){
-    applyMoodSwitch(newMood);
-    return;
-  }
-
-  // break → sleep or sleep → break direct
   applyMoodSwitch(newMood);
 }
 
