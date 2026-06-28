@@ -1389,21 +1389,8 @@ function renderTimer(){
 
 /* ═══ MOOD SWITCH ═══ */
 function switchMood(newMood){
-  // Break/Sleep mood বাটনে ক্লিক করলে এখন নিজের mood/timer পরিবর্তন হবে না —
-  // বরং "Live পড়ছে" সেকশনের উপরের stat বক্সের (বিরতিতে/ঘুমাচ্ছে) ফিল্টার কাজটাই হবে।
-  if(newMood==='break'||newMood==='sleep'){
-    filterLiveByMood(newMood);
-    return;
-  }
   if(!timerRunning){ showToast('⚠️ আগে পড়াশোনা শুরু করো'); return; }
-  if(newMood===mood) return; // already active
-
-  // Break/Sleep → Study: directly switch, no popup
-  if(newMood==='study' && (mood==='break'||mood==='sleep')){
-    applyMoodSwitch(newMood);
-    return;
-  }
-
+  if(newMood===mood) return;
   applyMoodSwitch(newMood);
 }
 
@@ -1439,11 +1426,10 @@ function applyMoodSwitch(newMood){
     document.getElementById('ctrlBSStop').style.display='none';
   }
 
-  updateMoodButtons(); renderTimer(); saveState(); syncSession();
+  updateMoodButtons(); renderTimer(); updateLsrCardHighlight(); saveState(); syncSession();
   updateSelfInList(); renderLiveStudents(allStudents);
-  const names={study:'📚 Study Mood',break:'☕ Break Mood',sleep:'😴 Sleep Mood'};
+  const names={study:'📚 Study',break:'☕ বিরতি',sleep:'😴 ঘুম'};
   showToast(`${names[newMood]} শুরু হলো`);
-  // Open overlay for break/sleep
   if(newMood==='break'||newMood==='sleep'){
     setTimeout(()=>openMoodOverlay(newMood),200);
   } else {
@@ -1739,7 +1725,14 @@ function startLiveSecTicker(){
   },1000);
 }
 
-function stopLiveSecTicker(){ if(liveSecTicker){clearInterval(liveSecTicker);liveSecTicker=null;} }
+function updateLsrCardHighlight(){
+  const isStudy=mood==='study';
+  const studyCard=document.getElementById('lsrCardStudy');
+  if(studyCard){
+    studyCard.style.borderColor=isStudy?'#10B981':'var(--border)';
+    studyCard.style.background=isStudy?'rgba(16,185,129,.08)':'var(--card-bg)';
+  }
+}
 
 function startPolling(){
   stopPolling();
@@ -1840,6 +1833,7 @@ async function renderLive(){
     // Live students section
     renderBatchFilter(allStudents);
     renderLiveStudents(allStudents);
+    updateLsrCardHighlight();
 
   } catch(e){ console.error('❌ renderLive error:', e); }
 }
