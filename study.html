@@ -28,44 +28,51 @@
 .subj-banner::after{ content:''; position:absolute; top:-50%; right:-15%; width:60%; height:200%; background:radial-gradient(circle, rgba(255,255,255,.14) 0%, transparent 70%); pointer-events:none; }
 .subj-banner-t{font-size:17px;font-weight:900;margin-bottom:4px;position:relative;z-index:1}
 .subj-banner-s{font-size:12px;opacity:.88;position:relative;z-index:1}
-.subj-list{padding:0 14px 24px;display:flex;flex-direction:column;gap:12px}
+.subj-list{padding:0 14px 24px;display:flex;flex-direction:column;gap:13px}
 	.subj-card{
-	  border-radius:16px;padding:18px 16px;display:flex;align-items:center;gap:14px;
-	  cursor:pointer;border:1px solid rgba(255,255,255,0.14);color:#fff;position:relative;overflow:hidden;
+	  border-radius:18px;padding:0;display:flex;align-items:center;gap:0;
+	  cursor:pointer;color:#fff;position:relative;overflow:hidden;
 	  transition:transform .22s cubic-bezier(.34,1.56,.64,1),box-shadow .22s ease;
-	  box-shadow:0 6px 18px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.12);
+	  box-shadow:0 10px 26px -6px rgba(0,0,0,.45), 0 2px 8px rgba(0,0,0,.25);
+	}
+	/* মূল ব্যাকগ্রাউন্ড: diagonal multi-stop gradient (g0..g7 এর সাথে combine হয়) + dot-pattern texture, যাতে flat-solid-color box মনে না হয় */
+	.subj-card-bg{
+	  position:absolute;inset:0;
+	  background-image:
+	    radial-gradient(circle at 15% 20%, rgba(255,255,255,.16) 0%, transparent 35%),
+	    radial-gradient(circle, rgba(255,255,255,.5) 1px, transparent 1.5px);
+	  background-size: auto, 16px 16px;
+	  background-position: 0 0, 0 0;
+	  opacity:.9;
 	}
 	.subj-card::before{
 	  content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
-	  background:linear-gradient(45deg,transparent 30%,rgba(255,255,255,0.1) 50%,transparent 70%);
-	  animation:cardShimmer 3.5s ease-in-out infinite;pointer-events:none;
-	}
-	.subj-card::after{
-	  content:'';position:absolute;inset:0;border-radius:16px;
-	  background:linear-gradient(180deg,rgba(255,255,255,.08) 0%,transparent 40%);
-	  pointer-events:none;
+	  background:linear-gradient(45deg,transparent 30%,rgba(255,255,255,0.14) 50%,transparent 70%);
+	  animation:cardShimmer 3.5s ease-in-out infinite;pointer-events:none;z-index:2;
 	}
 	@keyframes cardShimmer{0%{transform:translateX(-100%) rotate(45deg)}100%{transform:translateX(100%) rotate(45deg)}}
-	.subj-card:hover{transform:translateY(-3px) scale(1.01);box-shadow:0 12px 30px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.18)}
+	.subj-card:hover{transform:translateY(-3px) scale(1.012);box-shadow:0 16px 34px -6px rgba(0,0,0,.55), 0 2px 10px rgba(0,0,0,.3)}
 	.subj-card:active{transform:scale(.98)}
+	.subj-card-inner{position:relative;z-index:3;display:flex;align-items:center;gap:14px;padding:19px 17px;width:100%}
 	.subj-icon{
-	  font-size:24px;width:52px;height:52px;display:flex;align-items:center;justify-content:center;
-	  background:rgba(255,255,255,0.22);backdrop-filter:blur(10px);border-radius:15px;flex-shrink:0;
-	  border:1px solid rgba(255,255,255,0.22);box-shadow:0 2px 10px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.25);
-	  font-weight:900;position:relative;z-index:1;
+	  font-size:26px;width:54px;height:54px;display:flex;align-items:center;justify-content:center;
+	  background:linear-gradient(155deg, rgba(255,255,255,.32) 0%, rgba(255,255,255,.1) 100%);
+	  backdrop-filter:blur(10px);border-radius:16px;flex-shrink:0;
+	  border:1.5px solid rgba(255,255,255,.35);
+	  box-shadow:0 4px 14px rgba(0,0,0,.25), inset 0 1px 1px rgba(255,255,255,.4), inset 0 -2px 4px rgba(0,0,0,.12);
 	}
-.subj-info{flex:1;position:relative;z-index:1}
-.subj-name{font-size:15.5px;font-weight:800;letter-spacing:.1px}
-.subj-desc{font-size:11.5px;opacity:.82;margin-top:3px}
-.subj-arr{font-size:20px;opacity:.7;position:relative;z-index:1}
-.g0{background:linear-gradient(135deg,#6C63FF,#3D35B0)}
-.g1{background:linear-gradient(135deg,#00D4AA,#00856F)}
-.g2{background:linear-gradient(135deg,#FF6B6B,#B03535)}
-.g3{background:linear-gradient(135deg,#FFBE0B,#B08500)}
-.g4{background:linear-gradient(135deg,#3A86FF,#1A56CC)}
-.g5{background:linear-gradient(135deg,#FF006E,#AA0048)}
-.g6{background:linear-gradient(135deg,#8B5CF6,#5B21B6)}
-.g7{background:linear-gradient(135deg,#EC4899,#9D174D)}
+.subj-info{flex:1;min-width:0}
+.subj-name{font-size:16px;font-weight:800;letter-spacing:.1px;text-shadow:0 1px 3px rgba(0,0,0,.2)}
+.subj-desc{font-size:11.5px;opacity:.85;margin-top:3px}
+.subj-arr{font-size:20px;opacity:.75;flex-shrink:0}
+.g0{background:linear-gradient(150deg,#8B85FF 0%,#6C63FF 45%,#3D35B0 100%)}
+.g1{background:linear-gradient(150deg,#2EEFC4 0%,#00D4AA 45%,#00856F 100%)}
+.g2{background:linear-gradient(150deg,#FF8F8F 0%,#FF6B6B 45%,#B03535 100%)}
+.g3{background:linear-gradient(150deg,#FFD166 0%,#FFBE0B 45%,#B08500 100%)}
+.g4{background:linear-gradient(150deg,#6FA6FF 0%,#3A86FF 45%,#1A56CC 100%)}
+.g5{background:linear-gradient(150deg,#FF4D94 0%,#FF006E 45%,#AA0048 100%)}
+.g6{background:linear-gradient(150deg,#A78BFA 0%,#8B5CF6 45%,#5B21B6 100%)}
+.g7{background:linear-gradient(150deg,#F472B6 0%,#EC4899 45%,#9D174D 100%)}
 
 /* Lists (chapters/pdfs) */
 .item-list{padding:10px 14px 24px;display:flex;flex-direction:column;gap:8px}
@@ -349,12 +356,15 @@ async function loadSubjects() {
         const GS = ['g0','g1','g2','g3','g4','g5','g6','g7'];
         c.innerHTML = '<div class="subj-list">' + subjects.map((s,i) => `
             <div class="subj-card ${GS[(s.color_idx||i)%8]}" onclick="openSubject(${s.id},'${esc(s.name)}')">
-                <div class="subj-icon">${esc(s.icon||'📘')}</div>
-                <div class="subj-info">
-                    <div class="subj-name">${esc(s.name)}</div>
-                    <div class="subj-desc">${esc(s.description||'অধ্যায় দেখতে ক্লিক করো')}</div>
+                <div class="subj-card-bg"></div>
+                <div class="subj-card-inner">
+                    <div class="subj-icon">${esc(s.icon||'📘')}</div>
+                    <div class="subj-info">
+                        <div class="subj-name">${esc(s.name)}</div>
+                        <div class="subj-desc">${esc(s.description||'অধ্যায় দেখতে ক্লিক করো')}</div>
+                    </div>
+                    <div class="subj-arr">›</div>
                 </div>
-                <div class="subj-arr">›</div>
             </div>`).join('') + '</div>';
     } catch (e) { document.getElementById('subj-list').innerHTML = '<div class="ctr" style="color:var(--error)">লোড হয়নি। পুনরায় চেষ্টা করো।</div>'; }
 }
