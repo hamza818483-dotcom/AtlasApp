@@ -708,20 +708,32 @@ function getSystemPrompt(question) {
 async function askAI(question, imageData) {
     const systemPrompt = getSystemPrompt(question || 'ছবি বিশ্লেষণ করো');
     try {
+        // Use AbortController with 60s timeout to allow full long answers
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000);
         const res = await fetch(AI_PROXY_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
             body: JSON.stringify({
                 question: question || '',
                 image: imageData ? { base64: imageData.base64, mimeType: imageData.mimeType } : null,
                 systemPrompt
             })
         });
+        clearTimeout(timeoutId);
         const data = await res.json();
         if (data.success && data.answer && data.answer.trim().length > 5) {
             return { answer: data.answer.trim() };
         }
+        // If answer exists but success flag missing, still use it
+        if (data.answer && data.answer.trim().length > 5) {
+            return { answer: data.answer.trim() };
+        }
     } catch (e) {
+        if (e.name === 'AbortError') {
+            return { answer: '⏱️ উত্তর দিতে বেশি সময় লাগছে। আবার চেষ্টা করো অথবা প্রশ্নটি ছোট করো।' };
+        }
         console.error('ATLAS AI proxy error:', e);
     }
     return { answer: '❌ দুঃখিত! ATLAS AI এখন একটু busy আছে। কিছুক্ষণ পর আবার চেষ্টা করো। 🙏' };
