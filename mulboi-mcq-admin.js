@@ -79,6 +79,7 @@ let mbChapterId   = null;
 let mbPdfId       = null;
 let mbPdfFile     = null;
 let mbPdfDoc      = null;
+let mbPdfUrl       = null;  // current PDF's public URL, used to send the full PDF to Gemini for reliable MCQ generation
 let mbCurrentPage = 1;
 let mbAllPageData = [];
 let mbEditingId   = null;
@@ -603,6 +604,7 @@ function mbCloseMcqPanel() {
    ════════════════════════════════════════════════════ */
 
 async function mbLoadPdfPreview(url) {
+    mbPdfUrl = url;
     const loadingEl = document.getElementById('mbPreviewLoading');
     if (loadingEl) loadingEl.classList.add('show');
     try {
@@ -1256,40 +1258,54 @@ async function mbAiGenerate() {
     mbAiData = [];
 
     try {
-        const page     = await mbPdfDoc.getPage(mbCurrentPage);
-        const textCont = await page.getTextContent();
-        const pageText = textCont.items.map(i => i.str).join(' ').trim();
-
         const typeLabel = { standard: 'সাধারণ', true_false: 'সত্য/মিথ্যা', hard: 'কঠিন' };
         const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","type":"${type}"}]`;
+        const savedP = mbGetSavedPrompt(type);
+        const basePrompt = customP || savedP || (
+            `${typeLabel[type]||type} ধরনের ${count}টি MCQ তৈরি করো। ` +
+            `Content যে ভাষায় আছে সেই ভাষায় রাখো। ` +
+            `প্রতিটিতে চারটি বিকল্প (option_k, option_kh, option_g, option_gh) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে।`
+        );
 
         let rawJson;
 
-        if (pageText && pageText.length >= 30) {
-            // Text-based PDF: use text prompt
-            const savedP = mbGetSavedPrompt(type);
-            const prompt = customP || savedP || (
-                `নিচের টেক্সট থেকে ${count}টি ${typeLabel[type]||type} MCQ তৈরি করো। ` +
-                `Content যে ভাষায় আছে সেই ভাষায় রাখো। ` +
-                `প্রতিটিতে চারটি বিকল্প (option_k, option_kh, option_g, option_gh) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে। ` +
-                `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n` +
-                `${jsonFormat}\n\n` +
-                `টেক্সট:\n${pageText.slice(0, 4000)}`
-            );
-            rawJson = await mbCallAiApi(prompt, null);
-        } else {
-            // Image-based PDF: render canvas and send image
-            mbToast('ছবি-ভিত্তিক PDF — image AI ব্যবহার হচ্ছে...', 'info', 2000);
-            const imageData = await mbGetPageImageBase64(mbCurrentPage);
-            if (!imageData) { mbToast('পেইজের ছবি তৈরি করা যায়নি', 'error'); return; }
+        // Step 1 (preferred): send the whole PDF page directly to Gemini, which reads
+        // PDFs/scanned pages natively — works for both text-based and image-based pages,
+        // no client-side text-extraction needed.
+        if (mbPdfUrl) {
+            try {
+                const pdfPrompt = `এই PDF-এর পেইজ ${mbCurrentPage} দেখো এবং নিচের নির্দেশ অনুসরণ করো:\n${basePrompt}\n\n` +
+                    `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}`;
+                const res = await fetch(AI_PROXY_URL.replace(/\/$/, '') + '/mcq-from-pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pdf_url: mbPdfUrl, prompt: pdfPrompt })
+                });
+                const data = await res.json().catch(() => null);
+                if (res.ok && data?.success && data.answer) rawJson = data.answer;
+            } catch (_) { /* fall through to legacy approach below */ }
+        }
 
-            const savedP = mbGetSavedPrompt(type);
-            const sysPrompt = customP || savedP || (
-                `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে ${count}টি ${typeLabel[type]||type} MCQ বাংলায় তৈরি করো। ` +
-                `প্রতিটিতে option_k, option_kh, option_g, option_gh (চারটি বিকল্প) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে। ` +
-                `শুধু JSON array রিটার্ন করো: ${jsonFormat}`
-            );
-            rawJson = await mbCallAiApi('', imageData, sysPrompt);
+        // Step 2 (fallback): old text-extraction / page-image approach, kept for
+        // resilience in case the direct-PDF endpoint is unavailable.
+        if (!rawJson) {
+            const page     = await mbPdfDoc.getPage(mbCurrentPage);
+            const textCont = await page.getTextContent();
+            const pageText = textCont.items.map(i => i.str).join(' ').trim();
+
+            if (pageText && pageText.length >= 30) {
+                const prompt = `নিচের টেক্সট থেকে ${basePrompt}\n` +
+                    `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}\n\n` +
+                    `টেক্সট:\n${pageText.slice(0, 4000)}`;
+                rawJson = await mbCallAiApi(prompt, null);
+            } else {
+                mbToast('ছবি-ভিত্তিক PDF — image AI ব্যবহার হচ্ছে...', 'info', 2000);
+                const imageData = await mbGetPageImageBase64(mbCurrentPage);
+                if (!imageData) { mbToast('পেইজের ছবি তৈরি করা যায়নি', 'error'); return; }
+                const sysPrompt = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে ${basePrompt}\n` +
+                    `শুধু JSON array রিটার্ন করো: ${jsonFormat}`;
+                rawJson = await mbCallAiApi('', imageData, sysPrompt);
+            }
         }
 
         const parsed  = mbParseAiJson(rawJson);

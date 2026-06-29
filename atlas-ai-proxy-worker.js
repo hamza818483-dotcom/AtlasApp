@@ -53,6 +53,12 @@ export default {
         if (path === "/ocr-status") {
             return handleOcrStatus(body, env);
         }
+        // ── MCQ-from-PDF endpoint: fetches the PDF server-side and sends it directly
+        //    to Gemini (which reads PDFs natively), avoiding client-side text extraction
+        //    that fails on scanned/image-based pages. ──
+        if (path === "/mcq-from-pdf") {
+            return handleMcqFromPdf(body, env);
+        }
 
         // ── Default AI proxy ──
         const question = (body.question || "").trim();
@@ -100,26 +106,42 @@ function jsonResponse(obj, status = 200) {
 }
 
 /* ───────── 1. Google Gemini ───────── */
+function getGeminiKeys(env) {
+    const keys = [];
+    if (env.GEMINI_KEYS) keys.push(...env.GEMINI_KEYS.split(",").map(k => k.trim()).filter(Boolean));
+    if (env.GEMINI_API_KEY) keys.push(env.GEMINI_API_KEY.trim());
+    return [...new Set(keys)];
+}
+
 async function callGemini(env, question, systemPrompt, image) {
-    const key = env.GEMINI_API_KEY;
-    if (!key) return { error: "GEMINI_API_KEY not set" };
+    const keys = getGeminiKeys(env);
+    if (!keys.length) return { error: "GEMINI_API_KEY not set" };
 
     const parts = [];
     if (image) parts.push({ inline_data: { mime_type: image.mimeType, data: image.base64 } });
     parts.push({ text: systemPrompt + "\n\nপ্রশ্ন: " + (question || "এই ছবিটি বিশ্লেষণ করো।") });
 
-    const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
-        {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ contents: [{ parts }], generationConfig: { maxOutputTokens: 8192 } }),
+    let lastError = "Gemini: no keys worked";
+    for (const key of keys) {
+        try {
+            const res = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ contents: [{ parts }], generationConfig: { maxOutputTokens: 8192 } }),
+                }
+            );
+            if (!res.ok) { lastError = `Gemini HTTP ${res.status}`; continue; } // try next key on 401/429/etc.
+            const data = await res.json();
+            const answer = data.candidates?.[0]?.content?.parts?.[0]?.text || null;
+            if (answer) return { answer, provider: "gemini" };
+            lastError = "Gemini: empty response";
+        } catch (e) {
+            lastError = `Gemini exception: ${e?.message || e}`;
         }
-    );
-    if (!res.ok) return { error: `Gemini HTTP ${res.status}` };
-    const data = await res.json();
-    const answer = data.candidates?.[0]?.content?.parts?.[0]?.text || null;
-    return answer ? { answer, provider: "gemini" } : { error: "Gemini: empty response" };
+    }
+    return { error: lastError };
 }
 
 /* ───────── 2. OpenRouter (free vision model) ───────── */
@@ -472,6 +494,59 @@ async function ocrDbGet(url, key, path) {
     });
     if (!res.ok) return null;
     return res.json();
+}
+
+/* ───────── MCQ-from-PDF: fetch the whole PDF and let Gemini read it natively ───────── */
+async function handleMcqFromPdf(body, env) {
+    const { pdf_url, prompt } = body;
+    if (!pdf_url) return jsonResponse({ success: false, error: "pdf_url প্রয়োজন" }, 400);
+    if (!prompt) return jsonResponse({ success: false, error: "prompt প্রয়োজন" }, 400);
+
+    const keys = getGeminiKeys(env);
+    if (!keys.length) return jsonResponse({ success: false, error: "GEMINI_API_KEY not set" }, 500);
+
+    let pdfBase64;
+    try {
+        const pdfRes = await fetch(pdf_url);
+        if (!pdfRes.ok) return jsonResponse({ success: false, error: `PDF fetch failed: HTTP ${pdfRes.status}` }, 502);
+        const buf = await pdfRes.arrayBuffer();
+        const u8 = new Uint8Array(buf);
+        let bin = "";
+        for (let i = 0; i < u8.length; i += 8192) {
+            bin += String.fromCharCode(...u8.subarray(i, i + 8192));
+        }
+        pdfBase64 = btoa(bin);
+    } catch (e) {
+        return jsonResponse({ success: false, error: `PDF fetch exception: ${e?.message || e}` }, 502);
+    }
+
+    let lastError = "Gemini: no keys worked";
+    for (const key of keys) {
+        try {
+            const res = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [{ parts: [
+                            { inline_data: { mime_type: "application/pdf", data: pdfBase64 } },
+                            { text: prompt },
+                        ]}],
+                        generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
+                    }),
+                }
+            );
+            if (!res.ok) { lastError = `Gemini HTTP ${res.status}`; continue; }
+            const data = await res.json();
+            const answer = data.candidates?.[0]?.content?.parts?.[0]?.text || null;
+            if (answer) return jsonResponse({ success: true, answer, provider: "gemini-pdf" });
+            lastError = "Gemini: empty response";
+        } catch (e) {
+            lastError = `Gemini exception: ${e?.message || e}`;
+        }
+    }
+    return jsonResponse({ success: false, error: lastError }, 502);
 }
 
 /* ════════════════════════════════════════════════════════════
