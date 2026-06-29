@@ -1045,36 +1045,69 @@ function mbParseCsvFile(file) {
             if (lines.length < 2) { mbToast('CSV ফাইলে ডেটা নেই', 'error'); return; }
 
             const header = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/['"]/g,''));
-            const idx    = h => header.indexOf(h);
-            const qIdx   = idx('question');
-            const kIdx   = idx('option_k');
-            const khIdx  = idx('option_kh');
-            const gIdx   = idx('option_g');
-            const ghIdx  = idx('option_gh');
-            const cIdx   = idx('correct');
-            const eIdx   = idx('explanation');
-            const tIdx   = idx('type');
+            const idx = h => header.indexOf(h);
 
-            if (qIdx < 0 || kIdx < 0 || cIdx < 0) {
-                mbToast('CSV হেডার ভুল। question, option_k, correct কলাম প্রয়োজন।', 'error');
+            // New format: questions,option1,option2,option3,option4,option5,answer,explanation,type,section
+            // Old format: question,option_k,option_kh,option_g,option_gh,correct,explanation,type
+            const isNewFormat = idx('questions') >= 0 || idx('option1') >= 0 || idx('answer') >= 0;
+
+            let qIdx, o1,o2,o3,o4,o5, ansIdx, eIdx, tIdx;
+
+            if (isNewFormat) {
+                qIdx   = idx('questions');
+                o1     = idx('option1');
+                o2     = idx('option2');
+                o3     = idx('option3');
+                o4     = idx('option4');
+                o5     = idx('option5');
+                ansIdx = idx('answer');   // numeric: 1-5
+                eIdx   = idx('explanation');
+                tIdx   = idx('type');
+            } else {
+                // Legacy format fallback
+                qIdx   = idx('question');
+                o1     = idx('option_k');
+                o2     = idx('option_kh');
+                o3     = idx('option_g');
+                o4     = idx('option_gh');
+                ansIdx = idx('correct');  // letter: k/kh/g/gh
+                eIdx   = idx('explanation');
+                tIdx   = idx('type');
+            }
+
+            if (qIdx < 0) {
+                mbToast('CSV হেডার ভুল। questions কলাম প্রয়োজন।', 'error');
                 return;
             }
+
+            // Numeric answer → option key map
+            const numToKey = {'1':'k','2':'kh','3':'g','4':'gh','5':'u'};
 
             mbCsvData = [];
             for (let i = 1; i < lines.length; i++) {
                 const cols = mbSplitCsv(lines[i]);
                 const q = cols[qIdx] ? cols[qIdx].trim() : '';
                 if (!q) continue;
+
+                let correctKey;
+                if (isNewFormat) {
+                    const ansRaw = ansIdx >= 0 ? (cols[ansIdx]||'1').trim() : '1';
+                    correctKey = numToKey[ansRaw] || 'k';
+                } else {
+                    correctKey = ansIdx >= 0 ? (cols[ansIdx]||'k').trim().toLowerCase() : 'k';
+                }
+
                 mbCsvData.push({
                     id:          uid(),
                     question:    q,
-                    option_k:    kIdx  >= 0 ? (cols[kIdx]  || '').trim() : '',
-                    option_kh:   khIdx >= 0 ? (cols[khIdx] || '').trim() : '',
-                    option_g:    gIdx  >= 0 ? (cols[gIdx]  || '').trim() : '',
-                    option_gh:   ghIdx >= 0 ? (cols[ghIdx] || '').trim() : '',
-                    correct:     cIdx  >= 0 ? (cols[cIdx]  || 'k').trim().toLowerCase() : 'k',
-                    explanation: eIdx  >= 0 ? (cols[eIdx]  || '').trim() : '',
-                    type:        tIdx  >= 0 ? (cols[tIdx]  || 'standard').trim() : 'standard'
+                    option_k:    o1 >= 0 ? (cols[o1]||'').trim() : '',
+                    option_kh:   o2 >= 0 ? (cols[o2]||'').trim() : '',
+                    option_g:    o3 >= 0 ? (cols[o3]||'').trim() : '',
+                    option_gh:   o4 >= 0 ? (cols[o4]||'').trim() : '',
+                    option_u:    o5 >= 0 ? (cols[o5]||'').trim() : '',
+                    correct:     correctKey,
+                    explanation: eIdx >= 0 ? (cols[eIdx]||'').trim() : '',
+                    type:        tIdx >= 0 ? (cols[tIdx]||'standard').trim() : 'standard'
                 });
             }
 
