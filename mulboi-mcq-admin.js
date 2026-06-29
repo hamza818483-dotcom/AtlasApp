@@ -376,7 +376,11 @@ async function mbUploadPdf() {
 
         if (pf) pf.style.width = '100%';
         if (us) us.style.display = 'block';
-        mbToast('✓ PDF আপলোড সম্পন্ন', 'success');
+        mbToast('✓ PDF আপলোড সম্পন্ন — OCR শুরু হচ্ছে...', 'success');
+
+        // Get new PDF id for OCR
+        const newPdfData = await dbRes.json();
+        const newPdfId = Array.isArray(newPdfData) ? newPdfData[0]?.id : newPdfData?.id;
 
         mbPdfFile = null;
         const fc = document.getElementById('mbFileChosen');
@@ -387,6 +391,11 @@ async function mbUploadPdf() {
 
         mbLoadChapterPdfs();
         mbLoadAllPdfs();
+
+        // ── Auto OCR: start background OCR after upload ──
+        if (newPdfId) {
+            setTimeout(() => mbStartAutoOcr(newPdfId, fileUrl), 500);
+        }
 
     } catch (e) {
         mbToast('আপলোড ব্যর্থ: ' + e.message, 'error');
@@ -864,6 +873,12 @@ function mbSelectAiType(type) {
     });
     const at = document.getElementById('mbAiType');
     if (at) at.value = type;
+    // Load saved prompt for this type
+    const promptEl = document.getElementById('mbAiPrompt');
+    if (promptEl) {
+        const saved = mbGetSavedPrompt(type);
+        if (saved) promptEl.value = saved;
+    }
 }
 
 async function mbSaveMcq(e) {
@@ -1045,36 +1060,69 @@ function mbParseCsvFile(file) {
             if (lines.length < 2) { mbToast('CSV ফাইলে ডেটা নেই', 'error'); return; }
 
             const header = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/['"]/g,''));
-            const idx    = h => header.indexOf(h);
-            const qIdx   = idx('question');
-            const kIdx   = idx('option_k');
-            const khIdx  = idx('option_kh');
-            const gIdx   = idx('option_g');
-            const ghIdx  = idx('option_gh');
-            const cIdx   = idx('correct');
-            const eIdx   = idx('explanation');
-            const tIdx   = idx('type');
+            const idx = h => header.indexOf(h);
 
-            if (qIdx < 0 || kIdx < 0 || cIdx < 0) {
-                mbToast('CSV হেডার ভুল। question, option_k, correct কলাম প্রয়োজন।', 'error');
+            // New format: questions,option1,option2,option3,option4,option5,answer,explanation,type,section
+            // Old format: question,option_k,option_kh,option_g,option_gh,correct,explanation,type
+            const isNewFormat = idx('questions') >= 0 || idx('option1') >= 0 || idx('answer') >= 0;
+
+            let qIdx, o1,o2,o3,o4,o5, ansIdx, eIdx, tIdx;
+
+            if (isNewFormat) {
+                qIdx   = idx('questions');
+                o1     = idx('option1');
+                o2     = idx('option2');
+                o3     = idx('option3');
+                o4     = idx('option4');
+                o5     = idx('option5');
+                ansIdx = idx('answer');   // numeric: 1-5
+                eIdx   = idx('explanation');
+                tIdx   = idx('type');
+            } else {
+                // Legacy format fallback
+                qIdx   = idx('question');
+                o1     = idx('option_k');
+                o2     = idx('option_kh');
+                o3     = idx('option_g');
+                o4     = idx('option_gh');
+                ansIdx = idx('correct');  // letter: k/kh/g/gh
+                eIdx   = idx('explanation');
+                tIdx   = idx('type');
+            }
+
+            if (qIdx < 0) {
+                mbToast('CSV হেডার ভুল। questions কলাম প্রয়োজন।', 'error');
                 return;
             }
+
+            // Numeric answer → option key map
+            const numToKey = {'1':'k','2':'kh','3':'g','4':'gh','5':'u'};
 
             mbCsvData = [];
             for (let i = 1; i < lines.length; i++) {
                 const cols = mbSplitCsv(lines[i]);
                 const q = cols[qIdx] ? cols[qIdx].trim() : '';
                 if (!q) continue;
+
+                let correctKey;
+                if (isNewFormat) {
+                    const ansRaw = ansIdx >= 0 ? (cols[ansIdx]||'1').trim() : '1';
+                    correctKey = numToKey[ansRaw] || 'k';
+                } else {
+                    correctKey = ansIdx >= 0 ? (cols[ansIdx]||'k').trim().toLowerCase() : 'k';
+                }
+
                 mbCsvData.push({
                     id:          uid(),
                     question:    q,
-                    option_k:    kIdx  >= 0 ? (cols[kIdx]  || '').trim() : '',
-                    option_kh:   khIdx >= 0 ? (cols[khIdx] || '').trim() : '',
-                    option_g:    gIdx  >= 0 ? (cols[gIdx]  || '').trim() : '',
-                    option_gh:   ghIdx >= 0 ? (cols[ghIdx] || '').trim() : '',
-                    correct:     cIdx  >= 0 ? (cols[cIdx]  || 'k').trim().toLowerCase() : 'k',
-                    explanation: eIdx  >= 0 ? (cols[eIdx]  || '').trim() : '',
-                    type:        tIdx  >= 0 ? (cols[tIdx]  || 'standard').trim() : 'standard'
+                    option_k:    o1 >= 0 ? (cols[o1]||'').trim() : '',
+                    option_kh:   o2 >= 0 ? (cols[o2]||'').trim() : '',
+                    option_g:    o3 >= 0 ? (cols[o3]||'').trim() : '',
+                    option_gh:   o4 >= 0 ? (cols[o4]||'').trim() : '',
+                    option_u:    o5 >= 0 ? (cols[o5]||'').trim() : '',
+                    correct:     correctKey,
+                    explanation: eIdx >= 0 ? (cols[eIdx]||'').trim() : '',
+                    type:        tIdx >= 0 ? (cols[tIdx]||'standard').trim() : 'standard'
                 });
             }
 
@@ -1158,12 +1206,45 @@ async function mbImportCsv() {
    14. AI GENERATE
    ════════════════════════════════════════════════════ */
 
+/* ─── AI prompt storage (per-type, per-pdfId) ─── */
+function mbGetSavedPrompt(type) {
+    try { return JSON.parse(localStorage.getItem('mbPrompts')||'{}')[type] || ''; } catch { return ''; }
+}
+function mbSavePromptForType(type, text) {
+    try {
+        const all = JSON.parse(localStorage.getItem('mbPrompts')||'{}');
+        all[type] = text;
+        localStorage.setItem('mbPrompts', JSON.stringify(all));
+    } catch {}
+}
+
+/* ─── Get canvas image from current PDF page ─── */
+async function mbGetPageImageBase64(pageNum) {
+    if (!mbPdfDoc) return null;
+    try {
+        const canvas = document.getElementById('mbPreviewCanvas');
+        if (canvas && canvas.width > 100 && canvas.height > 100) {
+            return { base64: canvas.toDataURL('image/jpeg', 0.85).split(',')[1], mimeType: 'image/jpeg' };
+        }
+        // Render fresh if canvas not ready
+        const page = await mbPdfDoc.getPage(pageNum);
+        const vp = page.getViewport({ scale: 1.5 });
+        const tmp = document.createElement('canvas');
+        tmp.width = vp.width; tmp.height = vp.height;
+        await page.render({ canvasContext: tmp.getContext('2d'), viewport: vp }).promise;
+        return { base64: tmp.toDataURL('image/jpeg', 0.85).split(',')[1], mimeType: 'image/jpeg' };
+    } catch { return null; }
+}
+
 async function mbAiGenerate() {
     if (!mbPdfDoc) { mbToast('আগে একটি PDF খুলুন', 'error'); return; }
 
     const count    = parseInt((document.getElementById('mbAiCount') || {}).value) || 10;
     const type     = mbAiTypeKey;
     const customP  = ((document.getElementById('mbAiPrompt') || {}).value || '').trim();
+
+    // Save custom prompt per type
+    if (customP) mbSavePromptForType(type, customP);
 
     const spinner  = document.getElementById('mbAiSpinner');
     const genBtn   = document.getElementById('mbAiGenBtn');
@@ -1179,22 +1260,38 @@ async function mbAiGenerate() {
         const textCont = await page.getTextContent();
         const pageText = textCont.items.map(i => i.str).join(' ').trim();
 
-        if (!pageText || pageText.length < 30) {
-            mbToast('পেইজে পর্যাপ্ত টেক্সট নেই (text-based PDF প্রয়োজন)', 'error');
-            return;
+        const typeLabel = { standard: 'সাধারণ', true_false: 'সত্য/মিথ্যা', hard: 'কঠিন' };
+        const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","type":"${type}"}]`;
+
+        let rawJson;
+
+        if (pageText && pageText.length >= 30) {
+            // Text-based PDF: use text prompt
+            const savedP = mbGetSavedPrompt(type);
+            const prompt = customP || savedP || (
+                `নিচের টেক্সট থেকে ${count}টি ${typeLabel[type]||type} MCQ তৈরি করো। ` +
+                `Content যে ভাষায় আছে সেই ভাষায় রাখো। ` +
+                `প্রতিটিতে চারটি বিকল্প (option_k, option_kh, option_g, option_gh) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে। ` +
+                `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n` +
+                `${jsonFormat}\n\n` +
+                `টেক্সট:\n${pageText.slice(0, 4000)}`
+            );
+            rawJson = await mbCallAiApi(prompt, null);
+        } else {
+            // Image-based PDF: render canvas and send image
+            mbToast('ছবি-ভিত্তিক PDF — image AI ব্যবহার হচ্ছে...', 'info', 2000);
+            const imageData = await mbGetPageImageBase64(mbCurrentPage);
+            if (!imageData) { mbToast('পেইজের ছবি তৈরি করা যায়নি', 'error'); return; }
+
+            const savedP = mbGetSavedPrompt(type);
+            const sysPrompt = customP || savedP || (
+                `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে ${count}টি ${typeLabel[type]||type} MCQ বাংলায় তৈরি করো। ` +
+                `প্রতিটিতে option_k, option_kh, option_g, option_gh (চারটি বিকল্প) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে। ` +
+                `শুধু JSON array রিটার্ন করো: ${jsonFormat}`
+            );
+            rawJson = await mbCallAiApi('', imageData, sysPrompt);
         }
 
-        const typeLabel = { standard: 'সাধারণ', true_false: 'সত্য/মিথ্যা', hard: 'কঠিন' };
-        const prompt = customP || (
-            `নিচের টেক্সট থেকে ${count}টি ${typeLabel[type]||type} MCQ তৈরি করো। ` +
-            `Content যে ভাষায় আছে সেই ভাষায় রাখো। ` +
-            `প্রতিটিতে চারটি বিকল্প (option_k, option_kh, option_g, option_gh) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে। ` +
-            `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n` +
-            `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","type":"${type}"}]\n\n` +
-            `টেক্সট:\n${pageText.slice(0, 4000)}`
-        );
-
-        const rawJson = await mbCallAiApi(prompt);
         const parsed  = mbParseAiJson(rawJson);
 
         if (!parsed || !parsed.length) {
@@ -1235,14 +1332,14 @@ async function mbAiGenerate() {
 // All AI calls now go through the centralized proxy worker — no API key lives in
 // this file or any client-side code. See atlas-ai-proxy-worker.js for the actual
 // provider fallback chain (Gemini → OpenRouter → Groq → Cerebras → Cloudflare AI).
-async function mbCallAiApi(prompt, image) {
+async function mbCallAiApi(prompt, image, customSystemPrompt) {
     const res = await fetch(AI_PROXY_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            question: prompt,
+            question: prompt || '',
             image: image ? { base64: image.base64, mimeType: image.mimeType } : null,
-            systemPrompt: 'তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।'
+            systemPrompt: customSystemPrompt || 'তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।'
         })
     });
     if (!res.ok) throw new Error('AI প্রক্সি ব্যর্থ (' + res.status + ')');
@@ -1336,6 +1433,122 @@ function mbInjectStyles() {
 }
 
 /* ════════════════════════════════════════════════════
+   15b. AUTO OCR SYSTEM
+   ════════════════════════════════════════════════════ */
+
+const OCR_PROXY_URL = AI_PROXY_URL.replace(/\/$/, '') + '/'; // Same proxy with trailing slash
+
+// Start auto OCR for a newly uploaded PDF
+// Renders each page via PDF.js → sends image to /ocr-page → saves text to Supabase
+async function mbStartAutoOcr(pdfId, pdfUrl) {
+    const toastId = 'ocr-' + pdfId;
+    mbToast('🔍 OCR শুরু হচ্ছে... (background এ চলবে)', 'info', 4000);
+
+    try {
+        // Load PDF
+        if (!window.pdfjsLib) return;
+        const pdfDoc = await pdfjsLib.getDocument({ url: pdfUrl }).promise;
+        const totalPages = pdfDoc.numPages;
+
+        // Create OCR job record
+        await mbApi('/book_pdf_ocr_jobs', {
+            method: 'POST',
+            headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+            body: JSON.stringify({
+                pdf_id: parseInt(pdfId),
+                total_pages: totalPages,
+                done_pages: 0,
+                status: 'processing',
+                started_at: new Date().toISOString()
+            })
+        });
+
+        let doneCount = 0;
+
+        // Process pages in batches of 3 (parallel OCR per batch)
+        const BATCH = 3;
+        for (let start = 1; start <= totalPages; start += BATCH) {
+            const batch = [];
+            for (let p = start; p < start + BATCH && p <= totalPages; p++) {
+                batch.push(p);
+            }
+
+            // Process batch in parallel
+            await Promise.allSettled(batch.map(async (pageNum) => {
+                try {
+                    // Render page to image
+                    const page = await pdfDoc.getPage(pageNum);
+                    const vp = page.getViewport({ scale: 1.8 }); // Higher scale = better OCR
+                    const tmp = document.createElement('canvas');
+                    tmp.width = vp.width;
+                    tmp.height = vp.height;
+                    await page.render({ canvasContext: tmp.getContext('2d'), viewport: vp }).promise;
+                    const imageBase64 = tmp.toDataURL('image/jpeg', 0.9).split(',')[1];
+
+                    // Send to OCR endpoint
+                    const res = await fetch(OCR_PROXY_URL + 'ocr-page', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            pdf_id: pdfId,
+                            page_number: pageNum,
+                            image_base64: imageBase64,
+                            image_mime: 'image/jpeg',
+                            supabase_url: window.SUPABASE_URL,
+                            supabase_key: window.SUPABASE_KEY
+                        })
+                    });
+
+                    if (res.ok) {
+                        doneCount++;
+                        // Update progress pill if MCQ panel is open
+                        const pill = document.getElementById('mbOcrStatus-' + pdfId);
+                        if (pill) pill.textContent = `OCR: ${doneCount}/${totalPages}`;
+                    }
+                } catch (_) {}
+            }));
+
+            // Small delay between batches to avoid rate limits
+            if (start + BATCH <= totalPages) {
+                await new Promise(r => setTimeout(r, 800));
+            }
+        }
+
+        mbToast(`✅ OCR সম্পন্ন — ${doneCount}/${totalPages} পেইজ`, 'success', 4000);
+        mbLoadChapterPdfs();
+        mbLoadAllPdfs();
+
+    } catch (e) {
+        console.warn('Auto OCR failed:', e.message);
+        mbToast('⚠️ OCR শুরু করা যায়নি', 'error', 3000);
+    }
+}
+
+// Check OCR status for a specific PDF
+async function mbCheckOcrStatus(pdfId) {
+    try {
+        const res = await fetch(OCR_PROXY_URL + 'ocr-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                pdf_id: pdfId,
+                supabase_url: window.SUPABASE_URL,
+                supabase_key: window.SUPABASE_KEY
+            })
+        });
+        if (!res.ok) return null;
+        return res.json();
+    } catch { return null; }
+}
+
+// Manually trigger OCR for existing PDF (from admin panel)
+async function mbRetriggerOcr(pdfId, pdfUrl) {
+    if (!pdfUrl) { mbToast('PDF URL নেই', 'error'); return; }
+    mbToast('🔍 OCR পুনরায় শুরু করা হচ্ছে...', 'info', 3000);
+    await mbStartAutoOcr(pdfId, pdfUrl);
+}
+
+/* ════════════════════════════════════════════════════
    16. INIT & WINDOW EXPORTS
    ════════════════════════════════════════════════════ */
 
@@ -1387,5 +1600,10 @@ window.mbImportCsv        = mbImportCsv;
 window.mbAiGenerate       = mbAiGenerate;
 window.mbSaveAiMcqs       = mbSaveAiMcqs;
 window.mbDiscardAi        = mbDiscardAi;
+window.mbStartAutoOcr     = mbStartAutoOcr;
+window.mbCheckOcrStatus   = mbCheckOcrStatus;
+window.mbRetriggerOcr     = mbRetriggerOcr;
 
 })(); // end IIFE
+
+

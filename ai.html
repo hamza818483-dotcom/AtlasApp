@@ -155,6 +155,7 @@
             flex: 1;
             min-height: 0;
             overflow-y: auto;
+            overflow-anchor: none;
             background: var(--ai-surface);
             border-radius: var(--ai-radius);
             padding: 14px;
@@ -162,7 +163,13 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            scroll-behavior: smooth;
+            scroll-behavior: auto;
+        }
+        /* Scroll anchor at bottom */
+        .chat-scroll-anchor {
+            height: 1px;
+            flex-shrink: 0;
+            overflow-anchor: auto;
         }
         .chat-area::-webkit-scrollbar { width: 4px; }
         .chat-area::-webkit-scrollbar-track { background: transparent; }
@@ -228,6 +235,8 @@
             font-size: 13px;
             line-height: 1.65;
             word-break: break-word;
+            overflow-wrap: break-word;
+            overflow: visible;
             font-family: 'Noto Sans Bengali', 'Inter', sans-serif;
         }
         .msg-wrapper.user .msg-bubble {
@@ -563,6 +572,7 @@
             <div class="empty-title">ATLAS AI-তে স্বাগতম!</div>
             <div class="empty-sub">MCQ, HSC, Medical, Varsity<br>যেকোনো প্রশ্ন করো — ছবিও দিতে পারো 📸</div>
         </div>
+        <div class="chat-scroll-anchor" id="chatScrollAnchor"></div>
     </div>
 
     <!-- Chat Tools -->
@@ -621,6 +631,7 @@
 
 <script>
 // ===== AI PROXY CONFIG =====
+// Last sync: mirror trigger
 // All API keys (Gemini, OpenRouter, Groq, Cerebras, Cloudflare AI) live ONLY as
 // secrets inside this Worker — never in client-side code. The worker tries each
 // provider in order and returns the first usable answer.
@@ -655,16 +666,12 @@ function getSystemPrompt(question) {
     const subj = detectSubject(question);
     const isMCQ = /\(ক\)|\(খ\)|\(গ\)|\(ঘ\)|ক\)|খ\)|গ\)|ঘ\)|A\)|B\)|C\)|D\)|[Aa][\.\)]|[Bb][\.\)]|[Cc][\.\)]|[Dd][\.\)]/.test(question);
 
-    let prompt = `তুমি ATLAS AI — বাংলাদেশের সেরা HSC শিক্ষার্থীদের AI বন্ধু। নিচের নিয়ম কঠোরভাবে মানবে:
+    let prompt = `তুমি ATLAS AI — বাংলাদেশের HSC শিক্ষার্থীদের AI বন্ধু। নিয়ম:
 
-১। সব উত্তর সুন্দর বাংলায় দিবে। English technical word-এর পাশে বাংলা অর্থ দিবে।
-২। গাণিতিক সূত্র সবসময় Unicode-এ লিখবে — LaTeX কখনো নয়।
-   উদাহরণ: sin²θ + cos²θ = 1, x² + y² = r², H₂O, CO₂, NH₄⁺, SO₄²⁻
-৩। রাসায়নিক সমীকরণ Unicode-এ: 2H₂ + O₂ → 2H₂O
-৪। সহজ, বন্ধুত্বপূর্ণ ভাষায় কথা বলবে। কঠিন ভাষা পরিহার করবে।
-৫। উত্তর সংক্ষিপ্ত কিন্তু সম্পূর্ণ রাখবে (২-৫ প্যারাগ্রাফ)।
-৬। প্রয়োজনে সুন্দর উদাহরণ দিবে।
-৭। শেষে একটি উৎসাহমূলক লাইন দিবে যদি প্রাসঙ্গিক হয়।`;
+১। বাংলায় উত্তর দিবে। English technical word-এর পাশে বাংলা অর্থ দিবে।
+২। গাণিতিক সূত্র Unicode-এ লিখবে (LaTeX নয়)।
+৩। সহজ ভাষায় উত্তর দিবে।
+৪। উত্তর অবশ্যই সম্পূর্ণ করবে, মাঝখানে থামবে না। সংক্ষেপে লিখবে (২-৩ প্যারাগ্রাফ)।`;
 
     if (isMCQ) {
         prompt += `
@@ -700,20 +707,32 @@ function getSystemPrompt(question) {
 async function askAI(question, imageData) {
     const systemPrompt = getSystemPrompt(question || 'ছবি বিশ্লেষণ করো');
     try {
+        // Use AbortController with 60s timeout to allow full long answers
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000);
         const res = await fetch(AI_PROXY_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
             body: JSON.stringify({
                 question: question || '',
                 image: imageData ? { base64: imageData.base64, mimeType: imageData.mimeType } : null,
                 systemPrompt
             })
         });
+        clearTimeout(timeoutId);
         const data = await res.json();
         if (data.success && data.answer && data.answer.trim().length > 5) {
             return { answer: data.answer.trim() };
         }
+        // If answer exists but success flag missing, still use it
+        if (data.answer && data.answer.trim().length > 5) {
+            return { answer: data.answer.trim() };
+        }
     } catch (e) {
+        if (e.name === 'AbortError') {
+            return { answer: '⏱️ উত্তর দিতে বেশি সময় লাগছে। আবার চেষ্টা করো অথবা প্রশ্নটি ছোট করো।' };
+        }
         console.error('ATLAS AI proxy error:', e);
     }
     return { answer: '❌ দুঃখিত! ATLAS AI এখন একটু busy আছে। কিছুক্ষণ পর আবার চেষ্টা করো। 🙏' };
@@ -804,9 +823,19 @@ function hideEmpty() {
     document.getElementById('suggestBar').style.display = 'none';
 }
 
+function stableScrollToBottom() {
+    const area = document.getElementById('chatArea');
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            area.scrollTop = area.scrollHeight;
+        });
+    });
+}
+
 function addUserMessage(text, imageObj) {
     hideEmpty();
     const area = document.getElementById('chatArea');
+    const anchor = document.getElementById('chatScrollAnchor');
     const wrapper = document.createElement('div');
     wrapper.className = 'msg-wrapper user';
 
@@ -824,8 +853,9 @@ function addUserMessage(text, imageObj) {
         </div>
         <div class="msg-meta"><span class="msg-time">${getTime()}</span></div>
     `;
-    area.appendChild(wrapper);
-    area.scrollTop = area.scrollHeight;
+    if (anchor) area.insertBefore(wrapper, anchor);
+    else area.appendChild(wrapper);
+    stableScrollToBottom();
 
     chatHistory.push({ type: 'user', text, image: imageObj ? `[ছবি: ${imageObj.name}]` : null, time: getTime() });
     saveChat();
@@ -834,39 +864,46 @@ function addUserMessage(text, imageObj) {
 function addAIMessage(text) {
     hideEmpty();
     const area = document.getElementById('chatArea');
+    const anchor = document.getElementById('chatScrollAnchor');
     const wrapper = document.createElement('div');
     wrapper.className = 'msg-wrapper ai';
 
     const formattedText = formatAIText(text);
 
-    wrapper.innerHTML = `
-        <div class="msg-label">ATLAS AI</div>
-        <div class="msg-row">
-            <div class="msg-avatar-sm ai-av">🤖</div>
-            <div class="msg-bubble">
-                <div class="ai-answer">${formattedText}</div>
-                <div class="msg-meta">
-                    <span class="msg-time">${getTime()}</span>
-                    <button class="copy-btn" onclick="copyAnswer(this)">📋 কপি</button>
-                </div>
-            </div>
-        </div>
-    `;
-    area.appendChild(wrapper);
-    area.scrollTop = area.scrollHeight;
+    // Build HTML safely - avoid template literal issues with AI text
+    const html = '<div class="msg-label">ATLAS AI</div>' +
+        '<div class="msg-row">' +
+        '<div class="msg-avatar-sm ai-av">🤖</div>' +
+        '<div class="msg-bubble">' +
+        '<div class="ai-answer">' + formattedText + '</div>' +
+        '<div class="msg-meta">' +
+        '<span class="msg-time">' + getTime() + '</span>' +
+        '<button class="copy-btn" onclick="copyAnswer(this)">📋 কপি</button>' +
+        '</div></div></div>';
+    wrapper.innerHTML = html;
+
+    if (anchor) area.insertBefore(wrapper, anchor);
+    else area.appendChild(wrapper);
+    stableScrollToBottom();
 
     chatHistory.push({ type: 'ai', text, time: getTime() });
     saveChat();
 }
 
 function formatAIText(text) {
-    return text
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    // First escape HTML entities properly
+    let safe = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    // Then apply formatting
+    safe = safe
         .replace(/✅([^\n]*)/g, '<span class="mcq-correct">✅$1</span>')
         .replace(/❌([^\n]*)/g, '<span class="mcq-wrong">❌$1</span>')
         .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
         .replace(/`([^`]+)`/g, '<code style="background:rgba(108,99,255,0.15);padding:1px 5px;border-radius:4px;font-family:monospace">$1</code>')
         .replace(/\n/g, '<br>');
+    return safe;
 }
 
 function copyAnswer(btn) {
@@ -881,6 +918,7 @@ function copyAnswer(btn) {
 function showTyping() {
     hideEmpty();
     const area = document.getElementById('chatArea');
+    const anchor = document.getElementById('chatScrollAnchor');
     const div = document.createElement('div');
     div.id = 'typingIndicator';
     div.className = 'msg-wrapper ai';
@@ -891,8 +929,9 @@ function showTyping() {
             <div class="typing-bubble"><span></span><span></span><span></span></div>
         </div>
     `;
-    area.appendChild(div);
-    area.scrollTop = area.scrollHeight;
+    if (anchor) area.insertBefore(div, anchor);
+    else area.appendChild(div);
+    stableScrollToBottom();
 }
 
 function hideTyping() {
@@ -968,6 +1007,11 @@ if (session) {
 
 hideTyping();
 addAIMessage(finalAnswer);
+    // Scroll to bottom after answer renders
+    requestAnimationFrame(() => {
+        const area = document.getElementById('chatArea');
+        area.scrollTop = area.scrollHeight;
+    });
     isAIBusy = false;
     document.getElementById('sendBtn').disabled = false;
     setStatus('ready');
@@ -1000,38 +1044,34 @@ function loadChat() {
         chatHistory = saved;
         if (!saved.length) return;
         const area = document.getElementById('chatArea');
+        const anchor = document.getElementById('chatScrollAnchor');
         document.getElementById('chatEmpty').style.display = 'none';
         document.getElementById('suggestBar').style.display = 'none';
         saved.forEach(m => {
             const wrapper = document.createElement('div');
             wrapper.className = 'msg-wrapper ' + m.type;
             if (m.type === 'user') {
-                wrapper.innerHTML = `
-                    <div class="msg-label">তুমি</div>
-                    <div class="msg-row">
-                        <div class="msg-bubble">${(m.text || m.image || '').replace(/\n/g,'<br>')}</div>
-                        <div class="msg-avatar-sm user-av">👤</div>
-                    </div>
-                    <div class="msg-meta"><span class="msg-time">${m.time || ''}</span></div>
-                `;
+                wrapper.innerHTML = '<div class="msg-label">তুমি</div>' +
+                    '<div class="msg-row">' +
+                    '<div class="msg-bubble">' + ((m.text || m.image || '').replace(/\n/g,'<br>')) + '</div>' +
+                    '<div class="msg-avatar-sm user-av">👤</div>' +
+                    '</div>' +
+                    '<div class="msg-meta"><span class="msg-time">' + (m.time || '') + '</span></div>';
             } else {
-                wrapper.innerHTML = `
-                    <div class="msg-label">ATLAS AI</div>
-                    <div class="msg-row">
-                        <div class="msg-avatar-sm ai-av">🤖</div>
-                        <div class="msg-bubble">
-                            <div class="ai-answer">${formatAIText(m.text || '')}</div>
-                            <div class="msg-meta">
-                                <span class="msg-time">${m.time || ''}</span>
-                                <button class="copy-btn" onclick="copyAnswer(this)">📋 কপি</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                wrapper.innerHTML = '<div class="msg-label">ATLAS AI</div>' +
+                    '<div class="msg-row">' +
+                    '<div class="msg-avatar-sm ai-av">🤖</div>' +
+                    '<div class="msg-bubble">' +
+                    '<div class="ai-answer">' + formatAIText(m.text || '') + '</div>' +
+                    '<div class="msg-meta">' +
+                    '<span class="msg-time">' + (m.time || '') + '</span>' +
+                    '<button class="copy-btn" onclick="copyAnswer(this)">📋 কপি</button>' +
+                    '</div></div></div>';
             }
-            area.appendChild(wrapper);
+            if (anchor) area.insertBefore(wrapper, anchor);
+            else area.appendChild(wrapper);
         });
-        area.scrollTop = area.scrollHeight;
+        stableScrollToBottom();
     } catch(e) {}
 }
 

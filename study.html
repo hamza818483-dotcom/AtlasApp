@@ -24,39 +24,55 @@
 .scr-title{font-size:14.5px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* Subjects */
-.subj-banner{ background:linear-gradient(135deg,var(--accent),#3D35B0); margin:14px;border-radius:14px;padding:18px 16px;color:#fff; }
-.subj-banner-t{font-size:16px;font-weight:900;margin-bottom:4px}
-.subj-banner-s{font-size:12px;opacity:.85}
-.subj-list{padding:0 14px 24px;display:flex;flex-direction:column;gap:10px}
+.subj-banner{ background:linear-gradient(135deg,var(--accent),#3D35B0); margin:14px;border-radius:16px;padding:20px 18px;color:#fff; box-shadow:0 8px 28px rgba(108,99,255,.35); position:relative; overflow:hidden; }
+.subj-banner::after{ content:''; position:absolute; top:-50%; right:-15%; width:60%; height:200%; background:radial-gradient(circle, rgba(255,255,255,.14) 0%, transparent 70%); pointer-events:none; }
+.subj-banner-t{font-size:17px;font-weight:900;margin-bottom:4px;position:relative;z-index:1}
+.subj-banner-s{font-size:12px;opacity:.88;position:relative;z-index:1}
+.subj-list{padding:0 14px 24px;display:flex;flex-direction:column;gap:13px}
 	.subj-card{
-	  border-radius:14px;padding:18px 16px;display:flex;align-items:center;gap:14px;
-	  cursor:pointer;border:1px solid rgba(255,255,255,0.12);color:#fff;position:relative;overflow:hidden;
-	  transition:transform .2s,box-shadow .2s;
+	  border-radius:18px;padding:0;display:flex;align-items:center;gap:0;
+	  cursor:pointer;color:#fff;position:relative;overflow:hidden;
+	  transition:transform .22s cubic-bezier(.34,1.56,.64,1),box-shadow .22s ease;
+	  box-shadow:0 10px 26px -6px rgba(0,0,0,.45), 0 2px 8px rgba(0,0,0,.25);
+	}
+	/* মূল ব্যাকগ্রাউন্ড: diagonal multi-stop gradient (g0..g7 এর সাথে combine হয়) + dot-pattern texture, যাতে flat-solid-color box মনে না হয় */
+	.subj-card-bg{
+	  position:absolute;inset:0;
+	  background-image:
+	    radial-gradient(circle at 15% 20%, rgba(255,255,255,.16) 0%, transparent 35%),
+	    radial-gradient(circle, rgba(255,255,255,.5) 1px, transparent 1.5px);
+	  background-size: auto, 16px 16px;
+	  background-position: 0 0, 0 0;
+	  opacity:.9;
 	}
 	.subj-card::before{
 	  content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
-	  background:linear-gradient(45deg,transparent 30%,rgba(255,255,255,0.08) 50%,transparent 70%);
-	  animation:cardShimmer 3s ease-in-out infinite;pointer-events:none;
+	  background:linear-gradient(45deg,transparent 30%,rgba(255,255,255,0.14) 50%,transparent 70%);
+	  animation:cardShimmer 3.5s ease-in-out infinite;pointer-events:none;z-index:2;
 	}
 	@keyframes cardShimmer{0%{transform:translateX(-100%) rotate(45deg)}100%{transform:translateX(100%) rotate(45deg)}}
-	.subj-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+	.subj-card:hover{transform:translateY(-3px) scale(1.012);box-shadow:0 16px 34px -6px rgba(0,0,0,.55), 0 2px 10px rgba(0,0,0,.3)}
+	.subj-card:active{transform:scale(.98)}
+	.subj-card-inner{position:relative;z-index:3;display:flex;align-items:center;gap:14px;padding:19px 17px;width:100%}
 	.subj-icon{
-	  font-size:22px;width:48px;height:48px;display:flex;align-items:center;justify-content:center;
-	  background:rgba(255,255,255,0.2);backdrop-filter:blur(8px);border-radius:14px;flex-shrink:0;border:1px solid rgba(255,255,255,0.15);
-	  font-weight:900;
+	  font-size:26px;width:54px;height:54px;display:flex;align-items:center;justify-content:center;
+	  background:linear-gradient(155deg, rgba(255,255,255,.32) 0%, rgba(255,255,255,.1) 100%);
+	  backdrop-filter:blur(10px);border-radius:16px;flex-shrink:0;
+	  border:1.5px solid rgba(255,255,255,.35);
+	  box-shadow:0 4px 14px rgba(0,0,0,.25), inset 0 1px 1px rgba(255,255,255,.4), inset 0 -2px 4px rgba(0,0,0,.12);
 	}
-.subj-info{flex:1}
-.subj-name{font-size:15px;font-weight:700}
-.subj-desc{font-size:11px;opacity:.78;margin-top:2px}
-.subj-arr{font-size:20px;opacity:.6}
-.g0{background:linear-gradient(135deg,#6C63FF,#3D35B0)}
-.g1{background:linear-gradient(135deg,#00D4AA,#00856F)}
-.g2{background:linear-gradient(135deg,#FF6B6B,#B03535)}
-.g3{background:linear-gradient(135deg,#FFBE0B,#B08500)}
-.g4{background:linear-gradient(135deg,#3A86FF,#1A56CC)}
-.g5{background:linear-gradient(135deg,#FF006E,#AA0048)}
-.g6{background:linear-gradient(135deg,#8B5CF6,#5B21B6)}
-.g7{background:linear-gradient(135deg,#EC4899,#9D174D)}
+.subj-info{flex:1;min-width:0}
+.subj-name{font-size:16px;font-weight:800;letter-spacing:.1px;text-shadow:0 1px 3px rgba(0,0,0,.2)}
+.subj-desc{font-size:11.5px;opacity:.85;margin-top:3px}
+.subj-arr{font-size:20px;opacity:.75;flex-shrink:0}
+.g0{background:linear-gradient(150deg,#8B85FF 0%,#6C63FF 45%,#3D35B0 100%)}
+.g1{background:linear-gradient(150deg,#2EEFC4 0%,#00D4AA 45%,#00856F 100%)}
+.g2{background:linear-gradient(150deg,#FF8F8F 0%,#FF6B6B 45%,#B03535 100%)}
+.g3{background:linear-gradient(150deg,#FFD166 0%,#FFBE0B 45%,#B08500 100%)}
+.g4{background:linear-gradient(150deg,#6FA6FF 0%,#3A86FF 45%,#1A56CC 100%)}
+.g5{background:linear-gradient(150deg,#FF4D94 0%,#FF006E 45%,#AA0048 100%)}
+.g6{background:linear-gradient(150deg,#A78BFA 0%,#8B5CF6 45%,#5B21B6 100%)}
+.g7{background:linear-gradient(150deg,#F472B6 0%,#EC4899 45%,#9D174D 100%)}
 
 /* Lists (chapters/pdfs) */
 .item-list{padding:10px 14px 24px;display:flex;flex-direction:column;gap:8px}
@@ -207,6 +223,10 @@
     <button class="back-btn" onclick="go('s-subj')">←</button>
     <span class="scr-title" id="chap-title">অধ্যায়সমূহ</span>
   </div>
+  <div class="subj-banner" id="chap-banner">
+    <div class="subj-banner-t" id="chap-banner-t">📂 অধ্যায় নির্বাচন করো</div>
+    <div class="subj-banner-s" id="chap-banner-s">যে অধ্যায় পড়তে চাও সেটি বেছে নাও</div>
+  </div>
   <div id="chap-list"><div class="ctr"><div class="sp"></div><div>লোড হচ্ছে...</div></div></div>
 </div>
 
@@ -340,18 +360,23 @@ async function loadSubjects() {
         const GS = ['g0','g1','g2','g3','g4','g5','g6','g7'];
         c.innerHTML = '<div class="subj-list">' + subjects.map((s,i) => `
             <div class="subj-card ${GS[(s.color_idx||i)%8]}" onclick="openSubject(${s.id},'${esc(s.name)}')">
-                <div class="subj-icon">${esc(s.icon||'📘')}</div>
-                <div class="subj-info">
-                    <div class="subj-name">${esc(s.name)}</div>
-                    <div class="subj-desc">${esc(s.description||'অধ্যায় দেখতে ক্লিক করো')}</div>
+                <div class="subj-card-bg"></div>
+                <div class="subj-card-inner">
+                    <div class="subj-icon">${esc(s.icon||'📘')}</div>
+                    <div class="subj-info">
+                        <div class="subj-name">${esc(s.name)}</div>
+                        <div class="subj-desc">${esc(s.description||'অধ্যায় দেখতে ক্লিক করো')}</div>
+                    </div>
+                    <div class="subj-arr">›</div>
                 </div>
-                <div class="subj-arr">›</div>
             </div>`).join('') + '</div>';
     } catch (e) { document.getElementById('subj-list').innerHTML = '<div class="ctr" style="color:var(--error)">লোড হয়নি। পুনরায় চেষ্টা করো।</div>'; }
 }
 
 async function openSubject(id, name) {
     document.getElementById('chap-title').textContent = name;
+    document.getElementById('chap-banner-t').textContent = '📂 ' + name;
+    document.getElementById('chap-banner-s').textContent = 'যে অধ্যায় পড়তে চাও সেটি বেছে নাও';
     go('s-chap');
     const c = document.getElementById('chap-list');
     c.innerHTML = '<div class="ctr"><div class="sp"></div><div>লোড হচ্ছে...</div></div>';
@@ -359,6 +384,7 @@ async function openSubject(id, name) {
         const chapters = await safeFetch(`${SUPABASE_URL}/rest/v1/book_chapters?subject_id=eq.${id}&select=*&order=sort_order.asc`);
         if (!chapters?.length) { c.innerHTML = '<div class="ctr">কোনো অধ্যায় পাওয়া যায়নি</div>'; return; }
         document.getElementById('chap-title').textContent = name + ' (' + chapters.length + ' টি অধ্যায়)';
+        document.getElementById('chap-banner-s').textContent = chapters.length + ' টি অধ্যায় পাওয়া গেছে';
         c.innerHTML = '<div class="item-list">' + chapters.map((ch,i) => `
             <div class="list-item" onclick="openChapter(${ch.id},'${esc(ch.name)}')">
                 <div class="list-num">${i+1}</div>
@@ -417,14 +443,17 @@ async function openPdf(id, title, isPremium) {
         const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdfs?id=eq.${id}&select=file_url`);
         let fileUrl = rows?.[0]?.file_url;
         if (!fileUrl) throw new Error('URL পাওয়া যায়নি');
-        
-        // Handle potential invalid structure or CORS issues by ensuring proper loading
+
+        // Streaming চালু রাখা হয়েছে (disableAutoFetch/disableStream সরানো) —
+        // Supabase Storage CDN HTTP range request সমর্থন করে, তাই pdf.js
+        // পুরো ফাইল ডাউনলোডের অপেক্ষা না করে প্রথম পেইজগুলো progressively
+        // আনতে পারে। এটাই "Chapter ক্লিক করলে instant খুলবে না, loading
+        // থাকে" সমস্যার মূল কারণ ছিল — আগে পুরো PDF একবারে ডাউনলোড হওয়া
+        // পর্যন্ত অপেক্ষা করতে হতো।
         pdfDoc = await pdfjsLib.getDocument({
             url: fileUrl,
             cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
-            cMapPacked: true,
-            disableAutoFetch: true,
-            disableStream: true
+            cMapPacked: true
         }).promise;
         const n = pdfDoc.numPages;
         wrap.innerHTML = '';

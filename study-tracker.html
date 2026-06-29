@@ -79,6 +79,18 @@ body{background:var(--bg);color:var(--text);font-family:'Inter','Noto Sans Benga
 .s-val{font-size:18px;font-weight:800;color:var(--accent)}
 .s-lbl{font-size:10px;color:var(--sub);margin-top:2px}
 
+/* ── CIRCULAR PROGRESS RING (header পাশে, conic-gradient ভিত্তিক) ── */
+.chap-ring{
+  width:56px;height:56px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;position:relative;
+  background:conic-gradient(var(--accent) calc(var(--p,0)*1%), var(--border) 0);
+  transition:background .4s ease;
+}
+.chap-ring::before{
+  content:'';position:absolute;inset:4px;border-radius:50%;background:var(--bg);
+}
+.chap-ring-val{position:relative;z-index:1;font-size:12px;font-weight:800;color:var(--accent)}
+
 /* ── PROGRESS BAR ── */
 .pbar-wrap{padding:0 16px 14px}
 .pbar-head{display:flex;justify-content:space-between;font-size:11px;color:var(--sub);margin-bottom:5px}
@@ -162,9 +174,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter','Noto Sans Benga
 .spin{display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:10px}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ── TOAST ── */
-.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(8px);background:rgba(30,33,44,.97);border:1px solid var(--border);color:var(--text);padding:9px 18px;border-radius:12px;font-size:12px;font-weight:600;z-index:9999;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;white-space:nowrap;max-width:calc(100vw - 48px);width:auto;height:auto;max-height:40px;display:inline-block;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.5);box-sizing:border-box;line-height:1.4;isolation:isolate}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* ── TOAST (removed) ── */
 
 /* ── BOTTOM NAV (copy from site) ── */
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);display:flex;z-index:80;padding-bottom:env(safe-area-inset-bottom)}
@@ -206,7 +216,6 @@ body{background:var(--bg);color:var(--text);font-family:'Inter','Noto Sans Benga
 </head>
 <body>
 
-<div class="toast" id="toast"></div>
 
 <!-- ══════════════════════════════
      MAIN DASHBOARD
@@ -313,7 +322,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter','Noto Sans Benga
   <div class="st-topbar">
     <div class="back-btn" onclick="hidePanel('pChapter')"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></div>
     <span class="panel-title" id="chap-panel-title" style="font-size:15px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
-    <div class="topbar-pills"><button class="pill-btn active" onclick="hidePanel('pChapter');sylView('lb')">🏆 Leaderboard</button></div>
+    <div class="chap-ring" id="chap-ring" style="--p:0"><span class="chap-ring-val" id="chap-ring-val">0%</span></div>
   </div>
   <div class="stats-row">
     <div class="s-item"><div class="s-val" id="chap-s-total">—</div><div class="s-lbl">অধ্যায়</div></div>
@@ -471,15 +480,25 @@ async function loadSyllabus(mode,forceRefresh=false){
   // chapters table: id, subject_id, name, sort_order
   // topics table: id, chapter_id, name, weight, sort_order
   try{
+    // 3 bulk queries total (instead of 1 + N + N*M sequential ones) — much faster on slow connections.
     const subjects = await sbFetch(`/rest/v1/st_subjects?mode=eq.${mode}&order=sort_order.asc&select=id,name,short_name`);
-    for(const s of subjects){
-      const chapters = await sbFetch(`/rest/v1/st_chapters?subject_id=eq.${s.id}&order=sort_order.asc&select=id,name`);
-      for(const c of chapters){
-        const topics = await sbFetch(`/rest/v1/st_topics?chapter_id=eq.${c.id}&order=sort_order.asc&select=id,name,weight`);
-        c.topics = topics;
-      }
-      s.chapters = chapters;
+    if(!subjects.length){ CACHE[mode]=[]; return []; }
+    const subjIds = subjects.map(s=>s.id).join(',');
+    const chapters = await sbFetch(`/rest/v1/st_chapters?subject_id=in.(${subjIds})&order=sort_order.asc&select=id,name,subject_id`);
+    let topics=[];
+    if(chapters.length){
+      const chapIds = chapters.map(c=>c.id).join(',');
+      topics = await sbFetch(`/rest/v1/st_topics?chapter_id=in.(${chapIds})&order=sort_order.asc&select=id,name,weight,chapter_id`);
     }
+    // Group topics by chapter_id, then chapters by subject_id — all in-memory, no extra network calls.
+    const topicsByChap={};
+    for(const t of topics){ (topicsByChap[t.chapter_id]=topicsByChap[t.chapter_id]||[]).push(t); }
+    const chaptersBySubj={};
+    for(const c of chapters){
+      c.topics = topicsByChap[c.id]||[];
+      (chaptersBySubj[c.subject_id]=chaptersBySubj[c.subject_id]||[]).push(c);
+    }
+    for(const s of subjects){ s.chapters = chaptersBySubj[s.id]||[]; }
     CACHE[mode] = subjects;
     return subjects;
   }catch(e){
@@ -571,8 +590,12 @@ function tk(mode,sId,cId,tpId){return`${mode}|${sId}|${cId}|${tpId}`;}
 // ═══════════════════
 async function openChapters(mode,subjId){
   cur.mode=mode;cur.subjId=subjId;
+  // Instant panel open
+  showPanel('pChapter');
+  $('chapList').innerHTML='<div class="loading"><div class="spin"></div></div>';
   const subjs=await loadSyllabus(mode);
   const s=subjs.find(x=>x.id==subjId);
+  if(!s){ $('chapList').innerHTML='<div class="loading">পাওয়া যায়নি</div>'; return; }
   $('chap-panel-title').textContent=s.name;
   let doneCh=0;
   const rows=s.chapters.map((c,i)=>{
@@ -606,9 +629,12 @@ async function openChapters(mode,subjId){
   });
   $('chap-s-total').textContent=s.chapters.length;
   $('chap-s-done').textContent=doneCh;
-  $('chap-s-pct').textContent=subjPct(mode,s)[0]+'%';
+  const subjPctVal=subjPct(mode,s)[0];
+  $('chap-s-pct').textContent=subjPctVal+'%';
+  const ring=$('chap-ring');
+  ring.style.setProperty('--p',subjPctVal);
+  $('chap-ring-val').textContent=subjPctVal+'%';
   $('chapList').innerHTML=rows.join('');
-  showPanel('pChapter');
 }
 
 function toggleChapDrop(chapId){
@@ -653,6 +679,8 @@ async function toggleTopic(mode,subjId,chapId,topicId,rowEl){
     // Update subject panel stats
     const [sp]=subjPct(mode,s);
     $('chap-s-pct').textContent=sp+'%';
+    $('chap-ring').style.setProperty('--p',sp);
+    $('chap-ring-val').textContent=sp+'%';
     let doneCh=0;
     s.chapters.forEach(ch=>{if(chapPct(mode,subjId,ch)===100)doneCh++;});
     $('chap-s-done').textContent=doneCh;
@@ -766,14 +794,7 @@ function updateDash(){
 // ═══════════════════
 function $(id){return document.getElementById(id);}
 function goTo(url){location.href=url;}
-function toast(msg){
-  const t=$('toast');t.textContent=msg;
-  // Force a guaranteed-compact pill shape via inline styles, so no other CSS
-  // rule on the page (however it got there) can ever stretch this element.
-  t.style.cssText='position:fixed;bottom:100px;left:50%;background:rgba(30,33,44,.97);border:1px solid var(--border);color:var(--text);padding:9px 18px;border-radius:999px;font-size:12px;font-weight:600;z-index:9999;white-space:nowrap;max-width:calc(100vw - 48px);width:auto;height:auto;max-height:40px;display:inline-block;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.5);box-sizing:border-box;line-height:1.4;pointer-events:none;transition:opacity .2s,transform .2s;opacity:1;transform:translateX(-50%) translateY(0)';
-  clearTimeout(t._hideTimer);
-  t._hideTimer=setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(8px)'; },2200);
-}
+function toast(msg){ /* disabled per explicit user request */ }
 
 // ═══════════════════
 // FALLBACK DATA (যদি Supabase table না থাকে)
@@ -1000,6 +1021,7 @@ async function syncProgress(){
 
 loadST();
 updateDash();
+setTimeout(()=>{ loadSyllabus('hsc'); loadSyllabus('medical'); }, 800);
 </script>
 </body>
 </html>
