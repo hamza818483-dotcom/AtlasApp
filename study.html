@@ -223,6 +223,10 @@
     <button class="back-btn" onclick="go('s-subj')">←</button>
     <span class="scr-title" id="chap-title">অধ্যায়সমূহ</span>
   </div>
+  <div class="subj-banner" id="chap-banner">
+    <div class="subj-banner-t" id="chap-banner-t">📂 অধ্যায় নির্বাচন করো</div>
+    <div class="subj-banner-s" id="chap-banner-s">যে অধ্যায় পড়তে চাও সেটি বেছে নাও</div>
+  </div>
   <div id="chap-list"><div class="ctr"><div class="sp"></div><div>লোড হচ্ছে...</div></div></div>
 </div>
 
@@ -371,6 +375,8 @@ async function loadSubjects() {
 
 async function openSubject(id, name) {
     document.getElementById('chap-title').textContent = name;
+    document.getElementById('chap-banner-t').textContent = '📂 ' + name;
+    document.getElementById('chap-banner-s').textContent = 'যে অধ্যায় পড়তে চাও সেটি বেছে নাও';
     go('s-chap');
     const c = document.getElementById('chap-list');
     c.innerHTML = '<div class="ctr"><div class="sp"></div><div>লোড হচ্ছে...</div></div>';
@@ -378,6 +384,7 @@ async function openSubject(id, name) {
         const chapters = await safeFetch(`${SUPABASE_URL}/rest/v1/book_chapters?subject_id=eq.${id}&select=*&order=sort_order.asc`);
         if (!chapters?.length) { c.innerHTML = '<div class="ctr">কোনো অধ্যায় পাওয়া যায়নি</div>'; return; }
         document.getElementById('chap-title').textContent = name + ' (' + chapters.length + ' টি অধ্যায়)';
+        document.getElementById('chap-banner-s').textContent = chapters.length + ' টি অধ্যায় পাওয়া গেছে';
         c.innerHTML = '<div class="item-list">' + chapters.map((ch,i) => `
             <div class="list-item" onclick="openChapter(${ch.id},'${esc(ch.name)}')">
                 <div class="list-num">${i+1}</div>
