@@ -79,6 +79,18 @@ body{background:var(--bg);color:var(--text);font-family:'Inter','Noto Sans Benga
 .s-val{font-size:18px;font-weight:800;color:var(--accent)}
 .s-lbl{font-size:10px;color:var(--sub);margin-top:2px}
 
+/* ── CIRCULAR PROGRESS RING (header পাশে, conic-gradient ভিত্তিক) ── */
+.chap-ring{
+  width:56px;height:56px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;position:relative;
+  background:conic-gradient(var(--accent) calc(var(--p,0)*1%), var(--border) 0);
+  transition:background .4s ease;
+}
+.chap-ring::before{
+  content:'';position:absolute;inset:4px;border-radius:50%;background:var(--bg);
+}
+.chap-ring-val{position:relative;z-index:1;font-size:12px;font-weight:800;color:var(--accent)}
+
 /* ── PROGRESS BAR ── */
 .pbar-wrap{padding:0 16px 14px}
 .pbar-head{display:flex;justify-content:space-between;font-size:11px;color:var(--sub);margin-bottom:5px}
@@ -310,7 +322,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter','Noto Sans Benga
   <div class="st-topbar">
     <div class="back-btn" onclick="hidePanel('pChapter')"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></div>
     <span class="panel-title" id="chap-panel-title" style="font-size:15px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
-    <div class="topbar-pills"><button class="pill-btn active" onclick="hidePanel('pChapter');sylView('lb')">🏆 Leaderboard</button></div>
+    <div class="chap-ring" id="chap-ring" style="--p:0"><span class="chap-ring-val" id="chap-ring-val">0%</span></div>
   </div>
   <div class="stats-row">
     <div class="s-item"><div class="s-val" id="chap-s-total">—</div><div class="s-lbl">অধ্যায়</div></div>
@@ -613,7 +625,11 @@ async function openChapters(mode,subjId){
   });
   $('chap-s-total').textContent=s.chapters.length;
   $('chap-s-done').textContent=doneCh;
-  $('chap-s-pct').textContent=subjPct(mode,s)[0]+'%';
+  const subjPctVal=subjPct(mode,s)[0];
+  $('chap-s-pct').textContent=subjPctVal+'%';
+  const ring=$('chap-ring');
+  ring.style.setProperty('--p',subjPctVal);
+  $('chap-ring-val').textContent=subjPctVal+'%';
   $('chapList').innerHTML=rows.join('');
   showPanel('pChapter');
 }
@@ -660,6 +676,8 @@ async function toggleTopic(mode,subjId,chapId,topicId,rowEl){
     // Update subject panel stats
     const [sp]=subjPct(mode,s);
     $('chap-s-pct').textContent=sp+'%';
+    $('chap-ring').style.setProperty('--p',sp);
+    $('chap-ring-val').textContent=sp+'%';
     let doneCh=0;
     s.chapters.forEach(ch=>{if(chapPct(mode,subjId,ch)===100)doneCh++;});
     $('chap-s-done').textContent=doneCh;
