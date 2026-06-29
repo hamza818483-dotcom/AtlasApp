@@ -107,8 +107,6 @@ async function callGemini(env, question, systemPrompt, image) {
     if (!res.ok) return { error: `Gemini HTTP ${res.status}` };
     const data = await res.json();
     const answer = data.candidates?.[0]?.content?.parts?.[0]?.text || null;
-    const finishReason = data.candidates?.[0]?.finishReason;
-    if (finishReason === "MAX_TOKENS") return { error: "Gemini: response truncated, increase maxOutputTokens" };
     return answer ? { answer, provider: "gemini" } : { error: "Gemini: empty response" };
 }
 
