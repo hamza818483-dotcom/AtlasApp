@@ -155,6 +155,7 @@
             flex: 1;
             min-height: 0;
             overflow-y: auto;
+            overflow-anchor: none;
             background: var(--ai-surface);
             border-radius: var(--ai-radius);
             padding: 14px;
@@ -162,7 +163,13 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            scroll-behavior: smooth;
+            scroll-behavior: auto;
+        }
+        /* Scroll anchor at bottom */
+        .chat-scroll-anchor {
+            height: 1px;
+            flex-shrink: 0;
+            overflow-anchor: auto;
         }
         .chat-area::-webkit-scrollbar { width: 4px; }
         .chat-area::-webkit-scrollbar-track { background: transparent; }
