@@ -205,7 +205,6 @@ async function callCerebras(env, question, systemPrompt, image) {
     if (!res.ok) return { error: `Cerebras HTTP ${res.status}` };
     const data = await res.json();
     const answer = data.choices?.[0]?.message?.content || null;
-    if (data.choices?.[0]?.finish_reason === "length") return { error: "Cerebras: response truncated" };
     return answer ? { answer, provider: "cerebras" } : { error: "Cerebras: empty response" };
 }
 
