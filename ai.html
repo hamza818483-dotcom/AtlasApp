@@ -1048,38 +1048,34 @@ function loadChat() {
         chatHistory = saved;
         if (!saved.length) return;
         const area = document.getElementById('chatArea');
+        const anchor = document.getElementById('chatScrollAnchor');
         document.getElementById('chatEmpty').style.display = 'none';
         document.getElementById('suggestBar').style.display = 'none';
         saved.forEach(m => {
             const wrapper = document.createElement('div');
             wrapper.className = 'msg-wrapper ' + m.type;
             if (m.type === 'user') {
-                wrapper.innerHTML = `
-                    <div class="msg-label">তুমি</div>
-                    <div class="msg-row">
-                        <div class="msg-bubble">${(m.text || m.image || '').replace(/\n/g,'<br>')}</div>
-                        <div class="msg-avatar-sm user-av">👤</div>
-                    </div>
-                    <div class="msg-meta"><span class="msg-time">${m.time || ''}</span></div>
-                `;
+                wrapper.innerHTML = '<div class="msg-label">তুমি</div>' +
+                    '<div class="msg-row">' +
+                    '<div class="msg-bubble">' + ((m.text || m.image || '').replace(/\n/g,'<br>')) + '</div>' +
+                    '<div class="msg-avatar-sm user-av">👤</div>' +
+                    '</div>' +
+                    '<div class="msg-meta"><span class="msg-time">' + (m.time || '') + '</span></div>';
             } else {
-                wrapper.innerHTML = `
-                    <div class="msg-label">ATLAS AI</div>
-                    <div class="msg-row">
-                        <div class="msg-avatar-sm ai-av">🤖</div>
-                        <div class="msg-bubble">
-                            <div class="ai-answer">${formatAIText(m.text || '')}</div>
-                            <div class="msg-meta">
-                                <span class="msg-time">${m.time || ''}</span>
-                                <button class="copy-btn" onclick="copyAnswer(this)">📋 কপি</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                wrapper.innerHTML = '<div class="msg-label">ATLAS AI</div>' +
+                    '<div class="msg-row">' +
+                    '<div class="msg-avatar-sm ai-av">🤖</div>' +
+                    '<div class="msg-bubble">' +
+                    '<div class="ai-answer">' + formatAIText(m.text || '') + '</div>' +
+                    '<div class="msg-meta">' +
+                    '<span class="msg-time">' + (m.time || '') + '</span>' +
+                    '<button class="copy-btn" onclick="copyAnswer(this)">📋 কপি</button>' +
+                    '</div></div></div>';
             }
-            area.appendChild(wrapper);
+            if (anchor) area.insertBefore(wrapper, anchor);
+            else area.appendChild(wrapper);
         });
-        area.scrollTop = area.scrollHeight;
+        stableScrollToBottom();
     } catch(e) {}
 }
 
