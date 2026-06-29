@@ -825,9 +825,19 @@ function hideEmpty() {
     document.getElementById('suggestBar').style.display = 'none';
 }
 
+function stableScrollToBottom() {
+    const area = document.getElementById('chatArea');
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            area.scrollTop = area.scrollHeight;
+        });
+    });
+}
+
 function addUserMessage(text, imageObj) {
     hideEmpty();
     const area = document.getElementById('chatArea');
+    const anchor = document.getElementById('chatScrollAnchor');
     const wrapper = document.createElement('div');
     wrapper.className = 'msg-wrapper user';
 
@@ -845,8 +855,9 @@ function addUserMessage(text, imageObj) {
         </div>
         <div class="msg-meta"><span class="msg-time">${getTime()}</span></div>
     `;
-    area.appendChild(wrapper);
-    area.scrollTop = area.scrollHeight;
+    if (anchor) area.insertBefore(wrapper, anchor);
+    else area.appendChild(wrapper);
+    stableScrollToBottom();
 
     chatHistory.push({ type: 'user', text, image: imageObj ? `[ছবি: ${imageObj.name}]` : null, time: getTime() });
     saveChat();
@@ -855,6 +866,7 @@ function addUserMessage(text, imageObj) {
 function addAIMessage(text) {
     hideEmpty();
     const area = document.getElementById('chatArea');
+    const anchor = document.getElementById('chatScrollAnchor');
     const wrapper = document.createElement('div');
     wrapper.className = 'msg-wrapper ai';
 
@@ -873,8 +885,9 @@ function addAIMessage(text) {
             </div>
         </div>
     `;
-    area.appendChild(wrapper);
-    area.scrollTop = area.scrollHeight;
+    if (anchor) area.insertBefore(wrapper, anchor);
+    else area.appendChild(wrapper);
+    stableScrollToBottom();
 
     chatHistory.push({ type: 'ai', text, time: getTime() });
     saveChat();
