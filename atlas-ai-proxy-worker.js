@@ -180,7 +180,6 @@ async function callGroq(env, question, systemPrompt, image) {
     if (!res.ok) return { error: `Groq HTTP ${res.status}` };
     const data = await res.json();
     const answer = data.choices?.[0]?.message?.content || null;
-    if (data.choices?.[0]?.finish_reason === "length") return { error: "Groq: response truncated" };
     return answer ? { answer, provider: "groq" } : { error: "Groq: empty response" };
 }
 
