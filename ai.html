@@ -874,19 +874,18 @@ function addAIMessage(text) {
 
     const formattedText = formatAIText(text);
 
-    wrapper.innerHTML = `
-        <div class="msg-label">ATLAS AI</div>
-        <div class="msg-row">
-            <div class="msg-avatar-sm ai-av">🤖</div>
-            <div class="msg-bubble">
-                <div class="ai-answer">${formattedText}</div>
-                <div class="msg-meta">
-                    <span class="msg-time">${getTime()}</span>
-                    <button class="copy-btn" onclick="copyAnswer(this)">📋 কপি</button>
-                </div>
-            </div>
-        </div>
-    `;
+    // Build HTML safely - avoid template literal issues with AI text
+    const html = '<div class="msg-label">ATLAS AI</div>' +
+        '<div class="msg-row">' +
+        '<div class="msg-avatar-sm ai-av">🤖</div>' +
+        '<div class="msg-bubble">' +
+        '<div class="ai-answer">' + formattedText + '</div>' +
+        '<div class="msg-meta">' +
+        '<span class="msg-time">' + getTime() + '</span>' +
+        '<button class="copy-btn" onclick="copyAnswer(this)">📋 কপি</button>' +
+        '</div></div></div>';
+    wrapper.innerHTML = html;
+
     if (anchor) area.insertBefore(wrapper, anchor);
     else area.appendChild(wrapper);
     stableScrollToBottom();
