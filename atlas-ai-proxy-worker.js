@@ -144,7 +144,6 @@ async function callOpenRouter(env, question, systemPrompt, image) {
     if (!res.ok) return { error: `OpenRouter HTTP ${res.status}` };
     const data = await res.json();
     const answer = data.choices?.[0]?.message?.content || null;
-    if (data.choices?.[0]?.finish_reason === "length") return { error: "OpenRouter: response truncated" };
     return answer ? { answer, provider: "openrouter" } : { error: "OpenRouter: empty response" };
 }
 
