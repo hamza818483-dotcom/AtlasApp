@@ -376,7 +376,11 @@ async function mbUploadPdf() {
 
         if (pf) pf.style.width = '100%';
         if (us) us.style.display = 'block';
-        mbToast('✓ PDF আপলোড সম্পন্ন', 'success');
+        mbToast('✓ PDF আপলোড সম্পন্ন — OCR শুরু হচ্ছে...', 'success');
+
+        // Get new PDF id for OCR
+        const newPdfData = await dbRes.json();
+        const newPdfId = Array.isArray(newPdfData) ? newPdfData[0]?.id : newPdfData?.id;
 
         mbPdfFile = null;
         const fc = document.getElementById('mbFileChosen');
@@ -387,6 +391,11 @@ async function mbUploadPdf() {
 
         mbLoadChapterPdfs();
         mbLoadAllPdfs();
+
+        // ── Auto OCR: start background OCR after upload ──
+        if (newPdfId) {
+            setTimeout(() => mbStartAutoOcr(newPdfId, fileUrl), 500);
+        }
 
     } catch (e) {
         mbToast('আপলোড ব্যর্থ: ' + e.message, 'error');
@@ -1424,6 +1433,122 @@ function mbInjectStyles() {
 }
 
 /* ════════════════════════════════════════════════════
+   15b. AUTO OCR SYSTEM
+   ════════════════════════════════════════════════════ */
+
+const OCR_PROXY_URL = AI_PROXY_URL.replace(/\/$/, '') + '/'; // Same proxy with trailing slash
+
+// Start auto OCR for a newly uploaded PDF
+// Renders each page via PDF.js → sends image to /ocr-page → saves text to Supabase
+async function mbStartAutoOcr(pdfId, pdfUrl) {
+    const toastId = 'ocr-' + pdfId;
+    mbToast('🔍 OCR শুরু হচ্ছে... (background এ চলবে)', 'info', 4000);
+
+    try {
+        // Load PDF
+        if (!window.pdfjsLib) return;
+        const pdfDoc = await pdfjsLib.getDocument({ url: pdfUrl }).promise;
+        const totalPages = pdfDoc.numPages;
+
+        // Create OCR job record
+        await mbApi('/book_pdf_ocr_jobs', {
+            method: 'POST',
+            headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+            body: JSON.stringify({
+                pdf_id: parseInt(pdfId),
+                total_pages: totalPages,
+                done_pages: 0,
+                status: 'processing',
+                started_at: new Date().toISOString()
+            })
+        });
+
+        let doneCount = 0;
+
+        // Process pages in batches of 3 (parallel OCR per batch)
+        const BATCH = 3;
+        for (let start = 1; start <= totalPages; start += BATCH) {
+            const batch = [];
+            for (let p = start; p < start + BATCH && p <= totalPages; p++) {
+                batch.push(p);
+            }
+
+            // Process batch in parallel
+            await Promise.allSettled(batch.map(async (pageNum) => {
+                try {
+                    // Render page to image
+                    const page = await pdfDoc.getPage(pageNum);
+                    const vp = page.getViewport({ scale: 1.8 }); // Higher scale = better OCR
+                    const tmp = document.createElement('canvas');
+                    tmp.width = vp.width;
+                    tmp.height = vp.height;
+                    await page.render({ canvasContext: tmp.getContext('2d'), viewport: vp }).promise;
+                    const imageBase64 = tmp.toDataURL('image/jpeg', 0.9).split(',')[1];
+
+                    // Send to OCR endpoint
+                    const res = await fetch(OCR_PROXY_URL + 'ocr-page', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            pdf_id: pdfId,
+                            page_number: pageNum,
+                            image_base64: imageBase64,
+                            image_mime: 'image/jpeg',
+                            supabase_url: window.SUPABASE_URL,
+                            supabase_key: window.SUPABASE_KEY
+                        })
+                    });
+
+                    if (res.ok) {
+                        doneCount++;
+                        // Update progress pill if MCQ panel is open
+                        const pill = document.getElementById('mbOcrStatus-' + pdfId);
+                        if (pill) pill.textContent = `OCR: ${doneCount}/${totalPages}`;
+                    }
+                } catch (_) {}
+            }));
+
+            // Small delay between batches to avoid rate limits
+            if (start + BATCH <= totalPages) {
+                await new Promise(r => setTimeout(r, 800));
+            }
+        }
+
+        mbToast(`✅ OCR সম্পন্ন — ${doneCount}/${totalPages} পেইজ`, 'success', 4000);
+        mbLoadChapterPdfs();
+        mbLoadAllPdfs();
+
+    } catch (e) {
+        console.warn('Auto OCR failed:', e.message);
+        mbToast('⚠️ OCR শুরু করা যায়নি', 'error', 3000);
+    }
+}
+
+// Check OCR status for a specific PDF
+async function mbCheckOcrStatus(pdfId) {
+    try {
+        const res = await fetch(OCR_PROXY_URL + 'ocr-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                pdf_id: pdfId,
+                supabase_url: window.SUPABASE_URL,
+                supabase_key: window.SUPABASE_KEY
+            })
+        });
+        if (!res.ok) return null;
+        return res.json();
+    } catch { return null; }
+}
+
+// Manually trigger OCR for existing PDF (from admin panel)
+async function mbRetriggerOcr(pdfId, pdfUrl) {
+    if (!pdfUrl) { mbToast('PDF URL নেই', 'error'); return; }
+    mbToast('🔍 OCR পুনরায় শুরু করা হচ্ছে...', 'info', 3000);
+    await mbStartAutoOcr(pdfId, pdfUrl);
+}
+
+/* ════════════════════════════════════════════════════
    16. INIT & WINDOW EXPORTS
    ════════════════════════════════════════════════════ */
 
@@ -1475,6 +1600,10 @@ window.mbImportCsv        = mbImportCsv;
 window.mbAiGenerate       = mbAiGenerate;
 window.mbSaveAiMcqs       = mbSaveAiMcqs;
 window.mbDiscardAi        = mbDiscardAi;
+window.mbStartAutoOcr     = mbStartAutoOcr;
+window.mbCheckOcrStatus   = mbCheckOcrStatus;
+window.mbRetriggerOcr     = mbRetriggerOcr;
 
 })(); // end IIFE
+
 
