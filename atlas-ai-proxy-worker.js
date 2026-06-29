@@ -510,12 +510,18 @@ async function handleMcqFromPdf(body, env) {
         const pdfRes = await fetch(pdf_url);
         if (!pdfRes.ok) return jsonResponse({ success: false, error: `PDF fetch failed: HTTP ${pdfRes.status}` }, 502);
         const buf = await pdfRes.arrayBuffer();
-        const u8 = new Uint8Array(buf);
-        let bin = "";
-        for (let i = 0; i < u8.length; i += 8192) {
-            bin += String.fromCharCode(...u8.subarray(i, i + 8192));
+        // Reject PDFs that are too large for Gemini's inline-data limit (~20MB raw, smaller after base64
+        // overhead) — large files were also causing the worker to crash/timeout during base64 conversion.
+        if (buf.byteLength > 15 * 1024 * 1024) {
+            return jsonResponse({ success: false, error: "PDF too large (max ~15MB) for direct AI processing" }, 413);
         }
-        pdfBase64 = btoa(bin);
+        const u8 = new Uint8Array(buf);
+        const CHUNK = 0x8000; // 32KB — safe chunk size, avoids spread-operator stack issues on large arrays
+        const chunks = [];
+        for (let i = 0; i < u8.length; i += CHUNK) {
+            chunks.push(String.fromCharCode.apply(null, u8.subarray(i, i + CHUNK)));
+        }
+        pdfBase64 = btoa(chunks.join(""));
     } catch (e) {
         return jsonResponse({ success: false, error: `PDF fetch exception: ${e?.message || e}` }, 502);
     }
