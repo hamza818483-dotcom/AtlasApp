@@ -105,18 +105,31 @@ body{background:var(--bg);color:var(--text);font-family:'Inter','Noto Sans Benga
 .subj-badge{position:absolute;top:10px;right:10px;font-size:9px;padding:2px 7px;border-radius:999px;font-weight:600}
 .badge-done{background:rgba(34,197,94,.15);color:var(--green)}
 
-/* ── CHAPTER LIST ── */
-.chap-item{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
-.chap-item:active{background:var(--card)}
-.chap-num{width:34px;height:34px;border-radius:var(--rs);background:rgba(124,131,255,.12);border:1px solid rgba(124,131,255,.2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent);flex-shrink:0}
+/* ── CHAPTER INLINE DROPDOWN ── */
+.chap-row-item{border-bottom:1px solid var(--border)}
+.chap-header{display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;transition:background .12s}
+.chap-header:active{background:rgba(255,255,255,.03)}
+.chap-num{width:32px;height:32px;min-width:32px;border-radius:var(--rs);background:rgba(124,131,255,.12);border:1px solid rgba(124,131,255,.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--accent);flex-shrink:0}
 .chap-body{flex:1;min-width:0}
-.chap-name{font-size:13px;font-weight:600;margin-bottom:4px}
-.chap-stat{font-size:11px;color:var(--sub);margin-bottom:4px}
-.chap-bar-track{height:3px;background:var(--card2);border-radius:999px;overflow:hidden}
-.chap-bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--sky));transition:width .3s}
-.chap-pct{font-size:12px;font-weight:700;color:var(--green);flex-shrink:0;min-width:36px;text-align:right}
+.chap-name{font-size:13px;font-weight:600;margin-bottom:3px;line-height:1.4}
+.chap-stat{font-size:10px;color:var(--sub);margin-bottom:4px}
+.chap-bar-track{height:2px;background:var(--card2);border-radius:999px;overflow:hidden;margin-top:4px}
+.chap-bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--sky));transition:width .35s}
+.chap-pct-badge{font-size:11px;font-weight:700;color:var(--accent);flex-shrink:0;min-width:34px;text-align:right}
+.chap-pct-done{color:var(--green)}
+.chap-arr{font-size:14px;color:var(--sub);transition:transform .22s;flex-shrink:0;margin-left:2px}
+.chap-arr.open{transform:rotate(90deg)}
+.chap-topics-wrap{display:none;background:var(--card2)}
+.chap-topics-wrap.open{display:block}
 
-/* ── TOPIC LIST ── */
+/* ── TOPIC ITEM (inline) ── */
+.ti-row{display:flex;align-items:center;gap:12px;padding:11px 16px 11px 28px;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;transition:background .1s}
+.ti-row:last-child{border:none}
+.ti-row:active{background:rgba(255,255,255,.03)}
+.ti-name{flex:1;font-size:13px;line-height:1.5;transition:color .15s}
+.ti-name.done{color:var(--sub);text-decoration:line-through}
+
+/* ── TOPIC LIST (old, kept for compat) ── */
 .topic-item{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border);transition:background .1s}
 .topic-item:active{background:var(--card)}
 .topic-name{flex:1;font-size:13px;line-height:1.5;transition:color .15s}
@@ -319,19 +332,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter','Noto Sans Benga
   <div id="chapList"></div>
 </div>
 
-<!-- ── TOPIC PANEL ── -->
-<div class="panel" id="pTopic">
-  <div class="st-topbar">
-    <div class="back-btn" onclick="hidePanel('pTopic')"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></div>
-    <span class="panel-title" id="topic-panel-title" style="font-size:15px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
-  </div>
-  <div class="stats-row">
-    <div class="s-item"><div class="s-val" id="topic-s-total">—</div><div class="s-lbl">টপিক</div></div>
-    <div class="s-item"><div class="s-val" id="topic-s-done">0</div><div class="s-lbl">সম্পন্ন</div></div>
-    <div class="s-item"><div class="s-val" id="topic-s-pct">0%</div><div class="s-lbl">অগ্রগতি</div></div>
-  </div>
-  <div id="topicList"></div>
-</div>
+<!-- pTopic panel removed: topics now inline in pChapter -->
 
 <!-- ══════════════════════════════
      PANEL: ROUTINE MAKER
@@ -575,7 +576,7 @@ function overallPct(mode){
 function tk(mode,sId,cId,tpId){return`${mode}|${sId}|${cId}|${tpId}`;}
 
 // ═══════════════════
-// CHAPTERS
+// CHAPTERS (inline dropdown)
 // ═══════════════════
 async function openChapters(mode,subjId){
   cur.mode=mode;cur.subjId=subjId;
@@ -587,14 +588,29 @@ async function openChapters(mode,subjId){
     const pct=chapPct(mode,subjId,c);
     const dd=c.topics.filter(tp=>ST.progress[tk(mode,subjId,c.id,tp.id)]).length;
     if(pct===100)doneCh++;
-    return `<div class="chap-item" onclick="openTopics('${mode}','${subjId}','${c.id}')">
-      <div class="chap-num">${i+1}</div>
-      <div class="chap-body">
-        <div class="chap-name">${c.name}</div>
-        <div class="chap-stat">${dd}/${c.topics.length} টপিক সম্পন্ন</div>
-        <div class="chap-bar-track"><div class="chap-bar-fill" style="width:${pct}%"></div></div>
+    const pctClass=pct===100?'chap-pct-done':'';
+    const topicRows=c.topics.map(tp=>{
+      const key=tk(mode,subjId,c.id,tp.id);
+      const done=!!ST.progress[key];
+      return `<div class="ti-row" onclick="toggleTopic('${mode}','${subjId}','${c.id}','${tp.id}',this)">
+        <div class="t-check${done?' done':''}" id="tc-${mode}-${c.id}-${tp.id}">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <span class="ti-name${done?' done':''}" id="tn-${mode}-${c.id}-${tp.id}">${tp.name}</span>
+      </div>`;
+    }).join('');
+    return `<div class="chap-row-item" id="chrow-${c.id}">
+      <div class="chap-header" onclick="toggleChapDrop('${c.id}')">
+        <div class="chap-num">${i+1}</div>
+        <div class="chap-body">
+          <div class="chap-name">${c.name}</div>
+          <div class="chap-stat" id="cs-${c.id}">${dd}/${c.topics.length} টপিক · <span style="color:var(--accent)">${pct}%</span></div>
+          <div class="chap-bar-track"><div class="chap-bar-fill" id="cb-${c.id}" style="width:${pct}%"></div></div>
+        </div>
+        <span class="chap-pct-badge ${pctClass}" id="cp-${c.id}">${pct}%</span>
+        <span class="chap-arr" id="ca-${c.id}">›</span>
       </div>
-      <div class="chap-pct">${pct}%</div>
+      <div class="chap-topics-wrap" id="ct-${c.id}">${topicRows}</div>
     </div>`;
   });
   $('chap-s-total').textContent=s.chapters.length;
@@ -604,59 +620,55 @@ async function openChapters(mode,subjId){
   showPanel('pChapter');
 }
 
-// ═══════════════════
-// TOPICS
-// ═══════════════════
-async function openTopics(mode,subjId,chapId){
-  cur.chapId=chapId;
-  const subjs=await loadSyllabus(mode);
-  const s=subjs.find(x=>x.id==subjId);
-  const c=s.chapters.find(x=>x.id==chapId);
-  $('topic-panel-title').textContent=c.name;
-  renderTopics(mode,subjId,c);
-  showPanel('pTopic');
+function toggleChapDrop(chapId){
+  const wrap=document.getElementById('ct-'+chapId);
+  const arr=document.getElementById('ca-'+chapId);
+  if(!wrap)return;
+  const isOpen=wrap.classList.contains('open');
+  // Close all
+  document.querySelectorAll('.chap-topics-wrap.open').forEach(el=>el.classList.remove('open'));
+  document.querySelectorAll('.chap-arr.open').forEach(el=>el.classList.remove('open'));
+  // Open clicked if was closed
+  if(!isOpen){wrap.classList.add('open');arr.classList.add('open');}
 }
 
-function renderTopics(mode,subjId,c){
-  let d=0;
-  const rows=c.topics.map(tp=>{
-    const key=tk(mode,subjId,c.id,tp.id);
-    const done=!!ST.progress[key];
-    if(done)d++;
-    return `<div class="topic-item">
-      <div class="t-check${done?' done':''}" onclick="toggleTopic('${mode}','${subjId}','${c.id}','${tp.id}')">
-        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-      </div>
-      <span class="topic-name${done?' done':''}">${tp.name}</span>
-    </div>`;
-  });
-  const pct=c.topics.length?Math.round(d/c.topics.length*100):0;
-  $('topic-s-total').textContent=c.topics.length;
-  $('topic-s-done').textContent=d;
-  $('topic-s-pct').textContent=pct+'%';
-  $('topicList').innerHTML=rows.join('');
-}
-
-async function toggleTopic(mode,subjId,chapId,topicId){
+// ═══════════════════
+// TOPICS (inline toggle, no separate panel)
+// ═══════════════════
+async function toggleTopic(mode,subjId,chapId,topicId,rowEl){
   const key=tk(mode,subjId,chapId,topicId);
   ST.progress[key]=!ST.progress[key];
+  const done=!!ST.progress[key];
   saveST();
+  // Update UI inline without re-render
+  const tc=document.getElementById('tc-'+mode+'-'+chapId+'-'+topicId);
+  const tn=document.getElementById('tn-'+mode+'-'+chapId+'-'+topicId);
+  if(tc){tc.className='t-check'+(done?' done':'');}
+  if(tn){tn.className='ti-name'+(done?' done':'');}
+  // Update chapter stats
   const subjs=await loadSyllabus(mode);
   const s=subjs.find(x=>x.id==subjId);
-  const c=s.chapters.find(x=>x.id==chapId);
-  renderTopics(mode,subjId,c);
-  toast(ST.progress[key]?'✅ সম্পন্ন!':'↩ পূর্বাবস্থায় ফিরল');
+  const c=s&&s.chapters.find(x=>x.id==chapId);
+  if(c){
+    const pct=chapPct(mode,subjId,c);
+    const dd=c.topics.filter(tp=>ST.progress[tk(mode,subjId,c.id,tp.id)]).length;
+    const pctClass=pct===100?'chap-pct-done':'';
+    const cs=document.getElementById('cs-'+chapId);
+    const cp=document.getElementById('cp-'+chapId);
+    const cb=document.getElementById('cb-'+chapId);
+    if(cs)cs.innerHTML=`${dd}/${c.topics.length} টপিক · <span style="color:var(--accent)">${pct}%</span>`;
+    if(cp){cp.textContent=pct+'%';cp.className='chap-pct-badge '+pctClass;}
+    if(cb)cb.style.width=pct+'%';
+    // Update subject panel stats
+    const [sp]=subjPct(mode,s);
+    $('chap-s-pct').textContent=sp+'%';
+    let doneCh=0;
+    s.chapters.forEach(ch=>{if(chapPct(mode,subjId,ch)===100)doneCh++;});
+    $('chap-s-done').textContent=doneCh;
+  }
+  toast(done?'✅ সম্পন্ন!':'↩ পূর্বাবস্থায় ফিরল');
   updateDash();
   syncProgress();
-  // live update chapter panel in background
-  const pct=chapPct(mode,subjId,c);
-  const dd=c.topics.filter(tp=>ST.progress[tk(mode,subjId,c.id,tp.id)]).length;
-  const chapEl=document.querySelector(`#chapList .chap-item:nth-child(${s.chapters.indexOf(c)+1})`);
-  if(chapEl){
-    chapEl.querySelector('.chap-pct').textContent=pct+'%';
-    chapEl.querySelector('.chap-stat').textContent=`${dd}/${c.topics.length} টপিক সম্পন্ন`;
-    chapEl.querySelector('.chap-bar-fill').style.width=pct+'%';
-  }
 }
 
 // ═══════════════════
@@ -996,4 +1008,5 @@ updateDash();
 </script>
 </body>
 </html>
+
 
