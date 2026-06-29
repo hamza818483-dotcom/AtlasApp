@@ -897,13 +897,19 @@ function addAIMessage(text) {
 }
 
 function formatAIText(text) {
-    return text
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    // First escape HTML entities properly
+    let safe = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    // Then apply formatting
+    safe = safe
         .replace(/✅([^\n]*)/g, '<span class="mcq-correct">✅$1</span>')
         .replace(/❌([^\n]*)/g, '<span class="mcq-wrong">❌$1</span>')
         .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
         .replace(/`([^`]+)`/g, '<code style="background:rgba(108,99,255,0.15);padding:1px 5px;border-radius:4px;font-family:monospace">$1</code>')
         .replace(/\n/g, '<br>');
+    return safe;
 }
 
 function copyAnswer(btn) {
