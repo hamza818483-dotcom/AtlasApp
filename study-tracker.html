@@ -59,11 +59,12 @@ body{background:var(--bg);color:var(--text);font-family:'Inter','Noto Sans Benga
 @keyframes slideUp{from{transform:translateY(32px);opacity:0}to{transform:translateY(0);opacity:1}}
 
 /* ── TOPIC CHECKBOX ── */
-.t-check{width:24px;height:24px;border-radius:7px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;transition:all .2s cubic-bezier(.34,1.56,.64,1);position:relative;overflow:hidden}
-.t-check:active{transform:scale(.88)}
-.t-check.done{background:linear-gradient(135deg,#22c55e,#16a34a);border-color:transparent;box-shadow:0 0 0 3px rgba(34,197,94,.2),0 2px 8px rgba(34,197,94,.3)}
-.t-check svg{width:13px;height:13px;stroke:#fff;fill:none;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round;display:none;animation:checkPop .25s cubic-bezier(.34,1.56,.64,1)}
-.t-check.done svg{display:block}
+.t-check{width:24px;height:24px;min-width:24px;min-height:24px;max-width:24px;max-height:24px;border-radius:7px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;transition:background .2s,border-color .2s,box-shadow .2s,transform .15s cubic-bezier(.34,1.56,.64,1);position:relative;overflow:hidden}
+.t-check:active{transform:scale(.82)}
+.t-check.done{background:linear-gradient(135deg,#22c55e,#16a34a);border-color:transparent;box-shadow:0 0 0 3px rgba(34,197,94,.2),0 2px 8px rgba(34,197,94,.25);transform:scale(1.1)}
+.t-check.done:active{transform:scale(.9)}
+.t-check svg{width:13px;height:13px;min-width:13px;stroke:#fff;fill:none;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round;opacity:0;transform:scale(0) rotate(-30deg);transition:opacity .2s,transform .25s cubic-bezier(.34,1.56,.64,1)}
+.t-check.done svg{opacity:1;transform:scale(1) rotate(0deg)}
 @keyframes checkPop{from{transform:scale(0) rotate(-15deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
 
 /* ── TAB ROW ── */
