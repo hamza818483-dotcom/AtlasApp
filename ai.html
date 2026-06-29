@@ -900,7 +900,7 @@ function showTyping() {
         </div>
     `;
     area.appendChild(div);
-    area.scrollTop = area.scrollHeight;
+    requestAnimationFrame(() => { area.scrollTop = area.scrollHeight; });
 }
 
 function hideTyping() {
