@@ -163,7 +163,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter','Noto Sans Benga
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ── TOAST ── */
-.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(8px);background:rgba(30,33,44,.97);border:1px solid var(--border);color:var(--text);padding:9px 18px;border-radius:12px;font-size:12px;font-weight:600;z-index:9999;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;white-space:nowrap;max-width:calc(100vw - 48px);width:max-content;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(8px);background:rgba(30,33,44,.97);border:1px solid var(--border);color:var(--text);padding:9px 18px;border-radius:12px;font-size:12px;font-weight:600;z-index:9999;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;white-space:nowrap;max-width:calc(100vw - 48px);width:auto;height:auto;max-height:40px;display:inline-block;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.5);box-sizing:border-box;line-height:1.4;isolation:isolate}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* ── BOTTOM NAV (copy from site) ── */
@@ -767,8 +767,12 @@ function updateDash(){
 function $(id){return document.getElementById(id);}
 function goTo(url){location.href=url;}
 function toast(msg){
-  const t=$('toast');t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2200);
+  const t=$('toast');t.textContent=msg;
+  // Force a guaranteed-compact pill shape via inline styles, so no other CSS
+  // rule on the page (however it got there) can ever stretch this element.
+  t.style.cssText='position:fixed;bottom:100px;left:50%;background:rgba(30,33,44,.97);border:1px solid var(--border);color:var(--text);padding:9px 18px;border-radius:999px;font-size:12px;font-weight:600;z-index:9999;white-space:nowrap;max-width:calc(100vw - 48px);width:auto;height:auto;max-height:40px;display:inline-block;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.5);box-sizing:border-box;line-height:1.4;pointer-events:none;transition:opacity .2s,transform .2s;opacity:1;transform:translateX(-50%) translateY(0)';
+  clearTimeout(t._hideTimer);
+  t._hideTimer=setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(8px)'; },2200);
 }
 
 // ═══════════════════
