@@ -443,14 +443,17 @@ async function openPdf(id, title, isPremium) {
         const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdfs?id=eq.${id}&select=file_url`);
         let fileUrl = rows?.[0]?.file_url;
         if (!fileUrl) throw new Error('URL পাওয়া যায়নি');
-        
-        // Handle potential invalid structure or CORS issues by ensuring proper loading
+
+        // Streaming চালু রাখা হয়েছে (disableAutoFetch/disableStream সরানো) —
+        // Supabase Storage CDN HTTP range request সমর্থন করে, তাই pdf.js
+        // পুরো ফাইল ডাউনলোডের অপেক্ষা না করে প্রথম পেইজগুলো progressively
+        // আনতে পারে। এটাই "Chapter ক্লিক করলে instant খুলবে না, loading
+        // থাকে" সমস্যার মূল কারণ ছিল — আগে পুরো PDF একবারে ডাউনলোড হওয়া
+        // পর্যন্ত অপেক্ষা করতে হতো।
         pdfDoc = await pdfjsLib.getDocument({
             url: fileUrl,
             cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
-            cMapPacked: true,
-            disableAutoFetch: true,
-            disableStream: true
+            cMapPacked: true
         }).promise;
         const n = pdfDoc.numPages;
         wrap.innerHTML = '';
