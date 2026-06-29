@@ -869,18 +869,36 @@ function mbSelectType(type) {
 function mbSelectAiType(type) {
     mbAiTypeKey = type;
     const typeMap = { standard: 'Standard', true_false: 'TrueFalse', hard: 'Hard' };
+    const typeLabelBn = { standard: 'Standard', true_false: 'True-False', hard: 'Hard' };
     Object.keys(typeMap).forEach(t => {
         const el = document.getElementById('mbAiType' + typeMap[t]);
         if (el) el.classList.toggle('selected', t === type);
     });
     const at = document.getElementById('mbAiType');
     if (at) at.value = type;
+    const labelEl = document.getElementById('mbAiPromptLabel');
+    if (labelEl) labelEl.textContent = `কাস্টম প্রম্পট (ঐচ্ছিক) — ${typeLabelBn[type]||type} টাইপের জন্য সংরক্ষিত হবে`;
+    const savedTag = document.getElementById('mbPromptSavedTag');
+    if (savedTag) savedTag.style.display = 'none';
     // Load saved prompt for this type
     const promptEl = document.getElementById('mbAiPrompt');
     if (promptEl) {
         const saved = mbGetSavedPrompt(type);
-        if (saved) promptEl.value = saved;
+        promptEl.value = saved || '';
     }
+}
+
+function mbSavePromptOnly() {
+    const promptEl = document.getElementById('mbAiPrompt');
+    const text = (promptEl?.value || '').trim();
+    mbSavePromptForType(mbAiTypeKey, text);
+    const savedTag = document.getElementById('mbPromptSavedTag');
+    if (savedTag) {
+        savedTag.style.display = 'inline';
+        clearTimeout(window._mbPromptTagTimer);
+        window._mbPromptTagTimer = setTimeout(() => { savedTag.style.display = 'none'; }, 2500);
+    }
+    mbToast('✓ প্রম্পট সংরক্ষণ করা হয়েছে', 'success');
 }
 
 async function mbSaveMcq(e) {
