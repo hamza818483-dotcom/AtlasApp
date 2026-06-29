@@ -798,13 +798,14 @@ function mbUpdatePageCount() {
    ════════════════════════════════════════════════════ */
 
 function mbSwitchTab(name) {
-    const tabs = { manual: 'Manual', csv: 'Csv', ai: 'Ai' };
+    const tabs = { manual: 'Manual', csv: 'Csv', ai: 'Ai', all: 'All' };
     Object.keys(tabs).forEach(t => {
         const btn = document.getElementById('mbTabBtn' + tabs[t]);
         const pan = document.getElementById('mbTab'    + tabs[t]);
         if (btn) btn.classList.toggle('active', t === name);
         if (pan) pan.classList.toggle('active', t === name);
     });
+    if (name === 'all') mbRenderPageMcqList();
 }
 
 /* ════════════════════════════════════════════════════

@@ -3377,6 +3377,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="tab-btn-alt active" id="mbTabBtnManual" onclick="mbSwitchTab('manual')">📝 ম্যানুয়াল</button>
             <button class="tab-btn-alt" id="mbTabBtnCsv" onclick="mbSwitchTab('csv')">📊 CSV</button>
             <button class="tab-btn-alt" id="mbTabBtnAi" onclick="mbSwitchTab('ai')">🤖 AI</button>
+            <button class="tab-btn-alt" id="mbTabBtnAll" onclick="mbSwitchTab('all')">📋 All</button>
         </div>
 
         <!-- ── Tab: Manual ── -->
@@ -3518,9 +3519,9 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         </div>
 
-        <!-- MCQ List for current page -->
-        <div id="mbMcqListWrap">
-            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;margin-top:4px">এই পেইজের প্রশ্নসমূহ</div>
+        <!-- ── Tab: All (shows every question on this page, regardless of type) ── -->
+        <div class="tab-panel" id="mbTabAll">
+            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;margin-top:4px">এই পেইজের সকল প্রশ্নসমূহ</div>
             <div id="mbMcqList"></div>
         </div>
 
