@@ -101,7 +101,7 @@ async function callGemini(env, question, systemPrompt, image) {
         {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ contents: [{ parts }], generationConfig: { maxOutputTokens: 4096 } }),
+            body: JSON.stringify({ contents: [{ parts }], generationConfig: { maxOutputTokens: 8192 } }),
         }
     );
     if (!res.ok) return { error: `Gemini HTTP ${res.status}` };
