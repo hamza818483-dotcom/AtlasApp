@@ -590,8 +590,12 @@ function tk(mode,sId,cId,tpId){return`${mode}|${sId}|${cId}|${tpId}`;}
 // ═══════════════════
 async function openChapters(mode,subjId){
   cur.mode=mode;cur.subjId=subjId;
+  // Instant panel open
+  showPanel('pChapter');
+  $('chapList').innerHTML='<div class="loading"><div class="spin"></div></div>';
   const subjs=await loadSyllabus(mode);
   const s=subjs.find(x=>x.id==subjId);
+  if(!s){ $('chapList').innerHTML='<div class="loading">পাওয়া যায়নি</div>'; return; }
   $('chap-panel-title').textContent=s.name;
   let doneCh=0;
   const rows=s.chapters.map((c,i)=>{
@@ -631,7 +635,6 @@ async function openChapters(mode,subjId){
   ring.style.setProperty('--p',subjPctVal);
   $('chap-ring-val').textContent=subjPctVal+'%';
   $('chapList').innerHTML=rows.join('');
-  showPanel('pChapter');
 }
 
 function toggleChapDrop(chapId){
@@ -1018,6 +1021,7 @@ async function syncProgress(){
 
 loadST();
 updateDash();
+setTimeout(()=>{ loadSyllabus('hsc'); loadSyllabus('medical'); }, 800);
 </script>
 </body>
 </html>
