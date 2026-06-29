@@ -54,8 +54,8 @@ body{background:var(--bg);color:var(--text);font-family:'Inter','Noto Sans Benga
 .dc-arrow{font-size:20px;margin-top:6px;color:var(--sub)}
 
 /* ── FULL SCREEN PANELS ── */
-.panel{display:none;position:fixed;inset:0;background:var(--bg);z-index:100;overflow-y:auto;overflow-x:hidden;padding-bottom:84px;animation:slideUp .22s ease}
-.panel.open{display:block}
+.panel{position:fixed;inset:0;background:var(--bg);z-index:100;overflow-y:auto;overflow-x:hidden;padding-bottom:84px;pointer-events:none;opacity:0;transform:translateY(20px);transition:opacity .22s ease,transform .22s ease;visibility:hidden}
+.panel.open{pointer-events:all;opacity:1;transform:translateY(0);visibility:visible}
 @keyframes slideUp{from{transform:translateY(32px);opacity:0}to{transform:translateY(0);opacity:1}}
 
 /* ── TOPIC CHECKBOX ── */
