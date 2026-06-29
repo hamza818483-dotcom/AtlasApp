@@ -1342,9 +1342,16 @@ async function mbCallAiApi(prompt, image, customSystemPrompt) {
             systemPrompt: customSystemPrompt || 'তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।'
         })
     });
-    if (!res.ok) throw new Error('AI প্রক্সি ব্যর্থ (' + res.status + ')');
-    const data = await res.json();
-    if (!data.success) throw new Error(data.error || 'AI থেকে কোনো উত্তর পাওয়া যায়নি');
+    let data = null;
+    try { data = await res.json(); } catch (_) {}
+    if (!res.ok) {
+        // Surface the worker's per-provider error breakdown instead of just the status code,
+        // so the actual failure reason (missing secret, bad key, rate limit, etc.) is visible
+        // instead of a generic "AI প্রক্সি ব্যর্থ (502)" that hides the real cause.
+        const detail = data?.details?.length ? ' — ' + data.details.join(' | ') : (data?.error ? ' — ' + data.error : '');
+        throw new Error('AI প্রক্সি ব্যর্থ (' + res.status + ')' + detail);
+    }
+    if (!data || !data.success) throw new Error(data?.error || 'AI থেকে কোনো উত্তর পাওয়া যায়নি');
     return data.answer || '';
 }
 
