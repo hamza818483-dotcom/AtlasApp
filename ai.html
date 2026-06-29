@@ -988,6 +988,11 @@ if (session) {
 
 hideTyping();
 addAIMessage(finalAnswer);
+    // Scroll to bottom after answer renders
+    requestAnimationFrame(() => {
+        const area = document.getElementById('chatArea');
+        area.scrollTop = area.scrollHeight;
+    });
     isAIBusy = false;
     document.getElementById('sendBtn').disabled = false;
     setStatus('ready');
