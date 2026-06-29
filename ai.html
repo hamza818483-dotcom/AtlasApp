@@ -918,6 +918,7 @@ function copyAnswer(btn) {
 function showTyping() {
     hideEmpty();
     const area = document.getElementById('chatArea');
+    const anchor = document.getElementById('chatScrollAnchor');
     const div = document.createElement('div');
     div.id = 'typingIndicator';
     div.className = 'msg-wrapper ai';
@@ -928,8 +929,9 @@ function showTyping() {
             <div class="typing-bubble"><span></span><span></span><span></span></div>
         </div>
     `;
-    area.appendChild(div);
-    requestAnimationFrame(() => { area.scrollTop = area.scrollHeight; });
+    if (anchor) area.insertBefore(div, anchor);
+    else area.appendChild(div);
+    stableScrollToBottom();
 }
 
 function hideTyping() {
