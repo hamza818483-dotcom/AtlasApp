@@ -138,7 +138,7 @@ async function callOpenRouter(env, question, systemPrompt, image) {
                 { role: "user", content: userContent },
             ],
             temperature: 0.7,
-            max_tokens: 4096,
+            max_tokens: 8192,
         }),
     });
     if (!res.ok) return { error: `OpenRouter HTTP ${res.status}` };
