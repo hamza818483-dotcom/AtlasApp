@@ -552,6 +552,10 @@
   font-family: 'Courier New', monospace; letter-spacing: .3px;
   position: relative; overflow: hidden;
 }
+.r-meta-line {
+  font-size: 8.5px; font-weight: 700; color: var(--text-secondary);
+  margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .r-batch-tag::before {
   content: '';
   position: absolute; top: 0; left: -100%;
@@ -1134,6 +1138,11 @@
     <button class="period-btn" onclick="switchLbPeriod(30,this)">বিগত ৩০ দিন</button>
   </div>
   <div class="lb-full-body">
+    <div style="font-size:10.5px;font-weight:900;color:#10B981;margin-bottom:6px;display:flex;align-items:center;gap:4px">
+      <span style="width:6px;height:6px;border-radius:50%;background:#10B981;animation:livePulse 1.5s ease-in-out infinite"></span>আজকে
+    </div>
+    <div class="rank-list" id="lbTodayRow" style="margin-bottom:14px"></div>
+    <div style="font-size:10.5px;font-weight:900;color:var(--text-secondary);margin-bottom:6px">নির্বাচিত সময়কাল</div>
     <div id="lbTop3Graph" style="display:none;margin-bottom:10px"></div>
     <div class="rank-list" id="rankList"></div>
   </div>
@@ -2331,6 +2340,46 @@ function renderLeaderboard(list){
 
   // Full rank list — glass cards
   rankList.innerHTML=list.map((s,i)=>buildRankCard(s,i+1,false)).join('');
+  // আজকের (ক্যালেন্ডার দিন 12AM-11:59PM) ranking row — সবার উপরে আলাদা section
+  loadTodayLbRow();
+}
+
+async function loadTodayLbRow(){
+  const wrap=document.getElementById('lbTodayRow');
+  if(!wrap) return;
+  wrap.innerHTML='<div style="text-align:center;padding:8px;color:var(--text-secondary);font-size:10px">লোড হচ্ছে...</div>';
+  try{
+    const todayStart=new Date(); todayStart.setHours(0,0,0,0);
+    const sessRows=await safeFetch(
+      `${SUPABASE_URL}/rest/v1/focus_sessions?started_at=gte.${encodeURIComponent(todayStart.toISOString())}`+
+      `&select=user_phone,study_seconds,break_seconds,sleep_seconds,breaks_used,users(name,batch,college,is_premium,photo_url)&limit=1000`
+    );
+    const grouped={};
+    (sessRows||[]).forEach(r=>{
+      const p=r.user_phone; if(!p) return;
+      const u=Array.isArray(r.users)?r.users[0]:(r.users||{});
+      if(!grouped[p]) grouped[p]={phone:p,name:u.name||'Student',batch:u.batch||null,college:u.college||null,premium:u.is_premium||false,photo_url:u.photo_url||null,study_seconds:0,break_seconds:0,sleep_seconds:0,breaks_used:0};
+      grouped[p].study_seconds += (r.study_seconds||0);
+      grouped[p].break_seconds += (r.break_seconds||0);
+      grouped[p].sleep_seconds += (r.sleep_seconds||0);
+      grouped[p].breaks_used   += (r.breaks_used||0);
+    });
+    allStudents.forEach(s=>{
+      if(!s.phone) return;
+      const isSelf=s._isSelf;
+      const lv=isSelf?studySecs:(s.study_seconds||0), lb=isSelf?breakSecs:(s.break_seconds||0), ls=isSelf?sleepSecs:(s.sleep_seconds||0);
+      if(!lv && !lb && !ls) return;
+      if(!grouped[s.phone]) grouped[s.phone]={phone:s.phone,name:s.name||'Student',batch:s.batch,college:s.college,premium:s.premium,photo_url:s.photo_url,study_seconds:0,break_seconds:0,sleep_seconds:0,breaks_used:0};
+      grouped[s.phone].study_seconds += lv;
+      grouped[s.phone].break_seconds += lb;
+      grouped[s.phone].sleep_seconds += ls;
+    });
+    const list=Object.values(grouped).map(g=>({...g, total_seconds:g.study_seconds, score:g.study_seconds-(g.break_seconds*0.3)-(g.sleep_seconds*0.15)}))
+      .filter(g=>g.study_seconds>0||g.break_seconds>0||g.sleep_seconds>0)
+      .sort((a,b)=>b.score-a.score);
+    if(!list.length){ wrap.innerHTML='<div style="text-align:center;padding:10px;color:var(--text-secondary);font-size:10px">আজকে এখনো কেউ পড়েনি</div>'; return; }
+    wrap.innerHTML=list.map((s,i)=>buildRankCard(s,i+1,false)).join('');
+  }catch(e){ wrap.innerHTML=''; }
 }
 
 /* ═══ LIVE STUDENTS ═══ */
@@ -2412,6 +2461,17 @@ function buildRankCard(s,rank,showStatus){
 
   const timeVal=s.total_seconds||s.study_seconds||0;
 
+  // Leaderboard card-এ compact meta: কতবার break, কত সময় break+sleep মিলিয়ে
+  // (Total study + বাকি সময় = Break+Sleep, এভাবেই গণনা)
+  let metaLine='';
+  if(s.break_seconds!==undefined || s.sleep_seconds!==undefined){
+    const bsSecs=(s.break_seconds||0)+(s.sleep_seconds||0);
+    const breaksCount=s.breaks_used||0;
+    if(bsSecs>0 || breaksCount>0){
+      metaLine=`<div class="r-meta-line">${breaksCount>0?`☕×${breaksCount}`:''}${bsSecs>0?` · বিরতি+ঘুম ${fmtCompact(bsSecs)}`:''}</div>`;
+    }
+  }
+
   const safeData=JSON.stringify({name:s.name||'',batch:s.batch||'',college:s.college||'',secs:timeVal,breaks:s.breaks_used||0,phone:s.phone||'',photo:s.photo_url||''}).replace(/'/g,"&#39;");
   const isSelfCard = s._isSelf || (currentUser && s.phone===currentUser.phone);
   const compareBtnHtml = isSelfCard ? '' : `<button class="compare-btn" data-cmp='${safeData}' onclick="openCompare(this)">তুলনা করো</button>`;
@@ -2423,6 +2483,7 @@ function buildRankCard(s,rank,showStatus){
       <div class="r-info">
         <div class="r-name" style="font-weight:900;font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(s.name)}${premiumBadge}</div>
         ${batchLabel?`<div class="r-batch-tag" style="font-weight:600">${batchLabel}</div>`:''}
+        ${metaLine}
       </div>
       <div class="r-right">
         ${statusHtml}
