@@ -1153,6 +1153,7 @@ const MAX_BREAK_SEC = 3600;
 let mood = 'study';          // 'study' | 'break' | 'sleep'
 let timerRunning = false;
 let paused = false;
+let pauseStartTime = null; // রাত ১২টা-৮টার মধ্যে ১.৫ ঘন্টার বেশি pause হলে auto-sleep এর জন্য track করা হয়
 let sessionId = null;
 let studySecs = 0, breakSecs = 0, sleepSecs = 0, breaksUsed = 0;
 let sessionNumber = 1;          // increments each time Stop->Start happens same day, shown as (Session N)
@@ -1332,7 +1333,10 @@ function tick(){
   // study mood: respect paused flag
   // break/sleep mood: only bsRunning matters, ignore paused (study is "paused" but bs can run)
   if(mood==='study'){
-    if(paused) return;
+    if(paused){
+      checkAutoSleepFromPause();
+      return;
+    }
     studySecs++;
   } else if(mood==='break'){
     if(bsRunning){ breakSecs++; if(breakSecs>=MAX_BREAK_SEC){ autoEndBreak(); return; } }
@@ -1347,6 +1351,34 @@ function tick(){
   syncSession();
   // পুরো list re-render (rank recompute + DOM rebuild) ৫ সেকেন্ডে একবার — flicker এড়াতে
   if(total%5===0){ renderLiveStudents(allStudents); saveState(); }
+}
+
+/* রাত ১২টা থেকে সকাল ৮টার মধ্যে Study Mood pause অবস্থায় ১.৫ ঘন্টা (৫৪০০ সেকেন্ড)
+   পার হলে স্বয়ংক্রিয়ভাবে Sleep Mode-এ চলে যাবে, এবং সকাল ৯টা পর্যন্ত Sleep হিসেবে গণনা হবে */
+function checkAutoSleepFromPause(){
+  if(!pauseStartTime) return;
+  const now=new Date();
+  const hr=now.getHours();
+  const inNightWindow = (hr>=0 && hr<8); // রাত ১২টা থেকে সকাল ৮টা
+  if(!inNightWindow) return;
+  const pausedSecs=Math.floor((Date.now()-pauseStartTime)/1000);
+  if(pausedSecs>=5400){ // ১.৫ ঘন্টা
+    // ১.৫ ঘন্টার পুরোটাই sleep হিসেবে যোগ করো
+    sleepSecs += pausedSecs;
+    pauseStartTime=Date.now(); // রিসেট — যাতে বারবার যোগ না হয়, প্রতি সেকেন্ডে normal sleep tick চলবে
+    paused=false;
+    mood='sleep';
+    bsRunning=true;
+    updateMoodButtons();
+    setHeaderGlow(false);
+    document.getElementById('ctrlStudy').style.display='none';
+    const bsRow=document.getElementById('ctrlBSRow');
+    if(bsRow) bsRow.style.display='flex';
+    renderTimer();
+    saveState(); syncSession();
+    updateSelfInList(); renderLiveStudents(allStudents);
+    showToast('😴 রাতে দীর্ঘ বিরতি দেখে Sleep Mode চালু হলো');
+  }
 }
 
 function autoEndBreak(){
@@ -1532,6 +1564,7 @@ function updateMoodButtons(){
 /* ═══ PAUSE / RESUME ═══ */
 function pauseTimer(){
   paused=true;
+  pauseStartTime=Date.now();
   document.getElementById('ctrlPause').style.display='none';
   document.getElementById('ctrlResume').style.display='flex';
   saveState();
@@ -1549,6 +1582,7 @@ function pauseTimer(){
 
 function resumeTimer(){
   paused=false;
+  pauseStartTime=null;
   document.getElementById('ctrlPause').style.display='flex';
   document.getElementById('ctrlResume').style.display='none';
   saveState();
@@ -2230,6 +2264,8 @@ function buildRankCard(s,rank,showStatus){
   const timeVal=s.total_seconds||s.study_seconds||0;
 
   const safeData=JSON.stringify({name:s.name||'',batch:s.batch||'',college:s.college||'',secs:timeVal,breaks:s.breaks_used||0,phone:s.phone||'',photo:s.photo_url||''}).replace(/'/g,"&#39;");
+  const isSelfCard = s._isSelf || (currentUser && s.phone===currentUser.phone);
+  const compareBtnHtml = isSelfCard ? '' : `<button class="compare-btn" data-cmp='${safeData}' onclick="openCompare(this)">তুলনা করো</button>`;
   return `
     <div class="r-card ${rank===1?'rank1-card':''} ${isLive?'is-live':''} ${isPaused?'is-paused':''}" data-phone="${escHtml(s.phone||'')}">
       ${rank===1?'<div class="rank1-glow"></div>':''}
@@ -2242,7 +2278,7 @@ function buildRankCard(s,rank,showStatus){
       <div class="r-right">
         ${statusHtml}
         <div class="r-time">${fmtCompact(timeVal)}</div>
-        <button class="compare-btn" data-cmp='${safeData}' onclick="openCompare(this)">তুলনা করো</button>
+        ${compareBtnHtml}
       </div>
     </div>
   `;
