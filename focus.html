@@ -2214,73 +2214,78 @@ async function loadInlineLb(days, btn){
 async function loadLeaderboard(days){
   const rankList=document.getElementById('rankList');
   rankList.innerHTML='<div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:11px">লোড হচ্ছে...</div>';
-  const since=new Date(Date.now()-days*86400000).toISOString().slice(0,10);
   try {
-    const dailyRows=await safeFetch(
-      `${SUPABASE_URL}/rest/v1/study_tracker_daily?study_date=gte.${since}` +
-      `&select=user_phone,total_seconds,users(name,batch,college,is_premium,photo_url)` +
-      `&order=total_seconds.desc&limit=500`
+    // ধাপ ১: সব active/recent user-দের first_session_at আনো (Ultimate Leaderboard
+    // ক্যালেন্ডার দিনের বদলে প্রত্যেকের নিজের প্রথম session শুরু থেকে N×24h হিসাব করে)
+    const usersRows=await safeFetch(
+      `${SUPABASE_URL}/rest/v1/users?first_session_at=not.is.null`+
+      `&select=phone,name,batch,college,is_premium,photo_url,first_session_at&limit=500`
+    );
+    const userMap={};
+    (usersRows||[]).forEach(u=>{ if(u.phone) userMap[u.phone]=u; });
+
+    // ধাপ ২: প্রতিটা user এর জন্য window end = first_session_at + days×24h (অথবা এখন, যেটা আগে)
+    const now=Date.now();
+    const earliestSince = new Date(now - days*86400000).toISOString();
+
+    // ধাপ ৩: সব relevant focus_sessions আনো (broad fetch, পরে per-user filter)
+    const sessRows=await safeFetch(
+      `${SUPABASE_URL}/rest/v1/focus_sessions?started_at=gte.${encodeURIComponent(earliestSince)}`+
+      `&select=user_phone,study_seconds,break_seconds,sleep_seconds,breaks_used,started_at&limit=3000`
     );
 
     const grouped={};
-    (dailyRows||[]).forEach(r=>{
+    (sessRows||[]).forEach(r=>{
       const p=r.user_phone; if(!p) return;
-      const u=Array.isArray(r.users)?r.users[0]:(r.users||{});
+      const u=userMap[p];
+      // user-এর নিজের first_session_at থেকে days×24h window-এর মধ্যে কিনা চেক করো
+      const winStart = u?.first_session_at ? new Date(u.first_session_at).getTime() : null;
+      const winEnd = winStart ? winStart + days*86400000 : null;
+      const sessTime = r.started_at ? new Date(r.started_at).getTime() : null;
+      if(winStart && sessTime!==null){
+        if(sessTime < winStart || sessTime > winEnd) return; // window-এর বাইরে, বাদ
+      }
       if(!grouped[p]){
         grouped[p]={
-          phone:p,
-          name:u.name||null,
-          batch:u.batch||null,
-          college:u.college||null,
-          premium:u.is_premium||false,
-          photo_url:u.photo_url||null,
-          total_seconds:0
+          phone:p, name:u?.name||null, batch:u?.batch||null, college:u?.college||null,
+          premium:u?.is_premium||false, photo_url:u?.photo_url||null,
+          study_seconds:0, break_seconds:0, sleep_seconds:0, breaks_used:0
         };
       }
-      grouped[p].total_seconds+=(r.total_seconds||0);
+      grouped[p].study_seconds += (r.study_seconds||0);
+      grouped[p].break_seconds += (r.break_seconds||0);
+      grouped[p].sleep_seconds += (r.sleep_seconds||0);
+      grouped[p].breaks_used   += (r.breaks_used||0);
     });
 
-    // Supplement with focus_sessions for name/photo if daily had no user join
-    if(Object.values(grouped).some(g=>!g.name)){
-      const sessRows=await safeFetch(
-        `${SUPABASE_URL}/rest/v1/focus_sessions?updated_at=gte.${since}T00:00:00Z` +
-        `&select=user_phone,users(name,batch,college,is_premium,photo_url)&limit=500`
-      );
-      (sessRows||[]).forEach(r=>{
-        const p=r.user_phone; if(!p||!grouped[p]) return;
-        const u=r.users||{};
-        if(!grouped[p].name && u.name){ grouped[p].name=u.name; grouped[p].batch=u.batch||null; grouped[p].college=u.college||null; grouped[p].photo_url=u.photo_url||null; }
-      });
-    }
-
-    // Fill missing names from allStudents live cache
-    Object.values(grouped).forEach(g=>{
-      if(!g.name){
-        const live=allStudents.find(s=>s.phone===g.phone);
-        if(live){ g.name=live.name; g.batch=live.batch; g.photo_url=live.photo_url; }
-      }
-      if(!g.name) g.name='Student';
-    });
-
-    // Merge LIVE in-progress session seconds — study_tracker_daily only gets
-    // written when a session ENDS (upsertDailyTotal), so anyone currently
-    // mid-session has today's elapsed time missing from the daily table.
-    // Add that live elapsed time on top of whatever's already saved for today,
-    // for every active student (not just self), so 3/7/15/30 day totals
-    // reflect real-time progress instead of lagging until they stop.
+    // ধাপ ৪: লাইভ (এখনো চলমান) সময় যোগ করো — DB-তে এখনো সব sync নাও হতে পারে
     allStudents.forEach(s=>{
-      if(!s.phone || !s.study_seconds) return;
-      const liveSecs = s._isSelf ? studySecs : (s.study_seconds||0);
-      if(!liveSecs) return;
+      if(!s.phone) return;
+      const isSelf=s._isSelf;
+      const liveStudy = isSelf ? studySecs : (s.study_seconds||0);
+      const liveBreak = isSelf ? breakSecs : (s.break_seconds||0);
+      const liveSleep = isSelf ? sleepSecs : (s.sleep_seconds||0);
+      if(!liveStudy && !liveBreak && !liveSleep) return;
       if(!grouped[s.phone]){
-        grouped[s.phone]={phone:s.phone,name:s.name,batch:s.batch,college:s.college,premium:s.premium,photo_url:s.photo_url,total_seconds:0};
+        grouped[s.phone]={phone:s.phone,name:s.name,batch:s.batch,college:s.college,premium:s.premium,photo_url:s.photo_url,study_seconds:0,break_seconds:0,sleep_seconds:0,breaks_used:0};
       }
-      // today's live seconds haven't been flushed to daily yet, so add them
-      grouped[s.phone].total_seconds += liveSecs;
+      grouped[s.phone].study_seconds += liveStudy;
+      grouped[s.phone].break_seconds += liveBreak;
+      grouped[s.phone].sleep_seconds += liveSleep;
       if(!grouped[s.phone].name) grouped[s.phone].name = s.name || 'Student';
     });
 
-    const list=Object.values(grouped).sort((a,b)=>b.total_seconds-a.total_seconds);
+    Object.values(grouped).forEach(g=>{ if(!g.name) g.name='Student'; });
+
+    // ধাপ ৫: Ranking Score — বেশি study ভালো, কম break ভালো, কম sleep ভালো
+    // total_seconds মূল display value হিসেবে study_seconds থাকবে (UI-তে যা দেখানো হয়)
+    // কিন্তু rank order নির্ধারণ হবে score দিয়ে যা break+sleep পেনাল্টি হিসেবে ধরে
+    const list=Object.values(grouped).map(g=>{
+      const score = g.study_seconds - (g.break_seconds*0.3) - (g.sleep_seconds*0.15);
+      return {...g, total_seconds:g.study_seconds, score};
+    }).filter(g=>g.study_seconds>0 || g.break_seconds>0 || g.sleep_seconds>0)
+      .sort((a,b)=>b.score-a.score);
+
     if(!list.length){ renderLeaderboard([]); return; }
     renderLeaderboard(list);
   } catch(e){
