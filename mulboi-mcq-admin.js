@@ -1051,11 +1051,36 @@ async function mbDeleteMcq(mcqId) {
     }
 }
 
+// admin-added (option_k/kh/g/gh shape) ও user-generated (options[] + answer_index shape) —
+// দুটো ভিন্ন data shape-কে একটা common shape-এ normalize করে, যাতে একসাথে render করা যায়।
+function mbNormalizeMcqShape(m) {
+    if (m.options && Array.isArray(m.options)) {
+        // user-side shape → admin shape এ convert
+        const keys = ['k','kh','g','gh'];
+        const out = { id: m.id, question: m.question, explanation: m.explanation, type: m.type };
+        keys.forEach((k, i) => { out['option_'+k] = m.options[i] || ''; });
+        out.correct = keys[m.answer_index] || 'k';
+        return out;
+    }
+    return m; // ইতিমধ্যে admin shape এ আছে
+}
+
 function mbRenderPageMcqList() {
     const listEl = document.getElementById('mbMcqList');
     if (!listEl) return;
 
-    const mcqs = mbGetPageMcqs(mbCurrentPage);
+    // admin-added MCQ (edit/delete করা যায়) + এই পেইজের user-generated MCQ (read-only, সব ধরন একসাথে)
+    const adminMcqs = mbGetPageMcqs(mbCurrentPage).map(m => ({ ...mbNormalizeMcqShape(m), _source: 'admin' }));
+    const userRows = mbAllPageDataAllTypes.filter(r => r.page_number === mbCurrentPage && r.mcq_type !== 'admin');
+    let userMcqs = [];
+    userRows.forEach(r => {
+        try {
+            const qs = JSON.parse(r.questions_json || '[]');
+            qs.forEach(q => userMcqs.push({ ...mbNormalizeMcqShape({ ...q, type: r.mcq_type }), _source: 'user', id: q.id || (r.id + '_' + userMcqs.length) }));
+        } catch (_) {}
+    });
+
+    const mcqs = [...adminMcqs, ...userMcqs];
 
     if (!mcqs.length) {
         listEl.innerHTML = '<div style="text-align:center;padding:20px;font-size:12px;color:var(--text3)">এই পেইজে কোনো MCQ নেই। উপরে যোগ করুন।</div>';
@@ -1070,8 +1095,10 @@ function mbRenderPageMcqList() {
             <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
                 <div style="font-size:12px;font-weight:700;line-height:1.5;flex:1">${idx + 1}. ${esc(m.question)}</div>
                 <div style="display:flex;gap:6px;flex-shrink:0">
-                    <button class="act-btn act-edit" onclick="mbEditMcq('${m.id}')" title="সম্পাদনা">✏️</button>
-                    <button class="act-btn act-delete" onclick="mbDeleteMcq('${m.id}')" title="মুছুন">🗑️</button>
+                    ${m._source === 'admin'
+                        ? `<button class="act-btn act-edit" onclick="mbEditMcq('${m.id}')" title="সম্পাদনা">✏️</button>
+                           <button class="act-btn act-delete" onclick="mbDeleteMcq('${m.id}')" title="মুছুন">🗑️</button>`
+                        : `<span style="font-size:9px;color:var(--text3);font-weight:600">👤 ইউজার তৈরি</span>`}
                 </div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px">
@@ -1084,8 +1111,9 @@ function mbRenderPageMcqList() {
                     </div>`).join('')}
             </div>
             ${m.explanation ? `<div style="font-size:10px;color:var(--text3);margin-top:4px;padding:4px 8px;background:rgba(108,99,255,0.05);border-radius:4px">💡 ${esc(m.explanation)}</div>` : ''}
-            <div style="margin-top:6px">
+            <div style="margin-top:6px;display:flex;gap:6px">
                 <span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(108,99,255,0.1);color:#9C8BFF;text-transform:uppercase">${typeLabel[m.type]||m.type||'standard'}</span>
+                ${m._source === 'user' ? '<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(16,185,129,0.1);color:var(--green)">ইউজার-জেনারেটেড</span>' : ''}
             </div>
         </div>`).join('');
 }
