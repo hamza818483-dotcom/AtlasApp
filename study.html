@@ -397,16 +397,21 @@ async function openChapter(id, name) {
     const c = document.getElementById('pdf-list');
     c.innerHTML = '<div class="ctr"><div class="sp"></div><div>লোড হচ্ছে...</div></div>';
     try {
-        // Security note: file_url is deliberately excluded here for premium
-        // PDFs so a free-tier user can't read it straight from this network
-        // response. It's fetched separately in openPdf() only after the
-        // premium-access check passes.
-        const pdfs = await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdfs?chapter_id=eq.${id}&select=id,title,page_count,is_premium,sort_order&order=sort_order.asc`);
+        // Non-premium PDF হলে file_url-ও একই কলে নিয়ে নিচ্ছি, যাতে openPdf()-এ
+        // দ্বিতীয় network round-trip না লাগে — এটাই "Chapter ক্লিক করলে instant
+        // খুলবে না" সমস্যার মূল কারণ ছিল (২টা sequential fetch + pdf.js init)।
+        // Premium PDF-এর জন্য file_url আগের মতোই বাদ রাখা হচ্ছে (security অক্ষত)।
+        const pdfs = await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdfs?chapter_id=eq.${id}&select=id,title,page_count,is_premium,sort_order,file_url&order=sort_order.asc`);
         if (!pdfs?.length) { c.innerHTML = '<div class="ctr">কোনো PDF পাওয়া যায়নি</div>'; return; }
-        
-        // Instant open if only one PDF exists in chapter
+
+        // Instant open if only one PDF exists in chapter — file_url already in hand for non-premium
         if (pdfs.length === 1) {
-            openPdf(pdfs[0].id, pdfs[0].title, pdfs[0].is_premium);
+            const p0 = pdfs[0];
+            if (p0.is_premium) {
+                openPdf(p0.id, p0.title, true); // premium → security check + separate file_url fetch
+            } else {
+                openPdfFast(p0.id, p0.title, p0.file_url); // non-premium → no extra round-trip
+            }
             return;
         }
 
@@ -440,23 +445,42 @@ async function openPdf(id, title, isPremium) {
         const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdfs?id=eq.${id}&select=file_url`);
         let fileUrl = rows?.[0]?.file_url;
         if (!fileUrl) throw new Error('URL পাওয়া যায়নি');
-
-        // Streaming চালু রাখা হয়েছে (disableAutoFetch/disableStream সরানো) —
-        // Supabase Storage CDN HTTP range request সমর্থন করে, তাই pdf.js
-        // পুরো ফাইল ডাউনলোডের অপেক্ষা না করে প্রথম পেইজগুলো progressively
-        // আনতে পারে। এটাই "Chapter ক্লিক করলে instant খুলবে না, loading
-        // থাকে" সমস্যার মূল কারণ ছিল — আগে পুরো PDF একবারে ডাউনলোড হওয়া
-        // পর্যন্ত অপেক্ষা করতে হতো।
-        pdfDoc = await pdfjsLib.getDocument({
-            url: fileUrl,
-            cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
-            cMapPacked: true
-        }).promise;
-        const n = pdfDoc.numPages;
-        wrap.innerHTML = '';
-        for (let i = 1; i <= n; i++) wrap.appendChild(makePage(i, n));
-        setupObs();
+        await renderPdfDoc(fileUrl, wrap);
     } catch (e) { wrap.innerHTML = `<div class="ctr" style="color:var(--error)">PDF লোড হয়নি: ${esc(e.message)}</div>`; }
+}
+
+// non-premium single-PDF chapter এর জন্য fast-path — file_url ইতিমধ্যেই openChapter()
+// থেকে হাতে আছে, তাই এখানে দ্বিতীয় network round-trip এড়িয়ে সরাসরি pdf.js render শুরু হয়।
+async function openPdfFast(id, title, fileUrl) {
+    curPdfId = id; curPdfTitle = title; curPdfPremium = false; selPages.clear();
+    document.getElementById('view-title').textContent = title;
+    go('s-view');
+    updateMultiBtn();
+    const wrap = document.getElementById('pages-wrap');
+    wrap.innerHTML = '<div class="ctr"><div class="sp"></div><div>PDF লোড হচ্ছে...</div></div>';
+    try {
+        if (!fileUrl) throw new Error('URL পাওয়া যায়নি');
+        await renderPdfDoc(fileUrl, wrap);
+    } catch (e) { wrap.innerHTML = `<div class="ctr" style="color:var(--error)">PDF লোড হয়নি: ${esc(e.message)}</div>`; }
+}
+
+// দুই entry point (openPdf / openPdfFast) এর জন্য শেয়ার্ড pdf.js render লজিক — কোড ডুপ্লিকেশন এড়াতে।
+async function renderPdfDoc(fileUrl, wrap) {
+    // Streaming চালু রাখা হয়েছে (disableAutoFetch/disableStream সরানো) —
+    // Supabase Storage CDN HTTP range request সমর্থন করে, তাই pdf.js
+    // পুরো ফাইল ডাউনলোডের অপেক্ষা না করে প্রথম পেইজগুলো progressively
+    // আনতে পারে। এটাই "Chapter ক্লিক করলে instant খুলবে না, loading
+    // থাকে" সমস্যার মূল কারণ ছিল — আগে পুরো PDF একবারে ডাউনলোড হওয়া
+    // পর্যন্ত অপেক্ষা করতে হতো।
+    pdfDoc = await pdfjsLib.getDocument({
+        url: fileUrl,
+        cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+        cMapPacked: true
+    }).promise;
+    const n = pdfDoc.numPages;
+    wrap.innerHTML = '';
+    for (let i = 1; i <= n; i++) wrap.appendChild(makePage(i, n));
+    setupObs();
 }
 
 function makePage(p, tot) {
