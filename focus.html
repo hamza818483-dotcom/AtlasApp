@@ -1004,12 +1004,8 @@
           নতুন Session শুরু করো
         </button>
       </div>
-      <!-- Break/Sleep mood controls: শুধু Stop -->
-      <div class="timer-controls-inner" id="ctrlBSRow" style="display:none">
-        <button class="ctrl-btn ctrl-stop" style="flex:1;justify-content:center" onclick="showModal()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="2" fill="currentColor"/></svg> Stop
-        </button>
-      </div>
+      <!-- Break/Sleep mood: no controls needed, switching mood is enough -->
+      <div class="timer-controls-inner" id="ctrlBSRow" style="display:none"></div>
 
     </div>
 
@@ -1586,7 +1582,7 @@ function closeModal(){ document.getElementById('endModal').classList.remove('sho
 function confirmEnd(){ closeModal(); doEnd(false); }
 
 async function doEnd(auto){
-  clearInterval(ticker); stopPolling(); stopLiveSecTicker(); timerRunning=false;
+  clearInterval(ticker); stopPolling(); if(liveSecTicker){clearInterval(liveSecTicker);liveSecTicker=null;} timerRunning=false;
   clearState();
   setHeaderGlow(false);
   // সবার আগে timer screen নিশ্চিত করো — intro screen এ থাকলেও চলে আসবে
