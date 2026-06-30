@@ -846,7 +846,7 @@ function mbSwitchTab(name) {
         if (btn) btn.classList.toggle('active', t === name);
         if (pan) pan.classList.toggle('active', t === name);
     });
-    if (name === 'all') mbRenderPageMcqList();
+    if (name === 'all') { mbRenderPageMcqList(); mbLoadCsvArchive(); }
 }
 
 /* ════════════════════════════════════════════════════
@@ -1471,7 +1471,9 @@ async function mbSaveAiMcqs() {
         const currentMcqs = mbGetPageMcqs(mbCurrentPage);
         mbAiData.forEach(m => currentMcqs.push(m));
         await mbUpsertPageMcqs(mbCurrentPage, currentMcqs);
-        mbToast('✓ ' + mbAiData.length + 'টি AI MCQ সংরক্ষিত হয়েছে', 'success');
+        // AI দিয়ে generate হওয়া এই batch-টার CSV automatically তৈরি+save হয়ে যাবে — manual download লাগবে না।
+        await mbSaveMcqsAsCsv(mbAiData, mbCurrentPage, mbAiTypeKey);
+        mbToast('✓ ' + mbAiData.length + 'টি AI MCQ সংরক্ষিত হয়েছে (+ CSV)', 'success');
         mbAiData = [];
         const resultEl = document.getElementById('mbAiResult');
         if (resultEl) resultEl.style.display = 'none';
@@ -1482,6 +1484,128 @@ async function mbSaveAiMcqs() {
         mbRenderPageSummary();
     } catch (ex) {
         mbToast('সংরক্ষণ ব্যর্থ: ' + ex.message, 'error');
+    }
+}
+
+/* ════════════════════════════════════════════════════
+   14a-CSV. AUTO CSV ARCHIVE — AI generation থেকে স্বয়ংক্রিয়ভাবে CSV বানিয়ে
+   Supabase-এ জমা রাখে। Format: questions,option1-5,answer(numeric),
+   explanation,type,section — type ও section সবসময় "1" দিয়ে fill করা হয়
+   (নির্দেশনা অনুযায়ী)।
+   ════════════════════════════════════════════════════ */
+function mbCsvEscape(v) {
+    const s = String(v ?? '');
+    if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+        return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return s;
+}
+
+// option_k/kh/g/gh/u কী থেকে 1-5 numeric answer বের করে — CSV format-এর জন্য
+const MB_KEY_TO_NUM = { k: 1, kh: 2, g: 3, gh: 4, u: 5 };
+
+function mbBuildCsvFromMcqs(mcqs) {
+    const header = 'questions,option1,option2,option3,option4,option5,answer,explanation,type,section';
+    const rows = mcqs.map(m => {
+        const cols = [
+            m.question || '',
+            m.option_k || '',
+            m.option_kh || '',
+            m.option_g || '',
+            m.option_gh || '',
+            m.option_u || '',
+            MB_KEY_TO_NUM[m.correct] || 1,
+            m.explanation || '',
+            1, // type সবসময় 1
+            1, // section সবসময় 1
+        ];
+        return cols.map(mbCsvEscape).join(',');
+    });
+    return [header, ...rows].join('\n');
+}
+
+// একটা batch MCQ generate হওয়ার পরই CSV বানিয়ে Supabase archive-এ POST করে — fire-and-forget নয়,
+// await করা হয় যাতে save নিশ্চিত হওয়ার পরই success toast দেখানো হয়।
+async function mbSaveMcqsAsCsv(mcqs, pageNum, type) {
+    if (!mcqs || !mcqs.length || !mbPdfId) return;
+    try {
+        const csvContent = mbBuildCsvFromMcqs(mcqs);
+        const ts = new Date().toISOString().replace(/[:.]/g, '-');
+        const fileName = `page${pageNum}_${type}_${ts}.csv`;
+        await mbApi('/book_mcq_csv_archive', {
+            method: 'POST',
+            headers: { 'Prefer': 'return=minimal' },
+            body: JSON.stringify({
+                pdf_id: parseInt(mbPdfId),
+                page_number: pageNum,
+                file_name: fileName,
+                csv_content: csvContent,
+                question_count: mcqs.length,
+                mcq_type: type,
+            }),
+        });
+        mbLoadCsvArchive(); // archive list তাজা করে দাও যাতে নতুন ফাইলটা সাথে সাথে দেখা যায়
+    } catch (e) {
+        console.warn('CSV archive save failed:', e.message);
+        // CSV save fail হলেও মূল MCQ data save হয়ে গেছে — তাই এটা silent warning, blocking error না
+    }
+}
+
+// CSV archive list load + render — "All" ট্যাবের নিচে দেখা যায়
+async function mbLoadCsvArchive() {
+    const wrap = document.getElementById('mbCsvArchiveList');
+    if (!wrap || !mbPdfId) return;
+    wrap.innerHTML = '<div style="font-size:11px;color:var(--text3);text-align:center;padding:10px">লোড হচ্ছে...</div>';
+    try {
+        const rows = await mbApi('/book_mcq_csv_archive?pdf_id=eq.' + mbPdfId + '&select=id,page_number,file_name,question_count,mcq_type,created_at&order=created_at.desc&limit=200')
+            .then(r => r.ok ? r.json() : []);
+        if (!rows || !rows.length) {
+            wrap.innerHTML = '<div style="font-size:11px;color:var(--text3);text-align:center;padding:10px">এখনো কোনো CSV তৈরি হয়নি</div>';
+            return;
+        }
+        const typeLabel = { standard: 'Standard', true_false: 'True-False', hard: 'Hard' };
+        wrap.innerHTML = rows.map(r => {
+            const dt = new Date(r.created_at);
+            const dateStr = dt.toLocaleDateString('bn-BD') + ' ' + dt.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
+            return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                <div style="min-width:0">
+                    <div style="font-size:11.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.file_name)}</div>
+                    <div style="font-size:9.5px;color:var(--text3)">পেইজ ${r.page_number ?? '—'} · ${typeLabel[r.mcq_type]||r.mcq_type||''} · ${r.question_count}টি প্রশ্ন · ${dateStr}</div>
+                </div>
+                <div style="display:flex;gap:4px;flex-shrink:0">
+                    <button class="btn btn-sm btn-outline" style="font-size:10px;padding:4px 8px" onclick="mbDownloadCsvArchive(${r.id}, '${esc(r.file_name)}')">⬇</button>
+                    <button class="btn btn-sm btn-outline" style="font-size:10px;padding:4px 8px;color:#ef4444" onclick="mbDeleteCsvArchive(${r.id})">🗑</button>
+                </div>
+            </div>`;
+        }).join('');
+    } catch (e) {
+        wrap.innerHTML = '<div style="font-size:11px;color:#ef4444;text-align:center;padding:10px">লোড ব্যর্থ</div>';
+    }
+}
+
+async function mbDownloadCsvArchive(id, fileName) {
+    try {
+        const rows = await mbApi('/book_mcq_csv_archive?id=eq.' + id + '&select=csv_content').then(r => r.ok ? r.json() : []);
+        const csvContent = rows?.[0]?.csv_content;
+        if (!csvContent) { mbToast('CSV পাওয়া যায়নি', 'error'); return; }
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = fileName;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } catch (e) {
+        mbToast('ডাউনলোড ব্যর্থ: ' + e.message, 'error');
+    }
+}
+
+async function mbDeleteCsvArchive(id) {
+    if (!confirm('এই CSV ফাইলটি মুছে ফেলতে চাও?')) return;
+    try {
+        await mbApi('/book_mcq_csv_archive?id=eq.' + id, { method: 'DELETE' });
+        mbLoadCsvArchive();
+    } catch (e) {
+        mbToast('মুছে ফেলা ব্যর্থ: ' + e.message, 'error');
     }
 }
 
@@ -1691,6 +1815,10 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
         headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
         body: JSON.stringify({ pdf_id: parseInt(mbPdfId), page_number: pageNum, mcq_type: type, questions_json: JSON.stringify(currentMcqs) })
     });
+
+    // প্রতিটা পেইজের জন্য আলাদা CSV ফাইল — ফাইলের নামে page no থাকে, শুধু এই batch-এর
+    // নতুন প্রশ্নগুলো (পুরো accumulated history না) — যাতে প্রতি পেইজের জন্য পরিষ্কার আলাদা ফাইল তৈরি হয়।
+    await mbSaveMcqsAsCsv(newMcqs, pageNum, type);
 }
 
 // Page reload হলে আগের চলমান job থাকলে সেটা আবার resume করে — "refresh দিলেও কাজ থামবে না"
@@ -1939,6 +2067,9 @@ window.mbGenerateClick     = mbGenerateClick;
 window.mbStartBulkGenerate = mbStartBulkGenerate;
 window.mbStopBulkGenerate  = mbStopBulkGenerate;
 window.mbSaveAiMcqs       = mbSaveAiMcqs;
+window.mbLoadCsvArchive    = mbLoadCsvArchive;
+window.mbDownloadCsvArchive= mbDownloadCsvArchive;
+window.mbDeleteCsvArchive  = mbDeleteCsvArchive;
 window.mbDiscardAi        = mbDiscardAi;
 window.mbStartAutoOcr     = mbStartAutoOcr;
 window.mbCheckOcrStatus   = mbCheckOcrStatus;

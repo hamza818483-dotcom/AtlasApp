@@ -3571,6 +3571,17 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="tab-panel" id="mbTabAll">
             <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;margin-top:4px">এই পেইজের সকল প্রশ্নসমূহ</div>
             <div id="mbMcqList"></div>
+
+            <!-- AI দিয়ে generate করা MCQ-গুলোর CSV ফাইল সবসময় এখানে জমা থাকবে (download-যোগ্য) -->
+            <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px">
+                <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+                    <span>📄 AI-generated CSV ফাইলসমূহ</span>
+                    <button class="btn btn-sm btn-outline" style="font-size:10px;padding:3px 9px" onclick="mbLoadCsvArchive()">🔄</button>
+                </div>
+                <div id="mbCsvArchiveList" style="display:flex;flex-direction:column;gap:6px">
+                    <div style="font-size:11px;color:var(--text3);text-align:center;padding:10px">লোড হচ্ছে...</div>
+                </div>
+            </div>
         </div>
 
     </div>
