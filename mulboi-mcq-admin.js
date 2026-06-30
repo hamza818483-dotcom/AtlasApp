@@ -196,13 +196,12 @@ function mbToggleNewSubject() {
         if (inp) inp.focus();
     } else {
         document.getElementById('mbNewSubjectName').value = '';
-        document.getElementById('mbNewSubjectIcon').value = '';
     }
 }
 
 async function mbCreateSubject() {
     const name = document.getElementById('mbNewSubjectName').value.trim();
-    const icon = document.getElementById('mbNewSubjectIcon').value.trim() || '📚';
+    const icon = '📚'; // icon picker বাদ দেওয়া হয়েছে — fixed default ব্যবহার হবে
     if (!name) { mbToast('বিষয়ের নাম লিখুন', 'error'); return; }
     try {
         const res = await mbApi('/book_subjects', {
