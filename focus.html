@@ -1035,9 +1035,9 @@
 
     <!-- ═══ LEADERBOARD TRIGGER ═══ -->
     <div class="leaderboard-section">
-      <div class="lb-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:5px"><path d="M6 2h12v8a6 6 0 01-12 0V2z" stroke="#F59E0B" stroke-width="1.8" fill="rgba(245,158,11,.12)"/><path d="M6 5H3a3 3 0 003 3M18 5h3a3 3 0 01-3 3" stroke="#F59E0B" stroke-width="1.8" stroke-linecap="round"/><path d="M12 16v4M8 20h8" stroke="#F59E0B" stroke-width="1.8" stroke-linecap="round"/></svg>Leaderboard</div>
+      <div class="lb-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:5px"><path d="M6 2h12v8a6 6 0 01-12 0V2z" stroke="#F59E0B" stroke-width="1.8" fill="rgba(245,158,11,.12)"/><path d="M6 5H3a3 3 0 003 3M18 5h3a3 3 0 01-3 3" stroke="#F59E0B" stroke-width="1.8" stroke-linecap="round"/><path d="M12 16v4M8 20h8" stroke="#F59E0B" stroke-width="1.8" stroke-linecap="round"/></svg>Ultimate Leaderboard</div>
       <div class="lb-period-row">
-        <button class="period-btn active" onclick="openLbView(3,this)">বিগত ৩ দিন</button>
+        <button class="period-btn" onclick="openLbView(3,this)">বিগত ৩ দিন</button>
         <button class="period-btn" onclick="openLbView(7,this)">বিগত ৭ দিন</button>
         <button class="period-btn" onclick="openLbView(15,this)">বিগত ১৫ দিন</button>
         <button class="period-btn" onclick="openLbView(30,this)">বিগত ৩০ দিন</button>
@@ -1125,7 +1125,7 @@
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       ফিরে যাও
     </button>
-    <div class="lb-full-title" id="lbFullTitle">Leaderboard</div>
+    <div class="lb-full-title" id="lbFullTitle">Ultimate Leaderboard</div>
   </div>
   <div class="lb-full-period-row">
     <button class="period-btn" onclick="switchLbPeriod(3,this)">বিগত ৩ দিন</button>
@@ -2050,7 +2050,7 @@ function openLbView(days, btn){
   if(inlineBtns[map[days]]) inlineBtns[map[days]].classList.add('active');
   currentPeriod=days;
   const labels={3:'বিগত ৩ দিন',7:'বিগত ৭ দিন',15:'বিগত ১৫ দিন',30:'বিগত ৩০ দিন'};
-  document.getElementById('lbFullTitle').textContent=`Leaderboard — ${labels[days]||''}`;
+  document.getElementById('lbFullTitle').textContent=`Ultimate Leaderboard — ${labels[days]||''}`;
   loadLeaderboard(days);
 }
 
@@ -2068,7 +2068,7 @@ function switchLbPeriod(days, btn){
   if(inlineBtns[map[days]]) inlineBtns[map[days]].classList.add('active');
   currentPeriod=days;
   const labels={3:'বিগত ৩ দিন',7:'বিগত ৭ দিন',15:'বিগত ১৫ দিন',30:'বিগত ৩০ দিন'};
-  document.getElementById('lbFullTitle').textContent=`Leaderboard — ${labels[days]||''}`;
+  document.getElementById('lbFullTitle').textContent=`Ultimate Leaderboard — ${labels[days]||''}`;
   loadLeaderboard(days);
 }
 
