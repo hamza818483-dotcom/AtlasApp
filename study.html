@@ -274,13 +274,13 @@
         <span class="type-icon">📝</span>
         <div class="type-info"><div class="type-name">Standard MCQ</div><div class="type-desc">সাধারণ বহুনির্বাচনী প্রশ্ন</div></div>→
       </button>
-      <button class="type-btn" onclick="startExam('true_false')">
+      <button class="type-btn" id="typeBtnTF" onclick="startExamGuarded('true_false')">
         <span class="type-icon">✅</span>
-        <div class="type-info"><div class="type-name">সত্য / মিথ্যা</div><div class="type-desc">True/False ধরনের প্রশ্ন</div></div>→
+        <div class="type-info"><div class="type-name">সত্য / মিথ্যা</div><div class="type-desc">True/False ধরনের প্রশ্ন</div></div><span id="tfLockBadge"></span>
       </button>
-      <button class="type-btn" onclick="startExam('hard')">
+      <button class="type-btn" id="typeBtnHard" onclick="startExamGuarded('hard')">
         <span class="type-icon">🔥</span>
-        <div class="type-info"><div class="type-name">কঠিন প্রশ্ন</div><div class="type-desc">বিশ্লেষণমূলক কঠিন MCQ</div></div>→
+        <div class="type-info"><div class="type-name">কঠিন প্রশ্ন</div><div class="type-desc">বিশ্লেষণমূলক কঠিন MCQ</div></div><span id="hardLockBadge"></span>
       </button>
     </div>
   </div>
@@ -585,6 +585,15 @@ function openSheet(page) {
             mainTitle.textContent = 'MCQ ধরন বেছে নাও';
         }
     }
+    // Premium lock badge update
+    const locked = !canUseAdvancedTypes();
+    const tfBadge = document.getElementById('tfLockBadge');
+    const hardBadge = document.getElementById('hardLockBadge');
+    if (tfBadge) tfBadge.textContent = locked ? '🔒' : '→';
+    if (hardBadge) hardBadge.textContent = locked ? '🔒' : '→';
+    document.getElementById('typeBtnTF')?.style.setProperty('opacity', locked ? '0.55' : '1');
+    document.getElementById('typeBtnHard')?.style.setProperty('opacity', locked ? '0.55' : '1');
+
     document.getElementById('sheet').style.display = 'flex';
 }
 
@@ -596,6 +605,17 @@ function pickSinglePage(p) {
 
 function closeSheet(e) {
     if (e.target.id === 'sheet') { document.getElementById('sheet').style.display = 'none'; sheetSinglePage = null; }
+}
+
+function isAdmin() { try { return currentUser?.phone==='01754365403' || currentUser?.role==='admin' || currentUser?.role==='sub_admin'; } catch(_) { return false; } }
+function canUseAdvancedTypes() { return isAdmin() || !!(currentUser?.is_premium); }
+
+function startExamGuarded(type) {
+    if ((type === 'true_false' || type === 'hard') && !canUseAdvancedTypes()) {
+        showToast('⭐ এই ধরন শুধু Premium ইউজারদের জন্য — আপগ্রেড করো');
+        return;
+    }
+    startExam(type);
 }
 
 async function startExam(type) {
