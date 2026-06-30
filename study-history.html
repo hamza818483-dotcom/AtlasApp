@@ -62,6 +62,21 @@
   padding: 14px 12px; margin-bottom: 16px;
 }
 .sh-chart-title { font-size: 12px; font-weight: 800; color: var(--text); margin-bottom: 12px; }
+
+.sh-advice-btn {
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 8px; border: none;
+  background: linear-gradient(135deg,#8B5CF6,#6366F1,#8B5CF6);
+  background-size: 200% 200%;
+  color: #fff; font-size: 10px; font-weight: 800; font-family: inherit;
+  cursor: pointer; flex-shrink: 0;
+  box-shadow: 0 0 8px rgba(139,92,246,.5), 0 0 16px rgba(99,102,241,.3);
+  animation: shAdviceGlow 2.2s ease-in-out infinite;
+}
+@keyframes shAdviceGlow {
+  0%,100% { background-position: 0% 50%; box-shadow: 0 0 8px rgba(139,92,246,.5), 0 0 16px rgba(99,102,241,.3); }
+  50% { background-position: 100% 50%; box-shadow: 0 0 14px rgba(139,92,246,.8), 0 0 24px rgba(99,102,241,.5); }
+}
 .sh-chart-row { display: flex; align-items: flex-end; gap: 6px; height: 110px; }
 .sh-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; gap: 4px; }
 .sh-bar { width: 100%; max-width: 26px; border-radius: 6px 6px 2px 2px; background: linear-gradient(180deg, var(--accent), #4338CA); min-height: 4px; transition: height .5s ease; }
@@ -137,6 +152,21 @@
   color: var(--text); line-height: 1.7; font-weight: 600;
 }
 .sh-feedback-box b { color: var(--accent); }
+
+/* ═══ ADVICE PANEL ═══ */
+.sh-adv-headline { font-size: 15px; font-weight: 900; text-align: center; margin-bottom: 16px; line-height: 1.5; }
+.sh-adv-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.sh-adv-stat { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 10px 6px; text-align: center; }
+.sh-adv-stat-val { font-size: 14px; font-weight: 900; color: var(--text); }
+.sh-adv-stat-lbl { font-size: 8px; color: var(--text-secondary); font-weight: 700; margin-top: 2px; }
+.sh-adv-tips-title { font-size: 11px; font-weight: 800; color: var(--text-secondary); margin-bottom: 8px; }
+.sh-adv-tip {
+  display: flex; align-items: flex-start; gap: 8px;
+  background: rgba(139,92,246,.06); border: 1px solid rgba(139,92,246,.18);
+  border-radius: 10px; padding: 9px 11px; margin-bottom: 6px;
+  font-size: 12px; line-height: 1.5; color: var(--text);
+}
+.sh-adv-dot { width: 6px; height: 6px; border-radius: 50%; background: #8B5CF6; flex-shrink: 0; margin-top: 5px; }
 
 .sh-empty { text-align: center; padding: 30px 10px; color: var(--text-secondary); font-size: 12.5px; }
 .sh-loading { text-align: center; padding: 30px 10px; color: var(--text-secondary); font-size: 12px; }
@@ -222,9 +252,15 @@
     </div>
 
     <div class="sh-chart-card">
-        <div class="sh-chart-title" style="display:flex;align-items:center;gap:6px">
+        <div class="sh-chart-title" style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+  <span style="display:flex;align-items:center;gap:6px">
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><polyline points="16 7 22 7 22 13" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
   গত ৭ দিনের পড়াশোনা
+  </span>
+  <button class="sh-advice-btn" onclick="openAdvicePanel()">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 2L9 9l-7 1 5 5-1.5 7L12 18l6.5 4L17 15l5-5-7-1-3-7z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+    পরামর্শ
+  </button>
 </div>
         <div class="sh-chart-row" id="shChartRow"><div class="sh-loading">লোড হচ্ছে...</div></div>
     </div>
@@ -262,6 +298,13 @@
       </div>
     </div>
     <div class="sh-feedback-box" id="shPopupFeedback"></div>
+  </div>
+</div>
+
+<div class="sh-popup-bg" id="shAdviceBg" onclick="closeAdvicePanel()">
+  <div class="sh-popup" onclick="event.stopPropagation()">
+    <div class="sh-popup-handle"></div>
+    <div id="shAdviceBody"><div class="sh-loading">লোড হচ্ছে...</div></div>
   </div>
 </div>
 
@@ -576,6 +619,119 @@ function fmtHM(s){
   if(h>0) return `${h}h ${m}m`;
   if(m>0) return `${m}m`;
   return `${s}s`;
+}
+
+/* ═══ পরামর্শ — বিগত ৭ দিনের real data analysis ═══ */
+function openAdvicePanel(){
+  const bg = document.getElementById('shAdviceBg');
+  const body = document.getElementById('shAdviceBody');
+  bg.classList.add('show');
+  body.innerHTML = '<div class="sh-loading">বিশ্লেষণ হচ্ছে...</div>';
+
+  setTimeout(()=>{
+    const advice = buildAdvice();
+    body.innerHTML = advice;
+  }, 400);
+}
+function closeAdvicePanel(){ document.getElementById('shAdviceBg').classList.remove('show'); }
+
+function buildAdvice(){
+  // গত ৭ দিনের raw data (allSessions থেকে started_at দিয়ে গ্রুপ করা — chart-এর মতই সঠিক হিসাব)
+  const today = new Date().toISOString().slice(0,10);
+  const days = [];
+  for(let i=6;i>=0;i--){
+    const d = new Date(Date.now()-i*86400000).toISOString().slice(0,10);
+    const daySessions = (allSessions||[]).filter(s=>{
+      const dt = s.started_at||s.updated_at;
+      return dt && dt.slice(0,10)===d;
+    });
+    const studySecs = Math.min(daySessions.reduce((a,s)=>a+(s.study_seconds||0),0), 86400);
+    const breakSecs = daySessions.reduce((a,s)=>a+(s.break_seconds||0),0);
+    const sleepSecs = daySessions.reduce((a,s)=>a+(s.sleep_seconds||0),0);
+    const breaksUsed = daySessions.reduce((a,s)=>a+(s.breaks_used||0),0);
+    days.push({date:d, studySecs, breakSecs, sleepSecs, breaksUsed, isToday:d===today});
+  }
+
+  const totalStudy = days.reduce((a,d)=>a+d.studySecs,0);
+  const avgStudy = totalStudy/7;
+  const activeDays = days.filter(d=>d.studySecs>0).length;
+  const totalBreaks = days.reduce((a,d)=>a+d.breaksUsed,0);
+  const totalBreakSecs = days.reduce((a,d)=>a+d.breakSecs,0);
+  const totalSleepSecs = days.reduce((a,d)=>a+d.sleepSecs,0);
+
+  // consistency: কতগুলো দিন ০ পড়াশোনা
+  const zeroDays = 7-activeDays;
+  // trend: প্রথম ৩ দিন vs শেষ ৩ দিন (আজ বাদ দিয়ে)
+  const firstHalf = days.slice(0,3).reduce((a,d)=>a+d.studySecs,0)/3;
+  const lastHalf = days.slice(3,6).reduce((a,d)=>a+d.studySecs,0)/3;
+  const trendUp = lastHalf > firstHalf*1.15;
+  const trendDown = lastHalf < firstHalf*0.7;
+
+  // সর্বোচ্চ ও সর্বনিম্ন দিন
+  const sorted = [...days].sort((a,b)=>b.studySecs-a.studySecs);
+  const bestDay = sorted[0];
+  const BN_DAYS=['রবি','সোম','মঙ্গল','বুধ','বৃহঃ','শুক্র','শনি'];
+  const bestDayName = bestDay.studySecs>0 ? BN_DAYS[new Date(bestDay.date+'T12:00:00Z').getUTCDay()] : null;
+
+  let headline, tips=[], statusColor, statusIcon;
+
+  // ═══ Condition-based variety advice ═══
+  if(totalStudy===0){
+    statusColor='#EF4444'; statusIcon='😴';
+    headline='গত ৭ দিনে কোনো পড়াশোনার রেকর্ড নেই';
+    tips.push('আজই Focus Timer চালু করে একটা ছোট ২৫ মিনিটের session দিয়ে শুরু করো।');
+    tips.push('বড় লক্ষ্য না ভেবে প্রতিদিন মাত্র ৩০ মিনিট দিয়ে অভ্যাস তৈরি করো।');
+  } else if(zeroDays>=4){
+    statusColor='#F59E0B'; statusIcon='⚠️';
+    headline='ধারাবাহিকতা অনেক কম — সপ্তাহে মাত্র ' + activeDays + ' দিন পড়েছো';
+    tips.push('প্রতিদিন অল্প হলেও পড়ার অভ্যাস গড়ে তোলো — ধারাবাহিকতাই বড় ফলাফলের চাবিকাঠি।');
+    tips.push('একটানা বেশি পড়ার চেয়ে প্রতিদিন নিয়মিত ১ ঘণ্টা পড়া বেশি কার্যকর।');
+    if(bestDayName) tips.push(`${bestDayName}বার তুমি সবচেয়ে ভালো পড়েছিলে (${fmtHM(bestDay.studySecs)}) — সেই রুটিন বাকি দিনগুলোতেও রাখার চেষ্টা করো।`);
+  } else if(trendDown){
+    statusColor='#F59E0B'; statusIcon='📉';
+    headline='পড়াশোনার সময় কমে আসছে — মনোযোগ ধরে রাখতে হবে';
+    tips.push(`সপ্তাহের শুরুর দিকে গড়ে ${fmtHM(firstHalf)} পড়তে, এখন তা কমে ${fmtHM(lastHalf)} হয়েছে।`);
+    tips.push('Break Mode ব্যবহার করে ছোট ছোট বিরতি নিয়ে ক্লান্তি কমাও, যাতে দীর্ঘ সময় মনোযোগ ধরে রাখতে পারো।');
+    tips.push('ঘুমের সময় ঠিক রাখো — পর্যাপ্ত ঘুম মনোযোগ ফিরিয়ে আনতে সাহায্য করে।');
+  } else if(totalBreaks > activeDays*4){
+    statusColor='#F59E0B'; statusIcon='☕';
+    headline='অতিরিক্ত বিরতি নিচ্ছো — একটানা পড়ার অভ্যাস দরকার';
+    tips.push(`গড়ে দিনে প্রায় ${(totalBreaks/Math.max(activeDays,1)).toFixed(1)}টি বিরতি নিচ্ছো — এটা মনোযোগ ভেঙে দিতে পারে।`);
+    tips.push('Pomodoro পদ্ধতি ব্যবহার করো — ২৫ মিনিট একটানা পড়ে তারপর ৫ মিনিট বিরতি নাও।');
+    tips.push('বিরতির সময় ফোন থেকে দূরে থেকো, যাতে দ্রুত আবার মনোযোগ ফিরে আসে।');
+  } else if(avgStudy >= 14400){ // 4h+ avg
+    statusColor='#10B981'; statusIcon='🏆';
+    headline='চমৎকার পারফরম্যান্স! গড়ে দৈনিক ' + fmtHM(avgStudy) + ' পড়ছো';
+    tips.push('এই ধারাবাহিকতা বজায় রাখো — তুমি দারুণ পথে আছো!');
+    if(totalSleepSecs/7 < 18000) tips.push('তবে ঘুমের প্রতি একটু বেশি যত্ন নাও — পর্যাপ্ত বিশ্রাম দীর্ঘমেয়াদে পড়াশোনার মান বাড়ায়।');
+    else tips.push('ঘুম ও পড়াশোনার ভারসাম্য ভালো আছে — এভাবেই চালিয়ে যাও।');
+  } else if(trendUp){
+    statusColor='#10B981'; statusIcon='📈';
+    headline='দারুণ! পড়াশোনার সময় বাড়ছে প্রতিদিন';
+    tips.push(`সপ্তাহের শুরুতে গড়ে ${fmtHM(firstHalf)} ছিল, এখন ${fmtHM(lastHalf)} হয়েছে — চমৎকার উন্নতি!`);
+    tips.push('এই গতি ধরে রাখলে সামনের সপ্তাহে আরও ভালো ফলাফল আসবে।');
+  } else {
+    statusColor='#6366F1'; statusIcon='💡';
+    headline='মোটামুটি ভালো চলছে — আরেকটু ধারাবাহিক হলে আরও ভালো হবে';
+    tips.push(`গত ৭ দিনে গড়ে দৈনিক ${fmtHM(avgStudy)} পড়েছো, মোট ${activeDays} দিন সক্রিয় ছিলে।`);
+    tips.push('প্রতিদিন একটা নির্দিষ্ট সময়ে পড়তে বসার অভ্যাস করো — এতে মস্তিষ্ক স্বয়ংক্রিয়ভাবে প্রস্তুত হয়ে যাবে।');
+    if(bestDayName) tips.push(`${bestDayName}বার তোমার সেরা দিন ছিল (${fmtHM(bestDay.studySecs)}) — কী আলাদা করেছিলে সেদিন, মনে করার চেষ্টা করো।`);
+  }
+
+  const tipsHtml = tips.map(t=>`<div class="sh-adv-tip"><span class="sh-adv-dot"></span>${t}</div>`).join('');
+
+  return `
+    <div class="sh-adv-headline" style="color:${statusColor}">
+      <span style="font-size:20px">${statusIcon}</span> ${headline}
+    </div>
+    <div class="sh-adv-stats">
+      <div class="sh-adv-stat"><div class="sh-adv-stat-val">${fmtHM(totalStudy)}</div><div class="sh-adv-stat-lbl">মোট পড়াশোনা</div></div>
+      <div class="sh-adv-stat"><div class="sh-adv-stat-val">${activeDays}/৭</div><div class="sh-adv-stat-lbl">সক্রিয় দিন</div></div>
+      <div class="sh-adv-stat"><div class="sh-adv-stat-val">${fmtHM(avgStudy)}</div><div class="sh-adv-stat-lbl">দৈনিক গড়</div></div>
+    </div>
+    <div class="sh-adv-tips-title">পরামর্শ</div>
+    ${tipsHtml}
+  `;
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
