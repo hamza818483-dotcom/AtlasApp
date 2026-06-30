@@ -101,7 +101,8 @@ const MB_PERMANENT_RULES = (
     `২. প্রশ্ন বা ব্যাখ্যায় কখনো সোর্স-রেফারেন্স করে কথা বলবে না — অর্থাৎ "উল্লেখিত চিত্রে", "বক্সে", "ছকে", ` +
     `"উদ্দীপকে", "সারণিতে", "টপিকে", "পৃষ্ঠা নং এ দেখা যাচ্ছে", "বলা আছে", "উল্লেখ করা আছে", "লক্ষ করা যায়", ` +
     `"বর্ণনা আছে" — এই ধরনের কোনো বাক্যাংশ ব্যবহার করবে না। প্রশ্ন ও ব্যাখ্যা সবসময় স্বয়ংসম্পূর্ণ ও সরাসরি বিষয়বস্তু ` +
-    `নিয়ে লিখতে হবে, কোনো উৎস/অবস্থান নির্দেশ করা যাবে না।`
+    `নিয়ে লিখতে হবে, কোনো উৎস/অবস্থান নির্দেশ করা যাবে না।\n` +
+    `৩. ঠিক যত সংখ্যক প্রশ্ন চাওয়া হয়েছে, তার চেয়ে কম বা বেশি দেওয়া যাবে না — সংখ্যাটি অবশ্যই হুবহু মানতে হবে।`
 );
 let mbCsvData     = [];
 let mbAiData      = [];
@@ -1423,12 +1424,15 @@ async function mbAiGenerate() {
             }
         }
 
-        const parsed  = mbParseAiJson(rawJson);
+        let parsed  = mbParseAiJson(rawJson);
 
         if (!parsed || !parsed.length) {
             mbToast('AI সঠিক JSON দেয়নি। পুনরায় চেষ্টা করুন।', 'error');
             return;
         }
+        // Count must-follow: চাহিদার চেয়ে বেশি দিলে কেটে দাও, কম দিলে warning
+        if (parsed.length > count.max) parsed = parsed.slice(0, count.max);
+        if (parsed.length < count.min) console.warn(`চাহিদা ছিল ${count.label}, AI দিয়েছে ${parsed.length}টি`);
 
         mbAiData = parsed.map(m => ({ id: uid(), ...m, type: m.type || type }));
 
@@ -1744,7 +1748,24 @@ function mbUpdateBulkUI(job) {
     document.getElementById('mbBulkLabel').textContent =
         `⚡ চলছে: পেইজ ${job.currentPage}/${job.to} (${job.completedCount}/${job.totalPages})`;
     document.getElementById('mbBulkBarFill').style.width = pct + '%';
-    document.getElementById('mbBulkStatusLine').textContent = `${pct}% সম্পন্ন`;
+
+    // ETA হিসাব — গড় সময়/পেইজ থেকে বাকি পেইজের আনুমানিক সময়
+    let etaStr = '';
+    if (job.completedCount > 0 && job.startedAt) {
+        const elapsedSec = (Date.now() - job.startedAt) / 1000;
+        const avgPerPage = elapsedSec / job.completedCount;
+        const remainingPages = job.totalPages - job.completedCount;
+        const etaSec = Math.round(avgPerPage * remainingPages);
+        etaStr = etaSec > 60 ? ` · বাকি ~${Math.ceil(etaSec/60)} মিনিট` : etaSec > 0 ? ` · বাকি ~${etaSec}s` : '';
+    }
+    const totalMcq = job.totalMcqGenerated || 0;
+    document.getElementById('mbBulkStatusLine').textContent =
+        `${pct}% সম্পন্ন · মোট ${totalMcq}টি MCQ তৈরি হয়েছে${etaStr}`;
+
+    // চলমান bulk job-এর বর্তমান পেইজ অনুযায়ী page-pill dynamically highlight করো
+    document.querySelectorAll('[id^="mbPill-"]').forEach(el => el.classList.remove('mb-pill-active-bulk'));
+    const activePill = document.getElementById('mbPill-' + job.currentPage);
+    if (activePill) activePill.classList.add('mb-pill-active-bulk');
 }
 
 // মূল bulk loop — serially প্রতিটা পেইজে MCQ generate করে save করে, live progress দেখায়।
@@ -1760,8 +1781,9 @@ async function mbRunBulkJob(job) {
         if (!mbBulkRunning) return;
 
         try {
-            await mbGenerateForPage(p, job.countRaw, job.type);
+            const generatedCount = await mbGenerateForPage(p, job.countRaw, job.type);
             job.completedCount++;
+            job.totalMcqGenerated = (job.totalMcqGenerated || 0) + (generatedCount || 0);
         } catch (e) {
             console.error('Bulk page ' + p + ' failed:', e.message);
             // একটা পেইজ fail করলেও চালিয়ে যাও — পুরো job থামবে না
@@ -1829,8 +1851,15 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
         }
     }
 
-    const parsed = mbParseAiJson(rawJson);
+    let parsed = mbParseAiJson(rawJson);
     if (!parsed || !parsed.length) throw new Error('AI সঠিক JSON দেয়নি');
+
+    // Count must-follow: AI যদি চাহিদার চেয়ে কম প্রশ্ন দেয়, এক্সট্রা দিলে সংখ্যা কেটে দেওয়া হয়,
+    // কম দিলে warning log রাখা হয় (silently truncate না করে exact min মানা হয় যতটা সম্ভব)।
+    if (parsed.length > count.max) parsed = parsed.slice(0, count.max);
+    if (parsed.length < count.min) {
+        console.warn(`Page ${pageNum}: চাহিদা ছিল ${count.label}, AI দিয়েছে ${parsed.length}টি`);
+    }
 
     const newMcqs = parsed.map(m => ({ id: uid(), ...m, type: m.type || type }));
     const existingRow = mbAllPageDataAllTypes.find(r => r.page_number === pageNum && r.mcq_type === type);
@@ -1847,6 +1876,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     // প্রতিটা পেইজের জন্য আলাদা CSV ফাইল — ফাইলের নামে page no থাকে, শুধু এই batch-এর
     // নতুন প্রশ্নগুলো (পুরো accumulated history না) — যাতে প্রতি পেইজের জন্য পরিষ্কার আলাদা ফাইল তৈরি হয়।
     await mbSaveMcqsAsCsv(newMcqs, pageNum, type);
+    return newMcqs.length; // bulk progress-এ total MCQ count ট্র্যাক করার জন্য
 }
 
 // Page reload হলে আগের চলমান job থাকলে সেটা আবার resume করে — "refresh দিলেও কাজ থামবে না"
