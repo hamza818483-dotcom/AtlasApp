@@ -1291,10 +1291,24 @@ async function mbGetPageImageBase64(pageNum) {
     } catch { return null; }
 }
 
+// "প্রশ্ন সংখ্যা" বক্সে single number ("10") বা range ("5-10") — দুটোই সাপোর্ট করে।
+// AI prompt-এ পাঠানোর জন্য একটা readable label এবং loop/validation এর জন্য min/max রিটার্ন করে।
+function mbParseCountInput(raw) {
+    const s = (raw || '10').trim();
+    const m = s.match(/^(\d+)\s*-\s*(\d+)$/);
+    if (m) {
+        const min = parseInt(m[1]), max = parseInt(m[2]);
+        if (min > 0 && max >= min) return { min, max, label: `${min} থেকে ${max}টি`, forApi: max };
+    }
+    const n = parseInt(s) || 10;
+    return { min: n, max: n, label: `${n}টি`, forApi: n };
+}
+
 async function mbAiGenerate() {
     if (!mbPdfDoc) { mbToast('আগে একটি PDF খুলুন', 'error'); return; }
 
-    const count    = parseInt((document.getElementById('mbAiCount') || {}).value) || 10;
+    const countRaw = ((document.getElementById('mbAiCount') || {}).value || '10').trim();
+    const count    = mbParseCountInput(countRaw); // single number বা "5-10" রেঞ্জ উভয়ই সাপোর্ট করে
     const type     = mbAiTypeKey;
     const customP  = ((document.getElementById('mbAiPrompt') || {}).value || '').trim();
 
@@ -1315,7 +1329,7 @@ async function mbAiGenerate() {
         const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","type":"${type}"}]`;
         const savedP = mbGetSavedPrompt(type);
         const basePrompt = customP || savedP || (
-            `${typeLabel[type]||type} ধরনের ${count}টি MCQ তৈরি করো। ` +
+            `${typeLabel[type]||type} ধরনের ${count.label} MCQ তৈরি করো। ` +
             `Content যে ভাষায় আছে সেই ভাষায় রাখো। ` +
             `প্রতিটিতে চারটি বিকল্প (option_k, option_kh, option_g, option_gh) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে।`
         );
@@ -1459,47 +1473,82 @@ async function mbSaveAiMcqs() {
    ════════════════════════════════════════════════════ */
 const MB_BULK_KEY = 'mbBulkJob';
 let mbBulkRunning = false;
-let mbBulkMode = 'all'; // 'all' | 'range'
+let mbGenMode = 'single'; // 'single' | 'all' | 'range' — মূল Generate বাটনের আচরণ নির্ধারণ করে
 
-function mbOpenBulkSheet(mode) {
+// Apply-to-All / Page-Range টগল — ক্লিক করলে সেই মোড চালু হয়, আবার ক্লিক করলে single page এ ফিরে আসে
+function mbSetGenMode(mode) {
     if (!mbPdfDoc) { mbToast('আগে একটি PDF খুলুন', 'error'); return; }
-    mbBulkMode = mode;
-    const sheet = document.getElementById('mbBulkSheet');
-    const title = document.getElementById('mbBulkSheetTitle');
-    const rangeRow = document.getElementById('mbBulkRangeRow');
-    const typeLabel = { standard: '📚 Standard', true_false: '✅ True-False', hard: '🔥 Hard' };
-    document.getElementById('mbBulkTypeShow').textContent = typeLabel[mbAiTypeKey] || mbAiTypeKey;
-    if (mode === 'all') {
-        title.textContent = '⚡ Apply to All — প্রতিটি পেইজে MCQ তৈরি হবে';
-        rangeRow.style.display = 'none';
-    } else {
-        title.textContent = '⚡ Page Range — নির্দিষ্ট রেঞ্জে MCQ তৈরি হবে';
-        rangeRow.style.display = 'block';
-        document.getElementById('mbBulkFrom').value = 1;
-        document.getElementById('mbBulkTo').value = mbPdfDoc.numPages || 1;
+    mbGenMode = (mbGenMode === mode) ? 'single' : mode;
+
+    const allBtn   = document.getElementById('mbModeAllBtn');
+    const rangeBtn = document.getElementById('mbModeRangeBtn');
+    const rangeBox = document.getElementById('mbRangeBox');
+    const genBtn   = document.getElementById('mbAiGenBtn');
+
+    allBtn.classList.toggle('selected', mbGenMode === 'all');
+    rangeBtn.classList.toggle('selected', mbGenMode === 'range');
+    rangeBox.style.display = (mbGenMode === 'range') ? 'block' : 'none';
+
+    if (mbGenMode === 'range') {
+        document.getElementById('mbBulkFrom').value = document.getElementById('mbBulkFrom').value || 1;
+        document.getElementById('mbBulkTo').value = document.getElementById('mbBulkTo').value || mbPdfDoc.numPages || 1;
+        mbUpdateRangeSummary();
     }
-    sheet.style.display = 'flex';
+
+    if (mbGenMode === 'all') {
+        genBtn.textContent = `🤖 সকল ${mbPdfDoc.numPages} পেইজ থেকে প্রশ্ন বানান`;
+    } else if (mbGenMode === 'range') {
+        mbUpdateRangeSummary(); // label টাও আপডেট করে দেয়
+    } else {
+        genBtn.textContent = '🤖 এই পেইজ থেকে MCQ তৈরি করো';
+    }
 }
-function mbCloseBulkSheet() { document.getElementById('mbBulkSheet').style.display = 'none'; }
+
+// Range ইনপুট বদলালে লাইভ সামারি + Generate বাটনের লেবেল আপডেট হয়
+function mbUpdateRangeSummary() {
+    const totalPages = mbPdfDoc ? mbPdfDoc.numPages : 0;
+    const from = Math.max(1, parseInt(document.getElementById('mbBulkFrom').value) || 1);
+    const to   = Math.min(totalPages || from, parseInt(document.getElementById('mbBulkTo').value) || from);
+    const summaryEl = document.getElementById('mbRangeSummary');
+    const genBtn = document.getElementById('mbAiGenBtn');
+
+    if (from > to) {
+        summaryEl.textContent = '⚠️ শুরুর পেইজ শেষের চেয়ে বড় হতে পারবে না';
+        summaryEl.style.color = 'var(--error,#ef4444)';
+        return;
+    }
+    const count = to - from + 1;
+    summaryEl.style.color = 'var(--text2)';
+    summaryEl.textContent = `${from} থেকে ${to} পেইজ পর্যন্ত — মোট ${count}টি পেইজে প্রশ্ন তৈরি হবে (PDF-এ মোট ${totalPages} পেইজ)`;
+    if (mbGenMode === 'range') genBtn.textContent = `🤖 ${count}টি পেইজ থেকে প্রশ্ন বানান`;
+}
+
+// মূল Generate বাটন — mbGenMode অনুযায়ী single-page বা bulk (all/range) generate চালায়
+function mbGenerateClick() {
+    if (mbGenMode === 'single') { mbAiGenerate(); return; }
+    mbStartBulkGenerate();
+}
 
 function mbStartBulkGenerate() {
     const totalPages = mbPdfDoc.numPages || 1;
     let from = 1, to = totalPages;
-    if (mbBulkMode === 'range') {
+    if (mbGenMode === 'range') {
         from = Math.max(1, parseInt(document.getElementById('mbBulkFrom').value) || 1);
         to   = Math.min(totalPages, parseInt(document.getElementById('mbBulkTo').value) || totalPages);
         if (from > to) { mbToast('শুরুর পেইজ শেষের চেয়ে বড় হতে পারবে না', 'error'); return; }
     }
-    const count = parseInt(document.getElementById('mbBulkCount').value) || 10;
+    // প্রতি পেইজে কতগুলো প্রশ্ন — এখন মূল "প্রশ্ন সংখ্যা" বক্স থেকেই নেওয়া হয় (mbAiCount),
+    // যেটা single-page generate এও একই input — ইউজার একবারই সেট করলে সব মোডে কাজ করবে।
+    // Range ("5-10") বা single number ("10") উভয়ই সাপোর্টেড — mbGenerateForPage এ পাঠানো হয়।
+    const countRaw = (document.getElementById('mbAiCount').value || '10').trim();
     const type  = mbAiTypeKey;
 
     const job = {
-        pdfId: mbPdfId, from, to, count, type,
+        pdfId: mbPdfId, from, to, countRaw, type,
         currentPage: from, done: false, stopped: false,
         startedAt: Date.now(), totalPages: (to - from + 1), completedCount: 0
     };
     localStorage.setItem(MB_BULK_KEY, JSON.stringify(job));
-    mbCloseBulkSheet();
     mbBulkRunning = true;
     mbRunBulkJob(job);
 }
@@ -1539,7 +1588,7 @@ async function mbRunBulkJob(job) {
         if (!mbBulkRunning) return;
 
         try {
-            await mbGenerateForPage(p, job.count, job.type);
+            await mbGenerateForPage(p, job.countRaw, job.type);
             job.completedCount++;
         } catch (e) {
             console.error('Bulk page ' + p + ' failed:', e.message);
@@ -1562,12 +1611,13 @@ async function mbRunBulkJob(job) {
 
 // একটা নির্দিষ্ট পেইজের জন্য MCQ generate + save করে — mbAiGenerate এর core logic বিচ্ছিন্ন করে আলাদা করা হয়েছে
 // যাতে single-page generate ও bulk generate একই function ব্যবহার করে (কোড ডুপ্লিকেশন এড়াতে)।
-async function mbGenerateForPage(pageNum, count, type) {
+async function mbGenerateForPage(pageNum, countRaw, type) {
+    const count = mbParseCountInput(countRaw);
     const typeLabel = { standard: 'সাধারণ', true_false: 'সত্য/মিথ্যা', hard: 'কঠিন' };
     const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","type":"${type}"}]`;
     const savedP = mbGetSavedPrompt(type);
     const basePrompt = savedP || (
-        `${typeLabel[type]||type} ধরনের ${count}টি MCQ তৈরি করো। ` +
+        `${typeLabel[type]||type} ধরনের ${count.label} MCQ তৈরি করো। ` +
         `Content যে ভাষায় আছে সেই ভাষায় রাখো। ` +
         `প্রতিটিতে চারটি বিকল্প (option_k, option_kh, option_g, option_gh) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে।`
     );
@@ -1863,10 +1913,11 @@ window.mbCsvDrop          = mbCsvDrop;
 window.mbCsvFileSelect    = mbCsvFileSelect;
 window.mbImportCsv        = mbImportCsv;
 window.mbAiGenerate       = mbAiGenerate;
-window.mbOpenBulkSheet    = mbOpenBulkSheet;
-window.mbCloseBulkSheet   = mbCloseBulkSheet;
-window.mbStartBulkGenerate= mbStartBulkGenerate;
-window.mbStopBulkGenerate = mbStopBulkGenerate;
+window.mbSetGenMode        = mbSetGenMode;
+window.mbUpdateRangeSummary= mbUpdateRangeSummary;
+window.mbGenerateClick     = mbGenerateClick;
+window.mbStartBulkGenerate = mbStartBulkGenerate;
+window.mbStopBulkGenerate  = mbStopBulkGenerate;
 window.mbSaveAiMcqs       = mbSaveAiMcqs;
 window.mbDiscardAi        = mbDiscardAi;
 window.mbStartAutoOcr     = mbStartAutoOcr;
