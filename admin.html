@@ -1821,6 +1821,9 @@ async function deleteItem(table, id, loadFn) {
 ═══════════════════════════════════════════════ */
 function switchSection(sec, el) {
     currentSection = sec;
+    // Refresh/reload করলেও সর্বশেষ segment-এই থাকার জন্য সংরক্ষণ করা হচ্ছে —
+    // আগে এটা কোথাও persist হতো না, তাই refresh দিলে সবসময় "Class" সেগমেন্টে ফিরে যেতো।
+    try { localStorage.setItem('atlasAdminLastSection', sec); } catch (_) {}
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
     if (el) el.classList.add('active');
@@ -3317,8 +3320,22 @@ document.addEventListener('DOMContentLoaded', () => {
     setSwitchVal('examAllowPreview', true);
     setSwitchVal('examIsLocked', false);
 
-    // Load first tab + stats
-    loadClasses();
+    // Refresh/reload করলে সর্বশেষ যে segment-এ ছিলাম সেটাই আবার দেখানো হবে —
+    // আগে এখানে সবসময় hardcoded loadClasses() কল হতো, ফলে refresh দিলে
+    // অন্য কোনো সেগমেন্টে (যেমন মূলবই/PDF Edit) থাকলেও Class সেগমেন্টে চলে যেতো।
+    let restoredSection = null;
+    try { restoredSection = localStorage.getItem('atlasAdminLastSection'); } catch (_) {}
+    if (restoredSection && restoredSection !== 'class') {
+        const btn = Array.from(document.querySelectorAll('.tab-btn'))
+            .find(b => b.getAttribute('onclick') === `switchSection('${restoredSection}',this)`);
+        if (btn) {
+            switchSection(restoredSection, btn);
+        } else {
+            loadClasses(); // সংরক্ষিত section আর existing না থাকলে fallback
+        }
+    } else {
+        loadClasses();
+    }
     loadOwner();
     loadDashboardStats();
 
