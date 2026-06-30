@@ -2520,9 +2520,12 @@ function buildRankCard(s,rank,showStatus){
 /* ═══ COMPARE ═══ */
 let cmpTarget=null, cmpPeriod=1;
 
+let _cmpReqSeq = 0; // race-condition guard — Compare modal
+
 function openCompare(btn){
   let d;
   try{ d=JSON.parse(btn.dataset.cmp); }catch(e){ return; }
+  _cmpReqSeq++; // আগের কোনো pending compare request invalidate করে দাও
   cmpTarget={name:d.name,batch:d.batch,college:d.college,secs:d.secs,breaks:d.breaks,phone:d.phone,photoUrl:d.photo};
   cmpPeriod=1;
   document.getElementById('cmMeName').textContent=currentUser?.name||'তুমি';
@@ -2554,6 +2557,7 @@ function setCmpPeriod(days,btn){
 async function buildCompare(days){
   if(!cmpTarget) return;
   const statsEl=document.getElementById('cmStats');
+  const mySeq = ++_cmpReqSeq;
   statsEl.innerHTML=`<div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:11px">তুলনা লোড হচ্ছে...</div>`;
 
   let myStudy=0, myBreaks=0, theirStudy=0, theirBreaks=0, myDaily={}, theirDaily={};
@@ -2564,10 +2568,10 @@ async function buildCompare(days){
 
   if(days===1 && currentUser && theirPhone===myPhone){
     // edge case: comparing self with self
-    myStudy=theirStudy=studySecs; myBreaks=theirBreaks=breaksUsed;
+    myStudy=theirStudy=accumulatedStudySecs+studySecs; myBreaks=theirBreaks=breaksUsed;
   } else if(days===1){
     // "today" — use live session data for me, and the live snapshot for them
-    myStudy=studySecs; myBreaks=breaksUsed;
+    myStudy=accumulatedStudySecs+studySecs; myBreaks=breaksUsed;
     theirStudy=cmpTarget.secs; theirBreaks=cmpTarget.breaks;
   }
 
@@ -2576,6 +2580,7 @@ async function buildCompare(days){
     const since=new Date(Date.now()-days*86400000).toISOString().slice(0,10);
     const phoneList=[myPhone,theirPhone].filter(Boolean).map(p=>`"${p}"`).join(',');
     const rows=phoneList?await safeFetch(`${SUPABASE_URL}/rest/v1/study_tracker_daily?user_phone=in.(${phoneList})&study_date=gte.${since}&select=user_phone,study_date,total_seconds`):[];
+    if(mySeq !== _cmpReqSeq) return; // race-guard — ততক্ষণে অন্য period select হয়ে গেছে
     (rows||[]).forEach(r=>{
       if(myPhone && r.user_phone===myPhone){ myDaily[r.study_date]=(myDaily[r.study_date]||0)+(r.total_seconds||0); }
       if(theirPhone && r.user_phone===theirPhone){ theirDaily[r.study_date]=(theirDaily[r.study_date]||0)+(r.total_seconds||0); }
@@ -2586,7 +2591,7 @@ async function buildCompare(days){
       // include today's live session for me if it's running and not yet flushed to DB
       if(timerRunning && currentUser){
         const today=new Date().toISOString().slice(0,10);
-        if(!(today in myDaily)) myStudy+=studySecs;
+        if(!(today in myDaily)) myStudy+=(accumulatedStudySecs+studySecs);
       }
       myBreaks=breaksUsed; theirBreaks=cmpTarget.breaks;
     } else {
@@ -2596,6 +2601,7 @@ async function buildCompare(days){
     }
   } catch(_){ /* fall back to whatever totals we already had */ }
 
+  if(mySeq !== _cmpReqSeq) return; // race-guard — render করার আগে শেষ চেক
   renderCompareStats(myStudy,myBreaks,theirStudy,theirBreaks,myDaily,theirDaily,days);
 }
 
