@@ -3505,7 +3505,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div style="width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 10px"></div>
                         <div style="font-size:12px;color:var(--text2)">AI MCQ তৈরি করছে...</div>
                     </div>
-                    <button class="btn btn-primary btn-full" id="mbAiGenBtn" onclick="mbAiGenerate()">🤖 AI দিয়ে MCQ তৈরি করো</button>
+                    <button class="btn btn-primary btn-full" id="mbAiGenBtn" onclick="mbAiGenerate()">🤖 এই পেইজ থেকে MCQ তৈরি করো</button>
+
+                    <div style="display:flex;gap:8px;margin-top:10px">
+                        <button class="btn btn-outline btn-full" style="font-size:11.5px;padding:9px 8px" onclick="mbOpenBulkSheet('all')">⚡ Apply to All</button>
+                        <button class="btn btn-outline btn-full" style="font-size:11.5px;padding:9px 8px" onclick="mbOpenBulkSheet('range')">⚡ Page Range</button>
+                    </div>
+
+                    <!-- Compact live bulk-generation progress box — persists across refresh/navigation -->
+                    <div id="mbBulkBox" style="display:none;margin-top:12px;background:rgba(108,99,255,0.06);border:1px solid rgba(108,99,255,0.25);border-radius:var(--radius-sm);padding:10px 12px">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                            <span style="font-size:11.5px;font-weight:700;color:var(--accent)" id="mbBulkLabel">⚡ চলছে: পেইজ ০/০</span>
+                            <button class="btn btn-sm btn-outline" style="font-size:10px;padding:3px 9px" onclick="mbStopBulkGenerate()">⏹ থামাও</button>
+                        </div>
+                        <div style="height:6px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden">
+                            <div id="mbBulkBarFill" style="height:100%;background:linear-gradient(90deg,#6C63FF,#a78bfa);width:0%;transition:width .3s;border-radius:4px"></div>
+                        </div>
+                        <div style="font-size:10px;color:var(--text3);margin-top:5px" id="mbBulkStatusLine">প্রস্তুত হচ্ছে...</div>
+                    </div>
                     <div id="mbAiResult" style="display:none;margin-top:14px">
                         <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px" id="mbAiResultHeader"></div>
                         <div id="mbAiPreviewList"></div>
@@ -3526,6 +3543,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
     </div>
 </div>
+
+<!-- ── Bulk AI Generate Sheet (Apply to All / Page Range) ── -->
+<div id="mbBulkSheet" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;align-items:flex-end;justify-content:center" onclick="if(event.target===this)mbCloseBulkSheet()">
+    <div style="background:var(--card-bg,#1a1a2e);border-radius:20px 20px 0 0;padding:20px 16px 28px;width:100%;max-width:480px">
+        <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px"></div>
+        <div style="font-size:15px;font-weight:800;margin-bottom:14px" id="mbBulkSheetTitle">⚡ Apply to All</div>
+
+        <div id="mbBulkRangeRow" style="display:none;margin-bottom:12px">
+            <label class="form-label">পেইজ রেঞ্জ</label>
+            <div style="display:flex;align-items:center;gap:8px">
+                <input type="number" class="form-input" id="mbBulkFrom" min="1" placeholder="শুরু" style="flex:1">
+                <span style="color:var(--text3)">—</span>
+                <input type="number" class="form-input" id="mbBulkTo" min="1" placeholder="শেষ" style="flex:1">
+            </div>
+        </div>
+
+        <div style="margin-bottom:12px">
+            <label class="form-label">প্রতি পেইজে কতগুলো MCQ</label>
+            <input type="number" class="form-input" id="mbBulkCount" value="10" min="1" max="20" style="max-width:120px">
+        </div>
+
+        <div style="margin-bottom:16px">
+            <label class="form-label">MCQ ধরন (বর্তমান নির্বাচিত প্রকার অনুসরণ করবে)</label>
+            <div style="font-size:12px;color:var(--text2);background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px" id="mbBulkTypeShow">📚 Standard</div>
+        </div>
+
+        <div style="display:flex;gap:10px">
+            <button class="btn btn-outline btn-full" onclick="mbCloseBulkSheet()">বাতিল</button>
+            <button class="btn btn-primary btn-full" onclick="mbStartBulkGenerate()">▶ শুরু করো</button>
+        </div>
+    </div>
+</div>
+
 <!-- মূলবই MCQ panel — new isolated feature, copied/adapted from AtlasPro's admin/pdf.html -->
 <script src="mulboi-mcq-admin.js"></script>
 </body>

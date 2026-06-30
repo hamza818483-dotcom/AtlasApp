@@ -753,6 +753,7 @@ function mbGoToPagePill(p) {
 
 async function mbLoadAllPageMcqs() {
     if (!mbPdfId) return;
+    mbResumeBulkJob();
     try {
         // admin manually-added MCQ — editing/preview এর জন্য আলাদা রাখা হয়
         const res = await mbApi(
@@ -1450,6 +1451,190 @@ async function mbSaveAiMcqs() {
     }
 }
 
+/* ════════════════════════════════════════════════════
+   14b. BULK AI GENERATE — Apply to All / Page Range
+   Persistent background job: state সংরক্ষিত হয় localStorage এ,
+   যাতে page refresh/navigate করলেও কাজ থেমে না যায়, বরং চালু পেইজে
+   আবার দেখা গেলে progress box সেই জায়গা থেকেই চলতে থাকে।
+   ════════════════════════════════════════════════════ */
+const MB_BULK_KEY = 'mbBulkJob';
+let mbBulkRunning = false;
+let mbBulkMode = 'all'; // 'all' | 'range'
+
+function mbOpenBulkSheet(mode) {
+    if (!mbPdfDoc) { mbToast('আগে একটি PDF খুলুন', 'error'); return; }
+    mbBulkMode = mode;
+    const sheet = document.getElementById('mbBulkSheet');
+    const title = document.getElementById('mbBulkSheetTitle');
+    const rangeRow = document.getElementById('mbBulkRangeRow');
+    const typeLabel = { standard: '📚 Standard', true_false: '✅ True-False', hard: '🔥 Hard' };
+    document.getElementById('mbBulkTypeShow').textContent = typeLabel[mbAiTypeKey] || mbAiTypeKey;
+    if (mode === 'all') {
+        title.textContent = '⚡ Apply to All — প্রতিটি পেইজে MCQ তৈরি হবে';
+        rangeRow.style.display = 'none';
+    } else {
+        title.textContent = '⚡ Page Range — নির্দিষ্ট রেঞ্জে MCQ তৈরি হবে';
+        rangeRow.style.display = 'block';
+        document.getElementById('mbBulkFrom').value = 1;
+        document.getElementById('mbBulkTo').value = mbPdfDoc.numPages || 1;
+    }
+    sheet.style.display = 'flex';
+}
+function mbCloseBulkSheet() { document.getElementById('mbBulkSheet').style.display = 'none'; }
+
+function mbStartBulkGenerate() {
+    const totalPages = mbPdfDoc.numPages || 1;
+    let from = 1, to = totalPages;
+    if (mbBulkMode === 'range') {
+        from = Math.max(1, parseInt(document.getElementById('mbBulkFrom').value) || 1);
+        to   = Math.min(totalPages, parseInt(document.getElementById('mbBulkTo').value) || totalPages);
+        if (from > to) { mbToast('শুরুর পেইজ শেষের চেয়ে বড় হতে পারবে না', 'error'); return; }
+    }
+    const count = parseInt(document.getElementById('mbBulkCount').value) || 10;
+    const type  = mbAiTypeKey;
+
+    const job = {
+        pdfId: mbPdfId, from, to, count, type,
+        currentPage: from, done: false, stopped: false,
+        startedAt: Date.now(), totalPages: (to - from + 1), completedCount: 0
+    };
+    localStorage.setItem(MB_BULK_KEY, JSON.stringify(job));
+    mbCloseBulkSheet();
+    mbBulkRunning = true;
+    mbRunBulkJob(job);
+}
+
+function mbStopBulkGenerate() {
+    mbBulkRunning = false;
+    try {
+        const job = JSON.parse(localStorage.getItem(MB_BULK_KEY) || 'null');
+        if (job) { job.stopped = true; localStorage.setItem(MB_BULK_KEY, JSON.stringify(job)); }
+    } catch (_) {}
+    mbToast('⏹ Bulk generation থামানো হয়েছে', 'info');
+    mbUpdateBulkUI(null);
+}
+
+function mbUpdateBulkUI(job) {
+    const box = document.getElementById('mbBulkBox');
+    if (!box) return;
+    if (!job || job.done || job.stopped) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    const pct = job.totalPages ? Math.round((job.completedCount / job.totalPages) * 100) : 0;
+    document.getElementById('mbBulkLabel').textContent =
+        `⚡ চলছে: পেইজ ${job.currentPage}/${job.to} (${job.completedCount}/${job.totalPages})`;
+    document.getElementById('mbBulkBarFill').style.width = pct + '%';
+    document.getElementById('mbBulkStatusLine').textContent = `${pct}% সম্পন্ন`;
+}
+
+// মূল bulk loop — serially প্রতিটা পেইজে MCQ generate করে save করে, live progress দেখায়।
+// Tab বন্ধ না করলে background এ চলতে থাকবে, refresh হলেও mbResumeBulkJob() আবার ধরে নেবে।
+async function mbRunBulkJob(job) {
+    mbUpdateBulkUI(job);
+    for (let p = job.currentPage; p <= job.to; p++) {
+        // প্রতি iteration এ localStorage থেকে stop flag চেক করো — থামানো হয়েছে কিনা
+        try {
+            const liveJob = JSON.parse(localStorage.getItem(MB_BULK_KEY) || 'null');
+            if (!liveJob || liveJob.stopped || liveJob.pdfId !== job.pdfId) { mbBulkRunning = false; mbUpdateBulkUI(null); return; }
+        } catch (_) {}
+        if (!mbBulkRunning) return;
+
+        try {
+            await mbGenerateForPage(p, job.count, job.type);
+            job.completedCount++;
+        } catch (e) {
+            console.error('Bulk page ' + p + ' failed:', e.message);
+            // একটা পেইজ fail করলেও চালিয়ে যাও — পুরো job থামবে না
+        }
+        job.currentPage = p + 1;
+        localStorage.setItem(MB_BULK_KEY, JSON.stringify(job));
+        mbUpdateBulkUI(job);
+        // current viewed page হলে summary/list রিফ্রেশ করো
+        if (p === mbCurrentPage) { mbRenderPageMcqList(); mbUpdatePageCount(); }
+        await mbLoadAllPageMcqs();
+        mbRenderPageSummary();
+    }
+    job.done = true;
+    localStorage.setItem(MB_BULK_KEY, JSON.stringify(job));
+    mbBulkRunning = false;
+    mbUpdateBulkUI(null);
+    mbToast(`✓ Bulk generation সম্পন্ন — ${job.completedCount}টি পেইজ প্রসেস হয়েছে`, 'success');
+}
+
+// একটা নির্দিষ্ট পেইজের জন্য MCQ generate + save করে — mbAiGenerate এর core logic বিচ্ছিন্ন করে আলাদা করা হয়েছে
+// যাতে single-page generate ও bulk generate একই function ব্যবহার করে (কোড ডুপ্লিকেশন এড়াতে)।
+async function mbGenerateForPage(pageNum, count, type) {
+    const typeLabel = { standard: 'সাধারণ', true_false: 'সত্য/মিথ্যা', hard: 'কঠিন' };
+    const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","type":"${type}"}]`;
+    const savedP = mbGetSavedPrompt(type);
+    const basePrompt = savedP || (
+        `${typeLabel[type]||type} ধরনের ${count}টি MCQ তৈরি করো। ` +
+        `Content যে ভাষায় আছে সেই ভাষায় রাখো। ` +
+        `প্রতিটিতে চারটি বিকল্প (option_k, option_kh, option_g, option_gh) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে।`
+    );
+
+    let rawJson;
+    if (mbPdfUrl) {
+        try {
+            const pdfPrompt = `এই PDF-এর পেইজ ${pageNum} দেখো এবং নিচের নির্দেশ অনুসরণ করো:\n${basePrompt}\n\n` +
+                `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}`;
+            const res = await fetch(AI_PROXY_URL.replace(/\/$/, '') + '/mcq-from-pdf', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pdf_url: mbPdfUrl, prompt: pdfPrompt })
+            });
+            const data = await res.json().catch(() => null);
+            if (res.ok && data?.success && data.answer) rawJson = data.answer;
+        } catch (_) {}
+    }
+    if (!rawJson) {
+        const page = await mbPdfDoc.getPage(pageNum);
+        const textCont = await page.getTextContent();
+        const pageText = textCont.items.map(i => i.str).join(' ').trim();
+        if (pageText && pageText.length >= 30) {
+            const prompt = `নিচের টেক্সট থেকে ${basePrompt}\n` +
+                `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}\n\n` +
+                `টেক্সট:\n${pageText.slice(0, 4000)}`;
+            rawJson = await mbCallAiApi(prompt, null);
+        } else {
+            const vp = page.getViewport({ scale: 1.5 });
+            const tmp = document.createElement('canvas');
+            tmp.width = vp.width; tmp.height = vp.height;
+            await page.render({ canvasContext: tmp.getContext('2d'), viewport: vp }).promise;
+            const imageData = { base64: tmp.toDataURL('image/jpeg', 0.85).split(',')[1], mimeType: 'image/jpeg' };
+            const sysPrompt = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে ${basePrompt}\n` +
+                `শুধু JSON array রিটার্ন করো: ${jsonFormat}`;
+            rawJson = await mbCallAiApi('', imageData, sysPrompt);
+        }
+    }
+
+    const parsed = mbParseAiJson(rawJson);
+    if (!parsed || !parsed.length) throw new Error('AI সঠিক JSON দেয়নি');
+
+    const newMcqs = parsed.map(m => ({ id: uid(), ...m, type: m.type || type }));
+    const existingRow = mbAllPageDataAllTypes.find(r => r.page_number === pageNum && r.mcq_type === type);
+    let currentMcqs = [];
+    if (existingRow) { try { currentMcqs = JSON.parse(existingRow.questions_json || '[]'); } catch (_) {} }
+    currentMcqs.push(...newMcqs);
+
+    await mbApi('/book_page_mcqs', {
+        method: 'POST',
+        headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify({ pdf_id: parseInt(mbPdfId), page_number: pageNum, mcq_type: type, questions_json: JSON.stringify(currentMcqs) })
+    });
+}
+
+// Page reload হলে আগের চলমান job থাকলে সেটা আবার resume করে — "refresh দিলেও কাজ থামবে না"
+function mbResumeBulkJob() {
+    try {
+        const job = JSON.parse(localStorage.getItem(MB_BULK_KEY) || 'null');
+        if (job && !job.done && !job.stopped && job.pdfId === mbPdfId) {
+            mbBulkRunning = true;
+            mbUpdateBulkUI(job);
+            mbRunBulkJob(job);
+        }
+    } catch (_) {}
+}
+
 function mbDiscardAi() {
     mbAiData = [];
     const resultEl = document.getElementById('mbAiResult');
@@ -1674,6 +1859,10 @@ window.mbCsvDrop          = mbCsvDrop;
 window.mbCsvFileSelect    = mbCsvFileSelect;
 window.mbImportCsv        = mbImportCsv;
 window.mbAiGenerate       = mbAiGenerate;
+window.mbOpenBulkSheet    = mbOpenBulkSheet;
+window.mbCloseBulkSheet   = mbCloseBulkSheet;
+window.mbStartBulkGenerate= mbStartBulkGenerate;
+window.mbStopBulkGenerate = mbStopBulkGenerate;
 window.mbSaveAiMcqs       = mbSaveAiMcqs;
 window.mbDiscardAi        = mbDiscardAi;
 window.mbStartAutoOcr     = mbStartAutoOcr;
