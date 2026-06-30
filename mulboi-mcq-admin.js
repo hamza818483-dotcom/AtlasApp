@@ -82,6 +82,7 @@ let mbPdfDoc      = null;
 let mbPdfUrl       = null;  // current PDF's public URL, used to send the full PDF to Gemini for reliable MCQ generation
 let mbCurrentPage = 1;
 let mbAllPageData = [];
+let mbAllPageDataAllTypes = []; // admin + user-generated সব types একসাথে — count summary এর জন্য
 let mbEditingId   = null;
 let mbAnswerKey   = null;
 let mbTypeKey     = 'standard';
@@ -685,14 +686,18 @@ function mbRenderPageSummary() {
     const wrap = document.getElementById('mbPageSummary');
     if (!wrap) return;
 
-    // Build page→count map from all loaded MCQ rows
+    // Build page→count map from ALL MCQ rows (admin + user-generated standard/true_false/hard)
     const pageCounts = {};
-    mbAllPageData.forEach(row => {
+    const pageTypeCounts = {}; // {pageNum: {admin:3, standard:5, true_false:2, hard:1}}
+    mbAllPageDataAllTypes.forEach(row => {
         try {
             const qs = JSON.parse(row.questions_json || '[]');
             pageCounts[row.page_number] = (pageCounts[row.page_number] || 0) + qs.length;
+            if (!pageTypeCounts[row.page_number]) pageTypeCounts[row.page_number] = {};
+            pageTypeCounts[row.page_number][row.mcq_type] = qs.length;
         } catch {}
     });
+    window._mbPageTypeCounts = pageTypeCounts; // অন্য জায়গা থেকে access করার জন্য
 
     // Total pages = max of (pages with MCQs, currentPage, numPages from PDF.js) capped at 50
     const maxFromMcqs = Object.keys(pageCounts).length ? Math.max(...Object.keys(pageCounts).map(Number)) : 0;
@@ -701,12 +706,15 @@ function mbRenderPageSummary() {
 
     if (totalPages <= 1 && !Object.keys(pageCounts).length) { wrap.innerHTML = ''; return; }
 
+    const typeLabel = { admin:'Manual', standard:'Standard', true_false:'সত্য/মিথ্যা', hard:'Hard' };
     let html = '';
     for (let p = 1; p <= totalPages; p++) {
         const cnt      = pageCounts[p] || 0;
         const isActive = p === mbCurrentPage;
         const hasMcqs  = cnt > 0;
-        html += `<button onclick="mbGoToPagePill(${p})" id="mbPill-${p}" style="
+        const tc = pageTypeCounts[p] || {};
+        const breakdown = Object.keys(tc).map(t => `${typeLabel[t]||t}: ${tc[t]}`).join(', ') || 'কোনো MCQ নেই';
+        html += `<button onclick="mbGoToPagePill(${p})" id="mbPill-${p}" title="${breakdown}" style="
             padding:3px 9px;border-radius:20px;
             border:1.5px solid ${isActive ? 'var(--accent)' : hasMcqs ? 'rgba(108,99,255,0.35)' : 'var(--border)'};
             background:${isActive ? 'var(--accent)' : hasMcqs ? 'rgba(108,99,255,0.08)' : 'var(--card)'};
@@ -747,6 +755,7 @@ function mbGoToPagePill(p) {
 async function mbLoadAllPageMcqs() {
     if (!mbPdfId) return;
     try {
+        // admin manually-added MCQ — editing/preview এর জন্য আলাদা রাখা হয়
         const res = await mbApi(
             '/book_page_mcqs?pdf_id=eq.' + mbPdfId +
             '&mcq_type=eq.admin&select=id,page_number,questions_json&limit=500'
@@ -755,6 +764,18 @@ async function mbLoadAllPageMcqs() {
         mbAllPageData = await res.json() || [];
     } catch {
         mbAllPageData = [];
+    }
+
+    // সব ধরনের MCQ (admin + user-generated standard/true_false/hard) — count summary এর জন্য
+    try {
+        const res2 = await mbApi(
+            '/book_page_mcqs?pdf_id=eq.' + mbPdfId +
+            '&select=id,page_number,mcq_type,questions_json&limit=500'
+        );
+        if (!res2.ok) throw new Error();
+        mbAllPageDataAllTypes = await res2.json() || [];
+    } catch {
+        mbAllPageDataAllTypes = [];
     }
 }
 
