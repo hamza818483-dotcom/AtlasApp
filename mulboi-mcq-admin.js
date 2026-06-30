@@ -1812,11 +1812,15 @@ async function mbRetriggerOcr(pdfId, pdfUrl) {
    16. INIT & WINDOW EXPORTS
    ════════════════════════════════════════════════════ */
 
-function mbInit() {
+async function mbInit() {
     mbInjectStyles();
     mbLoadSubjects();
     mbLoadAllPdfs();
-    mbLoadAllPrompts();
+    await mbLoadAllPrompts();
+    // prompt cache load হওয়ার পর বর্তমান selected type এর জন্য textbox populate করো —
+    // আগে এই await ছাড়া কল হওয়ায় AI tab প্রথমবার খুললে prompt box ফাঁকা দেখাতো।
+    const promptEl = document.getElementById('mbAiPrompt');
+    if (promptEl) promptEl.value = mbGetSavedPrompt(mbAiTypeKey) || '';
 }
 
 if (document.readyState === 'loading') {
