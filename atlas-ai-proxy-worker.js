@@ -27,6 +27,30 @@ const CORS_HEADERS = {
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
+/* ════════════════════════════════════════════════════════════
+   KEY / MODEL ROTATION + RETRY ENGINE
+   প্রতিটা provider-এ একাধিক key এবং/অথবা একাধিক model থাকতে পারে।
+   কোনো key/model 429 (rate-limit), 5xx, বা timeout দিলে পরবর্তী
+   key/model এ smoothly সরে যাবে — এবং পুরো provider list শেষ হয়ে
+   গেলেও ছোট exponential-backoff delay দিয়ে পুরো cycle আরেকবার
+   চেষ্টা করবে (সর্বোচ্চ MAX_ROTATION_ROUNDS বার), যাতে সাময়িক
+   rate-limit এ পুরো request fail না হয়ে যায়।
+   ════════════════════════════════════════════════════════════ */
+const MAX_ROTATION_ROUNDS = 2; // পুরো key/model লিস্ট কতবার আবার চেষ্টা করবে
+const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
+
+function sleep(ms) { return new Promise(res => setTimeout(res, ms)); }
+
+// একটা single fetch-attempt কে wrap করে — নির্দিষ্ট HTTP status এ retryable বলে চিহ্নিত করে,
+// network exception ধরেও সেটাকে retryable error হিসেবে ফেরত দেয় (throw করে caller থামায় না)।
+async function attemptWithStatus(fn) {
+    try {
+        return await fn();
+    } catch (e) {
+        return { __exception: true, message: String(e?.message || e) };
+    }
+}
+
 export default {
     async fetch(request, env, ctx) {
         if (request.method === "OPTIONS") {
@@ -77,17 +101,24 @@ export default {
             () => callCloudflareAI(env, question, systemPrompt, image),
         ];
 
+        // প্রতিটা provider নিজের ভেতরেই key/model rotation + backoff করে (উপরে দেখো)।
+        // এখানে শুধু provider-চেইন ক্রমে চালানো হয় — কোনো একটায় সব key/model fail করলে
+        // পরের provider এ চলে যায়, একদম শেষ পর্যন্ত কেউ সফল না হলে সংক্ষিপ্ত বিরতি দিয়ে
+        // পুরো চেইন আরেকবার চেষ্টা করে — তাই সাময়িক outage এ পুরো request ব্যর্থ হয় না।
         const errors = [];
-        for (const tryProvider of providers) {
-            try {
-                const result = await tryProvider();
-                if (result && result.answer && result.answer.trim().length > 5) {
-                    return jsonResponse({ success: true, answer: result.answer, provider: result.provider });
+        for (let chainRound = 0; chainRound < 2; chainRound++) {
+            for (const tryProvider of providers) {
+                try {
+                    const result = await tryProvider();
+                    if (result && result.answer && result.answer.trim().length > 5) {
+                        return jsonResponse({ success: true, answer: result.answer, provider: result.provider });
+                    }
+                    if (result?.error) errors.push(result.error);
+                } catch (e) {
+                    errors.push(String(e.message || e));
                 }
-                if (result?.error) errors.push(result.error);
-            } catch (e) {
-                errors.push(String(e.message || e));
             }
+            if (chainRound === 0) await sleep(600); // পুরো চেইন একবার ব্যর্থ হলে ছোট বিরতি দিয়ে আবার
         }
 
         return jsonResponse({
@@ -105,12 +136,27 @@ function jsonResponse(obj, status = 200) {
     });
 }
 
-/* ───────── 1. Google Gemini ───────── */
+/* ───────── 1. Google Gemini — multi-key × multi-model rotation + backoff ───────── */
 function getGeminiKeys(env) {
     const keys = [];
     if (env.GEMINI_KEYS) keys.push(...env.GEMINI_KEYS.split(",").map(k => k.trim()).filter(Boolean));
     if (env.GEMINI_API_KEY) keys.push(env.GEMINI_API_KEY.trim());
     return [...new Set(keys)];
+}
+
+// নতুন মডেল আসলে/পুরনো deprecate হলে শুধু এই array আপডেট করলেই rotation এ যুক্ত হয়ে যাবে।
+const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+
+async function callGeminiOnce(key, model, parts, maxOutputTokens) {
+    const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+        {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ contents: [{ parts }], generationConfig: { maxOutputTokens, temperature: 0.7 } }),
+        }
+    );
+    return res;
 }
 
 async function callGemini(env, question, systemPrompt, image) {
@@ -121,33 +167,44 @@ async function callGemini(env, question, systemPrompt, image) {
     if (image) parts.push({ inline_data: { mime_type: image.mimeType, data: image.base64 } });
     parts.push({ text: systemPrompt + "\n\nপ্রশ্ন: " + (question || "এই ছবিটি বিশ্লেষণ করো।") });
 
-    let lastError = "Gemini: no keys worked";
-    for (const key of keys) {
-        try {
-            const res = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents: [{ parts }], generationConfig: { maxOutputTokens: 8192 } }),
+    let lastError = "Gemini: no keys/models worked";
+
+    for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
+        for (const model of GEMINI_MODELS) {
+            for (const key of keys) {
+                const outcome = await attemptWithStatus(() => callGeminiOnce(key, model, parts, 8192));
+
+                if (outcome.__exception) { lastError = `Gemini(${model}) exception: ${outcome.message}`; continue; }
+
+                if (!outcome.ok) {
+                    lastError = `Gemini(${model}) HTTP ${outcome.status}`;
+                    // রেট-লিমিট/সার্ভার এরর হলে এই key/model স্কিপ করে পরেরটায় যাও — থামবে না
+                    continue;
                 }
-            );
-            if (!res.ok) { lastError = `Gemini HTTP ${res.status}`; continue; } // try next key on 401/429/etc.
-            const data = await res.json();
-            const answer = data.candidates?.[0]?.content?.parts?.[0]?.text || null;
-            if (answer) return { answer, provider: "gemini" };
-            lastError = "Gemini: empty response";
-        } catch (e) {
-            lastError = `Gemini exception: ${e?.message || e}`;
+                const data = await outcome.json().catch(() => null);
+                const answer = data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
+                if (answer) return { answer, provider: `gemini:${model}` };
+                lastError = `Gemini(${model}): empty response`;
+            }
         }
+        // একটা পুরো round (সব model × সব key) ব্যর্থ হলে সংক্ষিপ্ত backoff দিয়ে আবার চেষ্টা
+        if (round < MAX_ROTATION_ROUNDS - 1) await sleep(400 * (round + 1));
     }
     return { error: lastError };
 }
 
-/* ───────── 2. OpenRouter (free vision model) ───────── */
+/* ───────── 2. OpenRouter (free vision model) — multi-key × multi-model rotation ───────── */
+function getOpenRouterKeys(env) {
+    const keys = [];
+    if (env.OPENROUTER_KEYS) keys.push(...env.OPENROUTER_KEYS.split(",").map(k => k.trim()).filter(Boolean));
+    if (env.OPENROUTER_API_KEY) keys.push(env.OPENROUTER_API_KEY.trim());
+    return [...new Set(keys)];
+}
+const OPENROUTER_MODELS = ["qwen/qwen2.5-vl-72b-instruct:free", "meta-llama/llama-3.2-11b-vision-instruct:free"];
+
 async function callOpenRouter(env, question, systemPrompt, image) {
-    const key = env.OPENROUTER_API_KEY;
-    if (!key) return { error: "OPENROUTER_API_KEY not set" };
+    const keys = getOpenRouterKeys(env);
+    if (!keys.length) return { error: "OPENROUTER_API_KEY not set" };
 
     let userContent;
     if (image) {
@@ -159,34 +216,51 @@ async function callOpenRouter(env, question, systemPrompt, image) {
         userContent = question;
     }
 
-    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-            Authorization: `Bearer ${key}`,
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            model: "qwen/qwen2.5-vl-72b-instruct:free",
-            messages: [
-                { role: "system", content: systemPrompt },
-                { role: "user", content: userContent },
-            ],
-            temperature: 0.7,
-            max_tokens: 8192,
-        }),
-    });
-    if (!res.ok) return { error: `OpenRouter HTTP ${res.status}` };
-    const data = await res.json();
-    const answer = data.choices?.[0]?.message?.content || null;
-    return answer ? { answer, provider: "openrouter" } : { error: "OpenRouter: empty response" };
+    let lastError = "OpenRouter: no keys/models worked";
+    for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
+        for (const model of OPENROUTER_MODELS) {
+            for (const key of keys) {
+                const outcome = await attemptWithStatus(() => fetch("https://openrouter.ai/api/v1/chat/completions", {
+                    method: "POST",
+                    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        model,
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: userContent },
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 8192,
+                    }),
+                }));
+                if (outcome.__exception) { lastError = `OpenRouter(${model}) exception: ${outcome.message}`; continue; }
+                if (!outcome.ok) { lastError = `OpenRouter(${model}) HTTP ${outcome.status}`; continue; }
+                const data = await outcome.json().catch(() => null);
+                const answer = data?.choices?.[0]?.message?.content || null;
+                if (answer) return { answer, provider: `openrouter:${model}` };
+                lastError = `OpenRouter(${model}): empty response`;
+            }
+        }
+        if (round < MAX_ROTATION_ROUNDS - 1) await sleep(400 * (round + 1));
+    }
+    return { error: lastError };
 }
 
-/* ───────── 3. Groq ───────── */
-async function callGroq(env, question, systemPrompt, image) {
-    const key = env.GROQ_API_KEY;
-    if (!key) return { error: "GROQ_API_KEY not set" };
+/* ───────── 3. Groq — multi-key rotation, per-modality model fallback list ───────── */
+function getGroqKeys(env) {
+    const keys = [];
+    if (env.GROQ_KEYS) keys.push(...env.GROQ_KEYS.split(",").map(k => k.trim()).filter(Boolean));
+    if (env.GROQ_API_KEY) keys.push(env.GROQ_API_KEY.trim());
+    return [...new Set(keys)];
+}
+const GROQ_TEXT_MODELS  = ["openai/gpt-oss-120b", "llama-3.3-70b-versatile"];
+const GROQ_IMAGE_MODELS = ["meta-llama/llama-4-maverick-17b-128e-instruct", "meta-llama/llama-4-scout-17b-16e-instruct"];
 
-    const model = image ? "meta-llama/llama-4-maverick-17b-128e-instruct" : "openai/gpt-oss-120b";
+async function callGroq(env, question, systemPrompt, image) {
+    const keys = getGroqKeys(env);
+    if (!keys.length) return { error: "GROQ_API_KEY not set" };
+    const models = image ? GROQ_IMAGE_MODELS : GROQ_TEXT_MODELS;
+
     let messages;
     if (image) {
         messages = [
@@ -206,40 +280,70 @@ async function callGroq(env, question, systemPrompt, image) {
         ];
     }
 
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 4096 }),
-    });
-    if (!res.ok) return { error: `Groq HTTP ${res.status}` };
-    const data = await res.json();
-    const answer = data.choices?.[0]?.message?.content || null;
-    return answer ? { answer, provider: "groq" } : { error: "Groq: empty response" };
+    let lastError = "Groq: no keys/models worked";
+    for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
+        for (const model of models) {
+            for (const key of keys) {
+                const outcome = await attemptWithStatus(() => fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    method: "POST",
+                    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 4096 }),
+                }));
+                if (outcome.__exception) { lastError = `Groq(${model}) exception: ${outcome.message}`; continue; }
+                if (!outcome.ok) { lastError = `Groq(${model}) HTTP ${outcome.status}`; continue; }
+                const data = await outcome.json().catch(() => null);
+                const answer = data?.choices?.[0]?.message?.content || null;
+                if (answer) return { answer, provider: `groq:${model}` };
+                lastError = `Groq(${model}): empty response`;
+            }
+        }
+        if (round < MAX_ROTATION_ROUNDS - 1) await sleep(400 * (round + 1));
+    }
+    return { error: lastError };
 }
 
-/* ───────── 4. Cerebras (text only — no vision support) ───────── */
+/* ───────── 4. Cerebras (text only — no vision support) — multi-key × multi-model ───────── */
+function getCerebrasKeys(env) {
+    const keys = [];
+    if (env.CEREBRAS_KEYS) keys.push(...env.CEREBRAS_KEYS.split(",").map(k => k.trim()).filter(Boolean));
+    if (env.CEREBRAS_API_KEY) keys.push(env.CEREBRAS_API_KEY.trim());
+    return [...new Set(keys)];
+}
+const CEREBRAS_MODELS = ["gpt-oss-120b", "llama-3.3-70b"];
+
 async function callCerebras(env, question, systemPrompt, image) {
     if (image) return { error: "Cerebras: vision not supported, skipped" };
-    const key = env.CEREBRAS_API_KEY;
-    if (!key) return { error: "CEREBRAS_API_KEY not set" };
+    const keys = getCerebrasKeys(env);
+    if (!keys.length) return { error: "CEREBRAS_API_KEY not set" };
 
-    const res = await fetch("https://api.cerebras.ai/v1/chat/completions", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-            model: "gpt-oss-120b",
-            messages: [
-                { role: "system", content: systemPrompt },
-                { role: "user", content: question },
-            ],
-            temperature: 0.7,
-            max_tokens: 4096,
-        }),
-    });
-    if (!res.ok) return { error: `Cerebras HTTP ${res.status}` };
-    const data = await res.json();
-    const answer = data.choices?.[0]?.message?.content || null;
-    return answer ? { answer, provider: "cerebras" } : { error: "Cerebras: empty response" };
+    let lastError = "Cerebras: no keys/models worked";
+    for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
+        for (const model of CEREBRAS_MODELS) {
+            for (const key of keys) {
+                const outcome = await attemptWithStatus(() => fetch("https://api.cerebras.ai/v1/chat/completions", {
+                    method: "POST",
+                    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        model,
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: question },
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 4096,
+                    }),
+                }));
+                if (outcome.__exception) { lastError = `Cerebras(${model}) exception: ${outcome.message}`; continue; }
+                if (!outcome.ok) { lastError = `Cerebras(${model}) HTTP ${outcome.status}`; continue; }
+                const data = await outcome.json().catch(() => null);
+                const answer = data?.choices?.[0]?.message?.content || null;
+                if (answer) return { answer, provider: `cerebras:${model}` };
+                lastError = `Cerebras(${model}): empty response`;
+            }
+        }
+        if (round < MAX_ROTATION_ROUNDS - 1) await sleep(400 * (round + 1));
+    }
+    return { error: lastError };
 }
 
 /* ───────── 5. Cloudflare Workers AI (last resort, same account, no extra key needed) ───────── */
@@ -526,31 +630,25 @@ async function handleMcqFromPdf(body, env) {
         return jsonResponse({ success: false, error: `PDF fetch exception: ${e?.message || e}` }, 502);
     }
 
-    let lastError = "Gemini: no keys worked";
-    for (const key of keys) {
-        try {
-            const res = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        contents: [{ parts: [
-                            { inline_data: { mime_type: "application/pdf", data: pdfBase64 } },
-                            { text: prompt },
-                        ]}],
-                        generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
-                    }),
-                }
-            );
-            if (!res.ok) { lastError = `Gemini HTTP ${res.status}`; continue; }
-            const data = await res.json();
-            const answer = data.candidates?.[0]?.content?.parts?.[0]?.text || null;
-            if (answer) return jsonResponse({ success: true, answer, provider: "gemini-pdf" });
-            lastError = "Gemini: empty response";
-        } catch (e) {
-            lastError = `Gemini exception: ${e?.message || e}`;
+    const pdfParts = [
+        { inline_data: { mime_type: "application/pdf", data: pdfBase64 } },
+        { text: prompt },
+    ];
+
+    let lastError = "Gemini: no keys/models worked";
+    for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
+        for (const model of GEMINI_MODELS) {
+            for (const key of keys) {
+                const outcome = await attemptWithStatus(() => callGeminiOnce(key, model, pdfParts, 8192));
+                if (outcome.__exception) { lastError = `Gemini(${model}) exception: ${outcome.message}`; continue; }
+                if (!outcome.ok) { lastError = `Gemini(${model}) HTTP ${outcome.status}`; continue; }
+                const data = await outcome.json().catch(() => null);
+                const answer = data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
+                if (answer) return jsonResponse({ success: true, answer, provider: `gemini-pdf:${model}` });
+                lastError = `Gemini(${model}): empty response`;
+            }
         }
+        if (round < MAX_ROTATION_ROUNDS - 1) await sleep(400 * (round + 1));
     }
     return jsonResponse({ success: false, error: lastError }, 502);
 }
@@ -561,10 +659,28 @@ async function handleMcqFromPdf(body, env) {
    Required secrets (Cloudflare dashboard → Workers & Pages →
    this worker → Settings → Variables and Secrets → "Add" →
    type: Secret):
-     GEMINI_API_KEY
+     GEMINI_API_KEY      (single key — backward compatible)
      OPENROUTER_API_KEY
      GROQ_API_KEY
      CEREBRAS_API_KEY
+
+   Optional — MULTI-KEY ROTATION (recommended for production load):
+   Add comma-separated keys to enable rotation across multiple
+   accounts/quotas. When both singular and plural are set, both
+   are merged and de-duplicated.
+     GEMINI_KEYS      = key1,key2,key3
+     OPENROUTER_KEYS  = key1,key2
+     GROQ_KEYS        = key1,key2
+     CEREBRAS_KEYS    = key1,key2
+
+   Rotation behavior: each provider tries every (model × key)
+   combination before giving up; a 429/5xx/timeout on one key
+   or model moves smoothly to the next without failing the whole
+   request. If an entire provider's key/model list is exhausted,
+   a short backoff delay is applied and the whole list is retried
+   once more (MAX_ROTATION_ROUNDS). If every provider in the chain
+   fails once, the entire provider chain is retried once after a
+   600ms pause before giving up and returning an error to the client.
 
    Required binding (same screen, under "Bindings" → "Add" →
    type: Workers AI) — this is NOT a secret, it's a native binding:
