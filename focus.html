@@ -616,6 +616,23 @@
 
 /* Today's LIVE section */
 .live-today-section { padding: 0 14px 6px; }
+
+/* ═══ MOOD PERIOD RANKING ═══ */
+.mood-period-row {
+  display: flex; gap: 5px; overflow-x: auto; padding: 10px 0 6px;
+  scrollbar-width: none;
+}
+.mood-period-row::-webkit-scrollbar { display: none; }
+.mood-period-btn {
+  flex-shrink: 0; padding: 5px 11px; border-radius: 8px;
+  background: var(--card-bg); border: 1px solid var(--border);
+  color: var(--text-secondary); font-size: 10.5px; font-weight: 800;
+  font-family: inherit; cursor: pointer; transition: all .15s;
+  white-space: nowrap;
+}
+.mood-period-btn.active {
+  background: linear-gradient(135deg,#10B981,#059669); color: #fff; border-color: transparent;
+}
 .live-today-title {
   font-size: 16px; font-weight: 900; color: #10B981;
   display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 8px;
@@ -1058,6 +1075,16 @@
       </div>
       <div class="batch-filter" id="batchFilter"></div>
       <div class="rank-list" id="liveStudentsList"></div>
+
+      <!-- Study Time-ভিত্তিক period ranking -->
+      <div class="mood-period-row">
+        <button class="mood-period-btn active" onclick="loadMoodRanking('study',1,this)">আজকে</button>
+        <button class="mood-period-btn" onclick="loadMoodRanking('study',3,this)">বিগত ৩ দিন</button>
+        <button class="mood-period-btn" onclick="loadMoodRanking('study',7,this)">বিগত ৭ দিন</button>
+        <button class="mood-period-btn" onclick="loadMoodRanking('study',15,this)">বিগত ১৫ দিন</button>
+        <button class="mood-period-btn" onclick="loadMoodRanking('study',30,this)">বিগত ৩০ দিন</button>
+      </div>
+      <div class="rank-list" id="studyMoodRankList"></div>
     </div>
 
   </div><!-- end timer-screen -->
@@ -1078,6 +1105,16 @@
     <div class="mood-overlay-list" id="moodOverlayList">
       <div style="text-align:center;padding:24px;color:var(--text-secondary);font-size:12px">লোড হচ্ছে...</div>
     </div>
+
+    <!-- Break/Sleep Time-ভিত্তিক period ranking -->
+    <div class="mood-period-row" style="margin:10px 14px 0">
+      <button class="mood-period-btn active" id="bsPeriodBtn1" onclick="loadMoodRanking(currentOverlayMood,1,this)">আজকে</button>
+      <button class="mood-period-btn" onclick="loadMoodRanking(currentOverlayMood,3,this)">বিগত ৩ দিন</button>
+      <button class="mood-period-btn" onclick="loadMoodRanking(currentOverlayMood,7,this)">বিগত ৭ দিন</button>
+      <button class="mood-period-btn" onclick="loadMoodRanking(currentOverlayMood,15,this)">বিগত ১৫ দিন</button>
+      <button class="mood-period-btn" onclick="loadMoodRanking(currentOverlayMood,30,this)">বিগত ৩০ দিন</button>
+    </div>
+    <div class="rank-list" id="bsMoodRankList" style="padding:0 14px 16px"></div>
   </div>
 </main>
 
@@ -1493,6 +1530,7 @@ function applyMoodSwitch(newMood){
 let moodOverlayTicker=null;
 
 function openMoodOverlay(m){
+  currentOverlayMood = m;
   const overlay=document.getElementById('moodOverlay');
   const titleEl=document.getElementById('moodOverlayTitle');
   const labelEl=document.getElementById('motLabel');
@@ -1503,6 +1541,9 @@ function openMoodOverlay(m){
   overlay.classList.add('show');
   history.pushState({moodOverlay:true},'');
   updateMoodOverlayList(m);
+  // Period ranking — আজকে দিয়ে শুরু
+  document.querySelectorAll('#moodOverlay .mood-period-row .mood-period-btn').forEach((b,i)=>b.classList.toggle('active', i===0));
+  loadMoodRanking(m, 1, document.getElementById('bsPeriodBtn1'));
   // start overlay timer ticker
   if(moodOverlayTicker) clearInterval(moodOverlayTicker);
   moodOverlayTicker=setInterval(()=>{
@@ -2031,6 +2072,89 @@ function switchLbPeriod(days, btn){
   loadLeaderboard(days);
 }
 
+/* ═══ MOOD PERIOD RANKING (Study/Break/Sleep আলাদা) ═══ */
+let currentOverlayMood = 'break';
+
+async function loadMoodRanking(moodType, days, btn){
+  const listElId = moodType==='study' ? 'studyMoodRankList' : 'bsMoodRankList';
+  const rowSelector = moodType==='study' ? '.live-today-section .mood-period-row' : '#moodOverlay .mood-period-row';
+  document.querySelectorAll(rowSelector+' .mood-period-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+
+  const el=document.getElementById(listElId);
+  if(!el) return;
+  el.innerHTML='<div style="text-align:center;padding:10px;color:var(--text-secondary);font-size:11px">লোড হচ্ছে...</div>';
+
+  const since=new Date(Date.now()-days*86400000).toISOString();
+
+  try{
+    if(days===1 && moodType==='study'){
+      // আজকের জন্য study_tracker_daily ব্যবহার করো (faster, already aggregated)
+      const todayStr=new Date().toISOString().slice(0,10);
+      const dailyRows=await safeFetch(
+        `${SUPABASE_URL}/rest/v1/study_tracker_daily?study_date=eq.${todayStr}`+
+        `&select=user_phone,total_seconds,users(name,batch,college,is_premium,photo_url)&order=total_seconds.desc&limit=200`
+      );
+      const grouped={};
+      (dailyRows||[]).forEach(r=>{
+        const p=r.user_phone; if(!p) return;
+        const u=Array.isArray(r.users)?r.users[0]:(r.users||{});
+        grouped[p]={phone:p,name:u.name||null,batch:u.batch||null,college:u.college||null,premium:u.is_premium||false,photo_url:u.photo_url||null,total_seconds:r.total_seconds||0};
+      });
+      allStudents.forEach(s=>{
+        if(!s.phone) return;
+        const liveSecs = s._isSelf ? studySecs : (s.study_seconds||0);
+        if(!liveSecs) return;
+        if(!grouped[s.phone]) grouped[s.phone]={phone:s.phone,name:s.name,batch:s.batch,college:s.college,premium:s.premium,photo_url:s.photo_url,total_seconds:0};
+        grouped[s.phone].total_seconds += liveSecs;
+      });
+      const list=Object.values(grouped).filter(g=>g.total_seconds>0).sort((a,b)=>b.total_seconds-a.total_seconds);
+      renderMoodRankList(el, list);
+      return;
+    }
+
+    // Break/Sleep অথবা multi-day periods → focus_sessions থেকে aggregate করো
+    const rows=await safeFetch(
+      `${SUPABASE_URL}/rest/v1/focus_sessions?started_at=gte.${encodeURIComponent(since)}`+
+      `&select=user_phone,study_seconds,break_seconds,sleep_seconds,users(name,batch,college,is_premium,photo_url)&limit=2000`
+    );
+    const grouped={};
+    (rows||[]).forEach(r=>{
+      const p=r.user_phone; if(!p) return;
+      const u=Array.isArray(r.users)?r.users[0]:(r.users||{});
+      if(!grouped[p]) grouped[p]={phone:p,name:u.name||null,batch:u.batch||null,college:u.college||null,premium:u.is_premium||false,photo_url:u.photo_url||null,study_seconds:0,break_seconds:0,sleep_seconds:0};
+      grouped[p].study_seconds += (r.study_seconds||0);
+      grouped[p].break_seconds += (r.break_seconds||0);
+      grouped[p].sleep_seconds += (r.sleep_seconds||0);
+    });
+    // Live (self) সময়ও যোগ করো
+    if(currentUser && (studySecs||breakSecs||sleepSecs)){
+      const p=currentUser.phone;
+      if(!grouped[p]) grouped[p]={phone:p,name:currentUser.name,batch:currentUser.batch,college:currentUser.college,premium:currentUser.premium,photo_url:currentUser.photo_url,study_seconds:0,break_seconds:0,sleep_seconds:0};
+      grouped[p].study_seconds += studySecs;
+      grouped[p].break_seconds += breakSecs;
+      grouped[p].sleep_seconds += sleepSecs;
+    }
+
+    const sortKey = moodType==='study'?'study_seconds':moodType==='break'?'break_seconds':'sleep_seconds';
+    const list=Object.values(grouped)
+      .map(g=>({...g, total_seconds:g[sortKey]}))
+      .filter(g=>g.total_seconds>0)
+      .sort((a,b)=>b.total_seconds-a.total_seconds);
+    renderMoodRankList(el, list);
+  }catch(e){
+    el.innerHTML='<div style="text-align:center;padding:10px;color:#EF4444;font-size:11px">লোড হয়নি</div>';
+  }
+}
+
+function renderMoodRankList(el, list){
+  if(!list.length){
+    el.innerHTML='<div style="text-align:center;padding:10px;color:var(--text-secondary);font-size:11px">কোনো ডেটা নেই</div>';
+    return;
+  }
+  el.innerHTML=list.map((s,i)=>buildRankCard(s,i+1,false)).join('');
+}
+
 async function loadInlineLb(days, btn){
   // update button state
   document.querySelectorAll('.leaderboard-section .period-btn').forEach(b=>b.classList.remove('active'));
@@ -2514,6 +2638,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const restored=restoreSession();
   if(!restored) renderLive();
   startIdlePolling();
+  setTimeout(()=>loadMoodRanking('study',1,document.querySelector('.live-today-section .mood-period-row .mood-period-btn')), 600);
 });
 
 history.pushState(null,'',location.href);
