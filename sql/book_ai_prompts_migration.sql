@@ -25,3 +25,6 @@ CREATE POLICY "public write" ON book_ai_prompts FOR INSERT WITH CHECK (true);
 
 DROP POLICY IF EXISTS "public update" ON book_ai_prompts;
 CREATE POLICY "public update" ON book_ai_prompts FOR UPDATE USING (true);
+
+-- pdf_id=0 কে "global prompt" (সব PDF এর জন্য প্রযোজ্য) হিসেবে ব্যবহারের জন্য FK constraint শিথিল করা
+ALTER TABLE book_ai_prompts DROP CONSTRAINT IF EXISTS book_ai_prompts_pdf_id_fkey;

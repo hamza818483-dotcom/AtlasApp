@@ -867,7 +867,7 @@ function mbSelectType(type) {
     if (mt) mt.value = type;
 }
 
-function mbSelectAiType(type) {
+async function mbSelectAiType(type) {
     mbAiTypeKey = type;
     const typeMap = { standard: 'Standard', true_false: 'TrueFalse', hard: 'Hard' };
     const typeLabelBn = { standard: 'Standard', true_false: 'True-False', hard: 'Hard' };
@@ -889,10 +889,10 @@ function mbSelectAiType(type) {
     }
 }
 
-function mbSavePromptOnly() {
+async function mbSavePromptOnly() {
     const promptEl = document.getElementById('mbAiPrompt');
     const text = (promptEl?.value || '').trim();
-    mbSavePromptForType(mbAiTypeKey, text);
+    await mbSavePromptForType(mbAiTypeKey, text);
     const savedTag = document.getElementById('mbPromptSavedTag');
     if (savedTag) {
         savedTag.style.display = 'inline';
@@ -1227,16 +1227,29 @@ async function mbImportCsv() {
    14. AI GENERATE
    ════════════════════════════════════════════════════ */
 
-/* ─── AI prompt storage (per-type, per-pdfId) ─── */
-function mbGetSavedPrompt(type) {
-    try { return JSON.parse(localStorage.getItem('mbPrompts')||'{}')[type] || ''; } catch { return ''; }
-}
-function mbSavePromptForType(type, text) {
+/* ─── AI prompt storage — Supabase book_ai_prompts (global per-type, not per-PDF) ───
+   এই prompt সব PDF/page এর জন্য একই — admin একবার সেট করলে user side সবসময় সেটাই follow করবে।
+   pdf_id = 0 কে "global" placeholder হিসেবে ব্যবহার করা হচ্ছে যাতে এক জায়গাতেই সব PDF এর জন্য কাজ করে। */
+let mbPromptCache = {};
+async function mbLoadAllPrompts() {
     try {
-        const all = JSON.parse(localStorage.getItem('mbPrompts')||'{}');
-        all[type] = text;
-        localStorage.setItem('mbPrompts', JSON.stringify(all));
-    } catch {}
+        const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/book_ai_prompts?pdf_id=eq.0&select=mcq_type,prompt`);
+        mbPromptCache = {};
+        (rows||[]).forEach(r => { mbPromptCache[r.mcq_type] = r.prompt; });
+    } catch(_) {}
+}
+function mbGetSavedPrompt(type) {
+    return mbPromptCache[type] || '';
+}
+async function mbSavePromptForType(type, text) {
+    mbPromptCache[type] = text;
+    try {
+        await safeFetch(`${SUPABASE_URL}/rest/v1/book_ai_prompts`, {
+            method: 'POST',
+            headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+            body: JSON.stringify({ pdf_id: 0, mcq_type: type, prompt: text, updated_at: new Date().toISOString() })
+        });
+    } catch(_) {}
 }
 
 /* ─── Get canvas image from current PDF page ─── */
@@ -1265,7 +1278,7 @@ async function mbAiGenerate() {
     const customP  = ((document.getElementById('mbAiPrompt') || {}).value || '').trim();
 
     // Save custom prompt per type
-    if (customP) mbSavePromptForType(type, customP);
+    if (customP) await mbSavePromptForType(type, customP);
 
     const spinner  = document.getElementById('mbAiSpinner');
     const genBtn   = document.getElementById('mbAiGenBtn');
@@ -1598,6 +1611,7 @@ function mbInit() {
     mbInjectStyles();
     mbLoadSubjects();
     mbLoadAllPdfs();
+    mbLoadAllPrompts();
 }
 
 if (document.readyState === 'loading') {

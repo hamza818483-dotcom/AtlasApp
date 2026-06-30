@@ -763,7 +763,28 @@ async function getPageImageBase64(p) {
 
 /* ── AI fallback chain is now handled entirely by the atlas-ai-proxy worker — see generateMCQsFromImage() below ── */
 
+// Admin panel এ সংরক্ষিত prompt cache — page load এ একবার fetch হয়
+let userPromptCache = {};
+async function loadAdminPrompts() {
+    try {
+        const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/book_ai_prompts?pdf_id=eq.0&select=mcq_type,prompt`);
+        userPromptCache = {};
+        (rows||[]).forEach(r => { userPromptCache[r.mcq_type] = r.prompt; });
+    } catch(_) {}
+}
+
 function mcqPrompt(type) {
+    const jsonFormat = `{"questions":[{"question":"...","options":["...","...","...","..."],"answer_index":0,"explanation":"..."}]}`;
+
+    // Admin panel এ সেভ করা prompt থাকলে সেটাই ব্যবহার হবে — user side ও admin side একই prompt follow করবে
+    const adminPrompt = userPromptCache[type];
+    if (adminPrompt) {
+        return `তুমি একজন অভিজ্ঞ HSC শিক্ষক। নিচের বইয়ের পেইজের ছবি দেখে MCQ তৈরি করো।\n\n${adminPrompt}\n\n` +
+            `প্রশ্ন, অপশন, ব্যাখ্যা — সব অবশ্যই এই পেইজের ভাষায় লিখবে। শুধুমাত্র এই পেইজের কন্টেন্ট থেকে প্রশ্ন বানাবে।\n\n` +
+            `শুধুমাত্র নিচের JSON ফরম্যাটে উত্তর দিবে, অন্য কোনো লেখা/markdown/backtick ছাড়া:\n${jsonFormat}`;
+    }
+
+    // Fallback — admin কোনো prompt সেট না করলে এই default ব্যবহার হবে
     const typeInstructions = {
         standard: 'সাধারণ মানের ৩-৫টি বহুনির্বাচনী (৪টি অপশন) প্রশ্ন তৈরি করো।',
         true_false: '৩-৫টি সত্য/মিথ্যা ধরনের প্রশ্ন তৈরি করো (অপশন: "সত্য", "মিথ্যা" — ২টি অপশন)।',
@@ -778,7 +799,7 @@ function mcqPrompt(type) {
 ৪. শুধুমাত্র এই পেইজের কন্টেন্ট থেকে প্রশ্ন বানাবে, বাইরের তথ্য না। প্লেসহোল্ডার/নমুনা প্রশ্ন বানাবে না।
 
 শুধুমাত্র নিচের JSON ফরম্যাটে উত্তর দিবে, অন্য কোনো লেখা/markdown/backtick ছাড়া:
-{"questions":[{"question":"...","options":["...","...","...","..."],"answer_index":0,"explanation":"..."}]}`;
+${jsonFormat}`;
 }
 
 // All AI MCQ generation now goes through the centralized proxy worker, which
@@ -834,6 +855,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try { currentUser = JSON.parse(localStorage.getItem('atlas-session')); } catch(_) { currentUser = null; }
     if (!currentUser) { location.replace('auth.html'); return; }
 
+    loadAdminPrompts();
     loadSubjects();
 });
 history.pushState(null, '', location.href);
