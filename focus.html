@@ -1279,6 +1279,10 @@ async function startSession(){
   // for everyone in the live list.
   closeStaleSessions(currentUser.phone).catch(()=>{});
 
+  // প্রথমবার timer চালু করলে first_session_at সেট করো (Ultimate Leaderboard
+  // এর ৩/৭/১৫/৩০ দিনের হিসাব এই date থেকেই শুরু হবে, ক্যালেন্ডার দিন নয়)
+  ensureFirstSessionAt(currentUser.phone).catch(()=>{});
+
   const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions`,{
     method:'POST',
     body:JSON.stringify({
@@ -1299,6 +1303,22 @@ async function startSession(){
 }
 
 // নতুন session শুরুর আগে এই ফোনের পুরনো অসমাপ্ত session(গুলো) বন্ধ করে দেয়
+/* প্রথমবার Focus Timer ব্যবহার করলে first_session_at সেট করে রাখে — এটাই
+   Ultimate Leaderboard-এর ৩/৭/১৫/৩০ দিনের window হিসাবের ভিত্তি (ক্যালেন্ডার
+   দিন না, ইউজারের নিজের প্রথম session শুরুর সময় থেকে গোনা হবে)। */
+async function ensureFirstSessionAt(phone){
+  if(!phone) return;
+  try{
+    const rows=await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${encodeURIComponent(phone)}&select=first_session_at`);
+    const existing=rows?.[0]?.first_session_at;
+    if(existing) return; // ইতিমধ্যে সেট করা আছে
+    await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${encodeURIComponent(phone)}`,{
+      method:'PATCH',
+      body:JSON.stringify({first_session_at:new Date().toISOString()})
+    });
+  }catch(e){ /* silent fail — leaderboard fallback করবে calendar day তে */ }
+}
+
 async function closeStaleSessions(phone){
   const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?user_phone=eq.${encodeURIComponent(phone)}&status=in.(study,break,sleep,paused,active)&select=id`);
   if(!rows||!rows.length) return;
