@@ -357,18 +357,15 @@ async function loadSubjects() {
         const c = document.getElementById('subj-list');
         if (!subjects?.length) { c.innerHTML = '<div class="ctr">কোনো বিষয় পাওয়া যায়নি। শীঘ্রই যোগ করা হবে।</div>'; return; }
         document.getElementById('subj-banner-sub').textContent = subjects.length + ' টি বিষয় পাওয়া গেছে';
-        const GS = ['g0','g1','g2','g3','g4','g5','g6','g7'];
-        c.innerHTML = '<div class="subj-list">' + subjects.map((s,i) => `
-            <div class="subj-card ${GS[(s.color_idx||i)%8]}" onclick="openSubject(${s.id},'${esc(s.name)}')">
-                <div class="subj-card-bg"></div>
-                <div class="subj-card-inner">
-                    <div class="subj-icon">${esc(s.icon||'📘')}</div>
-                    <div class="subj-info">
-                        <div class="subj-name">${esc(s.name)}</div>
-                        <div class="subj-desc">${esc(s.description||'অধ্যায় দেখতে ক্লিক করো')}</div>
-                    </div>
-                    <div class="subj-arr">›</div>
+        // Chapter list এর মতো simple list style — subject card design এর বদলে
+        c.innerHTML = '<div class="item-list">' + subjects.map((s,i) => `
+            <div class="list-item" onclick="openSubject(${s.id},'${esc(s.name)}')">
+                <div class="list-num">${i+1}</div>
+                <div class="list-info">
+                    <div class="list-name">${esc(s.name)}</div>
+                    <div class="list-sub">${esc(s.description||'অধ্যায় দেখতে ক্লিক করো')}</div>
                 </div>
+                <div class="list-arr">›</div>
             </div>`).join('') + '</div>';
     } catch (e) { document.getElementById('subj-list').innerHTML = '<div class="ctr" style="color:var(--error)">লোড হয়নি। পুনরায় চেষ্টা করো।</div>'; }
 }
