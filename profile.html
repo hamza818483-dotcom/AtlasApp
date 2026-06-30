@@ -1536,8 +1536,19 @@ function toggleTheme() {
 }
 // Global back button — always goes exactly one step back in real browser history (never further, never to a different page)
 function goBackGlobal() {
-    if (window.history.length > 1) { history.back(); }
-    else { location.href = 'index.html'; }
+    // Note: global-nav.js শেষে load হয়ে এটাকে override করে stack-based navigation দিয়ে।
+    // এই version টা শুধু fallback — global-nav.js লোড না হলে ব্যবহার হয়।
+    // history.back() এর বদলে সরাসরি ঠিক আগের known page এ পাঠানো হচ্ছে যাতে
+    // ব্রাউজার history-তে মাঝখানে কোনো internal state change থাকলেও skip না হয়।
+    try {
+        const stack = JSON.parse(sessionStorage.getItem('atlas_nav_stack') || '[]');
+        if (stack.length > 1) {
+            stack.pop();
+            location.href = stack[stack.length - 1];
+            return;
+        }
+    } catch (_) {}
+    location.href = 'index.html';
 }
 function toggleSidebar() {
     isSidebarOpen = !isSidebarOpen;

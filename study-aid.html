@@ -188,8 +188,19 @@ function showToast(m,d=2000){const t=document.getElementById('toast');t.textCont
 function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'☀️':'🌙';localStorage.setItem('atlas-theme',isDarkMode?'dark':'light');}
 // Global back button — always goes exactly one step back in real browser history (never further, never to a different page)
 function goBackGlobal() {
-    if (window.history.length > 1) { history.back(); }
-    else { location.href = 'index.html'; }
+    // Note: global-nav.js শেষে load হয়ে এটাকে override করে stack-based navigation দিয়ে।
+    // এই version টা শুধু fallback — global-nav.js লোড না হলে ব্যবহার হয়।
+    // history.back() এর বদলে সরাসরি ঠিক আগের known page এ পাঠানো হচ্ছে যাতে
+    // ব্রাউজার history-তে মাঝখানে কোনো internal state change থাকলেও skip না হয়।
+    try {
+        const stack = JSON.parse(sessionStorage.getItem('atlas_nav_stack') || '[]');
+        if (stack.length > 1) {
+            stack.pop();
+            location.href = stack[stack.length - 1];
+            return;
+        }
+    } catch (_) {}
+    location.href = 'index.html';
 }
 function toggleSidebar(){isSidebarOpen=!isSidebarOpen;document.getElementById('sidebarOverlay').classList.toggle('active',isSidebarOpen);document.getElementById('sidebar').classList.toggle('active',isSidebarOpen);}
 function closeSidebar(){isSidebarOpen=false;document.getElementById('sidebarOverlay').classList.remove('active');document.getElementById('sidebar').classList.remove('active');}
