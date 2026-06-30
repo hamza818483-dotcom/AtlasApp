@@ -30,7 +30,7 @@
   background: none; border: none; color: var(--text); cursor: pointer;
   padding: 4px; display: flex; align-items: center;
 }
-.mood-overlay-title { font-size: 15px; font-weight: 900; flex: 1; }
+.mood-overlay-title { font-size: 19px; font-weight: 900; flex: 1; text-align: center; }
 .mood-overlay-title.break { color: #F59E0B; }
 .mood-overlay-title.sleep { color: #818CF8; }
 .mood-overlay-count {
@@ -617,11 +617,12 @@
 /* Today's LIVE section */
 .live-today-section { padding: 0 14px 6px; }
 .live-today-title {
-  font-size: 11px; font-weight: 800; color: #10B981;
-  display: flex; align-items: center; gap: 5px; margin-bottom: 8px;
+  font-size: 16px; font-weight: 900; color: #10B981;
+  display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 8px;
   background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.25);
-  border-radius: 10px; padding: 7px 10px;
+  border-radius: 10px; padding: 9px 10px; position: relative;
 }
+.live-today-title #liveMoodClearBtn { position: absolute; right: 10px; margin-left: 0 !important; }
 .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #10B981; animation: livePulse 1.5s ease-in-out infinite; }
 @keyframes livePulse {
   0%,100% { transform: scale(1); opacity: 1; }
@@ -919,8 +920,8 @@
 
     <!-- ═══ ATLAS FOCUS TIMER BANNER ═══ -->
     <div style="margin:6px 14px 4px;padding:8px 14px;border-radius:10px;background:linear-gradient(135deg,rgba(245,158,11,.12) 0%,rgba(251,191,36,.06) 50%,rgba(99,102,241,.1) 100%);border:1.5px solid rgba(245,158,11,.35);display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 2px 12px rgba(245,158,11,.08)">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 2h12v8a6 6 0 01-12 0V2z" stroke="#F59E0B" stroke-width="1.8" fill="rgba(245,158,11,.2)"/><path d="M6 5H3a3 3 0 003 3M18 5h3a3 3 0 01-3 3" stroke="#F59E0B" stroke-width="1.8" stroke-linecap="round"/><path d="M12 16v4M8 20h8" stroke="#F59E0B" stroke-width="1.8" stroke-linecap="round"/></svg>
-      <span style="font-size:13px;font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,#F59E0B,#FBBF24,#F59E0B);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-family:inherit">ATLAS Focus Timer</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 2h12v8a6 6 0 01-12 0V2z" stroke="#F59E0B" stroke-width="1.8" fill="rgba(245,158,11,.2)"/><path d="M6 5H3a3 3 0 003 3M18 5h3a3 3 0 01-3 3" stroke="#F59E0B" stroke-width="1.8" stroke-linecap="round"/><path d="M12 16v4M8 20h8" stroke="#F59E0B" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span style="font-size:18px;font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,#F59E0B,#FBBF24,#F59E0B);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-family:inherit">ATLAS Focus Timer</span>
       <span style="font-size:7px;font-weight:900;padding:2px 6px;border-radius:5px;background:linear-gradient(90deg,#F59E0B,#FBBF24);color:#000;letter-spacing:.8px">PREMIUM</span>
     </div>
 
@@ -1804,9 +1805,9 @@ function stopPolling(){ if(pollInterval){clearInterval(pollInterval);pollInterva
 function startIdlePolling(){ if(idlePollInterval) return; idlePollInterval=setInterval(renderLive,1000); startLiveSecTicker(); }
 
 const MEDALS=[
-  `<svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#F59E0B"/><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="900" fill="#000" font-family="monospace">1</text></svg>`,
-  `<svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#9CA3AF"/><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="900" fill="#000" font-family="monospace">2</text></svg>`,
-  `<svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#B45309"/><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="900" fill="#fff" font-family="monospace">3</text></svg>`
+  `<svg width="26" height="26" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#F59E0B"/><text x="12" y="16.5" text-anchor="middle" font-size="13" font-weight="900" fill="#000" font-family="monospace">1</text></svg>`,
+  `<svg width="26" height="26" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#9CA3AF"/><text x="12" y="16.5" text-anchor="middle" font-size="13" font-weight="900" fill="#000" font-family="monospace">2</text></svg>`,
+  `<svg width="26" height="26" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#B45309"/><text x="12" y="16.5" text-anchor="middle" font-size="13" font-weight="900" fill="#fff" font-family="monospace">3</text></svg>`
 ];
 
 async function renderLive(){
