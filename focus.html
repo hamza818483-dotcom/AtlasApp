@@ -1704,7 +1704,8 @@ async function doEnd(auto){
   if(_s('ctrlBSRow'))    _s('ctrlBSRow').style.display='none';
   if(_s('ctrlBSStart'))  _s('ctrlBSStart').style.display='none';
   if(_s('ctrlBSStop'))   _s('ctrlBSStop').style.display='none';
-  if(_s('ctrlStartNew')) _s('ctrlStartNew').style.display='flex';
+  // modal animation শেষ হওয়ার পরে দেখাবে
+  setTimeout(()=>{ if(_s('ctrlStartNew')) _s('ctrlStartNew').style.display='flex'; }, 100);
   if(_s('timerUnifiedBox')) _s('timerUnifiedBox').className='timer-unified-box mood-study';
   if(_s('btnStudy'))  _s('btnStudy').classList.add('active');
   if(_s('btnBreak'))  _s('btnBreak').classList.remove('active');
@@ -1720,8 +1721,7 @@ async function doEnd(auto){
   accumulatedStudySecs += studySecs;
   sessionNumber++;
   saveDailyProgress();
-  // studySecs = 0 — নতুন session এ timer 0 থেকে শুরু হবে
-  // accumulatedStudySecs থাকবে — live list এ total দেখাবে
+  // studySecs = 0 — নতুন session এ timer 0 থেকে শুরু হবে; accumulatedStudySecs আলাদা থাকে, display-এ যোগ হয়
   studySecs=0; breakSecs=0; sleepSecs=0; breaksUsed=0;
   sessionId=null; mood='study'; paused=false; bsRunning=false;
 
