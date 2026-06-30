@@ -510,8 +510,8 @@
             position: relative; z-index: 2;
             background: linear-gradient(145deg, #110E2A 0%, #1C1040 40%, #0F0C24 100%);
             border-radius: 16px; overflow: hidden;
-            padding: 2px 18px; text-align: center;
-            flex-direction: column; gap: 0px;
+            padding: 8px 16px; text-align: left;
+            display: flex; flex-direction: row; align-items: center; gap: 10px;
         }
 
         /* Sweep shine on inner card */
@@ -527,12 +527,12 @@
         .courses-banner:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(108,99,255,.55), 0 4px 12px rgba(0,0,0,.6); }
         .courses-banner:active { transform: scale(.97); }
 
-        .courses-banner-icon { display: flex; align-items: center; justify-content: center; margin-bottom: 4px; position: relative; z-index: 1; }
-        .courses-banner-text { width: 100%; position: relative; z-index: 1; }
+        .courses-banner-icon { display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative; z-index: 1; }
+        .courses-banner-text { flex: 1; min-width: 0; position: relative; z-index: 1; }
 
         /* Yellow-white gradient shimmer on title — eye-catching, distinct from all other text */
         .courses-banner-title {
-            font-size: 20px; font-weight: 900; letter-spacing: .5px;
+            font-size: 15px; font-weight: 900; letter-spacing: .3px;
             background: linear-gradient(90deg,
                 #FFD700 0%, #FFF5A0 25%, #FFFFFF 50%, #FFE566 75%, #FFD700 100%);
             background-size: 200% auto;
@@ -542,7 +542,7 @@
             color: transparent;
             animation: coursesTitleShimmer 3s linear infinite;
         }
-        .courses-banner-sub { font-size: 11px; color: rgba(255,255,255,.75); margin-top: 4px; }
+        .courses-banner-sub { font-size: 9.5px; color: rgba(255,255,255,.7); margin-top: 1px; }
         .courses-banner-arr { display: none; }
 
         @media(max-width:340px) {
@@ -1112,7 +1112,7 @@
     <!-- ATLAS All Courses — premium static gradient banner, links to atlascourses.com -->
     <div class="courses-banner" onclick="window.open('https://atlascourses.com','_blank')">
         <div class="courses-banner-inner">
-            <span class="courses-banner-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5L2.5 9 12 13.5 21.5 9z"/><path d="M6.5 11.2v5c0 1.4 2.5 2.5 5.5 2.5s5.5-1.1 5.5-2.5v-5"/><path d="M21.5 9v6"/></svg></span>
+            <span class="courses-banner-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5L2.5 9 12 13.5 21.5 9z"/><path d="M6.5 11.2v5c0 1.4 2.5 2.5 5.5 2.5s5.5-1.1 5.5-2.5v-5"/><path d="M21.5 9v6"/></svg></span>
             <div class="courses-banner-text">
                 <div class="courses-banner-title">ATLAS All Courses</div>
                 <div class="courses-banner-sub">সম্পূর্ণ কোর্স দেখো atlascourses.com-এ</div>
