@@ -1025,40 +1025,50 @@ async function mbSaveMcq(e) {
     }
 }
 
+let mbInlineEditId = null; // যে MCQ এখন inline edit mode-এ আছে
+
 function mbEditMcq(mcqId) {
-    const mcqs = mbGetPageMcqs(mbCurrentPage);
-    const m = mcqs.find(q => q.id === mcqId);
-    if (!m) return;
+    // আগে এটা Manual ট্যাবে জাম্প করত — এখন MCQ যেখানে আছে (All ট্যাবের কার্ডেই) সেখানে inline edit form খোলে।
+    mbInlineEditId = mcqId;
+    mbRenderPageMcqList();
+}
 
-    mbEditingId = mcqId;
+function mbCancelInlineEdit() {
+    mbInlineEditId = null;
+    mbRenderPageMcqList();
+}
 
-    const q  = document.getElementById('mbMcqQuestion');
-    const ok = document.getElementById('mbOptK');
-    const okh= document.getElementById('mbOptKh');
-    const og = document.getElementById('mbOptG');
-    const ogh= document.getElementById('mbOptGh');
-    const ex = document.getElementById('mbMcqExplanation');
+async function mbSaveInlineEdit(mcqId) {
+    const get = id => (document.getElementById(id) || {}).value || '';
+    const correctBtn = document.querySelector(`#mbInlineForm-${mcqId} .mb-inline-ans.active`);
+    const updated = {
+        id: mcqId,
+        question:    get('mbInlineQ-' + mcqId),
+        option_k:    get('mbInlineOptK-' + mcqId),
+        option_kh:   get('mbInlineOptKh-' + mcqId),
+        option_g:    get('mbInlineOptG-' + mcqId),
+        option_gh:   get('mbInlineOptGh-' + mcqId),
+        correct:     correctBtn ? correctBtn.dataset.key : 'k',
+        explanation: get('mbInlineExp-' + mcqId),
+        type:        get('mbInlineType-' + mcqId) || 'standard',
+    };
+    try {
+        const currentMcqs = mbGetPageMcqs(mbCurrentPage).map(m => m.id === mcqId ? updated : m);
+        await mbUpsertPageMcqs(mbCurrentPage, currentMcqs);
+        mbInlineEditId = null;
+        mbToast('✓ প্রশ্ন আপডেট হয়েছে', 'success');
+        mbRenderPageMcqList();
+        mbUpdatePageCount();
+        mbRenderPageSummary();
+    } catch (ex) {
+        mbToast('আপডেট ব্যর্থ: ' + ex.message, 'error');
+    }
+}
 
-    if (q)   q.value   = m.question     || '';
-    if (ok)  ok.value  = m.option_k     || '';
-    if (okh) okh.value = m.option_kh    || '';
-    if (og)  og.value  = m.option_g     || '';
-    if (ogh) ogh.value = m.option_gh    || '';
-    if (ex)  ex.value  = m.explanation  || '';
-
-    mbSelectAnswer(m.correct  || 'k');
-    mbSelectType(m.type       || 'standard');
-
-    const title = document.getElementById('mbManualFormTitle');
-    if (title) title.textContent = '✏️ প্রশ্ন সম্পাদনা';
-    const cancelBtn = document.getElementById('mbMcqCancelBtn');
-    if (cancelBtn) cancelBtn.style.display = 'inline-flex';
-    const saveBtn = document.getElementById('mbMcqSaveBtn');
-    if (saveBtn) saveBtn.textContent = '✓ আপডেট করো';
-
-    mbSwitchTab('manual');
-    const form = document.getElementById('mbMcqForm');
-    if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+function mbInlineSelectAnswer(mcqId, key) {
+    document.querySelectorAll(`#mbInlineForm-${mcqId} .mb-inline-ans`).forEach(b => {
+        b.classList.toggle('active', b.dataset.key === key);
+    });
 }
 
 function mbCancelMcqEdit() {
@@ -1118,7 +1128,11 @@ function mbRenderPageMcqList() {
     const labelMap = { k: 'ক', kh: 'খ', g: 'গ', gh: 'ঘ' };
     const typeLabel = { standard: 'Standard', true_false: 'True-False', hard: 'Hard' };
 
-    listEl.innerHTML = mcqs.map((m, idx) => `
+    listEl.innerHTML = mcqs.map((m, idx) => {
+        if (m._source === 'admin' && m.id === mbInlineEditId) {
+            return mbBuildInlineEditForm(m, idx);
+        }
+        return `
         <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px">
             <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
                 <div style="font-size:12px;font-weight:700;line-height:1.5;flex:1">${idx + 1}. ${esc(m.question)}</div>
@@ -1143,7 +1157,32 @@ function mbRenderPageMcqList() {
                 <span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(108,99,255,0.1);color:#9C8BFF;text-transform:uppercase">${typeLabel[m.type]||m.type||'standard'}</span>
                 ${m._source === 'user' ? '<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(16,185,129,0.1);color:var(--green)">ইউজার-জেনারেটেড</span>' : ''}
             </div>
-        </div>`).join('');
+        </div>`;
+    }).join('');
+}
+
+// MCQ যেখানে দেখা যায় (All ট্যাবের কার্ড) সেখানেই inline edit form — Manual ট্যাবে জাম্প করে না।
+function mbBuildInlineEditForm(m, idx) {
+    const labelMap = { k: 'ক', kh: 'খ', g: 'গ', gh: 'ঘ' };
+    return `
+    <div id="mbInlineForm-${m.id}" style="background:var(--card);border:1.5px solid var(--accent);border-radius:var(--radius);padding:14px;margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:8px">✏️ ${idx + 1}. প্রশ্ন সম্পাদনা</div>
+        <textarea class="form-input" id="mbInlineQ-${m.id}" rows="2" style="margin-bottom:8px;width:100%">${esc(m.question||'')}</textarea>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
+            ${['k','kh','g','gh'].map(k => `
+                <div style="display:flex;align-items:center;gap:4px">
+                    <button type="button" class="mb-inline-ans ${m.correct===k?'active':''}" data-key="${k}" onclick="mbInlineSelectAnswer('${m.id}','${k}')"
+                        style="width:22px;height:22px;flex-shrink:0;border-radius:50%;border:1.5px solid ${m.correct===k?'var(--green)':'var(--border)'};background:${m.correct===k?'var(--green)':'transparent'};color:${m.correct===k?'#fff':'var(--text3)'};font-size:10px;font-weight:700;cursor:pointer">${labelMap[k]}</button>
+                    <input class="form-input" id="mbInlineOpt${k.charAt(0).toUpperCase()+k.slice(1)}-${m.id}" value="${esc(m['option_'+k]||'')}" style="flex:1;font-size:11px;padding:6px 8px">
+                </div>`).join('')}
+        </div>
+        <textarea class="form-input" id="mbInlineExp-${m.id}" rows="2" placeholder="ব্যাখ্যা (ঐচ্ছিক)" style="margin-bottom:8px;width:100%">${esc(m.explanation||'')}</textarea>
+        <input type="hidden" id="mbInlineType-${m.id}" value="${esc(m.type||'standard')}">
+        <div style="display:flex;gap:8px">
+            <button class="btn btn-outline" style="flex:1" onclick="mbCancelInlineEdit()">বাতিল</button>
+            <button class="btn btn-primary" style="flex:1" onclick="mbSaveInlineEdit('${m.id}')">✓ সংরক্ষণ করো</button>
+        </div>
+    </div>`;
 }
 
 /* ════════════════════════════════════════════════════
@@ -2163,6 +2202,9 @@ window.mbSelectType       = mbSelectType;
 window.mbSelectAiType     = mbSelectAiType;
 window.mbSaveMcq          = mbSaveMcq;
 window.mbEditMcq          = mbEditMcq;
+window.mbCancelInlineEdit = mbCancelInlineEdit;
+window.mbSaveInlineEdit   = mbSaveInlineEdit;
+window.mbInlineSelectAnswer = mbInlineSelectAnswer;
 window.mbCancelMcqEdit    = mbCancelMcqEdit;
 window.mbDeleteMcq        = mbDeleteMcq;
 window.mbCsvDragOver      = mbCsvDragOver;
