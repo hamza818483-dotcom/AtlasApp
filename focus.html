@@ -30,7 +30,7 @@
   background: none; border: none; color: var(--text); cursor: pointer;
   padding: 4px; display: flex; align-items: center;
 }
-.mood-overlay-title { font-size: 15px; font-weight: 900; flex: 1; }
+.mood-overlay-title { font-size: 19px; font-weight: 900; flex: 1; text-align: center; }
 .mood-overlay-title.break { color: #F59E0B; }
 .mood-overlay-title.sleep { color: #818CF8; }
 .mood-overlay-count {
@@ -617,11 +617,12 @@
 /* Today's LIVE section */
 .live-today-section { padding: 0 14px 6px; }
 .live-today-title {
-  font-size: 11px; font-weight: 800; color: #10B981;
-  display: flex; align-items: center; gap: 5px; margin-bottom: 8px;
+  font-size: 16px; font-weight: 900; color: #10B981;
+  display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 8px;
   background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.25);
-  border-radius: 10px; padding: 7px 10px;
+  border-radius: 10px; padding: 9px 10px; position: relative;
 }
+.live-today-title #liveMoodClearBtn { position: absolute; right: 10px; margin-left: 0 !important; }
 .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #10B981; animation: livePulse 1.5s ease-in-out infinite; }
 @keyframes livePulse {
   0%,100% { transform: scale(1); opacity: 1; }
