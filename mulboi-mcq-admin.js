@@ -587,6 +587,14 @@ function mbOpenMcqPanel(pdfId, pdfTitle, pdfUrl) {
 
     mbUpdatePageCount();
 
+    // Refresh দিলেও একই PDF/page-এ ফিরে আসার জন্য সংরক্ষণ করা হচ্ছে —
+    // একই PDF আগে থেকেই খোলা থাকলে তার page number বজায় রাখা হয় (overwrite করা হয় না)
+    try {
+        const prevSt = JSON.parse(localStorage.getItem('atlasMbOpenPanel') || 'null');
+        const keepPage = (prevSt && prevSt.pdfId === pdfId && prevSt.page) ? prevSt.page : 1;
+        localStorage.setItem('atlasMbOpenPanel', JSON.stringify({ pdfId, pdfTitle, pdfUrl, page: keepPage }));
+    } catch (_) {}
+
     mbLoadAllPageMcqs().then(() => {
         mbRenderPageSummary();
         mbRenderPageMcqList();
@@ -603,6 +611,7 @@ function mbCloseMcqPanel() {
     mbPdfId = null;
     mbPdfDoc = null;
     mbAllPageData = [];
+    try { localStorage.removeItem('atlasMbOpenPanel'); } catch (_) {}
     const canvas = document.getElementById('mbPreviewCanvas');
     if (canvas) {
         try {
@@ -727,14 +736,22 @@ function mbRenderPageSummary() {
     if (totalPages <= 1 && !Object.keys(pageCounts).length) { wrap.innerHTML = ''; return; }
 
     const typeLabel = { admin:'Manual', standard:'Standard', true_false:'সত্য/মিথ্যা', hard:'Hard' };
+    // বর্তমানে চলমান bulk job থাকলে কোন পেইজে এখন কাজ চলছে সেটা জেনে নাও — pill rebuild হলেও highlight টিকে থাকার জন্য
+    let bulkActivePage = null;
+    try {
+        const bj = JSON.parse(localStorage.getItem(MB_BULK_KEY) || 'null');
+        if (bj && !bj.done && !bj.stopped && bj.pdfId === mbPdfId) bulkActivePage = bj.currentPage;
+    } catch (_) {}
+
     let html = '';
     for (let p = 1; p <= totalPages; p++) {
         const cnt      = pageCounts[p] || 0;
         const isActive = p === mbCurrentPage;
+        const isBulkWorking = p === bulkActivePage;
         const hasMcqs  = cnt > 0;
         const tc = pageTypeCounts[p] || {};
         const breakdown = Object.keys(tc).map(t => `${typeLabel[t]||t}: ${tc[t]}`).join(', ') || 'কোনো MCQ নেই';
-        html += `<button onclick="mbGoToPagePill(${p})" id="mbPill-${p}" title="${breakdown}" style="
+        html += `<button onclick="mbGoToPagePill(${p})" id="mbPill-${p}" title="${breakdown}" class="${isBulkWorking ? 'mb-pill-active-bulk' : ''}" style="
             padding:3px 9px;border-radius:20px;
             border:1.5px solid ${isActive ? 'var(--accent)' : hasMcqs ? 'rgba(108,99,255,0.35)' : 'var(--border)'};
             background:${isActive ? 'var(--accent)' : hasMcqs ? 'rgba(108,99,255,0.08)' : 'var(--card)'};
@@ -759,6 +776,10 @@ function mbHighlightActivePill() {
 
 function mbGoToPagePill(p) {
     mbCurrentPage = p;
+    try {
+        const st = JSON.parse(localStorage.getItem('atlasMbOpenPanel') || 'null');
+        if (st) { st.page = p; localStorage.setItem('atlasMbOpenPanel', JSON.stringify(st)); }
+    } catch (_) {}
     const pi = document.getElementById('mbPageInput');
     if (pi) pi.value = p;
     mbResetMcqForm();
@@ -830,9 +851,14 @@ async function mbUpsertPageMcqs(pageNum, mcqs) {
 }
 
 function mbUpdatePageCount() {
-    const mcqs = mbGetPageMcqs(mbCurrentPage);
+    const adminMcqs = mbGetPageMcqs(mbCurrentPage);
+    let totalCount = adminMcqs.length;
+    const userRows = mbAllPageDataAllTypes.filter(r => r.page_number === mbCurrentPage && r.mcq_type !== 'admin');
+    userRows.forEach(r => {
+        try { totalCount += JSON.parse(r.questions_json || '[]').length; } catch (_) {}
+    });
     const pc = document.getElementById('mbPageCount');
-    if (pc) pc.textContent = mcqs.length + ' টি MCQ';
+    if (pc) pc.textContent = totalCount + ' টি MCQ';
 }
 
 /* ════════════════════════════════════════════════════
@@ -847,7 +873,8 @@ function mbSwitchTab(name) {
         if (btn) btn.classList.toggle('active', t === name);
         if (pan) pan.classList.toggle('active', t === name);
     });
-    if (name === 'all') { mbRenderPageMcqList(); mbLoadCsvArchive(); }
+    if (name === 'all') mbRenderPageMcqList();
+    if (name === 'csv') mbLoadCsvArchive();
 }
 
 /* ════════════════════════════════════════════════════
@@ -1862,16 +1889,25 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     }
 
     const newMcqs = parsed.map(m => ({ id: uid(), ...m, type: m.type || type }));
-    const existingRow = mbAllPageDataAllTypes.find(r => r.page_number === pageNum && r.mcq_type === type);
+    // bug fix: এটা admin panel-এর AI generate (single/bulk উভয়), তাই mcq_type অবশ্যই 'admin' হবে —
+    // আগে এখানে mcq_type:type (standard/true_false/hard) সেভ হতো, যার ফলে এই MCQ গুলো
+    // ভুলভাবে "ইউজার-জেনারেটেড" হিসেবে দেখাতো এবং edit/delete করা যেতো না।
+    const existingRow = mbAllPageData.find(r => r.page_number === pageNum);
     let currentMcqs = [];
     if (existingRow) { try { currentMcqs = JSON.parse(existingRow.questions_json || '[]'); } catch (_) {} }
     currentMcqs.push(...newMcqs);
 
-    await mbApi('/book_page_mcqs', {
+    const res = await mbApi('/book_page_mcqs', {
         method: 'POST',
-        headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-        body: JSON.stringify({ pdf_id: parseInt(mbPdfId), page_number: pageNum, mcq_type: type, questions_json: JSON.stringify(currentMcqs) })
+        headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+        body: JSON.stringify({ pdf_id: parseInt(mbPdfId), page_number: pageNum, mcq_type: 'admin', questions_json: JSON.stringify(currentMcqs) })
     });
+    try {
+        const data = await res.json();
+        const newRow = Array.isArray(data) ? data[0] : data;
+        const idx = mbAllPageData.findIndex(r => r.page_number === pageNum);
+        if (idx >= 0) mbAllPageData[idx] = newRow; else mbAllPageData.push(newRow);
+    } catch (_) {}
 
     // প্রতিটা পেইজের জন্য আলাদা CSV ফাইল — ফাইলের নামে page no থাকে, শুধু এই batch-এর
     // নতুন প্রশ্নগুলো (পুরো accumulated history না) — যাতে প্রতি পেইজের জন্য পরিষ্কার আলাদা ফাইল তৈরি হয়।
@@ -1881,6 +1917,10 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
 
 // Page reload হলে আগের চলমান job থাকলে সেটা আবার resume করে — "refresh দিলেও কাজ থামবে না"
 function mbResumeBulkJob() {
+    if (mbBulkRunning) return; // ইতিমধ্যে একটা loop চলছে — নতুন parallel loop শুরু করা যাবে না।
+    // bug fix: আগে এই guard না থাকায় mbRunBulkJob প্রতি পেইজে mbLoadAllPageMcqs() কল করত,
+    // যেটা আবার mbResumeBulkJob() কল করে নতুন parallel mbRunBulkJob শুরু করে দিত —
+    // ফলে একই পেইজ বহুবার generate হতো (CSV doubling এর মূল কারণ)।
     try {
         const job = JSON.parse(localStorage.getItem(MB_BULK_KEY) || 'null');
         if (job && !job.done && !job.stopped && job.pdfId === mbPdfId) {
@@ -2077,6 +2117,18 @@ async function mbInit() {
     // আগে এই await ছাড়া কল হওয়ায় AI tab প্রথমবার খুললে prompt box ফাঁকা দেখাতো।
     const promptEl = document.getElementById('mbAiPrompt');
     if (promptEl) promptEl.value = mbGetSavedPrompt(mbAiTypeKey) || '';
+
+    // Refresh/reload করলে আগে যে PDF/page খোলা ছিল সেটাই আবার খোলা হবে —
+    // এতদিন panel state কোথাও persist হতো না, তাই refresh দিলে panel বন্ধ হয়ে যেতো।
+    try {
+        const st = JSON.parse(localStorage.getItem('atlasMbOpenPanel') || 'null');
+        if (st && st.pdfId) {
+            mbOpenMcqPanel(st.pdfId, st.pdfTitle, st.pdfUrl);
+            if (st.page && st.page > 1) {
+                setTimeout(() => mbGoToPagePill(st.page), 600); // PDF.js load হওয়ার সময় দিতে সামান্য বিলম্ব
+            }
+        }
+    } catch (_) {}
 }
 
 if (document.readyState === 'loading') {
