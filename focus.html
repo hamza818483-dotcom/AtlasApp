@@ -1618,8 +1618,9 @@ async function doEnd(auto){
   accumulatedStudySecs += studySecs;
   sessionNumber++;
   saveDailyProgress();
-  // accumulated time timer এ দেখাবে — নতুন session এ এখান থেকে যোগ হবে
-  studySecs=accumulatedStudySecs; breakSecs=0; sleepSecs=0; breaksUsed=0;
+  // studySecs = 0 — নতুন session এ timer 0 থেকে শুরু হবে
+  // accumulatedStudySecs থাকবে — live list এ total দেখাবে
+  studySecs=0; breakSecs=0; sleepSecs=0; breaksUsed=0;
   sessionId=null; mood='study'; paused=false; bsRunning=false;
 
   // বাকি সব render/list-update কাজ — এর মধ্যে কোনো একটায় error হলেও
