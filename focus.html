@@ -1004,6 +1004,12 @@
           নতুন Session শুরু করো
         </button>
       </div>
+      <!-- Break/Sleep mood controls: শুধু Stop -->
+      <div class="timer-controls-inner" id="ctrlBSRow" style="display:none">
+        <button class="ctrl-btn ctrl-stop" style="flex:1;justify-content:center" onclick="showModal()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="2" fill="currentColor"/></svg> Stop
+        </button>
+      </div>
 
     </div>
 
@@ -1220,6 +1226,8 @@ async function startSession(){
   document.getElementById('ctrlStudy').style.display='flex';
   document.getElementById('ctrlPause').style.display='flex';
   document.getElementById('ctrlResume').style.display='none';
+  const bsRow=document.getElementById('ctrlBSRow');
+  if(bsRow) bsRow.style.display='none';
 
   showTimerScreen();
   renderTimer();
@@ -1427,31 +1435,22 @@ function applyMoodSwitch(newMood){
   if(newMood==='break' && prevMood==='study') breaksUsed++;
   mood=newMood;
 
+  const _e=id=>document.getElementById(id);
+
   if(newMood==='study'){
-    // Break/Sleep → Study: study আবার শুরু/resume হয়। আগে breakSecs/sleepSecs
-    // রিসেট হয়ে যেত (০ করে দেওয়া হতো) — কিন্তু পরে যদি ইউজার আবার Break/Sleep
-    // mood-এ যায়, তখন আগের সময়ের উপর নতুন সময় যুক্ত (accumulate) হওয়া উচিত,
-    // রিসেট না। তাই এখানে breakSecs/sleepSecs স্পর্শ করা হচ্ছে না — শুধু
-    // bsRunning বন্ধ করা হচ্ছে যাতে break/sleep টিক আর না বাড়ে study mode-এ।
     bsRunning=false;
     paused=false;
     setHeaderGlow(true);
-    document.getElementById('ctrlStudy').style.display='flex';
-    document.getElementById('ctrlPause').style.display='flex';
-    document.getElementById('ctrlResume').style.display='none';
+    if(_e('ctrlStudy'))  _e('ctrlStudy').style.display='flex';
+    if(_e('ctrlPause'))  _e('ctrlPause').style.display='flex';
+    if(_e('ctrlResume')) _e('ctrlResume').style.display='none';
+    if(_e('ctrlBSRow'))  _e('ctrlBSRow').style.display='none';
   } else {
-    // Study → Break/Sleep: study auto-pause হয়, এবং break/sleep timer
-    // এখন সাথে সাথেই auto-start হয়ে যায় — কোনো manual Start/Stop বাটন
-    // নেই, mood বাটন (উপরে) ক্লিক করাই যথেষ্ট। আগের breakSecs/sleepSecs
-    // (যদি আগে কোনো break/sleep সেশন চলিয়ে study-তে ফিরে থাকে) এখানেও
-    // রিসেট হয় না, তার উপর থেকেই আবার চলবে। Study-তে ফিরলে (mood বাটনে
-    // ক্লিক করেই) আবার auto-pause হয়ে যাবে এই mood-এর জন্য।
-    paused=true; // study timer paused
+    paused=true;
     bsRunning=true;
     setHeaderGlow(false);
-    document.getElementById('ctrlStudy').style.display='none';
-    document.getElementById('ctrlPause').style.display='none';
-    document.getElementById('ctrlResume').style.display='none';
+    if(_e('ctrlStudy'))  _e('ctrlStudy').style.display='none';
+    if(_e('ctrlBSRow'))  _e('ctrlBSRow').style.display='flex';
   }
 
   updateMoodButtons(); renderTimer(); updateLsrCardHighlight(); saveState(); syncSession();
@@ -1600,6 +1599,7 @@ async function doEnd(auto){
   if(_s('ctrlPause'))    _s('ctrlPause').style.display='none';
   if(_s('ctrlResume'))   _s('ctrlResume').style.display='none';
   if(_s('ctrlBreakSleep')) _s('ctrlBreakSleep').style.display='none';
+  if(_s('ctrlBSRow'))    _s('ctrlBSRow').style.display='none';
   if(_s('ctrlBSStart'))  _s('ctrlBSStart').style.display='none';
   if(_s('ctrlBSStop'))   _s('ctrlBSStop').style.display='none';
   if(_s('ctrlStartNew')) _s('ctrlStartNew').style.display='flex';
