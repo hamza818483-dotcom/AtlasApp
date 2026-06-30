@@ -87,6 +87,22 @@ let mbEditingId   = null;
 let mbAnswerKey   = null;
 let mbTypeKey     = 'standard';
 let mbAiTypeKey   = 'standard';
+
+/* ════════════════════════════════════════════════════
+   PERMANENT INTERNAL AI RULES — admin prompt-এর বাইরেও সবসময় প্রযোজ্য।
+   এগুলো কখনো admin-এর কাস্টম prompt দিয়ে override হবে না; প্রতিটা
+   MCQ-generation কলে শেষে append হয় যাতে AI অবশ্যই মেনে চলে।
+   ════════════════════════════════════════════════════ */
+const MB_PERMANENT_RULES = (
+    `\n\nবাধ্যতামূলক নিয়ম (এগুলো সবসময় মেনে চলতে হবে, কোনো ব্যতিক্রম নয়):\n` +
+    `১. গাণিতিক বা রাসায়নিক রাশি/সূত্র লেখার সময় সঠিকভাবে সাব-স্ক্রিপ্ট ও সুপার-স্ক্রিপ্ট ব্যবহার করো — ` +
+    `যেমন x² (x^2 না), H₂O (H2O না), CO₂, x₁+x₂, a^n, এই ধরনের ইউনিকোড সাব/সুপারস্ক্রিপ্ট ক্যারেক্টার ব্যবহার করবে, ` +
+    `সাধারণ সংখ্যা/অক্ষর দিয়ে লিখবে না।\n` +
+    `২. প্রশ্ন বা ব্যাখ্যায় কখনো সোর্স-রেফারেন্স করে কথা বলবে না — অর্থাৎ "উল্লেখিত চিত্রে", "বক্সে", "ছকে", ` +
+    `"উদ্দীপকে", "সারণিতে", "টপিকে", "পৃষ্ঠা নং এ দেখা যাচ্ছে", "বলা আছে", "উল্লেখ করা আছে", "লক্ষ করা যায়", ` +
+    `"বর্ণনা আছে" — এই ধরনের কোনো বাক্যাংশ ব্যবহার করবে না। প্রশ্ন ও ব্যাখ্যা সবসময় স্বয়ংসম্পূর্ণ ও সরাসরি বিষয়বস্তু ` +
+    `নিয়ে লিখতে হবে, কোনো উৎস/অবস্থান নির্দেশ করা যাবে না।`
+);
 let mbCsvData     = [];
 let mbAiData      = [];
 
@@ -1332,11 +1348,11 @@ async function mbAiGenerate() {
         const typeLabel = { standard: 'সাধারণ', true_false: 'সত্য/মিথ্যা', hard: 'কঠিন' };
         const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","type":"${type}"}]`;
         const savedP = mbGetSavedPrompt(type);
-        const basePrompt = customP || savedP || (
+        const basePrompt = (customP || savedP || (
             `${typeLabel[type]||type} ধরনের ${count.label} MCQ তৈরি করো। ` +
             `Content যে ভাষায় আছে সেই ভাষায় রাখো। ` +
             `প্রতিটিতে চারটি বিকল্প (option_k, option_kh, option_g, option_gh) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে।`
-        );
+        )) + MB_PERMANENT_RULES;
 
         let rawJson;
 
@@ -1620,11 +1636,11 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     const typeLabel = { standard: 'সাধারণ', true_false: 'সত্য/মিথ্যা', hard: 'কঠিন' };
     const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","type":"${type}"}]`;
     const savedP = mbGetSavedPrompt(type);
-    const basePrompt = savedP || (
+    const basePrompt = (savedP || (
         `${typeLabel[type]||type} ধরনের ${count.label} MCQ তৈরি করো। ` +
         `Content যে ভাষায় আছে সেই ভাষায় রাখো। ` +
         `প্রতিটিতে চারটি বিকল্প (option_k, option_kh, option_g, option_gh) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে।`
-    );
+    )) + MB_PERMANENT_RULES;
 
     let rawJson;
     if (mbPdfUrl) {
