@@ -500,9 +500,23 @@ function makePage(p, tot) {
         </div>
         <div class="page-footer">
             <span class="p-num-lbl">পেইজ ${p}</span>
+            <button class="exam-btn" style="background:var(--card);color:var(--accent);border:1px solid var(--accent);margin-right:6px" onclick="copyPageText(${p})">📋 টেক্সট কপি</button>
             <button class="exam-btn" onclick="openSheet(${p})">📝 এক্সাম দাও</button>
         </div>`;
     return d;
+}
+
+// OCR করা text clipboard-এ কপি করে — PDF আপলোডের সময় background-এ already OCR হয়ে গেছে (admin panel)
+async function copyPageText(p) {
+    try {
+        const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdf_pages?pdf_id=eq.${curPdfId}&page_number=eq.${p}&ocr_status=eq.done&select=extracted_text`);
+        const text = rows?.[0]?.extracted_text;
+        if (!text || !text.trim()) { showToast('এই পেইজের টেক্সট এখনো প্রস্তুত হয়নি'); return; }
+        await navigator.clipboard.writeText(text);
+        showToast('✓ টেক্সট কপি হয়েছে');
+    } catch (e) {
+        showToast('কপি করা যায়নি');
+    }
 }
 
 function setupObs() {
@@ -721,10 +735,22 @@ async function getOrGenerateMCQs(pageNum, type) {
         }
     } catch (_) {}
 
-    const imageData = await getPageImageBase64(pageNum);
-    if (!imageData) throw new Error('পেইজের ছবি তৈরি করা যায়নি');
+    // ৩️⃣ আগে থেকেই OCR করা text থাকলে সেটা ব্যবহার করো — ছবি-ভিত্তিক generation এর চেয়ে
+    // দ্রুত ও নির্ভুল, কারণ OCR আপলোডের সময়ই background এ হয়ে গেছে (mbStartAutoOcr)।
+    let questions = null;
+    try {
+        const ocrRows = await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdf_pages?pdf_id=eq.${curPdfId}&page_number=eq.${pageNum}&ocr_status=eq.done&select=extracted_text`);
+        const ocrText = ocrRows?.[0]?.extracted_text;
+        if (ocrText && ocrText.trim().length > 30) {
+            questions = await generateMCQsFromText(ocrText, type);
+        }
+    } catch (_) {}
 
-    const questions = await generateMCQsFromImage(imageData, type);
+    if (!questions?.length) {
+        const imageData = await getPageImageBase64(pageNum);
+        if (!imageData) throw new Error('পেইজের ছবি তৈরি করা যায়নি');
+        questions = await generateMCQsFromImage(imageData, type);
+    }
     if (!questions?.length) throw new Error('AI থেকে প্রশ্ন পাওয়া যায়নি');
 
     try {
@@ -863,6 +889,26 @@ ${jsonFormat}`;
 // keeps every provider key (Gemini, OpenRouter, Groq, Cerebras, Cloudflare AI)
 // as a server-side secret and runs its own fallback chain internally — this
 // file no longer needs to know which provider actually answered.
+// OCR করা text দিয়ে MCQ generate — image-vision এর চেয়ে দ্রুত ও নির্ভুল (যেহেতু text already নির্ভুলভাবে এক্সট্র্যাক্ট করা)
+async function generateMCQsFromText(text, type) {
+    try {
+        const res = await fetch(AI_PROXY_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                question: text.slice(0, 6000),
+                systemPrompt: mcqPrompt(type)
+            })
+        });
+        if (!res.ok) return [];
+        const data = await res.json();
+        if (!data.success || !data.answer) return [];
+        return parseQuestionsJSON(data.answer);
+    } catch (e) {
+        return [];
+    }
+}
+
 async function generateMCQsFromImage(imageData, type) {
     try {
         const res = await fetch(AI_PROXY_URL, {
