@@ -2235,8 +2235,11 @@ async function loadInlineLb(days, btn){
   } catch(e){ el.innerHTML='<div style="text-align:center;padding:10px;color:#EF4444;font-size:11px">লোড হয়নি</div>'; }
 }
 
+let _lbReqSeq = 0; // race-condition guard — Ultimate Leaderboard
+
 async function loadLeaderboard(days){
   const rankList=document.getElementById('rankList');
+  const mySeq = ++_lbReqSeq;
   rankList.innerHTML='<div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:11px">লোড হচ্ছে...</div>';
   try {
     // ধাপ ১: সব active/recent user-দের first_session_at আনো (Ultimate Leaderboard
@@ -2245,6 +2248,7 @@ async function loadLeaderboard(days){
       `${SUPABASE_URL}/rest/v1/users?first_session_at=not.is.null`+
       `&select=phone,name,batch,college,is_premium,photo_url,first_session_at&limit=500`
     );
+    if(mySeq !== _lbReqSeq) return; // race-guard
     const userMap={};
     (usersRows||[]).forEach(u=>{ if(u.phone) userMap[u.phone]=u; });
 
@@ -2257,6 +2261,7 @@ async function loadLeaderboard(days){
       `${SUPABASE_URL}/rest/v1/focus_sessions?started_at=gte.${encodeURIComponent(earliestSince)}`+
       `&select=user_phone,study_seconds,break_seconds,sleep_seconds,breaks_used,started_at&limit=3000`
     );
+    if(mySeq !== _lbReqSeq) return; // race-guard — এই response আসতে আসতে আরেকটা period select হয়ে গেছে
 
     const grouped={};
     (sessRows||[]).forEach(r=>{
@@ -2310,9 +2315,11 @@ async function loadLeaderboard(days){
     }).filter(g=>g.study_seconds>0 || g.break_seconds>0 || g.sleep_seconds>0)
       .sort((a,b)=>b.score-a.score);
 
-    if(!list.length){ renderLeaderboard([]); return; }
+    if(!list.length){ if(mySeq===_lbReqSeq) renderLeaderboard([]); return; }
+    if(mySeq !== _lbReqSeq) return; // race-guard
     renderLeaderboard(list);
   } catch(e){
+    if(mySeq !== _lbReqSeq) return; // race-guard
     console.error('Leaderboard error',e);
     renderLeaderboard([]);
   }
