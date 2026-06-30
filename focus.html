@@ -2264,6 +2264,8 @@ function buildRankCard(s,rank,showStatus){
   const timeVal=s.total_seconds||s.study_seconds||0;
 
   const safeData=JSON.stringify({name:s.name||'',batch:s.batch||'',college:s.college||'',secs:timeVal,breaks:s.breaks_used||0,phone:s.phone||'',photo:s.photo_url||''}).replace(/'/g,"&#39;");
+  const isSelfCard = s._isSelf || (currentUser && s.phone===currentUser.phone);
+  const compareBtnHtml = isSelfCard ? '' : `<button class="compare-btn" data-cmp='${safeData}' onclick="openCompare(this)">তুলনা করো</button>`;
   return `
     <div class="r-card ${rank===1?'rank1-card':''} ${isLive?'is-live':''} ${isPaused?'is-paused':''}" data-phone="${escHtml(s.phone||'')}">
       ${rank===1?'<div class="rank1-glow"></div>':''}
@@ -2276,7 +2278,7 @@ function buildRankCard(s,rank,showStatus){
       <div class="r-right">
         ${statusHtml}
         <div class="r-time">${fmtCompact(timeVal)}</div>
-        <button class="compare-btn" data-cmp='${safeData}' onclick="openCompare(this)">তুলনা করো</button>
+        ${compareBtnHtml}
       </div>
     </div>
   `;
