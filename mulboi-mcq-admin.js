@@ -638,7 +638,14 @@ async function mbLoadPdfPreview(url) {
         if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
         }
-        mbPdfDoc = await pdfjsLib.getDocument({ url }).promise;
+        // cMapUrl/cMapPacked যোগ করা হয়েছে — আগে এটা ছিল না বলে বাংলা/জটিল ফন্টের পেইজে
+        // pdf.js glyph তথ্য খুঁজতে গিয়ে ধীরগতিতে fallback করত, যেটাই "১০ সেকেন্ড পর আসে"
+        // সমস্যার একটা বড় কারণ ছিল। study.html (user side)-এ আগে থেকেই এই কনফিগ আছে।
+        mbPdfDoc = await pdfjsLib.getDocument({
+            url,
+            cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+            cMapPacked: true,
+        }).promise;
         const pi = document.getElementById('mbPageInput');
         if (pi) pi.max = mbPdfDoc.numPages;
         // mbPdfDoc.numPages এখন জানা গেছে — তাই page pills সাথে সাথেই দেখানো যাবে।
