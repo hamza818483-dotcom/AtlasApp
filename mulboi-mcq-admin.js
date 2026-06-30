@@ -615,6 +615,10 @@ async function mbLoadPdfPreview(url) {
         mbPdfDoc = await pdfjsLib.getDocument({ url }).promise;
         const pi = document.getElementById('mbPageInput');
         if (pi) pi.max = mbPdfDoc.numPages;
+        // mbPdfDoc.numPages এখন জানা গেছে — তাই page pills সাথে সাথেই দেখানো যাবে।
+        // আগে শুধু page switch করলে mbRenderPageSummary() পুনরায় কল হতো বলে pills
+        // প্রথমবারে আসতো না (numPages তখনো অজানা থাকায় খালি render হতো)।
+        mbRenderPageSummary();
         await mbRenderPdfPage(mbCurrentPage);
     } catch (e) {
         if (loadingEl) loadingEl.classList.remove('show');
