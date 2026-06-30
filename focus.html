@@ -2671,13 +2671,26 @@ function restoreSession(){
   // Inject self instantly with restored timer data
   injectSelfToLive();
 
-  if(paused){
-    document.getElementById('ctrlPause').style.display='none';
-    document.getElementById('ctrlResume').style.display='flex';
-    setHeaderGlow(false);
+  const _e=id=>document.getElementById(id);
+  if(mood==='study'){
+    if(_e('ctrlStudy'))  _e('ctrlStudy').style.display='flex';
+    if(_e('ctrlBSRow'))  _e('ctrlBSRow').style.display='none';
+    if(paused){
+      _e('ctrlPause').style.display='none';
+      _e('ctrlResume').style.display='flex';
+      setHeaderGlow(false);
+    } else {
+      _e('ctrlPause').style.display='flex';
+      _e('ctrlResume').style.display='none';
+      setHeaderGlow(true);
+    }
   } else {
-    setHeaderGlow(true);
+    // Break/Sleep mode — pause/resume/stop বাটন থাকবে না, শুধু BS row
+    if(_e('ctrlStudy'))  _e('ctrlStudy').style.display='none';
+    if(_e('ctrlBSRow'))  _e('ctrlBSRow').style.display='flex';
+    setHeaderGlow(false);
   }
+  updateLsrCardHighlight();
   ticker=setInterval(tick,1000);
   renderLive(); startPolling();
   return true;
