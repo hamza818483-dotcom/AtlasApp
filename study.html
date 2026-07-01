@@ -112,6 +112,8 @@
 .canvas-wrap{position:relative;overflow:auto;background:#111120;display:flex;justify-content:center;min-height:200px;align-items:center}
 .canvas-wrap canvas{display:block;max-width:100%}
 .page-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:var(--text-secondary);font-size:12px}
+.page-text-layer{position:absolute;inset:0;color:transparent;user-select:text;-webkit-user-select:text;cursor:text;line-height:1.6;padding:4%;box-sizing:border-box;overflow:hidden;white-space:pre-wrap;word-break:break-word;font-size:1.1vw}
+.page-text-layer::selection{background:rgba(124,131,255,0.35)}
 .sp{width:28px;height:28px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--accent);animation:studySpin .8s linear infinite}
 @keyframes studySpin{to{transform:rotate(360deg)}}
 .page-footer{padding:10px 12px;background:rgba(255,255,255,.02);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
@@ -449,16 +451,16 @@ async function openChapter(id, name) {
         if (pdfs.length === 1) {
             const p0 = pdfs[0];
             if (p0.is_premium) {
-                openPdf(p0.id, p0.title, true); // premium → security check + separate file_url fetch
+                openPdf(p0.id, p0.title, true, p0.page_count); // premium → security check + separate file_url fetch
             } else {
-                openPdfFast(p0.id, p0.title, p0.file_url); // non-premium → no extra round-trip
+                openPdfFast(p0.id, p0.title, p0.file_url, p0.page_count); // non-premium → no extra round-trip
             }
             return;
         }
 
         document.getElementById('pdfs-title').textContent = name + ' (' + pdfs.length + ' টি PDF)';
         c.innerHTML = '<div class="item-list">' + pdfs.map(p => `
-            <div class="list-item" onclick="openPdf(${p.id},'${esc(p.title)}',${!!p.is_premium})">
+            <div class="list-item" onclick="openPdf(${p.id},'${esc(p.title)}',${!!p.is_premium},${p.page_count||0})">
                 <div style="font-size:26px">📕</div>
                 <div class="list-info">
                     <div class="list-name">${esc(p.title)}</div>
@@ -471,7 +473,7 @@ async function openChapter(id, name) {
 }
 
 /* ── PDF Viewer ── */
-async function openPdf(id, title, isPremium) {
+async function openPdf(id, title, isPremium, pageCount) {
     if (isPremium && !(currentUser?.is_premium)) {
         showToast('⭐ এটি Premium কন্টেন্ট — আপগ্রেড করো');
         return;
@@ -481,32 +483,38 @@ async function openPdf(id, title, isPremium) {
     go('s-view');
     updateMultiBtn();
     const wrap = document.getElementById('pages-wrap');
-    wrap.innerHTML = '<div class="ctr"><div class="sp"></div><div>PDF লোড হচ্ছে...</div></div>';
+    // page_count জানা থাকলে সাথে সাথেই সব পেইজের skeleton card বসিয়ে দিচ্ছি —
+    // pdf.js রেজল্ভ হওয়ার অপেক্ষায় পুরো স্ক্রিন blank spinner দেখানো বাদ।
+    if (pageCount > 0) { wrap.innerHTML = ''; for (let i = 1; i <= pageCount; i++) wrap.appendChild(makePage(i, pageCount)); }
+    else wrap.innerHTML = '<div class="ctr"><div class="sp"></div><div>PDF লোড হচ্ছে...</div></div>';
     try {
         const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdfs?id=eq.${id}&select=file_url`);
         let fileUrl = rows?.[0]?.file_url;
         if (!fileUrl) throw new Error('URL পাওয়া যায়নি');
-        await renderPdfDoc(fileUrl, wrap);
+        await renderPdfDoc(fileUrl, wrap, pageCount > 0);
     } catch (e) { wrap.innerHTML = `<div class="ctr" style="color:var(--error)">PDF লোড হয়নি: ${esc(e.message)}</div>`; }
 }
 
 // non-premium single-PDF chapter এর জন্য fast-path — file_url ইতিমধ্যেই openChapter()
 // থেকে হাতে আছে, তাই এখানে দ্বিতীয় network round-trip এড়িয়ে সরাসরি pdf.js render শুরু হয়।
-async function openPdfFast(id, title, fileUrl) {
+async function openPdfFast(id, title, fileUrl, pageCount) {
     curPdfId = id; curPdfTitle = title; curPdfPremium = false; selPages.clear();
     document.getElementById('view-title').textContent = title;
     go('s-view');
     updateMultiBtn();
     const wrap = document.getElementById('pages-wrap');
-    wrap.innerHTML = '<div class="ctr"><div class="sp"></div><div>PDF লোড হচ্ছে...</div></div>';
+    if (pageCount > 0) { wrap.innerHTML = ''; for (let i = 1; i <= pageCount; i++) wrap.appendChild(makePage(i, pageCount)); }
+    else wrap.innerHTML = '<div class="ctr"><div class="sp"></div><div>PDF লোড হচ্ছে...</div></div>';
     try {
         if (!fileUrl) throw new Error('URL পাওয়া যায়নি');
-        await renderPdfDoc(fileUrl, wrap);
+        await renderPdfDoc(fileUrl, wrap, pageCount > 0);
     } catch (e) { wrap.innerHTML = `<div class="ctr" style="color:var(--error)">PDF লোড হয়নি: ${esc(e.message)}</div>`; }
 }
 
 // দুই entry point (openPdf / openPdfFast) এর জন্য শেয়ার্ড pdf.js render লজিক — কোড ডুপ্লিকেশন এড়াতে।
-async function renderPdfDoc(fileUrl, wrap) {
+// skeletonsAlreadyShown=true হলে page card গুলো আগেই বসানো আছে (instant feel), শুধু
+// pdf.js resolve হওয়ার পর numPages mismatch থাকলেই rebuild করা হয়।
+async function renderPdfDoc(fileUrl, wrap, skeletonsAlreadyShown) {
     // Streaming চালু রাখা হয়েছে (disableAutoFetch/disableStream সরানো) —
     // Supabase Storage CDN HTTP range request সমর্থন করে, তাই pdf.js
     // পুরো ফাইল ডাউনলোডের অপেক্ষা না করে প্রথম পেইজগুলো progressively
@@ -519,8 +527,11 @@ async function renderPdfDoc(fileUrl, wrap) {
         cMapPacked: true
     }).promise;
     const n = pdfDoc.numPages;
-    wrap.innerHTML = '';
-    for (let i = 1; i <= n; i++) wrap.appendChild(makePage(i, n));
+    const existingCards = wrap.querySelectorAll('.page-card').length;
+    if (!skeletonsAlreadyShown || existingCards !== n) {
+        wrap.innerHTML = '';
+        for (let i = 1; i <= n; i++) wrap.appendChild(makePage(i, n));
+    }
     setupObs();
 }
 
@@ -538,26 +549,29 @@ function makePage(p, tot) {
         <div class="canvas-wrap" id="cw-${p}">
             <div class="page-ph" id="ph-${p}"><div class="sp"></div><div>পেইজ ${p}...</div></div>
             <canvas id="cv-${p}" style="display:none"></canvas>
+            <div class="page-text-layer" id="tl-${p}"></div>
         </div>
         <div class="page-footer">
             <span class="p-num-lbl">পেইজ ${p}</span>
-            <button class="exam-btn" style="background:var(--card);color:var(--accent);border:1px solid var(--accent);margin-right:6px" onclick="copyPageText(${p})">📋 টেক্সট কপি</button>
             <button class="exam-btn" onclick="openSheet(${p})">📝 এক্সাম দাও</button>
         </div>`;
     return d;
 }
 
-// OCR করা text clipboard-এ কপি করে — PDF আপলোডের সময় background-এ already OCR হয়ে গেছে (admin panel)
-async function copyPageText(p) {
+// OCR করা টেক্সট canvas-এর উপর invisible selectable layer হিসেবে বসানো হয় —
+// ব্যবহারকারী সরাসরি ছবির উপর ড্র্যাগ করে সিলেক্ট করে কপি করতে পারবে (আলাদা
+// "টেক্সট কপি" বাটনের প্রয়োজন নেই)। bounding-box সঠিক না থাকায় visual alignment
+// perfect হবে না, তবে full-page OCR text হিসেবে select/copy কাজ করবে।
+async function loadPageTextLayer(p) {
+    const tl = document.getElementById('tl-'+p);
+    if (!tl || tl.dataset.loaded) return;
+    tl.dataset.loaded = '1';
     try {
         const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdf_pages?pdf_id=eq.${curPdfId}&page_number=eq.${p}&ocr_status=eq.done&select=extracted_text`);
         const text = rows?.[0]?.extracted_text;
-        if (!text || !text.trim()) { showToast('এই পেইজের টেক্সট এখনো প্রস্তুত হয়নি'); return; }
-        await navigator.clipboard.writeText(text);
-        showToast('✓ টেক্সট কপি হয়েছে');
-    } catch (e) {
-        showToast('কপি করা যায়নি');
-    }
+        if (text && text.trim()) tl.textContent = text;
+        else tl.dataset.loaded = ''; // OCR এখনো শেষ না হলে পরে আবার চেষ্টা করা যাবে
+    } catch (_) { tl.dataset.loaded = ''; }
 }
 
 function setupObs() {
@@ -566,7 +580,7 @@ function setupObs() {
         entries.forEach(e => {
             if (e.isIntersecting) {
                 const p = parseInt(e.target.dataset.page);
-                if (!done.has(p)) { done.add(p); renderPage(p); logPageView(p); }
+                if (!done.has(p)) { done.add(p); renderPage(p); logPageView(p); loadPageTextLayer(p); }
             }
         });
     }, { rootMargin: '350px 0px' });
@@ -615,7 +629,7 @@ function zoom(d) {
     document.querySelectorAll('.page-card').forEach(el => {
         const p = parseInt(el.dataset.page);
         const cv = document.getElementById('cv-'+p);
-        if (cv && cv.style.display !== 'none') renderPage(p);
+        if (cv && cv.style.display !== 'none') { renderPage(p); loadPageTextLayer(p); }
     });
 }
 

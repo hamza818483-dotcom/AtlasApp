@@ -474,20 +474,54 @@ async function mbLoadAllPdfs() {
         const res = await mbApi('/book_pdfs?select=*,book_chapters(name,book_subjects(name,icon))&order=created_at.desc&limit=100');
         if (!res.ok) throw new Error();
         const pdfs = await res.json();
-        mbRenderAllPdfs(pdfs || []);
+        // প্রতিটা PDF-এর OCR status একসাথে টেনে আনছি — যাতে কোনটার OCR বাকি আছে তা
+        // list এ দেখানো যায় এবং "সব OCR করো" বাটন শুধু বাকি থাকা গুলো টার্গেট করতে পারে।
+        let jobsById = {};
+        try {
+            const jobsRes = await mbApi('/book_pdf_ocr_jobs?select=pdf_id,status,done_pages,total_pages&order=started_at.desc');
+            if (jobsRes.ok) {
+                const jobs = await jobsRes.json();
+                jobs.forEach(j => { if (!jobsById[j.pdf_id]) jobsById[j.pdf_id] = j; }); // most recent first (order above)
+            }
+        } catch (_) {}
+        mbRenderAllPdfs(pdfs || [], jobsById);
     } catch {
         listEl.innerHTML = '<div class="empty-state">লোড ব্যর্থ</div>';
     }
 }
 
-function mbRenderAllPdfs(pdfs) {
+function mbOcrBadge(pdfId, jobsById) {
+    const j = jobsById[pdfId];
+    if (!j) return '<span class="ocr-badge ocr-none">⚪ OCR হয়নি</span>';
+    if (j.status === 'processing') return `<span class="ocr-badge ocr-processing">🔄 OCR চলছে ${j.done_pages||0}/${j.total_pages||'?'}</span>`;
+    if (j.status === 'done' || (j.total_pages && j.done_pages >= j.total_pages)) return '<span class="ocr-badge ocr-done">✅ OCR সম্পন্ন</span>';
+    return `<span class="ocr-badge ocr-partial">⚠️ আংশিক ${j.done_pages||0}/${j.total_pages||'?'}</span>`;
+}
+
+function mbPdfNeedsOcr(pdfId, jobsById) {
+    const j = jobsById[pdfId];
+    if (!j) return true;
+    if (j.status === 'done') return false;
+    if (j.total_pages && j.done_pages >= j.total_pages) return false;
+    return true; // no job, or partial/failed → needs (re)OCR
+}
+
+function mbRenderAllPdfs(pdfs, jobsById) {
+    jobsById = jobsById || {};
+    window._mbLastPdfs = pdfs; window._mbLastJobs = jobsById; // bulk trigger থেকে reuse করার জন্য
     const listEl = document.getElementById('mbAllPdfsList');
     if (!listEl) return;
     if (!pdfs.length) {
         listEl.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📂</div><div class="empty-state-title">কোনো PDF নেই</div></div>';
         return;
     }
-    listEl.innerHTML = pdfs.map(p => {
+    const pendingCount = pdfs.filter(p => mbPdfNeedsOcr(p.id, jobsById)).length;
+    const bulkBar = `
+        <div class="pdf-bulk-ocr-bar">
+            <div>${pendingCount > 0 ? `⚠️ ${pendingCount} টি PDF-এর OCR বাকি/অসম্পূর্ণ` : '✅ সব PDF-এর OCR সম্পন্ন'}</div>
+            <button class="btn btn-outline btn-sm" id="mbBulkOcrBtn" onclick="mbBulkOcrAll()" ${pendingCount === 0 ? 'disabled' : ''}>🔍 সব বাকি PDF OCR করো (${pendingCount})</button>
+        </div>`;
+    listEl.innerHTML = bulkBar + pdfs.map(p => {
         const ch  = p.book_chapters || {};
         const sub = ch.book_subjects || {};
         const ctx = (sub.name && ch.name)
@@ -501,8 +535,10 @@ function mbRenderAllPdfs(pdfs) {
                     <div class="pdf-card-title">${esc(p.title)}</div>
                     <div class="pdf-card-meta">${p.file_size ? fmtSize(p.file_size) + ' · ' : ''}${p.page_count ? p.page_count + ' পৃষ্ঠা · ' : ''}${fmtDate(p.created_at)}</div>
                     ${ctx}
+                    <div style="margin-top:4px">${mbOcrBadge(p.id, jobsById)}</div>
                 </div>
                 <div class="pdf-card-actions">
+                    <button class="act-btn act-ocr" title="OCR (পুনরায়) চালাও" onclick="mbRetriggerOcr(${p.id}, '${esc(p.file_url)}')">🔍</button>
                     <button class="act-btn act-toggle" title="${p.is_premium ? 'Free করো' : 'Premium করো'}" onclick="mbTogglePremium(${p.id}, ${!p.is_premium})">${p.is_premium ? '⭐' : '🔓'}</button>
                     <button class="act-btn act-edit" title="MCQ সম্পাদনা" onclick="mbOpenMcqPanel(${p.id}, '${esc(p.title)}', '${esc(p.file_url)}')">📝</button>
                     <button class="act-btn act-delete" title="মুছুন" onclick="mbDeletePdf(${p.id}, '${esc(p.title)}')">🗑️</button>
@@ -510,6 +546,36 @@ function mbRenderAllPdfs(pdfs) {
             </div>
         </div>`;
     }).join('');
+}
+
+// Existing + future সব scanned PDF-এর OCR নিশ্চিত করার জন্য bulk trigger।
+// একসাথে সব PDF-এ OCR পাঠানো হয় না (rate-limit ও ব্রাউজার লোড এড়াতে) —
+// একটার পর একটা sequentially চালানো হয়, প্রতিটার ভেতরে অলরেডি ৩-পেজ ব্যাচিং আছে।
+let _mbBulkOcrRunning = false;
+async function mbBulkOcrAll() {
+    if (_mbBulkOcrRunning) { mbToast('বাল্ক OCR ইতিমধ্যে চলছে...', 'info'); return; }
+    const pdfs = window._mbLastPdfs || [];
+    const jobsById = window._mbLastJobs || {};
+    const targets = pdfs.filter(p => mbPdfNeedsOcr(p.id, jobsById) && p.file_url);
+    if (!targets.length) { mbToast('সব PDF-এর OCR ইতিমধ্যে সম্পন্ন', 'success'); return; }
+
+    _mbBulkOcrRunning = true;
+    const btn = document.getElementById('mbBulkOcrBtn');
+    if (btn) { btn.disabled = true; btn.textContent = `🔄 চলছে... 0/${targets.length}`; }
+    mbToast(`🔍 ${targets.length} টি PDF-এর OCR শুরু হলো (background এ চলবে)`, 'info', 4000);
+
+    let done = 0;
+    for (const p of targets) {
+        try {
+            await mbStartAutoOcr(p.id, p.file_url);
+        } catch (_) {}
+        done++;
+        if (btn) btn.textContent = `🔄 চলছে... ${done}/${targets.length}`;
+    }
+
+    _mbBulkOcrRunning = false;
+    mbToast(`✅ বাল্ক OCR শেষ — ${done} টি PDF প্রসেস হয়েছে`, 'success', 4000);
+    mbLoadAllPdfs();
 }
 
 async function mbTogglePremium(pdfId, newState) {
@@ -2019,6 +2085,25 @@ function mbInjectStyles() {
         .act-btn.act-toggle { color: var(--text2); }
         .act-btn.act-toggle:hover { color: #F59E0B; border-color: #F59E0B; }
 
+        .act-btn.act-ocr { color: var(--text2); }
+        .act-btn.act-ocr:hover { color: #7C83FF; border-color: #7C83FF; }
+
+        .pdf-card-meta { font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+        .ocr-badge { display:inline-block; font-size:10px; padding:2px 8px; border-radius:20px; font-weight:600; }
+        .ocr-badge.ocr-none { background:rgba(148,163,184,0.15); color:#94A3B8; }
+        .ocr-badge.ocr-processing { background:rgba(124,131,255,0.15); color:#7C83FF; }
+        .ocr-badge.ocr-partial { background:rgba(245,158,11,0.15); color:#F59E0B; }
+        .ocr-badge.ocr-done { background:rgba(16,185,129,0.15); color:#10B981; }
+
+        .pdf-bulk-ocr-bar {
+            display:flex; align-items:center; justify-content:space-between; gap:10px;
+            padding:10px 12px; margin-bottom:10px; border-radius:10px;
+            background:var(--card, rgba(255,255,255,0.04)); border:1px solid rgba(124,131,255,0.25);
+            font-size:12px; color:var(--text2);
+        }
+        .pdf-bulk-ocr-bar button:disabled { opacity:0.5; cursor:default; }
+
         .pdf-card-meta { font-size: 10px; color: var(--text3); margin-top: 2px; }
 
         @keyframes mbSpin { to { transform: rotate(360deg); } }
@@ -2233,6 +2318,7 @@ window.mbDiscardAi        = mbDiscardAi;
 window.mbStartAutoOcr     = mbStartAutoOcr;
 window.mbCheckOcrStatus   = mbCheckOcrStatus;
 window.mbRetriggerOcr     = mbRetriggerOcr;
+window.mbBulkOcrAll       = mbBulkOcrAll;
 
 })(); // end IIFE
 
