@@ -499,10 +499,13 @@ async function mbLoadAllPdfs() {
 
 function mbOcrBadge(pdfId, jobsById) {
     const j = jobsById[pdfId];
-    if (!j) return '<span class="ocr-badge ocr-none">⚪ OCR হয়নি</span>';
-    if (j.status === 'processing') return `<span class="ocr-badge ocr-processing">🔄 OCR চলছে ${j.done_pages||0}/${j.total_pages||'?'}</span>`;
-    if (j.status === 'done' || (j.total_pages && j.done_pages >= j.total_pages)) return '<span class="ocr-badge ocr-done">✅ OCR সম্পন্ন</span>';
-    return `<span class="ocr-badge ocr-partial">⚠️ আংশিক ${j.done_pages||0}/${j.total_pages||'?'}</span>`;
+    if (!j) return `<span class="ocr-badge ocr-none" id="ocr-badge-${pdfId}">⚪ OCR হয়নি</span>`;
+    if (j.status === 'processing') {
+        const pct = j.total_pages ? Math.round(((j.done_pages||0) / j.total_pages) * 100) : 0;
+        return `<span class="ocr-badge ocr-processing" id="ocr-badge-${pdfId}">🔄 ${pct}% <span class="ocr-bar"><span class="ocr-bar-fill" style="width:${pct}%"></span></span></span>`;
+    }
+    if (j.status === 'done' || (j.total_pages && j.done_pages >= j.total_pages)) return `<span class="ocr-badge ocr-done" id="ocr-badge-${pdfId}">✅ OCR সম্পন্ন</span>`;
+    return `<span class="ocr-badge ocr-partial" id="ocr-badge-${pdfId}">⚠️ আংশিক ${j.done_pages||0}/${j.total_pages||'?'}</span>`;
 }
 
 function mbPdfNeedsOcr(pdfId, jobsById) {
@@ -2103,11 +2106,13 @@ function mbInjectStyles() {
 
         .pdf-card-meta { font-size: 10px; color: var(--text3); margin-top: 2px; }
 
-        .ocr-badge { display:inline-block; font-size:10px; padding:2px 8px; border-radius:20px; font-weight:600; }
+        .ocr-badge { display:inline-flex; align-items:center; gap:4px; font-size:10px; padding:2px 8px; border-radius:20px; font-weight:600; }
         .ocr-badge.ocr-none { background:rgba(148,163,184,0.15); color:#94A3B8; }
         .ocr-badge.ocr-processing { background:rgba(124,131,255,0.15); color:#7C83FF; }
         .ocr-badge.ocr-partial { background:rgba(245,158,11,0.15); color:#F59E0B; }
         .ocr-badge.ocr-done { background:rgba(16,185,129,0.15); color:#10B981; }
+        .ocr-bar { display:inline-block; width:34px; height:4px; border-radius:3px; background:rgba(124,131,255,0.2); overflow:hidden; vertical-align:middle; }
+        .ocr-bar-fill { display:block; height:100%; background:#7C83FF; border-radius:3px; transition:width 0.3s ease; }
 
         .pdf-bulk-ocr-bar {
             display:flex; align-items:center; justify-content:space-between; gap:10px;
@@ -2140,6 +2145,16 @@ const OCR_PROXY_URL = AI_PROXY_URL.replace(/\/$/, '') + '/'; // Same proxy with 
 
 // Start auto OCR for a newly uploaded PDF
 // Renders each page via PDF.js → sends image to /ocr-page → saves text to Supabase
+// "সংরক্ষিত সকল PDF" লিস্টের badge live আপডেট করে OCR চলাকালীন — প্রতি পেইজ শেষ হলেই কল হয়।
+// DOM element না থাকলে (অন্য panel-এ থাকলে) নিরাপদে কিছুই করে না।
+function mbUpdateOcrBadgeLive(pdfId, done, total) {
+    const badge = document.getElementById('ocr-badge-' + pdfId);
+    if (!badge) return;
+    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+    badge.className = 'ocr-badge ocr-processing';
+    badge.innerHTML = `🔄 ${pct}% <span class="ocr-bar"><span class="ocr-bar-fill" style="width:${pct}%"></span></span>`;
+}
+
 async function mbStartAutoOcr(pdfId, pdfUrl) {
     const toastId = 'ocr-' + pdfId;
     mbToast('🔍 OCR শুরু হচ্ছে... (background এ চলবে)', 'info', 4000);
@@ -2204,6 +2219,8 @@ async function mbStartAutoOcr(pdfId, pdfUrl) {
                         // Update progress pill if MCQ panel is open
                         const pill = document.getElementById('mbOcrStatus-' + pdfId);
                         if (pill) pill.textContent = `OCR: ${doneCount}/${totalPages}`;
+                        // "সংরক্ষিত সকল PDF" কার্ডের badge-ও live আপডেট করি — % সহ কম্প্যাক্ট
+                        mbUpdateOcrBadgeLive(pdfId, doneCount, totalPages);
                     }
                 } catch (_) {}
             }));
@@ -2215,6 +2232,8 @@ async function mbStartAutoOcr(pdfId, pdfUrl) {
         }
 
         mbToast(`✅ OCR সম্পন্ন — ${doneCount}/${totalPages} পেইজ`, 'success', 4000);
+        const badge = document.getElementById('ocr-badge-' + pdfId);
+        if (badge) { badge.className = 'ocr-badge ocr-done'; badge.textContent = '✅ OCR সম্পন্ন'; }
         mbLoadChapterPdfs();
         mbLoadAllPdfs();
 
