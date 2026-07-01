@@ -101,6 +101,16 @@
 .z-btn{width:28px;height:28px;border-radius:6px;background:transparent;border:none;color:var(--text);font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .z-lbl{font-size:12px;font-weight:700;color:var(--text-secondary);min-width:38px;text-align:center}
 
+/* Page navigator */
+.nav-pg-btn{display:flex;align-items:center;gap:4px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:4px 8px;color:var(--text);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.nav-pg-btn span{font-size:15px}
+.pg-nav-popup{position:fixed;top:115px;right:12px;z-index:500;background:var(--header-bg);border:1px solid var(--border);border-radius:14px;padding:12px;box-shadow:0 8px 32px rgba(0,0,0,.5);max-height:60vh;overflow-y:auto;display:none;width:220px}
+.pg-nav-popup.open{display:block}
+.pg-nav-title{font-size:11px;color:var(--text-secondary);font-weight:700;margin-bottom:8px;text-align:center}
+.pg-nav-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.pg-num-btn{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:7px 4px;font-size:12px;font-weight:700;color:var(--text);cursor:pointer;text-align:center;transition:background .15s}
+.pg-num-btn:active,.pg-num-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+
 .pages-wrap{padding:10px 8px 100px;display:flex;flex-direction:column;gap:14px}
 .page-card{background:var(--card-bg);border-radius:12px;overflow:hidden;border:1.5px solid var(--border)}
 .page-card.sel{border-color:var(--accent)}
@@ -249,11 +259,16 @@
   <div class="pdf-toolbar">
     <button class="back-btn" onclick="go('s-pdfs')">←</button>
     <span class="scr-title" id="view-title">PDF</span>
+    <button class="nav-pg-btn" onclick="togglePgNav()" id="pgNavBtn"><span>☰</span><span id="pgNavLbl">পেইজ</span></button>
     <div class="zoom-wrap">
       <button class="z-btn" onclick="zoom(-0.25)">−</button>
       <span class="z-lbl" id="zoom-lbl">50%</span>
       <button class="z-btn" onclick="zoom(0.25)">+</button>
     </div>
+  </div>
+  <div class="pg-nav-popup" id="pgNavPopup">
+    <div class="pg-nav-title">পেইজে যাও</div>
+    <div class="pg-nav-grid" id="pgNavGrid"></div>
   </div>
   <div class="pages-wrap" id="pages-wrap"></div>
   <div class="multi-float" id="multi-float">
@@ -482,13 +497,12 @@ async function openPdf(id, title, isPremium, pageCount) {
         return;
     }
     curPdfId = id; curPdfTitle = title; curPdfPremium = !!isPremium; selPages.clear();
+    scale = 0.5; document.getElementById('zoom-lbl').textContent = '50%';
     document.getElementById('view-title').textContent = title;
     go('s-view');
     updateMultiBtn();
     const wrap = document.getElementById('pages-wrap');
-    // page_count জানা থাকলে সাথে সাথেই সব পেইজের skeleton card বসিয়ে দিচ্ছি —
-    // pdf.js রেজল্ভ হওয়ার অপেক্ষায় পুরো স্ক্রিন blank spinner দেখানো বাদ।
-    if (pageCount > 0) { wrap.innerHTML = ''; for (let i = 1; i <= pageCount; i++) wrap.appendChild(makePage(i, pageCount)); }
+    if (pageCount > 0) { wrap.innerHTML = ''; for (let i = 1; i <= pageCount; i++) wrap.appendChild(makePage(i, pageCount)); buildPgNav(pageCount); }
     else wrap.innerHTML = '<div class="ctr"><div class="sp"></div><div>PDF লোড হচ্ছে...</div></div>';
     try {
         const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdfs?id=eq.${id}&select=file_url`);
@@ -502,12 +516,16 @@ async function openPdf(id, title, isPremium, pageCount) {
 // থেকে হাতে আছে, তাই এখানে দ্বিতীয় network round-trip এড়িয়ে সরাসরি pdf.js render শুরু হয়।
 async function openPdfFast(id, title, fileUrl, pageCount) {
     curPdfId = id; curPdfTitle = title; curPdfPremium = false; selPages.clear();
+    scale = 0.5; document.getElementById('zoom-lbl').textContent = '50%';
     document.getElementById('view-title').textContent = title;
     go('s-view');
     updateMultiBtn();
     const wrap = document.getElementById('pages-wrap');
-    if (pageCount > 0) { wrap.innerHTML = ''; for (let i = 1; i <= pageCount; i++) wrap.appendChild(makePage(i, pageCount)); }
-    else wrap.innerHTML = '<div class="ctr"><div class="sp"></div><div>PDF লোড হচ্ছে...</div></div>';
+    if (pageCount > 0) {
+        wrap.innerHTML = '';
+        for (let i = 1; i <= pageCount; i++) wrap.appendChild(makePage(i, pageCount));
+        buildPgNav(pageCount);
+    } else wrap.innerHTML = '<div class="ctr"><div class="sp"></div><div>PDF লোড হচ্ছে...</div></div>';
     try {
         if (!fileUrl) throw new Error('URL পাওয়া যায়নি');
         await renderPdfDoc(fileUrl, wrap, pageCount > 0);
@@ -535,6 +553,7 @@ async function renderPdfDoc(fileUrl, wrap, skeletonsAlreadyShown) {
         wrap.innerHTML = '';
         for (let i = 1; i <= n; i++) wrap.appendChild(makePage(i, n));
     }
+    buildPgNav(n);
     setupObs();
 }
 
@@ -655,6 +674,42 @@ function zoom(d) {
         if (cv && cv.style.display !== 'none') { renderPage(p); loadPageTextLayer(p); }
     });
 }
+
+function buildPgNav(n) {
+    const grid = document.getElementById('pgNavGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    for (let i = 1; i <= n; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'pg-num-btn';
+        btn.textContent = i;
+        btn.onclick = () => { jumpToPage(i); closePgNav(); };
+        grid.appendChild(btn);
+    }
+    document.getElementById('pgNavLbl').textContent = 'পেইজ ১-' + n;
+}
+
+function jumpToPage(p) {
+    const el = document.getElementById('pc-'+p);
+    if (el) { el.scrollIntoView({behavior:'smooth', block:'start'}); }
+}
+
+function togglePgNav() {
+    document.getElementById('pgNavPopup').classList.toggle('open');
+}
+
+function closePgNav() {
+    document.getElementById('pgNavPopup').classList.remove('open');
+}
+
+// popup বাইরে click করলে বন্ধ হবে
+document.addEventListener('click', e => {
+    const popup = document.getElementById('pgNavPopup');
+    const btn = document.getElementById('pgNavBtn');
+    if (popup && !popup.contains(e.target) && btn && !btn.contains(e.target)) {
+        popup.classList.remove('open');
+    }
+});
 
 function toggleSel(p) {
     const cbv = document.getElementById('cbv-'+p);
