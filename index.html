@@ -340,6 +340,50 @@
         .slideshow-zoom-bg.show { opacity: 1; pointer-events: all; }
         .slideshow-zoom-bg img { max-width: 92%; max-height: 86%; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,.6); }
 
+        /* ── Review Section — home page একদম নিচে ── */
+        .review-section { margin: 22px 0 10px; padding: 0 14px; }
+        .review-section-title { font-size: 15px; font-weight: 900; color: var(--text); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+        .review-cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .review-cat-tile {
+            position: relative; border-radius: 14px; overflow: hidden; cursor: pointer;
+            aspect-ratio: 1.5; background: var(--card-bg); border: 1px solid var(--border);
+            box-shadow: 0 3px 14px rgba(0,0,0,.15); transition: transform .15s;
+        }
+        .review-cat-tile:active { transform: scale(.97); }
+        .review-cat-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .review-cat-tile .rct-overlay {
+            position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end;
+            padding: 10px; background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,.75) 100%);
+        }
+        .review-cat-tile .rct-label { color: #fff; font-size: 13px; font-weight: 800; }
+        .review-cat-tile .rct-count { color: rgba(255,255,255,.75); font-size: 10px; margin-top: 1px; }
+        .review-cat-tile.empty { display: flex; align-items: center; justify-content: center; opacity: .4; }
+        .review-cat-tile.empty .rct-placeholder { font-size: 11px; color: var(--text-secondary); text-align: center; }
+
+        /* Gallery overlay — device-gallery style grid, then fullscreen swipe viewer */
+        .review-gallery-bg {
+            position: fixed; inset: 0; background: var(--bg); z-index: 997;
+            display: none; flex-direction: column; overflow-y: auto;
+        }
+        .review-gallery-bg.show { display: flex; }
+        .review-gallery-header {
+            position: sticky; top: 0; z-index: 2; background: var(--bg);
+            display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--border);
+        }
+        .review-gallery-back { font-size: 20px; cursor: pointer; color: var(--text); }
+        .review-gallery-title { font-size: 15px; font-weight: 800; color: var(--text); }
+        .review-gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; padding: 3px; }
+        .review-gallery-grid img { width: 100%; aspect-ratio: 1; object-fit: cover; cursor: pointer; }
+
+        .review-swipe-bg {
+            position: fixed; inset: 0; background: rgba(0,0,0,.92); z-index: 999;
+            display: none; align-items: center; justify-content: center; touch-action: pan-y;
+        }
+        .review-swipe-bg.show { display: flex; }
+        .review-swipe-bg img { max-width: 94%; max-height: 82%; border-radius: 8px; }
+        .review-swipe-close { position: absolute; top: 16px; right: 16px; color: #fff; font-size: 26px; cursor: pointer; z-index: 2; }
+        .review-swipe-counter { position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; color: rgba(255,255,255,.7); font-size: 12px; }
+
         /* ─────────────────────────────────────────────
            TIMER CARDS  (Flutter: CountdownTimerCard widget)
         ───────────────────────────────────────────── */
@@ -1267,6 +1311,9 @@
     <!-- Mentors Section  (Flutter: MentorsGrid widget) -->
     <div id="mentorsContainer"></div>
 
+    <!-- Review Section — একদম নিচে, Class/Exam/Mentoring/Other ক্যাটাগরি -->
+    <div id="reviewSectionContainer"></div>
+
 </main><!-- end main-container -->
 
 <!-- ════════════════════════════════════════════
@@ -1561,6 +1608,122 @@ function openSlideshowZoom(idx) {
     }
     document.getElementById('slideshowZoomImg').src = __slideshowImageUrls[idx] || '';
     bg.classList.add('show');
+}
+
+/* ═══════════════════════════════════════════════
+   REVIEW SECTION — home page একদম নিচে
+   ═══════════════════════════════════════════════ */
+let __reviewCatData = {}; // { class: [...], exam: [...], mentoring: [...], other: [...] }
+let __reviewSwipeList = [];
+let __reviewSwipeIdx = 0;
+
+const REVIEW_CATS = [
+    { key: 'class', label: 'Class', emoji: '📚' },
+    { key: 'exam', label: 'Exam', emoji: '📝' },
+    { key: 'mentoring', label: 'Mentoring', emoji: '👨‍🏫' },
+    { key: 'other', label: 'Other', emoji: '📦' },
+];
+
+async function loadReviewSection() {
+    const container = document.getElementById('reviewSectionContainer');
+    if (!container) return;
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/review_images?select=*&order=category.asc,sort_order.asc,created_at.asc&limit=500&is_active=eq.true`);
+        __reviewCatData = { class: [], exam: [], mentoring: [], other: [] };
+        (data || []).forEach(r => { if (__reviewCatData[r.category]) __reviewCatData[r.category].push(r); });
+
+        // কোনো ক্যাটাগরিতেই ছবি না থাকলে পুরো সেকশনটাই লুকানো থাকবে
+        const hasAny = Object.values(__reviewCatData).some(arr => arr.length > 0);
+        if (!hasAny) { container.innerHTML = ''; return; }
+
+        const tilesHtml = REVIEW_CATS.map(c => {
+            const imgs = __reviewCatData[c.key];
+            if (!imgs.length) {
+                return `<div class="review-cat-tile empty"><div class="rct-placeholder">${c.emoji}<br>${c.label}<br>(কোনো ছবি নেই)</div></div>`;
+            }
+            return `<div class="review-cat-tile" onclick="openReviewGallery('${c.key}')">
+                <img src="${escHtml(imgs[0].image_url)}" alt="${c.label}" loading="lazy">
+                <div class="rct-overlay">
+                    <div class="rct-label">${c.emoji} ${c.label}</div>
+                    <div class="rct-count">${imgs.length}টি ছবি</div>
+                </div>
+            </div>`;
+        }).join('');
+
+        container.innerHTML = `
+            <div class="review-section">
+                <div class="review-section-title">⭐ Reviews</div>
+                <div class="review-cat-grid">${tilesHtml}</div>
+            </div>`;
+    } catch (e) { console.error('Review section load error:', e); }
+}
+
+function openReviewGallery(catKey) {
+    const imgs = __reviewCatData[catKey] || [];
+    const catInfo = REVIEW_CATS.find(c => c.key === catKey);
+    let bg = document.getElementById('reviewGalleryBg');
+    if (!bg) {
+        bg = document.createElement('div');
+        bg.id = 'reviewGalleryBg';
+        bg.className = 'review-gallery-bg';
+        document.body.appendChild(bg);
+    }
+    const gridHtml = imgs.map((img, i) =>
+        `<img src="${escHtml(img.image_url)}" loading="lazy" onclick="openReviewSwipe('${catKey}',${i})">`
+    ).join('');
+    bg.innerHTML = `
+        <div class="review-gallery-header">
+            <span class="review-gallery-back" onclick="closeReviewGallery()">←</span>
+            <span class="review-gallery-title">${catInfo.emoji} ${catInfo.label} (${imgs.length})</span>
+        </div>
+        <div class="review-gallery-grid">${gridHtml}</div>`;
+    bg.classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+function closeReviewGallery() {
+    const bg = document.getElementById('reviewGalleryBg');
+    if (bg) bg.classList.remove('show');
+    document.body.style.overflow = '';
+}
+
+// Fullscreen swipe viewer — device gallery-এর মতো ছবি থেকে ছবিতে swipe করে যাওয়া যায়
+function openReviewSwipe(catKey, idx) {
+    __reviewSwipeList = __reviewCatData[catKey] || [];
+    __reviewSwipeIdx = idx;
+    let bg = document.getElementById('reviewSwipeBg');
+    if (!bg) {
+        bg = document.createElement('div');
+        bg.id = 'reviewSwipeBg';
+        bg.className = 'review-swipe-bg';
+        bg.innerHTML = `
+            <span class="review-swipe-close" onclick="closeReviewSwipe()">✕</span>
+            <img id="reviewSwipeImg" src="">
+            <div class="review-swipe-counter" id="reviewSwipeCounter"></div>`;
+        document.body.appendChild(bg);
+        let touchStartX = null;
+        bg.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+        bg.addEventListener('touchend', e => {
+            if (touchStartX === null) return;
+            const delta = e.changedTouches[0].clientX - touchStartX;
+            if (Math.abs(delta) > 50) {
+                if (delta < 0 && __reviewSwipeIdx < __reviewSwipeList.length - 1) __reviewSwipeIdx++;
+                else if (delta > 0 && __reviewSwipeIdx > 0) __reviewSwipeIdx--;
+                renderReviewSwipe();
+            }
+            touchStartX = null;
+        });
+    }
+    renderReviewSwipe();
+    bg.classList.add('show');
+}
+function renderReviewSwipe() {
+    const img = __reviewSwipeList[__reviewSwipeIdx];
+    document.getElementById('reviewSwipeImg').src = img ? img.image_url : '';
+    document.getElementById('reviewSwipeCounter').textContent = `${__reviewSwipeIdx + 1} / ${__reviewSwipeList.length}`;
+}
+function closeReviewSwipe() {
+    const bg = document.getElementById('reviewSwipeBg');
+    if (bg) bg.classList.remove('show');
 }
 
 async function loadSlideshow() {
@@ -2365,6 +2528,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load all sections  (Flutter: Future.wait([...]))
     loadTimers();
     loadSlideshow();
+    loadReviewSection();
     loadSpecialCards();
     loadSocialLinks();
     loadOwnerInfo();
