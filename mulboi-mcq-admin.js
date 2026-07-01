@@ -914,7 +914,9 @@ function mbRenderPageSummary() {
     // Total pages = max of (pages with MCQs, currentPage, numPages from PDF.js) capped at 50
     const maxFromMcqs = Object.keys(pageCounts).length ? Math.max(...Object.keys(pageCounts).map(Number)) : 0;
     const numPdfPages = mbPdfDoc ? mbPdfDoc.numPages : 0;
-    const totalPages  = Math.min(Math.max(maxFromMcqs, mbCurrentPage, numPdfPages, 1), 50);
+    // bug fix: আগে totalPages কে হার্ডকোড 50 তে cap করা ছিল, ফলে ৫০+ পেইজের PDF (যেমন ৬৭ পেইজ)
+    // এ শেষের পেইজগুলোর pill কখনোই দেখাতো না। এখন pure PDF page count ব্যবহার হচ্ছে, কোনো cap নেই।
+    const totalPages = Math.max(maxFromMcqs, mbCurrentPage, numPdfPages, 1);
 
     if (totalPages <= 1 && !Object.keys(pageCounts).length) { wrap.innerHTML = ''; return; }
 
