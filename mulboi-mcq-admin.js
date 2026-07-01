@@ -473,9 +473,14 @@ async function mbLoadAllPdfs() {
     let pdfs = [];
     try {
         const res = await mbApi('/book_pdfs?select=*,book_chapters(name,book_subjects(name,icon))&order=created_at.desc&limit=100');
-        if (!res.ok) throw new Error();
+        if (!res.ok) {
+            const errText = await res.text().catch(() => '');
+            console.error('mbLoadAllPdfs: /book_pdfs failed', res.status, errText);
+            throw new Error('status ' + res.status);
+        }
         pdfs = await res.json();
-    } catch {
+    } catch (e) {
+        console.error('mbLoadAllPdfs failed:', e);
         listEl.innerHTML = '<div class="empty-state">লোড ব্যর্থ</div>';
         return;
     }
@@ -2334,15 +2339,18 @@ async function mbInit() {
     // Refresh/navigate/close করার কারণে মাঝপথে থেমে যাওয়া OCR job গুলো অটো-রিজিউম করি —
     // "একবার অন করলে থামবে না" — mbStartAutoOcr() ইতিমধ্যেই আগে-করা পেইজ স্কিপ করে,
     // তাই এখানে আবার কল করলে ডুপ্লিকেট কাজ হবে না, শুধু বাকি পেইজগুলো চলবে।
-    mbResumeStuckOcrJobs();
+    // ২ সেকেন্ড delay দেওয়া হয়েছে যাতে page load-এর মূল PDF list fetch এর সাথে race
+    // করে network/API quota-তে চাপ না ফেলে ("লোড ব্যর্থ" এর সম্ভাব্য কারণ এড়াতে)।
+    setTimeout(() => mbResumeStuckOcrJobs(), 2000);
 }
 
 async function mbResumeStuckOcrJobs() {
     try {
         const res = await mbApi('/book_pdf_ocr_jobs?status=eq.processing&select=pdf_id');
-        if (!res.ok) return;
+        if (!res.ok) { console.warn('mbResumeStuckOcrJobs: job fetch not ok', res.status); return; }
         const jobs = await res.json();
         if (!Array.isArray(jobs) || !jobs.length) return;
+        console.log('mbResumeStuckOcrJobs: resuming', jobs.length, 'stuck job(s)');
 
         for (const j of jobs) {
             try {
@@ -2352,9 +2360,9 @@ async function mbResumeStuckOcrJobs() {
                 const pdf = rows?.[0];
                 if (!pdf?.file_url) continue;
                 mbStartAutoOcr(pdf.id, pdf.file_url); // await না করে চালিয়ে দিচ্ছি, background-এ চলবে
-            } catch (_) {}
+            } catch (e) { console.warn('mbResumeStuckOcrJobs: failed for pdf', j.pdf_id, e); }
         }
-    } catch (_) {}
+    } catch (e) { console.warn('mbResumeStuckOcrJobs failed:', e); }
 }
 
 if (document.readyState === 'loading') {
