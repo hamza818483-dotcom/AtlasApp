@@ -314,6 +314,32 @@
         }
         .slideshow-dot.active { background: #fff; width: 16px; border-radius: 3px; }
 
+        /* ── Compact mode — premium centered card, smaller, eye-catching shadow ── */
+        .slideshow-wrap.compact-mode {
+            background: transparent; box-shadow: none; border-radius: 0;
+            display: flex; justify-content: center; padding: 6px 0 14px;
+        }
+        .slideshow-wrap.compact-mode .slideshow-track { width: 78%; border-radius: 16px; }
+        .slideshow-wrap.compact-mode .slideshow-slide { position: relative; }
+        .slideshow-wrap.compact-mode .slideshow-slide img {
+            border-radius: 16px;
+            box-shadow: 0 8px 28px rgba(0,0,0,.35), 0 2px 8px rgba(108,99,255,.25);
+            transition: transform .2s ease;
+        }
+        .slideshow-wrap.compact-mode .slideshow-slide img:active { transform: scale(.97); }
+        .slideshow-wrap.compact-mode .slideshow-dots { bottom: -10px; }
+        .slideshow-wrap.compact-mode .slideshow-dot { background: rgba(108,99,255,.35); }
+        .slideshow-wrap.compact-mode .slideshow-dot.active { background: var(--accent, #6C63FF); }
+
+        /* Fullscreen zoom overlay when tapping a compact-mode image */
+        .slideshow-zoom-bg {
+            position: fixed; inset: 0; background: rgba(0,0,0,.85); z-index: 998;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity .2s;
+        }
+        .slideshow-zoom-bg.show { opacity: 1; pointer-events: all; }
+        .slideshow-zoom-bg img { max-width: 92%; max-height: 86%; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,.6); }
+
         /* ─────────────────────────────────────────────
            TIMER CARDS  (Flutter: CountdownTimerCard widget)
         ───────────────────────────────────────────── */
@@ -1521,6 +1547,21 @@ let __slideshowIdx = 0;
 let __slideshowTotal = 0;
 let __slideshowTouchStartX = null;
 let __slideshowTouchDeltaX = 0;
+let __slideshowImageUrls = [];
+
+function openSlideshowZoom(idx) {
+    let bg = document.getElementById('slideshowZoomBg');
+    if (!bg) {
+        bg = document.createElement('div');
+        bg.id = 'slideshowZoomBg';
+        bg.className = 'slideshow-zoom-bg';
+        bg.onclick = () => bg.classList.remove('show');
+        bg.innerHTML = '<img id="slideshowZoomImg" src="">';
+        document.body.appendChild(bg);
+    }
+    document.getElementById('slideshowZoomImg').src = __slideshowImageUrls[idx] || '';
+    bg.classList.add('show');
+}
 
 async function loadSlideshow() {
     try {
@@ -1546,15 +1587,26 @@ async function loadSlideshow() {
             img.src = s.image_url;
         })));
 
-        const slidesHtml = data.map(s =>
-            `<div class="slideshow-slide"><img src="${escHtml(s.image_url)}" alt="Slide" onerror="this.parentElement.style.display='none'"></div>`
-        ).join('');
+        const slidesHtml = data.map((s, i) => {
+            const hasLink = !!s.link_url;
+            const isCompact = s.display_mode === 'compact';
+            // Compact মোডে ছবিতে ক্লিক করলে বড় হয়ে zoom দেখাবে (যদি link না থাকে),
+            // link থাকলে সরাসরি সেই লিংকে যাবে — দুটো একসাথে না, link থাকলে link-ই priority পাবে।
+            const clickAttr = hasLink
+                ? `onclick="window.open('${escHtml(s.link_url)}','_blank')" style="cursor:pointer"`
+                : (isCompact ? `onclick="openSlideshowZoom(${i})" style="cursor:zoom-in"` : '');
+            return `<div class="slideshow-slide"><img src="${escHtml(s.image_url)}" alt="Slide" ${clickAttr} onerror="this.parentElement.style.display='none'"></div>`;
+        }).join('');
         const dotsHtml = data.length > 1
             ? `<div class="slideshow-dots">${data.map((_, i) => `<span class="slideshow-dot${i === 0 ? ' active' : ''}" data-idx="${i}"></span>`).join('')}</div>`
             : '';
 
+        // সব ছবি একই mode হওয়ার কথা (admin এক ব্যাচেই মোড সেট করে), প্রথম ছবির mode ব্যবহার করা হচ্ছে
+        const wrapModeClass = data[0]?.display_mode === 'compact' ? 'compact-mode' : '';
+        __slideshowImageUrls = data.map(s => s.image_url);
+
         container.innerHTML = `
-            <div class="slideshow-wrap">
+            <div class="slideshow-wrap ${wrapModeClass}">
                 <div class="slideshow-track" id="slideshowTrack">${slidesHtml}</div>
                 ${dotsHtml}
             </div>`;
