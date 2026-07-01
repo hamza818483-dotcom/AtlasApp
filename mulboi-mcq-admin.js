@@ -108,6 +108,95 @@ let mbCsvData     = [];
 let mbAiData      = [];
 
 /* ════════════════════════════════════════════════════
+   14c. SPECIAL MODE — শুধু existing MCQ এক্সট্র্যাক্ট, নতুন কিছু বানায় না।
+   Standard/TrueFalse/Hard এর MB_PERMANENT_RULES এখানে প্রযোজ্য না (কারণ ওটা
+   নির্দিষ্ট count বাধ্যতামূলক করে) — এর বদলে আলাদা extraction-only rule সেট।
+   ════════════════════════════════════════════════════ */
+function mbSpecialExtractPrompt() {
+    const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","type":"special"}]`;
+    return (
+        `তুমি একজন নিখুঁত ডেটা-এক্সট্র্যাকশন এক্সপার্ট। তোমার কাজ শুধুমাত্র এই পেইজে ইতিমধ্যে ছাপা/লেখা MCQ প্রশ্নগুলো ` +
+        `হুবহু এক্সট্র্যাক্ট করা — নতুন কোনো MCQ কখনোই বানাবে না।\n\n` +
+        `কঠোর নিয়ম:\n` +
+        `১. পেইজে যতগুলো MCQ (প্রশ্ন + অপশন) ইতিমধ্যে ছাপা আছে, ঠিক ততগুলোই ফেরত দিবে — এক্সট্রা যোগ করবে না, বাদও দিবে না।\n` +
+        `২. পেইজে যদি একটাও MCQ না থাকে, একটা খালি JSON array [] রিটার্ন করবে — কোনো MCQ বানিয়ে দিবে না।\n` +
+        `৩. প্রশ্নের টেক্সট ও অপশনগুলো পেইজে যেভাবে লেখা ঠিক সেভাবেই (ভাষা অপরিবর্তিত রেখে) নিবে, নিজের মতো ঘুরিয়ে লিখবে না।\n` +
+        `৪. সঠিক উত্তর যদি পেইজে চিহ্নিত/উল্লেখ করা থাকে সেটাই "correct" এ বসাবে (k/kh/g/gh)। উল্লেখ না থাকলে বিষয়বস্তু বিশ্লেষণ করে সঠিক উত্তর নির্ধারণ করবে।\n` +
+        `৫. ব্যাখ্যা (explanation) নির্ধারণের নিয়ম — এই ক্রম অনুসারে:\n` +
+        `   ক) MCQ-র ঠিক নিচে যদি ব্যাখ্যা লেখা থাকে, সেটাই হুবহু ১০০% কপি করবে (পরিবর্তন করবে না)।\n` +
+        `   খ) সরাসরি ব্যাখ্যা না থাকলেও পেইজে MCQ-সম্পর্কিত তথ্য থাকলে সেই তথ্য থেকে ব্যাখ্যা তৈরি করবে।\n` +
+        `   গ) পেইজে একেবারেই কোনো তথ্য না থাকলে, তুমি নিজে সবচেয়ে প্রাসঙ্গিক ও সঠিক ব্যাখ্যা লিখবে — কেন সঠিক অপশনটি সঠিক এবং বাকি অপশনগুলো কেন ভুল, তা সংক্ষেপে বলবে।\n` +
+        `৬. গাণিতিক/রাসায়নিক রাশি লেখার সময় সঠিক সাব/সুপারস্ক্রিপ্ট ইউনিকোড ব্যবহার করবে (x², H₂O ইত্যাদি), সাধারণ সংখ্যা দিয়ে লিখবে না।\n` +
+        `৭. প্রশ্ন বা ব্যাখ্যায় কখনো "উল্লেখিত চিত্রে", "বক্সে", "উদ্দীপকে", "পৃষ্ঠায়" জাতীয় সোর্স-রেফারেন্স বাক্য ব্যবহার করবে না — স্বয়ংসম্পূর্ণ রাখবে।\n` +
+        `৮. এটাই সবচেয়ে গুরুত্বপূর্ণ নিয়ম: তুমি একজন এক্সট্র্যাক্টর, জেনারেটর নও — কোনো অবস্থাতেই নিজের থেকে নতুন প্রশ্ন কল্পনা করে বানাবে না।\n\n` +
+        `শুধুমাত্র নিচের JSON ফরম্যাটে উত্তর দিবে, অন্য কোনো লেখা/markdown/backtick ছাড়া:\n${jsonFormat}`
+    );
+}
+
+// একটা প্রশ্নের option_k/kh/g/gh shuffle করে, correct key ঠিক রেখে আপডেট করে
+function mbShuffleSpecialOptions(m) {
+    const keys = ['k', 'kh', 'g', 'gh'];
+    const opts = keys.map(k => ({ v: m['option_' + k] || '', key: k }));
+    for (let i = opts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [opts[i], opts[j]] = [opts[j], opts[i]];
+    }
+    const newCorrect = opts.find(o => o.key === m.correct);
+    const remapped = { ...m };
+    keys.forEach((k, i) => { remapped['option_' + k] = opts[i].v; });
+    remapped.correct = keys[opts.findIndex(o => o.key === m.correct)];
+    return remapped;
+}
+
+// একটা পেইজ থেকে শুধু existing MCQ এক্সট্র্যাক্ট করে — retry + reliability check সহ।
+// রেজাল্ট খালি [] হলে অর্থ পেইজে সত্যিই কোনো MCQ নেই (silently skip, error না)।
+async function mbSpecialExtractPage(pageNum) {
+    const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","type":"special"}]`;
+    const basePrompt = mbSpecialExtractPrompt();
+    const MAX_ATTEMPTS = 3;
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        try {
+            let rawJson;
+            if (mbPdfUrl) {
+                try {
+                    const pdfPrompt = `এই PDF-এর পেইজ ${pageNum} দেখো এবং নিচের নির্দেশ অনুসরণ করো:\n${basePrompt}`;
+                    const res = await fetch(AI_PROXY_URL.replace(/\/$/, '') + '/mcq-from-pdf', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ pdf_url: mbPdfUrl, prompt: pdfPrompt })
+                    });
+                    const data = await res.json().catch(() => null);
+                    if (res.ok && data?.success && data.answer) rawJson = data.answer;
+                } catch (_) {}
+            }
+            if (!rawJson) {
+                const page = await mbPdfDoc.getPage(pageNum);
+                const textCont = await page.getTextContent();
+                const pageText = textCont.items.map(i => i.str).join(' ').trim();
+                if (pageText && pageText.length >= 30) {
+                    rawJson = await mbCallAiApi(`নিচের টেক্সট থেকে ${basePrompt}\n\nটেক্সট:\n${pageText.slice(0, 8000)}`, null);
+                } else {
+                    const vp = page.getViewport({ scale: 1.5 });
+                    const tmp = document.createElement('canvas');
+                    tmp.width = vp.width; tmp.height = vp.height;
+                    await page.render({ canvasContext: tmp.getContext('2d'), viewport: vp }).promise;
+                    const imageData = { base64: tmp.toDataURL('image/jpeg', 0.85).split(',')[1], mimeType: 'image/jpeg' };
+                    rawJson = await mbCallAiApi('', imageData, `তুমি একজন নিখুঁত ডেটা-এক্সট্র্যাকশন এক্সপার্ট। ${basePrompt}`);
+                }
+            }
+            const parsed = mbParseAiJson(rawJson);
+            if (parsed && parsed.length) return parsed; // পাওয়া গেছে — নিশ্চিত
+            if (parsed && parsed.length === 0 && attempt === 1) continue; // প্রথমবার খালি এলে একবার রি-চেক
+            return []; // দ্বিতীয়বারও খালি → পেইজে সত্যিই কোনো MCQ নেই
+        } catch (_) {
+            if (attempt === MAX_ATTEMPTS) return [];
+        }
+    }
+    return [];
+}
+
+/* ════════════════════════════════════════════════════
    4. SUBJECT / CHAPTER CASCADE
    ════════════════════════════════════════════════════ */
 
@@ -1032,21 +1121,34 @@ function mbSelectType(type) {
 
 async function mbSelectAiType(type) {
     mbAiTypeKey = type;
-    const typeMap = { standard: 'Standard', true_false: 'TrueFalse', hard: 'Hard' };
-    const typeLabelBn = { standard: 'Standard', true_false: 'True-False', hard: 'Hard' };
+    const typeMap = { standard: 'Standard', true_false: 'TrueFalse', hard: 'Hard', special: 'Special' };
+    const typeLabelBn = { standard: 'Standard', true_false: 'True-False', hard: 'Hard', special: 'Special' };
     Object.keys(typeMap).forEach(t => {
         const el = document.getElementById('mbAiType' + typeMap[t]);
         if (el) el.classList.toggle('selected', t === type);
     });
     const at = document.getElementById('mbAiType');
     if (at) at.value = type;
+
+    const isSpecial = type === 'special';
+    const countInput   = document.getElementById('mbAiCount');
+    const countLabel   = document.getElementById('mbAiCountLabel');
+    const promptGroup  = document.getElementById('mbAiPrompt')?.closest('.form-group');
+    const specialInfo  = document.getElementById('mbSpecialInfo');
+    const genBtn       = document.getElementById('mbAiGenBtn');
+    if (countInput) countInput.style.display = isSpecial ? 'none' : '';
+    if (countLabel) countLabel.textContent = isSpecial ? 'পেইজ স্কোপ নির্বাচন করো' : 'প্রশ্ন সংখ্যা (প্রতি পেইজে)';
+    if (promptGroup) promptGroup.style.display = isSpecial ? 'none' : '';
+    if (specialInfo) specialInfo.style.display = isSpecial ? 'block' : 'none';
+    if (genBtn && mbGenMode === 'single') genBtn.textContent = isSpecial ? '⚡ এই পেইজের existing MCQ এক্সট্র্যাক্ট করো' : '🤖 এই পেইজ থেকে MCQ তৈরি করো';
+
     const labelEl = document.getElementById('mbAiPromptLabel');
     if (labelEl) labelEl.textContent = `কাস্টম প্রম্পট (ঐচ্ছিক) — ${typeLabelBn[type]||type} টাইপের জন্য সংরক্ষিত হবে`;
     const savedTag = document.getElementById('mbPromptSavedTag');
     if (savedTag) savedTag.style.display = 'none';
     // Load saved prompt for this type
     const promptEl = document.getElementById('mbAiPrompt');
-    if (promptEl) {
+    if (promptEl && !isSpecial) {
         const saved = mbGetSavedPrompt(type);
         promptEl.value = saved || '';
     }
@@ -1516,9 +1618,11 @@ function mbParseCountInput(raw) {
 async function mbAiGenerate() {
     if (!mbPdfDoc) { mbToast('আগে একটি PDF খুলুন', 'error'); return; }
 
+    const type = mbAiTypeKey;
+    if (type === 'special') { await mbAiGenerateSpecial(); return; }
+
     const countRaw = ((document.getElementById('mbAiCount') || {}).value || '10').trim();
     const count    = mbParseCountInput(countRaw); // single number বা "5-10" রেঞ্জ উভয়ই সাপোর্ট করে
-    const type     = mbAiTypeKey;
     const customP  = ((document.getElementById('mbAiPrompt') || {}).value || '').trim();
 
     // Save custom prompt per type
@@ -1618,6 +1722,51 @@ async function mbAiGenerate() {
 
     } catch (ex) {
         mbToast('AI ব্যর্থ: ' + ex.message, 'error');
+    } finally {
+        if (spinner) spinner.style.display = 'none';
+        if (genBtn)  genBtn.style.display  = 'block';
+    }
+}
+
+// Special মোডে single-page: শুধু extract করে, প্রশ্ন সংখ্যা validate করে না
+async function mbAiGenerateSpecial() {
+    const spinner  = document.getElementById('mbAiSpinner');
+    const genBtn   = document.getElementById('mbAiGenBtn');
+    const resultEl = document.getElementById('mbAiResult');
+    if (spinner)  spinner.style.display  = 'block';
+    if (genBtn)   genBtn.style.display   = 'none';
+    if (resultEl) resultEl.style.display = 'none';
+    mbAiData = [];
+
+    try {
+        const parsed = await mbSpecialExtractPage(mbCurrentPage);
+        if (!parsed || !parsed.length) {
+            mbToast('❌ এই পেইজে কোনো existing MCQ পাওয়া যায়নি', 'error');
+            return;
+        }
+        mbAiData = parsed.map(m => ({ id: uid(), ...mbShuffleSpecialOptions(m), type: 'special' }));
+
+        const header = document.getElementById('mbAiResultHeader');
+        if (header) header.textContent = mbAiData.length + 'টি এক্সট্র্যাক্ট করা প্রশ্ন (সংরক্ষণ করতে নিচের বোতাম চাপুন)';
+
+        const previewList = document.getElementById('mbAiPreviewList');
+        if (previewList) {
+            const lMap = { k:'ক', kh:'খ', g:'গ', gh:'ঘ' };
+            previewList.innerHTML = mbAiData.map((m, i) => `
+                <div style="background:var(--card);border:1px solid rgba(108,99,255,0.2);border-radius:var(--radius-sm);padding:10px;margin-bottom:8px">
+                    <div style="font-size:12px;font-weight:600;margin-bottom:6px">${i+1}. ${esc(m.question)}</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px">
+                        ${['k','kh','g','gh'].map(k => `
+                            <div style="font-size:11px;padding:3px 7px;border-radius:3px;
+                                color:${m.correct===k?'var(--green)':'var(--text2)'};
+                                background:${m.correct===k?'rgba(16,185,129,0.08)':'var(--hover)'}"
+                            >${lMap[k]}. ${esc(m['option_'+k]||'')}${m.correct===k?' ✓':''}</div>`).join('')}
+                    </div>
+                </div>`).join('');
+        }
+        if (resultEl) resultEl.style.display = 'block';
+    } catch (ex) {
+        mbToast('এক্সট্র্যাকশন ব্যর্থ: ' + ex.message, 'error');
     } finally {
         if (spinner) spinner.style.display = 'none';
         if (genBtn)  genBtn.style.display  = 'block';
@@ -1832,11 +1981,15 @@ function mbSetGenMode(mode) {
     }
 
     if (mbGenMode === 'all') {
-        genBtn.textContent = `🤖 সকল ${mbPdfDoc.numPages} পেইজ থেকে প্রশ্ন বানান`;
+        genBtn.textContent = mbAiTypeKey === 'special'
+            ? `⚡ সকল ${mbPdfDoc.numPages} পেইজের existing MCQ এক্সট্র্যাক্ট করো`
+            : `🤖 সকল ${mbPdfDoc.numPages} পেইজ থেকে প্রশ্ন বানান`;
     } else if (mbGenMode === 'range') {
         mbUpdateRangeSummary(); // label টাও আপডেট করে দেয়
     } else {
-        genBtn.textContent = '🤖 এই পেইজ থেকে MCQ তৈরি করো';
+        genBtn.textContent = mbAiTypeKey === 'special'
+            ? '⚡ এই পেইজের existing MCQ এক্সট্র্যাক্ট করো'
+            : '🤖 এই পেইজ থেকে MCQ তৈরি করো';
     }
 }
 
@@ -1856,7 +2009,11 @@ function mbUpdateRangeSummary() {
     const count = to - from + 1;
     summaryEl.style.color = 'var(--text2)';
     summaryEl.textContent = `${from} থেকে ${to} পেইজ পর্যন্ত — মোট ${count}টি পেইজে প্রশ্ন তৈরি হবে (PDF-এ মোট ${totalPages} পেইজ)`;
-    if (mbGenMode === 'range') genBtn.textContent = `🤖 ${count}টি পেইজ থেকে প্রশ্ন বানান`;
+    if (mbGenMode === 'range') {
+        genBtn.textContent = mbAiTypeKey === 'special'
+            ? `⚡ ${count}টি পেইজের existing MCQ এক্সট্র্যাক্ট করো`
+            : `🤖 ${count}টি পেইজ থেকে প্রশ্ন বানান`;
+    }
 }
 
 // মূল Generate বাটন — mbGenMode অনুযায়ী single-page বা bulk (all/range) generate চালায়
@@ -1966,6 +2123,8 @@ async function mbRunBulkJob(job) {
 // একটা নির্দিষ্ট পেইজের জন্য MCQ generate + save করে — mbAiGenerate এর core logic বিচ্ছিন্ন করে আলাদা করা হয়েছে
 // যাতে single-page generate ও bulk generate একই function ব্যবহার করে (কোড ডুপ্লিকেশন এড়াতে)।
 async function mbGenerateForPage(pageNum, countRaw, type) {
+    if (type === 'special') return await mbGenerateForPageSpecial(pageNum);
+
     const count = mbParseCountInput(countRaw);
     const typeLabel = { standard: 'সাধারণ', true_false: 'সত্য/মিথ্যা', hard: 'কঠিন' };
     const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","type":"${type}"}]`;
@@ -2046,6 +2205,35 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     // নতুন প্রশ্নগুলো (পুরো accumulated history না) — যাতে প্রতি পেইজের জন্য পরিষ্কার আলাদা ফাইল তৈরি হয়।
     await mbSaveMcqsAsCsv(newMcqs, pageNum, type);
     return newMcqs.length; // bulk progress-এ total MCQ count ট্র্যাক করার জন্য
+}
+
+// Special মোডে bulk (all/range): একটা পেইজে existing MCQ না থাকলে silently skip করে (error না),
+// থাকলে extract + save + CSV — mbGenerateForPage এর মতোই একই সেভ পাইপলাইন ব্যবহার করে।
+async function mbGenerateForPageSpecial(pageNum) {
+    const parsed = await mbSpecialExtractPage(pageNum);
+    if (!parsed || !parsed.length) return 0; // এই পেইজে কোনো MCQ নেই — বাদ দাও, error না
+
+    const newMcqs = parsed.map(m => ({ id: uid(), ...mbShuffleSpecialOptions(m), type: 'special' }));
+
+    const existingRow = mbAllPageData.find(r => r.page_number === pageNum);
+    let currentMcqs = [];
+    if (existingRow) { try { currentMcqs = JSON.parse(existingRow.questions_json || '[]'); } catch (_) {} }
+    currentMcqs.push(...newMcqs);
+
+    const res = await mbApi('/book_page_mcqs', {
+        method: 'POST',
+        headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+        body: JSON.stringify({ pdf_id: parseInt(mbPdfId), page_number: pageNum, mcq_type: 'admin', questions_json: JSON.stringify(currentMcqs) })
+    });
+    try {
+        const data = await res.json();
+        const newRow = Array.isArray(data) ? data[0] : data;
+        const idx = mbAllPageData.findIndex(r => r.page_number === pageNum);
+        if (idx >= 0) mbAllPageData[idx] = newRow; else mbAllPageData.push(newRow);
+    } catch (_) {}
+
+    await mbSaveMcqsAsCsv(newMcqs, pageNum, 'special');
+    return newMcqs.length;
 }
 
 // Page reload হলে আগের চলমান job থাকলে সেটা আবার resume করে — "refresh দিলেও কাজ থামবে না"
