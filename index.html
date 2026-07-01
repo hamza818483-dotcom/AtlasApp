@@ -318,10 +318,23 @@
         .slideshow-wrap.compact-mode {
             background: transparent; box-shadow: none; border-radius: 0;
             display: flex; justify-content: center; padding: 6px 0 14px;
+            overflow: hidden; /* পাশের slide-এর কোনো অংশ যেন কখনোই দেখা না যায় */
         }
-        .slideshow-wrap.compact-mode .slideshow-track { width: 78%; border-radius: 16px; }
-        .slideshow-wrap.compact-mode .slideshow-slide { position: relative; }
+        .slideshow-wrap.compact-mode .slideshow-track {
+            width: 70%; border-radius: 16px; overflow: hidden;
+        }
+        .slideshow-wrap.compact-mode .slideshow-slide {
+            position: relative;
+            /* সব ছবি ঠিক একই আকারের বক্সে বসবে — ছবির আসল সাইজ যাই হোক না কেন */
+            aspect-ratio: 1 / 1.05;
+            background: linear-gradient(145deg, rgba(108,99,255,.06), rgba(108,99,255,.02));
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
         .slideshow-wrap.compact-mode .slideshow-slide img {
+            width: 100%; height: 100%;
+            /* object-fit: contain — ছবি crop না করে ছোট করে পুরোটা বক্সের মধ্যে দেখাবে (zoom out) */
+            object-fit: contain;
             border-radius: 16px;
             box-shadow: 0 8px 28px rgba(0,0,0,.35), 0 2px 8px rgba(108,99,255,.25);
             transition: transform .2s ease;
