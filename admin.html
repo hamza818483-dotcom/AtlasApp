@@ -3736,8 +3736,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         বর্তমান পেইজের content বিশ্লেষণ করে AI স্বয়ংক্রিয়ভাবে MCQ তৈরি করবে।
                     </div>
                     <!-- প্রশ্ন সংখ্যা + Apply-to-All/Page-Range — একই row তে compact ভাবে -->
-                    <div class="form-group">
-                        <label class="form-label">প্রশ্ন সংখ্যা (প্রতি পেইজে)</label>
+                    <!-- প্রশ্ন সংখ্যা + Apply-to-All/Page-Range — একই row তে compact ভাবে -->
+                    <div class="form-group" id="mbAiCountGroup">
+                        <label class="form-label" id="mbAiCountLabel">প্রশ্ন সংখ্যা (প্রতি পেইজে)</label>
                         <div style="display:flex;gap:8px;align-items:center">
                             <input type="text" class="form-input" id="mbAiCount" value="10" placeholder="10 অথবা 5-10" style="max-width:90px">
                             <button type="button" class="btn btn-outline" id="mbModeAllBtn" style="font-size:11px;padding:8px 10px;flex:1" onclick="mbSetGenMode('all')">⚡ Apply to All</button>
@@ -3762,8 +3763,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             <button type="button" class="type-opt-alt selected" id="mbAiTypeStandard" onclick="mbSelectAiType('standard')">📚 Standard</button>
                             <button type="button" class="type-opt-alt" id="mbAiTypeTrueFalse" onclick="mbSelectAiType('true_false')">✅ True-False</button>
                             <button type="button" class="type-opt-alt" id="mbAiTypeHard" onclick="mbSelectAiType('hard')">🔥 Hard</button>
+                            <button type="button" class="type-opt-alt" id="mbAiTypeSpecial" onclick="mbSelectAiType('special')">⚡ Special</button>
                         </div>
                         <input type="hidden" id="mbAiType" value="standard">
+                    </div>
+                    <div id="mbSpecialInfo" style="display:none;background:rgba(108,99,255,0.06);border:1px solid rgba(108,99,255,0.2);border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;line-height:1.6;margin-bottom:12px;color:var(--text2)">
+                        ⚡ Special মোডে AI পেইজে <b>ইতিমধ্যে থাকা</b> MCQ শুধু এক্সট্র্যাক্ট করবে — নতুন কোনো MCQ বানাবে না। পেইজে যতগুলো MCQ আছে ঠিক ততগুলোই আসবে।
                     </div>
                     <div class="form-group">
                         <label class="form-label" id="mbAiPromptLabel">কাস্টম প্রম্পট (ঐচ্ছিক) — Standard টাইপের জন্য সংরক্ষিত হবে</label>
