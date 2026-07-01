@@ -722,6 +722,8 @@ function jumpToPage(p) {
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 120);
 }
+
+function zoom(d) {
     scale = Math.max(.25, Math.min(3, scale+d));
     document.getElementById('zoom-lbl').textContent = Math.round(scale*100)+'%';
     document.querySelectorAll('.page-card').forEach(el => {
