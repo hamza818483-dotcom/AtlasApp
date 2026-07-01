@@ -257,7 +257,7 @@
 <!-- ██ SCREEN 4: PDF VIEWER ██ -->
 <div class="screen" id="s-view">
   <div class="pdf-toolbar">
-    <button class="back-btn" onclick="go('s-pdfs')">←</button>
+    <button class="back-btn" onclick="backFromViewer()">←</button>
     <span class="scr-title" id="view-title">PDF</span>
     <button class="nav-pg-btn" onclick="togglePgNav()" id="pgNavBtn"><span>☰</span><span id="pgNavLbl">পেইজ</span></button>
     <div class="zoom-wrap">
@@ -403,6 +403,7 @@ async function safeFetch(url, opts = {}) {
 if (typeof pdfjsLib !== 'undefined') pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 let scale = 0.5, pdfDoc = null, curPdfId = null, curPdfTitle = '', curPdfPremium = false;
+let curChapterId = null, curChapterName = '';
 let selPages = new Set(), sheetTarget = null, sheetSinglePage = null;
 
 function go(id) {
@@ -453,6 +454,7 @@ async function openSubject(id, name) {
 }
 
 async function openChapter(id, name) {
+    curChapterId = id; curChapterName = name;
     document.getElementById('pdfs-title').textContent = name;
     go('s-pdfs');
     const c = document.getElementById('pdf-list');
@@ -656,6 +658,16 @@ async function logPageView(p) {
     } catch (_) {}
 }
 
+function backFromViewer() {
+    // PDF viewer থেকে ← চাপলে — PDF list reload করো (loading দেখাবে না)
+    pdfDoc = null; // current doc clear
+    if (curChapterId) {
+        openChapter(curChapterId, curChapterName);
+    } else {
+        go('s-pdfs');
+    }
+}
+
 async function renderPage(p) {
     if (!pdfDoc) return;
     const cv = document.getElementById('cv-'+p), ph = document.getElementById('ph-'+p);
@@ -663,13 +675,34 @@ async function renderPage(p) {
     try {
         const page = await pdfDoc.getPage(p);
         const dpr = window.devicePixelRatio || 1;
-        const vp = page.getViewport({ scale: scale * dpr });
+        // screen width-এর মধ্যে canvas আটকে রাখো — mobile-এ overflow হবে না
+        const maxPx = (window.innerWidth - 16) * dpr;
+        const rawVp = page.getViewport({ scale: scale * dpr });
+        const fitScale = rawVp.width > maxPx ? (scale * dpr * maxPx / rawVp.width) : scale * dpr;
+        const vp = page.getViewport({ scale: fitScale });
         cv.width = vp.width; cv.height = vp.height;
         cv.style.width = (vp.width/dpr)+'px'; cv.style.height = (vp.height/dpr)+'px';
         await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
         if (ph) ph.style.display = 'none';
         cv.style.display = 'block';
     } catch (e) { if (ph) ph.innerHTML = '❌ লোড হয়নি'; }
+}
+
+function jumpToPage(p) {
+    // popup বন্ধ হওয়ার পর scroll করো — layout shift এড়াতে
+    closePgNav();
+    setTimeout(() => {
+        const el = document.getElementById('pc-'+p);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 120);
+}
+    scale = Math.max(.25, Math.min(3, scale+d));
+    document.getElementById('zoom-lbl').textContent = Math.round(scale*100)+'%';
+    document.querySelectorAll('.page-card').forEach(el => {
+        const p = parseInt(el.dataset.page);
+        const cv = document.getElementById('cv-'+p);
+        if (cv && cv.style.display !== 'none') { renderPage(p); loadPageTextLayer(p); }
+    });
 }
 
 function zoom(d) {
@@ -694,11 +727,6 @@ function buildPgNav(n) {
         grid.appendChild(btn);
     }
     document.getElementById('pgNavLbl').textContent = 'পেইজ ১-' + n;
-}
-
-function jumpToPage(p) {
-    const el = document.getElementById('pc-'+p);
-    if (el) { el.scrollIntoView({behavior:'smooth', block:'start'}); }
 }
 
 function togglePgNav() {
