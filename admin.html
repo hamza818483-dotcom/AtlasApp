@@ -1481,9 +1481,9 @@
             </div>
             <div id="slideshowPreviewWrap" style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;"></div>
             <div class="input-group">
-                <label>লিংক (ঐচ্ছিক — ছবিতে ক্লিক করলে এই লিংকে যাবে)</label>
+                <label>ডিফল্ট লিংক (ঐচ্ছিক)</label>
                 <input type="url" class="form-input" id="ssLinkUrl" placeholder="https://example.com">
-                <div style="font-size:10.5px;color:var(--text3);margin-top:3px">একাধিক ছবি আপলোড করলে সবগুলোতে একই লিংক প্রযোজ্য হবে — পরে তালিকা থেকে আলাদাভাবে বদলানো যাবে।</div>
+                <div style="font-size:10.5px;color:var(--text3);margin-top:3px">প্রতিটা ছবির নিচে আলাদা লিংক দেওয়া যাবে (ছবি সিলেক্ট করার পর দেখা যাবে) — সেটা খালি রাখলে এই ডিফল্ট লিংকটা ব্যবহার হবে।</div>
             </div>
             <button class="btn btn-primary" onclick="uploadSlideshowImages()" style="width:100%;" id="slideshowUploadBtn" disabled>⚡ আপলোড করুন</button>
             <div id="slideshowUploadStatus" style="margin-top:8px;font-size:12px;color:var(--text2);"></div>
@@ -2996,10 +2996,12 @@ function previewSlideshowFiles(input) {
     slideshowSelectedFiles.forEach((file, i) => {
         const r = new FileReader();
         r.onload = e => {
-            const img = document.createElement('img');
-            img.src = e.target.result;
-            img.style.cssText = 'width:64px;height:64px;object-fit:cover;border-radius:8px;border:2px solid var(--border);';
-            wrap.appendChild(img);
+            const cell = document.createElement('div');
+            cell.style.cssText = 'display:flex;flex-direction:column;gap:4px;width:82px';
+            cell.innerHTML = `
+                <img src="${e.target.result}" style="width:82px;height:64px;object-fit:cover;border-radius:8px;border:2px solid var(--border);">
+                <input type="url" class="form-input" id="ssPerImgLink-${i}" placeholder="লিংক (ঐচ্ছিক)" style="font-size:9.5px;padding:4px 6px">`;
+            wrap.appendChild(cell);
         };
         r.readAsDataURL(file);
     });
@@ -3069,13 +3071,18 @@ async function uploadSlideshowImages() {
         }
     } catch (e) { /* লিস্ট খালি বা এরর হলে ০ থেকেই শুরু */ }
 
-    for (const file of slideshowSelectedFiles) {
+    for (let i = 0; i < slideshowSelectedFiles.length; i++) {
+        const file = slideshowSelectedFiles[i];
         status.textContent = `⏳ আপলোড হচ্ছে (${done + 1}/${total})...`;
         try {
             const dataUrl = await fileToDataUrl(file);
+            // প্রতিটা ছবির নিজের link input থাকে — খালি থাকলে উপরের shared link fallback হিসেবে ব্যবহার হয়
+            const perImgEl = document.getElementById('ssPerImgLink-' + i);
+            const perImgLink = perImgEl ? (perImgEl.value || '').trim() : '';
+            const finalLink = perImgLink || linkUrl;
             const result = await safeFetch(`${SUPABASE_URL}/rest/v1/slideshow_images`, {
                 method: 'POST',
-                body: JSON.stringify({ image_url: dataUrl, sort_order: nextSortOrder + done, display_mode: displayMode, link_url: linkUrl })
+                body: JSON.stringify({ image_url: dataUrl, sort_order: nextSortOrder + done, display_mode: displayMode, link_url: finalLink })
             });
             if (!Array.isArray(result) || !result.length) {
                 throw new Error('সেইভড রো ফেরত আসেনি (RLS/policy সমস্যা হতে পারে)');
