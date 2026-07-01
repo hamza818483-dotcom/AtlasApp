@@ -357,10 +357,21 @@
         /* ── Review Section — home page একদম নিচে ── */
         .review-section { margin: 22px 0 10px; padding: 0 14px; }
 
+        /* Title container — চারপাশে bg box, ২ পাশে ঘুরন্ত তারা */
+        .review-title-box {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            background: linear-gradient(135deg, rgba(108,99,255,.12), rgba(255,215,0,.05));
+            border: 1px solid rgba(108,99,255,.25); border-radius: 14px;
+            padding: 10px 14px; margin-bottom: 12px;
+        }
+        .review-star-spin {
+            font-size: 16px; display: inline-block; animation: reviewStarSpin 2.5s linear infinite;
+        }
+        @keyframes reviewStarSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
         /* Animated title — shimmer effect, main "ATLAS All Courses" title-এর মতোই gradient shine */
         .review-section-title {
-            font-size: 20px; font-weight: 900; letter-spacing: .3px;
-            margin-bottom: 12px; text-align: center;
+            font-size: 19px; font-weight: 900; letter-spacing: .3px;
             background: linear-gradient(90deg,
                 #FFD700 0%, #FFF5A0 20%, #FFFFFF 40%, #6C63FF 60%, #FFE566 80%, #FFD700 100%);
             background-size: 250% auto;
@@ -370,23 +381,29 @@
         }
         @keyframes reviewTitleShimmer { 0% { background-position: 0% center; } 100% { background-position: -250% center; } }
 
-        /* Category cards — শুধু bold clear টাইপ টেক্সট, কোনো image preview নেই */
-        .review-cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 18px; }
-        .review-cat-tile {
-            position: relative; border-radius: 14px; overflow: hidden; cursor: pointer;
-            padding: 20px 10px; background: linear-gradient(145deg, rgba(108,99,255,.10), rgba(108,99,255,.02));
-            border: 1.5px solid rgba(108,99,255,.25);
-            box-shadow: 0 3px 14px rgba(0,0,0,.15); transition: transform .15s;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+        /* Category cards — একটা বড় box-এর ভেতরে ৪টা ছোট card, এক row-তে পাশাপাশি */
+        .review-cat-box {
+            display: flex; gap: 6px; padding: 10px; margin-bottom: 16px;
+            background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px;
+            box-shadow: 0 3px 14px rgba(0,0,0,.12);
         }
-        .review-cat-tile:active { transform: scale(.96); }
-        .review-cat-tile .rct-emoji { font-size: 26px; }
-        .review-cat-tile .rct-label { color: var(--text); font-size: 15px; font-weight: 900; letter-spacing: .3px; }
-        .review-cat-tile .rct-count { color: var(--text-secondary); font-size: 10.5px; font-weight: 600; margin-top: 1px; }
-        .review-cat-tile.empty { opacity: .45; cursor: default; }
+        .review-cat-tile {
+            position: relative; border-radius: 10px; overflow: hidden; cursor: pointer;
+            flex: 1; padding: 10px 4px; background: linear-gradient(145deg, rgba(108,99,255,.10), rgba(108,99,255,.02));
+            border: 1px solid rgba(108,99,255,.2);
+            transition: transform .15s;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+        }
+        .review-cat-tile:active { transform: scale(.93); }
+        .review-cat-tile .rct-emoji { font-size: 17px; }
+        .review-cat-tile .rct-label { color: var(--text); font-size: 10.5px; font-weight: 900; letter-spacing: .1px; text-align: center; }
+        .review-cat-tile .rct-count { color: var(--text-secondary); font-size: 8.5px; font-weight: 600; }
+        .review-cat-tile.empty { opacity: .4; cursor: default; }
 
-        /* Category card গুলোর নিচে — সব ধরনের review image একসাথে auto-sliding slideshow */
+        /* Category card গুলোর নিচে — সব ধরনের review image, ছোট আকারে স্ক্রিনের মাঝখানে, sliding */
         .review-all-slideshow-title { font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; }
+        .review-all-slideshow-wrap { display: flex; justify-content: center; }
+        .review-all-slideshow-wrap .slideshow-viewport { width: 58%; }
 
         /* Gallery overlay — device-gallery style grid, then fullscreen swipe viewer */
         .review-gallery-bg {
@@ -1677,8 +1694,12 @@ async function loadReviewSection() {
 
         container.innerHTML = `
             <div class="review-section">
-                <div class="review-section-title">⭐ Reviews</div>
-                <div class="review-cat-grid">${tilesHtml}</div>
+                <div class="review-title-box">
+                    <span class="review-star-spin">⭐</span>
+                    <div class="review-section-title">Reviews</div>
+                    <span class="review-star-spin" style="animation-direction:reverse">⭐</span>
+                </div>
+                <div class="review-cat-box">${tilesHtml}</div>
                 <div id="reviewAllSlideshowContainer"></div>
             </div>`;
 
@@ -1707,7 +1728,7 @@ async function loadReviewAllSlideshow(allImages) {
         : '';
 
     wrap.innerHTML = `
-        <div class="slideshow-wrap">
+        <div class="slideshow-wrap review-all-slideshow-wrap">
             <div class="slideshow-viewport">
                 <div class="slideshow-track" id="reviewAllSlideshowTrack">${slidesHtml}</div>
             </div>
