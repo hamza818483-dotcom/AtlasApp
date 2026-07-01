@@ -414,22 +414,29 @@ function go(id) {
 
 /* ── Subjects ── */
 async function loadSubjects() {
+    const c = document.getElementById('subj-list');
+    const CACHE_KEY = 'atlas_subjects_cache';
+    try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) { renderSubjects(JSON.parse(cached)); }
+    } catch (_) {}
     try {
         const subjects = await safeFetch(`${SUPABASE_URL}/rest/v1/book_subjects?select=*&order=sort_order.asc`);
-        const c = document.getElementById('subj-list');
-        if (!subjects?.length) { c.innerHTML = '<div class="ctr">কোনো বিষয় পাওয়া যায়নি। শীঘ্রই যোগ করা হবে।</div>'; return; }
-        document.getElementById('subj-banner-sub').textContent = subjects.length + ' টি বিষয় পাওয়া গেছে';
-        // Chapter list এর মতো simple list style — subject card design এর বদলে
-        c.innerHTML = '<div class="item-list">' + subjects.map((s,i) => `
-            <div class="list-item" onclick="openSubject(${s.id},'${esc(s.name)}')">
-                <div class="list-num">${i+1}</div>
-                <div class="list-info">
-                    <div class="list-name">${esc(s.name)}</div>
-                    <div class="list-sub">${esc(s.description||'অধ্যায় দেখতে ক্লিক করো')}</div>
-                </div>
-                <div class="list-arr">›</div>
-            </div>`).join('') + '</div>';
-    } catch (e) { document.getElementById('subj-list').innerHTML = '<div class="ctr" style="color:var(--error)">লোড হয়নি। পুনরায় চেষ্টা করো।</div>'; }
+        if (!subjects?.length) { if (!c.querySelector('.list-item')) c.innerHTML = '<div class="ctr">কোনো বিষয় পাওয়া যায়নি।</div>'; return; }
+        localStorage.setItem(CACHE_KEY, JSON.stringify(subjects));
+        renderSubjects(subjects);
+    } catch (e) { if (!c.querySelector('.list-item')) c.innerHTML = '<div class="ctr" style="color:var(--error)">লোড হয়নি।</div>'; }
+}
+
+function renderSubjects(subjects) {
+    const c = document.getElementById('subj-list');
+    document.getElementById('subj-banner-sub').textContent = subjects.length + ' টি বিষয় পাওয়া গেছে';
+    c.innerHTML = '<div class="item-list">' + subjects.map((s,i) => `
+        <div class="list-item" onclick="openSubject(${s.id},'${esc(s.name)}')">
+            <div class="list-num">${i+1}</div>
+            <div class="list-info"><div class="list-name">${esc(s.name)}</div><div class="list-sub">${esc(s.description||'অধ্যায় দেখতে ক্লিক করো')}</div></div>
+            <div class="list-arr">›</div>
+        </div>`).join('') + '</div>';
 }
 
 async function openSubject(id, name) {
@@ -438,19 +445,31 @@ async function openSubject(id, name) {
     document.getElementById('chap-banner-s').textContent = 'যে অধ্যায় পড়তে চাও সেটি বেছে নাও';
     go('s-chap');
     const c = document.getElementById('chap-list');
-    c.innerHTML = '<div class="ctr"><div class="sp"></div><div>লোড হচ্ছে...</div></div>';
+    const CACHE_KEY = 'atlas_chap_cache_' + id;
+    // Cache থেকে instantly দেখাও
+    try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) { renderChapters(JSON.parse(cached), name); }
+    } catch (_) {}
+    // Background refresh
     try {
         const chapters = await safeFetch(`${SUPABASE_URL}/rest/v1/book_chapters?subject_id=eq.${id}&select=*&order=sort_order.asc`);
-        if (!chapters?.length) { c.innerHTML = '<div class="ctr">কোনো অধ্যায় পাওয়া যায়নি</div>'; return; }
-        document.getElementById('chap-title').textContent = name + ' (' + chapters.length + ' টি অধ্যায়)';
-        document.getElementById('chap-banner-s').textContent = chapters.length + ' টি অধ্যায় পাওয়া গেছে';
-        c.innerHTML = '<div class="item-list">' + chapters.map((ch,i) => `
-            <div class="list-item" onclick="openChapter(${ch.id},'${esc(ch.name)}')">
-                <div class="list-num">${i+1}</div>
-                <div class="list-info"><div class="list-name">${esc(ch.name)}</div></div>
-                <div class="list-arr">›</div>
-            </div>`).join('') + '</div>';
-    } catch (e) { c.innerHTML = '<div class="ctr" style="color:var(--error)">লোড হয়নি।</div>'; }
+        if (!chapters?.length) { if (!c.querySelector('.list-item')) c.innerHTML = '<div class="ctr">কোনো অধ্যায় পাওয়া যায়নি</div>'; return; }
+        localStorage.setItem(CACHE_KEY, JSON.stringify(chapters));
+        renderChapters(chapters, name);
+    } catch (e) { if (!c.querySelector('.list-item')) c.innerHTML = '<div class="ctr" style="color:var(--error)">লোড হয়নি।</div>'; }
+}
+
+function renderChapters(chapters, name) {
+    const c = document.getElementById('chap-list');
+    document.getElementById('chap-title').textContent = (name || document.getElementById('chap-title').textContent.split(' (')[0]) + ' (' + chapters.length + ' টি অধ্যায়)';
+    document.getElementById('chap-banner-s').textContent = chapters.length + ' টি অধ্যায় পাওয়া গেছে';
+    c.innerHTML = '<div class="item-list">' + chapters.map((ch,i) => `
+        <div class="list-item" onclick="openChapter(${ch.id},'${esc(ch.name)}')">
+            <div class="list-num">${i+1}</div>
+            <div class="list-info"><div class="list-name">${esc(ch.name)}</div></div>
+            <div class="list-arr">›</div>
+        </div>`).join('') + '</div>';
 }
 
 async function openChapter(id, name) {
@@ -458,38 +477,45 @@ async function openChapter(id, name) {
     document.getElementById('pdfs-title').textContent = name;
     go('s-pdfs');
     const c = document.getElementById('pdf-list');
-    c.innerHTML = '<div class="ctr"><div class="sp"></div><div>লোড হচ্ছে...</div></div>';
+    const CACHE_KEY = 'atlas_pdfs_cache_' + id;
+    // Cache থেকে instantly দেখাও — loading spinner নেই
+    try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) { renderPdfList(JSON.parse(cached), name, id); }
+        else { c.innerHTML = '<div class="ctr"><div class="sp"></div><div>লোড হচ্ছে...</div></div>'; }
+    } catch (_) { c.innerHTML = '<div class="ctr"><div class="sp"></div><div>লোড হচ্ছে...</div></div>'; }
     try {
         // Non-premium PDF হলে file_url-ও একই কলে নিয়ে নিচ্ছি, যাতে openPdf()-এ
         // দ্বিতীয় network round-trip না লাগে — এটাই "Chapter ক্লিক করলে instant
         // খুলবে না" সমস্যার মূল কারণ ছিল (২টা sequential fetch + pdf.js init)।
         // Premium PDF-এর জন্য file_url আগের মতোই বাদ রাখা হচ্ছে (security অক্ষত)।
         const pdfs = await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdfs?chapter_id=eq.${id}&select=id,title,page_count,is_premium,sort_order,file_url&order=sort_order.asc`);
-        if (!pdfs?.length) { c.innerHTML = '<div class="ctr">কোনো PDF পাওয়া যায়নি</div>'; return; }
+        if (!pdfs?.length) { if (!c.querySelector('.list-item')) c.innerHTML = '<div class="ctr">কোনো PDF পাওয়া যায়নি</div>'; return; }
+        localStorage.setItem(CACHE_KEY, JSON.stringify(pdfs));
+        renderPdfList(pdfs, name, id);
+    } catch (e) { if (!c.querySelector('.list-item')) c.innerHTML = '<div class="ctr" style="color:var(--error)">লোড হয়নি।</div>'; }
+}
 
-        // Instant open if only one PDF exists in chapter — file_url already in hand for non-premium
-        if (pdfs.length === 1) {
-            const p0 = pdfs[0];
-            if (p0.is_premium) {
-                openPdf(p0.id, p0.title, true, p0.page_count); // premium → security check + separate file_url fetch
-            } else {
-                openPdfFast(p0.id, p0.title, p0.file_url, p0.page_count); // non-premium → no extra round-trip
-            }
-            return;
-        }
-
-        document.getElementById('pdfs-title').textContent = name + ' (' + pdfs.length + ' টি PDF)';
-        c.innerHTML = '<div class="item-list">' + pdfs.map(p => `
-            <div class="list-item" onclick="openPdf(${p.id},'${esc(p.title)}',${!!p.is_premium},${p.page_count||0})">
-                <div style="font-size:26px">📕</div>
-                <div class="list-info">
-                    <div class="list-name">${esc(p.title)}</div>
-                    <div class="list-sub">${p.page_count ? p.page_count+' পেইজ' : 'PDF ফাইল'}</div>
-                </div>
-                ${p.is_premium ? '<span class="premium-lock">⭐ Premium</span>' : ''}
-                <div class="list-arr">›</div>
-            </div>`).join('') + '</div>';
-    } catch (e) { c.innerHTML = '<div class="ctr" style="color:var(--error)">লোড হয়নি।</div>'; }
+function renderPdfList(pdfs, name, id) {
+    const c = document.getElementById('pdf-list');
+    // Single PDF → instant open
+    if (pdfs.length === 1) {
+        const p0 = pdfs[0];
+        if (p0.is_premium) { openPdf(p0.id, p0.title, true, p0.page_count); }
+        else { openPdfFast(p0.id, p0.title, p0.file_url, p0.page_count); }
+        return;
+    }
+    document.getElementById('pdfs-title').textContent = name + ' (' + pdfs.length + ' টি PDF)';
+    c.innerHTML = '<div class="item-list">' + pdfs.map(p => `
+        <div class="list-item" onclick="openPdf(${p.id},'${esc(p.title)}',${!!p.is_premium},${p.page_count||0})">
+            <div style="font-size:26px">📕</div>
+            <div class="list-info">
+                <div class="list-name">${esc(p.title)}</div>
+                <div class="list-sub">${p.page_count ? p.page_count+' পেইজ' : 'PDF ফাইল'}</div>
+            </div>
+            ${p.is_premium ? '<span class="premium-lock">⭐ Premium</span>' : ''}
+            <div class="list-arr">›</div>
+        </div>`).join('') + '</div>';
 }
 
 /* ── PDF Viewer ── */
