@@ -2147,12 +2147,14 @@ const OCR_PROXY_URL = AI_PROXY_URL.replace(/\/$/, '') + '/'; // Same proxy with 
 // Renders each page via PDF.js → sends image to /ocr-page → saves text to Supabase
 // "সংরক্ষিত সকল PDF" লিস্টের badge live আপডেট করে OCR চলাকালীন — প্রতি পেইজ শেষ হলেই কল হয়।
 // DOM element না থাকলে (অন্য panel-এ থাকলে) নিরাপদে কিছুই করে না।
-function mbUpdateOcrBadgeLive(pdfId, done, total) {
+// currentLabel = এখন কোন পেইজ(গুলো) প্রসেস হচ্ছে (যেমন "৪-৬" বা "৭"), কম্প্যাক্টভাবে % এর পাশে দেখানো হয়।
+function mbUpdateOcrBadgeLive(pdfId, done, total, currentLabel) {
     const badge = document.getElementById('ocr-badge-' + pdfId);
     if (!badge) return;
     const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+    const pageInfo = currentLabel ? ` · পেইজ ${currentLabel}` : '';
     badge.className = 'ocr-badge ocr-processing';
-    badge.innerHTML = `🔄 ${pct}% <span class="ocr-bar"><span class="ocr-bar-fill" style="width:${pct}%"></span></span>`;
+    badge.innerHTML = `🔄 ${pct}%${pageInfo} <span class="ocr-bar"><span class="ocr-bar-fill" style="width:${pct}%"></span></span>`;
 }
 
 async function mbStartAutoOcr(pdfId, pdfUrl) {
@@ -2188,6 +2190,13 @@ async function mbStartAutoOcr(pdfId, pdfUrl) {
                 batch.push(p);
             }
 
+            // ব্যাচ শুরু হওয়ার সাথে সাথেই কোন পেইজ(গুলো) নিয়ে কাজ চলছে সেটা badge-এ দেখাই —
+            // পেইজ শেষ হওয়ার অপেক্ষা না করে, যাতে ইউজার রিয়েল-টাইমে বুঝতে পারে।
+            const rangeLabel = batch.length > 1 ? `${batch[0]}-${batch[batch.length-1]}` : `${batch[0]}`;
+            mbUpdateOcrBadgeLive(pdfId, doneCount, totalPages, rangeLabel);
+            const pill0 = document.getElementById('mbOcrStatus-' + pdfId);
+            if (pill0) pill0.textContent = `OCR: ${doneCount}/${totalPages} (পেইজ ${rangeLabel})`;
+
             // Process batch in parallel
             await Promise.allSettled(batch.map(async (pageNum) => {
                 try {
@@ -2218,9 +2227,9 @@ async function mbStartAutoOcr(pdfId, pdfUrl) {
                         doneCount++;
                         // Update progress pill if MCQ panel is open
                         const pill = document.getElementById('mbOcrStatus-' + pdfId);
-                        if (pill) pill.textContent = `OCR: ${doneCount}/${totalPages}`;
-                        // "সংরক্ষিত সকল PDF" কার্ডের badge-ও live আপডেট করি — % সহ কম্প্যাক্ট
-                        mbUpdateOcrBadgeLive(pdfId, doneCount, totalPages);
+                        if (pill) pill.textContent = `OCR: ${doneCount}/${totalPages} (পেইজ ${rangeLabel})`;
+                        // "সংরক্ষিত সকল PDF" কার্ডের badge-ও live আপডেট করি — % ও current page সহ কম্প্যাক্ট
+                        mbUpdateOcrBadgeLive(pdfId, doneCount, totalPages, rangeLabel);
                     }
                 } catch (_) {}
             }));
