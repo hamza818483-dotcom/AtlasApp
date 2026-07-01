@@ -678,10 +678,26 @@ function jumpToPage(p) {
     closePgNav();
     setTimeout(() => {
         const el = document.getElementById('pc-'+p);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        // correction pass: initial smooth-scroll positioning সামান্য off হতে পারে যদি
-        // আশেপাশের পেইজ ঠিক এই সময়েই lazy-render হয়ে height বদলে দেয় — এই দ্বিতীয় scroll সেটা ঠিক করে দেয়।
-        setTimeout(() => { if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' }); }, 550);
+        if (!el) return;
+        el.scrollIntoView({ behavior: 'auto', block: 'start' });
+        // Settle-loop: মাঝের lazy-render না-হওয়া পেইজগুলো render হয়ে height বদলে দিলে
+        // target পেইজের position সরে যায় — তাই position স্থির না হওয়া পর্যন্ত (max ~2s)
+        // বারবার চেক করে re-snap করা হয়। কোনো fixed delay-নির্ভরতা নেই, তাই device/
+        // network speed যাই হোক, নির্ভুলভাবে সঠিক পেইজেই থামবে।
+        let stableCount = 0, attempts = 0;
+        const check = () => {
+            const target = document.getElementById('pc-' + p);
+            if (!target || attempts++ >= 40) return; // সর্বোচ্চ ~2s (40 × 50ms)
+            const top = target.getBoundingClientRect().top;
+            if (Math.abs(top) > 4) {
+                target.scrollIntoView({ behavior: 'auto', block: 'start' });
+                stableCount = 0;
+            } else if (++stableCount >= 3) {
+                return; // পরপর ৩ বার স্থির অবস্থানে পাওয়া গেছে — নিশ্চিত সঠিক পেইজে আছি
+            }
+            setTimeout(check, 50);
+        };
+        setTimeout(check, 60);
     }, 120);
 }
 
