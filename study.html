@@ -114,6 +114,9 @@
 .page-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:var(--text-secondary);font-size:12px}
 .page-text-layer{position:absolute;inset:0;color:transparent;user-select:text;-webkit-user-select:text;cursor:text;line-height:1.6;padding:4%;box-sizing:border-box;overflow:hidden;white-space:pre-wrap;word-break:break-word;font-size:1.1vw}
 .page-text-layer::selection{background:rgba(124,131,255,0.35)}
+.page-text-layer.word-boxes-mode{padding:0}
+.page-text-layer.word-boxes-mode .word-box{position:absolute;color:transparent;white-space:nowrap;overflow:hidden;line-height:1;font-size:inherit}
+.page-text-layer.word-boxes-mode .word-box::selection{background:rgba(124,131,255,0.35)}
 .sp{width:28px;height:28px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--accent);animation:studySpin .8s linear infinite}
 @keyframes studySpin{to{transform:rotate(360deg)}}
 .page-footer{padding:10px 12px;background:rgba(255,255,255,.02);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
@@ -558,19 +561,39 @@ function makePage(p, tot) {
     return d;
 }
 
-// OCR করা টেক্সট canvas-এর উপর invisible selectable layer হিসেবে বসানো হয় —
-// ব্যবহারকারী সরাসরি ছবির উপর ড্র্যাগ করে সিলেক্ট করে কপি করতে পারবে (আলাদা
-// "টেক্সট কপি" বাটনের প্রয়োজন নেই)। bounding-box সঠিক না থাকায় visual alignment
-// perfect হবে না, তবে full-page OCR text হিসেবে select/copy কাজ করবে।
+// OCR করা টেক্সট canvas-এর উপর invisible selectable layer হিসেবে বসানো হয়।
+// word_boxes ডেটা থাকলে (নতুন OCR pipeline) প্রতিটা শব্দ/অংশের জন্য আলাদা positioned span
+// বসানো হয় — Google Lens-এর মতো নির্দিষ্ট লাইন/শব্দ সিলেক্ট করা যায়, পুরো পেইজ layout
+// অক্ষত থাকে (কিছু ভাঙে না, শুধু ছবির উপর invisible text বসে থাকে)। পুরনো OCR করা
+// পেইজে (word_boxes নেই) আগের মতো পুরো টেক্সট একটা ব্লক হিসেবে fallback করে — কপি কাজ
+// করবে, শুধু সিলেকশন visually align নাও হতে পারে।
 async function loadPageTextLayer(p) {
     const tl = document.getElementById('tl-'+p);
     if (!tl || tl.dataset.loaded) return;
     tl.dataset.loaded = '1';
     try {
-        const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdf_pages?pdf_id=eq.${curPdfId}&page_number=eq.${p}&ocr_status=eq.done&select=extracted_text`);
-        const text = rows?.[0]?.extracted_text;
-        if (text && text.trim()) tl.textContent = text;
-        else tl.dataset.loaded = ''; // OCR এখনো শেষ না হলে পরে আবার চেষ্টা করা যাবে
+        const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdf_pages?pdf_id=eq.${curPdfId}&page_number=eq.${p}&ocr_status=eq.done&select=extracted_text,word_boxes`);
+        const row = rows?.[0];
+        if (!row) { tl.dataset.loaded = ''; return; } // OCR এখনো শেষ না হলে পরে আবার চেষ্টা করা যাবে
+
+        let boxes = null;
+        if (row.word_boxes) {
+            try { boxes = typeof row.word_boxes === 'string' ? JSON.parse(row.word_boxes) : row.word_boxes; } catch (_) { boxes = null; }
+        }
+
+        if (Array.isArray(boxes) && boxes.length) {
+            tl.classList.add('word-boxes-mode');
+            tl.innerHTML = boxes.map(b => {
+                if (!b || typeof b.t !== 'string' || !b.t.trim()) return '';
+                const x = Math.max(0, Math.min(100, b.x||0)), y = Math.max(0, Math.min(100, b.y||0));
+                const w = Math.max(0, Math.min(100-x, b.w||5)), h = Math.max(0, Math.min(100-y, b.h||3));
+                return `<span class="word-box" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%">${esc(b.t)}</span>`;
+            }).join('');
+        } else if (row.extracted_text && row.extracted_text.trim()) {
+            tl.textContent = row.extracted_text; // পুরনো পদ্ধতি — fallback
+        } else {
+            tl.dataset.loaded = '';
+        }
     } catch (_) { tl.dataset.loaded = ''; }
 }
 

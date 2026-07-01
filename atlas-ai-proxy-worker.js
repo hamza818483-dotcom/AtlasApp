@@ -399,6 +399,21 @@ const OCR_SYSTEM_PROMPT = `তুমি একটি OCR সিস্টেম�
 ৪. শুধু extracted text দাও — কোনো ব্যাখ্যা, মন্তব্য বা markdown ছাড়া।
 ৫. ছবিতে কোনো টেক্সট না থাকলে শুধু লেখো: [NO_TEXT]`;
 
+// Google Lens-স্টাইল click-to-copy এর জন্য word-level bounding box সহ OCR প্রম্পট।
+// Gemini-কেই এটার জন্য ব্যবহার করা হয় (structured JSON output-এ সবচেয়ে নির্ভরযোগ্য)।
+// x,y,w,h সব শতাংশ (0-100) হিসেবে — যাতে ফ্রন্টএন্ডে যেকোনো zoom/resolution-এ কাজ করে,
+// পিক্সেল-নির্ভর কো-অর্ডিনেট হলে zoom বদলালে align ভেঙে যেত।
+const OCR_BOXES_SYSTEM_PROMPT = `তুমি একটি OCR সিস্টেম যা বইয়ের পেইজের ছবি থেকে প্রতিটি শব্দ/শব্দগুচ্ছ এবং তার অবস্থান বের করে।
+
+নিয়ম:
+১. পেইজের প্রতিটি লাইনকে কয়েকটি অংশে (word বা ছোট phrase, প্রায় ২-৬ শব্দ করে) ভাগ করো।
+২. প্রতিটি অংশের জন্য bounding box দাও — পুরো ছবির উচ্চতা/প্রস্থের শতাংশ (%) হিসেবে, ০ থেকে ১০০ এর মধ্যে সংখ্যা।
+৩. শুধুমাত্র নিচের JSON array ফরম্যাটে উত্তর দাও, অন্য কিছু লিখো না (কোনো markdown code fence না, কোনো ব্যাখ্যা না):
+[{"t":"টেক্সট অংশ","x":12.5,"y":8.3,"w":20.1,"h":3.2}, ...]
+যেখানে x,y = বাম-উপরের কোণার position (%), w,h = width/height (%)।
+৪. বাংলা, ইংরেজি, গণিতের সূত্র — সব ধরনের টেক্সট কভার করো।
+৫. ছবিতে কোনো টেক্সট না থাকলে শুধু লেখো: []`;
+
 async function handleOcrPage(body, env) {
     const { pdf_id, page_number, image_base64, image_mime, supabase_url, supabase_key } = body;
     if (!pdf_id || !page_number || !image_base64) {
@@ -418,19 +433,23 @@ async function handleOcrPage(body, env) {
         updated_at: new Date().toISOString()
     });
 
-    // Run strong multi-provider OCR
-    const extractedText = await runStrongOcr(env, image_base64, image_mime || "image/jpeg");
+    // Run strong multi-provider OCR (full text) + bounding-box OCR (Google Lens-style selection) — সমান্তরালে
+    const [extractedText, wordBoxes] = await Promise.all([
+        runStrongOcr(env, image_base64, image_mime || "image/jpeg"),
+        callGeminiOcrBoxes(env, { base64: image_base64, mimeType: image_mime || "image/jpeg" })
+    ]);
 
     const isEmpty = !extractedText ||
         extractedText.trim() === "[NO_TEXT]" ||
         extractedText.trim().length < 5;
     const wordCount = isEmpty ? 0 : extractedText.trim().split(/\s+/).length;
 
-    // Save result
+    // Save result — word_boxes ব্যর্থ হলে null থাকে, ফ্রন্টএন্ড তখন plain full-text layer-এ fallback করবে
     await ocrDbUpsert(sbUrl, sbKey, {
         pdf_id: parseInt(pdf_id),
         page_number: parseInt(page_number),
         extracted_text: isEmpty ? null : extractedText.trim(),
+        word_boxes: wordBoxes && wordBoxes.length ? JSON.stringify(wordBoxes) : null,
         ocr_status: isEmpty ? "empty" : "done",
         word_count: wordCount,
         updated_at: new Date().toISOString()
@@ -456,6 +475,7 @@ async function handleOcrPage(body, env) {
         page_number: parseInt(page_number),
         text_length: extractedText?.length || 0,
         word_count: wordCount,
+        boxes_captured: !!(wordBoxes && wordBoxes.length),
         status: isEmpty ? "empty" : "done"
     });
 }
@@ -521,6 +541,48 @@ async function callGeminiOcr(env, image) {
     const data = await res.json();
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || null;
     return text && text !== "[NO_TEXT]" ? text : null;
+}
+
+// Google Lens-স্টাইল সিলেকশনের জন্য word-level bounding box বের করে (Gemini দিয়েই, যেহেতু
+// structured JSON output-এ এটাই সবচেয়ে নির্ভরযোগ্য)। ব্যর্থ হলে null রিটার্ন করে —
+// caller তখন plain full-page text layer-এ fallback করবে, কোনো ফিচার ভাঙবে না।
+async function callGeminiOcrBoxes(env, image) {
+    const key = env.GEMINI_API_KEY;
+    if (!key) return null;
+    const parts = [
+        { inline_data: { mime_type: image.mimeType, data: image.base64 } },
+        { text: OCR_BOXES_SYSTEM_PROMPT }
+    ];
+    try {
+        const res = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{ parts }],
+                    generationConfig: { maxOutputTokens: 8192, temperature: 0, responseMimeType: "application/json" }
+                })
+            }
+        );
+        if (!res.ok) return null;
+        const data = await res.json();
+        const raw = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!raw) return null;
+        // মাঝেমধ্যে model markdown fence দিয়ে wrap করে ফেলতে পারে (```json ... ```) — সেটা strip করি
+        const cleaned = raw.trim().replace(/^```json\s*/i, '').replace(/^```\s*/,'').replace(/```\s*$/,'');
+        const parsed = JSON.parse(cleaned);
+        if (!Array.isArray(parsed)) return null;
+        // Sanity-check প্রতিটা entry — malformed হলে বাদ দেই, পুরো response বাতিল না করে
+        const valid = parsed.filter(it =>
+            it && typeof it.t === 'string' && it.t.trim() &&
+            typeof it.x === 'number' && typeof it.y === 'number' &&
+            typeof it.w === 'number' && typeof it.h === 'number'
+        );
+        return valid.length ? valid : null;
+    } catch (_) {
+        return null; // parse error বা অন্য যেকোনো ব্যর্থতায় নিরাপদে null — fallback চলবে
+    }
 }
 
 async function callOpenRouterOcr(env, image) {
