@@ -2157,9 +2157,11 @@ function mbUpdateOcrBadgeLive(pdfId, done, total, currentLabel) {
     badge.innerHTML = `🔄 ${pct}%${pageInfo} <span class="ocr-bar"><span class="ocr-bar-fill" style="width:${pct}%"></span></span>`;
 }
 
+const _mbActiveOcrPdfIds = new Set();
 async function mbStartAutoOcr(pdfId, pdfUrl) {
     const toastId = 'ocr-' + pdfId;
-    mbToast('🔍 OCR শুরু হচ্ছে... (background এ চলবে)', 'info', 4000);
+    if (_mbActiveOcrPdfIds.has(parseInt(pdfId))) return; // এই ট্যাবে আগে থেকেই চলছে — ডুপ্লিকেট রান এড়াতে
+    _mbActiveOcrPdfIds.add(parseInt(pdfId));
 
     try {
         // Load PDF
@@ -2167,28 +2169,53 @@ async function mbStartAutoOcr(pdfId, pdfUrl) {
         const pdfDoc = await pdfjsLib.getDocument({ url: pdfUrl }).promise;
         const totalPages = pdfDoc.numPages;
 
-        // Create OCR job record
+        // আগে থেকে কোন কোন পেইজের OCR done আছে সেটা চেক করি — refresh/navigate করে
+        // মাঝপথে থেমে গেলে বা আবার চালু করলে, শুধু বাকি থাকা পেইজগুলোই প্রসেস হবে,
+        // যেগুলো আগেই OCR হয়ে গেছে সেগুলো আবার redo হবে না ("একবার অন করলে থামবে না" fix)।
+        let alreadyDone = new Set();
+        try {
+            const doneRows = await mbApi(`/book_pdf_pages?pdf_id=eq.${pdfId}&ocr_status=eq.done&select=page_number`);
+            if (doneRows.ok) {
+                const rows = await doneRows.json();
+                rows.forEach(r => alreadyDone.add(r.page_number));
+            }
+        } catch (_) {}
+
+        const pagesToProcess = [];
+        for (let p = 1; p <= totalPages; p++) if (!alreadyDone.has(p)) pagesToProcess.push(p);
+
+        if (pagesToProcess.length === 0) {
+            mbToast('✅ এই PDF-এর সব পেইজ আগেই OCR হয়ে গেছে', 'success', 3000);
+            const badge = document.getElementById('ocr-badge-' + pdfId);
+            if (badge) { badge.className = 'ocr-badge ocr-done'; badge.textContent = '✅ OCR সম্পন্ন'; }
+            return;
+        }
+
+        mbToast(alreadyDone.size > 0
+            ? `🔍 OCR চালিয়ে যাওয়া হচ্ছে... (${alreadyDone.size}/${totalPages} আগে থেকেই করা)`
+            : '🔍 OCR শুরু হচ্ছে... (background এ চলবে)', 'info', 4000);
+
+        // Create/update OCR job record — done_pages রিসেট না করে alreadyDone দিয়ে শুরু করি,
+        // যাতে resume এর ক্ষেত্রে progress bar ভুলভাবে ০% থেকে শুরু না দেখায়।
         await mbApi('/book_pdf_ocr_jobs', {
             method: 'POST',
             headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
             body: JSON.stringify({
                 pdf_id: parseInt(pdfId),
                 total_pages: totalPages,
-                done_pages: 0,
+                done_pages: alreadyDone.size,
                 status: 'processing',
                 started_at: new Date().toISOString()
             })
         });
 
-        let doneCount = 0;
+        let doneCount = alreadyDone.size;
+        mbUpdateOcrBadgeLive(pdfId, doneCount, totalPages, '');
 
-        // Process pages in batches of 3 (parallel OCR per batch)
+        // Process pages in batches of 3 (parallel OCR per batch) — শুধু বাকি থাকা পেইজগুলো
         const BATCH = 3;
-        for (let start = 1; start <= totalPages; start += BATCH) {
-            const batch = [];
-            for (let p = start; p < start + BATCH && p <= totalPages; p++) {
-                batch.push(p);
-            }
+        for (let start = 0; start < pagesToProcess.length; start += BATCH) {
+            const batch = pagesToProcess.slice(start, start + BATCH);
 
             // ব্যাচ শুরু হওয়ার সাথে সাথেই কোন পেইজ(গুলো) নিয়ে কাজ চলছে সেটা badge-এ দেখাই —
             // পেইজ শেষ হওয়ার অপেক্ষা না করে, যাতে ইউজার রিয়েল-টাইমে বুঝতে পারে।
@@ -2235,7 +2262,7 @@ async function mbStartAutoOcr(pdfId, pdfUrl) {
             }));
 
             // Small delay between batches to avoid rate limits
-            if (start + BATCH <= totalPages) {
+            if (start + BATCH < pagesToProcess.length) {
                 await new Promise(r => setTimeout(r, 800));
             }
         }
@@ -2249,6 +2276,8 @@ async function mbStartAutoOcr(pdfId, pdfUrl) {
     } catch (e) {
         console.warn('Auto OCR failed:', e.message);
         mbToast('⚠️ OCR শুরু করা যায়নি', 'error', 3000);
+    } finally {
+        _mbActiveOcrPdfIds.delete(parseInt(pdfId));
     }
 }
 
@@ -2299,6 +2328,31 @@ async function mbInit() {
             if (st.page && st.page > 1) {
                 setTimeout(() => mbGoToPagePill(st.page), 600); // PDF.js load হওয়ার সময় দিতে সামান্য বিলম্ব
             }
+        }
+    } catch (_) {}
+
+    // Refresh/navigate/close করার কারণে মাঝপথে থেমে যাওয়া OCR job গুলো অটো-রিজিউম করি —
+    // "একবার অন করলে থামবে না" — mbStartAutoOcr() ইতিমধ্যেই আগে-করা পেইজ স্কিপ করে,
+    // তাই এখানে আবার কল করলে ডুপ্লিকেট কাজ হবে না, শুধু বাকি পেইজগুলো চলবে।
+    mbResumeStuckOcrJobs();
+}
+
+async function mbResumeStuckOcrJobs() {
+    try {
+        const res = await mbApi('/book_pdf_ocr_jobs?status=eq.processing&select=pdf_id');
+        if (!res.ok) return;
+        const jobs = await res.json();
+        if (!Array.isArray(jobs) || !jobs.length) return;
+
+        for (const j of jobs) {
+            try {
+                const pdfRes = await mbApi(`/book_pdfs?id=eq.${j.pdf_id}&select=id,file_url`);
+                if (!pdfRes.ok) continue;
+                const rows = await pdfRes.json();
+                const pdf = rows?.[0];
+                if (!pdf?.file_url) continue;
+                mbStartAutoOcr(pdf.id, pdf.file_url); // await না করে চালিয়ে দিচ্ছি, background-এ চলবে
+            } catch (_) {}
         }
     } catch (_) {}
 }
