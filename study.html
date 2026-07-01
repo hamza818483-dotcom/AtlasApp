@@ -618,6 +618,12 @@ async function loadPageTextLayer(p) {
 
 function setupObs() {
     const done = new Set();
+    // প্রথম ২টা পেইজ সাথে সাথেই render করো — scroll-এর অপেক্ষা না করে
+    [1, 2].forEach(p => {
+        if (!done.has(p) && document.getElementById('pc-'+p)) {
+            done.add(p); renderPage(p); loadPageTextLayer(p);
+        }
+    });
     const obs = new IntersectionObserver(entries => {
         entries.forEach(e => {
             if (e.isIntersecting) {
@@ -625,7 +631,8 @@ function setupObs() {
                 if (!done.has(p)) { done.add(p); renderPage(p); logPageView(p); loadPageTextLayer(p); }
             }
         });
-    }, { rootMargin: '350px 0px' });
+    // rootMargin বাড়ানো হয়েছে: পেইজ viewport-এ আসার ৫০০px আগেই render শুরু হবে
+    }, { rootMargin: '500px 0px' });
     document.querySelectorAll('.page-card').forEach(el => obs.observe(el));
 }
 
