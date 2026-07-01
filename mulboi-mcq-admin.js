@@ -1016,11 +1016,33 @@ function mbGetPageMcqs(pageNum) {
     try { return JSON.parse(row.questions_json || '[]'); } catch { return []; }
 }
 
-async function mbUpsertPageMcqs(pageNum, mcqs) {
+// mcqId দিয়ে সেই MCQ কোন mcq_type row-এ আছে সেটা খুঁজে বের করে (admin/standard/true_false/hard) —
+// user-generated MCQ edit করার সময় সঠিক row-এ save করার জন্য দরকার, নাহলে সবসময় 'admin'-এ
+// লেখার চেষ্টা হয় আর duplicate-key constraint এ আটকে যায়।
+function mbFindMcqSourceType(pageNum, mcqId) {
+    const rows = mbAllPageDataAllTypes.filter(r => r.page_number === pageNum);
+    for (const r of rows) {
+        try {
+            const qs = JSON.parse(r.questions_json || '[]');
+            if (qs.some(q => String(q.id) === String(mcqId))) return r.mcq_type;
+        } catch (_) {}
+    }
+    return 'admin'; // fallback — না পেলে admin ধরে নাও
+}
+
+// একটা নির্দিষ্ট mcq_type row-এর raw MCQ array (normalize না করা, আসল shape যেমন আছে) ফেরত দেয়
+function mbGetPageMcqsByType(pageNum, mcqType) {
+    const row = mbAllPageDataAllTypes.find(r => r.page_number === pageNum && r.mcq_type === mcqType);
+    if (!row) return [];
+    try { return JSON.parse(row.questions_json || '[]'); } catch { return []; }
+}
+
+async function mbUpsertPageMcqs(pageNum, mcqs, mcqType) {
+    mcqType = mcqType || 'admin';
     const body = {
         pdf_id:         parseInt(mbPdfId),
         page_number:    pageNum,
-        mcq_type:       'admin',
+        mcq_type:       mcqType,
         questions_json: JSON.stringify(mcqs)
     };
     const res = await mbApi('/book_page_mcqs', {
@@ -1034,9 +1056,15 @@ async function mbUpsertPageMcqs(pageNum, mcqs) {
     }
     const data = await res.json();
     const newRow = Array.isArray(data) ? data[0] : data;
-    const idx = mbAllPageData.findIndex(r => r.page_number === pageNum);
-    if (idx >= 0) mbAllPageData[idx] = newRow;
-    else mbAllPageData.push(newRow);
+    if (mcqType === 'admin') {
+        const idx = mbAllPageData.findIndex(r => r.page_number === pageNum);
+        if (idx >= 0) mbAllPageData[idx] = newRow;
+        else mbAllPageData.push(newRow);
+    }
+    // mbAllPageDataAllTypes (সব ধরনের row একসাথে রাখে, All ট্যাব + count-এর জন্য) — সেখানেও sync রাখা দরকার
+    const idxAll = mbAllPageDataAllTypes.findIndex(r => r.page_number === pageNum && r.mcq_type === mcqType);
+    if (idxAll >= 0) mbAllPageDataAllTypes[idxAll] = newRow;
+    else mbAllPageDataAllTypes.push(newRow);
 }
 
 function mbUpdatePageCount() {
@@ -1243,20 +1271,42 @@ function mbCancelInlineEdit() {
 async function mbSaveInlineEdit(mcqId) {
     const get = id => (document.getElementById(id) || {}).value || '';
     const correctBtn = document.querySelector(`#mbInlineForm-${mcqId} .mb-inline-ans.active`);
-    const updated = {
+    const keys = ['k', 'kh', 'g', 'gh'];
+    const correctKey = correctBtn ? correctBtn.dataset.key : 'k';
+    const updatedAdminShape = {
         id: mcqId,
         question:    get('mbInlineQ-' + mcqId),
         option_k:    get('mbInlineOptK-' + mcqId),
         option_kh:   get('mbInlineOptKh-' + mcqId),
         option_g:    get('mbInlineOptG-' + mcqId),
         option_gh:   get('mbInlineOptGh-' + mcqId),
-        correct:     correctBtn ? correctBtn.dataset.key : 'k',
+        correct:     correctKey,
         explanation: get('mbInlineExp-' + mcqId),
         type:        get('mbInlineType-' + mcqId) || 'standard',
     };
     try {
-        const currentMcqs = mbGetPageMcqs(mbCurrentPage).map(m => m.id === mcqId ? updated : m);
-        await mbUpsertPageMcqs(mbCurrentPage, currentMcqs);
+        // এই mcqId কোন mcq_type row-এ আছে খুঁজে বের করো (admin, নাকি user-generated
+        // standard/true_false/hard) — সঠিক row-এ save না করলে duplicate-key error হয়
+        const sourceType = mbFindMcqSourceType(mbCurrentPage, mcqId);
+        const rawMcqs = mbGetPageMcqsByType(mbCurrentPage, sourceType);
+
+        const updatedRaw = rawMcqs.map(m => {
+            if (String(m.id) !== String(mcqId)) return m;
+            if (m.options && Array.isArray(m.options)) {
+                // user-generated shape — options[]+answer_index বজায় রেখে আপডেট করো
+                return {
+                    ...m,
+                    question: updatedAdminShape.question,
+                    options: keys.map(k => updatedAdminShape['option_' + k]),
+                    answer_index: keys.indexOf(correctKey),
+                    explanation: updatedAdminShape.explanation,
+                };
+            }
+            // admin shape — যেমন ছিল সেভাবেই
+            return { ...m, ...updatedAdminShape };
+        });
+
+        await mbUpsertPageMcqs(mbCurrentPage, updatedRaw, sourceType);
         mbInlineEditId = null;
         mbToast('✓ প্রশ্ন আপডেট হয়েছে', 'success');
         mbRenderPageMcqList();
@@ -1280,8 +1330,9 @@ function mbCancelMcqEdit() {
 async function mbDeleteMcq(mcqId) {
     if (!confirm('এই প্রশ্নটি মুছে ফেলবেন?')) return;
     try {
-        const currentMcqs = mbGetPageMcqs(mbCurrentPage).filter(m => m.id !== mcqId);
-        await mbUpsertPageMcqs(mbCurrentPage, currentMcqs);
+        const sourceType = mbFindMcqSourceType(mbCurrentPage, mcqId);
+        const rawMcqs = mbGetPageMcqsByType(mbCurrentPage, sourceType).filter(m => String(m.id) !== String(mcqId));
+        await mbUpsertPageMcqs(mbCurrentPage, rawMcqs, sourceType);
         mbToast('✓ প্রশ্ন মুছে গেছে', 'success');
         mbRenderPageMcqList();
         mbUpdatePageCount();
@@ -1331,7 +1382,7 @@ function mbRenderPageMcqList() {
     const typeLabel = { standard: 'Standard', true_false: 'True-False', hard: 'Hard' };
 
     listEl.innerHTML = mcqs.map((m, idx) => {
-        if (m._source === 'admin' && m.id === mbInlineEditId) {
+        if (m.id === mbInlineEditId) {
             return mbBuildInlineEditForm(m, idx);
         }
         return `
@@ -1339,10 +1390,8 @@ function mbRenderPageMcqList() {
             <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
                 <div style="font-size:12px;font-weight:700;line-height:1.5;flex:1">${idx + 1}. ${esc(m.question)}</div>
                 <div style="display:flex;gap:6px;flex-shrink:0">
-                    ${m._source === 'admin'
-                        ? `<button class="act-btn act-edit" onclick="mbEditMcq('${m.id}')" title="সম্পাদনা">✏️</button>
-                           <button class="act-btn act-delete" onclick="mbDeleteMcq('${m.id}')" title="মুছুন">🗑️</button>`
-                        : `<span style="font-size:9px;color:var(--text3);font-weight:600">👤 ইউজার তৈরি</span>`}
+                    <button class="act-btn act-edit" onclick="mbEditMcq('${m.id}')" title="সম্পাদনা">✏️</button>
+                    <button class="act-btn act-delete" onclick="mbDeleteMcq('${m.id}')" title="মুছুন">🗑️</button>
                 </div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px">
