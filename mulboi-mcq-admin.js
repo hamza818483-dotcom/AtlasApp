@@ -772,7 +772,11 @@ function mbOpenMcqPanel(pdfId, pdfTitle, pdfUrl) {
     } catch (_) {}
 
     mbLoadAllPageMcqs().then(() => {
-        mbRenderPageSummary();
+        // mbPdfDoc তখনো load না-ও হয়ে থাকতে পারে (mbLoadPdfPreview আলাদা async call,
+        // নিচে শুরু হয়) — তাই এখানে render করলে numPages=0/stale অবস্থায় pill count
+        // ভুল (কম) দেখাতে পারে। PDF doc load হয়ে গেলে mbLoadPdfPreview নিজেই আবার
+        // mbRenderPageSummary() call করবে সঠিক numPages সহ।
+        if (mbPdfDoc) mbRenderPageSummary();
         mbRenderPageMcqList();
         mbUpdatePageCount();
     });
@@ -914,7 +918,9 @@ function mbRenderPageSummary() {
     // Total pages = max of (pages with MCQs, currentPage, numPages from PDF.js) capped at 50
     const maxFromMcqs = Object.keys(pageCounts).length ? Math.max(...Object.keys(pageCounts).map(Number)) : 0;
     const numPdfPages = mbPdfDoc ? mbPdfDoc.numPages : 0;
-    const totalPages  = Math.min(Math.max(maxFromMcqs, mbCurrentPage, numPdfPages, 1), 50);
+    // bug fix: আগে totalPages কে হার্ডকোড 50 তে cap করা ছিল, ফলে ৫০+ পেইজের PDF (যেমন ৬৭ পেইজ)
+    // এ শেষের পেইজগুলোর pill কখনোই দেখাতো না। এখন pure PDF page count ব্যবহার হচ্ছে, কোনো cap নেই।
+    const totalPages = Math.max(maxFromMcqs, mbCurrentPage, numPdfPages, 1);
 
     if (totalPages <= 1 && !Object.keys(pageCounts).length) { wrap.innerHTML = ''; return; }
 
@@ -1010,11 +1016,33 @@ function mbGetPageMcqs(pageNum) {
     try { return JSON.parse(row.questions_json || '[]'); } catch { return []; }
 }
 
-async function mbUpsertPageMcqs(pageNum, mcqs) {
+// mcqId দিয়ে সেই MCQ কোন mcq_type row-এ আছে সেটা খুঁজে বের করে (admin/standard/true_false/hard) —
+// user-generated MCQ edit করার সময় সঠিক row-এ save করার জন্য দরকার, নাহলে সবসময় 'admin'-এ
+// লেখার চেষ্টা হয় আর duplicate-key constraint এ আটকে যায়।
+function mbFindMcqSourceType(pageNum, mcqId) {
+    const rows = mbAllPageDataAllTypes.filter(r => r.page_number === pageNum);
+    for (const r of rows) {
+        try {
+            const qs = JSON.parse(r.questions_json || '[]');
+            if (qs.some(q => String(q.id) === String(mcqId))) return r.mcq_type;
+        } catch (_) {}
+    }
+    return 'admin'; // fallback — না পেলে admin ধরে নাও
+}
+
+// একটা নির্দিষ্ট mcq_type row-এর raw MCQ array (normalize না করা, আসল shape যেমন আছে) ফেরত দেয়
+function mbGetPageMcqsByType(pageNum, mcqType) {
+    const row = mbAllPageDataAllTypes.find(r => r.page_number === pageNum && r.mcq_type === mcqType);
+    if (!row) return [];
+    try { return JSON.parse(row.questions_json || '[]'); } catch { return []; }
+}
+
+async function mbUpsertPageMcqs(pageNum, mcqs, mcqType) {
+    mcqType = mcqType || 'admin';
     const body = {
         pdf_id:         parseInt(mbPdfId),
         page_number:    pageNum,
-        mcq_type:       'admin',
+        mcq_type:       mcqType,
         questions_json: JSON.stringify(mcqs)
     };
     const res = await mbApi('/book_page_mcqs', {
@@ -1028,9 +1056,15 @@ async function mbUpsertPageMcqs(pageNum, mcqs) {
     }
     const data = await res.json();
     const newRow = Array.isArray(data) ? data[0] : data;
-    const idx = mbAllPageData.findIndex(r => r.page_number === pageNum);
-    if (idx >= 0) mbAllPageData[idx] = newRow;
-    else mbAllPageData.push(newRow);
+    if (mcqType === 'admin') {
+        const idx = mbAllPageData.findIndex(r => r.page_number === pageNum);
+        if (idx >= 0) mbAllPageData[idx] = newRow;
+        else mbAllPageData.push(newRow);
+    }
+    // mbAllPageDataAllTypes (সব ধরনের row একসাথে রাখে, All ট্যাব + count-এর জন্য) — সেখানেও sync রাখা দরকার
+    const idxAll = mbAllPageDataAllTypes.findIndex(r => r.page_number === pageNum && r.mcq_type === mcqType);
+    if (idxAll >= 0) mbAllPageDataAllTypes[idxAll] = newRow;
+    else mbAllPageDataAllTypes.push(newRow);
 }
 
 function mbUpdatePageCount() {
@@ -1237,20 +1271,42 @@ function mbCancelInlineEdit() {
 async function mbSaveInlineEdit(mcqId) {
     const get = id => (document.getElementById(id) || {}).value || '';
     const correctBtn = document.querySelector(`#mbInlineForm-${mcqId} .mb-inline-ans.active`);
-    const updated = {
+    const keys = ['k', 'kh', 'g', 'gh'];
+    const correctKey = correctBtn ? correctBtn.dataset.key : 'k';
+    const updatedAdminShape = {
         id: mcqId,
         question:    get('mbInlineQ-' + mcqId),
         option_k:    get('mbInlineOptK-' + mcqId),
         option_kh:   get('mbInlineOptKh-' + mcqId),
         option_g:    get('mbInlineOptG-' + mcqId),
         option_gh:   get('mbInlineOptGh-' + mcqId),
-        correct:     correctBtn ? correctBtn.dataset.key : 'k',
+        correct:     correctKey,
         explanation: get('mbInlineExp-' + mcqId),
         type:        get('mbInlineType-' + mcqId) || 'standard',
     };
     try {
-        const currentMcqs = mbGetPageMcqs(mbCurrentPage).map(m => m.id === mcqId ? updated : m);
-        await mbUpsertPageMcqs(mbCurrentPage, currentMcqs);
+        // এই mcqId কোন mcq_type row-এ আছে খুঁজে বের করো (admin, নাকি user-generated
+        // standard/true_false/hard) — সঠিক row-এ save না করলে duplicate-key error হয়
+        const sourceType = mbFindMcqSourceType(mbCurrentPage, mcqId);
+        const rawMcqs = mbGetPageMcqsByType(mbCurrentPage, sourceType);
+
+        const updatedRaw = rawMcqs.map(m => {
+            if (String(m.id) !== String(mcqId)) return m;
+            if (m.options && Array.isArray(m.options)) {
+                // user-generated shape — options[]+answer_index বজায় রেখে আপডেট করো
+                return {
+                    ...m,
+                    question: updatedAdminShape.question,
+                    options: keys.map(k => updatedAdminShape['option_' + k]),
+                    answer_index: keys.indexOf(correctKey),
+                    explanation: updatedAdminShape.explanation,
+                };
+            }
+            // admin shape — যেমন ছিল সেভাবেই
+            return { ...m, ...updatedAdminShape };
+        });
+
+        await mbUpsertPageMcqs(mbCurrentPage, updatedRaw, sourceType);
         mbInlineEditId = null;
         mbToast('✓ প্রশ্ন আপডেট হয়েছে', 'success');
         mbRenderPageMcqList();
@@ -1274,8 +1330,9 @@ function mbCancelMcqEdit() {
 async function mbDeleteMcq(mcqId) {
     if (!confirm('এই প্রশ্নটি মুছে ফেলবেন?')) return;
     try {
-        const currentMcqs = mbGetPageMcqs(mbCurrentPage).filter(m => m.id !== mcqId);
-        await mbUpsertPageMcqs(mbCurrentPage, currentMcqs);
+        const sourceType = mbFindMcqSourceType(mbCurrentPage, mcqId);
+        const rawMcqs = mbGetPageMcqsByType(mbCurrentPage, sourceType).filter(m => String(m.id) !== String(mcqId));
+        await mbUpsertPageMcqs(mbCurrentPage, rawMcqs, sourceType);
         mbToast('✓ প্রশ্ন মুছে গেছে', 'success');
         mbRenderPageMcqList();
         mbUpdatePageCount();
@@ -1325,7 +1382,7 @@ function mbRenderPageMcqList() {
     const typeLabel = { standard: 'Standard', true_false: 'True-False', hard: 'Hard' };
 
     listEl.innerHTML = mcqs.map((m, idx) => {
-        if (m._source === 'admin' && m.id === mbInlineEditId) {
+        if (m.id === mbInlineEditId) {
             return mbBuildInlineEditForm(m, idx);
         }
         return `
@@ -1333,10 +1390,8 @@ function mbRenderPageMcqList() {
             <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
                 <div style="font-size:12px;font-weight:700;line-height:1.5;flex:1">${idx + 1}. ${esc(m.question)}</div>
                 <div style="display:flex;gap:6px;flex-shrink:0">
-                    ${m._source === 'admin'
-                        ? `<button class="act-btn act-edit" onclick="mbEditMcq('${m.id}')" title="সম্পাদনা">✏️</button>
-                           <button class="act-btn act-delete" onclick="mbDeleteMcq('${m.id}')" title="মুছুন">🗑️</button>`
-                        : `<span style="font-size:9px;color:var(--text3);font-weight:600">👤 ইউজার তৈরি</span>`}
+                    <button class="act-btn act-edit" onclick="mbEditMcq('${m.id}')" title="সম্পাদনা">✏️</button>
+                    <button class="act-btn act-delete" onclick="mbDeleteMcq('${m.id}')" title="মুছুন">🗑️</button>
                 </div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px">
@@ -2610,6 +2665,207 @@ window.mbStartAutoOcr     = mbStartAutoOcr;
 window.mbCheckOcrStatus   = mbCheckOcrStatus;
 window.mbRetriggerOcr     = mbRetriggerOcr;
 window.mbBulkOcrAll       = mbBulkOcrAll;
+
+/* ══════════════ ⚡ SPECIAL — শুধু existing MCQ এক্সট্র্যাক্ট (নতুন বানাবে না), CSV export ══════════════
+   Admin-only tool: PDF page-এ আগে থেকেই ছাপা MCQ থাকলে সেটা AI দিয়ে হুবহু এক্সট্র্যাক্ট করে,
+   option shuffle করে, সরাসরি CSV হিসেবে ডাউনলোড করে দেয়। User-side এ এই ফিচার নেই — শুধু admin panel। */
+
+let mbSpecialScope = null;
+
+function mbOpenSpecialSheet() {
+    if (!mbPdfDoc) { mbToast('আগে একটা PDF select করো', 'error'); return; }
+    mbSpecialScope = null;
+    const rangeBox = document.getElementById('mbSpecialRangeBox');
+    const singleBox = document.getElementById('mbSpecialSingleBox');
+    const allBox = document.getElementById('mbSpecialAllBox');
+    const progress = document.getElementById('mbSpecialProgress');
+    if (rangeBox) rangeBox.style.display = 'none';
+    if (singleBox) singleBox.style.display = 'none';
+    if (allBox) allBox.style.display = 'none';
+    if (progress) progress.style.display = 'none';
+    const singleInput = document.getElementById('mbSpecialSinglePage');
+    if (singleInput) singleInput.value = mbCurrentPage || '';
+    const sheet = document.getElementById('mbSpecialSheet');
+    if (sheet) sheet.style.display = 'flex';
+}
+
+function mbCloseSpecialSheet(e) {
+    if (e && e.target && e.target.id !== 'mbSpecialSheet') return;
+    const sheet = document.getElementById('mbSpecialSheet');
+    if (sheet) sheet.style.display = 'none';
+}
+
+function mbPickSpecialScope(scope) {
+    mbSpecialScope = scope;
+    const rangeBox = document.getElementById('mbSpecialRangeBox');
+    const singleBox = document.getElementById('mbSpecialSingleBox');
+    const allBox = document.getElementById('mbSpecialAllBox');
+    if (rangeBox) rangeBox.style.display = scope === 'range' ? 'block' : 'none';
+    if (singleBox) singleBox.style.display = scope === 'single' ? 'block' : 'none';
+    if (allBox) allBox.style.display = scope === 'all' ? 'block' : 'none';
+}
+
+async function mbConfirmSpecialExtract(scope) {
+    let pages = [];
+    if (scope === 'single') {
+        const p = parseInt((document.getElementById('mbSpecialSinglePage') || {}).value);
+        if (!p || p < 1 || p > mbPdfDoc.numPages) { mbToast('সঠিক পেইজ নম্বর দাও', 'error'); return; }
+        pages = [p];
+    } else if (scope === 'range') {
+        const from = parseInt((document.getElementById('mbSpecialRangeFrom') || {}).value);
+        const to = parseInt((document.getElementById('mbSpecialRangeTo') || {}).value);
+        if (!from || !to || from < 1 || to > mbPdfDoc.numPages || from > to) { mbToast('সঠিক রেঞ্জ দাও', 'error'); return; }
+        for (let i = from; i <= to; i++) pages.push(i);
+    } else if (scope === 'all') {
+        for (let i = 1; i <= mbPdfDoc.numPages; i++) pages.push(i);
+    } else { return; }
+
+    const progress = document.getElementById('mbSpecialProgress');
+    const progressText = document.getElementById('mbSpecialProgressText');
+    if (progress) progress.style.display = 'block';
+
+    let allExtracted = [];
+    try {
+        for (let i = 0; i < pages.length; i++) {
+            if (progressText) progressText.textContent = `পেইজ ${i + 1}/${pages.length} — existing MCQ যাচাই হচ্ছে...`;
+            const qs = await mbSpecialExtractPage(pages[i]);
+            if (qs && qs.length) {
+                allExtracted = allExtracted.concat(qs.map(q => mbSpecialShuffleOptions(mbSpecialConvertToAdminFormat(q, pages[i]))));
+            }
+        }
+
+        if (!allExtracted.length) {
+            if (progress) progress.style.display = 'none';
+            mbToast('নির্বাচিত পেইজে কোনো existing MCQ পাওয়া যায়নি', 'error');
+            return;
+        }
+
+        mbCloseSpecialSheet();
+        mbDownloadSpecialCsv(allExtracted, pages);
+        mbToast('✓ ' + allExtracted.length + 'টি MCQ এক্সট্র্যাক্ট + CSV ডাউনলোড হয়েছে', 'success');
+    } catch (ex) {
+        mbToast('এক্সট্র্যাক্ট ব্যর্থ: ' + ex.message, 'error');
+    } finally {
+        if (progress) progress.style.display = 'none';
+    }
+}
+
+// Extraction-only prompt — কখনো নতুন MCQ বানাবে না, শুধু পেইজে যা আছে হুবহু বের করবে
+function mbSpecialExtractPrompt() {
+    const jsonFormat = `{"questions":[{"question":"...","options":["...","...","...","..."],"answer_index":0,"explanation":"..."}]}`;
+    return (
+        `তুমি একজন নিখুঁত ডেটা-এক্সট্র্যাকশন এক্সপার্ট। তোমার কাজ শুধুমাত্র এই পেইজে ইতিমধ্যে ছাপা/লেখা MCQ প্রশ্নগুলো ` +
+        `হুবহু এক্সট্র্যাক্ট করা — নতুন কোনো MCQ কখনোই বানাবে না।\n\n` +
+        `কঠোর নিয়ম:\n` +
+        `১. পেইজে যতগুলো MCQ (প্রশ্ন + অপশন) ইতিমধ্যে ছাপা আছে, ঠিক ততগুলোই ফেরত দিবে — এক্সট্রা যোগ করবে না, বাদও দিবে না।\n` +
+        `২. পেইজে যদি একটাও MCQ না থাকে, questions একটা খালি array [] হিসেবে ফেরত দিবে — কোনো MCQ বানিয়ে দিবে না।\n` +
+        `৩. প্রশ্নের টেক্সট ও অপশনগুলো পেইজে যেভাবে লেখা ঠিক সেভাবেই (ভাষা অপরিবর্তিত রেখে) নিবে, নিজের মতো ঘুরিয়ে লিখবে না।\n` +
+        `৪. সঠিক উত্তর যদি পেইজে চিহ্নিত/উল্লেখ করা থাকে সেটাই answer_index এ বসাবে (0-based)। উল্লেখ না থাকলে বিষয়বস্তু বিশ্লেষণ করে সঠিক উত্তর নির্ধারণ করবে।\n` +
+        `৫. ব্যাখ্যা (explanation) নির্ধারণের নিয়ম — এই ক্রম অনুসারে:\n` +
+        `   ক) MCQ-র ঠিক নিচে যদি ব্যাখ্যা লেখা থাকে, সেটাই হুবহু ১০০% কপি করবে (পরিবর্তন করবে না)।\n` +
+        `   খ) সরাসরি ব্যাখ্যা না থাকলেও পেইজে MCQ-সম্পর্কিত তথ্য থাকলে সেই তথ্য থেকে ব্যাখ্যা তৈরি করবে।\n` +
+        `   গ) পেইজে একেবারেই কোনো তথ্য না থাকলে, তুমি নিজে সবচেয়ে প্রাসঙ্গিক ও সঠিক ব্যাখ্যা লিখবে।\n` +
+        `৬. গাণিতিক/রাসায়নিক রাশি লেখার সময় সঠিক সাব/সুপারস্ক্রিপ্ট ইউনিকোড ব্যবহার করবে (x², H₂O ইত্যাদি)।\n` +
+        `৭. প্রশ্ন বা ব্যাখ্যায় কখনো "উল্লেখিত চিত্রে", "বক্সে", "উদ্দীপকে", "পৃষ্ঠায়" জাতীয় সোর্স-রেফারেন্স বাক্য ব্যবহার করবে না — স্বয়ংসম্পূর্ণ রাখবে।\n` +
+        `৮. এটাই সবচেয়ে গুরুত্বপূর্ণ নিয়ম: তুমি একজন এক্সট্র্যাক্টর, জেনারেটর নও — কোনো অবস্থাতেই নিজের থেকে নতুন প্রশ্ন কল্পনা করে বানাবে না।\n\n` +
+        `শুধুমাত্র নিচের JSON ফরম্যাটে উত্তর দিবে, অন্য কোনো লেখা/markdown/backtick ছাড়া:\n${jsonFormat}`
+    );
+}
+
+// একটা পেইজ থেকে existing MCQ extract — 2-attempt retry (empty result হলে একবার recheck)
+async function mbSpecialExtractPage(pageNum) {
+    const MAX_ATTEMPTS = 2;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        try {
+            const page = await mbPdfDoc.getPage(pageNum);
+            const textCont = await page.getTextContent();
+            const pageText = textCont.items.map(i => i.str).join(' ').trim();
+
+            let raw;
+            if (pageText && pageText.length >= 30) {
+                raw = await mbCallAiApi(
+                    `নিচের টেক্সট বিশ্লেষণ করো:\n${pageText.slice(0, 8000)}`,
+                    null,
+                    mbSpecialExtractPrompt()
+                );
+            } else {
+                const imageData = await mbGetPageImageBase64(pageNum);
+                if (!imageData) return [];
+                raw = await mbCallAiApi('', imageData, mbSpecialExtractPrompt());
+            }
+            const parsed = mbSpecialParseJson(raw);
+            const questions = parsed?.questions || [];
+            if (questions.length) return questions; // success
+            if (questions.length === 0 && attempt === 1) continue; // প্রথমবার খালি এলে একবার রি-চেক
+            return []; // দ্বিতীয়বারও খালি → সত্যিই কোনো MCQ নেই
+        } catch (_) {
+            if (attempt === MAX_ATTEMPTS) return [];
+        }
+    }
+    return [];
+}
+
+// Special প্রম্পট {"questions":[...]} object ফরম্যাটে আসে (mbParseAiJson শুধু array ধরে, তাই আলাদা parser)
+function mbSpecialParseJson(raw) {
+    if (!raw) return null;
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) return null;
+    try { return JSON.parse(match[0]); } catch { return null; }
+}
+
+// options[]+answer_index(0-based) ফরম্যাট থেকে admin panel-এর option_k/kh/g/gh+correct ফরম্যাটে রূপান্তর
+function mbSpecialConvertToAdminFormat(q, pageNum) {
+    const opts = q.options || [];
+    const keys = ['k', 'kh', 'g', 'gh'];
+    return {
+        id: uid(),
+        question: q.question || '',
+        option_k: opts[0] || '',
+        option_kh: opts[1] || '',
+        option_g: opts[2] || '',
+        option_gh: opts[3] || '',
+        correct: keys[q.answer_index] || 'k',
+        explanation: q.explanation || '',
+        type: 'admin',
+        _sourcePage: pageNum
+    };
+}
+
+// প্রতিটা প্রশ্নের অপশন shuffle করে, সঠিক উত্তর ঠিক রেখে আপডেট করে (admin k/kh/g/gh ফরম্যাটে)
+function mbSpecialShuffleOptions(q) {
+    const keys = ['k', 'kh', 'g', 'gh'];
+    const opts = keys.map((k, i) => ({ v: q['option_' + k] || '', origKey: k }));
+    for (let i = opts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [opts[i], opts[j]] = [opts[j], opts[i]];
+    }
+    const newCorrectIdx = opts.findIndex(o => o.origKey === q.correct);
+    const out = { ...q };
+    keys.forEach((k, i) => { out['option_' + k] = opts[i]?.v || ''; });
+    out.correct = keys[newCorrectIdx >= 0 ? newCorrectIdx : 0];
+    return out;
+}
+
+// এক্সট্র্যাক্ট করা MCQ গুলো দিয়ে CSV বানিয়ে সরাসরি ডাউনলোড করে (admin-এর CSV format ব্যবহার করে)
+function mbDownloadSpecialCsv(mcqs, pages) {
+    const csvContent = mbBuildCsvFromMcqs(mcqs);
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const ts = new Date().toISOString().replace(/[:.]/g, '-');
+    const titleSafe = 'pdf' + (mbPdfId || 'special');
+    a.href = url;
+    a.download = `special_${titleSafe}_p${pages[0]}-${pages[pages.length - 1]}_${ts}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+window.mbOpenSpecialSheet      = mbOpenSpecialSheet;
+window.mbCloseSpecialSheet     = mbCloseSpecialSheet;
+window.mbPickSpecialScope      = mbPickSpecialScope;
+window.mbConfirmSpecialExtract = mbConfirmSpecialExtract;
 
 })(); // end IIFE
 

@@ -3803,6 +3803,13 @@ document.addEventListener('DOMContentLoaded', () => {
                             <button class="btn btn-primary btn-full" onclick="mbSaveAiMcqs()">✓ সব সংরক্ষণ করো</button>
                         </div>
                     </div>
+
+                    <!-- ⚡ Special — শুধু existing MCQ এক্সট্র্যাক্ট (নতুন বানাবে না) — Admin-only -->
+                    <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:16px">
+                        <button class="btn btn-outline btn-full" onclick="mbOpenSpecialSheet()">
+                            ⚡ Special — পেইজের existing MCQ শুধু এক্সট্র্যাক্ট করো
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -3814,6 +3821,39 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
 
     </div>
+</div>
+
+<!-- ██ Special Extract Sheet — Admin-only, existing MCQ extraction ██ -->
+<div class="overlay" id="mbSpecialSheet" style="display:none" onclick="mbCloseSpecialSheet(event)">
+  <div class="type-sheet" onclick="event.stopPropagation()" style="background:var(--card-bg);border-radius:16px 16px 0 0;max-width:480px;margin:auto;padding:20px">
+    <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 14px"></div>
+    <div style="font-size:15px;font-weight:800;text-align:center;margin-bottom:6px">⚡ Special — কোন স্কোপে এক্সট্র্যাক্ট করবো?</div>
+    <div style="font-size:11px;color:var(--text2);text-align:center;margin:-2px 0 16px;line-height:1.5">পেইজে যতগুলো MCQ আগে থেকেই আছে শুধু সেগুলোই এক্সট্র্যাক্ট হবে, নতুন MCQ বানানো হবে না।</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn btn-outline btn-full" onclick="mbPickSpecialScope('single')">📄 একক পেইজ — শুধু একটি নির্দিষ্ট পেইজ</button>
+      <button class="btn btn-outline btn-full" onclick="mbPickSpecialScope('range')">🧩 নির্দিষ্ট রেঞ্জ — শুরু থেকে শেষ পেইজ পর্যন্ত</button>
+      <button class="btn btn-outline btn-full" onclick="mbPickSpecialScope('all')">📚 সব পেইজ — পুরো PDF-এর সবকটি পেইজ</button>
+    </div>
+    <div id="mbSpecialRangeBox" style="display:none;margin-top:14px">
+      <div style="display:flex;gap:10px;margin-bottom:12px">
+        <input type="number" id="mbSpecialRangeFrom" class="form-input" placeholder="শুরু পেইজ" min="1" style="flex:1;text-align:center">
+        <input type="number" id="mbSpecialRangeTo" class="form-input" placeholder="শেষ পেইজ" min="1" style="flex:1;text-align:center">
+      </div>
+      <button class="btn btn-primary btn-full" onclick="mbConfirmSpecialExtract('range')">✓ কনফার্ম করো</button>
+    </div>
+    <div id="mbSpecialSingleBox" style="display:none;margin-top:14px">
+      <input type="number" id="mbSpecialSinglePage" class="form-input" placeholder="পেইজ নম্বর" min="1" style="width:100%;text-align:center;margin-bottom:12px">
+      <button class="btn btn-primary btn-full" onclick="mbConfirmSpecialExtract('single')">✓ কনফার্ম করো</button>
+    </div>
+    <div id="mbSpecialAllBox" style="display:none;margin-top:14px">
+      <button class="btn btn-primary btn-full" onclick="mbConfirmSpecialExtract('all')">✓ সবকটি পেইজ কনফার্ম করো</button>
+    </div>
+    <div id="mbSpecialProgress" style="display:none;margin-top:14px;text-align:center;padding:16px">
+        <div style="width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 10px"></div>
+        <div style="font-size:12px;color:var(--text2)" id="mbSpecialProgressText">এক্সট্র্যাক্ট হচ্ছে...</div>
+    </div>
+    <button class="btn btn-outline btn-full" style="margin-top:12px" onclick="mbCloseSpecialSheet()">বন্ধ করো</button>
+  </div>
 </div>
 
 

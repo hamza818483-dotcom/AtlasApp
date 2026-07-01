@@ -240,6 +240,69 @@
         }
     }
 
+    // ---------- ৪. Focus Timer page-এর বাইরে থেকেও Study Time গণনা ----------
+    // যদি কেউ Focus Timer-এ Study Mode চালু রেখে অন্য কোনো পেজে (এক্সাম, মক
+    // টেস্ট ইত্যাদি) চলে যায়, তাহলে Atlasprep.pages.dev-এর মধ্যে থাকা অবস্থায়
+    // ব্যাকগ্রাউন্ডে স্টাডি টাইম গণনা চলতেই থাকবে এবং Supabase-এ sync হবে —
+    // কিন্তু এই গণনা focus.html-এর Live List/Timer Display-তে দেখানো হবে না,
+    // শুধু মোট study_seconds-এ যোগ হবে (২৪ ঘণ্টার হিসাবে)।
+    const FOCUS_PAGE = 'focus.html';
+    const STATE_KEY = 'focus_state_v2';
+    const SUPABASE_URL_BG = 'https://btezborkuiqfogykrjrn.supabase.co';
+    const SUPABASE_KEY_BG = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
+
+    function setupBackgroundStudyTracking() {
+        if (currentPage() === FOCUS_PAGE) return; // focus.html নিজেই নিজের timer চালায়, ডাবল কাউন্ট এড়াতে স্কিপ
+        let bgSecsAccum = 0;
+        let bgTimer = null;
+
+        function readState() {
+            try { return JSON.parse(localStorage.getItem(STATE_KEY)); } catch (_) { return null; }
+        }
+        function writeState(st) {
+            try { localStorage.setItem(STATE_KEY, JSON.stringify(st)); } catch (_) {}
+        }
+
+        async function syncBgStudy(extraSecs) {
+            try {
+                const session = JSON.parse(localStorage.getItem('atlas-session') || 'null');
+                const st = readState();
+                if (!session || !st || !st.sessionId) return;
+                await fetch(`${SUPABASE_URL_BG}/rest/v1/focus_sessions?id=eq.${st.sessionId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        apikey: SUPABASE_KEY_BG,
+                        Authorization: 'Bearer ' + SUPABASE_KEY_BG,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        study_seconds: (st.studySecs || 0) + extraSecs,
+                        updated_at: new Date().toISOString()
+                    })
+                });
+            } catch (_) { /* network issue — পরের tick এ আবার চেষ্টা হবে */ }
+        }
+
+        function tick() {
+            const st = readState();
+            // শুধুমাত্র Study Mode চালু এবং paused না থাকলেই গণনা হবে
+            if (!st || st.mood !== 'study' || st.paused) return;
+            bgSecsAccum++;
+            // localStorage-এ studySecs আপডেট রাখি যাতে focus.html-এ ফিরে গেলে
+            // ধারাবাহিকভাবে সময় যোগ থাকে (timer display-এ প্রভাব ফেলে না কারণ
+            // focus.html নিজে restoreSession()-এ এই value-ই পড়বে)
+            st.studySecs = (st.studySecs || 0) + 1;
+            writeState(st);
+            // প্রতি ৩০ সেকেন্ডে Supabase-এ sync — পুরো accumulation একবারে পাঠাই
+            if (bgSecsAccum % 30 === 0) {
+                syncBgStudy(0); // studySecs already আপডেট করা আছে state-এ, সরাসরি পাঠাই
+            }
+        }
+
+        bgTimer = setInterval(tick, 1000);
+        window.addEventListener('beforeunload', () => { if (bgTimer) clearInterval(bgTimer); });
+    }
+
     // ---------- ইনিশিয়ালাইজ ----------
     function init() {
         injectVisibilityStyle();
@@ -249,6 +312,7 @@
         ensureBackButton();
         setupPagePersistence();
         setupReturnUrl();
+        setupBackgroundStudyTracking();
     }
 
     if (document.readyState === 'loading') {
