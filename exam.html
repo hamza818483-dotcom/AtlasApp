@@ -834,7 +834,16 @@ function showMedicalSub(type){
 
 function showSubCategory(cat,sub){ loadExamsBySubType(cat,sub); }
 function backToList()     { switchMode('List'); currentCategory=null; }
-function backToCategory() { if(currentCategory) showCategory(currentCategory); else backToList(); }
+function backToCategory() {
+    // study.html থেকে practice=mock এ এলে — history.back() দিয়ে study.html-এ ফিরবে
+    // page reload হবে না, user যেই PDF page-এ ছিল সেখানেই থাকবে (back/forward cache)
+    const src = sessionStorage.getItem('practiceSource');
+    if (src === 'study' || new URLSearchParams(location.search).get('practice') === 'mock') {
+        history.back();
+        return;
+    }
+    if(currentCategory) showCategory(currentCategory); else backToList();
+}
 function backToPreExam()  { previewRevealed=false; switchMode('PreExam'); }
 
 // =============================================================
