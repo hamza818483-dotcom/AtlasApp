@@ -1213,6 +1213,7 @@ let accumulatedStudySecs = 0;   // total study time carried across stop/start cy
 let ticker = null, pollInterval = null;
 let allStudents = [], selectedBatch = 'all';
 let activeStudyPeriod = 1; // ১=আজকে(live), ৩/৭/১৫/৩০ — কোনটা সিলেক্টেড তা track করে যাতে live-update পুরনো period overwrite না করে
+let _accurateTodayLoaded = false; // loadMoodRanking('study',1) থেকে সঠিক aggregated data একবার এলে, renderLive() এর দ্রুত/আনুমানিক data দিয়ে সেটা overwrite হবে না
 let currentPeriod = 3;       // leaderboard days — matches default-active "৩ দিন" button in HTML
 let bsRunning = false;        // break/sleep timer running
 let pendingMood = null;       // mood awaiting popup confirm
@@ -1535,6 +1536,7 @@ function confirmMoodSwitch(){
 
 function applyMoodSwitch(newMood){
   activeStudyPeriod = 1; // mood বদলালে আবার "আজকে" (live) থেকে শুরু
+  _accurateTodayLoaded = false; // mood বদলালে আবার নতুন accurate data load হবে
   const prevMood=mood;
   if(newMood==='break' && prevMood==='study') breaksUsed++;
   mood=newMood;
@@ -2115,7 +2117,10 @@ let currentOverlayMood = 'break';
 let _moodRankReqSeq = 0; // race-condition guard — পুরনো request-এর দেরি করা response যেন নতুন data overwrite না করে
 
 async function loadMoodRanking(moodType, days, btn){
-  if(moodType==='study') activeStudyPeriod = days;
+  if(moodType==='study'){
+    activeStudyPeriod = days;
+    if(days!==1) _accurateTodayLoaded=false; // অন্য period-এ গেলে flag রিসেট — পরে "আজকে"-তে ফিরলে আবার accurate load হবে
+  }
   const listElId = moodType==='study' ? 'studyMoodRankList' : 'bsMoodRankList';
   const rowSelector = moodType==='study' ? '.live-today-section .mood-period-row' : '#moodOverlay .mood-period-row';
   document.querySelectorAll(rowSelector+' .mood-period-btn').forEach(b=>b.classList.remove('active'));
@@ -2152,6 +2157,7 @@ async function loadMoodRanking(moodType, days, btn){
       });
       const list=Object.values(grouped).filter(g=>g.total_seconds>0).sort((a,b)=>b.total_seconds-a.total_seconds);
       renderMoodRankList(el, list);
+      _accurateTodayLoaded=true; // এখন থেকে renderLive()-এর quick data আর overwrite করবে না
       return;
     }
 
@@ -2419,6 +2425,7 @@ function filterBatch(b){ selectedBatch=b; renderBatchFilter(allStudents); render
 
 function renderLiveStudents(students){
   if(activeStudyPeriod!==1) return; // অন্য period (৩/৭/১৫/৩০ দিন) সিলেক্টেড থাকলে live-update সেটা overwrite করবে না
+  if(_accurateTodayLoaded) return; // loadMoodRanking('study',1) থেকে সঠিক data একবার এলে, এই quick/approximate data আর overwrite করবে না
   const titleEl=document.getElementById('liveTitleText');
 
   // Mood-based filtering
@@ -2520,9 +2527,12 @@ function buildRankCard(s,rank,showStatus){
 /* ═══ COMPARE ═══ */
 let cmpTarget=null, cmpPeriod=1;
 
+let _cmpReqSeq = 0; // race-condition guard — Compare modal
+
 function openCompare(btn){
   let d;
   try{ d=JSON.parse(btn.dataset.cmp); }catch(e){ return; }
+  _cmpReqSeq++; // আগের কোনো pending compare request invalidate করে দাও
   cmpTarget={name:d.name,batch:d.batch,college:d.college,secs:d.secs,breaks:d.breaks,phone:d.phone,photoUrl:d.photo};
   cmpPeriod=1;
   document.getElementById('cmMeName').textContent=currentUser?.name||'তুমি';
@@ -2554,6 +2564,7 @@ function setCmpPeriod(days,btn){
 async function buildCompare(days){
   if(!cmpTarget) return;
   const statsEl=document.getElementById('cmStats');
+  const mySeq = ++_cmpReqSeq;
   statsEl.innerHTML=`<div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:11px">তুলনা লোড হচ্ছে...</div>`;
 
   let myStudy=0, myBreaks=0, theirStudy=0, theirBreaks=0, myDaily={}, theirDaily={};
@@ -2564,10 +2575,10 @@ async function buildCompare(days){
 
   if(days===1 && currentUser && theirPhone===myPhone){
     // edge case: comparing self with self
-    myStudy=theirStudy=studySecs; myBreaks=theirBreaks=breaksUsed;
+    myStudy=theirStudy=accumulatedStudySecs+studySecs; myBreaks=theirBreaks=breaksUsed;
   } else if(days===1){
     // "today" — use live session data for me, and the live snapshot for them
-    myStudy=studySecs; myBreaks=breaksUsed;
+    myStudy=accumulatedStudySecs+studySecs; myBreaks=breaksUsed;
     theirStudy=cmpTarget.secs; theirBreaks=cmpTarget.breaks;
   }
 
@@ -2576,6 +2587,7 @@ async function buildCompare(days){
     const since=new Date(Date.now()-days*86400000).toISOString().slice(0,10);
     const phoneList=[myPhone,theirPhone].filter(Boolean).map(p=>`"${p}"`).join(',');
     const rows=phoneList?await safeFetch(`${SUPABASE_URL}/rest/v1/study_tracker_daily?user_phone=in.(${phoneList})&study_date=gte.${since}&select=user_phone,study_date,total_seconds`):[];
+    if(mySeq !== _cmpReqSeq) return; // race-guard — ততক্ষণে অন্য period select হয়ে গেছে
     (rows||[]).forEach(r=>{
       if(myPhone && r.user_phone===myPhone){ myDaily[r.study_date]=(myDaily[r.study_date]||0)+(r.total_seconds||0); }
       if(theirPhone && r.user_phone===theirPhone){ theirDaily[r.study_date]=(theirDaily[r.study_date]||0)+(r.total_seconds||0); }
@@ -2586,7 +2598,7 @@ async function buildCompare(days){
       // include today's live session for me if it's running and not yet flushed to DB
       if(timerRunning && currentUser){
         const today=new Date().toISOString().slice(0,10);
-        if(!(today in myDaily)) myStudy+=studySecs;
+        if(!(today in myDaily)) myStudy+=(accumulatedStudySecs+studySecs);
       }
       myBreaks=breaksUsed; theirBreaks=cmpTarget.breaks;
     } else {
@@ -2596,6 +2608,7 @@ async function buildCompare(days){
     }
   } catch(_){ /* fall back to whatever totals we already had */ }
 
+  if(mySeq !== _cmpReqSeq) return; // race-guard — render করার আগে শেষ চেক
   renderCompareStats(myStudy,myBreaks,theirStudy,theirBreaks,myDaily,theirDaily,days);
 }
 
@@ -2751,20 +2764,20 @@ document.addEventListener('visibilitychange',()=>{
 });
 
 /* ═══ INIT ═══ */
-document.addEventListener('DOMContentLoaded',()=>{
+document.addEventListener('DOMContentLoaded',async ()=>{
   const saved=localStorage.getItem('atlas-theme');
   if(saved==='light'){isDarkMode=false;document.body.classList.add('light-mode');document.body.classList.remove('dark-mode');}
   try{currentUser=JSON.parse(localStorage.getItem('atlas-session'));}catch(_){currentUser=null;}
   if(!currentUser){location.replace('auth.html');return;}
   loadDailyProgress();
   const restored=restoreSession();
-  if(!restored) renderLive();
+  await renderLive(); // restored হোক বা না হোক — allStudents সবসময় fresh populate করো
   startIdlePolling();
-  setTimeout(()=>loadMoodRanking('study',1,document.querySelector('.live-today-section .mood-period-row .mood-period-btn')), 600);
+  // renderLive() শেষ হওয়ার পরে call — allStudents তখন fresh, তাই accurate merge হবে
+  loadMoodRanking('study',1,document.querySelector('.live-today-section .mood-period-row .mood-period-btn'));
 });
 
-history.pushState(null,'',location.href);
-window.addEventListener('popstate',()=>history.back());
+
 </script>
 
 <script src="global-nav.js"></script>

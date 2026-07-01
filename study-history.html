@@ -741,8 +741,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if(!currentUser){ location.replace('auth.html'); return; }
     await loadAllData();
 });
-history.pushState(null, '', location.href);
-window.addEventListener('popstate', () => history.back());
+
 </script>
 
 <script src="global-nav.js"></script>
