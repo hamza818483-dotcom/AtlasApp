@@ -1463,12 +1463,27 @@
     <div class="admin-section" id="secSlideshow">
         <div class="form-card">
             <h3>🖼️ স্লাইডশো ছবি যোগ করুন</h3>
-            <div class="perm-note">Home page-এ header-এর নিচে এই ছবিগুলো right-to-left, প্রতি ২ সেকেন্ড পর পর অটো-স্লাইড আকারে দেখাবে। একসাথে একাধিক ছবি সিলেক্ট করা যাবে।</div>
+            <div class="perm-note">Home page-এ header-এর নিচে এই ছবিগুলো দেখাবে। একসাথে একাধিক ছবি সিলেক্ট করা যাবে।</div>
+
+            <div class="input-group">
+                <label>প্রদর্শন মোড</label>
+                <div class="type-selector-alt">
+                    <button type="button" class="type-opt-alt selected" id="ssModeExactBtn" onclick="setSlideshowMode('exact')">📐 Exact — যেমন আছে তেমনই</button>
+                    <button type="button" class="type-opt-alt" id="ssModeCompactBtn" onclick="setSlideshowMode('compact')">✨ Compact — প্রিমিয়াম কার্ড স্টাইল</button>
+                </div>
+                <input type="hidden" id="ssMode" value="exact">
+            </div>
+
             <div class="input-group">
                 <label>ছবি (একাধিক সিলেক্ট করা যাবে)</label>
                 <input type="file" id="slideshowFiles" accept="image/*" multiple onchange="previewSlideshowFiles(this)">
             </div>
             <div id="slideshowPreviewWrap" style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;"></div>
+            <div class="input-group">
+                <label>লিংক (ঐচ্ছিক — ছবিতে ক্লিক করলে এই লিংকে যাবে)</label>
+                <input type="url" class="form-input" id="ssLinkUrl" placeholder="https://example.com">
+                <div style="font-size:10.5px;color:var(--text3);margin-top:3px">একাধিক ছবি আপলোড করলে সবগুলোতে একই লিংক প্রযোজ্য হবে — পরে তালিকা থেকে আলাদাভাবে বদলানো যাবে।</div>
+            </div>
             <button class="btn btn-primary" onclick="uploadSlideshowImages()" style="width:100%;" id="slideshowUploadBtn" disabled>⚡ আপলোড করুন</button>
             <div id="slideshowUploadStatus" style="margin-top:8px;font-size:12px;color:var(--text2);"></div>
         </div>
@@ -2982,10 +2997,20 @@ function fileToDataUrl(file) {
     });
 }
 
+let ssSelectedMode = 'exact';
+function setSlideshowMode(mode) {
+    ssSelectedMode = mode;
+    document.getElementById('ssMode').value = mode;
+    document.getElementById('ssModeExactBtn').classList.toggle('selected', mode === 'exact');
+    document.getElementById('ssModeCompactBtn').classList.toggle('selected', mode === 'compact');
+}
+
 async function uploadSlideshowImages() {
     if (!slideshowSelectedFiles.length) { showToast('⚠️ অন্তত একটি ছবি সিলেক্ট করুন'); return; }
     const status = document.getElementById('slideshowUploadStatus');
     const btn = document.getElementById('slideshowUploadBtn');
+    const displayMode = document.getElementById('ssMode').value || 'exact';
+    const linkUrl = (document.getElementById('ssLinkUrl').value || '').trim() || null;
     btn.disabled = true;
     let done = 0, errors = 0;
     let lastError = '';
@@ -3009,7 +3034,7 @@ async function uploadSlideshowImages() {
             const dataUrl = await fileToDataUrl(file);
             const result = await safeFetch(`${SUPABASE_URL}/rest/v1/slideshow_images`, {
                 method: 'POST',
-                body: JSON.stringify({ image_url: dataUrl, sort_order: nextSortOrder + done })
+                body: JSON.stringify({ image_url: dataUrl, sort_order: nextSortOrder + done, display_mode: displayMode, link_url: linkUrl })
             });
             if (!Array.isArray(result) || !result.length) {
                 throw new Error('সেইভড রো ফেরত আসেনি (RLS/policy সমস্যা হতে পারে)');
@@ -3040,9 +3065,14 @@ async function loadSlideshowAdmin() {
         let html = '<div style="display:flex;flex-direction:column;gap:8px;">';
         data.forEach(s => {
             const isActive = s.is_active !== false; // কলাম না থাকলে/null হলে ডিফল্ট সক্রিয় ধরা হবে
+            const modeTag = s.display_mode === 'compact' ? '✨ Compact' : '📐 Exact';
             html += `<div class="list-item">
                 <img src="${s.image_url}" style="width:60px;height:40px;object-fit:cover;border-radius:6px;margin-right:8px;flex-shrink:0;">
-                <div style="flex:1;font-size:12px;color:var(--text2);">${s.caption || 'স্লাইড ছবি'}</div>
+                <div style="flex:1;font-size:12px;color:var(--text2);">
+                    <div>${s.caption || 'স্লাইড ছবি'}</div>
+                    <div style="font-size:9.5px;color:var(--text3);margin-top:2px">${modeTag}${s.link_url ? ' · 🔗 লিংকযুক্ত' : ''}</div>
+                </div>
+                <button class="btn btn-sm btn-outline" style="margin-right:6px;font-size:10px;padding:4px 8px" onclick="editSlideshowLink('${s.id}','${(s.link_url||'').replace(/'/g,"\\'")}')" title="লিংক সম্পাদনা">🔗</button>
                 <div class="toggle-switch ${isActive ? 'on success' : ''}" style="margin-right:8px;" onclick="toggleSlideshowActive('${s.id}',${isActive})" title="${isActive ? 'বন্ধ করুন' : 'চালু করুন'}"></div>
                 ${isAdmin ? `<button class="btn btn-sm btn-danger" onclick="deleteItem('slideshow_images','${s.id}',loadSlideshowAdmin)">🗑️</button>` : ''}
             </div>`;
@@ -3069,6 +3099,21 @@ async function toggleSlideshowActive(id, currentlyActive) {
     } catch (e) {
         console.error('toggleSlideshowActive error:', e);
         showToast('⚠️ টগল করতে সমস্যা হয়েছে: ' + (e.message || 'অজানা এরর'));
+    }
+}
+
+async function editSlideshowLink(id, currentLink) {
+    const newLink = prompt('এই ছবির লিংক দিন (খালি রাখলে লিংক থাকবে না):', currentLink || '');
+    if (newLink === null) return; // বাতিল করা হয়েছে
+    try {
+        await safeFetch(`${SUPABASE_URL}/rest/v1/slideshow_images?id=eq.${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ link_url: newLink.trim() || null })
+        });
+        loadSlideshowAdmin();
+        showToast('✅ লিংক আপডেট হয়েছে');
+    } catch (e) {
+        showToast('⚠️ লিংক সংরক্ষণ ব্যর্থ: ' + (e.message || 'অজানা এরর'));
     }
 }
 
