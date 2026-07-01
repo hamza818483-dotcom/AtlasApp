@@ -402,39 +402,31 @@
 
         /* Category card গুলোর নিচে — সব ধরনের review image, ছোট আকারে স্ক্রিনের মাঝখানে, sliding */
         .review-all-slideshow-title { font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; }
-        .review-all-slideshow-wrap { display: flex; justify-content: center; padding: 4px 0; }
-        /* বাইরের বক্স — এখানেই rotating light border, ভেতরে single image, কোনো peek নেই */
+        /* বাইরের ভিউপোর্ট — স্ক্রিনের একদম দুই পাশ জুড়ে (full width), এর ভেতরেই right-to-left sliding */
         .review-all-slideshow-viewport {
-            position: relative; width: 52%; aspect-ratio: 1 / 1;
-            border-radius: 16px; overflow: hidden;
-            background: linear-gradient(145deg, #110E2A 0%, #1C1040 40%, #0F0C24 100%);
+            position: relative; width: 100%; overflow: hidden;
+            display: flex; align-items: center; justify-content: center; min-height: 180px;
         }
-        /* ঘুরন্ত আলো — courses-banner-এ ব্যবহৃত একই conic-gradient স্পিন কৌশল */
-        .review-all-slideshow-viewport::before {
-            content: ''; position: absolute; width: 200%; height: 200%; top: -50%; left: -50%;
-            transform-origin: center center;
+        .review-all-slideshow-track {
+            display: flex; width: 100%; transition: transform .5s ease;
+        }
+        /* প্রতিটা slide পুরো viewport width নেয় — তাই adjacent slide কখনোই আংশিক দেখা যাবে না */
+        .review-all-slideshow-slide {
+            flex: 0 0 100%; display: flex; align-items: center; justify-content: center; padding: 10px 0;
+        }
+        /* ছবির চারপাশে shrink-wrap করা ফ্রেম — display:inline-block হওয়ায় ছবির নিজের shape/অনুপাত অনুযায়ী বসে, fixed square না */
+        .rv-img-frame { position: relative; display: inline-block; border-radius: 12px; }
+        .rv-img-frame::before {
+            content: ''; position: absolute; inset: -4px; border-radius: 14px; z-index: 0;
             background: conic-gradient(from 0deg,
                 rgba(255,210,0,0) 0deg, rgba(255,210,0,.9) 60deg,
-                rgba(255,255,255,.8) 90deg, rgba(108,99,255,.7) 130deg, rgba(255,210,0,0) 180deg);
+                rgba(255,255,255,.85) 90deg, rgba(108,99,255,.75) 130deg, rgba(255,210,0,0) 180deg);
             animation: coursesBorderSpin 3s linear infinite;
-            z-index: 0;
         }
-        .review-all-slideshow-inner {
-            position: absolute; inset: 2px; z-index: 1; border-radius: 14px; overflow: hidden;
-            background: linear-gradient(145deg, #110E2A 0%, #1C1040 40%, #0F0C24 100%);
-            display: flex; align-items: center; justify-content: center;
-        }
-        /* একবারে ঠিক একটাই ছবি দেখাবে, পাশে কোনো portion নেই — track নিজেই absolute positioned slide-ভিত্তিক ফেড হয়ে বদলাবে */
-        .review-all-slideshow-track { position: relative; width: 100%; height: 100%; }
-        .review-all-slideshow-slide {
-            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-            opacity: 0; transition: opacity .5s ease; padding: 8%;
-        }
-        .review-all-slideshow-slide.active { opacity: 1; }
         .review-all-slideshow-slide img {
-            /* object-fit: contain — ছবি কখনো crop হবে না, পুরোটাই ছোট আকারে বক্সের মধ্যে দেখাবে */
-            max-width: 100%; max-height: 100%; width: auto; height: auto;
-            object-fit: contain; cursor: zoom-in; border-radius: 8px;
+            position: relative; z-index: 1; display: block;
+            max-width: 44%; max-height: 200px; width: auto; height: auto;
+            object-fit: contain; cursor: zoom-in; border-radius: 10px;
         }
 
         /* Gallery overlay — device-gallery style grid, then fullscreen swipe viewer */
@@ -1755,32 +1747,42 @@ async function loadReviewAllSlideshow(allImages) {
 
     const rvUrls = allImages.map(img => img.image_url);
 
-    // Cross-fade পদ্ধতি — কোনো horizontal sliding/translateX নেই, শুধু opacity fade।
-    // তাই পাশের ছবির কোনো অংশ কখনোই দেখা যাবে না (একবারে একটাই ছবি, একই position-এ)।
-    const slidesHtml = allImages.map((img, i) =>
-        `<div class="review-all-slideshow-slide${i === 0 ? ' active' : ''}" id="rvSlide-${i}">
-            <img src="${escHtml(img.image_url)}" alt="Review" loading="lazy" onclick='openSlideshowZoom(${i}, ${JSON.stringify(rvUrls)})' onerror="this.parentElement.style.display='none'">
-        </div>`
-    ).join('');
+    const slideImg = (img, i) =>
+        `<div class="review-all-slideshow-slide">
+            <div class="rv-img-frame">
+                <img src="${escHtml(img.image_url)}" alt="Review" loading="lazy" onclick='openSlideshowZoom(${i}, ${JSON.stringify(rvUrls)})' onerror="this.parentElement.parentElement.style.display='none'">
+            </div>
+        </div>`;
+
+    // Full-width sliding — প্রতিটা slide পুরো viewport width নেয় (100%), তাই translateX
+    // দিয়ে right-to-left সরানোর সময় adjacent slide কখনোই partially দেখা যায় না।
+    // Seamless forward-only loop-এর জন্য প্রথম ছবির একটা clone শেষে জুড়ে দেওয়া হচ্ছে —
+    // শেষে পৌঁছে transition শেষ হওয়ার পর নিঃশব্দে (no-transition) আসল প্রথম position-এ snap করা হবে।
+    const slidesHtml = allImages.map(slideImg).join('') + (allImages.length > 1 ? slideImg(allImages[0], 0) : '');
 
     wrap.innerHTML = `
-        <div class="review-all-slideshow-wrap">
-            <div class="review-all-slideshow-viewport">
-                <div class="review-all-slideshow-inner">
-                    <div class="review-all-slideshow-track">${slidesHtml}</div>
-                </div>
-            </div>
+        <div class="review-all-slideshow-viewport">
+            <div class="review-all-slideshow-track" id="reviewAllSlideshowTrack">${slidesHtml}</div>
         </div>`;
 
     __rvAllIdx = 0;
     __rvAllTotal = allImages.length;
     if (allImages.length > 1) {
         __rvAllTimer = setInterval(() => {
-            const prevEl = document.getElementById('rvSlide-' + __rvAllIdx);
-            __rvAllIdx = (__rvAllIdx + 1) % __rvAllTotal; // সবসময় সামনের দিকে — শেষে পৌঁছালে সহজভাবে ০-তে fade, কোনো snap/jump নেই কারণ movement-ই নেই
-            const nextEl = document.getElementById('rvSlide-' + __rvAllIdx);
-            if (prevEl) prevEl.classList.remove('active');
-            if (nextEl) nextEl.classList.add('active');
+            const track = document.getElementById('reviewAllSlideshowTrack');
+            if (!track) { clearInterval(__rvAllTimer); return; }
+            __rvAllIdx++;
+            track.style.transition = 'transform .5s ease';
+            track.style.transform = `translateX(-${__rvAllIdx * 100}%)`;
+
+            if (__rvAllIdx === __rvAllTotal) {
+                // clone (প্রথম ছবির হুবহু কপি) দেখানো শেষ হলে চুপচাপ আসল প্রথম position-এ ফিরিয়ে আনা হচ্ছে
+                setTimeout(() => {
+                    track.style.transition = 'none';
+                    __rvAllIdx = 0;
+                    track.style.transform = 'translateX(0%)';
+                }, 520);
+            }
         }, 2200);
     }
 }
