@@ -470,22 +470,29 @@ async function mbLoadAllPdfs() {
     const listEl = document.getElementById('mbAllPdfsList');
     if (!listEl) return;
     listEl.innerHTML = '<div class="skeleton skel-row"></div><div class="skeleton skel-sm"></div>';
+    let pdfs = [];
     try {
         const res = await mbApi('/book_pdfs?select=*,book_chapters(name,book_subjects(name,icon))&order=created_at.desc&limit=100');
         if (!res.ok) throw new Error();
-        const pdfs = await res.json();
-        // প্রতিটা PDF-এর OCR status একসাথে টেনে আনছি — যাতে কোনটার OCR বাকি আছে তা
-        // list এ দেখানো যায় এবং "সব OCR করো" বাটন শুধু বাকি থাকা গুলো টার্গেট করতে পারে।
-        let jobsById = {};
-        try {
-            const jobsRes = await mbApi('/book_pdf_ocr_jobs?select=pdf_id,status,done_pages,total_pages&order=started_at.desc');
-            if (jobsRes.ok) {
-                const jobs = await jobsRes.json();
-                jobs.forEach(j => { if (!jobsById[j.pdf_id]) jobsById[j.pdf_id] = j; }); // most recent first (order above)
-            }
-        } catch (_) {}
-        mbRenderAllPdfs(pdfs || [], jobsById);
+        pdfs = await res.json();
     } catch {
+        listEl.innerHTML = '<div class="empty-state">লোড ব্যর্থ</div>';
+        return;
+    }
+    // OCR status আলাদাভাবে, safely আনা হচ্ছে — এই অংশ fail করলেও মূল PDF list যেন
+    // ভেঙে না যায় (table না থাকলে বা কোনো কারণে ব্যর্থ হলেও চুপচাপ badge ছাড়া দেখাবে)।
+    let jobsById = {};
+    try {
+        const jobsRes = await mbApi('/book_pdf_ocr_jobs?select=pdf_id,status,done_pages,total_pages&order=started_at.desc');
+        if (jobsRes && jobsRes.ok) {
+            const jobs = await jobsRes.json();
+            if (Array.isArray(jobs)) jobs.forEach(j => { if (j && j.pdf_id != null && !jobsById[j.pdf_id]) jobsById[j.pdf_id] = j; });
+        }
+    } catch (_) {}
+    try {
+        mbRenderAllPdfs(pdfs || [], jobsById);
+    } catch (e) {
+        console.error('mbRenderAllPdfs failed:', e);
         listEl.innerHTML = '<div class="empty-state">লোড ব্যর্থ</div>';
     }
 }
@@ -521,31 +528,37 @@ function mbRenderAllPdfs(pdfs, jobsById) {
             <div>${pendingCount > 0 ? `⚠️ ${pendingCount} টি PDF-এর OCR বাকি/অসম্পূর্ণ` : '✅ সব PDF-এর OCR সম্পন্ন'}</div>
             <button class="btn btn-outline btn-sm" id="mbBulkOcrBtn" onclick="mbBulkOcrAll()" ${pendingCount === 0 ? 'disabled' : ''}>🔍 সব বাকি PDF OCR করো (${pendingCount})</button>
         </div>`;
-    listEl.innerHTML = bulkBar + pdfs.map(p => {
-        const ch  = p.book_chapters || {};
-        const sub = ch.book_subjects || {};
-        const ctx = (sub.name && ch.name)
-            ? `<div style="font-size:10px;color:var(--text3);margin-top:2px">${esc(sub.icon||'')} ${esc(sub.name)} &gt; ${esc(ch.name)}</div>`
-            : '';
-        return `
-        <div class="pdf-card">
-            <div class="pdf-card-top">
-                <div class="pdf-card-icon">📕</div>
-                <div class="pdf-card-info">
-                    <div class="pdf-card-title">${esc(p.title)}</div>
-                    <div class="pdf-card-meta">${p.file_size ? fmtSize(p.file_size) + ' · ' : ''}${p.page_count ? p.page_count + ' পৃষ্ঠা · ' : ''}${fmtDate(p.created_at)}</div>
-                    ${ctx}
-                    <div style="margin-top:4px">${mbOcrBadge(p.id, jobsById)}</div>
+    const cardsHtml = pdfs.map(p => {
+        try {
+            const ch  = p.book_chapters || {};
+            const sub = ch.book_subjects || {};
+            const ctx = (sub.name && ch.name)
+                ? `<div style="font-size:10px;color:var(--text3);margin-top:2px">${esc(sub.icon||'')} ${esc(sub.name)} &gt; ${esc(ch.name)}</div>`
+                : '';
+            return `
+            <div class="pdf-card">
+                <div class="pdf-card-top">
+                    <div class="pdf-card-icon">📕</div>
+                    <div class="pdf-card-info">
+                        <div class="pdf-card-title">${esc(p.title)}</div>
+                        <div class="pdf-card-meta">${p.file_size ? fmtSize(p.file_size) + ' · ' : ''}${p.page_count ? p.page_count + ' পৃষ্ঠা · ' : ''}${fmtDate(p.created_at)}</div>
+                        ${ctx}
+                        <div style="margin-top:4px">${mbOcrBadge(p.id, jobsById)}</div>
+                    </div>
+                    <div class="pdf-card-actions">
+                        <button class="act-btn act-ocr" title="OCR (পুনরায়) চালাও" onclick="mbRetriggerOcr(${p.id}, '${esc(p.file_url)}')">🔍</button>
+                        <button class="act-btn act-toggle" title="${p.is_premium ? 'Free করো' : 'Premium করো'}" onclick="mbTogglePremium(${p.id}, ${!p.is_premium})">${p.is_premium ? '⭐' : '🔓'}</button>
+                        <button class="act-btn act-edit" title="MCQ সম্পাদনা" onclick="mbOpenMcqPanel(${p.id}, '${esc(p.title)}', '${esc(p.file_url)}')">📝</button>
+                        <button class="act-btn act-delete" title="মুছুন" onclick="mbDeletePdf(${p.id}, '${esc(p.title)}')">🗑️</button>
+                    </div>
                 </div>
-                <div class="pdf-card-actions">
-                    <button class="act-btn act-ocr" title="OCR (পুনরায়) চালাও" onclick="mbRetriggerOcr(${p.id}, '${esc(p.file_url)}')">🔍</button>
-                    <button class="act-btn act-toggle" title="${p.is_premium ? 'Free করো' : 'Premium করো'}" onclick="mbTogglePremium(${p.id}, ${!p.is_premium})">${p.is_premium ? '⭐' : '🔓'}</button>
-                    <button class="act-btn act-edit" title="MCQ সম্পাদনা" onclick="mbOpenMcqPanel(${p.id}, '${esc(p.title)}', '${esc(p.file_url)}')">📝</button>
-                    <button class="act-btn act-delete" title="মুছুন" onclick="mbDeletePdf(${p.id}, '${esc(p.title)}')">🗑️</button>
-                </div>
-            </div>
-        </div>`;
+            </div>`;
+        } catch (e) {
+            console.error('PDF card render failed for id', p && p.id, e);
+            return '';
+        }
     }).join('');
+    listEl.innerHTML = bulkBar + cardsHtml;
 }
 
 // Existing + future সব scanned PDF-এর OCR নিশ্চিত করার জন্য bulk trigger।
