@@ -772,7 +772,11 @@ function mbOpenMcqPanel(pdfId, pdfTitle, pdfUrl) {
     } catch (_) {}
 
     mbLoadAllPageMcqs().then(() => {
-        mbRenderPageSummary();
+        // mbPdfDoc তখনো load না-ও হয়ে থাকতে পারে (mbLoadPdfPreview আলাদা async call,
+        // নিচে শুরু হয়) — তাই এখানে render করলে numPages=0/stale অবস্থায় pill count
+        // ভুল (কম) দেখাতে পারে। PDF doc load হয়ে গেলে mbLoadPdfPreview নিজেই আবার
+        // mbRenderPageSummary() call করবে সঠিক numPages সহ।
+        if (mbPdfDoc) mbRenderPageSummary();
         mbRenderPageMcqList();
         mbUpdatePageCount();
     });
