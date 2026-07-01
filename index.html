@@ -356,23 +356,37 @@
 
         /* ── Review Section — home page একদম নিচে ── */
         .review-section { margin: 22px 0 10px; padding: 0 14px; }
-        .review-section-title { font-size: 15px; font-weight: 900; color: var(--text); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
-        .review-cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+        /* Animated title — shimmer effect, main "ATLAS All Courses" title-এর মতোই gradient shine */
+        .review-section-title {
+            font-size: 20px; font-weight: 900; letter-spacing: .3px;
+            margin-bottom: 12px; text-align: center;
+            background: linear-gradient(90deg,
+                #FFD700 0%, #FFF5A0 20%, #FFFFFF 40%, #6C63FF 60%, #FFE566 80%, #FFD700 100%);
+            background-size: 250% auto;
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent; color: transparent;
+            animation: reviewTitleShimmer 3.5s linear infinite;
+        }
+        @keyframes reviewTitleShimmer { 0% { background-position: 0% center; } 100% { background-position: -250% center; } }
+
+        /* Category cards — শুধু bold clear টাইপ টেক্সট, কোনো image preview নেই */
+        .review-cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 18px; }
         .review-cat-tile {
             position: relative; border-radius: 14px; overflow: hidden; cursor: pointer;
-            aspect-ratio: 1.5; background: var(--card-bg); border: 1px solid var(--border);
+            padding: 20px 10px; background: linear-gradient(145deg, rgba(108,99,255,.10), rgba(108,99,255,.02));
+            border: 1.5px solid rgba(108,99,255,.25);
             box-shadow: 0 3px 14px rgba(0,0,0,.15); transition: transform .15s;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
         }
-        .review-cat-tile:active { transform: scale(.97); }
-        .review-cat-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .review-cat-tile .rct-overlay {
-            position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end;
-            padding: 10px; background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,.75) 100%);
-        }
-        .review-cat-tile .rct-label { color: #fff; font-size: 13px; font-weight: 800; }
-        .review-cat-tile .rct-count { color: rgba(255,255,255,.75); font-size: 10px; margin-top: 1px; }
-        .review-cat-tile.empty { display: flex; align-items: center; justify-content: center; opacity: .4; }
-        .review-cat-tile.empty .rct-placeholder { font-size: 11px; color: var(--text-secondary); text-align: center; }
+        .review-cat-tile:active { transform: scale(.96); }
+        .review-cat-tile .rct-emoji { font-size: 26px; }
+        .review-cat-tile .rct-label { color: var(--text); font-size: 15px; font-weight: 900; letter-spacing: .3px; }
+        .review-cat-tile .rct-count { color: var(--text-secondary); font-size: 10.5px; font-weight: 600; margin-top: 1px; }
+        .review-cat-tile.empty { opacity: .45; cursor: default; }
+
+        /* Category card গুলোর নিচে — সব ধরনের review image একসাথে auto-sliding slideshow */
+        .review-all-slideshow-title { font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; }
 
         /* Gallery overlay — device-gallery style grid, then fullscreen swipe viewer */
         .review-gallery-bg {
@@ -1650,17 +1664,14 @@ async function loadReviewSection() {
         const hasAny = Object.values(__reviewCatData).some(arr => arr.length > 0);
         if (!hasAny) { container.innerHTML = ''; return; }
 
+        // Card-এ এখন কোনো image preview নেই — শুধু bold clear category type টেক্সট
         const tilesHtml = REVIEW_CATS.map(c => {
             const imgs = __reviewCatData[c.key];
-            if (!imgs.length) {
-                return `<div class="review-cat-tile empty"><div class="rct-placeholder">${c.emoji}<br>${c.label}<br>(কোনো ছবি নেই)</div></div>`;
-            }
-            return `<div class="review-cat-tile" onclick="openReviewGallery('${c.key}')">
-                <img src="${escHtml(imgs[0].image_url)}" alt="${c.label}" loading="lazy">
-                <div class="rct-overlay">
-                    <div class="rct-label">${c.emoji} ${c.label}</div>
-                    <div class="rct-count">${imgs.length}টি ছবি</div>
-                </div>
+            const isEmpty = !imgs.length;
+            return `<div class="review-cat-tile${isEmpty ? ' empty' : ''}" ${isEmpty ? '' : `onclick="openReviewGallery('${c.key}')"`}>
+                <div class="rct-emoji">${c.emoji}</div>
+                <div class="rct-label">${c.label}</div>
+                <div class="rct-count">${imgs.length}টি ছবি</div>
             </div>`;
         }).join('');
 
@@ -1668,8 +1679,52 @@ async function loadReviewSection() {
             <div class="review-section">
                 <div class="review-section-title">⭐ Reviews</div>
                 <div class="review-cat-grid">${tilesHtml}</div>
+                <div id="reviewAllSlideshowContainer"></div>
             </div>`;
+
+        // Card-গুলোর নিচে — সব ক্যাটাগরির সব ছবি একসাথে, উপরের main slideshow-এর মতোই auto-sliding
+        loadReviewAllSlideshow(data || []);
     } catch (e) { console.error('Review section load error:', e); }
+}
+
+/* Card-গুলোর নিচের "সব রিভিউ ছবি" স্লাইডশো — main header slideshow-এর মতোই আচরণ,
+   কিন্তু নিজস্ব state variable ও DOM id ব্যবহার করে যাতে উপরের slideshow-এর সাথে conflict না হয়। */
+let __rvAllTimer = null;
+let __rvAllIdx = 0;
+let __rvAllTotal = 0;
+
+async function loadReviewAllSlideshow(allImages) {
+    const wrap = document.getElementById('reviewAllSlideshowContainer');
+    if (!wrap) return;
+    if (__rvAllTimer) { clearInterval(__rvAllTimer); __rvAllTimer = null; }
+    if (!allImages.length) { wrap.innerHTML = ''; return; }
+
+    const slidesHtml = allImages.map(img =>
+        `<div class="slideshow-slide"><img src="${escHtml(img.image_url)}" alt="Review" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`
+    ).join('');
+    const dotsHtml = allImages.length > 1
+        ? `<div class="slideshow-dots">${allImages.map((_, i) => `<span class="slideshow-dot${i === 0 ? ' active' : ''}" data-idx="${i}"></span>`).join('')}</div>`
+        : '';
+
+    wrap.innerHTML = `
+        <div class="slideshow-wrap">
+            <div class="slideshow-viewport">
+                <div class="slideshow-track" id="reviewAllSlideshowTrack">${slidesHtml}</div>
+            </div>
+            ${dotsHtml}
+        </div>`;
+
+    __rvAllIdx = 0;
+    __rvAllTotal = allImages.length;
+    if (allImages.length > 1) {
+        __rvAllTimer = setInterval(() => {
+            __rvAllIdx = (__rvAllIdx + 1) % __rvAllTotal;
+            const track = document.getElementById('reviewAllSlideshowTrack');
+            if (!track) { clearInterval(__rvAllTimer); return; }
+            track.style.transform = `translateX(-${__rvAllIdx * 100}%)`;
+            wrap.querySelectorAll('.slideshow-dot').forEach((dot, i) => dot.classList.toggle('active', i === __rvAllIdx));
+        }, 2000);
+    }
 }
 
 function openReviewGallery(catKey) {
