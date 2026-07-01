@@ -1213,6 +1213,7 @@ let accumulatedStudySecs = 0;   // total study time carried across stop/start cy
 let ticker = null, pollInterval = null;
 let allStudents = [], selectedBatch = 'all';
 let activeStudyPeriod = 1; // ১=আজকে(live), ৩/৭/১৫/৩০ — কোনটা সিলেক্টেড তা track করে যাতে live-update পুরনো period overwrite না করে
+let _accurateTodayLoaded = false; // loadMoodRanking('study',1) থেকে সঠিক aggregated data একবার এলে, renderLive() এর দ্রুত/আনুমানিক data দিয়ে সেটা overwrite হবে না
 let currentPeriod = 3;       // leaderboard days — matches default-active "৩ দিন" button in HTML
 let bsRunning = false;        // break/sleep timer running
 let pendingMood = null;       // mood awaiting popup confirm
@@ -1535,6 +1536,7 @@ function confirmMoodSwitch(){
 
 function applyMoodSwitch(newMood){
   activeStudyPeriod = 1; // mood বদলালে আবার "আজকে" (live) থেকে শুরু
+  _accurateTodayLoaded = false; // mood বদলালে আবার নতুন accurate data load হবে
   const prevMood=mood;
   if(newMood==='break' && prevMood==='study') breaksUsed++;
   mood=newMood;
@@ -2115,7 +2117,10 @@ let currentOverlayMood = 'break';
 let _moodRankReqSeq = 0; // race-condition guard — পুরনো request-এর দেরি করা response যেন নতুন data overwrite না করে
 
 async function loadMoodRanking(moodType, days, btn){
-  if(moodType==='study') activeStudyPeriod = days;
+  if(moodType==='study'){
+    activeStudyPeriod = days;
+    if(days!==1) _accurateTodayLoaded=false; // অন্য period-এ গেলে flag রিসেট — পরে "আজকে"-তে ফিরলে আবার accurate load হবে
+  }
   const listElId = moodType==='study' ? 'studyMoodRankList' : 'bsMoodRankList';
   const rowSelector = moodType==='study' ? '.live-today-section .mood-period-row' : '#moodOverlay .mood-period-row';
   document.querySelectorAll(rowSelector+' .mood-period-btn').forEach(b=>b.classList.remove('active'));
@@ -2152,6 +2157,7 @@ async function loadMoodRanking(moodType, days, btn){
       });
       const list=Object.values(grouped).filter(g=>g.total_seconds>0).sort((a,b)=>b.total_seconds-a.total_seconds);
       renderMoodRankList(el, list);
+      _accurateTodayLoaded=true; // এখন থেকে renderLive()-এর quick data আর overwrite করবে না
       return;
     }
 
@@ -2419,6 +2425,7 @@ function filterBatch(b){ selectedBatch=b; renderBatchFilter(allStudents); render
 
 function renderLiveStudents(students){
   if(activeStudyPeriod!==1) return; // অন্য period (৩/৭/১৫/৩০ দিন) সিলেক্টেড থাকলে live-update সেটা overwrite করবে না
+  if(_accurateTodayLoaded) return; // loadMoodRanking('study',1) থেকে সঠিক data একবার এলে, এই quick/approximate data আর overwrite করবে না
   const titleEl=document.getElementById('liveTitleText');
 
   // Mood-based filtering
