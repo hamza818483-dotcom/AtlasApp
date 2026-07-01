@@ -2764,16 +2764,17 @@ document.addEventListener('visibilitychange',()=>{
 });
 
 /* ═══ INIT ═══ */
-document.addEventListener('DOMContentLoaded',()=>{
+document.addEventListener('DOMContentLoaded',async ()=>{
   const saved=localStorage.getItem('atlas-theme');
   if(saved==='light'){isDarkMode=false;document.body.classList.add('light-mode');document.body.classList.remove('dark-mode');}
   try{currentUser=JSON.parse(localStorage.getItem('atlas-session'));}catch(_){currentUser=null;}
   if(!currentUser){location.replace('auth.html');return;}
   loadDailyProgress();
   const restored=restoreSession();
-  if(!restored) renderLive();
+  await renderLive(); // restored হোক বা না হোক — allStudents সবসময় fresh populate করো
   startIdlePolling();
-  setTimeout(()=>loadMoodRanking('study',1,document.querySelector('.live-today-section .mood-period-row .mood-period-btn')), 600);
+  // renderLive() শেষ হওয়ার পরে call — allStudents তখন fresh, তাই accurate merge হবে
+  loadMoodRanking('study',1,document.querySelector('.live-today-section .mood-period-row .mood-period-btn'));
 });
 
 history.pushState(null,'',location.href);
