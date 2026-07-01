@@ -433,23 +433,23 @@ async function handleOcrPage(body, env) {
         updated_at: new Date().toISOString()
     });
 
-    // Run strong multi-provider OCR (full text) + bounding-box OCR (Google Lens-style selection) — সমান্তরালে
-    const [extractedText, wordBoxes] = await Promise.all([
-        runStrongOcr(env, image_base64, image_mime || "image/jpeg"),
-        callGeminiOcrBoxes(env, { base64: image_base64, mimeType: image_mime || "image/jpeg" })
-    ]);
+    // শুধু strong multi-provider টেক্সট OCR — bounding-box extraction (Google Lens-style
+    // click-to-copy) বাদ দেওয়া হয়েছে কারণ সেটা প্রতি পেইজে আলাদা একটা অতিরিক্ত Gemini call
+    // লাগাতো, যা daily quota প্রায় দ্বিগুণ খরচ করতো। মূল টেক্সট OCR (MCQ generation ও
+    // copy এর জন্য জরুরি) অক্ষত আছে — শুধু pixel-perfect word-selection বাদ গেছে,
+    // কপি করা এখনো পুরো-পেইজ ব্লক হিসেবে ঠিকই কাজ করবে।
+    const extractedText = await runStrongOcr(env, image_base64, image_mime || "image/jpeg");
 
     const isEmpty = !extractedText ||
         extractedText.trim() === "[NO_TEXT]" ||
         extractedText.trim().length < 5;
     const wordCount = isEmpty ? 0 : extractedText.trim().split(/\s+/).length;
 
-    // Save result — word_boxes ব্যর্থ হলে null থাকে, ফ্রন্টএন্ড তখন plain full-text layer-এ fallback করবে
+    // Save result
     await ocrDbUpsert(sbUrl, sbKey, {
         pdf_id: parseInt(pdf_id),
         page_number: parseInt(page_number),
         extracted_text: isEmpty ? null : extractedText.trim(),
-        word_boxes: wordBoxes && wordBoxes.length ? JSON.stringify(wordBoxes) : null,
         ocr_status: isEmpty ? "empty" : "done",
         word_count: wordCount,
         updated_at: new Date().toISOString()
@@ -475,7 +475,6 @@ async function handleOcrPage(body, env) {
         page_number: parseInt(page_number),
         text_length: extractedText?.length || 0,
         word_count: wordCount,
-        boxes_captured: !!(wordBoxes && wordBoxes.length),
         status: isEmpty ? "empty" : "done"
     });
 }
