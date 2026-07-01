@@ -778,6 +778,7 @@
         <button class="tab-btn" onclick="switchSection('mentors',this)">👨‍🏫 Mentors</button>
         <button class="tab-btn" onclick="switchSection('special',this)">🃏 Special Card</button>
         <button class="tab-btn" onclick="switchSection('slideshow',this)">🖼️ Slideshow</button>
+        <button class="tab-btn" onclick="switchSection('review',this)">⭐ Review</button>
         <button class="tab-btn" onclick="switchSection('telegram',this)">🔗 Telegram Support</button>
         <button class="tab-btn" onclick="switchSection('serial',this)">🔢 Serial</button>
         <button class="tab-btn" onclick="switchSection('studytracker',this)">📚 Study Tracker</button>
@@ -1496,6 +1497,45 @@
         </div>
     </div>
 
+    <!-- ══════════════ TAB: REVIEW SECTION ══════════════ -->
+    <div class="admin-section" id="secReview">
+        <div class="form-card">
+            <h3>⭐ রিভিউ ছবি যোগ করুন</h3>
+            <div class="perm-note">Home page-এর সবচেয়ে নিচে Class/Exam/Mentoring/Other — এই ৪টি ক্যাটাগরিতে ছবি দেখাবে। ইউজার ক্যাটাগরিতে ক্লিক করে গ্যালারি স্টাইলে সব ছবি দেখতে পাবে।</div>
+
+            <div class="input-group">
+                <label>ক্যাটাগরি</label>
+                <div class="type-selector-alt">
+                    <button type="button" class="type-opt-alt selected" id="rvCatClassBtn" onclick="setReviewCategory('class')">📚 Class</button>
+                    <button type="button" class="type-opt-alt" id="rvCatExamBtn" onclick="setReviewCategory('exam')">📝 Exam</button>
+                    <button type="button" class="type-opt-alt" id="rvCatMentoringBtn" onclick="setReviewCategory('mentoring')">👨‍🏫 Mentoring</button>
+                    <button type="button" class="type-opt-alt" id="rvCatOtherBtn" onclick="setReviewCategory('other')">📦 Other</button>
+                </div>
+                <input type="hidden" id="rvCategory" value="class">
+            </div>
+
+            <div class="input-group">
+                <label>ছবি (একাধিক সিলেক্ট করা যাবে)</label>
+                <input type="file" id="reviewFiles" accept="image/*" multiple onchange="previewReviewFiles(this)">
+            </div>
+            <div id="reviewPreviewWrap" style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;"></div>
+            <button class="btn btn-primary" onclick="uploadReviewImages()" style="width:100%;" id="reviewUploadBtn" disabled>⚡ আপলোড করুন</button>
+            <div id="reviewUploadStatus" style="margin-top:8px;font-size:12px;color:var(--text2);"></div>
+        </div>
+
+        <div class="form-card">
+            <h3 style="margin-bottom:10px">📋 রিভিউ তালিকা</h3>
+            <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+                <button class="btn btn-sm btn-outline selected" id="rvFilterAllBtn" onclick="filterReviewList('all')">সবগুলো</button>
+                <button class="btn btn-sm btn-outline" id="rvFilterClassBtn" onclick="filterReviewList('class')">📚 Class</button>
+                <button class="btn btn-sm btn-outline" id="rvFilterExamBtn" onclick="filterReviewList('exam')">📝 Exam</button>
+                <button class="btn btn-sm btn-outline" id="rvFilterMentoringBtn" onclick="filterReviewList('mentoring')">👨‍🏫 Mentoring</button>
+                <button class="btn btn-sm btn-outline" id="rvFilterOtherBtn" onclick="filterReviewList('other')">📦 Other</button>
+            </div>
+            <div id="reviewList"></div>
+        </div>
+    </div>
+
     <!-- ══════════════ TAB: TELEGRAM SUPPORT ══════════════ -->
     <div class="admin-section" id="secTelegram">
         <div class="form-card">
@@ -1861,6 +1901,7 @@ function switchSection(sec, el) {
         mentors:   loadMentors,
         special:   loadSpecials,
         slideshow: loadSlideshowAdmin,
+        review:    loadReviewAdmin,
         telegram:  loadTelegramAdmin,
         serial:    () => {},
         studytracker: () => { stLoadDashCounts(); }
@@ -3118,6 +3159,133 @@ async function editSlideshowLink(id, currentLink) {
 }
 
 /* ═══════════════════════════════════════════════
+   REVIEW SECTION — Class/Exam/Mentoring/Other গ্যালারি
+   ═══════════════════════════════════════════════ */
+let rvSelectedCategory = 'class';
+let reviewSelectedFiles = [];
+let rvCurrentFilter = 'all';
+
+function setReviewCategory(cat) {
+    rvSelectedCategory = cat;
+    document.getElementById('rvCategory').value = cat;
+    ['Class','Exam','Mentoring','Other'].forEach(c => {
+        document.getElementById('rvCat' + c + 'Btn').classList.toggle('selected', c.toLowerCase() === cat);
+    });
+}
+
+function previewReviewFiles(input) {
+    reviewSelectedFiles = Array.from(input.files || []);
+    const wrap = document.getElementById('reviewPreviewWrap');
+    const btn  = document.getElementById('reviewUploadBtn');
+    wrap.innerHTML = '';
+    if (!reviewSelectedFiles.length) { btn.disabled = true; return; }
+    reviewSelectedFiles.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.style.cssText = 'width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid var(--border)';
+            wrap.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+    });
+    btn.disabled = false;
+}
+
+async function uploadReviewImages() {
+    if (!reviewSelectedFiles.length) { showToast('⚠️ অন্তত একটি ছবি সিলেক্ট করুন'); return; }
+    const status = document.getElementById('reviewUploadStatus');
+    const btn = document.getElementById('reviewUploadBtn');
+    const category = document.getElementById('rvCategory').value || 'class';
+    btn.disabled = true;
+    let done = 0, errors = 0, lastError = '';
+    const total = reviewSelectedFiles.length;
+
+    let nextSortOrder = 0;
+    try {
+        const existing = await safeFetch(`${SUPABASE_URL}/rest/v1/review_images?category=eq.${category}&select=sort_order&order=sort_order.desc&limit=1`);
+        if (existing?.length && typeof existing[0].sort_order === 'number') nextSortOrder = existing[0].sort_order + 1;
+    } catch (e) {}
+
+    for (const file of reviewSelectedFiles) {
+        status.textContent = `⏳ আপলোড হচ্ছে (${done + 1}/${total})...`;
+        try {
+            const dataUrl = await fileToDataUrl(file);
+            const result = await safeFetch(`${SUPABASE_URL}/rest/v1/review_images`, {
+                method: 'POST',
+                body: JSON.stringify({ image_url: dataUrl, category, sort_order: nextSortOrder + done })
+            });
+            if (!Array.isArray(result) || !result.length) throw new Error('সেইভড রো ফেরত আসেনি');
+            done++;
+        } catch (e) {
+            console.error('Review upload error:', e);
+            lastError = e.message || 'অজানা এরর';
+            errors++;
+        }
+    }
+    status.textContent = errors === 0
+        ? `✅ ${done}টি ছবি সফলভাবে যোগ হয়েছে।`
+        : `⚠️ ${done}টি সফল, ${errors}টি ব্যর্থ। ${lastError}`;
+    reviewSelectedFiles = [];
+    document.getElementById('reviewFiles').value = '';
+    document.getElementById('reviewPreviewWrap').innerHTML = '';
+    btn.disabled = true;
+    loadReviewAdmin();
+}
+
+async function loadReviewAdmin() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/review_images?select=*&order=category.asc,sort_order.asc,created_at.asc&limit=200`);
+        window.__rvAllData = data || [];
+        renderReviewList();
+    } catch (e) {
+        document.getElementById('reviewList').innerHTML = '<p style="color:var(--red);">লোড এরর — review_images টেবিল তৈরি হয়েছে কিনা যাচাই করুন</p>';
+    }
+}
+
+function filterReviewList(cat) {
+    rvCurrentFilter = cat;
+    ['All','Class','Exam','Mentoring','Other'].forEach(c => {
+        document.getElementById('rvFilter' + c + 'Btn').classList.toggle('selected', c.toLowerCase() === cat);
+    });
+    renderReviewList();
+}
+
+function renderReviewList() {
+    const data = (window.__rvAllData || []).filter(r => rvCurrentFilter === 'all' || r.category === rvCurrentFilter);
+    const listEl = document.getElementById('reviewList');
+    if (!data.length) { listEl.innerHTML = '<p style="color:var(--text2);text-align:center;padding:16px;">কোনো ছবি নেই</p>'; return; }
+    const catLabel = { class: '📚 Class', exam: '📝 Exam', mentoring: '👨‍🏫 Mentoring', other: '📦 Other' };
+    let html = '<div style="display:flex;flex-direction:column;gap:8px;">';
+    data.forEach(r => {
+        const isActive = r.is_active !== false;
+        html += `<div class="list-item">
+            <img src="${r.image_url}" style="width:60px;height:40px;object-fit:cover;border-radius:6px;margin-right:8px;flex-shrink:0;">
+            <div style="flex:1;font-size:12px;color:var(--text2);">
+                <div>${r.caption || 'রিভিউ ছবি'}</div>
+                <div style="font-size:9.5px;color:var(--text3);margin-top:2px">${catLabel[r.category]||r.category}</div>
+            </div>
+            <div class="toggle-switch ${isActive ? 'on success' : ''}" style="margin-right:8px;" onclick="toggleReviewActive('${r.id}',${isActive})" title="${isActive ? 'বন্ধ করুন' : 'চালু করুন'}"></div>
+            ${isAdmin ? `<button class="btn btn-sm btn-danger" onclick="deleteItem('review_images','${r.id}',loadReviewAdmin)">🗑️</button>` : ''}
+        </div>`;
+    });
+    html += '</div>';
+    listEl.innerHTML = html;
+}
+
+async function toggleReviewActive(id, currentlyActive) {
+    try {
+        await safeFetch(`${SUPABASE_URL}/rest/v1/review_images?id=eq.${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ is_active: !currentlyActive })
+        });
+        loadReviewAdmin();
+    } catch (e) {
+        showToast('⚠️ টগল করতে সমস্যা: ' + (e.message || 'অজানা এরর'));
+    }
+}
+
+/* ═══════════════════════════════════════════════
    TELEGRAM SUPPORT  (Flutter: TelegramSupportAdminController)
    টেবিল: telegram_support_links (key-value, PDF/AllGroups/Bot)
            telegram_poll_subjects (Poll/Quiz subject list)
@@ -3261,6 +3429,7 @@ const serialConfig = {
     mentors:   { table:'mentors',         label:'👨‍🏫 Mentors',   nameField: d => d.name },
     modeltest: { table:'model_tests',     label:'📖 Model Test',  nameField: d => `${d.type} › ${d.subject||d.varsity_name||'—'}` },
     slideshow: { table:'slideshow_images',label:'🖼️ Slideshow',  nameField: d => d.caption || `ছবি #${(d.id||'').toString().slice(0,6)}` },
+    review: { table:'review_images', label:'⭐ Review', nameField: d => d.caption || `ছবি #${(d.id||'').toString().slice(0,6)}` },
     tgpoll: { table:'telegram_poll_subjects', label:'🔗 Poll/Quiz', nameField: d => d.subject }
 };
 
