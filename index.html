@@ -402,42 +402,31 @@
 
         /* Category card গুলোর নিচে — সব ধরনের review image, ছোট আকারে স্ক্রিনের মাঝখানে, sliding */
         .review-all-slideshow-title { font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; }
-        /* বাইরের ভিউপোর্ট — স্ক্রিনের একদম দুই পাশ জুড়ে (full width), এর ভেতরেই right-to-left sliding */
-        .review-all-slideshow-viewport {
-            position: relative; width: 100%; overflow: hidden;
-            display: flex; align-items: center; justify-content: center; min-height: 230px;
+        /* বাইরের ভিউপোর্ট — reference ছবির মতো peek-carousel: বড় center card, দুই পাশে ছোট peek */
+        .review-all-slideshow-viewport { position: relative; width: 100%; overflow: hidden; padding: 6px 0 4px; }
+        .review-all-slideshow-track { display: flex; align-items: center; transition: transform .45s ease; }
+        /* প্রতিটা slide viewport-এর ৭৮% জায়গা নেয়, দুই পাশে ১১% করে ফাঁকা রেখে — সেই ফাঁকা থেকেই
+           পাশের card-এর প্রান্ত (peek) সামান্য উঁকি দেয়, ঠিক reference ছবির মতো */
+        .review-all-slideshow-slide { flex: 0 0 78%; padding: 0 3%; box-sizing: border-box; transition: opacity .35s, transform .35s; }
+        .review-all-slideshow-slide:not(.rv-active) { opacity: .45; transform: scale(.92); }
+        .review-all-slideshow-slide.rv-active { opacity: 1; transform: scale(1); }
+        .rv-img-card {
+            width: 100%; aspect-ratio: 16/10; border-radius: 16px; overflow: hidden;
+            background: linear-gradient(145deg, #110E2A 0%, #1C1040 40%, #0F0C24 100%);
+            box-shadow: 0 8px 26px rgba(0,0,0,.4), 0 2px 10px rgba(108,99,255,.25);
         }
-        /* ছবির পেছনে — স্ক্রিনের একদম দুই পাশ জুড়ে (side to side) লম্বা চিকন ব্যাকগ্রাউন্ড বার */
-        .review-all-slideshow-viewport::before {
-            content: ''; position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
-            height: 62%; background: linear-gradient(90deg, rgba(108,99,255,.14), rgba(108,99,255,.05) 50%, rgba(108,99,255,.14));
-            border-top: 1px solid rgba(108,99,255,.18); border-bottom: 1px solid rgba(108,99,255,.18);
-            z-index: 0;
+        .rv-img-card img { width: 100%; height: 100%; object-fit: cover; cursor: zoom-in; display: block; }
+        .review-all-slideshow-dots { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
+        .review-all-slideshow-dots span { width: 6px; height: 6px; border-radius: 50%; background: rgba(108,99,255,.3); transition: all .3s; }
+        .review-all-slideshow-dots span.active { background: var(--accent, #6C63FF); width: 16px; border-radius: 3px; }
+        /* নিচের row-এ থাকা left/right arrow বাটন — reference-এর গোলাকার semi-transparent arrow */
+        .review-all-slideshow-nav {
+            position: absolute; top: 50%; transform: translateY(-50%); z-index: 3;
+            width: 30px; height: 30px; border-radius: 50%; background: rgba(0,0,0,.35);
+            display: flex; align-items: center; justify-content: center; color: #fff; font-size: 15px; cursor: pointer;
         }
-        .review-all-slideshow-track {
-            display: flex; width: 100%; transition: transform .5s ease; position: relative; z-index: 1;
-        }
-        /* প্রতিটা slide পুরো viewport width নেয় — তাই adjacent slide কখনোই আংশিক দেখা যাবে না */
-        .review-all-slideshow-slide {
-            flex: 0 0 100%; display: flex; align-items: center; justify-content: center; padding: 10px 0;
-        }
-        /* ছবির চারপাশে shrink-wrap করা ফ্রেম — display:inline-block হওয়ায় ছবির নিজের shape/অনুপাত অনুযায়ী বসে, fixed square না।
-           overflow:hidden দেওয়ায় ঘুরন্ত আলো ঠিক ফ্রেমের কিনারা বরাবর clip হয়ে থাকবে (এটাই "abnormal" দেখানোর মূল কারণ ছিল — আগে clip হচ্ছিল না)। */
-        .rv-img-frame {
-            position: relative; display: inline-block; border-radius: 12px; overflow: hidden; padding: 3px;
-        }
-        .rv-img-frame::before {
-            content: ''; position: absolute; inset: -60%; z-index: 0;
-            background: conic-gradient(from 0deg,
-                rgba(255,210,0,0) 0deg, rgba(255,210,0,.95) 60deg,
-                rgba(255,255,255,.9) 90deg, rgba(108,99,255,.85) 130deg, rgba(255,210,0,0) 180deg);
-            animation: coursesBorderSpin 3s linear infinite;
-        }
-        .review-all-slideshow-slide img {
-            position: relative; z-index: 1; display: block;
-            max-width: 62%; max-height: 280px; width: auto; height: auto;
-            object-fit: contain; cursor: zoom-in; border-radius: 10px;
-        }
+        .review-all-slideshow-nav.rv-prev { left: 2%; }
+        .review-all-slideshow-nav.rv-next { right: 2%; }
 
         /* Gallery overlay — device-gallery style grid, then fullscreen swipe viewer */
         .review-gallery-bg {
@@ -1756,44 +1745,66 @@ async function loadReviewAllSlideshow(allImages) {
     if (!allImages.length) { wrap.innerHTML = ''; return; }
 
     const rvUrls = allImages.map(img => img.image_url);
+    const n = allImages.length;
 
     const slideImg = (img, i) =>
-        `<div class="review-all-slideshow-slide">
-            <div class="rv-img-frame">
-                <img src="${escHtml(img.image_url)}" alt="Review" loading="lazy" onclick='openSlideshowZoom(${i}, ${JSON.stringify(rvUrls)})' onerror="this.parentElement.parentElement.style.display='none'">
+        `<div class="review-all-slideshow-slide${i === 0 ? ' rv-active' : ''}" id="rvSlide-${i}">
+            <div class="rv-img-card">
+                <img src="${escHtml(img.image_url)}" alt="Review" loading="lazy" onclick='openSlideshowZoom(${i}, ${JSON.stringify(rvUrls)})' onerror="this.closest('.review-all-slideshow-slide').style.display='none'">
             </div>
         </div>`;
 
-    // Full-width sliding — প্রতিটা slide পুরো viewport width নেয় (100%), তাই translateX
-    // দিয়ে right-to-left সরানোর সময় adjacent slide কখনোই partially দেখা যায় না।
-    // Seamless forward-only loop-এর জন্য প্রথম ছবির একটা clone শেষে জুড়ে দেওয়া হচ্ছে —
-    // শেষে পৌঁছে transition শেষ হওয়ার পর নিঃশব্দে (no-transition) আসল প্রথম position-এ snap করা হবে।
-    const slidesHtml = allImages.map(slideImg).join('') + (allImages.length > 1 ? slideImg(allImages[0], 0) : '');
+    // Peek-carousel — প্রতিটা slide viewport-এর ৭৮% জায়গা নেয়, তাই দুই পাশে পরের/আগের card-এর
+    // কিছুটা অংশ (peek) স্বাভাবিকভাবেই দেখা যায় — ঠিক reference ছবির মতো। Seamless forward-only
+    // loop-এর জন্য প্রথম card-এর একটা clone শেষে জুড়ে দেওয়া হয়েছে, যাতে শেষ থেকে আবার শুরুতে
+    // ফেরার সময় কখনো backward snap দেখা না যায় — সবসময় right-to-left একমুখী চলবে।
+    const slidesHtml = allImages.map(slideImg).join('') + (n > 1 ? slideImg(allImages[0], 0) : '');
+    const dotsHtml = n > 1
+        ? `<div class="review-all-slideshow-dots">${allImages.map((_, i) => `<span class="${i === 0 ? 'active' : ''}" id="rvDot-${i}"></span>`).join('')}</div>`
+        : '';
+    const navHtml = n > 1
+        ? `<div class="review-all-slideshow-nav rv-prev" onclick="rvAllGo(-1)">‹</div>
+           <div class="review-all-slideshow-nav rv-next" onclick="rvAllGo(1)">›</div>`
+        : '';
 
     wrap.innerHTML = `
         <div class="review-all-slideshow-viewport">
+            ${navHtml}
             <div class="review-all-slideshow-track" id="reviewAllSlideshowTrack">${slidesHtml}</div>
-        </div>`;
+        </div>
+        ${dotsHtml}`;
 
     __rvAllIdx = 0;
-    __rvAllTotal = allImages.length;
-    if (allImages.length > 1) {
-        __rvAllTimer = setInterval(() => {
-            const track = document.getElementById('reviewAllSlideshowTrack');
-            if (!track) { clearInterval(__rvAllTimer); return; }
-            __rvAllIdx++;
-            track.style.transition = 'transform .5s ease';
-            track.style.transform = `translateX(-${__rvAllIdx * 100}%)`;
+    __rvAllTotal = n;
+    rvAllPosition(false);
+    if (n > 1) __rvAllTimer = setInterval(() => rvAllGo(1), 2500);
+}
 
-            if (__rvAllIdx === __rvAllTotal) {
-                // clone (প্রথম ছবির হুবহু কপি) দেখানো শেষ হলে চুপচাপ আসল প্রথম position-এ ফিরিয়ে আনা হচ্ছে
-                setTimeout(() => {
-                    track.style.transition = 'none';
-                    __rvAllIdx = 0;
-                    track.style.transform = 'translateX(0%)';
-                }, 520);
-            }
-        }, 2200);
+function rvAllPosition(animate) {
+    const track = document.getElementById('reviewAllSlideshowTrack');
+    if (!track) return;
+    track.style.transition = animate ? 'transform .45s ease' : 'none';
+    // ৭৮% slide + দুই পাশে ৩% padding = ৮৪% স্টেপ প্রতি index-এ, viewport-এর কেন্দ্রে বসাতে অর্ধেক বাদ
+    track.style.transform = `translateX(calc(-${__rvAllIdx * 84}% + 8%))`;
+    document.querySelectorAll('.review-all-slideshow-slide').forEach((el, i) => {
+        el.classList.toggle('rv-active', i === (__rvAllIdx % __rvAllTotal));
+    });
+    document.querySelectorAll('.review-all-slideshow-dots span').forEach((dot, i) => {
+        dot.classList.toggle('active', i === (__rvAllIdx % __rvAllTotal));
+    });
+}
+
+function rvAllGo(dir) {
+    if (dir < 0) { // ম্যানুয়াল prev — শুধু ব্যবহারকারী arrow চাপলে; auto-timer সবসময় forward-ই থাকে
+        __rvAllIdx = (__rvAllIdx - 1 + __rvAllTotal) % __rvAllTotal;
+        rvAllPosition(true);
+        return;
+    }
+    __rvAllIdx++;
+    rvAllPosition(true);
+    if (__rvAllIdx === __rvAllTotal) {
+        // clone (প্রথম card-এর হুবহু কপি) দেখানো শেষ হলে চুপচাপ আসল প্রথম position-এ ফিরিয়ে আনা হচ্ছে
+        setTimeout(() => { __rvAllIdx = 0; rvAllPosition(false); }, 460);
     }
 }
 
