@@ -1877,8 +1877,10 @@ function rvAllPosition(animate) {
     const track = document.getElementById('reviewAllSlideshowTrack');
     if (!track) return;
     track.style.transition = animate ? 'transform .45s ease' : 'none';
-    // ৭৮% slide + দুই পাশে ৩% padding = ৮৪% স্টেপ প্রতি index-এ, viewport-এর কেন্দ্রে বসাতে অর্ধেক বাদ
-    track.style.transform = `translateX(calc(-${__rvAllIdx * 84}% + 8%))`;
+    // প্রতিটা slide viewport-এর ৭৮% জায়গা নেয় (৩% padding প্রতি পাশে = ৮৪% স্টেপ)।
+    // সঠিকভাবে center করতে: viewport-এর বাকি ২২% জায়গার অর্ধেক (১১%) বাম দিক থেকে বাদ দিতে হবে,
+    // যাতে active slide ঠিক মাঝখানে বসে এবং দুই পাশে আগের/পরের slide-এর অংশ সমানভাবে দেখা যায়।
+    track.style.transform = `translateX(calc(-${__rvAllIdx * 84}% + 11%))`;
     document.querySelectorAll('.review-all-slideshow-slide').forEach((el, i) => {
         el.classList.toggle('rv-active', i === (__rvAllIdx % __rvAllTotal));
     });
