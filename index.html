@@ -1884,7 +1884,11 @@ function rvAllPosition(animate) {
     track.style.transition = animate ? 'transform .45s ease' : 'none';
     // প্রতিটা slide viewport-এর ৭৮% জায়গা নেয় (৩% padding প্রতি পাশে = ৮৪% স্টেপ)।
     // viewport-এর বাকি ২২% জায়গার অর্ধেক (১১%) বাম দিক থেকে বাদ দিলে active slide ঠিক মাঝখানে বসে।
-    track.style.transform = `translateX(calc(-${__rvAllIdx * 84}% + 11%))`;
+    // bug fix: CSS-এ .review-all-slideshow-slide এর flex-basis 78% এবং box-sizing:border-box —
+    // অর্থাৎ padding সহ পুরো width-ই 78%, তাই আসল step 78% (84% নয়, যেটা ভুলবশত padding দুইবার
+    // যোগ করে হিসাব করা হয়েছিল)। এই mismatch-ই index বাড়ার সাথে সাথে জমতে থাকা drift-এর কারণ ছিল —
+    // যত বেশি ছবি, তত বেশি ভুল জমে শেষে একদম বাম দিকে সরে যেত।
+    track.style.transform = `translateX(calc(-${__rvAllIdx * 78}% + 11%))`;
     const realActive = __rvAllTotal > 1 ? __rvAllIdx - 1 : 0; // clone বাদ দিয়ে বাস্তব index
     document.querySelectorAll('.review-all-slideshow-slide').forEach((el, i) => {
         el.classList.toggle('rv-active', i === __rvAllIdx);
