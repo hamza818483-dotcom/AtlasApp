@@ -1131,7 +1131,7 @@
         <button class="sidebar-item" onclick="goTo('focus.html');closeSidebar();">
             <span class="si-icon"><span class="si-tile tile-emerald"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" stroke="#fff" stroke-width="1.8"/><path d="M12 9v4l2.5 2.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 3h4M12 3v2" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></span></span> Focus Timer
         </button>
-        <button class="sidebar-item" onclick="showToast('শীঘ্রই আসছে! <svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 20l9-15 9 15z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.5 17h7M9.7 15h4.6M11 13h2" stroke="currentColor" stroke-width="1.4"/></svg>');closeSidebar();">
+        <button class="sidebar-item" onclick="showToast('শীঘ্রই আসছে!');closeSidebar();">
             <span class="si-icon"><span class="si-tile tile-sky"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19V11M9.5 19V6M15 19V13.5M20 19V8.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></span></span> Study Tracker
         </button>
         <button class="sidebar-item" onclick="goTo('profile.html#pomoScreen');closeSidebar();">
@@ -1490,9 +1490,10 @@ function toggleTheme() {
     isDarkMode = !isDarkMode;
     document.body.classList.toggle('dark-mode', isDarkMode);
     document.body.classList.toggle('light-mode', !isDarkMode);
-    const icon = isDarkMode ? '<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.7"/></svg>' : '<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.6"/><path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8L6 18M18 6l1.8-1.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
-    document.getElementById('themeToggle').textContent = icon;
-    document.getElementById('sidebarThemeIcon').textContent = icon;
+    const iconBare = isDarkMode ? '<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.7"/></svg>' : '<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.6"/><path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8L6 18M18 6l1.8-1.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+    const iconTiled = isDarkMode ? '<span class="si-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="#fff" stroke-width="1.7"/></svg></span>' : '<span class="si-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.5" stroke="#fff" stroke-width="1.6"/><path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8L6 18M18 6l1.8-1.8" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span>';
+    document.getElementById('themeToggle').innerHTML = iconBare;
+    document.getElementById('sidebarThemeIcon').innerHTML = iconTiled;
     localStorage.setItem('atlas-theme', isDarkMode ? 'dark' : 'light');
 }
 
@@ -2272,12 +2273,12 @@ async function __tgFetchLink(key) {
 window.__tgOpenDirectLink = async function (key) {
     try {
         const row = await __tgFetchLink(key);
-        if (!row?.link) { showToast('<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.3 4L2 18h20L13.7 4a2 2 0 00-3.4 0z" stroke="currentColor" stroke-width="1.7"/><path d="M12 9v5M12 17h.01" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg> এখনো লিংক যোগ করা হয়নি।'); return; }
+        if (!row?.link) { showToast('এখনো লিংক যোগ করা হয়নি।'); return; }
         closeModal();
         window.open(row.link, '_blank');
     } catch (e) {
         console.error('__tgOpenDirectLink error:', e);
-        showToast('<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.3 4L2 18h20L13.7 4a2 2 0 00-3.4 0z" stroke="currentColor" stroke-width="1.7"/><path d="M12 9v5M12 17h.01" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg> লোড করতে সমস্যা হয়েছে।');
+        showToast('লোড করতে সমস্যা হয়েছে।');
     }
 };
 
@@ -2560,7 +2561,7 @@ function buildDetailQuestionsHtml(questions, answers, filter) {
 function startPractice(resultId, examId, mode) {
     // Collect question IDs based on mode
     const r = detailModalResult || mistakesData.find(x => String(x.id)===String(resultId));
-    if (!r) { showToast('<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg> ডাটা পাওয়া যায়নি'); return; }
+    if (!r) { showToast('ডাটা পাওয়া যায়নি'); return; }
 
     let answers = {};
     try { answers = typeof r.answers==='string' ? JSON.parse(r.answers) : (r.answers||{}); } catch(e) {}
@@ -2580,7 +2581,7 @@ function startPractice(resultId, examId, mode) {
     });
 
     if (!practiceQIds.length) {
-        showToast('<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12.5l5 5L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> কোনো প্রশ্ন নেই এই মোডে');
+        showToast('কোনো প্রশ্ন নেই এই মোডে');
         return;
     }
 
@@ -2704,7 +2705,7 @@ function showError(title, message, details, retryFn) {
     if (retryFn) {
         const retryBtn = document.createElement('button');
         retryBtn.className = 'error-popup-retry';
-        retryBtn.textContent = '<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12a8 8 0 0113.6-5.7L19.5 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M19.5 4v4h-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12a8 8 0 01-13.6 5.7L4.5 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M4.5 20v-4h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> আবার চেষ্টা';
+        retryBtn.innerHTML = '<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12a8 8 0 0113.6-5.7L19.5 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M19.5 4v4h-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12a8 8 0 01-13.6 5.7L4.5 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M4.5 20v-4h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> আবার চেষ্টা';
         retryBtn.addEventListener('click', () => { overlay.remove(); retryFn(); });
         overlay.querySelector('#errorPopupBtnRow').prepend(retryBtn);
     }
@@ -2735,8 +2736,8 @@ document.addEventListener('DOMContentLoaded', () => {
         isDarkMode = false;
         document.body.classList.remove('dark-mode');
         document.body.classList.add('light-mode');
-        document.getElementById('themeToggle').textContent = '<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.6"/><path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8L6 18M18 6l1.8-1.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
-        document.getElementById('sidebarThemeIcon').textContent = '<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.6"/><path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8L6 18M18 6l1.8-1.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+        document.getElementById('themeToggle').innerHTML = '<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.6"/><path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8L6 18M18 6l1.8-1.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+        document.getElementById('sidebarThemeIcon').innerHTML = '<span class="si-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.5" stroke="#fff" stroke-width="1.6"/><path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8L6 18M18 6l1.8-1.8" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span>';
     }
 
     // Load all sections  (Flutter: Future.wait([...]))
