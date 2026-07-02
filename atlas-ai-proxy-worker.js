@@ -87,6 +87,9 @@ export default {
         const question = (body.question || "").trim();
         const image = body.image || null; // { base64, mimeType }
         const systemPrompt = body.systemPrompt || "তুমি একজন সহায়ক AI।";
+        const skipGemini = !!body.skipGemini; // এই request-এর জন্য Gemini আগেই অন্য পথে (PDF-native) একবার
+                                                // চেষ্টা হয়ে থাকলে ফ্রন্টএন্ড এটা true পাঠায় — quota বাঁচাতে
+                                                // এখানে Gemini আবার কল না করে বাকি provider চেইন সরাসরি চলে।
 
         if (!question && !image) {
             return jsonResponse({ success: false, error: "question বা image এর একটি দিতে হবে" }, 400);
@@ -94,13 +97,14 @@ export default {
 
         // Groq আগে চেষ্টা হয় (দ্রুত ও free-tier generous), fail করলে Gemini 2.5 Flash,
         // তারপর বাকি provider গুলো fallback হিসেবে।
-        const providers = [
-            () => callGroq(env, question, systemPrompt, image),
-            () => callGemini(env, question, systemPrompt, image),
-            () => callOpenRouter(env, question, systemPrompt, image),
-            () => callCerebras(env, question, systemPrompt, image),
-            () => callCloudflareAI(env, question, systemPrompt, image),
+        const allProviders = [
+            { name: "groq", fn: () => callGroq(env, question, systemPrompt, image) },
+            { name: "gemini", fn: () => callGemini(env, question, systemPrompt, image) },
+            { name: "openrouter", fn: () => callOpenRouter(env, question, systemPrompt, image) },
+            { name: "cerebras", fn: () => callCerebras(env, question, systemPrompt, image) },
+            { name: "cloudflare", fn: () => callCloudflareAI(env, question, systemPrompt, image) },
         ];
+        const providers = (skipGemini ? allProviders.filter(p => p.name !== "gemini") : allProviders).map(p => p.fn);
 
         // প্রতিটা provider নিজের ভেতরেই key/model rotation + backoff করে (উপরে দেখো)।
         // এখানে শুধু provider-চেইন ক্রমে চালানো হয় — কোনো একটায় সব key/model fail করলে

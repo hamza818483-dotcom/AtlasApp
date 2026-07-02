@@ -158,6 +158,8 @@ async function mbSpecialExtractPage(pageNum) {
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
         try {
             let rawJson;
+            let geminiAlreadyTried = false; // এই page-এ Gemini PDF-native ইতিমধ্যে চেষ্টা হয়েছে কি না —
+                                              // fallback chain-এ আবার Gemini কল করে quota নষ্ট না করার জন্য
             if (mbPdfUrl) {
                 try {
                     const pdfPrompt = `এই PDF-এর পেইজ ${pageNum} দেখো এবং নিচের নির্দেশ অনুসরণ করো:\n${basePrompt}`;
@@ -166,6 +168,7 @@ async function mbSpecialExtractPage(pageNum) {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ pdf_url: mbPdfUrl, prompt: pdfPrompt })
                     });
+                    geminiAlreadyTried = true; // এই কল Gemini-ই ব্যবহার করে (PDF-native একমাত্র Gemini করতে পারে)
                     const data = await res.json().catch(() => null);
                     if (res.ok && data?.success && data.answer) rawJson = data.answer;
                 } catch (_) {}
@@ -175,14 +178,14 @@ async function mbSpecialExtractPage(pageNum) {
                 const textCont = await page.getTextContent();
                 const pageText = textCont.items.map(i => i.str).join(' ').trim();
                 if (pageText && pageText.length >= 30) {
-                    rawJson = await mbCallAiApi(`নিচের টেক্সট থেকে ${basePrompt}\n\nটেক্সট:\n${pageText.slice(0, 8000)}`, null);
+                    rawJson = await mbCallAiApi(`নিচের টেক্সট থেকে ${basePrompt}\n\nটেক্সট:\n${pageText.slice(0, 8000)}`, null, null, geminiAlreadyTried);
                 } else {
                     const vp = page.getViewport({ scale: 1.5 });
                     const tmp = document.createElement('canvas');
                     tmp.width = vp.width; tmp.height = vp.height;
                     await page.render({ canvasContext: tmp.getContext('2d'), viewport: vp }).promise;
                     const imageData = { base64: tmp.toDataURL('image/jpeg', 0.85).split(',')[1], mimeType: 'image/jpeg' };
-                    rawJson = await mbCallAiApi('', imageData, `তুমি একজন নিখুঁত ডেটা-এক্সট্র্যাকশন এক্সপার্ট। ${basePrompt}`);
+                    rawJson = await mbCallAiApi('', imageData, `তুমি একজন নিখুঁত ডেটা-এক্সট্র্যাকশন এক্সপার্ট। ${basePrompt}`, geminiAlreadyTried);
                 }
             }
             const parsed = mbParseAiJson(rawJson);
@@ -1628,6 +1631,8 @@ async function mbAiGenerate() {
         )) + MB_PERMANENT_RULES;
 
         let rawJson;
+        let geminiAlreadyTried = false; // এই page-এ Gemini PDF-native ইতিমধ্যে চেষ্টা হয়েছে কি না —
+                                          // fallback chain-এ আবার Gemini কল করে quota নষ্ট না করার জন্য
 
         // Step 1 (preferred): send the whole PDF page directly to Gemini, which reads
         // PDFs/scanned pages natively — works for both text-based and image-based pages,
@@ -1641,6 +1646,7 @@ async function mbAiGenerate() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ pdf_url: mbPdfUrl, prompt: pdfPrompt })
                 });
+                geminiAlreadyTried = true;
                 const data = await res.json().catch(() => null);
                 if (res.ok && data?.success && data.answer) rawJson = data.answer;
             } catch (_) { /* fall through to legacy approach below */ }
@@ -1657,14 +1663,14 @@ async function mbAiGenerate() {
                 const prompt = `নিচের টেক্সট থেকে ${basePrompt}\n` +
                     `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}\n\n` +
                     `টেক্সট:\n${pageText.slice(0, 4000)}`;
-                rawJson = await mbCallAiApi(prompt, null);
+                rawJson = await mbCallAiApi(prompt, null, null, geminiAlreadyTried);
             } else {
                 mbToast('ছবি-ভিত্তিক PDF — image AI ব্যবহার হচ্ছে...', 'info', 2000);
                 const imageData = await mbGetPageImageBase64(mbCurrentPage);
                 if (!imageData) { mbToast('পেইজের ছবি তৈরি করা যায়নি', 'error'); return; }
                 const sysPrompt = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে ${basePrompt}\n` +
                     `শুধু JSON array রিটার্ন করো: ${jsonFormat}`;
-                rawJson = await mbCallAiApi('', imageData, sysPrompt);
+                rawJson = await mbCallAiApi('', imageData, sysPrompt, geminiAlreadyTried);
             }
         }
 
@@ -1756,14 +1762,16 @@ async function mbAiGenerateSpecial() {
 // All AI calls now go through the centralized proxy worker — no API key lives in
 // this file or any client-side code. See atlas-ai-proxy-worker.js for the actual
 // provider fallback chain (Gemini → OpenRouter → Groq → Cerebras → Cloudflare AI).
-async function mbCallAiApi(prompt, image, customSystemPrompt) {
+async function mbCallAiApi(prompt, image, customSystemPrompt, skipGemini) {
     const res = await fetch(AI_PROXY_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             question: prompt || '',
             image: image ? { base64: image.base64, mimeType: image.mimeType } : null,
-            systemPrompt: customSystemPrompt || 'তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।'
+            systemPrompt: customSystemPrompt || 'তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।',
+            skipGemini: !!skipGemini // এই page-এর জন্য Gemini আগেই একবার (PDF-native) চেষ্টা হয়ে থাকলে,
+                                       // fallback chain-এ আবার Gemini-কে ডাবল-কল না করার জন্য
         })
     });
     let data = null;
@@ -2116,6 +2124,8 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     )) + MB_PERMANENT_RULES;
 
     let rawJson;
+    let geminiAlreadyTried = false; // এই page-এ Gemini PDF-native ইতিমধ্যে চেষ্টা হয়েছে কি না —
+                                      // fallback chain-এ আবার Gemini কল করে quota নষ্ট না করার জন্য
     if (mbPdfUrl) {
         try {
             const pdfPrompt = `এই PDF-এর পেইজ ${pageNum} দেখো এবং নিচের নির্দেশ অনুসরণ করো:\n${basePrompt}\n\n` +
@@ -2125,6 +2135,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ pdf_url: mbPdfUrl, prompt: pdfPrompt })
             });
+            geminiAlreadyTried = true;
             const data = await res.json().catch(() => null);
             if (res.ok && data?.success && data.answer) rawJson = data.answer;
         } catch (_) {}
@@ -2137,7 +2148,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
             const prompt = `নিচের টেক্সট থেকে ${basePrompt}\n` +
                 `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}\n\n` +
                 `টেক্সট:\n${pageText.slice(0, 4000)}`;
-            rawJson = await mbCallAiApi(prompt, null);
+            rawJson = await mbCallAiApi(prompt, null, null, geminiAlreadyTried);
         } else {
             const vp = page.getViewport({ scale: 1.5 });
             const tmp = document.createElement('canvas');
@@ -2146,7 +2157,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
             const imageData = { base64: tmp.toDataURL('image/jpeg', 0.85).split(',')[1], mimeType: 'image/jpeg' };
             const sysPrompt = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে ${basePrompt}\n` +
                 `শুধু JSON array রিটার্ন করো: ${jsonFormat}`;
-            rawJson = await mbCallAiApi('', imageData, sysPrompt);
+            rawJson = await mbCallAiApi('', imageData, sysPrompt, geminiAlreadyTried);
         }
     }
 
