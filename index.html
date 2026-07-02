@@ -118,15 +118,15 @@
 
         /* Brand box  (Flutter: AnimatedLogo widget) — clean, no hazy glow */
         .atlas-brand-box {
-            display: flex; align-items: center; gap: 7px;
-            background: var(--card-bg);
+            display: flex; align-items: center; gap: 6px;
+            background: #0c191e;
             border: 1px solid var(--border);
-            border-radius: 8px; padding: 3px 8px; height: 46px; box-sizing: border-box;
+            border-radius: 8px; padding: 2px 6px; height: 52px; box-sizing: border-box;
             cursor: pointer; transition: border-color .2s ease;
         }
         .atlas-brand-box:active { border-color: var(--accent); }
-        .atlas-logo-img { height: 100%; width: auto; display: block; }
-        .atlas-logo-full { height: 100%; }
+        .atlas-logo-icon { height: 100%; width: auto; display: block; image-rendering: -webkit-optimize-contrast; }
+        .atlas-logo-text { height: 68%; width: auto; display: block; image-rendering: -webkit-optimize-contrast; }
         .atlas-brand-text { font-size: 17px; font-weight: 800; color: var(--accent); letter-spacing: -.5px; }
 
         /* Header icon buttons */
@@ -316,35 +316,29 @@
         .slideshow-dot.active { background: #fff; width: 16px; border-radius: 3px; }
 
         /* ── Compact mode — premium centered card, smaller, eye-catching shadow ── */
-        .slideshow-wrap.compact-mode {
-            background: transparent; box-shadow: none; border-radius: 0;
-            display: block; padding: 6px 0 16px;
+        /* Compact mode — review slideshow-এর সাথে ১০০% একই peek-carousel system */
+        .slideshow-wrap.compact-mode { background: transparent; box-shadow: none; border-radius: 0; padding: 6px 0 16px; }
+        .cs-viewport { position: relative; width: 100%; overflow: hidden; padding: 6px 0 4px; }
+        .cs-track { display: flex; align-items: center; transition: transform .45s ease; }
+        .cs-slide { flex: 0 0 78%; padding: 0 3%; box-sizing: border-box; transition: opacity .35s, transform .35s; }
+        .cs-slide:not(.cs-active) { opacity: .45; transform: scale(.92); }
+        .cs-slide.cs-active { opacity: 1; transform: scale(1); }
+        .cs-img-card {
+            width: 100%; aspect-ratio: 16/10; border-radius: 16px; overflow: hidden;
+            background: linear-gradient(145deg, #110E2A 0%, #1C1040 40%, #0F0C24 100%);
+            box-shadow: 0 8px 26px rgba(0,0,0,.4), 0 2px 10px rgba(108,99,255,.25);
         }
-        /* বাইরের viewport — এখানেই clip হয়, পাশের slide কখনো বের হয়ে আসবে না */
-        .slideshow-wrap.compact-mode .slideshow-viewport {
-            width: 62%; margin: 0 auto; overflow: hidden; border-radius: 16px;
-            box-shadow: 0 8px 28px rgba(0,0,0,.35), 0 2px 8px rgba(108,99,255,.25);
+        .cs-img-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .cs-dots { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
+        .cs-dots span { width: 6px; height: 6px; border-radius: 50%; background: rgba(108,99,255,.3); transition: all .3s; }
+        .cs-dots span.active { background: var(--accent, #6C63FF); width: 16px; border-radius: 3px; }
+        .cs-nav {
+            position: absolute; top: 50%; transform: translateY(-50%); z-index: 3;
+            width: 30px; height: 30px; border-radius: 50%; background: rgba(0,0,0,.35);
+            display: flex; align-items: center; justify-content: center; color: #fff; font-size: 15px; cursor: pointer;
         }
-        .slideshow-wrap.compact-mode .slideshow-track {
-            width: 100%;
-        }
-        .slideshow-wrap.compact-mode .slideshow-slide {
-            /* সব ছবি ঠিক একই আকারের বক্সে বসবে — ছবির আসল সাইজ/অনুপাত যাই হোক না কেন */
-            width: 100%; aspect-ratio: 1 / 1;
-            background: linear-gradient(145deg, rgba(108,99,255,.10), rgba(108,99,255,.03));
-            display: flex; align-items: center; justify-content: center;
-            overflow: hidden;
-        }
-        .slideshow-wrap.compact-mode .slideshow-slide img {
-            width: 100%; height: 100%;
-            /* object-fit: contain — ছবি crop না করে ছোট করে পুরোটা বক্সের মধ্যে দেখাবে (zoom out), সব ছবির final সাইজ সমান */
-            object-fit: contain;
-            transition: transform .2s ease;
-        }
-        .slideshow-wrap.compact-mode .slideshow-slide img:active { transform: scale(.97); }
-        .slideshow-wrap.compact-mode .slideshow-dots { bottom: -12px; }
-        .slideshow-wrap.compact-mode .slideshow-dot { background: rgba(108,99,255,.35); }
-        .slideshow-wrap.compact-mode .slideshow-dot.active { background: var(--accent, #6C63FF); }
+        .cs-nav.cs-prev { left: 2%; }
+        .cs-nav.cs-next { right: 2%; }
 
         /* Fullscreen zoom overlay when tapping a compact-mode image */
         .slideshow-zoom-bg {
@@ -405,44 +399,31 @@
    সাথে touch/swipe ও arrow+dot দিয়ে manual navigation। শুধু ছবির চারপাশের ঘুরন্ত বর্ডার
    animation বাদ দেওয়া হয়েছে (rv-img-frame এখন plain static ফ্রেম, glow spin নেই)। */
         .review-all-slideshow-title { font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; }
-        /* বাইরের ভিউপোর্ট — স্ক্রিনের একদম দুই পাশ জুড়ে (full width), এর ভেতরেই right-to-left sliding
-           section এর 14px padding বাদ দিয়ে negative margin দিয়ে viewport-কে পুরো screen width এ
-           নিয়ে আসা হয়েছে, যাতে ছবি সত্যিকারভাবে screen এর ঠিক মাঝে থাকে (arrow button থাকা সত্ত্বেও) */
-        .review-all-slideshow-viewport {
-            position: relative; width: 100%; overflow: hidden;
-            display: flex; align-items: center; justify-content: center; min-height: 230px;
-            touch-action: pan-y; /* vertical page-scroll কে ব্যাহত না করে শুধু horizontal swipe ধরার জন্য */
-            margin: 0 -14px; width: calc(100% + 28px);
+        /* বাইরের ভিউপোর্ট — reference ছবির মতো peek-carousel: বড় center card, দুই পাশে ছোট peek */
+        .review-all-slideshow-viewport { position: relative; width: 100%; overflow: hidden; padding: 6px 0 4px; }
+        .review-all-slideshow-track { display: flex; align-items: center; transition: transform .45s ease; }
+        /* প্রতিটা slide viewport-এর ৭৮% জায়গা নেয়, দুই পাশে ১১% করে ফাঁকা রেখে — সেই ফাঁকা থেকেই
+           পাশের card-এর প্রান্ত (peek) সামান্য উঁকি দেয়, ঠিক reference ছবির মতো */
+        .review-all-slideshow-slide { flex: 0 0 78%; padding: 0 3%; box-sizing: border-box; transition: opacity .35s, transform .35s; }
+        .review-all-slideshow-slide:not(.rv-active) { opacity: .45; transform: scale(.92); }
+        .review-all-slideshow-slide.rv-active { opacity: 1; transform: scale(1); }
+        .rv-img-card {
+            width: 100%; aspect-ratio: 16/10; border-radius: 16px; overflow: hidden;
+            background: linear-gradient(145deg, #110E2A 0%, #1C1040 40%, #0F0C24 100%);
+            box-shadow: 0 8px 26px rgba(0,0,0,.4), 0 2px 10px rgba(108,99,255,.25);
         }
-        /* ছবির পেছনে — স্ক্রিনের একদম দুই পাশ জুড়ে (side to side) লম্বা চিকন ব্যাকগ্রাউন্ড বার */
-        .review-all-slideshow-viewport::before {
-            content: ''; position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
-            height: 62%; background: linear-gradient(90deg, rgba(108,99,255,.14), rgba(108,99,255,.05) 50%, rgba(108,99,255,.14));
-            border-top: 1px solid rgba(108,99,255,.18); border-bottom: 1px solid rgba(108,99,255,.18);
-            z-index: 0;
+        .rv-img-card img { width: 100%; height: 100%; object-fit: cover; cursor: zoom-in; display: block; }
+        .review-all-slideshow-dots { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
+        .review-all-slideshow-dots span { width: 6px; height: 6px; border-radius: 50%; background: rgba(108,99,255,.3); transition: all .3s; }
+        .review-all-slideshow-dots span.active { background: var(--accent, #6C63FF); width: 16px; border-radius: 3px; }
+        /* নিচের row-এ থাকা left/right arrow বাটন — reference-এর গোলাকার semi-transparent arrow */
+        .review-all-slideshow-nav {
+            position: absolute; top: 50%; transform: translateY(-50%); z-index: 3;
+            width: 30px; height: 30px; border-radius: 50%; background: rgba(0,0,0,.35);
+            display: flex; align-items: center; justify-content: center; color: #fff; font-size: 15px; cursor: pointer;
         }
-        .review-all-slideshow-track {
-            display: flex; width: 100%; transition: transform .5s ease; position: relative; z-index: 1;
-        }
-        /* প্রতিটা slide viewport width এর 82% নেয় — বাকি 18% এর অর্ধেক করে দুই পাশে
-           আগের/পরের slide-এর অংশ হালকাভাবে (peek) দেখা যায়, ঠিক reference site এর মতো */
-        .review-all-slideshow-slide {
-            flex: 0 0 78%; display: flex; align-items: center; justify-content: center; padding: 10px 4px;
-            opacity: .55; transform: scale(.95); transition: opacity .4s ease, transform .4s ease;
-        }
-        .review-all-slideshow-slide.rv-active {
-            opacity: 1; transform: scale(1);
-        }
-        /* ছবির চারপাশে plain static ফ্রেম — আগে এখানে ঘুরন্ত (spinning) আলোর বর্ডার animation ছিল, সেটা বাদ */
-        .rv-img-frame {
-            position: relative; display: inline-block; border-radius: 12px; overflow: hidden; padding: 3px;
-            border: 1px solid rgba(108,99,255,.25);
-        }
-        .review-all-slideshow-slide img {
-            position: relative; z-index: 1; display: block;
-            max-width: 100%; max-height: 170px; width: auto; height: auto;
-            object-fit: contain; cursor: zoom-in; border-radius: 10px; margin: 0 auto;
-        }
+        .review-all-slideshow-nav.rv-prev { left: 2%; }
+        .review-all-slideshow-nav.rv-next { right: 2%; }
 
         /* Screenshot-এ দেখানো স্টাইলের মতো — দুই পাশে গোল arrow বাটন */
         .rv-slide-arrow {
@@ -1140,7 +1121,7 @@
         <button class="sidebar-item" onclick="goTo('focus.html');closeSidebar();">
             <span class="si-icon"><span class="si-tile tile-emerald"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" stroke="#fff" stroke-width="1.8"/><path d="M12 9v4l2.5 2.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 3h4M12 3v2" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></span></span> Focus Timer
         </button>
-        <button class="sidebar-item" onclick="showToast('শীঘ্রই আসছে!');closeSidebar();">
+        <button class="sidebar-item" onclick="goTo('study-tracker.html');closeSidebar();">
             <span class="si-icon"><span class="si-tile tile-sky"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19V11M9.5 19V6M15 19V13.5M20 19V8.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></span></span> Study Tracker
         </button>
         <button class="sidebar-item" onclick="goTo('profile.html#pomoScreen');closeSidebar();">
@@ -1151,6 +1132,9 @@
         </button>
         <button class="sidebar-item" onclick="goTo('exam.html?cat=board');closeSidebar();">
             <span class="si-icon"><span class="si-tile tile-sky"><svg viewBox="0 0 24 24" fill="none"><path d="M3.5 9.5L12 4l8.5 5.5M4.5 9.5v9.5h15V9.5M9.5 19v-5h5v5" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.1)"/></svg></span></span> HSC
+        </button>
+        <button class="sidebar-item" onclick="openTelegramSupportModal();closeSidebar();">
+            <span class="si-icon"><span class="si-tile tile-orange"><svg viewBox="0 0 24 24" fill="none"><path d="M21 4L3 11.5l6.5 2.5M9.5 14l2 6 3-4.5L21 4 9.5 14z" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.1)"/></svg></span></span> Telegram Support
         </button>
         <button class="sidebar-item" onclick="openAdmissionModal();closeSidebar();">
             <span class="si-icon"><span class="si-tile tile-teal"><svg viewBox="0 0 24 24" fill="none"><path d="M3 21h18M5 21V10l7-7 7 7v11" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.1)"/></svg></span></span> এডমিশন
@@ -1218,8 +1202,11 @@
         <button class="global-back-btn" onclick="goBackGlobal()" title="ফিরে যান" aria-label="ফিরে যান">←</button>
         <button class="hamburger" onclick="toggleSidebar()"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></button>
         <div class="atlas-brand-box" onclick="goTo('index.html')">
-            <img src="logo.png"
-                 class="atlas-logo-img atlas-logo-full" alt="ATLAS APP"
+            <img src="logo-icon.png"
+                 class="atlas-logo-icon" alt="ATLAS icon"
+                 onerror="this.style.display='none'">
+            <img src="logo-text.png"
+                 class="atlas-logo-text" alt="ATLAS APP"
                  onerror="this.style.display='none'">
         </div>
     </div>
@@ -1848,59 +1835,94 @@ async function loadReviewAllSlideshow(allImages) {
     if (!allImages.length) { wrap.innerHTML = ''; return; }
 
     const rvUrls = allImages.map(img => img.image_url);
+    const n = allImages.length;
 
-    const slideImg = (img, i) =>
+    const slideImg = (img, realIdx) =>
         `<div class="review-all-slideshow-slide">
-            <div class="rv-img-frame">
-                <img src="${escHtml(img.image_url)}" alt="Review" loading="lazy" onclick='openSlideshowZoom(${i}, ${JSON.stringify(rvUrls)})' onerror="this.parentElement.parentElement.style.display='none'">
+            <div class="rv-img-card">
+                <img src="${escHtml(img.image_url)}" alt="Review" loading="lazy" onclick='openSlideshowZoom(${realIdx}, ${JSON.stringify(rvUrls)})' onerror="this.closest('.review-all-slideshow-slide').style.display='none'">
             </div>
         </div>`;
 
-    // Peek-style sliding — প্রতিটা slide viewport-এর 82% নেয়, বাকি অংশে দুই পাশের slide আংশিক
-    // দেখা যায়। Seamless loop-এর জন্য শুরুতে শেষ ছবির clone আর শেষে প্রথম ছবির clone জোড়া হচ্ছে,
-    // যাতে বামে-ডানে উভয় দিকেই peek করার সময় সবসময় একটা real ছবির অংশ দেখা যায়।
-    const slidesHtml =
-        (allImages.length > 1 ? slideImg(allImages[allImages.length - 1], allImages.length - 1) : '') +
-        allImages.map(slideImg).join('') +
-        (allImages.length > 1 ? slideImg(allImages[0], 0) : '');
-    const dotsHtml = allImages.length > 1
-        ? `<div class="rv-slide-dots" id="rvAllDots">${allImages.map((_, i) => `<button class="rv-slide-dot${i === 0 ? ' active' : ''}" onclick="rvGoToSlide(${i})" aria-label="Slide ${i+1}"></button>`).join('')}</div>`
+    // Peek-carousel — দুই পাশেই সবসময় প্রতিবেশী card-এর অংশ দেখানোর জন্য track-এর একদম শুরুতে
+    // শেষ ছবির clone আর শেষে প্রথম ছবির clone জুড়ে দেওয়া হয়েছে। আগে শুধু শেষে clone ছিল, তাই
+    // প্রথম ছবি দেখানোর সময় বাম পাশে দেখানোর মতো কিছুই ছিল না — এখন দুই দিকেই সবসময় কিছু না কিছু থাকবে।
+    // __rvAllIdx=1 মানে বাস্তব প্রথম ছবি (index 0 = leading clone, N+1 = trailing clone)।
+    const slidesHtml = n > 1
+        ? slideImg(allImages[n - 1], n - 1) + allImages.map(slideImg).join('') + slideImg(allImages[0], 0)
+        : slideImg(allImages[0], 0);
+    const dotsHtml = n > 1
+        ? `<div class="review-all-slideshow-dots">${allImages.map((_, i) => `<span class="${i === 0 ? 'active' : ''}"></span>`).join('')}</div>`
+        : '';
+    const navHtml = n > 1
+        ? `<div class="review-all-slideshow-nav rv-prev" onclick="rvAllGo(-1)">‹</div>
+           <div class="review-all-slideshow-nav rv-next" onclick="rvAllGo(1)">›</div>`
         : '';
 
     wrap.innerHTML = `
-        <div class="review-all-slideshow-viewport" id="rvAllViewport">
-            ${allImages.length > 1 ? `<button class="rv-slide-arrow prev" onclick="rvPrevSlide()" aria-label="আগের ছবি">‹</button>` : ''}
+        <div class="review-all-slideshow-viewport" id="rvViewport">
+            ${navHtml}
             <div class="review-all-slideshow-track" id="reviewAllSlideshowTrack">${slidesHtml}</div>
-            ${allImages.length > 1 ? `<button class="rv-slide-arrow next" onclick="rvNextSlide()" aria-label="পরের ছবি">›</button>` : ''}
         </div>
         ${dotsHtml}`;
 
-    __rvAllIdx = 0;
-    __rvAllTotal = allImages.length;
-    __rvHasClones = allImages.length > 1;
-    rvSetTrackPosition(false);
-
-    // Touch/swipe support — বাম/ডানে সোয়াইপ করলে slide পরিবর্তন হবে
-    if (allImages.length > 1) {
-        const viewport = document.getElementById('rvAllViewport');
-        let touchStartX = 0, touchStartY = 0, touchMoved = false;
-        viewport.addEventListener('touchstart', (e) => {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-            touchMoved = false;
-        }, { passive: true });
-        viewport.addEventListener('touchmove', () => { touchMoved = true; }, { passive: true });
-        viewport.addEventListener('touchend', (e) => {
-            if (!touchMoved) return;
-            const dx = e.changedTouches[0].clientX - touchStartX;
-            const dy = e.changedTouches[0].clientY - touchStartY;
-            if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) { // মূলত horizontal swipe হলেই react করবে, vertical scroll কে বাধা দেবে না
-                if (dx < 0) rvNextSlide(); else rvPrevSlide();
-            }
-        }, { passive: true });
-
-        rvStartAutoplay();
+    __rvAllIdx = n > 1 ? 1 : 0;
+    __rvAllTotal = n;
+    rvAllPosition(false);
+    if (n > 1) {
+        __rvAllTimer = setInterval(() => rvAllGo(1), 2500);
+        rvAttachSwipe();
     }
+}
+
+function rvAllPosition(animate) {
+    const track = document.getElementById('reviewAllSlideshowTrack');
+    if (!track) return;
+    track.style.transition = animate ? 'transform .45s ease' : 'none';
+    // প্রতিটা slide viewport-এর ৭৮% জায়গা নেয় (৩% padding প্রতি পাশে = ৮৪% স্টেপ)।
+    // viewport-এর বাকি ২২% জায়গার অর্ধেক (১১%) বাম দিক থেকে বাদ দিলে active slide ঠিক মাঝখানে বসে।
+    // bug fix: CSS-এ .review-all-slideshow-slide এর flex-basis 78% এবং box-sizing:border-box —
+    // অর্থাৎ padding সহ পুরো width-ই 78%, তাই আসল step 78% (84% নয়, যেটা ভুলবশত padding দুইবার
+    // যোগ করে হিসাব করা হয়েছিল)। এই mismatch-ই index বাড়ার সাথে সাথে জমতে থাকা drift-এর কারণ ছিল —
+    // যত বেশি ছবি, তত বেশি ভুল জমে শেষে একদম বাম দিকে সরে যেত।
+    track.style.transform = `translateX(calc(-${__rvAllIdx * 78}% + 11%))`;
+    const realActive = __rvAllTotal > 1 ? __rvAllIdx - 1 : 0; // clone বাদ দিয়ে বাস্তব index
+    document.querySelectorAll('.review-all-slideshow-slide').forEach((el, i) => {
+        el.classList.toggle('rv-active', i === __rvAllIdx);
+    });
+    document.querySelectorAll('.review-all-slideshow-dots span').forEach((dot, i) => {
+        dot.classList.toggle('active', i === ((realActive % __rvAllTotal) + __rvAllTotal) % __rvAllTotal);
+    });
+}
+
+function rvAllGo(dir) {
+    __rvAllIdx += dir;
+    rvAllPosition(true);
+    // দুই প্রান্তেই clone দেখানো শেষ হলে চুপচাপ (transition ছাড়া) বাস্তব ছবির position-এ ফিরিয়ে আনা হচ্ছে —
+    // তাই forward/backward দুই দিকেই কখনো visible jump/snap হবে না।
+    if (__rvAllIdx === __rvAllTotal + 1) {
+        setTimeout(() => { __rvAllIdx = 1; rvAllPosition(false); }, 460);
+    } else if (__rvAllIdx === 0) {
+        setTimeout(() => { __rvAllIdx = __rvAllTotal; rvAllPosition(false); }, 460);
+    }
+}
+
+// আঙুল দিয়ে swipe করে slide পাল্টানো — বাম দিকে swipe করলে পরের ছবি, ডান দিকে করলে আগের ছবি
+function rvAttachSwipe() {
+    const vp = document.getElementById('rvViewport');
+    if (!vp) return;
+    let startX = null;
+    vp.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
+    vp.addEventListener('touchend', e => {
+        if (startX === null) return;
+        const dx = e.changedTouches[0].clientX - startX;
+        if (Math.abs(dx) > 40) {
+            clearInterval(__rvAllTimer);
+            rvAllGo(dx < 0 ? 1 : -1);
+            __rvAllTimer = setInterval(() => rvAllGo(1), 2500); // swipe করার পর auto-slide আবার শুরু হবে
+        }
+        startX = null;
+    }, { passive: true });
 }
 
 function openReviewGallery(catKey) {
@@ -1981,40 +2003,36 @@ async function loadSlideshow() {
         const data = await safeFetch(`${SUPABASE_URL}/rest/v1/slideshow_images?select=*&order=sort_order.asc,created_at.asc&limit=20&is_active=eq.true`);
 
         if (__slideshowTimer) { clearInterval(__slideshowTimer); __slideshowTimer = null; }
+        if (__csTimer) { clearInterval(__csTimer); __csTimer = null; }
 
         if (!data?.length) { container.innerHTML = ''; return; }
 
-        // ছবিগুলো ব্রাউজার cache-এ আগেই preload করা হচ্ছে — base64 ছবি
-        // সরাসরি innerHTML-এ বসালে প্রথমবার decode করতে সময় লাগে এবং
-        // "loading দিলে চলে যায়" (flicker/disappear) সমস্যা হয়। preload
-        // শেষ হওয়ার পরই DOM-এ বসানো হচ্ছে, যাতে স্মুথ ও instant দেখায়।
-        await Promise.all(data.map(s => new Promise(resolve => {
-            const img = new Image();
-            img.onload = resolve;
-            img.onerror = resolve; // ভাঙা ছবি থাকলেও বাকি স্লাইডের জন্য আটকাবে না
-            img.src = s.image_url;
-        })));
+        // bug fix: আগে এখানে সব ছবি সম্পূর্ণ preload/decode হওয়া পর্যন্ত (await Promise.all) কিছুই
+        // দেখানো হতো না — একাধিক base64 ছবির ক্ষেত্রে এতে ২-৪ সেকেন্ড পর্যন্ত সময় লাগত, তাই মনে হতো
+        // slideshow "instant show করে না"। এখন markup সাথে সাথেই বসানো হচ্ছে, ছবিগুলো browser নিজে
+        // থেকেই progressively (একটা একটা করে যেমন রেডি হবে) দেখাবে — নতুন ছবি যোগ করলেও তৎক্ষণাৎ দেখা যাবে।
+
+        const isCompact = data[0]?.display_mode === 'compact';
+        if (isCompact) {
+            loadCompactSlideshow(container, data); // review slideshow-এর সাথে ১০০% একই peek-carousel system
+            return;
+        }
 
         const slidesHtml = data.map((s, i) => {
             const hasLink = !!s.link_url;
-            const isCompact = s.display_mode === 'compact';
-            // Compact মোডে ছবিতে ক্লিক করলে বড় হয়ে zoom দেখাবে (যদি link না থাকে),
-            // link থাকলে সরাসরি সেই লিংকে যাবে — দুটো একসাথে না, link থাকলে link-ই priority পাবে।
             const clickAttr = hasLink
                 ? `onclick="window.open('${escHtml(s.link_url)}','_blank')" style="cursor:pointer"`
-                : (isCompact ? `onclick="openSlideshowZoom(${i})" style="cursor:zoom-in"` : '');
+                : '';
             return `<div class="slideshow-slide"><img src="${escHtml(s.image_url)}" alt="Slide" ${clickAttr} onerror="this.parentElement.style.display='none'"></div>`;
         }).join('');
         const dotsHtml = data.length > 1
             ? `<div class="slideshow-dots">${data.map((_, i) => `<span class="slideshow-dot${i === 0 ? ' active' : ''}" data-idx="${i}"></span>`).join('')}</div>`
             : '';
 
-        // সব ছবি একই mode হওয়ার কথা (admin এক ব্যাচেই মোড সেট করে), প্রথম ছবির mode ব্যবহার করা হচ্ছে
-        const wrapModeClass = data[0]?.display_mode === 'compact' ? 'compact-mode' : '';
         __slideshowImageUrls = data.map(s => s.image_url);
 
         container.innerHTML = `
-            <div class="slideshow-wrap ${wrapModeClass}">
+            <div class="slideshow-wrap">
                 <div class="slideshow-viewport">
                     <div class="slideshow-track" id="slideshowTrack">${slidesHtml}</div>
                 </div>
@@ -2028,6 +2046,94 @@ async function loadSlideshow() {
             startSlideshowAutoTimer();
         }
     } catch (e) { console.error('Slideshow load error:', e); }
+}
+
+/* ── Compact mode — review slideshow ("সব রিভিউ ছবি" carousel)-এর সাথে হুবহু একই সিস্টেম ──
+   একই CSS proportions (78% slide, 11% centering offset), leading+trailing clone দিয়ে
+   দুই পাশে সবসময় peek, forward/backward উভয় দিকেই seamless loop, touch swipe সহ। */
+let __csTimer = null;
+let __csIdx = 0;
+let __csTotal = 0;
+
+function loadCompactSlideshow(container, data) {
+    const n = data.length;
+    const slideCard = (s, realIdx) => {
+        const hasLink = !!s.link_url;
+        const clickAttr = hasLink
+            ? `onclick="window.open('${escHtml(s.link_url)}','_blank')"`
+            : `onclick='openSlideshowZoom(${realIdx}, ${JSON.stringify(data.map(x => x.image_url))})'`;
+        return `<div class="cs-slide">
+            <div class="cs-img-card">
+                <img src="${escHtml(s.image_url)}" alt="Slide" ${clickAttr} style="cursor:${hasLink ? 'pointer' : 'zoom-in'}" onerror="this.closest('.cs-slide').style.display='none'">
+            </div>
+        </div>`;
+    };
+
+    const slidesHtml = n > 1
+        ? slideCard(data[n - 1], n - 1) + data.map(slideCard).join('') + slideCard(data[0], 0)
+        : slideCard(data[0], 0);
+    const dotsHtml = n > 1
+        ? `<div class="cs-dots">${data.map((_, i) => `<span class="${i === 0 ? 'active' : ''}"></span>`).join('')}</div>`
+        : '';
+    const navHtml = n > 1
+        ? `<div class="cs-nav cs-prev" onclick="csGo(-1)">‹</div><div class="cs-nav cs-next" onclick="csGo(1)">›</div>`
+        : '';
+
+    container.innerHTML = `
+        <div class="slideshow-wrap compact-mode">
+            <div class="cs-viewport" id="csViewport">
+                ${navHtml}
+                <div class="cs-track" id="csTrack">${slidesHtml}</div>
+            </div>
+            ${dotsHtml}
+        </div>`;
+
+    __csIdx = n > 1 ? 1 : 0;
+    __csTotal = n;
+    csPosition(false);
+    if (n > 1) {
+        __csTimer = setInterval(() => csGo(1), 2500);
+        csAttachSwipe();
+    }
+}
+
+function csPosition(animate) {
+    const track = document.getElementById('csTrack');
+    if (!track) return;
+    track.style.transition = animate ? 'transform .45s ease' : 'none';
+    track.style.transform = `translateX(calc(-${__csIdx * 78}% + 11%))`;
+    document.querySelectorAll('.cs-slide').forEach((el, i) => el.classList.toggle('cs-active', i === __csIdx));
+    const realActive = __csTotal > 1 ? __csIdx - 1 : 0;
+    document.querySelectorAll('.cs-dots span').forEach((dot, i) => {
+        dot.classList.toggle('active', i === ((realActive % __csTotal) + __csTotal) % __csTotal);
+    });
+}
+
+function csGo(dir) {
+    __csIdx += dir;
+    csPosition(true);
+    if (__csIdx === __csTotal + 1) {
+        setTimeout(() => { __csIdx = 1; csPosition(false); }, 460);
+    } else if (__csIdx === 0) {
+        setTimeout(() => { __csIdx = __csTotal; csPosition(false); }, 460);
+    }
+}
+
+function csAttachSwipe() {
+    const vp = document.getElementById('csViewport');
+    if (!vp) return;
+    let startX = null;
+    vp.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
+    vp.addEventListener('touchend', e => {
+        if (startX === null) return;
+        const dx = e.changedTouches[0].clientX - startX;
+        if (Math.abs(dx) > 40) {
+            clearInterval(__csTimer);
+            csGo(dx < 0 ? 1 : -1);
+            __csTimer = setInterval(() => csGo(1), 2500);
+        }
+        startX = null;
+    }, { passive: true });
 }
 
 function startSlideshowAutoTimer() {
