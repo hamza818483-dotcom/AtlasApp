@@ -118,15 +118,15 @@
 
         /* Brand box  (Flutter: AnimatedLogo widget) — clean, no hazy glow */
         .atlas-brand-box {
-            display: flex; align-items: center; gap: 7px;
+            display: flex; align-items: center; gap: 6px;
             background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 8px; padding: 2px 6px; height: 52px; box-sizing: border-box;
             cursor: pointer; transition: border-color .2s ease;
         }
         .atlas-brand-box:active { border-color: var(--accent); }
-        .atlas-logo-img { height: 100%; width: auto; display: block; }
-        .atlas-logo-full { height: 100%; }
+        .atlas-logo-icon { height: 100%; width: auto; display: block; image-rendering: -webkit-optimize-contrast; }
+        .atlas-logo-text { height: 68%; width: auto; display: block; image-rendering: -webkit-optimize-contrast; }
         .atlas-brand-text { font-size: 17px; font-weight: 800; color: var(--accent); letter-spacing: -.5px; }
 
         /* Header icon buttons */
@@ -1202,8 +1202,11 @@
         <button class="global-back-btn" onclick="goBackGlobal()" title="ফিরে যান" aria-label="ফিরে যান">←</button>
         <button class="hamburger" onclick="toggleSidebar()"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></button>
         <div class="atlas-brand-box" onclick="goTo('index.html')">
-            <img src="logo.png"
-                 class="atlas-logo-img atlas-logo-full" alt="ATLAS APP"
+            <img src="logo-icon.png"
+                 class="atlas-logo-icon" alt="ATLAS icon"
+                 onerror="this.style.display='none'">
+            <img src="logo-text.png"
+                 class="atlas-logo-text" alt="ATLAS APP"
                  onerror="this.style.display='none'">
         </div>
     </div>
