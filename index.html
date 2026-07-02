@@ -2004,16 +2004,10 @@ async function loadSlideshow() {
 
         if (!data?.length) { container.innerHTML = ''; return; }
 
-        // ছবিগুলো ব্রাউজার cache-এ আগেই preload করা হচ্ছে — base64 ছবি
-        // সরাসরি innerHTML-এ বসালে প্রথমবার decode করতে সময় লাগে এবং
-        // "loading দিলে চলে যায়" (flicker/disappear) সমস্যা হয়। preload
-        // শেষ হওয়ার পরই DOM-এ বসানো হচ্ছে, যাতে স্মুথ ও instant দেখায়।
-        await Promise.all(data.map(s => new Promise(resolve => {
-            const img = new Image();
-            img.onload = resolve;
-            img.onerror = resolve; // ভাঙা ছবি থাকলেও বাকি স্লাইডের জন্য আটকাবে না
-            img.src = s.image_url;
-        })));
+        // bug fix: আগে এখানে সব ছবি সম্পূর্ণ preload/decode হওয়া পর্যন্ত (await Promise.all) কিছুই
+        // দেখানো হতো না — একাধিক base64 ছবির ক্ষেত্রে এতে ২-৪ সেকেন্ড পর্যন্ত সময় লাগত, তাই মনে হতো
+        // slideshow "instant show করে না"। এখন markup সাথে সাথেই বসানো হচ্ছে, ছবিগুলো browser নিজে
+        // থেকেই progressively (একটা একটা করে যেমন রেডি হবে) দেখাবে — নতুন ছবি যোগ করলেও তৎক্ষণাৎ দেখা যাবে।
 
         const isCompact = data[0]?.display_mode === 'compact';
         if (isCompact) {
