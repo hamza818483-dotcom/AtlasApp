@@ -426,22 +426,21 @@
         /* প্রতিটা slide viewport width এর 82% নেয় — বাকি 18% এর অর্ধেক করে দুই পাশে
            আগের/পরের slide-এর অংশ হালকাভাবে (peek) দেখা যায়, ঠিক reference site এর মতো */
         .review-all-slideshow-slide {
-            flex: 0 0 82%; display: flex; align-items: center; justify-content: center; padding: 10px 0;
-            opacity: .45; transform: scale(.92); transition: opacity .4s ease, transform .4s ease;
+            flex: 0 0 90%; display: flex; align-items: center; justify-content: center; padding: 10px 6px;
+            opacity: .55; transform: scale(.95); transition: opacity .4s ease, transform .4s ease;
         }
         .review-all-slideshow-slide.rv-active {
             opacity: 1; transform: scale(1);
         }
         /* ছবির চারপাশে plain static ফ্রেম — আগে এখানে ঘুরন্ত (spinning) আলোর বর্ডার animation ছিল, সেটা বাদ */
         .rv-img-frame {
-            position: relative; display: inline-block; border-radius: 12px; overflow: hidden; padding: 3px;
-            border: 1px solid rgba(108,99,255,.25);
+            position: relative; display: inline-block; border-radius: 16px; overflow: hidden;
+            width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,.08);
         }
         .review-all-slideshow-slide img {
             position: relative; z-index: 1; display: block;
-            max-width: 68%; max-height: 280px; width: auto; height: auto;
-            object-fit: contain; cursor: zoom-in; border-radius: 10px;
-            margin: 0 auto;
+            width: 100%; max-height: 280px; height: auto;
+            object-fit: cover; cursor: zoom-in; border-radius: 16px;
         }
 
         /* Screenshot-এ দেখানো স্টাইলের মতো — দুই পাশে গোল arrow বাটন */
@@ -1776,7 +1775,7 @@ function rvSetTrackPosition(withTransition) {
     track.style.transition = withTransition ? 'transform .5s ease' : 'none';
     // Slide width 82% + (18%/2 = 9%) centering offset per step, যাতে active slide viewport-এর
     // ঠিক মাঝে থাকে এবং দুই পাশের slide আংশিকভাবে (peek) দেখা যায়
-    const SLIDE_PCT = 82;
+    const SLIDE_PCT = 90;
     const offset = (100 - SLIDE_PCT) / 2;
     const domIdx = __rvDomIdx(__rvAllIdx);
     track.style.transform = `translateX(calc(-${domIdx * SLIDE_PCT}% + ${offset}%))`;
@@ -1805,7 +1804,7 @@ function rvNextSlide(fromAutoplay) {
         // তারপর নিঃশব্দে (no-transition) আসল প্রথম slide-এর position এ ফিরিয়ে আনা হয়
         __rvAllIdx = __rvAllTotal; // clone position (dots handling ignores out-of-range safely below)
         const track = document.getElementById('reviewAllSlideshowTrack');
-        const SLIDE_PCT = 82, offset = (100 - SLIDE_PCT) / 2;
+        const SLIDE_PCT = 90, offset = (100 - SLIDE_PCT) / 2;
         const domIdx = __rvDomIdx(__rvAllTotal); // trailing clone's DOM index
         if (track) {
             track.style.transition = 'transform .5s ease';
