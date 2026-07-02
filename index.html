@@ -423,9 +423,14 @@
         .review-all-slideshow-track {
             display: flex; width: 100%; transition: transform .5s ease; position: relative; z-index: 1;
         }
-        /* প্রতিটা slide পুরো viewport width নেয় — তাই adjacent slide কখনোই আংশিক দেখা যাবে না */
+        /* প্রতিটা slide viewport width এর 82% নেয় — বাকি 18% এর অর্ধেক করে দুই পাশে
+           আগের/পরের slide-এর অংশ হালকাভাবে (peek) দেখা যায়, ঠিক reference site এর মতো */
         .review-all-slideshow-slide {
-            flex: 0 0 100%; display: flex; align-items: center; justify-content: center; padding: 10px 0;
+            flex: 0 0 82%; display: flex; align-items: center; justify-content: center; padding: 10px 0;
+            opacity: .45; transform: scale(.92); transition: opacity .4s ease, transform .4s ease;
+        }
+        .review-all-slideshow-slide.rv-active {
+            opacity: 1; transform: scale(1);
         }
         /* ছবির চারপাশে plain static ফ্রেম — আগে এখানে ঘুরন্ত (spinning) আলোর বর্ডার animation ছিল, সেটা বাদ */
         .rv-img-frame {
@@ -1756,14 +1761,27 @@ async function loadReviewSection() {
    সাথে touch/swipe এবং arrow+dot দিয়ে manual control। শুধু ছবির চারপাশের ঘুরন্ত বর্ডার
    বাদ দেওয়া হয়েছে (CSS-এ rv-img-frame এখন static)। */
 let __rvAllTimer = null;
-let __rvAllIdx = 0;
+let __rvAllIdx = 0;      // "real" slide index (0-based, matches dots) — no clone offset
 let __rvAllTotal = 0;
+let __rvHasClones = false; // true if leading/trailing clone slides exist (needs >1 image)
+
+// DOM position = real index + 1 যখন leading clone আছে (clone slide 0 তে বসে)
+function __rvDomIdx(realIdx) {
+    return __rvHasClones ? realIdx + 1 : realIdx;
+}
 
 function rvSetTrackPosition(withTransition) {
     const track = document.getElementById('reviewAllSlideshowTrack');
     if (!track) return;
     track.style.transition = withTransition ? 'transform .5s ease' : 'none';
-    track.style.transform = `translateX(-${__rvAllIdx * 100}%)`;
+    // Slide width 82% + (18%/2 = 9%) centering offset per step, যাতে active slide viewport-এর
+    // ঠিক মাঝে থাকে এবং দুই পাশের slide আংশিকভাবে (peek) দেখা যায়
+    const SLIDE_PCT = 82;
+    const offset = (100 - SLIDE_PCT) / 2;
+    const domIdx = __rvDomIdx(__rvAllIdx);
+    track.style.transform = `translateX(calc(-${domIdx * SLIDE_PCT}% + ${offset}%))`;
+    const slides = track.querySelectorAll('.review-all-slideshow-slide');
+    slides.forEach((el, i) => el.classList.toggle('rv-active', i === domIdx));
     const dots = document.getElementById('rvAllDots');
     if (dots) dots.querySelectorAll('.rv-slide-dot').forEach((el, i) => el.classList.toggle('active', i === __rvAllIdx));
 }
@@ -1774,43 +1792,48 @@ function rvStartAutoplay() {
     __rvAllTimer = setInterval(() => {
         const track = document.getElementById('reviewAllSlideshowTrack');
         if (!track) { clearInterval(__rvAllTimer); return; }
-        __rvAllIdx++;
-        rvSetTrackPosition(true);
-        if (__rvAllIdx === __rvAllTotal) {
-            // clone (প্রথম ছবির হুবহু কপি) দেখানো শেষ হলে চুপচাপ আসল প্রথম position-এ ফিরিয়ে আনা হচ্ছে
-            setTimeout(() => { __rvAllIdx = 0; rvSetTrackPosition(false); }, 520);
-        }
+        rvNextSlide(true);
     }, 2200);
 }
 
 // Arrow/dot/swipe থেকে manually navigate করলে autoplay timer রিসেট হয় — যাতে ইউজার একটা ছবি
 // দেখা শুরু করার সাথে সাথেই হঠাৎ আবার auto-advance হয়ে না যায়।
-function rvNextSlide() {
+function rvNextSlide(fromAutoplay) {
     if (__rvAllTotal < 2) return;
-    __rvAllIdx = (__rvAllIdx + 1) % __rvAllTotal;
-    rvSetTrackPosition(true);
-    rvStartAutoplay();
+    if (__rvAllIdx === __rvAllTotal - 1) {
+        // শেষ real slide থেকে পরেরটায় — trailing clone (প্রথম ছবির কপি) এর দিকে smooth transition,
+        // তারপর নিঃশব্দে (no-transition) আসল প্রথম slide-এর position এ ফিরিয়ে আনা হয়
+        __rvAllIdx = __rvAllTotal; // clone position (dots handling ignores out-of-range safely below)
+        const track = document.getElementById('reviewAllSlideshowTrack');
+        const SLIDE_PCT = 82, offset = (100 - SLIDE_PCT) / 2;
+        const domIdx = __rvDomIdx(__rvAllTotal); // trailing clone's DOM index
+        if (track) {
+            track.style.transition = 'transform .5s ease';
+            track.style.transform = `translateX(calc(-${domIdx * SLIDE_PCT}% + ${offset}%))`;
+        }
+        setTimeout(() => { __rvAllIdx = 0; rvSetTrackPosition(false); }, 520);
+    } else {
+        __rvAllIdx++;
+        rvSetTrackPosition(true);
+    }
+    if (!fromAutoplay) rvStartAutoplay();
 }
 function rvPrevSlide() {
     if (__rvAllTotal < 2) return;
-    const track = document.getElementById('reviewAllSlideshowTrack');
     if (__rvAllIdx === 0) {
-        // শুধু শেষে clone আছে, শুরুতে নেই — তাই "আগেরটা" চাইলে প্রথমে নিঃশব্দে (no-transition)
-        // clone position-এ jump করে, তারপর সেখান থেকে normal transition দিয়ে আসল শেষ slide-এ যাওয়া হয়
-        if (track) {
-            __rvAllIdx = __rvAllTotal; // clone-এর position
-            rvSetTrackPosition(false);
-            // পরের ফ্রেমে actual শেষ slide-এ smooth transition
-            requestAnimationFrame(() => {
-                __rvAllIdx = __rvAllTotal - 1;
-                rvSetTrackPosition(true);
-            });
-        }
+        // leading clone (শেষ ছবির কপি) এর দিকে smooth transition, তারপর নিঃশব্দে আসল শেষ slide-এ jump
+        __rvAllIdx = -1; // leading clone position
+        rvSetTrackPosition(true);
+        setTimeout(() => { __rvAllIdx = __rvAllTotal - 1; rvSetTrackPosition(false); }, 520);
     } else {
         __rvAllIdx--;
         rvSetTrackPosition(true);
     }
     rvStartAutoplay();
+}
+function __rvDomIdxSafe(realIdx) {
+    // rvSetTrackPosition already handles negative/over-range via __rvDomIdx; kept for clarity
+    return __rvDomIdx(realIdx);
 }
 function rvGoToSlide(i) {
     if (i < 0 || i >= __rvAllTotal) return;
@@ -1834,9 +1857,13 @@ async function loadReviewAllSlideshow(allImages) {
             </div>
         </div>`;
 
-    // Full-width sliding — প্রতিটা slide পুরো viewport width নেয় (100%)। Seamless forward-loop
-    // এর জন্য প্রথম ছবির একটা clone শেষে জুড়ে দেওয়া হচ্ছে (auto-play-এর loop-এর জন্য দরকার)।
-    const slidesHtml = allImages.map(slideImg).join('') + (allImages.length > 1 ? slideImg(allImages[0], 0) : '');
+    // Peek-style sliding — প্রতিটা slide viewport-এর 82% নেয়, বাকি অংশে দুই পাশের slide আংশিক
+    // দেখা যায়। Seamless loop-এর জন্য শুরুতে শেষ ছবির clone আর শেষে প্রথম ছবির clone জোড়া হচ্ছে,
+    // যাতে বামে-ডানে উভয় দিকেই peek করার সময় সবসময় একটা real ছবির অংশ দেখা যায়।
+    const slidesHtml =
+        (allImages.length > 1 ? slideImg(allImages[allImages.length - 1], allImages.length - 1) : '') +
+        allImages.map(slideImg).join('') +
+        (allImages.length > 1 ? slideImg(allImages[0], 0) : '');
     const dotsHtml = allImages.length > 1
         ? `<div class="rv-slide-dots" id="rvAllDots">${allImages.map((_, i) => `<button class="rv-slide-dot${i === 0 ? ' active' : ''}" onclick="rvGoToSlide(${i})" aria-label="Slide ${i+1}"></button>`).join('')}</div>`
         : '';
@@ -1851,6 +1878,8 @@ async function loadReviewAllSlideshow(allImages) {
 
     __rvAllIdx = 0;
     __rvAllTotal = allImages.length;
+    __rvHasClones = allImages.length > 1;
+    rvSetTrackPosition(false);
 
     // Touch/swipe support — বাম/ডানে সোয়াইপ করলে slide পরিবর্তন হবে
     if (allImages.length > 1) {
