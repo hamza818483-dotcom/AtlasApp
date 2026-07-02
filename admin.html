@@ -782,6 +782,7 @@
         <button class="tab-btn" onclick="switchSection('telegram',this)">🔗 Telegram Support</button>
         <button class="tab-btn" onclick="switchSection('serial',this)">🔢 Serial</button>
         <button class="tab-btn" onclick="switchSection('studytracker',this)">📚 Study Tracker</button>
+        <button class="tab-btn" onclick="switchSection('quickpractice',this)">⚡ Quick Practice</button>
     </div>
 
     <!-- ══════════════ TAB 1: CLASS ══════════════ -->
@@ -1727,8 +1728,26 @@
 
     </div>
 
+    <!-- ══════════════ TAB: QUICK PRACTICE ══════════════ -->
+    <div class="admin-section" id="secQuickpractice">
+        <div class="form-card">
+            <h3>➕ নতুন বিষয় যোগ</h3>
+            <div class="input-group">
+                <label>বিষয়ের নাম</label>
+                <input type="text" id="qpSubjectName" placeholder="যেমন: Physics 1st Paper">
+            </div>
+            <button class="btn-save" onclick="qpSaveSubject()">💾 বিষয় সেইভ করুন</button>
+        </div>
+
+        <div class="form-card">
+            <h3>📘 বিষয় সমূহ <span id="qpSubjCount" style="font-size:11px;color:var(--text2);font-weight:400"></span></h3>
+            <div id="qpSubjList"><div style="color:var(--text2);font-size:12px">লোড হচ্ছে...</div></div>
+        </div>
+    </div>
+
 </main><!-- end admin-container -->
 <script src="admin-study-tracker.js"></script>
+<script src="admin-quick-practice.js"></script>
 
 <!-- ══════════════════════════════════════════════
      JAVASCRIPT
@@ -1904,7 +1923,8 @@ function switchSection(sec, el) {
         review:    loadReviewAdmin,
         telegram:  loadTelegramAdmin,
         serial:    () => {},
-        studytracker: () => { stLoadDashCounts(); }
+        studytracker: () => { stLoadDashCounts(); },
+        quickpractice: loadQpSubjects
     };
     if (loaders[sec]) loaders[sec]();
 }
