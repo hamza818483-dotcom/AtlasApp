@@ -70,12 +70,11 @@ export default {
         const url = new URL(request.url);
         const path = url.pathname;
 
-        // ── OCR endpoint ──
-        if (path === "/ocr-page") {
-            return handleOcrPage(body, env);
-        }
-        if (path === "/ocr-status") {
-            return handleOcrStatus(body, env);
+        // ── OCR endpoints DISABLED — OCR এখন client-side Tesseract.js দিয়ে হয় (study.html),
+        //    কোনো AI API quota খরচ হয় না। এই route গুলো ভুলবশত/পুরনো কোড থেকে কল হলেও
+        //    যেন কোনো AI key খরচ না হয়, তাই এখানেই সরাসরি বন্ধ রাখা হলো। ──
+        if (path === "/ocr-page" || path === "/ocr-status") {
+            return jsonResponse({ success: false, error: "OCR endpoint disabled — client-side Tesseract.js ব্যবহার করা হচ্ছে, AI quota বাঁচাতে" }, 410);
         }
         // ── MCQ-from-PDF endpoint: fetches the PDF server-side and sends it directly
         //    to Gemini (which reads PDFs natively), avoiding client-side text extraction
