@@ -121,11 +121,12 @@
             display: flex; align-items: center; gap: 7px;
             background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 8px; padding: 4px 18px;
+            border-radius: 8px; padding: 3px 8px; height: 46px; box-sizing: border-box;
             cursor: pointer; transition: border-color .2s ease;
         }
         .atlas-brand-box:active { border-color: var(--accent); }
-        .atlas-logo-img { height: 22px; width: auto; }
+        .atlas-logo-img { height: 100%; width: auto; display: block; }
+        .atlas-logo-full { height: 100%; }
         .atlas-brand-text { font-size: 17px; font-weight: 800; color: var(--accent); letter-spacing: -.5px; }
 
         /* Header icon buttons */
@@ -400,7 +401,9 @@
         .review-cat-tile .rct-count { color: var(--text-secondary); font-size: 8.5px; font-weight: 600; }
         .review-cat-tile.empty { opacity: .4; cursor: default; }
 
-        /* Category card গুলোর নিচে — সব ধরনের review image, ছোট আকারে স্ক্রিনের মাঝখানে, sliding */
+        /* Category card গুলোর নিচে — সব ধরনের review image, smooth right-to-left auto-slide,
+   সাথে touch/swipe ও arrow+dot দিয়ে manual navigation। শুধু ছবির চারপাশের ঘুরন্ত বর্ডার
+   animation বাদ দেওয়া হয়েছে (rv-img-frame এখন plain static ফ্রেম, glow spin নেই)। */
         .review-all-slideshow-title { font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; }
         /* বাইরের ভিউপোর্ট — reference ছবির মতো peek-carousel: বড় center card, দুই পাশে ছোট peek */
         .review-all-slideshow-viewport { position: relative; width: 100%; overflow: hidden; padding: 6px 0 4px; }
@@ -427,6 +430,22 @@
         }
         .review-all-slideshow-nav.rv-prev { left: 2%; }
         .review-all-slideshow-nav.rv-next { right: 2%; }
+
+        /* Screenshot-এ দেখানো স্টাইলের মতো — দুই পাশে গোল arrow বাটন */
+        .rv-slide-arrow {
+            position: absolute; top: 50%; transform: translateY(-50%); z-index: 3;
+            width: 28px; height: 28px; border-radius: 50%; border: none; cursor: pointer;
+            background: rgba(20,20,30,.5); color: #fff; font-size: 15px; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .rv-slide-arrow:active { transform: translateY(-50%) scale(.9); }
+        .rv-slide-arrow.prev { left: 6px; }
+        .rv-slide-arrow.next { right: 6px; }
+
+        /* নিচে dots — কোন slide এ আছি সেটা বোঝানোর জন্য */
+        .rv-slide-dots { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
+        .rv-slide-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(108,99,255,.25); border: none; padding: 0; cursor: pointer; }
+        .rv-slide-dot.active { background: #6C63FF; width: 18px; border-radius: 4px; }
 
         /* Gallery overlay — device-gallery style grid, then fullscreen swipe viewer */
         .review-gallery-bg {
@@ -689,16 +708,7 @@
         }
 
         /* Button icons — proper semantic icons not color circles */
-        .icon-class::before    { content: '📚'; }
-        .icon-board::before    { content: '🎯'; }
-        .icon-medical::before  { content: '🏥'; }
-        .icon-varsity::before  { content: '🎓'; }
-        .icon-practice::before { content: '✏️'; }
-        .icon-model::before    { content: '📋'; }
-        .icon-mock::before     { content: '🔁'; }
-        .icon-mistakes::before { content: '⚠️'; }
-        .icon-ai::before       { content: '🤖'; }
-        .icon-admin::before    { content: '👑'; }
+
 
         /* ─────────────────────────────────────────────
            SOCIAL CHIPS  (Flutter: SocialChipRow widget)
@@ -1069,6 +1079,7 @@
         .empty-state { text-align:center; padding:30px 20px; color:var(--text-secondary); }
         .empty-icon  { font-size:36px; margin-bottom:8px; display:block; }
     
+        .ei{width:1em;height:1em;display:inline-block;vertical-align:-0.14em;flex-shrink:0}
         .si-tile{width:26px;height:26px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 2px 5px rgba(0,0,0,.2)}
         .si-tile svg{width:15px;height:15px}
         .ni-tile{width:24px;height:24px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 2px 4px rgba(0,0,0,.2)}
@@ -1116,7 +1127,7 @@
         <button class="sidebar-item" onclick="goTo('focus.html');closeSidebar();">
             <span class="si-icon"><span class="si-tile tile-emerald"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" stroke="#fff" stroke-width="1.8"/><path d="M12 9v4l2.5 2.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 3h4M12 3v2" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></span></span> Focus Timer
         </button>
-        <button class="sidebar-item" onclick="showToast('শীঘ্রই আসছে! 🚧');closeSidebar();">
+        <button class="sidebar-item" onclick="goTo('study-tracker.html');closeSidebar();">
             <span class="si-icon"><span class="si-tile tile-sky"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19V11M9.5 19V6M15 19V13.5M20 19V8.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></span></span> Study Tracker
         </button>
         <button class="sidebar-item" onclick="goTo('profile.html#pomoScreen');closeSidebar();">
@@ -1127,6 +1138,9 @@
         </button>
         <button class="sidebar-item" onclick="goTo('exam.html?cat=board');closeSidebar();">
             <span class="si-icon"><span class="si-tile tile-sky"><svg viewBox="0 0 24 24" fill="none"><path d="M3.5 9.5L12 4l8.5 5.5M4.5 9.5v9.5h15V9.5M9.5 19v-5h5v5" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.1)"/></svg></span></span> HSC
+        </button>
+        <button class="sidebar-item" onclick="openTelegramSupportModal();closeSidebar();">
+            <span class="si-icon"><span class="si-tile tile-orange"><svg viewBox="0 0 24 24" fill="none"><path d="M21 4L3 11.5l6.5 2.5M9.5 14l2 6 3-4.5L21 4 9.5 14z" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.1)"/></svg></span></span> Telegram Support
         </button>
         <button class="sidebar-item" onclick="openAdmissionModal();closeSidebar();">
             <span class="si-icon"><span class="si-tile tile-teal"><svg viewBox="0 0 24 24" fill="none"><path d="M3 21h18M5 21V10l7-7 7 7v11" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.1)"/></svg></span></span> এডমিশন
@@ -1192,34 +1206,33 @@
 <header class="header">
     <div class="header-left">
         <button class="global-back-btn" onclick="goBackGlobal()" title="ফিরে যান" aria-label="ফিরে যান">←</button>
-        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+        <button class="hamburger" onclick="toggleSidebar()"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></button>
         <div class="atlas-brand-box" onclick="goTo('index.html')">
-            <img src="https://cdn.phototourl.com/free/2026-05-15-b45df560-6dc8-4cb7-9040-238612c8a161.png"
-                 class="atlas-logo-img" alt="ATLAS"
+            <img src="logo.png"
+                 class="atlas-logo-img atlas-logo-full" alt="ATLAS APP"
                  onerror="this.style.display='none'">
-            <span class="atlas-brand-text">ATLAS APP</span>
         </div>
     </div>
     <div class="header-right">
         <!-- Theme toggle — no toast per spec -->
-        <button class="header-icon" onclick="toggleTheme()" id="themeToggle" title="থিম পরিবর্তন">🌙</button>
+        <button class="header-icon" onclick="toggleTheme()" id="themeToggle" title="থিম পরিবর্তন"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.7"/></svg></button>
 
         <!-- Notification bell — shows unread count, opens dropdown -->
         <!-- (Flutter: IconButton + Badge + OverlayEntry) -->
         <button class="header-icon" id="notifHeaderBtn" onclick="toggleNotifDropdown()" title="নোটিফিকেশন">
-            🔔
+            <svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9a6 6 0 0112 0c0 4.5 1.5 6 1.5 6h-15S6 13.5 6 9z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M10 19a2 2 0 004 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
             <span class="notif-header-badge" id="notifHeaderBadge"></span>
         </button>
 
         <!-- Profile icon -->
-        <button class="header-icon" onclick="navigateTo('profile')" title="প্রোফাইল">👤</button>
+        <button class="header-icon" onclick="navigateTo('profile')" title="প্রোফাইল"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.7"/><path d="M4.5 20c0-3.6 3.4-6.5 7.5-6.5s7.5 2.9 7.5 6.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
     </div>
 </header>
 
 <!-- Notification Dropdown  (Flutter: OverlayEntry with PopupMenu style) -->
 <div class="notif-dropdown" id="notifDropdown">
     <div class="notif-dropdown-header">
-        <span>🔔 নোটিফিকেশন</span>
+        <span><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9a6 6 0 0112 0c0 4.5 1.5 6 1.5 6h-15S6 13.5 6 9z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M10 19a2 2 0 004 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg> নোটিফিকেশন</span>
         <span style="font-size:10px;cursor:pointer;color:var(--text-secondary);" onclick="markAllNotifsRead()">সব পড়া হয়েছে</span>
     </div>
     <div id="notifDropdownBody">
@@ -1262,7 +1275,7 @@
     <!-- (Flutter: Column of Rows, each Row = GridView shrinkWrap) -->
     <div class="btn-coverage-box">
 
-    <div class="section-sep"><span class="section-sep-label">📚 Class + Practice</span></div>
+    <div class="section-sep"><span class="section-sep-label"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 19.5V5a2 2 0 012-2h11.5v15H6a2 2 0 00-2 2zm0 0a2 2 0 002 2h11.5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 6.5h7M8 10h7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg> Class + Practice</span></div>
 
     <!-- Row 1: ফ্রি ক্লাস + মূলবই পেইজভিত্তিক প্রস্তুতি (50/50) -->
     <div class="home-row home-row-2">
@@ -1276,7 +1289,7 @@
         </button>
     </div>
 
-    <div class="section-sep"><span class="section-sep-label">🧩 ATLAS Study Aid</span></div>
+    <div class="section-sep"><span class="section-sep-label"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 8.5h4V6a2 2 0 114 0v2.5h4v4H18a2 2 0 100 4h1.5v4h-4V19a2 2 0 10-4 0v1.5h-4v-4H6a2 2 0 100-4H4.5v-4H4z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg> ATLAS Study Aid</span></div>
 
     <!-- Row 2: Focus Timer, Study Tracker, Pomodoro, GPA Calculator -->
     <div class="home-row home-row-4">
@@ -1298,7 +1311,7 @@
         </button>
     </div>
 
-    <div class="section-sep"><span class="section-sep-label">🗂️ Category / Type</span></div>
+    <div class="section-sep"><span class="section-sep-label"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg> Category / Type</span></div>
 
     <!-- Row 3: HSC, Admission, অনুশীলনী -->
     <div class="home-row home-row-3">
@@ -1316,7 +1329,7 @@
         </button>
     </div>
 
-    <div class="section-sep"><span class="section-sep-label">🚀 Super Practice</span></div>
+    <div class="section-sep"><span class="section-sep-label"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.5c3 2 4.5 5.5 4.5 9 0 2-1 4-2 5l-2.5 2-2.5-2c-1-1-2-3-2-5 0-3.5 1.5-7 4.5-9z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="10.5" r="1.6" fill="currentColor"/><path d="M8.5 15.5L6 20l3.5-1.5M15.5 15.5L18 20l-3.5-1.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Super Practice</span></div>
 
     <!-- Row 4: Telegram Support + Model Test (pair) -->
     <div class="home-row home-row-2">
@@ -1346,7 +1359,7 @@
 
     <!-- Admin Control — owner-only, lives OUTSIDE the button coverage area, separate full-width button -->
     <button class="admin-fullwidth-btn" id="adminBtn" onclick="goTo('admin.html')">
-        <span style="font-size:18px">👑</span> Admin Control
+        <span style="font-size:18px"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 18h18M4 18l-1-9 5 3.5L12 6l4 6.5 5-3.5-1 9" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></span> Admin Control
     </button>
 
     <!-- Social Chips Row  (Flutter: SocialChipsRow widget) -->
@@ -1365,7 +1378,7 @@
                              alt="Owner">
                         <div id="ownerPhotoFallback"
                              style="display:flex;width:140px;height:140px;border-radius:8px;background:var(--card-hover);color:var(--text);align-items:center;justify-content:center;font-size:36px;border:2px solid var(--border);position:relative;z-index:2;">
-                            👤
+                            <svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.7"/><path d="M4.5 20c0-3.6 3.4-6.5 7.5-6.5s7.5 2.9 7.5 6.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
                         </div>
                     </div>
                 </div>
@@ -1475,9 +1488,10 @@ function toggleTheme() {
     isDarkMode = !isDarkMode;
     document.body.classList.toggle('dark-mode', isDarkMode);
     document.body.classList.toggle('light-mode', !isDarkMode);
-    const icon = isDarkMode ? '🌙' : '☀️';
-    document.getElementById('themeToggle').textContent = icon;
-    document.getElementById('sidebarThemeIcon').textContent = icon;
+    const iconBare = isDarkMode ? '<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.7"/></svg>' : '<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.6"/><path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8L6 18M18 6l1.8-1.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+    const iconTiled = isDarkMode ? '<span class="si-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="#fff" stroke-width="1.7"/></svg></span>' : '<span class="si-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.5" stroke="#fff" stroke-width="1.6"/><path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8L6 18M18 6l1.8-1.8" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span>';
+    document.getElementById('themeToggle').innerHTML = iconBare;
+    document.getElementById('sidebarThemeIcon').innerHTML = iconTiled;
     localStorage.setItem('atlas-theme', isDarkMode ? 'dark' : 'light');
 }
 
@@ -1578,7 +1592,7 @@ async function safeFetch(url, opts = {}) {
         if (!res.ok) throw new Error(data.message || 'Error');
         return data;
     } catch(e) {
-        console.error('❌ Fetch:', e.message);
+        console.error('<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg> Fetch:', e.message);
         return [];
     }
 }
@@ -1602,7 +1616,7 @@ async function loadTimers() {
                 ${cd.subtopic ? `<div class="timer-subtopic">${escHtml(cd.subtopic)}</div>` : ''}
                 <div class="timer-clock-card">
                     <div class="timer-row">
-                        <span class="timer-clock-icon">🕐</span>
+                        <span class="timer-clock-icon"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.7"/><path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                         <div class="timer-values">
                             <div class="timer-block">
                                 <span class="timer-number countdown-d-${i}">--</span>
@@ -1687,10 +1701,10 @@ let __reviewSwipeList = [];
 let __reviewSwipeIdx = 0;
 
 const REVIEW_CATS = [
-    { key: 'class', label: 'Class', emoji: '📚' },
-    { key: 'exam', label: 'Exam', emoji: '📝' },
-    { key: 'mentoring', label: 'Mentoring', emoji: '👨‍🏫' },
-    { key: 'other', label: 'Other', emoji: '📦' },
+    { key: 'class', label: 'Class', emoji: '<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 19.5V5a2 2 0 012-2h11.5v15H6a2 2 0 00-2 2zm0 0a2 2 0 002 2h11.5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 6.5h7M8 10h7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>' },
+    { key: 'exam', label: 'Exam', emoji: '<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>' },
+    { key: 'mentoring', label: 'Mentoring', emoji: '<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="7" r="3" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 19c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><rect x="15" y="9" width="6" height="4.5" rx="0.5" stroke="currentColor" stroke-width="1.3"/><path d="M17 9V7.5a1 1 0 012 0V9" stroke="currentColor" stroke-width="1.3"/></svg>' },
+    { key: 'other', label: 'Other', emoji: '<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.5 7.5L12 3l8.5 4.5L12 12z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M3.5 7.5v9L12 21l8.5-4.5v-9M12 12v9" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>' },
 ];
 
 async function loadReviewSection() {
@@ -1719,9 +1733,9 @@ async function loadReviewSection() {
         container.innerHTML = `
             <div class="review-section">
                 <div class="review-title-box">
-                    <span class="review-star-spin">⭐</span>
+                    <span class="review-star-spin"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.5l2.6 6.3 6.9.5-5.3 4.5 1.7 6.7L12 16.8 6.1 20.5l1.7-6.7-5.3-4.5 6.9-.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></span>
                     <div class="review-section-title">Reviews</div>
-                    <span class="review-star-spin" style="animation-direction:reverse">⭐</span>
+                    <span class="review-star-spin" style="animation-direction:reverse"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.5l2.6 6.3 6.9.5-5.3 4.5 1.7 6.7L12 16.8 6.1 20.5l1.7-6.7-5.3-4.5 6.9-.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></span>
                 </div>
                 <div class="review-cat-box">${tilesHtml}</div>
                 <div id="reviewAllSlideshowContainer"></div>
@@ -1732,11 +1746,90 @@ async function loadReviewSection() {
     } catch (e) { console.error('Review section load error:', e); }
 }
 
-/* Card-গুলোর নিচের "সব রিভিউ ছবি" স্লাইডশো — main header slideshow-এর মতোই আচরণ,
-   কিন্তু নিজস্ব state variable ও DOM id ব্যবহার করে যাতে উপরের slideshow-এর সাথে conflict না হয়। */
+/* Card-গুলোর নিচের "সব রিভিউ ছবি" স্লাইডশো — smooth right-to-left auto-slide (আগের মতো),
+   সাথে touch/swipe এবং arrow+dot দিয়ে manual control। শুধু ছবির চারপাশের ঘুরন্ত বর্ডার
+   বাদ দেওয়া হয়েছে (CSS-এ rv-img-frame এখন static)। */
 let __rvAllTimer = null;
-let __rvAllIdx = 0;
+let __rvAllIdx = 0;      // "real" slide index (0-based, matches dots) — no clone offset
 let __rvAllTotal = 0;
+let __rvHasClones = false; // true if leading/trailing clone slides exist (needs >1 image)
+
+// DOM position = real index + 1 যখন leading clone আছে (clone slide 0 তে বসে)
+function __rvDomIdx(realIdx) {
+    return __rvHasClones ? realIdx + 1 : realIdx;
+}
+
+function rvSetTrackPosition(withTransition) {
+    const track = document.getElementById('reviewAllSlideshowTrack');
+    if (!track) return;
+    track.style.transition = withTransition ? 'transform .5s ease' : 'none';
+    // Slide width 82% + (18%/2 = 9%) centering offset per step, যাতে active slide viewport-এর
+    // ঠিক মাঝে থাকে এবং দুই পাশের slide আংশিকভাবে (peek) দেখা যায়
+    const SLIDE_PCT = 78;
+    const offset = (100 - SLIDE_PCT) / 2;
+    const domIdx = __rvDomIdx(__rvAllIdx);
+    track.style.transform = `translateX(calc(-${domIdx * SLIDE_PCT}% + ${offset}%))`;
+    const slides = track.querySelectorAll('.review-all-slideshow-slide');
+    slides.forEach((el, i) => el.classList.toggle('rv-active', i === domIdx));
+    const dots = document.getElementById('rvAllDots');
+    if (dots) dots.querySelectorAll('.rv-slide-dot').forEach((el, i) => el.classList.toggle('active', i === __rvAllIdx));
+}
+
+function rvStartAutoplay() {
+    if (__rvAllTimer) clearInterval(__rvAllTimer);
+    if (__rvAllTotal < 2) return;
+    __rvAllTimer = setInterval(() => {
+        const track = document.getElementById('reviewAllSlideshowTrack');
+        if (!track) { clearInterval(__rvAllTimer); return; }
+        rvNextSlide(true);
+    }, 2200);
+}
+
+// Arrow/dot/swipe থেকে manually navigate করলে autoplay timer রিসেট হয় — যাতে ইউজার একটা ছবি
+// দেখা শুরু করার সাথে সাথেই হঠাৎ আবার auto-advance হয়ে না যায়।
+function rvNextSlide(fromAutoplay) {
+    if (__rvAllTotal < 2) return;
+    if (__rvAllIdx === __rvAllTotal - 1) {
+        // শেষ real slide থেকে পরেরটায় — trailing clone (প্রথম ছবির কপি) এর দিকে smooth transition,
+        // তারপর নিঃশব্দে (no-transition) আসল প্রথম slide-এর position এ ফিরিয়ে আনা হয়
+        __rvAllIdx = __rvAllTotal; // clone position (dots handling ignores out-of-range safely below)
+        const track = document.getElementById('reviewAllSlideshowTrack');
+        const SLIDE_PCT = 78, offset = (100 - SLIDE_PCT) / 2;
+        const domIdx = __rvDomIdx(__rvAllTotal); // trailing clone's DOM index
+        if (track) {
+            track.style.transition = 'transform .5s ease';
+            track.style.transform = `translateX(calc(-${domIdx * SLIDE_PCT}% + ${offset}%))`;
+        }
+        setTimeout(() => { __rvAllIdx = 0; rvSetTrackPosition(false); }, 520);
+    } else {
+        __rvAllIdx++;
+        rvSetTrackPosition(true);
+    }
+    if (!fromAutoplay) rvStartAutoplay();
+}
+function rvPrevSlide() {
+    if (__rvAllTotal < 2) return;
+    if (__rvAllIdx === 0) {
+        // leading clone (শেষ ছবির কপি) এর দিকে smooth transition, তারপর নিঃশব্দে আসল শেষ slide-এ jump
+        __rvAllIdx = -1; // leading clone position
+        rvSetTrackPosition(true);
+        setTimeout(() => { __rvAllIdx = __rvAllTotal - 1; rvSetTrackPosition(false); }, 520);
+    } else {
+        __rvAllIdx--;
+        rvSetTrackPosition(true);
+    }
+    rvStartAutoplay();
+}
+function __rvDomIdxSafe(realIdx) {
+    // rvSetTrackPosition already handles negative/over-range via __rvDomIdx; kept for clarity
+    return __rvDomIdx(realIdx);
+}
+function rvGoToSlide(i) {
+    if (i < 0 || i >= __rvAllTotal) return;
+    __rvAllIdx = i;
+    rvSetTrackPosition(true);
+    rvStartAutoplay();
+}
 
 async function loadReviewAllSlideshow(allImages) {
     const wrap = document.getElementById('reviewAllSlideshowContainer');
@@ -1846,7 +1939,7 @@ function openReviewSwipe(catKey, idx) {
         bg.id = 'reviewSwipeBg';
         bg.className = 'review-swipe-bg';
         bg.innerHTML = `
-            <span class="review-swipe-close" onclick="closeReviewSwipe()">✕</span>
+            <span class="review-swipe-close" onclick="closeReviewSwipe()"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></span>
             <img id="reviewSwipeImg" src="">
             <div class="review-swipe-counter" id="reviewSwipeCounter"></div>`;
         document.body.appendChild(bg);
@@ -2086,7 +2179,7 @@ async function loadMentors() {
         if (!data?.length) return;
 
         let html = `<div class="mentors-section">
-            <div class="mentors-title">👨‍🏫 আমাদের মেন্টর</div>
+            <div class="mentors-title"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="7" r="3" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 19c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><rect x="15" y="9" width="6" height="4.5" rx="0.5" stroke="currentColor" stroke-width="1.3"/><path d="M17 9V7.5a1 1 0 012 0V9" stroke="currentColor" stroke-width="1.3"/></svg> আমাদের মেন্টর</div>
             <div class="mentors-grid">`;
 
         data.forEach(m => {
@@ -2094,13 +2187,13 @@ async function loadMentors() {
                 html += `<div class="mentor-item">
                     <img src="${escHtml(m.photo_url)}" class="mentor-photo" alt="${escHtml(m.name)}"
                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" loading="lazy">
-                    <div class="mentor-photo-fallback" style="display:none;">👤</div>
+                    <div class="mentor-photo-fallback" style="display:none;"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.7"/><path d="M4.5 20c0-3.6 3.4-6.5 7.5-6.5s7.5 2.9 7.5 6.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
                     <div class="mentor-name">${escHtml(m.name)}</div>
                     <div class="mentor-role">${escHtml(m.role||'')}</div>
                 </div>`;
             } else {
                 html += `<div class="mentor-item">
-                    <div class="mentor-photo-fallback">👤</div>
+                    <div class="mentor-photo-fallback"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.7"/><path d="M4.5 20c0-3.6 3.4-6.5 7.5-6.5s7.5 2.9 7.5 6.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
                     <div class="mentor-name">${escHtml(m.name)}</div>
                     <div class="mentor-role">${escHtml(m.role||'')}</div>
                 </div>`;
@@ -2119,30 +2212,30 @@ async function loadMentors() {
 function openModelTestModal() {
     const mc = document.getElementById('modalContent');
     mc.innerHTML = `
-        <div class="modal-title">📖 Model Test</div>
+        <div class="modal-title"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 6c-2-1.3-4.7-1.7-7-1.5v12.9c2.3-.2 5 .2 7 1.5 2-1.3 4.7-1.7 7-1.5V4.5c-2.3-.2-5 .2-7 1.5z" stroke="currentColor" stroke-width="1.6"/><path d="M12 6v12.9" stroke="currentColor" stroke-width="1.6"/></svg> Model Test</div>
 
-        <div class="model-segment-label">🟥 Medical Segment</div>
+        <div class="model-segment-label"><svg class="ei" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3" fill="#e5484d"/></svg> Medical Segment</div>
         <button class="model-btn" onclick="closeModal();goTo('exam.html?cat=model&sub=medical_subject')">
-            🏥 Medical (Subject Final)
+            <svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> Medical (Subject Final)
         </button>
         <button class="model-btn" onclick="closeModal();goTo('exam.html?cat=model&sub=medical_paper')">
-            🏥 Medical (Paper Final)
+            <svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> Medical (Paper Final)
         </button>
         <button class="model-btn" onclick="closeModal();goTo('exam.html?cat=model&sub=full')">
-            📖 Full Model Test
+            <svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 6c-2-1.3-4.7-1.7-7-1.5v12.9c2.3-.2 5 .2 7 1.5 2-1.3 4.7-1.7 7-1.5V4.5c-2.3-.2-5 .2-7 1.5z" stroke="currentColor" stroke-width="1.6"/><path d="M12 6v12.9" stroke="currentColor" stroke-width="1.6"/></svg> Full Model Test
         </button>
         <div class="model-sub-note">জীববিজ্ঞান=৩০ | রসায়ন=২৫ | পদার্থ=১৫ | সাধারণ জ্ঞান + নৈতিকতা=১৫ | ইংরেজি=১৫</div>
 
-        <div class="model-segment-label varsity" style="margin-top:8px;">🟦 Varsity Segment</div>
+        <div class="model-segment-label varsity" style="margin-top:8px;"><svg class="ei" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3" fill="#3b82f6"/></svg> Varsity Segment</div>
         <button class="model-btn" onclick="closeModal();goTo('exam.html?cat=varsity&sub=varsitywise')">
-            🎓 Varsity-wise মডেল
+            <svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5L2.5 9.5 12 14 21.5 9.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M6.5 11.7v4.6c0 1.4 2.5 2.5 5.5 2.5s5.5-1.1 5.5-2.5v-4.6" stroke="currentColor" stroke-width="1.5"/><path d="M21.5 9.5v5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Varsity-wise মডেল
         </button>
         <button class="model-btn" onclick="closeModal();goTo('exam.html?cat=varsity&sub=chapter')">
-            📖 চ্যাপ্টারভিত্তিক
+            <svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 6c-2-1.3-4.7-1.7-7-1.5v12.9c2.3-.2 5 .2 7 1.5 2-1.3 4.7-1.7 7-1.5V4.5c-2.3-.2-5 .2-7 1.5z" stroke="currentColor" stroke-width="1.6"/><path d="M12 6v12.9" stroke="currentColor" stroke-width="1.6"/></svg> চ্যাপ্টারভিত্তিক
         </button>
 
         <div class="modal-close">
-            <button class="btn btn-outline" onclick="closeModal()" style="width:100%;">✕ বন্ধ</button>
+            <button class="btn btn-outline" onclick="closeModal()" style="width:100%;"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg> বন্ধ</button>
         </div>`;
     document.getElementById('mainModal').classList.add('active');
 }
@@ -2152,15 +2245,15 @@ function openModelTestModal() {
 function openAdmissionModal() {
     const mc = document.getElementById('modalContent');
     mc.innerHTML = `
-        <div class="modal-title">🏛️ এডমিশন প্রস্তুতি</div>
+        <div class="modal-title"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 21h16M5 21V10M19 21V10M3 10l9-6 9 6M8 10v7M12 10v7M16 10v7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> এডমিশন প্রস্তুতি</div>
         <button class="model-btn" onclick="closeModal();goTo('exam.html?cat=medical')">
-            🏥 মেডিকেল/ডেন্টাল
+            <svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> মেডিকেল/ডেন্টাল
         </button>
         <button class="model-btn" onclick="closeModal();goTo('exam.html?cat=varsity')">
-            🎓 ভার্সিটি প্রস্তুতি
+            <svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5L2.5 9.5 12 14 21.5 9.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M6.5 11.7v4.6c0 1.4 2.5 2.5 5.5 2.5s5.5-1.1 5.5-2.5v-4.6" stroke="currentColor" stroke-width="1.5"/><path d="M21.5 9.5v5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> ভার্সিটি প্রস্তুতি
         </button>
         <div class="modal-close">
-            <button class="btn btn-outline" onclick="closeModal()" style="width:100%;">✕ বন্ধ</button>
+            <button class="btn btn-outline" onclick="closeModal()" style="width:100%;"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg> বন্ধ</button>
         </div>`;
     document.getElementById('mainModal').classList.add('active');
 }
@@ -2180,21 +2273,21 @@ function openAdmissionModal() {
 function openTelegramSupportModal() {
     const mc = document.getElementById('modalContent');
     mc.innerHTML = `
-        <div class="modal-title">🔗 Telegram Support</div>
+        <div class="modal-title"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 14.5l5-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M7.5 12.5l-2 2a3.2 3.2 0 004.5 4.5l2.5-2.5M16.5 11.5l2-2a3.2 3.2 0 00-4.5-4.5l-2.5 2.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg> Telegram Support</div>
         <button class="tg-box" onclick="window.__tgOpenPollQuiz()">
-            <span>🔗 Telegram Poll/Quiz</span><span>→</span>
+            <span><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 14.5l5-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M7.5 12.5l-2 2a3.2 3.2 0 004.5 4.5l2.5-2.5M16.5 11.5l2-2a3.2 3.2 0 00-4.5-4.5l-2.5 2.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg> Telegram Poll/Quiz</span><span>→</span>
         </button>
         <button class="tg-box" onclick="window.__tgOpenDirectLink('pdf_support')">
-            <span>🔗 Free PDF Support</span><span>→</span>
+            <span><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 14.5l5-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M7.5 12.5l-2 2a3.2 3.2 0 004.5 4.5l2.5-2.5M16.5 11.5l2-2a3.2 3.2 0 00-4.5-4.5l-2.5 2.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg> Free PDF Support</span><span>→</span>
         </button>
         <button class="tg-box" onclick="window.__tgOpenPracticeBot()">
-            <span>🔗 Telegram Practice Bot</span><span>→</span>
+            <span><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 14.5l5-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M7.5 12.5l-2 2a3.2 3.2 0 004.5 4.5l2.5-2.5M16.5 11.5l2-2a3.2 3.2 0 00-4.5-4.5l-2.5 2.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg> Telegram Practice Bot</span><span>→</span>
         </button>
         <button class="tg-box" onclick="window.__tgOpenDirectLink('all_groups_channels')">
-            <span>🔗 সকল গ্রুপ+চ্যানেল</span><span>→</span>
+            <span><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 14.5l5-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M7.5 12.5l-2 2a3.2 3.2 0 004.5 4.5l2.5-2.5M16.5 11.5l2-2a3.2 3.2 0 00-4.5-4.5l-2.5 2.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg> সকল গ্রুপ+চ্যানেল</span><span>→</span>
         </button>
         <div class="modal-close">
-            <button class="btn btn-outline" onclick="closeModal()" style="width:100%;">✕ বন্ধ</button>
+            <button class="btn btn-outline" onclick="closeModal()" style="width:100%;"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg> বন্ধ</button>
         </div>`;
     document.getElementById('mainModal').classList.add('active');
 }
@@ -2210,26 +2303,26 @@ async function __tgFetchLink(key) {
 window.__tgOpenDirectLink = async function (key) {
     try {
         const row = await __tgFetchLink(key);
-        if (!row?.link) { showToast('⚠️ এখনো লিংক যোগ করা হয়নি।'); return; }
+        if (!row?.link) { showToast('এখনো লিংক যোগ করা হয়নি।'); return; }
         closeModal();
         window.open(row.link, '_blank');
     } catch (e) {
         console.error('__tgOpenDirectLink error:', e);
-        showToast('⚠️ লোড করতে সমস্যা হয়েছে।');
+        showToast('লোড করতে সমস্যা হয়েছে।');
     }
 };
 
 // Practice Bot — description + "Start Now" বাটন দেখায়, বাটনে ক্লিক করলে লিংকে যায়
 window.__tgOpenPracticeBot = async function () {
     const mc = document.getElementById('modalContent');
-    mc.innerHTML = `<div class="modal-title">🔗 Telegram Practice Bot</div><p class="tg-empty">লোড হচ্ছে...</p>`;
+    mc.innerHTML = `<div class="modal-title"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 14.5l5-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M7.5 12.5l-2 2a3.2 3.2 0 004.5 4.5l2.5-2.5M16.5 11.5l2-2a3.2 3.2 0 00-4.5-4.5l-2.5 2.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg> Telegram Practice Bot</div><p class="tg-empty">লোড হচ্ছে...</p>`;
     try {
         const row = await __tgFetchLink('practice_bot');
         mc.innerHTML = `
             <button class="tg-back-btn" onclick="openTelegramSupportModal()">← ফিরে যান</button>
-            <div class="modal-title" style="margin-top:0;">🔗 Telegram Practice Bot</div>
+            <div class="modal-title" style="margin-top:0;"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 14.5l5-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M7.5 12.5l-2 2a3.2 3.2 0 004.5 4.5l2.5-2.5M16.5 11.5l2-2a3.2 3.2 0 00-4.5-4.5l-2.5 2.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg> Telegram Practice Bot</div>
             <div class="tg-desc-box">${escHtml(row?.description || 'বিস্তারিত শীঘ্রই যোগ করা হবে।')}</div>
-            ${row?.link ? `<button class="tg-join-btn" onclick="window.open('${row.link.replace(/'/g, "\\'")}','_blank')">🚀 Start Now</button>` : '<p class="tg-empty">লিংক এখনো যোগ করা হয়নি।</p>'}
+            ${row?.link ? `<button class="tg-join-btn" onclick="window.open('${row.link.replace(/'/g, "\\'")}','_blank')"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.5c3 2 4.5 5.5 4.5 9 0 2-1 4-2 5l-2.5 2-2.5-2c-1-1-2-3-2-5 0-3.5 1.5-7 4.5-9z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="10.5" r="1.6" fill="currentColor"/><path d="M8.5 15.5L6 20l3.5-1.5M15.5 15.5L18 20l-3.5-1.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Start Now</button>` : '<p class="tg-empty">লিংক এখনো যোগ করা হয়নি।</p>'}
         `;
     } catch (e) {
         console.error('__tgOpenPracticeBot error:', e);
@@ -2242,24 +2335,24 @@ window.__tgPollSubjects = [];
 
 window.__tgOpenPollQuiz = async function () {
     const mc = document.getElementById('modalContent');
-    mc.innerHTML = `<div class="modal-title">🔗 Telegram Poll/Quiz</div><p class="tg-empty">লোড হচ্ছে...</p>`;
+    mc.innerHTML = `<div class="modal-title"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 14.5l5-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M7.5 12.5l-2 2a3.2 3.2 0 004.5 4.5l2.5-2.5M16.5 11.5l2-2a3.2 3.2 0 00-4.5-4.5l-2.5 2.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg> Telegram Poll/Quiz</div><p class="tg-empty">লোড হচ্ছে...</p>`;
     try {
         const data = await safeFetch(`${SUPABASE_URL}/rest/v1/telegram_poll_subjects?select=*&order=sort_order.asc,created_at.asc&limit=100`);
         window.__tgPollSubjects = data || [];
 
         let html = `<button class="tg-back-btn" onclick="openTelegramSupportModal()">← ফিরে যান</button>
-            <div class="modal-title" style="margin-top:0;">🔗 Telegram Poll/Quiz</div>`;
+            <div class="modal-title" style="margin-top:0;"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 14.5l5-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M7.5 12.5l-2 2a3.2 3.2 0 004.5 4.5l2.5-2.5M16.5 11.5l2-2a3.2 3.2 0 00-4.5-4.5l-2.5 2.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg> Telegram Poll/Quiz</div>`;
 
         if (!data?.length) {
             html += `<p class="tg-empty">কোনো সাবজেক্ট যোগ করা হয়নি।</p>`;
         } else {
             data.forEach(s => {
                 html += `<button class="tg-box" onclick="window.__tgOpenPollSubject('${s.id}')">
-                    <span>📘 ${escHtml(s.subject)}</span><span>→</span>
+                    <span><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 4.5A2 2 0 017 3h12v16H7a2 2 0 00-2 2z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M19 19v2" stroke="currentColor" stroke-width="1.6"/></svg> ${escHtml(s.subject)}</span><span>→</span>
                 </button>`;
             });
         }
-        html += `<div class="modal-close"><button class="btn btn-outline" onclick="closeModal()" style="width:100%;">✕ বন্ধ</button></div>`;
+        html += `<div class="modal-close"><button class="btn btn-outline" onclick="closeModal()" style="width:100%;"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg> বন্ধ</button></div>`;
         mc.innerHTML = html;
     } catch (e) {
         console.error('__tgOpenPollQuiz error:', e);
@@ -2273,9 +2366,9 @@ window.__tgOpenPollSubject = function (id) {
     if (!subj) return;
     mc.innerHTML = `
         <button class="tg-back-btn" onclick="window.__tgOpenPollQuiz()">← সাবজেক্ট তালিকায় ফিরুন</button>
-        <div class="modal-title" style="margin-top:0;">📘 ${escHtml(subj.subject)}</div>
+        <div class="modal-title" style="margin-top:0;"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 4.5A2 2 0 017 3h12v16H7a2 2 0 00-2 2z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M19 19v2" stroke="currentColor" stroke-width="1.6"/></svg> ${escHtml(subj.subject)}</div>
         ${subj.description ? `<div class="tg-desc-box">${escHtml(subj.description)}</div>` : ''}
-        ${subj.link ? `<button class="tg-join-btn" onclick="window.open('${subj.link.replace(/'/g, "\\'")}','_blank')">✅ Join Now</button>` : '<p class="tg-empty">লিংক এখনো যোগ করা হয়নি।</p>'}
+        ${subj.link ? `<button class="tg-join-btn" onclick="window.open('${subj.link.replace(/'/g, "\\'")}','_blank')"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12.5l5 5L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Join Now</button>` : '<p class="tg-empty">লিংক এখনো যোগ করা হয়নি।</p>'}
     `;
 };
 
@@ -2291,14 +2384,14 @@ async function openMistakesModal() {
     const mc = document.getElementById('modalContent');
 
     if (!sess) {
-        mc.innerHTML = `<div class="modal-title">⚠️ My Mistakes</div>
+        mc.innerHTML = `<div class="modal-title"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.3 4L2 18h20L13.7 4a2 2 0 00-3.4 0z" stroke="currentColor" stroke-width="1.7"/><path d="M12 9v5M12 17h.01" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg> My Mistakes</div>
             <div class="empty-state">
-                <span class="empty-icon">🔒</span>
+                <span class="empty-icon"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="10.5" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M8 10.5V7.5a4 4 0 018 0v3" stroke="currentColor" stroke-width="1.7"/></svg></span>
                 <div>এই ফিচার ব্যবহার করতে লগইন করুন</div>
             </div>
             <div class="modal-close">
-                <button class="btn btn-primary" onclick="closeModal();goTo('auth.html')" style="width:100%;">🔑 লগইন করুন</button>
-                <button class="btn btn-outline" onclick="closeModal()" style="width:100%;margin-top:6px;">✕ বন্ধ</button>
+                <button class="btn btn-primary" onclick="closeModal();goTo('auth.html')" style="width:100%;"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M11 11l9 9M17 17l2.5-2.5M19.5 19.5L22 17" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg> লগইন করুন</button>
+                <button class="btn btn-outline" onclick="closeModal()" style="width:100%;margin-top:6px;"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg> বন্ধ</button>
             </div>`;
         document.getElementById('mainModal').classList.add('active');
         return;
@@ -2313,13 +2406,13 @@ function renderMistakesModal() {
     // Check if any wrong/skip
     const hasMistakes = mistakesData.some(r => (r.wrong||0) > 0 || (r.skipped||0) > 0);
     if (!mistakesData.length || !hasMistakes) {
-        mc.innerHTML = `<div class="modal-title">⚠️ My Mistakes</div>
+        mc.innerHTML = `<div class="modal-title"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.3 4L2 18h20L13.7 4a2 2 0 00-3.4 0z" stroke="currentColor" stroke-width="1.7"/><path d="M12 9v5M12 17h.01" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg> My Mistakes</div>
             <div class="empty-state">
-                <span class="empty-icon">🎉</span>
+                <span class="empty-icon"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 20l3.5-9.5L14 4l6 6-6.5 6.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="6" cy="18" r="1" fill="currentColor"/><circle cx="17" cy="8" r="1" fill="currentColor"/></svg></span>
                 <div>সব সঠিক! কোনো ভুল নেই</div>
             </div>
             <div class="modal-close">
-                <button class="btn btn-outline" onclick="closeModal()" style="width:100%;">✕ বন্ধ</button>
+                <button class="btn btn-outline" onclick="closeModal()" style="width:100%;"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg> বন্ধ</button>
             </div>`;
         return;
     }
@@ -2333,7 +2426,7 @@ function renderMistakesModal() {
     if (currentMistakeFilter !== 'all') filtered = filtered.filter(r => r.category === currentMistakeFilter);
     if (currentSubjectFilter !== 'all') filtered = filtered.filter(r => r.subject === currentSubjectFilter);
 
-    let html = `<div class="modal-title">⚠️ My Mistakes</div>
+    let html = `<div class="modal-title"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.3 4L2 18h20L13.7 4a2 2 0 00-3.4 0z" stroke="currentColor" stroke-width="1.7"/><path d="M12 9v5M12 17h.01" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg> My Mistakes</div>
         <div class="filter-row">
             <select onchange="currentMistakeFilter=this.value;renderMistakesModal();">
                 <option value="all">সব ক্যাটাগরি</option>
@@ -2346,13 +2439,13 @@ function renderMistakesModal() {
         </div>`;
 
     if (!filtered.length) {
-        html += `<div class="empty-state"><span class="empty-icon">🔍</span><div>এই ফিল্টারে কোনো ভুল নেই</div></div>`;
+        html += `<div class="empty-state"><span class="empty-icon"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.7"/><path d="M20 20l-5-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span><div>এই ফিল্টারে কোনো ভুল নেই</div></div>`;
     } else {
         filtered.forEach(r => { html += buildMistakeCard(r); });
     }
 
     html += `<div class="modal-close">
-        <button class="btn btn-outline" onclick="closeModal()" style="width:100%;">✕ বন্ধ</button>
+        <button class="btn btn-outline" onclick="closeModal()" style="width:100%;"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg> বন্ধ</button>
     </div>`;
 
     mc.innerHTML = html;
@@ -2363,22 +2456,22 @@ function buildMistakeCard(r) {
     return `<div class="mistake-item">
         <div class="mistake-item-header">
             <div>
-                <div class="mistake-item-title">📝 ${escHtml(examName)}</div>
+                <div class="mistake-item-title"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg> ${escHtml(examName)}</div>
                 <div class="mistake-item-sub">
-                    ${r.subject ? '📘 ' + escHtml(r.subject) : ''}
-                    ${r.category ? ' 🏷️ ' + escHtml(r.category) : ''}
+                    ${r.subject ? '<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 4.5A2 2 0 017 3h12v16H7a2 2 0 00-2 2z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M19 19v2" stroke="currentColor" stroke-width="1.6"/></svg> ' + escHtml(r.subject) : ''}
+                    ${r.category ? ' <svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.5 3H4v7.5L14 20.5l7.5-7.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="8" cy="7" r="1.3" fill="currentColor"/></svg> ' + escHtml(r.category) : ''}
                 </div>
             </div>
         </div>
         <div class="mistake-item-stats">
-            <span class="mistake-stat-chip chip-wrong">❌ ভুল: ${r.wrong||0}</span>
+            <span class="mistake-stat-chip chip-wrong"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg> ভুল: ${r.wrong||0}</span>
             <span class="mistake-stat-chip chip-skip">⏭️ স্কিপ: ${r.skipped||0}</span>
         </div>
-        <div class="mistake-item-date">📅 ${toBanglaDate(r.submitted_at)}</div>
+        <div class="mistake-item-date"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="5" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M4 9.5h16M8 3v3.5M16 3v3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg> ${toBanglaDate(r.submitted_at)}</div>
         <div class="mistake-btns">
-            <button class="btn btn-outline" style="flex:1;" onclick="viewMistakeDetail('${r.id}','${r.exam_id}')">📋 বিস্তারিত</button>
-            <button class="btn btn-warning" style="flex:1;" onclick="startPractice('${r.id}','${r.exam_id}','skipped')">🔁 Practice-01</button>
-            <button class="btn btn-danger"  style="flex:1;" onclick="startPractice('${r.id}','${r.exam_id}','both')">🔁 Practice-02</button>
+            <button class="btn btn-outline" style="flex:1;" onclick="viewMistakeDetail('${r.id}','${r.exam_id}')"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="4" width="14" height="17" rx="2" stroke="currentColor" stroke-width="1.7"/><rect x="8.5" y="2.5" width="7" height="3" rx="1" fill="currentColor"/><path d="M8 11h8M8 14.5h8M8 18h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg> বিস্তারিত</button>
+            <button class="btn btn-warning" style="flex:1;" onclick="startPractice('${r.id}','${r.exam_id}','skipped')"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12a8 8 0 0113.6-5.7L19.5 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M19.5 4v4h-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12a8 8 0 01-13.6 5.7L4.5 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M4.5 20v-4h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Practice-01</button>
+            <button class="btn btn-danger"  style="flex:1;" onclick="startPractice('${r.id}','${r.exam_id}','both')"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12a8 8 0 0113.6-5.7L19.5 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M19.5 4v4h-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12a8 8 0 01-13.6 5.7L4.5 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M4.5 20v-4h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Practice-02</button>
         </div>
     </div>`;
 }
@@ -2389,7 +2482,7 @@ function buildMistakeCard(r) {
 ══════════════════════════════════════════════ */
 async function viewMistakeDetail(resultId, examId) {
     const mc = document.getElementById('modalContent');
-    mc.innerHTML = `<div class="modal-title">📋 বিস্তারিত লোড হচ্ছে...</div>
+    mc.innerHTML = `<div class="modal-title"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="4" width="14" height="17" rx="2" stroke="currentColor" stroke-width="1.7"/><rect x="8.5" y="2.5" width="7" height="3" rx="1" fill="currentColor"/><path d="M8 11h8M8 14.5h8M8 18h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg> বিস্তারিত লোড হচ্ছে...</div>
         <div class="skeleton skeleton-block"></div>`;
 
     const result = mistakesData.find(r => String(r.id) === String(resultId));
@@ -2417,22 +2510,22 @@ function renderMistakeDetailModal() {
     const pct = Math.round((score/total)*100);
     const badgeCls = pct>=80?'score-high':pct>=50?'score-mid':'score-low';
 
-    let html = `<div class="modal-title">📋 ${escHtml(examName)}</div>
+    let html = `<div class="modal-title"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="4" width="14" height="17" rx="2" stroke="currentColor" stroke-width="1.7"/><rect x="8.5" y="2.5" width="7" height="3" rx="1" fill="currentColor"/><path d="M8 11h8M8 14.5h8M8 18h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg> ${escHtml(examName)}</div>
         <div style="text-align:center;margin-bottom:8px;">
             <span style="font-size:13px;padding:3px 12px;border-radius:12px;font-weight:700;"
                   class="${badgeCls}">${score.toFixed(1)}/${total}</span>
         </div>
         <div style="display:flex;justify-content:space-around;padding:8px;background:var(--card-hover);border-radius:8px;margin-bottom:10px;">
-            <div style="text-align:center;"><div style="color:var(--success);font-size:15px;font-weight:800;">✅ ${r.correct||0}</div><div style="font-size:9px;color:var(--text-secondary);">সঠিক</div></div>
-            <div style="text-align:center;"><div style="color:var(--error);font-size:15px;font-weight:800;">❌ ${r.wrong||0}</div><div style="font-size:9px;color:var(--text-secondary);">ভুল</div></div>
+            <div style="text-align:center;"><div style="color:var(--success);font-size:15px;font-weight:800;"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12.5l5 5L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> ${r.correct||0}</div><div style="font-size:9px;color:var(--text-secondary);">সঠিক</div></div>
+            <div style="text-align:center;"><div style="color:var(--error);font-size:15px;font-weight:800;"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg> ${r.wrong||0}</div><div style="font-size:9px;color:var(--text-secondary);">ভুল</div></div>
             <div style="text-align:center;"><div style="color:var(--yellow);font-size:15px;font-weight:800;">⏭️ ${r.skipped||0}</div><div style="font-size:9px;color:var(--text-secondary);">স্কিপ</div></div>
         </div>`;
 
     if (detailModalQuestions.length) {
         html += `<div class="q-filter-tabs">
-            <button class="q-filter-tab ${currentQFilter==='all'?'active':''}" onclick="currentQFilter='all';renderMistakeDetailModal();">📋 সব</button>
-            <button class="q-filter-tab ${currentQFilter==='correct'?'active':''}" onclick="currentQFilter='correct';renderMistakeDetailModal();">✅ সঠিক</button>
-            <button class="q-filter-tab ${currentQFilter==='wrong'?'active':''}" onclick="currentQFilter='wrong';renderMistakeDetailModal();">❌ ভুল</button>
+            <button class="q-filter-tab ${currentQFilter==='all'?'active':''}" onclick="currentQFilter='all';renderMistakeDetailModal();"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="4" width="14" height="17" rx="2" stroke="currentColor" stroke-width="1.7"/><rect x="8.5" y="2.5" width="7" height="3" rx="1" fill="currentColor"/><path d="M8 11h8M8 14.5h8M8 18h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg> সব</button>
+            <button class="q-filter-tab ${currentQFilter==='correct'?'active':''}" onclick="currentQFilter='correct';renderMistakeDetailModal();"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12.5l5 5L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> সঠিক</button>
+            <button class="q-filter-tab ${currentQFilter==='wrong'?'active':''}" onclick="currentQFilter='wrong';renderMistakeDetailModal();"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg> ভুল</button>
             <button class="q-filter-tab ${currentQFilter==='skipped'?'active':''}" onclick="currentQFilter='skipped';renderMistakeDetailModal();">⏭️ স্কিপ</button>
         </div>`;
         html += buildDetailQuestionsHtml(detailModalQuestions, detailModalAnswers, currentQFilter);
@@ -2442,8 +2535,8 @@ function renderMistakeDetailModal() {
 
     html += `<div class="modal-close">
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
-            <button class="btn btn-warning" style="flex:1;" onclick="startPractice('${r.id}','${r.exam_id}','skipped')">🔁 Practice-01 (স্কিপ)</button>
-            <button class="btn btn-danger"  style="flex:1;" onclick="startPractice('${r.id}','${r.exam_id}','both')">🔁 Practice-02 (ভুল+স্কিপ)</button>
+            <button class="btn btn-warning" style="flex:1;" onclick="startPractice('${r.id}','${r.exam_id}','skipped')"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12a8 8 0 0113.6-5.7L19.5 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M19.5 4v4h-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12a8 8 0 01-13.6 5.7L4.5 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M4.5 20v-4h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Practice-01 (স্কিপ)</button>
+            <button class="btn btn-danger"  style="flex:1;" onclick="startPractice('${r.id}','${r.exam_id}','both')"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12a8 8 0 0113.6-5.7L19.5 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M19.5 4v4h-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12a8 8 0 01-13.6 5.7L4.5 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M4.5 20v-4h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Practice-02 (ভুল+স্কিপ)</button>
         </div>
         <button class="btn btn-outline" onclick="renderMistakesModal()" style="width:100%;margin-top:6px;">← ফিরে যান</button>
     </div>`;
@@ -2465,11 +2558,11 @@ function buildDetailQuestionsHtml(questions, answers, filter) {
 
     if (filter !== 'all') items = items.filter(i => i.status === filter);
     if (!items.length) return `<div class="empty-state" style="padding:20px;">
-        <span class="empty-icon">${filter==='correct'?'✅':filter==='wrong'?'❌':'⏭️'}</span>
+        <span class="empty-icon">${filter==='correct'?'<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12.5l5 5L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>':filter==='wrong'?'<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>':'⏭️'}</span>
         <div>কোনো প্রশ্ন নেই</div></div>`;
 
     return items.map(({ q, userAns, status }) => {
-        const statusLabel = status==='correct'?'✅ সঠিক':status==='wrong'?'❌ ভুল':'⏭️ স্কিপ';
+        const statusLabel = status==='correct'?'<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12.5l5 5L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> সঠিক':status==='wrong'?'<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg> ভুল':'⏭️ স্কিপ';
         const allOpts = [q.option_a, q.option_b, q.option_c, q.option_d, q.option_e].filter(Boolean);
         const optHtml = allOpts.map((opt, i) => {
             const isC = String(i)===String(q.correct_option)||String(opts[i])===String(q.correct_option);
@@ -2484,7 +2577,7 @@ function buildDetailQuestionsHtml(questions, answers, filter) {
             ${q.image_url?`<img class="question-img" src="${escHtml(q.image_url)}" alt="" loading="lazy">`:''}
             <div class="question-text">${escHtml(q.question||'')}</div>
             <ul class="options-list">${optHtml}</ul>
-            ${q.explanation?`<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>`:''}
+            ${q.explanation?`<div class="explanation-box"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 18h6M10 21h4M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0012 3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg> ${escHtml(q.explanation)}</div>`:''}
         </div>`;
     }).join('');
 }
@@ -2498,7 +2591,7 @@ function buildDetailQuestionsHtml(questions, answers, filter) {
 function startPractice(resultId, examId, mode) {
     // Collect question IDs based on mode
     const r = detailModalResult || mistakesData.find(x => String(x.id)===String(resultId));
-    if (!r) { showToast('❌ ডাটা পাওয়া যায়নি'); return; }
+    if (!r) { showToast('ডাটা পাওয়া যায়নি'); return; }
 
     let answers = {};
     try { answers = typeof r.answers==='string' ? JSON.parse(r.answers) : (r.answers||{}); } catch(e) {}
@@ -2518,7 +2611,7 @@ function startPractice(resultId, examId, mode) {
     });
 
     if (!practiceQIds.length) {
-        showToast('✅ কোনো প্রশ্ন নেই এই মোডে');
+        showToast('কোনো প্রশ্ন নেই এই মোডে');
         return;
     }
 
@@ -2626,12 +2719,12 @@ function showError(title, message, details, retryFn) {
     overlay.className = 'error-popup-overlay';
     overlay.innerHTML = `
         <div class="error-popup" onclick="event.stopPropagation()">
-            <div class="error-popup-icon">⚠️</div>
+            <div class="error-popup-icon"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.3 4L2 18h20L13.7 4a2 2 0 00-3.4 0z" stroke="currentColor" stroke-width="1.7"/><path d="M12 9v5M12 17h.01" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></div>
             <div class="error-popup-title">${title || 'কিছু সমস্যা হয়েছে'}</div>
             <div class="error-popup-message">${message || 'পরে আবার চেষ্টা করুন'}</div>
             ${details ? `<div class="error-popup-details">${details}</div>` : ''}
             <div style="display:flex;justify-content:center;gap:8px;" id="errorPopupBtnRow">
-                <button class="error-popup-btn" id="errorPopupCloseBtn">✕ বন্ধ</button>
+                <button class="error-popup-btn" id="errorPopupCloseBtn"><svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg> বন্ধ</button>
             </div>
         </div>
     `;
@@ -2642,21 +2735,21 @@ function showError(title, message, details, retryFn) {
     if (retryFn) {
         const retryBtn = document.createElement('button');
         retryBtn.className = 'error-popup-retry';
-        retryBtn.textContent = '🔄 আবার চেষ্টা';
+        retryBtn.innerHTML = '<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12a8 8 0 0113.6-5.7L19.5 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M19.5 4v4h-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12a8 8 0 01-13.6 5.7L4.5 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M4.5 20v-4h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> আবার চেষ্টা';
         retryBtn.addEventListener('click', () => { overlay.remove(); retryFn(); });
         overlay.querySelector('#errorPopupBtnRow').prepend(retryBtn);
     }
 }
 
 window.addEventListener('error', e => {
-    showError('💥 জাভাস্ক্রিপ্ট এরর', 'পৃষ্ঠাটি রিলোড করুন', e.error?.message, () => location.reload());
+    showError('<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l2 6 6-2-3.5 5.5L22 15l-6.5.5L14 22l-2-6-6 2 3.5-5.5L2 9l6.5-.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg> জাভাস্ক্রিপ্ট এরর', 'পৃষ্ঠাটি রিলোড করুন', e.error?.message, () => location.reload());
 });
 window.addEventListener('unhandledrejection', e => {
-    showError('⚠️ প্রসেসিং সমস্যা', 'অনুরোধ সম্পূর্ণ করা যায়নি', e.reason?.message, null);
+    showError('<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.3 4L2 18h20L13.7 4a2 2 0 00-3.4 0z" stroke="currentColor" stroke-width="1.7"/><path d="M12 9v5M12 17h.01" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg> প্রসেসিং সমস্যা', 'অনুরোধ সম্পূর্ণ করা যায়নি', e.reason?.message, null);
 });
 
 // Network detection
-window.addEventListener('offline', () => showError('📡 নেটওয়ার্ক নেই', 'ইন্টারনেট সংযোগ চেক করুন', null, () => location.reload()));
+window.addEventListener('offline', () => showError('<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 21v-6M12 15a4 4 0 00-4-4M12 15a4 4 0 014-4M4.5 8.5a11 11 0 0115 0M7.5 11.5a7 7 0 019 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> নেটওয়ার্ক নেই', 'ইন্টারনেট সংযোগ চেক করুন', null, () => location.reload()));
 
 /* ══════════════════════════════════════════════
    SCORE BADGE HELPER  (Flutter: ScoreBadge widget)
@@ -2673,8 +2766,8 @@ document.addEventListener('DOMContentLoaded', () => {
         isDarkMode = false;
         document.body.classList.remove('dark-mode');
         document.body.classList.add('light-mode');
-        document.getElementById('themeToggle').textContent = '☀️';
-        document.getElementById('sidebarThemeIcon').textContent = '☀️';
+        document.getElementById('themeToggle').innerHTML = '<svg class="ei" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.6"/><path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8L6 18M18 6l1.8-1.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+        document.getElementById('sidebarThemeIcon').innerHTML = '<span class="si-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.5" stroke="#fff" stroke-width="1.6"/><path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8L6 18M18 6l1.8-1.8" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span>';
     }
 
     // Load all sections  (Flutter: Future.wait([...]))

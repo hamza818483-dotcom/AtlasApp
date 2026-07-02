@@ -70,12 +70,11 @@ export default {
         const url = new URL(request.url);
         const path = url.pathname;
 
-        // ── OCR endpoint ──
-        if (path === "/ocr-page") {
-            return handleOcrPage(body, env);
-        }
-        if (path === "/ocr-status") {
-            return handleOcrStatus(body, env);
+        // ── OCR endpoints DISABLED — OCR এখন client-side Tesseract.js দিয়ে হয় (study.html),
+        //    কোনো AI API quota খরচ হয় না। এই route গুলো ভুলবশত/পুরনো কোড থেকে কল হলেও
+        //    যেন কোনো AI key খরচ না হয়, তাই এখানেই সরাসরি বন্ধ রাখা হলো। ──
+        if (path === "/ocr-page" || path === "/ocr-status") {
+            return jsonResponse({ success: false, error: "OCR endpoint disabled — client-side Tesseract.js ব্যবহার করা হচ্ছে, AI quota বাঁচাতে" }, 410);
         }
         // ── MCQ-from-PDF endpoint: fetches the PDF server-side and sends it directly
         //    to Gemini (which reads PDFs natively), avoiding client-side text extraction
@@ -88,18 +87,24 @@ export default {
         const question = (body.question || "").trim();
         const image = body.image || null; // { base64, mimeType }
         const systemPrompt = body.systemPrompt || "তুমি একজন সহায়ক AI।";
+        const skipGemini = !!body.skipGemini; // এই request-এর জন্য Gemini আগেই অন্য পথে (PDF-native) একবার
+                                                // চেষ্টা হয়ে থাকলে ফ্রন্টএন্ড এটা true পাঠায় — quota বাঁচাতে
+                                                // এখানে Gemini আবার কল না করে বাকি provider চেইন সরাসরি চলে।
 
         if (!question && !image) {
             return jsonResponse({ success: false, error: "question বা image এর একটি দিতে হবে" }, 400);
         }
 
-        const providers = [
-            () => callGemini(env, question, systemPrompt, image),
-            () => callOpenRouter(env, question, systemPrompt, image),
-            () => callGroq(env, question, systemPrompt, image),
-            () => callCerebras(env, question, systemPrompt, image),
-            () => callCloudflareAI(env, question, systemPrompt, image),
+        // Groq আগে চেষ্টা হয় (দ্রুত ও free-tier generous), fail করলে Gemini 2.5 Flash,
+        // তারপর বাকি provider গুলো fallback হিসেবে।
+        const allProviders = [
+            { name: "groq", fn: () => callGroq(env, question, systemPrompt, image) },
+            { name: "gemini", fn: () => callGemini(env, question, systemPrompt, image) },
+            { name: "openrouter", fn: () => callOpenRouter(env, question, systemPrompt, image) },
+            { name: "cerebras", fn: () => callCerebras(env, question, systemPrompt, image) },
+            { name: "cloudflare", fn: () => callCloudflareAI(env, question, systemPrompt, image) },
         ];
+        const providers = (skipGemini ? allProviders.filter(p => p.name !== "gemini") : allProviders).map(p => p.fn);
 
         // প্রতিটা provider নিজের ভেতরেই key/model rotation + backoff করে (উপরে দেখো)।
         // এখানে শুধু provider-চেইন ক্রমে চালানো হয় — কোনো একটায় সব key/model fail করলে

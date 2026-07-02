@@ -6,6 +6,9 @@
 <title>ATLAS APP · মূলবই পেইজভিত্তিক প্রস্তুতি</title>
 <link rel="stylesheet" href="style.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<!-- Tesseract.js: client-side OCR, কোনো API key/quota লাগে না — শুধু "টেক্সট কপি" ফিচারের জন্য।
+     MCQ generation-এর AI (Gemini/Groq) থেকে সম্পূর্ণ আলাদা ও স্বাধীন। -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
 <style>
 *{box-sizing:border-box}
 .screen{display:none;min-height:calc(100vh - 60px);flex-direction:column}
@@ -208,9 +211,8 @@
 <header class="header">
     <div class="header-left">
         <button class="hamburger" onclick="toggleSidebar()">☰</button>
-        <div class="atlas-brand-box" onclick="goTo('index.html')">
-            <img src="https://cdn.phototourl.com/free/2026-05-15-b45df560-6dc8-4cb7-9040-238612c8a161.png" class="atlas-logo-img" alt="ATLAS">
-            <span class="atlas-brand-text">ATLAS APP</span>
+        <div class="atlas-brand-box" onclick="goTo('index.html')" style="display:flex;align-items:center;height:46px;padding:3px 8px;cursor:pointer;">
+            <img src="logo.png" class="atlas-logo-img" alt="ATLAS APP" style="height:100%;width:auto;display:block">
         </div>
     </div>
     <div class="header-right">
@@ -567,40 +569,62 @@ function makePage(p, tot) {
     return d;
 }
 
-// OCR করা টেক্সট canvas-এর উপর invisible selectable layer হিসেবে বসানো হয়।
-// word_boxes ডেটা থাকলে (নতুন OCR pipeline) প্রতিটা শব্দ/অংশের জন্য আলাদা positioned span
-// বসানো হয় — Google Lens-এর মতো নির্দিষ্ট লাইন/শব্দ সিলেক্ট করা যায়, পুরো পেইজ layout
-// অক্ষত থাকে (কিছু ভাঙে না, শুধু ছবির উপর invisible text বসে থাকে)। পুরনো OCR করা
-// পেইজে (word_boxes নেই) আগের মতো পুরো টেক্সট একটা ব্লক হিসেবে fallback করে — কপি কাজ
-// করবে, শুধু সিলেকশন visually align নাও হতে পারে।
+// টেক্সট কপি ফিচারের জন্য Tesseract.js দিয়ে client-side (browser-এই, কোনো AI API/quota
+// ছাড়া) OCR চালানো হয়। প্রথমবার একটা পেইজ দেখলে canvas থেকে সরাসরি টেক্সট বের করে
+// book_pdf_pages-এ ক্যাশ করে রাখে (source='tesseract' মার্ক করে) — পরের বার সেই ক্যাশড
+// টেক্সটই ব্যবহার হয়, বারবার re-run করতে হয় না। MCQ generation-এর AI (Gemini/Groq)
+// থেকে এটা সম্পূর্ণ আলাদা ও স্বাধীন পাইপলাইন — এখানে কোনো AI vision call নেই।
+let _tesseractWorker = null;
+async function getTesseractWorker() {
+    if (_tesseractWorker) return _tesseractWorker;
+    if (typeof Tesseract === 'undefined') return null;
+    _tesseractWorker = await Tesseract.createWorker('ben+eng');
+    return _tesseractWorker;
+}
+
 async function loadPageTextLayer(p) {
     const tl = document.getElementById('tl-'+p);
     if (!tl || tl.dataset.loaded) return;
     tl.dataset.loaded = '1';
+
+    // আগে থেকে ক্যাশ করা টেক্সট আছে কি না চেক করি — থাকলে সরাসরি সেটাই দেখাই, re-run লাগবে না
     try {
-        const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdf_pages?pdf_id=eq.${curPdfId}&page_number=eq.${p}&ocr_status=eq.done&select=extracted_text,word_boxes`);
-        const row = rows?.[0];
-        if (!row) { tl.dataset.loaded = ''; return; } // OCR এখনো শেষ না হলে পরে আবার চেষ্টা করা যাবে
+        const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/book_pdf_pages?pdf_id=eq.${curPdfId}&page_number=eq.${p}&ocr_status=eq.done&select=extracted_text`);
+        const cached = rows?.[0]?.extracted_text;
+        if (cached && cached.trim()) { tl.textContent = cached; return; }
+    } catch (_) {}
 
-        let boxes = null;
-        if (row.word_boxes) {
-            try { boxes = typeof row.word_boxes === 'string' ? JSON.parse(row.word_boxes) : row.word_boxes; } catch (_) { boxes = null; }
-        }
+    // ক্যাশ নেই — canvas render হয়ে গেলে (renderPage ইতিমধ্যে কল হয়েছে observer থেকে)
+    // সেই canvas-ই Tesseract-কে দিয়ে দিচ্ছি, আলাদা করে আবার pdf.js render করার দরকার নেই।
+    const cv = document.getElementById('cv-'+p);
+    if (!cv || cv.style.display === 'none') { tl.dataset.loaded = ''; return; } // canvas এখনো তৈরি হয়নি, পরে আবার চেষ্টা হবে
 
-        if (Array.isArray(boxes) && boxes.length) {
-            tl.classList.add('word-boxes-mode');
-            tl.innerHTML = boxes.map(b => {
-                if (!b || typeof b.t !== 'string' || !b.t.trim()) return '';
-                const x = Math.max(0, Math.min(100, b.x||0)), y = Math.max(0, Math.min(100, b.y||0));
-                const w = Math.max(0, Math.min(100-x, b.w||5)), h = Math.max(0, Math.min(100-y, b.h||3));
-                return `<span class="word-box" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%">${esc(b.t)}</span>`;
-            }).join('');
-        } else if (row.extracted_text && row.extracted_text.trim()) {
-            tl.textContent = row.extracted_text; // পুরনো পদ্ধতি — fallback
-        } else {
-            tl.dataset.loaded = '';
-        }
-    } catch (_) { tl.dataset.loaded = ''; }
+    try {
+        const worker = await getTesseractWorker();
+        if (!worker) { tl.dataset.loaded = ''; return; }
+        const { data } = await worker.recognize(cv);
+        const text = (data?.text || '').trim();
+        if (!text) return; // পেইজে টেক্সট না পেলে চুপচাপ থাকা — ভুল কিছু দেখানোর দরকার নেই
+        tl.textContent = text;
+
+        // পরের বার এই পেইজ খুললে আবার OCR না চালিয়ে সরাসরি এই টেক্সট ব্যবহারের জন্য ক্যাশ করি
+        try {
+            await fetch(`${SUPABASE_URL}/rest/v1/book_pdf_pages`, {
+                method: 'POST',
+                headers: {
+                    apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY,
+                    'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates,return=minimal'
+                },
+                body: JSON.stringify({
+                    pdf_id: curPdfId, page_number: p, extracted_text: text,
+                    ocr_status: 'done', word_count: text.split(/\s+/).length,
+                    updated_at: new Date().toISOString()
+                })
+            });
+        } catch (_) {} // ক্যাশ করা fail করলেও কপি ফিচার এই সেশনে ঠিকই কাজ করবে
+    } catch (e) {
+        tl.dataset.loaded = ''; // ব্যর্থ হলে পরে scroll করলে আবার চেষ্টা হবে
+    }
 }
 
 function setupObs() {
@@ -615,7 +639,7 @@ function setupObs() {
         entries.forEach(e => {
             if (e.isIntersecting) {
                 const p = parseInt(e.target.dataset.page);
-                if (!done.has(p)) { done.add(p); renderPage(p); logPageView(p); loadPageTextLayer(p); }
+                if (!done.has(p)) { done.add(p); logPageView(p); renderPage(p).then(() => loadPageTextLayer(p)); }
             }
         });
     // rootMargin বাড়ানো হয়েছে: পেইজ viewport-এ আসার ৫০০px আগেই render শুরু হবে
@@ -707,7 +731,11 @@ function zoom(d) {
     document.querySelectorAll('.page-card').forEach(el => {
         const p = parseInt(el.dataset.page);
         const cv = document.getElementById('cv-'+p);
-        if (cv && cv.style.display !== 'none') { renderPage(p); loadPageTextLayer(p); }
+        if (cv && cv.style.display !== 'none') {
+            const tl = document.getElementById('tl-'+p);
+            if (tl) tl.dataset.loaded = ''; // zoom বদলালে টেক্সট re-load flag রিসেট, যদিও ক্যাশ থাকলে আবার OCR চলবে না
+            renderPage(p).then(() => loadPageTextLayer(p));
+        }
     });
 }
 

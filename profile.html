@@ -65,8 +65,8 @@
         .header-left { display:flex;align-items:center;gap:10px; }
         .hamburger { background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:6px;border-radius:8px;transition:background 0.2s; }
         .hamburger:hover { background:var(--hover); }
-        .atlas-brand-box { display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:4px 10px;cursor:pointer; }
-        .atlas-logo-img { width:28px;height:28px;border-radius:6px; }
+        .atlas-brand-box { display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:3px 8px;height:46px;box-sizing:border-box;cursor:pointer; }
+        .atlas-logo-img { height:100%; width:auto; display:block; }
         .atlas-brand-text { font-size:18px;font-weight:800;letter-spacing:-0.5px;color:var(--accent); }
         @keyframes brandShift { 0%{background-position:0%}100%{background-position:200%} }
         .header-right { display:flex;gap:6px; }
@@ -786,8 +786,7 @@
         <button class="global-back-btn" onclick="goBackGlobal()" title="ফিরে যান" aria-label="ফিরে যান">←</button>
         <button class="hamburger" onclick="toggleSidebar()">☰</button>
         <div class="atlas-brand-box" onclick="goTo('index.html')">
-            <img src="https://cdn.phototourl.com/free/2026-05-15-b45df560-6dc8-4cb7-9040-238612c8a161.png" class="atlas-logo-img" alt="ATLAS" onerror="this.style.display='none'">
-            <span class="atlas-brand-text">ATLAS APP</span>
+            <img src="logo.png" class="atlas-logo-img" alt="ATLAS" onerror="this.style.display='none'">
         </div>
     </div>
     <div class="header-right">
@@ -2690,7 +2689,7 @@ function scheduleTodoNotifications() {
         if (todos.length > 0) {
             new Notification('📚 ATLAS — টার্গেট রিমাইন্ডার', {
                 body: `${todos.length}টি টার্গেট বাকি আছে! পড়া শুরু করুন।`,
-                icon: 'https://cdn.phototourl.com/free/2026-05-15-b45df560-6dc8-4cb7-9040-238612c8a161.png'
+                icon: 'logo.png'
             });
         }
     } 
@@ -2782,7 +2781,7 @@ function pomoStart() {
             if (Notification.permission === 'granted') {
                 new Notification('⏱️ ATLAS Pomodoro সম্পন্ন!', {
                     body: `"${pomoCurrentTask}" — টাইম শেষ! বিরতি নিন।`,
-                    icon: 'https://cdn.phototourl.com/free/2026-05-15-b45df560-6dc8-4cb7-9040-238612c8a161.png'
+                    icon: 'logo.png'
                 });
             }
             savePomoState();

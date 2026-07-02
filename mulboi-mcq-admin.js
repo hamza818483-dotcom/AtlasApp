@@ -158,6 +158,8 @@ async function mbSpecialExtractPage(pageNum) {
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
         try {
             let rawJson;
+            let geminiAlreadyTried = false; // এই page-এ Gemini PDF-native ইতিমধ্যে চেষ্টা হয়েছে কি না —
+                                              // fallback chain-এ আবার Gemini কল করে quota নষ্ট না করার জন্য
             if (mbPdfUrl) {
                 try {
                     const pdfPrompt = `এই PDF-এর পেইজ ${pageNum} দেখো এবং নিচের নির্দেশ অনুসরণ করো:\n${basePrompt}`;
@@ -166,6 +168,7 @@ async function mbSpecialExtractPage(pageNum) {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ pdf_url: mbPdfUrl, prompt: pdfPrompt })
                     });
+                    geminiAlreadyTried = true; // এই কল Gemini-ই ব্যবহার করে (PDF-native একমাত্র Gemini করতে পারে)
                     const data = await res.json().catch(() => null);
                     if (res.ok && data?.success && data.answer) rawJson = data.answer;
                 } catch (_) {}
@@ -175,14 +178,14 @@ async function mbSpecialExtractPage(pageNum) {
                 const textCont = await page.getTextContent();
                 const pageText = textCont.items.map(i => i.str).join(' ').trim();
                 if (pageText && pageText.length >= 30) {
-                    rawJson = await mbCallAiApi(`নিচের টেক্সট থেকে ${basePrompt}\n\nটেক্সট:\n${pageText.slice(0, 8000)}`, null);
+                    rawJson = await mbCallAiApi(`নিচের টেক্সট থেকে ${basePrompt}\n\nটেক্সট:\n${pageText.slice(0, 8000)}`, null, null, geminiAlreadyTried);
                 } else {
                     const vp = page.getViewport({ scale: 1.5 });
                     const tmp = document.createElement('canvas');
                     tmp.width = vp.width; tmp.height = vp.height;
                     await page.render({ canvasContext: tmp.getContext('2d'), viewport: vp }).promise;
                     const imageData = { base64: tmp.toDataURL('image/jpeg', 0.85).split(',')[1], mimeType: 'image/jpeg' };
-                    rawJson = await mbCallAiApi('', imageData, `তুমি একজন নিখুঁত ডেটা-এক্সট্র্যাকশন এক্সপার্ট। ${basePrompt}`);
+                    rawJson = await mbCallAiApi('', imageData, `তুমি একজন নিখুঁত ডেটা-এক্সট্র্যাকশন এক্সপার্ট। ${basePrompt}`, geminiAlreadyTried);
                 }
             }
             const parsed = mbParseAiJson(rawJson);
@@ -499,11 +502,6 @@ async function mbUploadPdf() {
         mbLoadChapterPdfs();
         mbLoadAllPdfs();
 
-        // ── Auto OCR: start background OCR after upload ──
-        if (newPdfId) {
-            setTimeout(() => mbStartAutoOcr(newPdfId, fileUrl), 500);
-        }
-
     } catch (e) {
         mbToast('আপলোড ব্যর্থ: ' + e.message, 'error');
     } finally {
@@ -573,59 +571,22 @@ async function mbLoadAllPdfs() {
         listEl.innerHTML = '<div class="empty-state">লোড ব্যর্থ</div>';
         return;
     }
-    // OCR status আলাদাভাবে, safely আনা হচ্ছে — এই অংশ fail করলেও মূল PDF list যেন
-    // ভেঙে না যায় (table না থাকলে বা কোনো কারণে ব্যর্থ হলেও চুপচাপ badge ছাড়া দেখাবে)।
-    let jobsById = {};
     try {
-        const jobsRes = await mbApi('/book_pdf_ocr_jobs?select=pdf_id,status,done_pages,total_pages&order=started_at.desc');
-        if (jobsRes && jobsRes.ok) {
-            const jobs = await jobsRes.json();
-            if (Array.isArray(jobs)) jobs.forEach(j => { if (j && j.pdf_id != null && !jobsById[j.pdf_id]) jobsById[j.pdf_id] = j; });
-        }
-    } catch (_) {}
-    try {
-        mbRenderAllPdfs(pdfs || [], jobsById);
+        mbRenderAllPdfs(pdfs || []);
     } catch (e) {
         console.error('mbRenderAllPdfs failed:', e);
         listEl.innerHTML = '<div class="empty-state">লোড ব্যর্থ</div>';
     }
 }
 
-function mbOcrBadge(pdfId, jobsById) {
-    const j = jobsById[pdfId];
-    if (!j) return `<span class="ocr-badge ocr-none" id="ocr-badge-${pdfId}">⚪ OCR হয়নি</span>`;
-    if (j.status === 'processing') {
-        const pct = j.total_pages ? Math.round(((j.done_pages||0) / j.total_pages) * 100) : 0;
-        return `<span class="ocr-badge ocr-processing" id="ocr-badge-${pdfId}">🔄 ${pct}% <span class="ocr-bar"><span class="ocr-bar-fill" style="width:${pct}%"></span></span></span>`;
-    }
-    if (j.status === 'done' || (j.total_pages && j.done_pages >= j.total_pages)) return `<span class="ocr-badge ocr-done" id="ocr-badge-${pdfId}">✅ OCR সম্পন্ন</span>`;
-    return `<span class="ocr-badge ocr-partial" id="ocr-badge-${pdfId}">⚠️ আংশিক ${j.done_pages||0}/${j.total_pages||'?'}</span>`;
-}
-
-function mbPdfNeedsOcr(pdfId, jobsById) {
-    const j = jobsById[pdfId];
-    if (!j) return true;
-    if (j.status === 'done') return false;
-    if (j.total_pages && j.done_pages >= j.total_pages) return false;
-    return true; // no job, or partial/failed → needs (re)OCR
-}
-
-function mbRenderAllPdfs(pdfs, jobsById) {
-    jobsById = jobsById || {};
-    window._mbLastPdfs = pdfs; window._mbLastJobs = jobsById; // bulk trigger থেকে reuse করার জন্য
+function mbRenderAllPdfs(pdfs) {
     const listEl = document.getElementById('mbAllPdfsList');
     if (!listEl) return;
     if (!pdfs.length) {
         listEl.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📂</div><div class="empty-state-title">কোনো PDF নেই</div></div>';
         return;
     }
-    const pendingCount = pdfs.filter(p => mbPdfNeedsOcr(p.id, jobsById)).length;
-    const bulkBar = `
-        <div class="pdf-bulk-ocr-bar">
-            <div>${pendingCount > 0 ? `⚠️ ${pendingCount} টি PDF-এর OCR বাকি/অসম্পূর্ণ` : '✅ সব PDF-এর OCR সম্পন্ন'}</div>
-            <button class="btn btn-outline btn-sm" id="mbBulkOcrBtn" onclick="mbBulkOcrAll()" ${pendingCount === 0 ? 'disabled' : ''}>🔍 সব বাকি PDF OCR করো (${pendingCount})</button>
-        </div>`;
-    const cardsHtml = pdfs.map(p => {
+    listEl.innerHTML = pdfs.map(p => {
         try {
             const ch  = p.book_chapters || {};
             const sub = ch.book_subjects || {};
@@ -640,10 +601,8 @@ function mbRenderAllPdfs(pdfs, jobsById) {
                         <div class="pdf-card-title">${esc(p.title)}</div>
                         <div class="pdf-card-meta">${p.file_size ? fmtSize(p.file_size) + ' · ' : ''}${p.page_count ? p.page_count + ' পৃষ্ঠা · ' : ''}${fmtDate(p.created_at)}</div>
                         ${ctx}
-                        <div style="margin-top:4px">${mbOcrBadge(p.id, jobsById)}</div>
                     </div>
                     <div class="pdf-card-actions">
-                        <button class="act-btn act-ocr" title="OCR (পুনরায়) চালাও" onclick="mbRetriggerOcr(${p.id}, '${esc(p.file_url)}')">🔍</button>
                         <button class="act-btn act-toggle" title="${p.is_premium ? 'Free করো' : 'Premium করো'}" onclick="mbTogglePremium(${p.id}, ${!p.is_premium})">${p.is_premium ? '⭐' : '🔓'}</button>
                         <button class="act-btn act-edit" title="MCQ সম্পাদনা" onclick="mbOpenMcqPanel(${p.id}, '${esc(p.title)}', '${esc(p.file_url)}')">📝</button>
                         <button class="act-btn act-delete" title="মুছুন" onclick="mbDeletePdf(${p.id}, '${esc(p.title)}')">🗑️</button>
@@ -655,37 +614,6 @@ function mbRenderAllPdfs(pdfs, jobsById) {
             return '';
         }
     }).join('');
-    listEl.innerHTML = bulkBar + cardsHtml;
-}
-
-// Existing + future সব scanned PDF-এর OCR নিশ্চিত করার জন্য bulk trigger।
-// একসাথে সব PDF-এ OCR পাঠানো হয় না (rate-limit ও ব্রাউজার লোড এড়াতে) —
-// একটার পর একটা sequentially চালানো হয়, প্রতিটার ভেতরে অলরেডি ৩-পেজ ব্যাচিং আছে।
-let _mbBulkOcrRunning = false;
-async function mbBulkOcrAll() {
-    if (_mbBulkOcrRunning) { mbToast('বাল্ক OCR ইতিমধ্যে চলছে...', 'info'); return; }
-    const pdfs = window._mbLastPdfs || [];
-    const jobsById = window._mbLastJobs || {};
-    const targets = pdfs.filter(p => mbPdfNeedsOcr(p.id, jobsById) && p.file_url);
-    if (!targets.length) { mbToast('সব PDF-এর OCR ইতিমধ্যে সম্পন্ন', 'success'); return; }
-
-    _mbBulkOcrRunning = true;
-    const btn = document.getElementById('mbBulkOcrBtn');
-    if (btn) { btn.disabled = true; btn.textContent = `🔄 চলছে... 0/${targets.length}`; }
-    mbToast(`🔍 ${targets.length} টি PDF-এর OCR শুরু হলো (background এ চলবে)`, 'info', 4000);
-
-    let done = 0;
-    for (const p of targets) {
-        try {
-            await mbStartAutoOcr(p.id, p.file_url);
-        } catch (_) {}
-        done++;
-        if (btn) btn.textContent = `🔄 চলছে... ${done}/${targets.length}`;
-    }
-
-    _mbBulkOcrRunning = false;
-    mbToast(`✅ বাল্ক OCR শেষ — ${done} টি PDF প্রসেস হয়েছে`, 'success', 4000);
-    mbLoadAllPdfs();
 }
 
 async function mbTogglePremium(pdfId, newState) {
@@ -1703,6 +1631,8 @@ async function mbAiGenerate() {
         )) + MB_PERMANENT_RULES;
 
         let rawJson;
+        let geminiAlreadyTried = false; // এই page-এ Gemini PDF-native ইতিমধ্যে চেষ্টা হয়েছে কি না —
+                                          // fallback chain-এ আবার Gemini কল করে quota নষ্ট না করার জন্য
 
         // Step 1 (preferred): send the whole PDF page directly to Gemini, which reads
         // PDFs/scanned pages natively — works for both text-based and image-based pages,
@@ -1716,6 +1646,7 @@ async function mbAiGenerate() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ pdf_url: mbPdfUrl, prompt: pdfPrompt })
                 });
+                geminiAlreadyTried = true;
                 const data = await res.json().catch(() => null);
                 if (res.ok && data?.success && data.answer) rawJson = data.answer;
             } catch (_) { /* fall through to legacy approach below */ }
@@ -1732,14 +1663,14 @@ async function mbAiGenerate() {
                 const prompt = `নিচের টেক্সট থেকে ${basePrompt}\n` +
                     `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}\n\n` +
                     `টেক্সট:\n${pageText.slice(0, 4000)}`;
-                rawJson = await mbCallAiApi(prompt, null);
+                rawJson = await mbCallAiApi(prompt, null, null, geminiAlreadyTried);
             } else {
                 mbToast('ছবি-ভিত্তিক PDF — image AI ব্যবহার হচ্ছে...', 'info', 2000);
                 const imageData = await mbGetPageImageBase64(mbCurrentPage);
                 if (!imageData) { mbToast('পেইজের ছবি তৈরি করা যায়নি', 'error'); return; }
                 const sysPrompt = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে ${basePrompt}\n` +
                     `শুধু JSON array রিটার্ন করো: ${jsonFormat}`;
-                rawJson = await mbCallAiApi('', imageData, sysPrompt);
+                rawJson = await mbCallAiApi('', imageData, sysPrompt, geminiAlreadyTried);
             }
         }
 
@@ -1831,14 +1762,16 @@ async function mbAiGenerateSpecial() {
 // All AI calls now go through the centralized proxy worker — no API key lives in
 // this file or any client-side code. See atlas-ai-proxy-worker.js for the actual
 // provider fallback chain (Gemini → OpenRouter → Groq → Cerebras → Cloudflare AI).
-async function mbCallAiApi(prompt, image, customSystemPrompt) {
+async function mbCallAiApi(prompt, image, customSystemPrompt, skipGemini) {
     const res = await fetch(AI_PROXY_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             question: prompt || '',
             image: image ? { base64: image.base64, mimeType: image.mimeType } : null,
-            systemPrompt: customSystemPrompt || 'তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।'
+            systemPrompt: customSystemPrompt || 'তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।',
+            skipGemini: !!skipGemini // এই page-এর জন্য Gemini আগেই একবার (PDF-native) চেষ্টা হয়ে থাকলে,
+                                       // fallback chain-এ আবার Gemini-কে ডাবল-কল না করার জন্য
         })
     });
     let data = null;
@@ -2191,6 +2124,8 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     )) + MB_PERMANENT_RULES;
 
     let rawJson;
+    let geminiAlreadyTried = false; // এই page-এ Gemini PDF-native ইতিমধ্যে চেষ্টা হয়েছে কি না —
+                                      // fallback chain-এ আবার Gemini কল করে quota নষ্ট না করার জন্য
     if (mbPdfUrl) {
         try {
             const pdfPrompt = `এই PDF-এর পেইজ ${pageNum} দেখো এবং নিচের নির্দেশ অনুসরণ করো:\n${basePrompt}\n\n` +
@@ -2200,6 +2135,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ pdf_url: mbPdfUrl, prompt: pdfPrompt })
             });
+            geminiAlreadyTried = true;
             const data = await res.json().catch(() => null);
             if (res.ok && data?.success && data.answer) rawJson = data.answer;
         } catch (_) {}
@@ -2212,7 +2148,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
             const prompt = `নিচের টেক্সট থেকে ${basePrompt}\n` +
                 `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}\n\n` +
                 `টেক্সট:\n${pageText.slice(0, 4000)}`;
-            rawJson = await mbCallAiApi(prompt, null);
+            rawJson = await mbCallAiApi(prompt, null, null, geminiAlreadyTried);
         } else {
             const vp = page.getViewport({ scale: 1.5 });
             const tmp = document.createElement('canvas');
@@ -2221,7 +2157,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
             const imageData = { base64: tmp.toDataURL('image/jpeg', 0.85).split(',')[1], mimeType: 'image/jpeg' };
             const sysPrompt = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে ${basePrompt}\n` +
                 `শুধু JSON array রিটার্ন করো: ${jsonFormat}`;
-            rawJson = await mbCallAiApi('', imageData, sysPrompt);
+            rawJson = await mbCallAiApi('', imageData, sysPrompt, geminiAlreadyTried);
         }
     }
 
@@ -2349,27 +2285,6 @@ function mbInjectStyles() {
         .act-btn.act-toggle { color: var(--text2); }
         .act-btn.act-toggle:hover { color: #F59E0B; border-color: #F59E0B; }
 
-        .act-btn.act-ocr { color: var(--text2); }
-        .act-btn.act-ocr:hover { color: #7C83FF; border-color: #7C83FF; }
-
-        .pdf-card-meta { font-size: 10px; color: var(--text3); margin-top: 2px; }
-
-        .ocr-badge { display:inline-flex; align-items:center; gap:4px; font-size:10px; padding:2px 8px; border-radius:20px; font-weight:600; }
-        .ocr-badge.ocr-none { background:rgba(148,163,184,0.15); color:#94A3B8; }
-        .ocr-badge.ocr-processing { background:rgba(124,131,255,0.15); color:#7C83FF; }
-        .ocr-badge.ocr-partial { background:rgba(245,158,11,0.15); color:#F59E0B; }
-        .ocr-badge.ocr-done { background:rgba(16,185,129,0.15); color:#10B981; }
-        .ocr-bar { display:inline-block; width:34px; height:4px; border-radius:3px; background:rgba(124,131,255,0.2); overflow:hidden; vertical-align:middle; }
-        .ocr-bar-fill { display:block; height:100%; background:#7C83FF; border-radius:3px; transition:width 0.3s ease; }
-
-        .pdf-bulk-ocr-bar {
-            display:flex; align-items:center; justify-content:space-between; gap:10px;
-            padding:10px 12px; margin-bottom:10px; border-radius:10px;
-            background:var(--card, rgba(255,255,255,0.04)); border:1px solid rgba(124,131,255,0.25);
-            font-size:12px; color:var(--text2);
-        }
-        .pdf-bulk-ocr-bar button:disabled { opacity:0.5; cursor:default; }
-
         .pdf-card-meta { font-size: 10px; color: var(--text3); margin-top: 2px; }
 
         @keyframes mbSpin { to { transform: rotate(360deg); } }
@@ -2390,168 +2305,6 @@ function mbInjectStyles() {
    ════════════════════════════════════════════════════ */
 
 const OCR_PROXY_URL = AI_PROXY_URL.replace(/\/$/, '') + '/'; // Same proxy with trailing slash
-
-// Start auto OCR for a newly uploaded PDF
-// Renders each page via PDF.js → sends image to /ocr-page → saves text to Supabase
-// "সংরক্ষিত সকল PDF" লিস্টের badge live আপডেট করে OCR চলাকালীন — প্রতি পেইজ শেষ হলেই কল হয়।
-// DOM element না থাকলে (অন্য panel-এ থাকলে) নিরাপদে কিছুই করে না।
-// currentLabel = এখন কোন পেইজ(গুলো) প্রসেস হচ্ছে (যেমন "৪-৬" বা "৭"), কম্প্যাক্টভাবে % এর পাশে দেখানো হয়।
-function mbUpdateOcrBadgeLive(pdfId, done, total, currentLabel) {
-    const badge = document.getElementById('ocr-badge-' + pdfId);
-    if (!badge) return;
-    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-    const pageInfo = currentLabel ? ` · পেইজ ${currentLabel}` : '';
-    badge.className = 'ocr-badge ocr-processing';
-    badge.innerHTML = `🔄 ${pct}%${pageInfo} <span class="ocr-bar"><span class="ocr-bar-fill" style="width:${pct}%"></span></span>`;
-}
-
-const _mbActiveOcrPdfIds = new Set();
-async function mbStartAutoOcr(pdfId, pdfUrl) {
-    const toastId = 'ocr-' + pdfId;
-    if (_mbActiveOcrPdfIds.has(parseInt(pdfId))) return; // এই ট্যাবে আগে থেকেই চলছে — ডুপ্লিকেট রান এড়াতে
-    _mbActiveOcrPdfIds.add(parseInt(pdfId));
-
-    try {
-        // Load PDF
-        if (!window.pdfjsLib) return;
-        const pdfDoc = await pdfjsLib.getDocument({ url: pdfUrl }).promise;
-        const totalPages = pdfDoc.numPages;
-
-        // আগে থেকে কোন কোন পেইজের OCR done আছে সেটা চেক করি — refresh/navigate করে
-        // মাঝপথে থেমে গেলে বা আবার চালু করলে, শুধু বাকি থাকা পেইজগুলোই প্রসেস হবে,
-        // যেগুলো আগেই OCR হয়ে গেছে সেগুলো আবার redo হবে না ("একবার অন করলে থামবে না" fix)।
-        let alreadyDone = new Set();
-        try {
-            const doneRows = await mbApi(`/book_pdf_pages?pdf_id=eq.${pdfId}&ocr_status=eq.done&select=page_number`);
-            if (doneRows.ok) {
-                const rows = await doneRows.json();
-                rows.forEach(r => alreadyDone.add(r.page_number));
-            }
-        } catch (_) {}
-
-        const pagesToProcess = [];
-        for (let p = 1; p <= totalPages; p++) if (!alreadyDone.has(p)) pagesToProcess.push(p);
-
-        if (pagesToProcess.length === 0) {
-            mbToast('✅ এই PDF-এর সব পেইজ আগেই OCR হয়ে গেছে', 'success', 3000);
-            const badge = document.getElementById('ocr-badge-' + pdfId);
-            if (badge) { badge.className = 'ocr-badge ocr-done'; badge.textContent = '✅ OCR সম্পন্ন'; }
-            return;
-        }
-
-        mbToast(alreadyDone.size > 0
-            ? `🔍 OCR চালিয়ে যাওয়া হচ্ছে... (${alreadyDone.size}/${totalPages} আগে থেকেই করা)`
-            : '🔍 OCR শুরু হচ্ছে... (background এ চলবে)', 'info', 4000);
-
-        // Create/update OCR job record — done_pages রিসেট না করে alreadyDone দিয়ে শুরু করি,
-        // যাতে resume এর ক্ষেত্রে progress bar ভুলভাবে ০% থেকে শুরু না দেখায়।
-        await mbApi('/book_pdf_ocr_jobs', {
-            method: 'POST',
-            headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
-            body: JSON.stringify({
-                pdf_id: parseInt(pdfId),
-                total_pages: totalPages,
-                done_pages: alreadyDone.size,
-                status: 'processing',
-                started_at: new Date().toISOString()
-            })
-        });
-
-        let doneCount = alreadyDone.size;
-        mbUpdateOcrBadgeLive(pdfId, doneCount, totalPages, '');
-
-        // Process pages in batches of 3 (parallel OCR per batch) — শুধু বাকি থাকা পেইজগুলো
-        const BATCH = 3;
-        for (let start = 0; start < pagesToProcess.length; start += BATCH) {
-            const batch = pagesToProcess.slice(start, start + BATCH);
-
-            // ব্যাচ শুরু হওয়ার সাথে সাথেই কোন পেইজ(গুলো) নিয়ে কাজ চলছে সেটা badge-এ দেখাই —
-            // পেইজ শেষ হওয়ার অপেক্ষা না করে, যাতে ইউজার রিয়েল-টাইমে বুঝতে পারে।
-            const rangeLabel = batch.length > 1 ? `${batch[0]}-${batch[batch.length-1]}` : `${batch[0]}`;
-            mbUpdateOcrBadgeLive(pdfId, doneCount, totalPages, rangeLabel);
-            const pill0 = document.getElementById('mbOcrStatus-' + pdfId);
-            if (pill0) pill0.textContent = `OCR: ${doneCount}/${totalPages} (পেইজ ${rangeLabel})`;
-
-            // Process batch in parallel
-            await Promise.allSettled(batch.map(async (pageNum) => {
-                try {
-                    // Render page to image
-                    const page = await pdfDoc.getPage(pageNum);
-                    const vp = page.getViewport({ scale: 1.8 }); // Higher scale = better OCR
-                    const tmp = document.createElement('canvas');
-                    tmp.width = vp.width;
-                    tmp.height = vp.height;
-                    await page.render({ canvasContext: tmp.getContext('2d'), viewport: vp }).promise;
-                    const imageBase64 = tmp.toDataURL('image/jpeg', 0.9).split(',')[1];
-
-                    // Send to OCR endpoint
-                    const res = await fetch(OCR_PROXY_URL + 'ocr-page', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            pdf_id: pdfId,
-                            page_number: pageNum,
-                            image_base64: imageBase64,
-                            image_mime: 'image/jpeg',
-                            supabase_url: window.SUPABASE_URL,
-                            supabase_key: window.SUPABASE_KEY
-                        })
-                    });
-
-                    if (res.ok) {
-                        doneCount++;
-                        // Update progress pill if MCQ panel is open
-                        const pill = document.getElementById('mbOcrStatus-' + pdfId);
-                        if (pill) pill.textContent = `OCR: ${doneCount}/${totalPages} (পেইজ ${rangeLabel})`;
-                        // "সংরক্ষিত সকল PDF" কার্ডের badge-ও live আপডেট করি — % ও current page সহ কম্প্যাক্ট
-                        mbUpdateOcrBadgeLive(pdfId, doneCount, totalPages, rangeLabel);
-                    }
-                } catch (_) {}
-            }));
-
-            // Small delay between batches to avoid rate limits
-            if (start + BATCH < pagesToProcess.length) {
-                await new Promise(r => setTimeout(r, 800));
-            }
-        }
-
-        mbToast(`✅ OCR সম্পন্ন — ${doneCount}/${totalPages} পেইজ`, 'success', 4000);
-        const badge = document.getElementById('ocr-badge-' + pdfId);
-        if (badge) { badge.className = 'ocr-badge ocr-done'; badge.textContent = '✅ OCR সম্পন্ন'; }
-        mbLoadChapterPdfs();
-        mbLoadAllPdfs();
-
-    } catch (e) {
-        console.warn('Auto OCR failed:', e.message);
-        mbToast('⚠️ OCR শুরু করা যায়নি', 'error', 3000);
-    } finally {
-        _mbActiveOcrPdfIds.delete(parseInt(pdfId));
-    }
-}
-
-// Check OCR status for a specific PDF
-async function mbCheckOcrStatus(pdfId) {
-    try {
-        const res = await fetch(OCR_PROXY_URL + 'ocr-status', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                pdf_id: pdfId,
-                supabase_url: window.SUPABASE_URL,
-                supabase_key: window.SUPABASE_KEY
-            })
-        });
-        if (!res.ok) return null;
-        return res.json();
-    } catch { return null; }
-}
-
-// Manually trigger OCR for existing PDF (from admin panel)
-async function mbRetriggerOcr(pdfId, pdfUrl) {
-    if (!pdfUrl) { mbToast('PDF URL নেই', 'error'); return; }
-    mbToast('🔍 OCR পুনরায় শুরু করা হচ্ছে...', 'info', 3000);
-    await mbStartAutoOcr(pdfId, pdfUrl);
-}
 
 /* ════════════════════════════════════════════════════
    16. INIT & WINDOW EXPORTS
@@ -2578,34 +2331,6 @@ async function mbInit() {
             }
         }
     } catch (_) {}
-
-    // Refresh/navigate/close করার কারণে মাঝপথে থেমে যাওয়া OCR job গুলো অটো-রিজিউম করি —
-    // "একবার অন করলে থামবে না" — mbStartAutoOcr() ইতিমধ্যেই আগে-করা পেইজ স্কিপ করে,
-    // তাই এখানে আবার কল করলে ডুপ্লিকেট কাজ হবে না, শুধু বাকি পেইজগুলো চলবে।
-    // ২ সেকেন্ড delay দেওয়া হয়েছে যাতে page load-এর মূল PDF list fetch এর সাথে race
-    // করে network/API quota-তে চাপ না ফেলে ("লোড ব্যর্থ" এর সম্ভাব্য কারণ এড়াতে)।
-    setTimeout(() => mbResumeStuckOcrJobs(), 2000);
-}
-
-async function mbResumeStuckOcrJobs() {
-    try {
-        const res = await mbApi('/book_pdf_ocr_jobs?status=eq.processing&select=pdf_id');
-        if (!res.ok) { console.warn('mbResumeStuckOcrJobs: job fetch not ok', res.status); return; }
-        const jobs = await res.json();
-        if (!Array.isArray(jobs) || !jobs.length) return;
-        console.log('mbResumeStuckOcrJobs: resuming', jobs.length, 'stuck job(s)');
-
-        for (const j of jobs) {
-            try {
-                const pdfRes = await mbApi(`/book_pdfs?id=eq.${j.pdf_id}&select=id,file_url`);
-                if (!pdfRes.ok) continue;
-                const rows = await pdfRes.json();
-                const pdf = rows?.[0];
-                if (!pdf?.file_url) continue;
-                mbStartAutoOcr(pdf.id, pdf.file_url); // await না করে চালিয়ে দিচ্ছি, background-এ চলবে
-            } catch (e) { console.warn('mbResumeStuckOcrJobs: failed for pdf', j.pdf_id, e); }
-        }
-    } catch (e) { console.warn('mbResumeStuckOcrJobs failed:', e); }
 }
 
 if (document.readyState === 'loading') {
@@ -2661,10 +2386,6 @@ window.mbLoadCsvArchive    = mbLoadCsvArchive;
 window.mbDownloadCsvArchive= mbDownloadCsvArchive;
 window.mbDeleteCsvArchive  = mbDeleteCsvArchive;
 window.mbDiscardAi        = mbDiscardAi;
-window.mbStartAutoOcr     = mbStartAutoOcr;
-window.mbCheckOcrStatus   = mbCheckOcrStatus;
-window.mbRetriggerOcr     = mbRetriggerOcr;
-window.mbBulkOcrAll       = mbBulkOcrAll;
 
 /* ══════════════ ⚡ SPECIAL — শুধু existing MCQ এক্সট্র্যাক্ট (নতুন বানাবে না), CSV export ══════════════
    Admin-only tool: PDF page-এ আগে থেকেই ছাপা MCQ থাকলে সেটা AI দিয়ে হুবহু এক্সট্র্যাক্ট করে,
