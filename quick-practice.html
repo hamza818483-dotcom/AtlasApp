@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Quick Practice — ATLAS APP</title>
+<style>
+    :root {
+        --bg: #0D1117; --card-bg: #161B22; --card-hover: #1C2129;
+        --text: #E6EDF3; --text-secondary: #8B949E;
+        --accent: #7C83FF; --accent-hover: #9499FF;
+        --border: #30363D;
+        --shadow: 0 2px 8px rgba(0,0,0,0.3);
+        --radius: 14px; --radius-md: 10px; --radius-sm: 8px; --radius-full: 999px;
+        --success: #3FB950; --error: #F85149; --gold: #F5C542;
+    }
+    body.light-mode {
+        --bg: #F6F8FA; --card-bg: #FFFFFF; --card-hover: #F0F2F5;
+        --text: #1C2129; --text-secondary: #57606A; --border: #D0D7DE;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; padding-bottom:100px; transition:background .3s; }
+
+    .qp-header { position:sticky; top:0; z-index:50; display:flex; align-items:center; gap:10px; padding:14px 16px; background:var(--card-bg); border-bottom:1px solid var(--border); }
+    .qp-back { width:36px; height:36px; border-radius:var(--radius-full); border:1px solid var(--border); background:var(--bg); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text); }
+    .qp-title { font-size:17px; font-weight:800; flex:1; }
+    .qp-points-badge { display:flex; align-items:center; gap:4px; background:linear-gradient(135deg,#F5C542,#F5A623); color:#1C1300; font-weight:800; font-size:12px; padding:6px 12px; border-radius:var(--radius-full); box-shadow:0 2px 8px rgba(245,197,66,.35); }
+
+    .qp-random-btn { margin:16px; padding:16px; border-radius:var(--radius); background:linear-gradient(135deg,#7C83FF,#9499FF); display:flex; align-items:center; gap:12px; cursor:pointer; box-shadow:0 4px 16px rgba(124,131,255,.35); }
+    .qp-random-icon { width:44px; height:44px; border-radius:12px; background:rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .qp-random-text { color:#fff; }
+    .qp-random-text .t1 { font-weight:800; font-size:15px; }
+    .qp-random-text .t2 { font-size:11.5px; opacity:.85; margin-top:2px; }
+
+    .qp-all-row { display:flex; justify-content:flex-end; padding:0 16px 8px; }
+    .qp-all-btn { padding:7px 16px; border-radius:var(--radius-full); background:var(--card-bg); border:1px solid var(--accent); color:var(--accent); font-weight:700; font-size:12px; cursor:pointer; }
+    .qp-all-btn.active { background:var(--accent); color:#fff; }
+
+    .qp-subj-list { padding:0 16px; display:flex; flex-direction:column; gap:10px; }
+    .qp-subj-card { background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+    .qp-subj-head { display:flex; align-items:center; gap:10px; padding:14px; cursor:pointer; }
+    .qp-subj-icon { width:38px; height:38px; border-radius:10px; background:rgba(124,131,255,.12); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--accent); }
+    .qp-subj-name { flex:1; font-weight:700; font-size:14.5px; }
+    .qp-subj-chevron { color:var(--text-secondary); transition:transform .25s; font-size:13px; }
+    .qp-subj-chevron.open { transform:rotate(180deg); }
+
+    .qp-chap-panel { display:none; border-top:1px solid var(--border); padding:10px 14px 14px; background:var(--bg); }
+    .qp-chap-panel.open { display:block; }
+    .qp-chap-all-row { display:flex; justify-content:flex-end; margin-bottom:8px; }
+    .qp-chap-all-btn { padding:5px 12px; border-radius:var(--radius-full); background:var(--card-bg); border:1px solid var(--border); color:var(--text-secondary); font-size:11px; font-weight:700; cursor:pointer; }
+    .qp-chap-all-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+    .qp-chap-row { display:flex; align-items:center; gap:10px; padding:10px 6px; border-bottom:1px solid var(--border); }
+    .qp-chap-row:last-child { border-bottom:none; }
+    .qp-chap-check { width:19px; height:19px; border-radius:5px; border:2px solid var(--border); flex-shrink:0; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+    .qp-chap-check.checked { background:var(--accent); border-color:var(--accent); }
+    .qp-chap-check.checked::after { content:'✓'; color:#fff; font-size:12px; font-weight:800; }
+    .qp-chap-title { flex:1; font-size:13px; }
+    .qp-chap-status { font-size:11px; color:var(--text-secondary); }
+    .qp-chap-status.empty { color:var(--error); font-style:italic; }
+
+    .qp-empty { padding:14px; text-align:center; color:var(--text-secondary); font-size:12.5px; }
+
+    .qp-float-start { position:fixed; right:16px; bottom:24px; z-index:80; background:linear-gradient(135deg,#7C83FF,#9499FF); color:#fff; font-weight:800; font-size:14px; padding:14px 22px; border-radius:var(--radius-full); box-shadow:0 6px 20px rgba(124,131,255,.45); display:none; align-items:center; gap:8px; cursor:pointer; animation:qpFloatIn .3s ease; }
+    .qp-float-start.show { display:flex; }
+    @keyframes qpFloatIn { from{ transform:translateY(20px); opacity:0; } to{ transform:translateY(0); opacity:1; } }
+</style>
+</head>
+<body>
+
+<div class="qp-header">
+    <div class="qp-back" onclick="location.href='index.html'">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="qp-title">⚡ Quick Practice</div>
+    <div class="qp-points-badge" id="qpPointsBadge">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="#1C1300"><path d="M12 2.5l1.8 5.7 5.7 1.8-5.7 1.8L12 17.5l-1.8-5.7-5.7-1.8 5.7-1.8z"/></svg>
+        <span id="qpPointsVal">0</span>
+    </div>
+</div>
+
+<div class="qp-random-btn" id="qpRandomBtn" onclick="qpSelectRandomMode()">
+    <div class="qp-random-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0113.6-5.7L19.5 8"/><path d="M19.5 4v4h-4"/><path d="M20 12a8 8 0 01-13.6 5.7L4.5 16"/><path d="M4.5 20v-4h4"/></svg>
+    </div>
+    <div class="qp-random-text">
+        <div class="t1">🎲 Random Practice</div>
+        <div class="t2">সব বিষয়/অধ্যায় থেকে random MCQ</div>
+    </div>
+</div>
+
+<div class="qp-all-row">
+    <button class="qp-all-btn" id="qpAllSubjBtn" onclick="qpToggleAllSubjects()">All</button>
+</div>
+
+<div class="qp-subj-list" id="qpSubjList">
+    <div class="qp-empty">লোড হচ্ছে...</div>
+</div>
+
+<div class="qp-float-start" id="qpFloatStart" onclick="qpStartPractice()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>
+    শুরু করো
+</div>
+
+<script>
+const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
+
+async function qpFetch(path, opts = {}) {
+    opts.headers = Object.assign({ apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }, opts.headers || {});
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, opts);
+    const text = await res.text();
+    return text ? JSON.parse(text) : [];
+}
+
+function qpGetSession() {
+    try { return JSON.parse(localStorage.getItem('atlas-session')); } catch (e) { return null; }
+}
+
+// ── Theme sync (matches rest of app) ──
+(function () {
+    const saved = localStorage.getItem('atlas-theme');
+    if (saved === 'light') { document.body.classList.add('light-mode'); }
+})();
+
+// ── Selection state ──
+let qpSubjects = [];
+let qpChaptersBySubject = {};   // subjectId -> [{id,name,mcqCount}]
+let qpSelectedChapters = new Set();  // chapter IDs selected
+let qpOpenSubjectId = null;
+let qpAllSubjectsMode = false;
+let qpChapAllMode = {};  // subjectId -> bool
+
+async function qpInit() {
+    await qpLoadPoints();
+    qpSubjects = await qpFetch('qp_subjects?order=sort_order.asc&select=id,name');
+    const list = document.getElementById('qpSubjList');
+    if (!qpSubjects.length) {
+        list.innerHTML = '<div class="qp-empty">কোনো বিষয় যোগ করা হয়নি।</div>';
+        return;
+    }
+    list.innerHTML = qpSubjects.map(s => qpRenderSubjectCard(s)).join('');
+}
+
+function qpRenderSubjectCard(s) {
+    return `
+    <div class="qp-subj-card" id="qpSubjCard_${s.id}">
+        <div class="qp-subj-head" onclick="qpToggleSubject(${s.id})">
+            <div class="qp-subj-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 19.5V5a2 2 0 012-2h11.5v15H6a2 2 0 00-2 2zm0 0a2 2 0 002 2h11.5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="qp-subj-name">${qpEsc(s.name)}</div>
+            <div class="qp-subj-chevron" id="qpChevron_${s.id}">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+        </div>
+        <div class="qp-chap-panel" id="qpChapPanel_${s.id}"></div>
+    </div>`;
+}
+
+function qpEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+async function qpToggleSubject(subjId) {
+    const panel = document.getElementById(`qpChapPanel_${subjId}`);
+    const chevron = document.getElementById(`qpChevron_${subjId}`);
+    const isOpen = panel.classList.contains('open');
+    if (isOpen) {
+        panel.classList.remove('open');
+        chevron.classList.remove('open');
+        qpOpenSubjectId = null;
+        return;
+    }
+    // অন্য open panel বন্ধ করা (একটাই সবসময় খোলা থাকবে, per design cleanliness)
+    if (qpOpenSubjectId !== null) {
+        document.getElementById(`qpChapPanel_${qpOpenSubjectId}`)?.classList.remove('open');
+        document.getElementById(`qpChevron_${qpOpenSubjectId}`)?.classList.remove('open');
+    }
+    panel.classList.add('open');
+    chevron.classList.add('open');
+    qpOpenSubjectId = subjId;
+
+    if (!qpChaptersBySubject[subjId]) {
+        panel.innerHTML = '<div class="qp-empty">লোড হচ্ছে...</div>';
+        const chapters = await qpFetch(`qp_chapters?subject_id=eq.${subjId}&order=sort_order.asc&select=id,name`);
+        for (const ch of chapters) {
+            const mcqs = await qpFetch(`qp_mcqs?chapter_id=eq.${ch.id}&select=id`);
+            ch.mcqCount = mcqs.length;
+        }
+        qpChaptersBySubject[subjId] = chapters;
+    }
+    qpRenderChapters(subjId);
+}
+
+function qpRenderChapters(subjId) {
+    const panel = document.getElementById(`qpChapPanel_${subjId}`);
+    const chapters = qpChaptersBySubject[subjId];
+    if (!chapters.length) {
+        panel.innerHTML = '<div class="qp-empty">Coming soon</div>';
+        return;
+    }
+    const allActive = qpChapAllMode[subjId] ? 'active' : '';
+    panel.innerHTML = `
+        <div class="qp-chap-all-row">
+            <button class="qp-chap-all-btn ${allActive}" onclick="qpToggleAllChapters(${subjId})">All Chapter</button>
+        </div>
+        ${chapters.map(ch => {
+            const checked = qpSelectedChapters.has(ch.id) ? 'checked' : '';
+            const statusTxt = ch.mcqCount > 0 ? `${ch.mcqCount}টি MCQ` : 'Coming soon';
+            const statusCls = ch.mcqCount > 0 ? '' : 'empty';
+            const disabled = ch.mcqCount === 0 ? 'style="opacity:.5;pointer-events:none"' : '';
+            return `
+            <div class="qp-chap-row" ${disabled}>
+                <div class="qp-chap-check ${checked}" onclick="qpToggleChapter(${subjId},${ch.id})"></div>
+                <div class="qp-chap-title">${qpEsc(ch.name)}</div>
+                <div class="qp-chap-status ${statusCls}">${statusTxt}</div>
+            </div>`;
+        }).join('')}
+    `;
+}
+
+function qpToggleChapter(subjId, chapId) {
+    const ch = qpChaptersBySubject[subjId].find(c => c.id === chapId);
+    if (!ch || ch.mcqCount === 0) return;
+    if (qpSelectedChapters.has(chapId)) qpSelectedChapters.delete(chapId);
+    else qpSelectedChapters.add(chapId);
+    qpChapAllMode[subjId] = false;
+    qpAllSubjectsMode = false;
+    document.getElementById('qpAllSubjBtn').classList.remove('active');
+    qpRenderChapters(subjId);
+    qpUpdateFloatButton();
+}
+
+function qpToggleAllChapters(subjId) {
+    const chapters = qpChaptersBySubject[subjId].filter(c => c.mcqCount > 0);
+    const turningOn = !qpChapAllMode[subjId];
+    qpChapAllMode[subjId] = turningOn;
+    chapters.forEach(ch => {
+        if (turningOn) qpSelectedChapters.add(ch.id);
+        else qpSelectedChapters.delete(ch.id);
+    });
+    qpRenderChapters(subjId);
+    qpUpdateFloatButton();
+}
+
+async function qpToggleAllSubjects() {
+    const btn = document.getElementById('qpAllSubjBtn');
+    qpAllSubjectsMode = !qpAllSubjectsMode;
+    btn.classList.toggle('active', qpAllSubjectsMode);
+    if (qpAllSubjectsMode) {
+        qpSelectedChapters.clear();
+        for (const s of qpSubjects) {
+            if (!qpChaptersBySubject[s.id]) {
+                const chapters = await qpFetch(`qp_chapters?subject_id=eq.${s.id}&order=sort_order.asc&select=id,name`);
+                for (const ch of chapters) {
+                    const mcqs = await qpFetch(`qp_mcqs?chapter_id=eq.${ch.id}&select=id`);
+                    ch.mcqCount = mcqs.length;
+                }
+                qpChaptersBySubject[s.id] = chapters;
+            }
+            qpChaptersBySubject[s.id].forEach(ch => { if (ch.mcqCount > 0) qpSelectedChapters.add(ch.id); });
+        }
+    } else {
+        qpSelectedChapters.clear();
+    }
+    if (qpOpenSubjectId) qpRenderChapters(qpOpenSubjectId);
+    qpUpdateFloatButton();
+}
+
+function qpUpdateFloatButton() {
+    const btn = document.getElementById('qpFloatStart');
+    btn.classList.toggle('show', qpSelectedChapters.size > 0);
+}
+
+function qpSelectRandomMode() {
+    sessionStorage.setItem('qp_practice_mode', JSON.stringify({ type: 'random' }));
+    location.href = 'quick-practice-play.html';
+}
+
+function qpStartPractice() {
+    if (!qpSelectedChapters.size) return;
+    sessionStorage.setItem('qp_practice_mode', JSON.stringify({ type: 'selected', chapterIds: Array.from(qpSelectedChapters) }));
+    location.href = 'quick-practice-play.html';
+}
+
+async function qpLoadPoints() {
+    const session = qpGetSession();
+    if (!session || !session.phone) { document.getElementById('qpPointsVal').textContent = '0'; return; }
+    const rows = await qpFetch(`qp_user_points?user_phone=eq.${session.phone}&select=total_points`);
+    document.getElementById('qpPointsVal').textContent = rows.length ? rows[0].total_points : 0;
+}
+
+qpInit();
+</script>
+</body>
+</html>
