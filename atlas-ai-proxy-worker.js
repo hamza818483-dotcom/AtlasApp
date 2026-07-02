@@ -92,10 +92,12 @@ export default {
             return jsonResponse({ success: false, error: "question বা image এর একটি দিতে হবে" }, 400);
         }
 
+        // Groq আগে চেষ্টা হয় (দ্রুত ও free-tier generous), fail করলে Gemini 2.5 Flash,
+        // তারপর বাকি provider গুলো fallback হিসেবে।
         const providers = [
+            () => callGroq(env, question, systemPrompt, image),
             () => callGemini(env, question, systemPrompt, image),
             () => callOpenRouter(env, question, systemPrompt, image),
-            () => callGroq(env, question, systemPrompt, image),
             () => callCerebras(env, question, systemPrompt, image),
             () => callCloudflareAI(env, question, systemPrompt, image),
         ];
