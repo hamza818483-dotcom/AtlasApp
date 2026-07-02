@@ -1840,20 +1840,22 @@ async function loadReviewAllSlideshow(allImages) {
     const rvUrls = allImages.map(img => img.image_url);
     const n = allImages.length;
 
-    const slideImg = (img, i) =>
-        `<div class="review-all-slideshow-slide${i === 0 ? ' rv-active' : ''}" id="rvSlide-${i}">
+    const slideImg = (img, realIdx) =>
+        `<div class="review-all-slideshow-slide">
             <div class="rv-img-card">
-                <img src="${escHtml(img.image_url)}" alt="Review" loading="lazy" onclick='openSlideshowZoom(${i}, ${JSON.stringify(rvUrls)})' onerror="this.closest('.review-all-slideshow-slide').style.display='none'">
+                <img src="${escHtml(img.image_url)}" alt="Review" loading="lazy" onclick='openSlideshowZoom(${realIdx}, ${JSON.stringify(rvUrls)})' onerror="this.closest('.review-all-slideshow-slide').style.display='none'">
             </div>
         </div>`;
 
-    // Peek-carousel — প্রতিটা slide viewport-এর ৭৮% জায়গা নেয়, তাই দুই পাশে পরের/আগের card-এর
-    // কিছুটা অংশ (peek) স্বাভাবিকভাবেই দেখা যায় — ঠিক reference ছবির মতো। Seamless forward-only
-    // loop-এর জন্য প্রথম card-এর একটা clone শেষে জুড়ে দেওয়া হয়েছে, যাতে শেষ থেকে আবার শুরুতে
-    // ফেরার সময় কখনো backward snap দেখা না যায় — সবসময় right-to-left একমুখী চলবে।
-    const slidesHtml = allImages.map(slideImg).join('') + (n > 1 ? slideImg(allImages[0], 0) : '');
+    // Peek-carousel — দুই পাশেই সবসময় প্রতিবেশী card-এর অংশ দেখানোর জন্য track-এর একদম শুরুতে
+    // শেষ ছবির clone আর শেষে প্রথম ছবির clone জুড়ে দেওয়া হয়েছে। আগে শুধু শেষে clone ছিল, তাই
+    // প্রথম ছবি দেখানোর সময় বাম পাশে দেখানোর মতো কিছুই ছিল না — এখন দুই দিকেই সবসময় কিছু না কিছু থাকবে।
+    // __rvAllIdx=1 মানে বাস্তব প্রথম ছবি (index 0 = leading clone, N+1 = trailing clone)।
+    const slidesHtml = n > 1
+        ? slideImg(allImages[n - 1], n - 1) + allImages.map(slideImg).join('') + slideImg(allImages[0], 0)
+        : slideImg(allImages[0], 0);
     const dotsHtml = n > 1
-        ? `<div class="review-all-slideshow-dots">${allImages.map((_, i) => `<span class="${i === 0 ? 'active' : ''}" id="rvDot-${i}"></span>`).join('')}</div>`
+        ? `<div class="review-all-slideshow-dots">${allImages.map((_, i) => `<span class="${i === 0 ? 'active' : ''}"></span>`).join('')}</div>`
         : '';
     const navHtml = n > 1
         ? `<div class="review-all-slideshow-nav rv-prev" onclick="rvAllGo(-1)">‹</div>
@@ -1861,16 +1863,19 @@ async function loadReviewAllSlideshow(allImages) {
         : '';
 
     wrap.innerHTML = `
-        <div class="review-all-slideshow-viewport">
+        <div class="review-all-slideshow-viewport" id="rvViewport">
             ${navHtml}
             <div class="review-all-slideshow-track" id="reviewAllSlideshowTrack">${slidesHtml}</div>
         </div>
         ${dotsHtml}`;
 
-    __rvAllIdx = 0;
+    __rvAllIdx = n > 1 ? 1 : 0;
     __rvAllTotal = n;
     rvAllPosition(false);
-    if (n > 1) __rvAllTimer = setInterval(() => rvAllGo(1), 2500);
+    if (n > 1) {
+        __rvAllTimer = setInterval(() => rvAllGo(1), 2500);
+        rvAttachSwipe();
+    }
 }
 
 function rvAllPosition(animate) {
@@ -1878,29 +1883,45 @@ function rvAllPosition(animate) {
     if (!track) return;
     track.style.transition = animate ? 'transform .45s ease' : 'none';
     // প্রতিটা slide viewport-এর ৭৮% জায়গা নেয় (৩% padding প্রতি পাশে = ৮৪% স্টেপ)।
-    // সঠিকভাবে center করতে: viewport-এর বাকি ২২% জায়গার অর্ধেক (১১%) বাম দিক থেকে বাদ দিতে হবে,
-    // যাতে active slide ঠিক মাঝখানে বসে এবং দুই পাশে আগের/পরের slide-এর অংশ সমানভাবে দেখা যায়।
+    // viewport-এর বাকি ২২% জায়গার অর্ধেক (১১%) বাম দিক থেকে বাদ দিলে active slide ঠিক মাঝখানে বসে।
     track.style.transform = `translateX(calc(-${__rvAllIdx * 84}% + 11%))`;
+    const realActive = __rvAllTotal > 1 ? __rvAllIdx - 1 : 0; // clone বাদ দিয়ে বাস্তব index
     document.querySelectorAll('.review-all-slideshow-slide').forEach((el, i) => {
-        el.classList.toggle('rv-active', i === (__rvAllIdx % __rvAllTotal));
+        el.classList.toggle('rv-active', i === __rvAllIdx);
     });
     document.querySelectorAll('.review-all-slideshow-dots span').forEach((dot, i) => {
-        dot.classList.toggle('active', i === (__rvAllIdx % __rvAllTotal));
+        dot.classList.toggle('active', i === ((realActive % __rvAllTotal) + __rvAllTotal) % __rvAllTotal);
     });
 }
 
 function rvAllGo(dir) {
-    if (dir < 0) { // ম্যানুয়াল prev — শুধু ব্যবহারকারী arrow চাপলে; auto-timer সবসময় forward-ই থাকে
-        __rvAllIdx = (__rvAllIdx - 1 + __rvAllTotal) % __rvAllTotal;
-        rvAllPosition(true);
-        return;
-    }
-    __rvAllIdx++;
+    __rvAllIdx += dir;
     rvAllPosition(true);
-    if (__rvAllIdx === __rvAllTotal) {
-        // clone (প্রথম card-এর হুবহু কপি) দেখানো শেষ হলে চুপচাপ আসল প্রথম position-এ ফিরিয়ে আনা হচ্ছে
-        setTimeout(() => { __rvAllIdx = 0; rvAllPosition(false); }, 460);
+    // দুই প্রান্তেই clone দেখানো শেষ হলে চুপচাপ (transition ছাড়া) বাস্তব ছবির position-এ ফিরিয়ে আনা হচ্ছে —
+    // তাই forward/backward দুই দিকেই কখনো visible jump/snap হবে না।
+    if (__rvAllIdx === __rvAllTotal + 1) {
+        setTimeout(() => { __rvAllIdx = 1; rvAllPosition(false); }, 460);
+    } else if (__rvAllIdx === 0) {
+        setTimeout(() => { __rvAllIdx = __rvAllTotal; rvAllPosition(false); }, 460);
     }
+}
+
+// আঙুল দিয়ে swipe করে slide পাল্টানো — বাম দিকে swipe করলে পরের ছবি, ডান দিকে করলে আগের ছবি
+function rvAttachSwipe() {
+    const vp = document.getElementById('rvViewport');
+    if (!vp) return;
+    let startX = null;
+    vp.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
+    vp.addEventListener('touchend', e => {
+        if (startX === null) return;
+        const dx = e.changedTouches[0].clientX - startX;
+        if (Math.abs(dx) > 40) {
+            clearInterval(__rvAllTimer);
+            rvAllGo(dx < 0 ? 1 : -1);
+            __rvAllTimer = setInterval(() => rvAllGo(1), 2500); // swipe করার পর auto-slide আবার শুরু হবে
+        }
+        startX = null;
+    }, { passive: true });
 }
 
 function openReviewGallery(catKey) {
