@@ -400,12 +400,15 @@
         .review-cat-tile .rct-count { color: var(--text-secondary); font-size: 8.5px; font-weight: 600; }
         .review-cat-tile.empty { opacity: .4; cursor: default; }
 
-        /* Category card গুলোর নিচে — সব ধরনের review image, arrow ও dot দিয়ে manually navigate করা যায়, কোনো auto-slide/animation নেই */
+        /* Category card গুলোর নিচে — সব ধরনের review image, smooth right-to-left auto-slide,
+   সাথে touch/swipe ও arrow+dot দিয়ে manual navigation। শুধু ছবির চারপাশের ঘুরন্ত বর্ডার
+   animation বাদ দেওয়া হয়েছে (rv-img-frame এখন plain static ফ্রেম, glow spin নেই)। */
         .review-all-slideshow-title { font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; }
-        /* বাইরের ভিউপোর্ট — স্ক্রিনের একদম দুই পাশ জুড়ে (full width) */
+        /* বাইরের ভিউপোর্ট — স্ক্রিনের একদম দুই পাশ জুড়ে (full width), এর ভেতরেই right-to-left sliding */
         .review-all-slideshow-viewport {
             position: relative; width: 100%; overflow: hidden;
             display: flex; align-items: center; justify-content: center; min-height: 230px;
+            touch-action: pan-y; /* vertical page-scroll কে ব্যাহত না করে শুধু horizontal swipe ধরার জন্য */
         }
         /* ছবির পেছনে — স্ক্রিনের একদম দুই পাশ জুড়ে (side to side) লম্বা চিকন ব্যাকগ্রাউন্ড বার */
         .review-all-slideshow-viewport::before {
@@ -414,21 +417,17 @@
             border-top: 1px solid rgba(108,99,255,.18); border-bottom: 1px solid rgba(108,99,255,.18);
             z-index: 0;
         }
-        /* animation/transition ইচ্ছাকৃতভাবে নেই — slide পরিবর্তন instant (no transform sliding) */
-        .review-all-slideshow-track { position: relative; z-index: 1; width: 100%; display: flex; align-items: center; justify-content: center; }
-        .review-all-slideshow-slide { display: none; align-items: center; justify-content: center; padding: 10px 0; width: 100%; }
-        .review-all-slideshow-slide.active { display: flex; }
-        /* ছবির চারপাশে shrink-wrap করা ফ্রেম — display:inline-block হওয়ায় ছবির নিজের shape/অনুপাত অনুযায়ী বসে, fixed square না।
-           overflow:hidden দেওয়ায় ঘুরন্ত আলো ঠিক ফ্রেমের কিনারা বরাবর clip হয়ে থাকবে। */
+        .review-all-slideshow-track {
+            display: flex; width: 100%; transition: transform .5s ease; position: relative; z-index: 1;
+        }
+        /* প্রতিটা slide পুরো viewport width নেয় — তাই adjacent slide কখনোই আংশিক দেখা যাবে না */
+        .review-all-slideshow-slide {
+            flex: 0 0 100%; display: flex; align-items: center; justify-content: center; padding: 10px 0;
+        }
+        /* ছবির চারপাশে plain static ফ্রেম — আগে এখানে ঘুরন্ত (spinning) আলোর বর্ডার animation ছিল, সেটা বাদ */
         .rv-img-frame {
             position: relative; display: inline-block; border-radius: 12px; overflow: hidden; padding: 3px;
-        }
-        .rv-img-frame::before {
-            content: ''; position: absolute; inset: -60%; z-index: 0;
-            background: conic-gradient(from 0deg,
-                rgba(255,210,0,0) 0deg, rgba(255,210,0,.95) 60deg,
-                rgba(255,255,255,.9) 90deg, rgba(108,99,255,.85) 130deg, rgba(255,210,0,0) 180deg);
-            animation: coursesBorderSpin 3s linear infinite;
+            border: 1px solid rgba(108,99,255,.25);
         }
         .review-all-slideshow-slide img {
             position: relative; z-index: 1; display: block;
@@ -1756,33 +1755,97 @@ async function loadReviewSection() {
     } catch (e) { console.error('Review section load error:', e); }
 }
 
-/* Card-গুলোর নিচের "সব রিভিউ ছবি" স্লাইডশো — এখন manual navigation (arrow বাটন + dots),
-   কোনো auto-play/animation নেই। ক্লিক করলেই slide পরিবর্তন হয় (instant, transition ছাড়া)। */
+/* Card-গুলোর নিচের "সব রিভিউ ছবি" স্লাইডশো — smooth right-to-left auto-slide (আগের মতো),
+   সাথে touch/swipe এবং arrow+dot দিয়ে manual control। শুধু ছবির চারপাশের ঘুরন্ত বর্ডার
+   বাদ দেওয়া হয়েছে (CSS-এ rv-img-frame এখন static)। */
+let __rvAllTimer = null;
 let __rvAllIdx = 0;
 let __rvAllTotal = 0;
+
+function rvSetTrackPosition(withTransition) {
+    const track = document.getElementById('reviewAllSlideshowTrack');
+    if (!track) return;
+    track.style.transition = withTransition ? 'transform .5s ease' : 'none';
+    track.style.transform = `translateX(-${__rvAllIdx * 100}%)`;
+    const dots = document.getElementById('rvAllDots');
+    if (dots) dots.querySelectorAll('.rv-slide-dot').forEach((el, i) => el.classList.toggle('active', i === __rvAllIdx));
+}
+
+function rvStartAutoplay() {
+    if (__rvAllTimer) clearInterval(__rvAllTimer);
+    if (__rvAllTotal < 2) return;
+    __rvAllTimer = setInterval(() => {
+        const track = document.getElementById('reviewAllSlideshowTrack');
+        if (!track) { clearInterval(__rvAllTimer); return; }
+        __rvAllIdx++;
+        rvSetTrackPosition(true);
+        if (__rvAllIdx === __rvAllTotal) {
+            // clone (প্রথম ছবির হুবহু কপি) দেখানো শেষ হলে চুপচাপ আসল প্রথম position-এ ফিরিয়ে আনা হচ্ছে
+            setTimeout(() => { __rvAllIdx = 0; rvSetTrackPosition(false); }, 520);
+        }
+    }, 2200);
+}
+
+// Arrow/dot/swipe থেকে manually navigate করলে autoplay timer রিসেট হয় — যাতে ইউজার একটা ছবি
+// দেখা শুরু করার সাথে সাথেই হঠাৎ আবার auto-advance হয়ে না যায়।
+function rvNextSlide() {
+    if (__rvAllTotal < 2) return;
+    __rvAllIdx = (__rvAllIdx + 1) % __rvAllTotal;
+    rvSetTrackPosition(true);
+    rvStartAutoplay();
+}
+function rvPrevSlide() {
+    if (__rvAllTotal < 2) return;
+    const track = document.getElementById('reviewAllSlideshowTrack');
+    if (__rvAllIdx === 0) {
+        // শুধু শেষে clone আছে, শুরুতে নেই — তাই "আগেরটা" চাইলে প্রথমে নিঃশব্দে (no-transition)
+        // clone position-এ jump করে, তারপর সেখান থেকে normal transition দিয়ে আসল শেষ slide-এ যাওয়া হয়
+        if (track) {
+            __rvAllIdx = __rvAllTotal; // clone-এর position
+            rvSetTrackPosition(false);
+            // পরের ফ্রেমে actual শেষ slide-এ smooth transition
+            requestAnimationFrame(() => {
+                __rvAllIdx = __rvAllTotal - 1;
+                rvSetTrackPosition(true);
+            });
+        }
+    } else {
+        __rvAllIdx--;
+        rvSetTrackPosition(true);
+    }
+    rvStartAutoplay();
+}
+function rvGoToSlide(i) {
+    if (i < 0 || i >= __rvAllTotal) return;
+    __rvAllIdx = i;
+    rvSetTrackPosition(true);
+    rvStartAutoplay();
+}
 
 async function loadReviewAllSlideshow(allImages) {
     const wrap = document.getElementById('reviewAllSlideshowContainer');
     if (!wrap) return;
+    if (__rvAllTimer) { clearInterval(__rvAllTimer); __rvAllTimer = null; }
     if (!allImages.length) { wrap.innerHTML = ''; return; }
 
     const rvUrls = allImages.map(img => img.image_url);
-    window.__rvAllUrls = rvUrls; // dot/arrow click handler থেকে reuse করার জন্য
 
     const slideImg = (img, i) =>
-        `<div class="review-all-slideshow-slide${i === 0 ? ' active' : ''}" data-idx="${i}">
+        `<div class="review-all-slideshow-slide">
             <div class="rv-img-frame">
                 <img src="${escHtml(img.image_url)}" alt="Review" loading="lazy" onclick='openSlideshowZoom(${i}, ${JSON.stringify(rvUrls)})' onerror="this.parentElement.parentElement.style.display='none'">
             </div>
         </div>`;
 
-    const slidesHtml = allImages.map(slideImg).join('');
+    // Full-width sliding — প্রতিটা slide পুরো viewport width নেয় (100%)। Seamless forward-loop
+    // এর জন্য প্রথম ছবির একটা clone শেষে জুড়ে দেওয়া হচ্ছে (auto-play-এর loop-এর জন্য দরকার)।
+    const slidesHtml = allImages.map(slideImg).join('') + (allImages.length > 1 ? slideImg(allImages[0], 0) : '');
     const dotsHtml = allImages.length > 1
         ? `<div class="rv-slide-dots" id="rvAllDots">${allImages.map((_, i) => `<button class="rv-slide-dot${i === 0 ? ' active' : ''}" onclick="rvGoToSlide(${i})" aria-label="Slide ${i+1}"></button>`).join('')}</div>`
         : '';
 
     wrap.innerHTML = `
-        <div class="review-all-slideshow-viewport">
+        <div class="review-all-slideshow-viewport" id="rvAllViewport">
             ${allImages.length > 1 ? `<button class="rv-slide-arrow prev" onclick="rvPrevSlide()" aria-label="আগের ছবি">‹</button>` : ''}
             <div class="review-all-slideshow-track" id="reviewAllSlideshowTrack">${slidesHtml}</div>
             ${allImages.length > 1 ? `<button class="rv-slide-arrow next" onclick="rvNextSlide()" aria-label="পরের ছবি">›</button>` : ''}
@@ -1791,36 +1854,28 @@ async function loadReviewAllSlideshow(allImages) {
 
     __rvAllIdx = 0;
     __rvAllTotal = allImages.length;
-}
 
-function rvRenderActiveSlide() {
-    const track = document.getElementById('reviewAllSlideshowTrack');
-    if (!track) return;
-    track.querySelectorAll('.review-all-slideshow-slide').forEach(el => {
-        el.classList.toggle('active', parseInt(el.dataset.idx) === __rvAllIdx);
-    });
-    const dots = document.getElementById('rvAllDots');
-    if (dots) {
-        dots.querySelectorAll('.rv-slide-dot').forEach((el, i) => el.classList.toggle('active', i === __rvAllIdx));
+    // Touch/swipe support — বাম/ডানে সোয়াইপ করলে slide পরিবর্তন হবে
+    if (allImages.length > 1) {
+        const viewport = document.getElementById('rvAllViewport');
+        let touchStartX = 0, touchStartY = 0, touchMoved = false;
+        viewport.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            touchMoved = false;
+        }, { passive: true });
+        viewport.addEventListener('touchmove', () => { touchMoved = true; }, { passive: true });
+        viewport.addEventListener('touchend', (e) => {
+            if (!touchMoved) return;
+            const dx = e.changedTouches[0].clientX - touchStartX;
+            const dy = e.changedTouches[0].clientY - touchStartY;
+            if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) { // মূলত horizontal swipe হলেই react করবে, vertical scroll কে বাধা দেবে না
+                if (dx < 0) rvNextSlide(); else rvPrevSlide();
+            }
+        }, { passive: true });
+
+        rvStartAutoplay();
     }
-}
-
-function rvNextSlide() {
-    if (__rvAllTotal < 2) return;
-    __rvAllIdx = (__rvAllIdx + 1) % __rvAllTotal;
-    rvRenderActiveSlide();
-}
-
-function rvPrevSlide() {
-    if (__rvAllTotal < 2) return;
-    __rvAllIdx = (__rvAllIdx - 1 + __rvAllTotal) % __rvAllTotal;
-    rvRenderActiveSlide();
-}
-
-function rvGoToSlide(i) {
-    if (i < 0 || i >= __rvAllTotal) return;
-    __rvAllIdx = i;
-    rvRenderActiveSlide();
 }
 
 function openReviewGallery(catKey) {
