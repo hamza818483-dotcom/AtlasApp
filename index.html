@@ -426,7 +426,7 @@
         /* প্রতিটা slide viewport width এর 82% নেয় — বাকি 18% এর অর্ধেক করে দুই পাশে
            আগের/পরের slide-এর অংশ হালকাভাবে (peek) দেখা যায়, ঠিক reference site এর মতো */
         .review-all-slideshow-slide {
-            flex: 0 0 90%; display: flex; align-items: center; justify-content: center; padding: 10px 6px;
+            flex: 0 0 78%; display: flex; align-items: center; justify-content: center; padding: 10px 4px;
             opacity: .55; transform: scale(.95); transition: opacity .4s ease, transform .4s ease;
         }
         .review-all-slideshow-slide.rv-active {
@@ -445,9 +445,9 @@
 
         /* Screenshot-এ দেখানো স্টাইলের মতো — দুই পাশে গোল arrow বাটন */
         .rv-slide-arrow {
-            position: absolute; top: 50%; transform: translateY(-50%); z-index: 2;
-            width: 34px; height: 34px; border-radius: 50%; border: none; cursor: pointer;
-            background: rgba(20,20,30,.55); color: #fff; font-size: 18px; font-weight: 700;
+            position: absolute; top: 50%; transform: translateY(-50%); z-index: 3;
+            width: 28px; height: 28px; border-radius: 50%; border: none; cursor: pointer;
+            background: rgba(20,20,30,.5); color: #fff; font-size: 15px; font-weight: 700;
             display: flex; align-items: center; justify-content: center;
         }
         .rv-slide-arrow:active { transform: translateY(-50%) scale(.9); }
@@ -1775,7 +1775,7 @@ function rvSetTrackPosition(withTransition) {
     track.style.transition = withTransition ? 'transform .5s ease' : 'none';
     // Slide width 82% + (18%/2 = 9%) centering offset per step, যাতে active slide viewport-এর
     // ঠিক মাঝে থাকে এবং দুই পাশের slide আংশিকভাবে (peek) দেখা যায়
-    const SLIDE_PCT = 90;
+    const SLIDE_PCT = 78;
     const offset = (100 - SLIDE_PCT) / 2;
     const domIdx = __rvDomIdx(__rvAllIdx);
     track.style.transform = `translateX(calc(-${domIdx * SLIDE_PCT}% + ${offset}%))`;
@@ -1804,7 +1804,7 @@ function rvNextSlide(fromAutoplay) {
         // তারপর নিঃশব্দে (no-transition) আসল প্রথম slide-এর position এ ফিরিয়ে আনা হয়
         __rvAllIdx = __rvAllTotal; // clone position (dots handling ignores out-of-range safely below)
         const track = document.getElementById('reviewAllSlideshowTrack');
-        const SLIDE_PCT = 90, offset = (100 - SLIDE_PCT) / 2;
+        const SLIDE_PCT = 78, offset = (100 - SLIDE_PCT) / 2;
         const domIdx = __rvDomIdx(__rvAllTotal); // trailing clone's DOM index
         if (track) {
             track.style.transition = 'transform .5s ease';
