@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Quick Practice — ATLAS APP</title>
+<style>
+    :root {
+        --bg: #0D1117; --card-bg: #161B22; --card-hover: #1C2129;
+        --text: #E6EDF3; --text-secondary: #8B949E;
+        --accent: #7C83FF; --accent-hover: #9499FF;
+        --border: #30363D;
+        --radius: 14px; --radius-md: 10px; --radius-full: 999px;
+        --success: #3FB950; --error: #F85149; --gold: #F5C542;
+    }
+    body.light-mode {
+        --bg: #F6F8FA; --card-bg: #FFFFFF; --card-hover: #F0F2F5;
+        --text: #1C2129; --text-secondary: #57606A; --border: #D0D7DE;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; min-height:100vh; display:flex; flex-direction:column; }
+
+    .qpp-header { display:flex; align-items:center; gap:10px; padding:14px 16px; background:var(--card-bg); border-bottom:1px solid var(--border); }
+    .qpp-back { width:34px; height:34px; border-radius:var(--radius-full); border:1px solid var(--border); background:var(--bg); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text); }
+    .qpp-progress-wrap { flex:1; }
+    .qpp-progress-text { font-size:11px; color:var(--text-secondary); margin-bottom:4px; }
+    .qpp-progress-bar { height:5px; background:var(--border); border-radius:99px; overflow:hidden; }
+    .qpp-progress-fill { height:100%; background:linear-gradient(90deg,#7C83FF,#9499FF); transition:width .3s; }
+    .qpp-finish-btn { padding:8px 14px; border-radius:var(--radius-full); background:var(--error); color:#fff; font-weight:800; font-size:12px; cursor:pointer; white-space:nowrap; }
+
+    .qpp-body { flex:1; padding:20px 16px 16px; display:flex; flex-direction:column; }
+    .qpp-tag { display:inline-flex; align-self:flex-start; gap:5px; align-items:center; background:rgba(124,131,255,.12); color:var(--accent); font-size:11px; font-weight:700; padding:5px 11px; border-radius:var(--radius-full); margin-bottom:14px; }
+    .qpp-question { font-size:16.5px; font-weight:700; line-height:1.6; margin-bottom:20px; }
+
+    .qpp-options { display:flex; flex-direction:column; gap:10px; }
+    .qpp-opt { display:flex; align-items:center; gap:12px; padding:14px 16px; border-radius:var(--radius-md); border:1.5px solid var(--border); background:var(--card-bg); cursor:pointer; transition:all .15s; font-size:14px; }
+    .qpp-opt:active { transform:scale(0.98); }
+    .qpp-opt-letter { width:26px; height:26px; border-radius:8px; background:var(--bg); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; flex-shrink:0; color:var(--text-secondary); }
+    .qpp-opt.correct { border-color:var(--success); background:rgba(63,185,80,.1); }
+    .qpp-opt.correct .qpp-opt-letter { background:var(--success); color:#fff; }
+    .qpp-opt.wrong { border-color:var(--error); background:rgba(248,81,73,.1); }
+    .qpp-opt.wrong .qpp-opt-letter { background:var(--error); color:#fff; }
+    .qpp-opt.disabled { pointer-events:none; }
+    .qpp-opt.dim { opacity:.5; }
+
+    .qpp-explanation { margin-top:16px; padding:14px; border-radius:var(--radius-md); background:var(--card-hover); border-left:3px solid var(--accent); font-size:13px; line-height:1.6; display:none; animation:qppFadeIn .3s ease; }
+    .qpp-explanation.show { display:block; }
+    @keyframes qppFadeIn { from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+    .qpp-explanation .lbl { font-weight:800; color:var(--accent); font-size:11.5px; margin-bottom:5px; }
+
+    .qpp-nav { display:flex; gap:10px; padding:14px 16px 20px; background:var(--card-bg); border-top:1px solid var(--border); }
+    .qpp-nav-btn { flex:1; padding:13px; border-radius:var(--radius-md); border:1px solid var(--border); background:var(--bg); color:var(--text); font-weight:700; font-size:13.5px; cursor:pointer; text-align:center; }
+    .qpp-nav-btn.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+    .qpp-nav-btn:disabled { opacity:.4; pointer-events:none; }
+
+    .qpp-empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:40px; color:var(--text-secondary); gap:10px; }
+
+    /* Result screen */
+    .qpp-result { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px; text-align:center; display:none; }
+    .qpp-result.show { display:flex; }
+    .qpp-result-icon { width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg,#F5C542,#F5A623); display:flex; align-items:center; justify-content:center; margin-bottom:18px; box-shadow:0 8px 24px rgba(245,197,66,.35); }
+    .qpp-result-title { font-size:20px; font-weight:800; margin-bottom:6px; }
+    .qpp-result-sub { font-size:13px; color:var(--text-secondary); margin-bottom:24px; }
+    .qpp-result-stats { display:flex; gap:14px; margin-bottom:28px; }
+    .qpp-rstat { background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px 18px; min-width:80px; }
+    .qpp-rstat .v { font-size:20px; font-weight:800; }
+    .qpp-rstat .l { font-size:10.5px; color:var(--text-secondary); margin-top:3px; }
+    .qpp-rstat.correct .v { color:var(--success); }
+    .qpp-rstat.wrong .v { color:var(--error); }
+    .qpp-rstat.points .v { color:var(--gold); }
+    .qpp-result-btn { padding:14px 32px; border-radius:var(--radius-full); background:var(--accent); color:#fff; font-weight:800; font-size:14px; cursor:pointer; }
+</style>
+</head>
+<body>
+
+<div class="qpp-header">
+    <div class="qpp-back" onclick="qppExitConfirm()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="qpp-progress-wrap">
+        <div class="qpp-progress-text" id="qppProgressText">প্রশ্ন ১/১</div>
+        <div class="qpp-progress-bar"><div class="qpp-progress-fill" id="qppProgressFill" style="width:0%"></div></div>
+    </div>
+    <div class="qpp-finish-btn" id="qppFinishBtn" onclick="qppFinish()">শেষ করো</div>
+</div>
+
+<div class="qpp-body" id="qppBody">
+    <div class="qpp-empty" id="qppEmpty" style="display:none">
+        <div style="font-size:40px">😕</div>
+        <div style="font-weight:700">কোনো MCQ পাওয়া যায়নি</div>
+        <div style="font-size:12px">অন্য বিষয়/অধ্যায় বেছে নিন</div>
+    </div>
+
+    <div id="qppQuestionWrap" style="display:none">
+        <div class="qpp-tag" id="qppTag">📘 বিষয় · অধ্যায়</div>
+        <div class="qpp-question" id="qppQuestion">প্রশ্ন লোড হচ্ছে...</div>
+        <div class="qpp-options" id="qppOptions"></div>
+        <div class="qpp-explanation" id="qppExplanation">
+            <div class="lbl">💡 ব্যাখ্যা</div>
+            <div id="qppExplanationText"></div>
+        </div>
+    </div>
+
+    <div class="qpp-result" id="qppResult">
+        <div class="qpp-result-icon">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none"><path d="M9 11l3 3L22 4" stroke="#1C1300" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke="#1C1300" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="qpp-result-title">কুইজ শেষ! 🎉</div>
+        <div class="qpp-result-sub" id="qppResultSub">মোট ১০টি প্রশ্ন খেলেছেন</div>
+        <div class="qpp-result-stats">
+            <div class="qpp-rstat correct"><div class="v" id="qppRCorrect">0</div><div class="l">সঠিক</div></div>
+            <div class="qpp-rstat wrong"><div class="v" id="qppRWrong">0</div><div class="l">ভুল</div></div>
+            <div class="qpp-rstat points"><div class="v" id="qppRPoints">+0</div><div class="l">পয়েন্ট</div></div>
+        </div>
+        <div class="qpp-result-btn" onclick="location.href='quick-practice.html'">হোমে ফিরুন</div>
+    </div>
+</div>
+
+<div class="qpp-nav" id="qppNav" style="display:none">
+    <button class="qpp-nav-btn" id="qppPrevBtn" onclick="qppPrev()">← Previous</button>
+    <button class="qpp-nav-btn primary" id="qppNextBtn" onclick="qppNext()">Next →</button>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
+
+async function qppFetch(path, opts = {}) {
+    opts.headers = Object.assign({ apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }, opts.headers || {});
+    if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') opts.headers['Content-Type'] = 'application/json';
+    if (opts.method === 'PATCH' && !opts.headers['Prefer']) opts.headers['Prefer'] = 'return=minimal';
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, opts);
+    const text = await res.text();
+    return text ? JSON.parse(text) : [];
+}
+function qppGetSession() { try { return JSON.parse(localStorage.getItem('atlas-session')); } catch (e) { return null; } }
+(function () { if (localStorage.getItem('atlas-theme') === 'light') document.body.classList.add('light-mode'); })();
+
+// ── Sound (WebAudio synthesized beep — no external asset needed) ──
+function qppPlaySound(correct) {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        if (correct) {
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
+            osc.frequency.setValueAtTime(1174.66, ctx.currentTime + 0.1);
+        } else {
+            osc.frequency.setValueAtTime(220, ctx.currentTime);
+            osc.frequency.setValueAtTime(174.61, ctx.currentTime + 0.12);
+        }
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+        osc.start(); osc.stop(ctx.currentTime + 0.25);
+    } catch (e) { /* audio not available, silently skip */ }
+}
+
+// ── State ──
+let qppMcqs = [];             // [{id, question, option1..5, answer, explanation, subjectName, chapterName}]
+let qppCurrent = 0;
+let qppAnswered = [];         // per-question: null | {selectedIdx, correct}
+let qppSessionCorrect = 0;
+let qppSessionWrong = 0;
+
+async function qppInit() {
+    const modeRaw = sessionStorage.getItem('qp_practice_mode');
+    if (!modeRaw) { location.href = 'quick-practice.html'; return; }
+    const mode = JSON.parse(modeRaw);
+
+    let rows = [];
+    if (mode.type === 'random') {
+        rows = await qppFetch('qp_mcqs?select=id,question,option1,option2,option3,option4,option5,answer,explanation,subject_id,chapter_id');
+    } else {
+        const ids = mode.chapterIds.join(',');
+        rows = await qppFetch(`qp_mcqs?chapter_id=in.(${ids})&select=id,question,option1,option2,option3,option4,option5,answer,explanation,subject_id,chapter_id`);
+    }
+
+    if (!rows.length) {
+        document.getElementById('qppEmpty').style.display = 'flex';
+        return;
+    }
+
+    // Fisher-Yates shuffle (random order প্রতি সেশনে)
+    for (let i = rows.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [rows[i], rows[j]] = [rows[j], rows[i]];
+    }
+
+    // Tag resolution (subject/chapter name)
+    const subjIds = [...new Set(rows.map(r => r.subject_id))];
+    const chapIds = [...new Set(rows.map(r => r.chapter_id))];
+    const subjs = await qppFetch(`qp_subjects?id=in.(${subjIds.join(',')})&select=id,name`);
+    const chaps = await qppFetch(`qp_chapters?id=in.(${chapIds.join(',')})&select=id,name`);
+    const subjMap = Object.fromEntries(subjs.map(s => [s.id, s.name]));
+    const chapMap = Object.fromEntries(chaps.map(c => [c.id, c.name]));
+
+    qppMcqs = rows.map(r => ({
+        ...r,
+        subjectName: subjMap[r.subject_id] || '',
+        chapterName: chapMap[r.chapter_id] || ''
+    }));
+    qppAnswered = new Array(qppMcqs.length).fill(null);
+
+    document.getElementById('qppQuestionWrap').style.display = 'block';
+    document.getElementById('qppNav').style.display = 'flex';
+    qppRenderQuestion();
+}
+
+function qppEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+function qppRenderQuestion() {
+    const q = qppMcqs[qppCurrent];
+    const total = qppMcqs.length;
+    document.getElementById('qppProgressText').textContent = `প্রশ্ন ${qppCurrent + 1}/${total}`;
+    document.getElementById('qppProgressFill').style.width = `${((qppCurrent + 1) / total) * 100}%`;
+    document.getElementById('qppTag').textContent = `📘 ${q.subjectName} · ${q.chapterName}`;
+    document.getElementById('qppQuestion').textContent = q.question;
+
+    const opts = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(o => o != null && o !== '');
+    const letters = ['A', 'B', 'C', 'D', 'E'];
+    const answered = qppAnswered[qppCurrent];
+
+    document.getElementById('qppOptions').innerHTML = opts.map((opt, i) => {
+        let cls = '';
+        if (answered) {
+            cls = 'disabled ';
+            if (i === q.answer - 1) cls += 'correct';
+            else if (i === answered.selectedIdx) cls += 'wrong';
+            else cls += 'dim';
+        }
+        return `<div class="qpp-opt ${cls}" onclick="qppSelectOption(${i})">
+            <div class="qpp-opt-letter">${letters[i]}</div>
+            <div>${qppEsc(opt)}</div>
+        </div>`;
+    }).join('');
+
+    const expEl = document.getElementById('qppExplanation');
+    if (answered && q.explanation) {
+        document.getElementById('qppExplanationText').textContent = q.explanation;
+        expEl.classList.add('show');
+    } else {
+        expEl.classList.remove('show');
+    }
+
+    document.getElementById('qppPrevBtn').disabled = qppCurrent === 0;
+    document.getElementById('qppNextBtn').textContent = qppCurrent === total - 1 ? 'শেষ করো' : 'Next →';
+}
+
+function qppSelectOption(idx) {
+    if (qppAnswered[qppCurrent]) return; // already answered, ignore re-click
+    const q = qppMcqs[qppCurrent];
+    const correct = (idx === q.answer - 1);
+    qppAnswered[qppCurrent] = { selectedIdx: idx, correct };
+    if (correct) qppSessionCorrect++; else qppSessionWrong++;
+    qppPlaySound(correct);
+    qppRenderQuestion();
+}
+
+function qppPrev() {
+    if (qppCurrent > 0) { qppCurrent--; qppRenderQuestion(); }
+}
+function qppNext() {
+    if (qppCurrent < qppMcqs.length - 1) { qppCurrent++; qppRenderQuestion(); }
+    else qppFinish();
+}
+
+function qppExitConfirm() {
+    if (qppSessionCorrect + qppSessionWrong > 0) {
+        if (!confirm('কুইজ থেকে বের হতে চান? অগ্রগতি সেভ হয়ে যাবে।')) return;
+        qppSaveProgress();
+    }
+    location.href = 'quick-practice.html';
+}
+
+async function qppFinish() {
+    document.getElementById('qppQuestionWrap').style.display = 'none';
+    document.getElementById('qppNav').style.display = 'none';
+    document.getElementById('qppFinishBtn').style.display = 'none';
+
+    const attempted = qppSessionCorrect + qppSessionWrong;
+    document.getElementById('qppResultSub').textContent = `মোট ${attempted}টি প্রশ্ন খেলেছেন`;
+    document.getElementById('qppRCorrect').textContent = qppSessionCorrect;
+    document.getElementById('qppRWrong').textContent = qppSessionWrong;
+    document.getElementById('qppRPoints').textContent = `+${qppSessionCorrect}`;
+    document.getElementById('qppResult').classList.add('show');
+
+    await qppSaveProgress();
+}
+
+async function qppSaveProgress() {
+    const session = qppGetSession();
+    if (!session || !session.phone) return;
+    const phone = session.phone;
+    const existing = await qppFetch(`qp_user_points?user_phone=eq.${phone}&select=*`);
+    const attempted = qppSessionCorrect + qppSessionWrong;
+    if (existing.length) {
+        const cur = existing[0];
+        await qppFetch(`qp_user_points?user_phone=eq.${phone}`, {
+            method: 'PATCH',
+            body: JSON.stringify({
+                total_points: cur.total_points + qppSessionCorrect,
+                total_correct: cur.total_correct + qppSessionCorrect,
+                total_wrong: cur.total_wrong + qppSessionWrong,
+                total_quizzes: cur.total_quizzes + (attempted > 0 ? 1 : 0),
+                updated_at: new Date().toISOString()
+            })
+        });
+    } else {
+        await qppFetch('qp_user_points', {
+            method: 'POST',
+            body: JSON.stringify({
+                user_phone: phone,
+                total_points: qppSessionCorrect,
+                total_correct: qppSessionCorrect,
+                total_wrong: qppSessionWrong,
+                total_quizzes: attempted > 0 ? 1 : 0
+            })
+        });
+    }
+}
+
+qppInit();
+</script>
+</body>
+</html>
