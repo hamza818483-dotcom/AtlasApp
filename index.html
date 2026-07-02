@@ -316,35 +316,29 @@
         .slideshow-dot.active { background: #fff; width: 16px; border-radius: 3px; }
 
         /* ── Compact mode — premium centered card, smaller, eye-catching shadow ── */
-        .slideshow-wrap.compact-mode {
-            background: transparent; box-shadow: none; border-radius: 0;
-            display: block; padding: 6px 0 16px;
+        /* Compact mode — review slideshow-এর সাথে ১০০% একই peek-carousel system */
+        .slideshow-wrap.compact-mode { background: transparent; box-shadow: none; border-radius: 0; padding: 6px 0 16px; }
+        .cs-viewport { position: relative; width: 100%; overflow: hidden; padding: 6px 0 4px; }
+        .cs-track { display: flex; align-items: center; transition: transform .45s ease; }
+        .cs-slide { flex: 0 0 78%; padding: 0 3%; box-sizing: border-box; transition: opacity .35s, transform .35s; }
+        .cs-slide:not(.cs-active) { opacity: .45; transform: scale(.92); }
+        .cs-slide.cs-active { opacity: 1; transform: scale(1); }
+        .cs-img-card {
+            width: 100%; aspect-ratio: 16/10; border-radius: 16px; overflow: hidden;
+            background: linear-gradient(145deg, #110E2A 0%, #1C1040 40%, #0F0C24 100%);
+            box-shadow: 0 8px 26px rgba(0,0,0,.4), 0 2px 10px rgba(108,99,255,.25);
         }
-        /* বাইরের viewport — এখানেই clip হয়, পাশের slide কখনো বের হয়ে আসবে না */
-        .slideshow-wrap.compact-mode .slideshow-viewport {
-            width: 62%; margin: 0 auto; overflow: hidden; border-radius: 16px;
-            box-shadow: 0 8px 28px rgba(0,0,0,.35), 0 2px 8px rgba(108,99,255,.25);
+        .cs-img-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .cs-dots { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
+        .cs-dots span { width: 6px; height: 6px; border-radius: 50%; background: rgba(108,99,255,.3); transition: all .3s; }
+        .cs-dots span.active { background: var(--accent, #6C63FF); width: 16px; border-radius: 3px; }
+        .cs-nav {
+            position: absolute; top: 50%; transform: translateY(-50%); z-index: 3;
+            width: 30px; height: 30px; border-radius: 50%; background: rgba(0,0,0,.35);
+            display: flex; align-items: center; justify-content: center; color: #fff; font-size: 15px; cursor: pointer;
         }
-        .slideshow-wrap.compact-mode .slideshow-track {
-            width: 100%;
-        }
-        .slideshow-wrap.compact-mode .slideshow-slide {
-            /* সব ছবি ঠিক একই আকারের বক্সে বসবে — ছবির আসল সাইজ/অনুপাত যাই হোক না কেন */
-            width: 100%; aspect-ratio: 1 / 1;
-            background: linear-gradient(145deg, rgba(108,99,255,.10), rgba(108,99,255,.03));
-            display: flex; align-items: center; justify-content: center;
-            overflow: hidden;
-        }
-        .slideshow-wrap.compact-mode .slideshow-slide img {
-            width: 100%; height: 100%;
-            /* object-fit: contain — ছবি crop না করে ছোট করে পুরোটা বক্সের মধ্যে দেখাবে (zoom out), সব ছবির final সাইজ সমান */
-            object-fit: contain;
-            transition: transform .2s ease;
-        }
-        .slideshow-wrap.compact-mode .slideshow-slide img:active { transform: scale(.97); }
-        .slideshow-wrap.compact-mode .slideshow-dots { bottom: -12px; }
-        .slideshow-wrap.compact-mode .slideshow-dot { background: rgba(108,99,255,.35); }
-        .slideshow-wrap.compact-mode .slideshow-dot.active { background: var(--accent, #6C63FF); }
+        .cs-nav.cs-prev { left: 2%; }
+        .cs-nav.cs-next { right: 2%; }
 
         /* Fullscreen zoom overlay when tapping a compact-mode image */
         .slideshow-zoom-bg {
@@ -2006,6 +2000,7 @@ async function loadSlideshow() {
         const data = await safeFetch(`${SUPABASE_URL}/rest/v1/slideshow_images?select=*&order=sort_order.asc,created_at.asc&limit=20&is_active=eq.true`);
 
         if (__slideshowTimer) { clearInterval(__slideshowTimer); __slideshowTimer = null; }
+        if (__csTimer) { clearInterval(__csTimer); __csTimer = null; }
 
         if (!data?.length) { container.innerHTML = ''; return; }
 
@@ -2020,26 +2015,27 @@ async function loadSlideshow() {
             img.src = s.image_url;
         })));
 
+        const isCompact = data[0]?.display_mode === 'compact';
+        if (isCompact) {
+            loadCompactSlideshow(container, data); // review slideshow-এর সাথে ১০০% একই peek-carousel system
+            return;
+        }
+
         const slidesHtml = data.map((s, i) => {
             const hasLink = !!s.link_url;
-            const isCompact = s.display_mode === 'compact';
-            // Compact মোডে ছবিতে ক্লিক করলে বড় হয়ে zoom দেখাবে (যদি link না থাকে),
-            // link থাকলে সরাসরি সেই লিংকে যাবে — দুটো একসাথে না, link থাকলে link-ই priority পাবে।
             const clickAttr = hasLink
                 ? `onclick="window.open('${escHtml(s.link_url)}','_blank')" style="cursor:pointer"`
-                : (isCompact ? `onclick="openSlideshowZoom(${i})" style="cursor:zoom-in"` : '');
+                : '';
             return `<div class="slideshow-slide"><img src="${escHtml(s.image_url)}" alt="Slide" ${clickAttr} onerror="this.parentElement.style.display='none'"></div>`;
         }).join('');
         const dotsHtml = data.length > 1
             ? `<div class="slideshow-dots">${data.map((_, i) => `<span class="slideshow-dot${i === 0 ? ' active' : ''}" data-idx="${i}"></span>`).join('')}</div>`
             : '';
 
-        // সব ছবি একই mode হওয়ার কথা (admin এক ব্যাচেই মোড সেট করে), প্রথম ছবির mode ব্যবহার করা হচ্ছে
-        const wrapModeClass = data[0]?.display_mode === 'compact' ? 'compact-mode' : '';
         __slideshowImageUrls = data.map(s => s.image_url);
 
         container.innerHTML = `
-            <div class="slideshow-wrap ${wrapModeClass}">
+            <div class="slideshow-wrap">
                 <div class="slideshow-viewport">
                     <div class="slideshow-track" id="slideshowTrack">${slidesHtml}</div>
                 </div>
@@ -2053,6 +2049,94 @@ async function loadSlideshow() {
             startSlideshowAutoTimer();
         }
     } catch (e) { console.error('Slideshow load error:', e); }
+}
+
+/* ── Compact mode — review slideshow ("সব রিভিউ ছবি" carousel)-এর সাথে হুবহু একই সিস্টেম ──
+   একই CSS proportions (78% slide, 11% centering offset), leading+trailing clone দিয়ে
+   দুই পাশে সবসময় peek, forward/backward উভয় দিকেই seamless loop, touch swipe সহ। */
+let __csTimer = null;
+let __csIdx = 0;
+let __csTotal = 0;
+
+function loadCompactSlideshow(container, data) {
+    const n = data.length;
+    const slideCard = (s, realIdx) => {
+        const hasLink = !!s.link_url;
+        const clickAttr = hasLink
+            ? `onclick="window.open('${escHtml(s.link_url)}','_blank')"`
+            : `onclick='openSlideshowZoom(${realIdx}, ${JSON.stringify(data.map(x => x.image_url))})'`;
+        return `<div class="cs-slide">
+            <div class="cs-img-card">
+                <img src="${escHtml(s.image_url)}" alt="Slide" ${clickAttr} style="cursor:${hasLink ? 'pointer' : 'zoom-in'}" onerror="this.closest('.cs-slide').style.display='none'">
+            </div>
+        </div>`;
+    };
+
+    const slidesHtml = n > 1
+        ? slideCard(data[n - 1], n - 1) + data.map(slideCard).join('') + slideCard(data[0], 0)
+        : slideCard(data[0], 0);
+    const dotsHtml = n > 1
+        ? `<div class="cs-dots">${data.map((_, i) => `<span class="${i === 0 ? 'active' : ''}"></span>`).join('')}</div>`
+        : '';
+    const navHtml = n > 1
+        ? `<div class="cs-nav cs-prev" onclick="csGo(-1)">‹</div><div class="cs-nav cs-next" onclick="csGo(1)">›</div>`
+        : '';
+
+    container.innerHTML = `
+        <div class="slideshow-wrap compact-mode">
+            <div class="cs-viewport" id="csViewport">
+                ${navHtml}
+                <div class="cs-track" id="csTrack">${slidesHtml}</div>
+            </div>
+            ${dotsHtml}
+        </div>`;
+
+    __csIdx = n > 1 ? 1 : 0;
+    __csTotal = n;
+    csPosition(false);
+    if (n > 1) {
+        __csTimer = setInterval(() => csGo(1), 2500);
+        csAttachSwipe();
+    }
+}
+
+function csPosition(animate) {
+    const track = document.getElementById('csTrack');
+    if (!track) return;
+    track.style.transition = animate ? 'transform .45s ease' : 'none';
+    track.style.transform = `translateX(calc(-${__csIdx * 78}% + 11%))`;
+    document.querySelectorAll('.cs-slide').forEach((el, i) => el.classList.toggle('cs-active', i === __csIdx));
+    const realActive = __csTotal > 1 ? __csIdx - 1 : 0;
+    document.querySelectorAll('.cs-dots span').forEach((dot, i) => {
+        dot.classList.toggle('active', i === ((realActive % __csTotal) + __csTotal) % __csTotal);
+    });
+}
+
+function csGo(dir) {
+    __csIdx += dir;
+    csPosition(true);
+    if (__csIdx === __csTotal + 1) {
+        setTimeout(() => { __csIdx = 1; csPosition(false); }, 460);
+    } else if (__csIdx === 0) {
+        setTimeout(() => { __csIdx = __csTotal; csPosition(false); }, 460);
+    }
+}
+
+function csAttachSwipe() {
+    const vp = document.getElementById('csViewport');
+    if (!vp) return;
+    let startX = null;
+    vp.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
+    vp.addEventListener('touchend', e => {
+        if (startX === null) return;
+        const dx = e.changedTouches[0].clientX - startX;
+        if (Math.abs(dx) > 40) {
+            clearInterval(__csTimer);
+            csGo(dx < 0 ? 1 : -1);
+            __csTimer = setInterval(() => csGo(1), 2500);
+        }
+        startX = null;
+    }, { passive: true });
 }
 
 function startSlideshowAutoTimer() {
