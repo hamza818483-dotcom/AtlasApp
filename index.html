@@ -404,11 +404,14 @@
    সাথে touch/swipe ও arrow+dot দিয়ে manual navigation। শুধু ছবির চারপাশের ঘুরন্ত বর্ডার
    animation বাদ দেওয়া হয়েছে (rv-img-frame এখন plain static ফ্রেম, glow spin নেই)। */
         .review-all-slideshow-title { font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; }
-        /* বাইরের ভিউপোর্ট — স্ক্রিনের একদম দুই পাশ জুড়ে (full width), এর ভেতরেই right-to-left sliding */
+        /* বাইরের ভিউপোর্ট — স্ক্রিনের একদম দুই পাশ জুড়ে (full width), এর ভেতরেই right-to-left sliding
+           section এর 14px padding বাদ দিয়ে negative margin দিয়ে viewport-কে পুরো screen width এ
+           নিয়ে আসা হয়েছে, যাতে ছবি সত্যিকারভাবে screen এর ঠিক মাঝে থাকে (arrow button থাকা সত্ত্বেও) */
         .review-all-slideshow-viewport {
             position: relative; width: 100%; overflow: hidden;
             display: flex; align-items: center; justify-content: center; min-height: 230px;
             touch-action: pan-y; /* vertical page-scroll কে ব্যাহত না করে শুধু horizontal swipe ধরার জন্য */
+            margin: 0 -14px; width: calc(100% + 28px);
         }
         /* ছবির পেছনে — স্ক্রিনের একদম দুই পাশ জুড়ে (side to side) লম্বা চিকন ব্যাকগ্রাউন্ড বার */
         .review-all-slideshow-viewport::before {
@@ -431,8 +434,9 @@
         }
         .review-all-slideshow-slide img {
             position: relative; z-index: 1; display: block;
-            max-width: 62%; max-height: 280px; width: auto; height: auto;
+            max-width: 68%; max-height: 280px; width: auto; height: auto;
             object-fit: contain; cursor: zoom-in; border-radius: 10px;
+            margin: 0 auto;
         }
 
         /* Screenshot-এ দেখানো স্টাইলের মতো — দুই পাশে গোল arrow বাটন */
