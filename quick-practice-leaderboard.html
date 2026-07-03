@@ -24,41 +24,47 @@
     .lb-my-rank.show { display:flex; }
     .lb-my-rank b { color:var(--accent); }
 
-    /* TOP 3 PODIUM */
+    /* TOP 3 — glass card style matching Focus Timer, still shown in list */
     .top3-section { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin:16px 16px 6px; align-items:end; }
-    .top3-card { padding:14px 8px 12px; border-radius:14px; border:1.5px solid var(--border); background:var(--card-bg); text-align:center; position:relative; overflow:hidden; }
-    .top3-card.rank1 { order:2; padding-top:6px; border-color:rgba(245,197,66,.6); background:linear-gradient(160deg, rgba(245,197,66,.16), var(--card-bg)); box-shadow:0 6px 20px rgba(245,197,66,.25); transform:scale(1.06); z-index:2; }
-    .top3-card.rank2 { order:1; border-color:rgba(156,163,175,.5); background:linear-gradient(160deg, rgba(156,163,175,.12), var(--card-bg)); }
-    .top3-card.rank3 { order:3; border-color:rgba(205,127,50,.45); background:linear-gradient(160deg, rgba(205,127,50,.1), var(--card-bg)); }
+    .top3-card { padding:14px 8px 12px; border-radius:14px; position:relative; overflow:hidden; text-align:center;
+        background:rgba(0,0,0,.03); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+        border:1px solid var(--border); box-shadow:0 2px 8px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.5); }
+    .top3-card::after { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent); pointer-events:none; }
+    .top3-card.rank1 { order:2; padding-top:6px; border-color:rgba(245,197,66,.5); background:linear-gradient(160deg, rgba(245,197,66,.1), rgba(0,0,0,.03)); box-shadow:0 4px 14px rgba(245,197,66,.2), inset 0 1px 0 rgba(255,255,255,.6); transform:scale(1.06); z-index:2; }
+    .top3-card.rank2 { order:1; border-color:rgba(156,163,175,.4); }
+    .top3-card.rank3 { order:3; border-color:rgba(205,127,50,.35); }
     .top3-crown { font-size:20px; margin-bottom:2px; }
-    .top3-avatar { width:52px; height:52px; border-radius:50%; background:rgba(124,131,255,.12); margin:0 auto 6px; display:flex; align-items:center; justify-content:center; font-size:22px; border:2.5px solid var(--card-bg); overflow:hidden; position:relative; }
-    .top3-card.rank1 .top3-avatar { width:62px; height:62px; border-color:var(--gold); box-shadow:0 0 0 2px rgba(245,197,66,.4); }
-    .top3-card.rank2 .top3-avatar { border-color:#9CA3AF; }
-    .top3-card.rank3 .top3-avatar { border-color:#CD7F32; }
-    .top3-avatar img { width:100%; height:100%; object-fit:cover; }
+    .top3-avatar { width:52px; height:52px; border-radius:12px; background:linear-gradient(135deg, rgba(124,131,255,.2), rgba(124,131,255,.08)); margin:0 auto 6px; display:flex; align-items:center; justify-content:center; font-size:22px; border:1px solid rgba(124,131,255,.2); overflow:hidden; position:relative; }
+    .top3-card.rank1 .top3-avatar { width:62px; height:62px; border-color:var(--gold); }
+    .top3-avatar img { width:100%; height:100%; object-fit:cover; border-radius:11px; }
     .top3-medal { position:absolute; bottom:-2px; right:-2px; width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:900; border:2px solid var(--card-bg); }
     .rank1 .top3-medal { background:var(--gold); color:#1C1300; }
     .rank2 .top3-medal { background:#B0B8C1; color:#fff; }
     .rank3 .top3-medal { background:#CD7F32; color:#fff; }
-    .top3-name { font-size:11.5px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .top3-batch { font-size:9.5px; color:var(--text-secondary); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .top3-points { font-size:14px; font-weight:900; color:var(--accent); margin-top:4px; }
-    .top3-points .l { font-size:8.5px; font-weight:700; color:var(--text-secondary); display:block; }
+    .top3-name { font-size:11.5px; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .top3-batch { font-size:9px; font-weight:700; color:#818CF8; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .top3-points { font-size:14px; font-weight:900; color:#10B981; margin-top:4px; font-family:'Courier New',monospace; }
+    .top3-points .l { font-size:8px; font-weight:700; color:var(--text-secondary); display:block; font-family:'Segoe UI',sans-serif; }
 
     .lb-vs-strip { display:flex; align-items:center; justify-content:center; gap:6px; margin:2px 16px 14px; font-size:10px; color:var(--text-secondary); font-weight:700; }
     .lb-vs-strip::before, .lb-vs-strip::after { content:''; flex:1; height:1px; background:var(--border); }
 
-    .lb-list { padding:0 16px; display:flex; flex-direction:column; gap:8px; }
-    .lb-card { display:flex; align-items:center; gap:10px; background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius-md); padding:10px 12px; }
-    .lb-card.is-me { border-color:var(--accent); background:linear-gradient(135deg, rgba(124,131,255,.06), var(--card-bg)); }
-    .lb-rank { font-size:14px; font-weight:900; width:26px; text-align:center; color:var(--text-secondary); font-family:'Courier New',monospace; flex-shrink:0; }
-    .lb-photo { width:40px; height:40px; border-radius:10px; flex-shrink:0; background:linear-gradient(135deg, rgba(124,131,255,.18), rgba(124,131,255,.08)); display:flex; align-items:center; justify-content:center; overflow:hidden; color:var(--accent); }
-    .lb-photo img { width:100%; height:100%; object-fit:cover; }
-    .lb-info { flex:1; min-width:0; }
-    .lb-name { font-size:13px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .lb-batch { font-size:10.5px; color:var(--text-secondary); margin-top:1px; }
-    .lb-points { font-size:14px; font-weight:900; color:var(--accent); text-align:right; flex-shrink:0; }
-    .lb-points .l { font-size:8.5px; font-weight:700; color:var(--text-secondary); display:block; text-align:right; }
+    /* Regular list — Focus Timer glass card style */
+    .lb-list { padding:0 16px; display:flex; flex-direction:column; gap:5px; }
+    .lb-card { display:flex; align-items:center; gap:8px; position:relative; overflow:hidden;
+        background:rgba(0,0,0,.03); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+        border:1px solid var(--border); border-radius:10px; padding:6px 10px 6px 6px;
+        box-shadow:0 2px 8px rgba(0,0,0,.06), inset 0 1px 0 rgba(255,255,255,.4); }
+    .lb-card::after { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent); pointer-events:none; }
+    .lb-card.is-me { border-color:rgba(124,131,255,.4); background:linear-gradient(135deg, rgba(124,131,255,.08), rgba(0,0,0,.03)); box-shadow:0 2px 10px rgba(124,131,255,.15), inset 0 1px 0 rgba(255,255,255,.5); }
+    .lb-rank { font-size:16px; font-weight:900; width:34px; text-align:center; font-family:'Courier New',monospace; color:var(--text-secondary); flex-shrink:0; }
+    .lb-photo { width:38px; height:38px; border-radius:8px; flex-shrink:0; background:linear-gradient(135deg, rgba(124,131,255,.2), rgba(124,131,255,.08)); display:flex; align-items:center; justify-content:center; overflow:hidden; border:1px solid rgba(124,131,255,.15); color:var(--accent); margin-left:-2px; }
+    .lb-photo img { width:100%; height:100%; object-fit:cover; border-radius:7px; }
+    .lb-info { flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
+    .lb-name { font-size:12px; font-weight:900; letter-spacing:.2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .lb-batch { font-size:8.5px; font-weight:800; color:#818CF8; background:rgba(99,102,241,.15); border:1px solid rgba(99,102,241,.3); border-radius:8px; padding:1px 6px; width:fit-content; font-family:'Courier New',monospace; }
+    .lb-points { font-size:12px; font-weight:900; color:#10B981; text-align:right; flex-shrink:0; font-family:'Courier New',monospace; }
+    .lb-points .l { font-size:7.5px; font-weight:700; color:var(--text-secondary); display:block; text-align:right; font-family:'Segoe UI',sans-serif; }
 
     .lb-empty { padding:40px 20px; text-align:center; color:var(--text-secondary); font-size:13px; }
     .lb-loading { padding:40px 20px; text-align:center; color:var(--text-secondary); font-size:13px; }
@@ -123,7 +129,7 @@ async function lbInit() {
     }
 
     const top3 = ranked.slice(0, 3);
-    const rest = ranked.slice(3);
+    const rest = ranked; // top3 also shown again in the full list below
 
     let html = '';
     if (top3.length) {
@@ -135,7 +141,7 @@ async function lbInit() {
             const crown = rc === 1 ? '👑' : '';
             const photoHtml = p.photo ? `<img src="${lbEsc(p.photo)}">` : lbAvatarSvg();
             html += `
-            <div class="top3-card rank${rc}" id="lbCard_${p.phone}">
+            <div class="top3-card rank${rc}" id="lbTop3_${p.phone}">
                 <div class="top3-crown">${crown}</div>
                 <div class="top3-avatar">${photoHtml}<div class="top3-medal">${rc}</div></div>
                 <div class="top3-name">${lbEsc(p.name)}</div>
