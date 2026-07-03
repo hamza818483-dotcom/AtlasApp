@@ -26,11 +26,15 @@
     .qp-title { font-size:17px; font-weight:800; flex:1; }
     .qp-points-badge { display:flex; align-items:center; gap:4px; background:linear-gradient(135deg,#F5C542,#F5A623); color:#1C1300; font-weight:800; font-size:12px; padding:6px 12px; border-radius:var(--radius-full); box-shadow:0 2px 8px rgba(245,197,66,.35); }
 
-    .qp-random-btn { margin:16px; padding:16px; border-radius:var(--radius); background:linear-gradient(135deg,#7C83FF,#9499FF); display:flex; align-items:center; gap:12px; cursor:pointer; box-shadow:0 4px 16px rgba(124,131,255,.35); }
-    .qp-random-icon { width:44px; height:44px; border-radius:12px; background:rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-    .qp-random-text { color:#fff; }
-    .qp-random-text .t1 { font-weight:800; font-size:15px; }
-    .qp-random-text .t2 { font-size:11.5px; opacity:.85; margin-top:2px; }
+    .qp-random-btn { position:relative; overflow:hidden; margin:14px 16px 0; padding:12px 16px; border-radius:var(--radius); background:linear-gradient(120deg,#6A6FFF,#8C7CFF,#9F6FFF,#7C83FF); background-size:300% 300%; animation:qpGradientShift 6s ease infinite; display:flex; align-items:center; gap:12px; cursor:pointer; box-shadow:0 4px 18px rgba(124,131,255,.4); }
+    .qp-random-btn::before { content:''; position:absolute; inset:0; background:linear-gradient(120deg, transparent 30%, rgba(255,255,255,.16) 50%, transparent 70%); background-size:200% 100%; animation:qpShine 3.5s ease-in-out infinite; pointer-events:none; }
+    @keyframes qpGradientShift { 0%{background-position:0% 50%;} 50%{background-position:100% 50%;} 100%{background-position:0% 50%;} }
+    @keyframes qpShine { 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
+    .qp-random-icon { width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; flex-shrink:0; position:relative; z-index:1; }
+    .qp-random-text { color:#fff; position:relative; z-index:1; }
+    .qp-random-text .t1 { font-weight:800; font-size:14px; }
+    .qp-random-text .t2 { font-size:11px; opacity:.85; margin-top:1px; }
+    .qp-random-sep { margin:16px 16px 8px; height:1px; background:linear-gradient(90deg, transparent, var(--border) 50%, transparent); }
 
     .qp-all-row { display:flex; justify-content:flex-end; padding:0 16px 8px; }
     .qp-all-btn { padding:7px 16px; border-radius:var(--radius-full); background:var(--card-bg); border:1px solid var(--accent); color:var(--accent); font-weight:700; font-size:12px; cursor:pointer; }
@@ -88,6 +92,8 @@
         <div class="t2">সব বিষয়/অধ্যায় থেকে random MCQ</div>
     </div>
 </div>
+
+<div class="qp-random-sep"></div>
 
 <div class="qp-all-row">
     <button class="qp-all-btn" id="qpAllSubjBtn" onclick="qpToggleAllSubjects()">All</button>
