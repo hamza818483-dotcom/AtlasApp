@@ -34,9 +34,9 @@
     .qp-random-text { color:#fff; position:relative; z-index:1; }
     .qp-random-text .t1 { font-weight:800; font-size:14px; }
     .qp-random-text .t2 { font-size:11px; opacity:.85; margin-top:1px; }
+    .qp-random-text .t3 { font-size:10.5px; opacity:.75; margin-top:3px; font-weight:700; }
+    .qp-random-text .t3 b { font-weight:900; }
     .qp-random-sep { margin:16px 16px 8px; height:1px; background:linear-gradient(90deg, transparent, var(--border) 50%, transparent); }
-    .qp-total-count { text-align:center; font-size:11.5px; color:var(--text-secondary); margin:-4px 16px 6px; }
-    .qp-total-count b { color:var(--accent); font-weight:800; }
 
     .qp-lb-box { margin:0 16px 4px; padding:13px 16px; border-radius:var(--radius); position:relative; overflow:hidden; cursor:pointer;
         background:linear-gradient(120deg,#F5C542,#F5A623,#FFD76A,#F5C542); background-size:300% 300%; animation:qpGradientShift 7s ease infinite;
@@ -102,10 +102,9 @@
     <div class="qp-random-text">
         <div class="t1">🎲 Random Practice</div>
         <div class="t2">সব বিষয়/অধ্যায় থেকে random MCQ</div>
+        <div class="t3" id="qpTotalCount"></div>
     </div>
 </div>
-
-<div class="qp-total-count" id="qpTotalCount"></div>
 
 <div class="qp-lb-box" onclick="location.href='quick-practice-leaderboard.html'">
     <div class="qp-lb-icon">🏆</div>
@@ -352,7 +351,7 @@ async function qpLoadPoints() {
 async function qpLoadTotalCount() {
     const el = document.getElementById('qpTotalCount');
     const cached = localStorage.getItem('qp_total_mcq_count');
-    if (cached) el.innerHTML = `মোট <b>${cached}</b>টি MCQ আছে সব বিষয়/অধ্যায় মিলিয়ে`;
+    if (cached) el.innerHTML = `মোট <b>${cached}</b>টি MCQ`;
     try {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/qp_mcqs?select=id`, {
             headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, Prefer: 'count=exact', Range: '0-0' }
@@ -361,7 +360,7 @@ async function qpLoadTotalCount() {
         const total = range ? range.split('/')[1] : null;
         if (total) {
             localStorage.setItem('qp_total_mcq_count', total);
-            el.innerHTML = `মোট <b>${total}</b>টি MCQ আছে সব বিষয়/অধ্যায় মিলিয়ে`;
+            el.innerHTML = `মোট <b>${total}</b>টি MCQ`;
         }
     } catch (e) {}
 }
