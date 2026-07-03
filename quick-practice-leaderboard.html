@@ -117,7 +117,9 @@ async function lbInit() {
     if (myEntry) {
         const myRankEl = document.getElementById('lbMyRank');
         myRankEl.classList.add('show');
-        myRankEl.innerHTML = `🎯 তোমার Rank: <b>#${myEntry.rank}</b> &nbsp;•&nbsp; <b>${myEntry.points}</b> পয়েন্ট`;
+        myRankEl.style.cursor = 'pointer';
+        myRankEl.onclick = () => lbScrollToMe();
+        myRankEl.innerHTML = `🎯 তোমার Rank: <b>#${myEntry.rank}</b> &nbsp;•&nbsp; <b>${myEntry.points}</b> পয়েন্ট <span style="margin-left:auto;font-size:11px;opacity:.7">দেখো ↓</span>`;
     }
 
     const top3 = ranked.slice(0, 3);
@@ -133,7 +135,7 @@ async function lbInit() {
             const crown = rc === 1 ? '👑' : '';
             const photoHtml = p.photo ? `<img src="${lbEsc(p.photo)}">` : lbAvatarSvg();
             html += `
-            <div class="top3-card rank${rc}">
+            <div class="top3-card rank${rc}" id="lbCard_${p.phone}">
                 <div class="top3-crown">${crown}</div>
                 <div class="top3-avatar">${photoHtml}<div class="top3-medal">${rc}</div></div>
                 <div class="top3-name">${lbEsc(p.name)}</div>
@@ -149,7 +151,7 @@ async function lbInit() {
         const isMe = p.phone === myPhone;
         const photoHtml = p.photo ? `<img src="${lbEsc(p.photo)}">` : lbAvatarSvg();
         html += `
-        <div class="lb-card ${isMe ? 'is-me' : ''}">
+        <div class="lb-card ${isMe ? 'is-me' : ''}" id="lbCard_${p.phone}">
             <div class="lb-rank">#${p.rank}</div>
             <div class="lb-photo">${photoHtml}</div>
             <div class="lb-info">
@@ -162,6 +164,22 @@ async function lbInit() {
     html += '</div>';
 
     document.getElementById('lbContent').innerHTML = html;
+
+    if (myEntry) setTimeout(() => lbScrollToMe(true), 400);
+}
+
+function lbScrollToMe(silent) {
+    const session = lbGetSession();
+    const myPhone = session && session.phone;
+    if (!myPhone) return;
+    const el = document.getElementById('lbCard_' + myPhone);
+    if (!el) return;
+    el.scrollIntoView({ behavior: silent ? 'auto' : 'smooth', block: 'center' });
+    if (!silent) {
+        el.style.transition = 'box-shadow .3s';
+        el.style.boxShadow = '0 0 0 3px var(--accent)';
+        setTimeout(() => { el.style.boxShadow = ''; }, 1200);
+    }
 }
 
 lbInit();
