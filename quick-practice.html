@@ -125,8 +125,7 @@ function qpGetSession() {
 
 // ── Theme sync (matches rest of app) ──
 (function () {
-    const saved = localStorage.getItem('atlas-theme');
-    if (saved === 'light') { document.body.classList.add('light-mode'); }
+    document.body.classList.add('light-mode');
 })();
 
 // ── Selection state ──
@@ -137,15 +136,27 @@ let qpOpenSubjectId = null;
 let qpAllSubjectsMode = false;
 let qpChapAllMode = {};  // subjectId -> bool
 
+const QP_CACHE_KEY = 'qp_cache_v1';
+function qpCacheGet() { try { return JSON.parse(localStorage.getItem(QP_CACHE_KEY)) || {}; } catch (e) { return {}; } }
+function qpCacheSet(data) { try { localStorage.setItem(QP_CACHE_KEY, JSON.stringify(data)); } catch (e) {} }
+
 async function qpInit() {
-    await qpLoadPoints();
-    qpSubjects = await qpFetch('qp_subjects?order=sort_order.asc&select=id,name');
+    qpLoadPoints();
+    const cache = qpCacheGet();
+    if (cache.subjects && cache.subjects.length) {
+        qpSubjects = cache.subjects;
+        qpChaptersBySubject = cache.chaptersBySubject || {};
+        document.getElementById('qpSubjList').innerHTML = qpSubjects.map(s => qpRenderSubjectCard(s)).join('');
+    }
+    const freshSubjects = await qpFetch('qp_subjects?order=sort_order.asc&select=id,name');
     const list = document.getElementById('qpSubjList');
-    if (!qpSubjects.length) {
-        list.innerHTML = '<div class="qp-empty">কোনো বিষয় যোগ করা হয়নি।</div>';
+    if (!freshSubjects.length) {
+        if (!qpSubjects.length) list.innerHTML = '<div class="qp-empty">কোনো বিষয় যোগ করা হয়নি।</div>';
         return;
     }
+    qpSubjects = freshSubjects;
     list.innerHTML = qpSubjects.map(s => qpRenderSubjectCard(s)).join('');
+    qpCacheSet({ subjects: qpSubjects, chaptersBySubject: qpChaptersBySubject });
 }
 
 function qpRenderSubjectCard(s) {
@@ -193,8 +204,24 @@ async function qpToggleSubject(subjId) {
             ch.mcqCount = mcqs.length;
         }
         qpChaptersBySubject[subjId] = chapters;
+        qpCacheSet({ subjects: qpSubjects, chaptersBySubject: qpChaptersBySubject });
+    } else {
+        // instant render from cache, refresh in background
+        qpRenderChapters(subjId);
+        qpRefreshChaptersBackground(subjId);
     }
     qpRenderChapters(subjId);
+}
+
+async function qpRefreshChaptersBackground(subjId) {
+    const chapters = await qpFetch(`qp_chapters?subject_id=eq.${subjId}&order=sort_order.asc&select=id,name`);
+    for (const ch of chapters) {
+        const mcqs = await qpFetch(`qp_mcqs?chapter_id=eq.${ch.id}&select=id`);
+        ch.mcqCount = mcqs.length;
+    }
+    qpChaptersBySubject[subjId] = chapters;
+    qpCacheSet({ subjects: qpSubjects, chaptersBySubject: qpChaptersBySubject });
+    if (qpOpenSubjectId === subjId) qpRenderChapters(subjId);
 }
 
 function qpRenderChapters(subjId) {
@@ -265,6 +292,7 @@ async function qpToggleAllSubjects() {
             }
             qpChaptersBySubject[s.id].forEach(ch => { if (ch.mcqCount > 0) qpSelectedChapters.add(ch.id); });
         }
+        qpCacheSet({ subjects: qpSubjects, chaptersBySubject: qpChaptersBySubject });
     } else {
         qpSelectedChapters.clear();
     }

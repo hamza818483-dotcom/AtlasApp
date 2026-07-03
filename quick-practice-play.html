@@ -152,7 +152,7 @@ async function qppFetch(path, opts = {}) {
     return text ? JSON.parse(text) : [];
 }
 function qppGetSession() { try { return JSON.parse(localStorage.getItem('atlas-session')); } catch (e) { return null; } }
-(function () { if (localStorage.getItem('atlas-theme') === 'light') document.body.classList.add('light-mode'); })();
+(function () { document.body.classList.add('light-mode'); })();
 (function () { const v = parseFloat(localStorage.getItem('atlas-sound-vol') || '1'); setTimeout(() => qppSetVol(v), 0); })();
 
 // ── Sound (WebAudio synthesized beep — no external asset needed) ──
