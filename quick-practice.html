@@ -344,8 +344,12 @@ function qpStartPractice() {
 async function qpLoadPoints() {
     const session = qpGetSession();
     if (!session || !session.phone) { document.getElementById('qpPointsVal').textContent = '0'; return; }
+    const cachedPts = localStorage.getItem('qp_points_cache_' + session.phone);
+    if (cachedPts !== null) document.getElementById('qpPointsVal').textContent = cachedPts;
     const rows = await qpFetch(`qp_user_points?user_phone=eq.${session.phone}&select=total_points`);
-    document.getElementById('qpPointsVal').textContent = rows.length ? rows[0].total_points : 0;
+    const val = rows.length ? rows[0].total_points : 0;
+    document.getElementById('qpPointsVal').textContent = val;
+    localStorage.setItem('qp_points_cache_' + session.phone, val);
 }
 
 async function qpLoadTotalCount() {

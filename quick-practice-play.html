@@ -211,6 +211,25 @@ async function qppInit() {
     if (!modeRaw) { location.href = 'quick-practice.html'; return; }
     const mode = JSON.parse(modeRaw);
 
+    // Try resume from saved progress (survives reload within same session)
+    const savedRaw = sessionStorage.getItem('qp_practice_state');
+    if (savedRaw) {
+        try {
+            const saved = JSON.parse(savedRaw);
+            if (saved.modeKey === JSON.stringify(mode)) {
+                qppMcqs = saved.qppMcqs;
+                qppCurrent = saved.qppCurrent;
+                qppAnswered = saved.qppAnswered;
+                qppSessionCorrect = saved.qppSessionCorrect;
+                qppSessionWrong = saved.qppSessionWrong;
+                document.getElementById('qppQuestionWrap').style.display = 'block';
+                document.getElementById('qppNav').style.display = 'flex';
+                qppRenderQuestion();
+                return;
+            }
+        } catch (e) {}
+    }
+
     let rows = [];
     if (mode.type === 'random') {
         rows = await qppFetch('qp_mcqs?select=id,question,option1,option2,option3,option4,option5,answer,explanation,subject_id,chapter_id');
@@ -244,10 +263,21 @@ async function qppInit() {
         chapterName: chapMap[r.chapter_id] || ''
     }));
     qppAnswered = new Array(qppMcqs.length).fill(null);
+    qppCurrent = 0;
 
     document.getElementById('qppQuestionWrap').style.display = 'block';
     document.getElementById('qppNav').style.display = 'flex';
     qppRenderQuestion();
+    qppSaveState(mode);
+}
+
+function qppSaveState(mode) {
+    try {
+        sessionStorage.setItem('qp_practice_state', JSON.stringify({
+            modeKey: JSON.stringify(mode || JSON.parse(sessionStorage.getItem('qp_practice_mode'))),
+            qppMcqs, qppCurrent, qppAnswered, qppSessionCorrect, qppSessionWrong
+        }));
+    } catch (e) {}
 }
 
 function qppEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
@@ -298,13 +328,14 @@ function qppSelectOption(idx) {
     if (correct) qppSessionCorrect++; else qppSessionWrong++;
     qppPlaySound(correct);
     qppRenderQuestion();
+    qppSaveState();
 }
 
 function qppPrev() {
-    if (qppCurrent > 0) { qppCurrent--; qppRenderQuestion(); }
+    if (qppCurrent > 0) { qppCurrent--; qppRenderQuestion(); qppSaveState(); }
 }
 function qppNext() {
-    if (qppCurrent < qppMcqs.length - 1) { qppCurrent++; qppRenderQuestion(); }
+    if (qppCurrent < qppMcqs.length - 1) { qppCurrent++; qppRenderQuestion(); qppSaveState(); }
     else qppFinish();
 }
 
@@ -313,6 +344,8 @@ function qppExitConfirm() {
         if (!confirm('কুইজ থেকে বের হতে চান? অগ্রগতি সেভ হয়ে যাবে।')) return;
         qppSaveProgress();
     }
+    sessionStorage.removeItem('qp_practice_state');
+    sessionStorage.removeItem('qp_practice_mode');
     location.href = 'quick-practice.html';
 }
 
@@ -328,6 +361,8 @@ async function qppFinish() {
     document.getElementById('qppRPoints').textContent = `+${qppSessionCorrect}`;
     document.getElementById('qppResult').classList.add('show');
 
+    sessionStorage.removeItem('qp_practice_state');
+    sessionStorage.removeItem('qp_practice_mode');
     await qppSaveProgress();
 }
 
