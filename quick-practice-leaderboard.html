@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Leaderboard — Quick Practice</title>
+<style>
+    :root {
+        --bg: #F6F8FA; --card-bg: #FFFFFF; --card-hover: #F0F2F5;
+        --text: #1C2129; --text-secondary: #57606A;
+        --accent: #7C83FF; --accent-hover: #9499FF;
+        --border: #D0D7DE;
+        --radius: 14px; --radius-md: 10px; --radius-full: 999px;
+        --gold: #F5C542;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; min-height:100vh; padding-bottom:30px; }
+
+    .lb-header { position:sticky; top:0; z-index:50; display:flex; align-items:center; gap:10px; padding:14px 16px; background:var(--card-bg); border-bottom:1px solid var(--border); }
+    .lb-back { width:36px; height:36px; border-radius:var(--radius-full); border:1px solid var(--border); background:var(--bg); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text); }
+    .lb-title { font-size:17px; font-weight:800; flex:1; }
+
+    .lb-my-rank { margin:14px 16px 0; padding:12px 14px; border-radius:var(--radius-md); background:linear-gradient(135deg, rgba(124,131,255,.12), rgba(124,131,255,.04)); border:1px solid rgba(124,131,255,.3); display:none; align-items:center; gap:10px; font-size:12.5px; }
+    .lb-my-rank.show { display:flex; }
+    .lb-my-rank b { color:var(--accent); }
+
+    /* TOP 3 PODIUM */
+    .top3-section { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin:16px 16px 6px; align-items:end; }
+    .top3-card { padding:14px 8px 12px; border-radius:14px; border:1.5px solid var(--border); background:var(--card-bg); text-align:center; position:relative; overflow:hidden; }
+    .top3-card.rank1 { order:2; padding-top:6px; border-color:rgba(245,197,66,.6); background:linear-gradient(160deg, rgba(245,197,66,.16), var(--card-bg)); box-shadow:0 6px 20px rgba(245,197,66,.25); transform:scale(1.06); z-index:2; }
+    .top3-card.rank2 { order:1; border-color:rgba(156,163,175,.5); background:linear-gradient(160deg, rgba(156,163,175,.12), var(--card-bg)); }
+    .top3-card.rank3 { order:3; border-color:rgba(205,127,50,.45); background:linear-gradient(160deg, rgba(205,127,50,.1), var(--card-bg)); }
+    .top3-crown { font-size:20px; margin-bottom:2px; }
+    .top3-avatar { width:52px; height:52px; border-radius:50%; background:rgba(124,131,255,.12); margin:0 auto 6px; display:flex; align-items:center; justify-content:center; font-size:22px; border:2.5px solid var(--card-bg); overflow:hidden; position:relative; }
+    .top3-card.rank1 .top3-avatar { width:62px; height:62px; border-color:var(--gold); box-shadow:0 0 0 2px rgba(245,197,66,.4); }
+    .top3-card.rank2 .top3-avatar { border-color:#9CA3AF; }
+    .top3-card.rank3 .top3-avatar { border-color:#CD7F32; }
+    .top3-avatar img { width:100%; height:100%; object-fit:cover; }
+    .top3-medal { position:absolute; bottom:-2px; right:-2px; width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:900; border:2px solid var(--card-bg); }
+    .rank1 .top3-medal { background:var(--gold); color:#1C1300; }
+    .rank2 .top3-medal { background:#B0B8C1; color:#fff; }
+    .rank3 .top3-medal { background:#CD7F32; color:#fff; }
+    .top3-name { font-size:11.5px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .top3-batch { font-size:9.5px; color:var(--text-secondary); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .top3-points { font-size:14px; font-weight:900; color:var(--accent); margin-top:4px; }
+    .top3-points .l { font-size:8.5px; font-weight:700; color:var(--text-secondary); display:block; }
+
+    .lb-vs-strip { display:flex; align-items:center; justify-content:center; gap:6px; margin:2px 16px 14px; font-size:10px; color:var(--text-secondary); font-weight:700; }
+    .lb-vs-strip::before, .lb-vs-strip::after { content:''; flex:1; height:1px; background:var(--border); }
+
+    .lb-list { padding:0 16px; display:flex; flex-direction:column; gap:8px; }
+    .lb-card { display:flex; align-items:center; gap:10px; background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius-md); padding:10px 12px; }
+    .lb-card.is-me { border-color:var(--accent); background:linear-gradient(135deg, rgba(124,131,255,.06), var(--card-bg)); }
+    .lb-rank { font-size:14px; font-weight:900; width:26px; text-align:center; color:var(--text-secondary); font-family:'Courier New',monospace; flex-shrink:0; }
+    .lb-photo { width:40px; height:40px; border-radius:10px; flex-shrink:0; background:linear-gradient(135deg, rgba(124,131,255,.18), rgba(124,131,255,.08)); display:flex; align-items:center; justify-content:center; overflow:hidden; color:var(--accent); }
+    .lb-photo img { width:100%; height:100%; object-fit:cover; }
+    .lb-info { flex:1; min-width:0; }
+    .lb-name { font-size:13px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .lb-batch { font-size:10.5px; color:var(--text-secondary); margin-top:1px; }
+    .lb-points { font-size:14px; font-weight:900; color:var(--accent); text-align:right; flex-shrink:0; }
+    .lb-points .l { font-size:8.5px; font-weight:700; color:var(--text-secondary); display:block; text-align:right; }
+
+    .lb-empty { padding:40px 20px; text-align:center; color:var(--text-secondary); font-size:13px; }
+    .lb-loading { padding:40px 20px; text-align:center; color:var(--text-secondary); font-size:13px; }
+</style>
+</head>
+<body>
+
+<div class="lb-header">
+    <div class="lb-back" onclick="location.href='quick-practice.html'">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="lb-title">🏆 Leaderboard</div>
+</div>
+
+<div class="lb-my-rank" id="lbMyRank"></div>
+
+<div id="lbContent">
+    <div class="lb-loading">লোড হচ্ছে...</div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
+
+async function lbFetch(path) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY } });
+    const text = await res.text();
+    return text ? JSON.parse(text) : [];
+}
+function lbGetSession() { try { return JSON.parse(localStorage.getItem('atlas-session')); } catch (e) { return null; } }
+function lbEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function lbAvatarSvg() { return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" fill="currentColor" opacity=".5"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="currentColor" opacity=".35"/></svg>'; }
+
+async function lbInit() {
+    const rows = await lbFetch('qp_user_points?select=user_phone,total_points,total_correct,total_quizzes&order=total_points.desc&limit=100');
+    if (!rows.length) {
+        document.getElementById('lbContent').innerHTML = '<div class="lb-empty">এখনো কেউ Quick Practice খেলেনি। প্রথম হও! 🚀</div>';
+        return;
+    }
+    const phones = rows.map(r => r.user_phone).filter(Boolean);
+    const users = await lbFetch(`users?phone=in.(${phones.join(',')})&select=phone,name,batch,photo_url`);
+    const userMap = Object.fromEntries(users.map(u => [u.phone, u]));
+
+    const ranked = rows.map((r, i) => ({
+        rank: i + 1,
+        phone: r.user_phone,
+        points: r.total_points || 0,
+        name: (userMap[r.user_phone] && userMap[r.user_phone].name) || 'Student',
+        batch: (userMap[r.user_phone] && userMap[r.user_phone].batch) || '',
+        photo: (userMap[r.user_phone] && userMap[r.user_phone].photo_url) || null
+    }));
+
+    const session = lbGetSession();
+    const myPhone = session && session.phone;
+    const myEntry = ranked.find(r => r.phone === myPhone);
+    if (myEntry) {
+        const myRankEl = document.getElementById('lbMyRank');
+        myRankEl.classList.add('show');
+        myRankEl.innerHTML = `🎯 তোমার Rank: <b>#${myEntry.rank}</b> &nbsp;•&nbsp; <b>${myEntry.points}</b> পয়েন্ট`;
+    }
+
+    const top3 = ranked.slice(0, 3);
+    const rest = ranked.slice(3);
+
+    let html = '';
+    if (top3.length) {
+        html += '<div class="top3-section">';
+        const order = [1, 0, 2]; // render 2nd,1st,3rd for podium visual (CSS order also handles it)
+        top3.forEach((p, idx) => {
+            if (!p) return;
+            const rc = idx + 1;
+            const crown = rc === 1 ? '👑' : '';
+            const photoHtml = p.photo ? `<img src="${lbEsc(p.photo)}">` : lbAvatarSvg();
+            html += `
+            <div class="top3-card rank${rc}">
+                <div class="top3-crown">${crown}</div>
+                <div class="top3-avatar">${photoHtml}<div class="top3-medal">${rc}</div></div>
+                <div class="top3-name">${lbEsc(p.name)}</div>
+                <div class="top3-batch">${lbEsc(p.batch)}</div>
+                <div class="top3-points">${p.points}<span class="l">পয়েন্ট</span></div>
+            </div>`;
+        });
+        html += '</div><div class="lb-vs-strip">সেরা তিনজন</div>';
+    }
+
+    html += '<div class="lb-list">';
+    rest.forEach(p => {
+        const isMe = p.phone === myPhone;
+        const photoHtml = p.photo ? `<img src="${lbEsc(p.photo)}">` : lbAvatarSvg();
+        html += `
+        <div class="lb-card ${isMe ? 'is-me' : ''}">
+            <div class="lb-rank">#${p.rank}</div>
+            <div class="lb-photo">${photoHtml}</div>
+            <div class="lb-info">
+                <div class="lb-name">${lbEsc(p.name)}${isMe ? ' (তুমি)' : ''}</div>
+                <div class="lb-batch">${lbEsc(p.batch)}</div>
+            </div>
+            <div class="lb-points">${p.points}<span class="l">পয়েন্ট</span></div>
+        </div>`;
+    });
+    html += '</div>';
+
+    document.getElementById('lbContent').innerHTML = html;
+}
+
+lbInit();
+</script>
+</body>
+</html>

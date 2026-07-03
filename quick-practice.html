@@ -35,6 +35,18 @@
     .qp-random-text .t1 { font-weight:800; font-size:14px; }
     .qp-random-text .t2 { font-size:11px; opacity:.85; margin-top:1px; }
     .qp-random-sep { margin:16px 16px 8px; height:1px; background:linear-gradient(90deg, transparent, var(--border) 50%, transparent); }
+    .qp-total-count { text-align:center; font-size:11.5px; color:var(--text-secondary); margin:-4px 16px 6px; }
+    .qp-total-count b { color:var(--accent); font-weight:800; }
+
+    .qp-lb-box { margin:0 16px 4px; padding:13px 16px; border-radius:var(--radius); position:relative; overflow:hidden; cursor:pointer;
+        background:linear-gradient(120deg,#F5C542,#F5A623,#FFD76A,#F5C542); background-size:300% 300%; animation:qpGradientShift 7s ease infinite;
+        display:flex; align-items:center; gap:12px; box-shadow:0 4px 16px rgba(245,197,66,.35); }
+    .qp-lb-box::before { content:''; position:absolute; inset:0; background:linear-gradient(120deg, transparent 30%, rgba(255,255,255,.25) 50%, transparent 70%); background-size:200% 100%; animation:qpShine 3s ease-in-out infinite; pointer-events:none; }
+    .qp-lb-icon { width:36px; height:36px; border-radius:10px; background:rgba(28,19,0,.15); display:flex; align-items:center; justify-content:center; flex-shrink:0; position:relative; z-index:1; font-size:18px; }
+    .qp-lb-text { color:#1C1300; position:relative; z-index:1; flex:1; }
+    .qp-lb-text .t1 { font-weight:900; font-size:14px; }
+    .qp-lb-text .t2 { font-size:10.5px; opacity:.75; margin-top:1px; }
+    .qp-lb-arrow { color:#1C1300; position:relative; z-index:1; opacity:.7; }
 
     .qp-all-row { display:flex; justify-content:flex-end; padding:0 16px 8px; }
     .qp-all-btn { padding:7px 16px; border-radius:var(--radius-full); background:var(--card-bg); border:1px solid var(--accent); color:var(--accent); font-weight:700; font-size:12px; cursor:pointer; }
@@ -93,6 +105,19 @@
     </div>
 </div>
 
+<div class="qp-total-count" id="qpTotalCount"></div>
+
+<div class="qp-lb-box" onclick="location.href='quick-practice-leaderboard.html'">
+    <div class="qp-lb-icon">🏆</div>
+    <div class="qp-lb-text">
+        <div class="t1">Leaderboard</div>
+        <div class="t2">Top players দেখো, নিজের rank চেক করো</div>
+    </div>
+    <div class="qp-lb-arrow">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+</div>
+
 <div class="qp-random-sep"></div>
 
 <div class="qp-all-row">
@@ -142,6 +167,7 @@ function qpCacheSet(data) { try { localStorage.setItem(QP_CACHE_KEY, JSON.string
 
 async function qpInit() {
     qpLoadPoints();
+    qpLoadTotalCount();
     const cache = qpCacheGet();
     if (cache.subjects && cache.subjects.length) {
         qpSubjects = cache.subjects;
@@ -321,6 +347,23 @@ async function qpLoadPoints() {
     if (!session || !session.phone) { document.getElementById('qpPointsVal').textContent = '0'; return; }
     const rows = await qpFetch(`qp_user_points?user_phone=eq.${session.phone}&select=total_points`);
     document.getElementById('qpPointsVal').textContent = rows.length ? rows[0].total_points : 0;
+}
+
+async function qpLoadTotalCount() {
+    const el = document.getElementById('qpTotalCount');
+    const cached = localStorage.getItem('qp_total_mcq_count');
+    if (cached) el.innerHTML = `মোট <b>${cached}</b>টি MCQ আছে সব বিষয়/অধ্যায় মিলিয়ে`;
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/qp_mcqs?select=id`, {
+            headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, Prefer: 'count=exact', Range: '0-0' }
+        });
+        const range = res.headers.get('content-range');
+        const total = range ? range.split('/')[1] : null;
+        if (total) {
+            localStorage.setItem('qp_total_mcq_count', total);
+            el.innerHTML = `মোট <b>${total}</b>টি MCQ আছে সব বিষয়/অধ্যায় মিলিয়ে`;
+        }
+    } catch (e) {}
 }
 
 qpInit();
