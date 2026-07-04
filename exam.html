@@ -1517,11 +1517,30 @@ function submitExam(isAutoSubmit=false){
 }
 
 async function saveResultToDB(c,w,s,n,f,g,wg,t){
+    const user=getSession();if(!user)return;
+    const payload={phone:user.phone,exam_id:safeNumericExamId(currentExam?.id),exam_name:currentExam?.title||(currentExam?.subject+' - '+currentExam?.chapter),subject:currentExam?.subject,chapter:currentExam?.chapter,category:currentExam?.exam_type,total_questions:t,correct:c,wrong:w,skipped:s,negative_marks:n,final_score:f,gpa_score:g,with_gpa_total:wg};
     try{
-        const user=getSession();if(!user)return;
-        await safeFetch(`${SUPABASE_URL}/rest/v1/exam_results`,{method:'POST',body:JSON.stringify({phone:user.phone,exam_id:safeNumericExamId(currentExam?.id),exam_name:currentExam?.title||(currentExam?.subject+' - '+currentExam?.chapter),subject:currentExam?.subject,chapter:currentExam?.chapter,category:currentExam?.exam_type,total_questions:t,correct:c,wrong:w,skipped:s,negative_marks:n,final_score:f,gpa_score:g,with_gpa_total:wg})});
-    }catch(e){}
+        await safeFetch(`${SUPABASE_URL}/rest/v1/exam_results`,{method:'POST',body:JSON.stringify(payload)});
+    }catch(e){
+        // অফলাইন/নেটওয়ার্ক-ফেইল হলে রিজাল্ট হারিয়ে যাবে না — IndexedDB-এ queue করো, পরে অনলাইন হলে sync হবে
+        try{ if(window.offlineDB) await window.offlineDB.saveExamOffline(payload); }catch(_){}
+    }
 }
+
+// ইন্টারনেট ফিরলে queue হওয়া রিজাল্টগুলো Supabase-এ sync করো
+window.addEventListener('online', async ()=>{
+    if(!window.offlineDB) return;
+    try{
+        const unsynced=await window.offlineDB.getUnsyncedExams();
+        for(const exam of unsynced){
+            try{
+                const {id,timestamp,synced,...payload}=exam;
+                await safeFetch(`${SUPABASE_URL}/rest/v1/exam_results`,{method:'POST',body:JSON.stringify(payload)});
+                await window.offlineDB.markExamAsSynced(id);
+            }catch(e){}
+        }
+    }catch(e){}
+});
 
 // exam_id in Supabase is a bigint column, but practice/mock/retake-from-mistakes flows
 // generate string IDs like "exam_1782..." / "mock_..." / "practice_..." — sending those
@@ -2010,6 +2029,7 @@ history.pushState(null,'',location.href);
 <script src="kakhacq/kakhacq-user-render.js"></script>
 
 <!-- ══════════════ গ্লোবাল নেভিগেশন + UI কন্ট্রোল (নতুন, আলাদা ফাইল) ══════════════ -->
+<script src="offline-db.js"></script>
 <script src="global-nav.js"></script>
 <script src="atlas-ui.js"></script>
 </body>
