@@ -222,7 +222,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter','Noto Sans Benga
 ══════════════════════════════ -->
 <div id="dashMain">
   <div class="st-topbar">
-    <div class="back-btn" onclick="goTo('index.html')">
+    <div class="back-btn" onclick="goBackSmart()">
       <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
     </div>
     <span class="topbar-title">📚 Study Tracker</span>
@@ -794,6 +794,10 @@ function updateDash(){
 // ═══════════════════
 function $(id){return document.getElementById(id);}
 function goTo(url){location.href=url;}
+function goBackSmart(){
+  if(document.referrer && document.referrer.includes(location.hostname)){ history.back(); }
+  else { goTo('index.html'); }
+}
 function toast(msg){ /* disabled per explicit user request */ }
 
 // ═══════════════════
