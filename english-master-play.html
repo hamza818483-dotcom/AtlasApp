@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GK-English Master — ATLAS APP</title>
+<style>
+    :root {
+        --bg: #0D1117; --card-bg: #161B22; --card-hover: #1C2129;
+        --text: #E6EDF3; --text-secondary: #8B949E;
+        --accent: #7C83FF; --accent-hover: #9499FF;
+        --border: #30363D;
+        --radius: 14px; --radius-md: 10px; --radius-full: 999px;
+        --success: #3FB950; --error: #F85149; --gold: #F5C542;
+    }
+    body.light-mode {
+        --bg: #F6F8FA; --card-bg: #FFFFFF; --card-hover: #F0F2F5;
+        --text: #1C2129; --text-secondary: #57606A; --border: #D0D7DE;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; min-height:100vh; display:flex; flex-direction:column; }
+
+    .emp-header { display:flex; align-items:center; gap:10px; padding:14px 16px; background:var(--card-bg); border-bottom:1px solid var(--border); }
+    .emp-back { width:34px; height:34px; border-radius:var(--radius-full); border:1px solid var(--border); background:var(--bg); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text); }
+    .emp-progress-wrap { flex:1; }
+    .emp-progress-text { font-size:11px; color:var(--text-secondary); margin-bottom:4px; }
+    .emp-progress-bar { height:5px; background:var(--border); border-radius:99px; overflow:hidden; }
+    .emp-progress-fill { height:100%; background:linear-gradient(90deg,#7C83FF,#9499FF); transition:width .3s; }
+    .emp-finish-btn { padding:8px 14px; border-radius:var(--radius-full); background:var(--error); color:#fff; font-weight:800; font-size:12px; cursor:pointer; white-space:nowrap; }
+
+    .emp-vol-wrap { position:relative; }
+    .emp-vol-btn { width:34px; height:34px; border-radius:var(--radius-full); border:1px solid var(--border); background:var(--bg); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:15px; }
+    .emp-vol-menu { position:absolute; top:42px; right:0; background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius-md); padding:8px; display:none; flex-direction:column; gap:8px; box-shadow:0 6px 20px rgba(0,0,0,.25); z-index:100; width:220px; }
+    .emp-vol-menu.open { display:flex; }
+    .emp-vol-row { display:flex; gap:4px; justify-content:space-between; padding-bottom:8px; border-bottom:1px solid var(--border); }
+    .emp-vol-opt { flex:1; text-align:center; padding:6px 0; border-radius:8px; font-size:14px; cursor:pointer; }
+    .emp-vol-opt:hover { background:var(--card-hover); }
+    .emp-vol-opt.active { background:rgba(124,131,255,.15); }
+    .emp-sound-cols { display:flex; gap:0; }
+    .emp-sound-col { flex:1; min-width:0; }
+    .emp-sound-sep { width:1px; background:var(--border); margin:0 7px; }
+    .emp-sound-lbl { font-size:10px; font-weight:800; color:var(--text-secondary); margin-bottom:4px; }
+    .emp-sound-opt { padding:6px 7px; border-radius:7px; font-size:11px; cursor:pointer; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .emp-sound-opt:hover { background:var(--card-hover); }
+    .emp-sound-opt.active { background:rgba(124,131,255,.15); color:var(--accent); font-weight:700; }
+
+    .emp-body { flex:1; padding:20px 16px 16px; display:flex; flex-direction:column; }
+    .emp-tag { display:inline-flex; align-self:flex-start; gap:5px; align-items:center; background:rgba(124,131,255,.12); color:var(--accent); font-size:11px; font-weight:700; padding:5px 11px; border-radius:var(--radius-full); margin-bottom:14px; }
+    .emp-question { font-size:16.5px; font-weight:700; line-height:1.6; margin-bottom:20px; }
+
+    .emp-options { display:flex; flex-direction:column; gap:10px; }
+    .emp-opt { display:flex; align-items:center; gap:12px; padding:14px 16px; border-radius:var(--radius-md); border:1.5px solid var(--border); background:var(--card-bg); cursor:pointer; transition:all .15s; font-size:14px; }
+    .emp-opt:active { transform:scale(0.98); }
+    .emp-opt-letter { width:26px; height:26px; border-radius:8px; background:var(--bg); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; flex-shrink:0; color:var(--text-secondary); }
+    .emp-opt.correct { border-color:var(--success); background:rgba(63,185,80,.1); }
+    .emp-opt.correct .emp-opt-letter { background:var(--success); color:#fff; }
+    .emp-opt.wrong { border-color:var(--error); background:rgba(248,81,73,.1); }
+    .emp-opt.wrong .emp-opt-letter { background:var(--error); color:#fff; }
+    .emp-opt.disabled { pointer-events:none; }
+    .emp-opt.dim { opacity:.5; }
+
+    .emp-explanation { margin-top:16px; padding:14px; border-radius:var(--radius-md); background:var(--card-hover); border-left:3px solid var(--accent); font-size:13px; line-height:1.6; display:none; animation:empFadeIn .3s ease; }
+    .emp-explanation.show { display:block; }
+    @keyframes empFadeIn { from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+    .emp-explanation .lbl { font-weight:800; color:var(--accent); font-size:11.5px; margin-bottom:5px; }
+
+    .emp-nav { display:flex; gap:10px; margin-top:14px; }
+    .emp-nav-btn { flex:1; padding:13px; border-radius:var(--radius-md); border:1px solid var(--border); background:var(--bg); color:var(--text); font-weight:700; font-size:13.5px; cursor:pointer; text-align:center; transition:transform .15s, opacity .15s; }
+    .emp-nav-btn:active { transform:scale(0.97); }
+    .emp-nav-btn.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+    .emp-nav-btn:disabled { opacity:.4; pointer-events:none; }
+
+    .emp-empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:40px; color:var(--text-secondary); gap:10px; }
+
+    /* Result screen */
+    .emp-result { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px; text-align:center; display:none; }
+    .emp-result.show { display:flex; }
+    .emp-result-icon { width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg,#F5C542,#F5A623); display:flex; align-items:center; justify-content:center; margin-bottom:18px; box-shadow:0 8px 24px rgba(245,197,66,.35); }
+    .emp-result-title { font-size:20px; font-weight:800; margin-bottom:6px; }
+    .emp-result-sub { font-size:13px; color:var(--text-secondary); margin-bottom:24px; }
+    .emp-result-stats { display:flex; gap:14px; margin-bottom:28px; }
+    .emp-rstat { background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px 18px; min-width:80px; }
+    .emp-rstat .v { font-size:20px; font-weight:800; }
+    .emp-rstat .l { font-size:10.5px; color:var(--text-secondary); margin-top:3px; }
+    .emp-rstat.correct .v { color:var(--success); }
+    .emp-rstat.wrong .v { color:var(--error); }
+    .emp-rstat.points .v { color:var(--gold); }
+    .emp-result-btn { padding:14px 32px; border-radius:var(--radius-full); background:var(--accent); color:#fff; font-weight:800; font-size:14px; cursor:pointer; }
+</style>
+</head>
+<body>
+
+<div class="emp-header">
+    <div class="emp-back" onclick="empExitConfirm()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="emp-progress-wrap">
+        <div class="emp-progress-text" id="empProgressText">প্রশ্ন ১/১</div>
+        <div class="emp-progress-bar"><div class="emp-progress-fill" id="empProgressFill" style="width:0%"></div></div>
+    </div>
+    <div class="emp-vol-wrap" id="empVolWrap">
+        <div class="emp-vol-btn" id="empVolIcon" onclick="empToggleVolMenu()">🔊</div>
+        <div class="emp-vol-menu" id="empVolMenu">
+            <div class="emp-vol-row">
+                <div class="emp-vol-opt" data-v="0" onclick="empSetVol(0)">🔇</div>
+                <div class="emp-vol-opt" data-v="0.5" onclick="empSetVol(0.5)">🔉</div>
+                <div class="emp-vol-opt active" data-v="1" onclick="empSetVol(1)">🔊</div>
+                <div class="emp-vol-opt" data-v="1.6" onclick="empSetVol(1.6)">📢</div>
+            </div>
+            <div class="emp-sound-cols">
+                <div class="emp-sound-col">
+                    <div class="emp-sound-lbl">✅ Right</div>
+                    <div id="empRightSoundList"></div>
+                </div>
+                <div class="emp-sound-sep"></div>
+                <div class="emp-sound-col">
+                    <div class="emp-sound-lbl">❌ Wrong</div>
+                    <div id="empWrongSoundList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="emp-finish-btn" id="empFinishBtn" onclick="empFinish()">শেষ করো</div>
+</div>
+
+<div class="emp-body" id="empBody">
+    <div class="emp-empty" id="empEmpty" style="display:none">
+        <div style="font-size:40px">😕</div>
+        <div style="font-weight:700">কোনো MCQ পাওয়া যায়নি</div>
+        <div style="font-size:12px">অন্য বিষয়/অধ্যায় বেছে নিন</div>
+    </div>
+
+    <div id="empQuestionWrap" style="display:none">
+        <div class="emp-tag" id="empTag">📘 বিষয় · অধ্যায়</div>
+        <div class="emp-question" id="empQuestion">প্রশ্ন লোড হচ্ছে...</div>
+        <div class="emp-options" id="empOptions"></div>
+        <div class="emp-explanation" id="empExplanation">
+            <div class="lbl">💡 ব্যাখ্যা</div>
+            <div id="empExplanationText"></div>
+        </div>
+
+        <div class="emp-nav" id="empNav" style="display:none">
+            <button class="emp-nav-btn" id="empPrevBtn" onclick="empPrev()">← Previous</button>
+            <button class="emp-nav-btn primary" id="empNextBtn" onclick="empNext()">Next →</button>
+        </div>
+    </div>
+
+    <div class="emp-result" id="empResult">
+        <div class="emp-result-icon">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none"><path d="M9 11l3 3L22 4" stroke="#1C1300" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke="#1C1300" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="emp-result-title">কুইজ শেষ! 🎉</div>
+        <div class="emp-result-sub" id="empResultSub">মোট ১০টি প্রশ্ন খেলেছেন</div>
+        <div class="emp-result-stats">
+            <div class="emp-rstat correct"><div class="v" id="empRCorrect">0</div><div class="l">সঠিক</div></div>
+            <div class="emp-rstat wrong"><div class="v" id="empRWrong">0</div><div class="l">ভুল</div></div>
+            <div class="emp-rstat points"><div class="v" id="empRPoints">+0</div><div class="l">পয়েন্ট</div></div>
+        </div>
+        <div class="emp-result-btn" onclick="location.href='english-master.html'">হোমে ফিরুন</div>
+    </div>
+</div>
+
+<script src="offline-db.js"></script>
+<script src="global-nav.js"></script>
+<script>
+const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
+
+async function empFetch(path, opts = {}) {
+    opts.headers = Object.assign({ apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }, opts.headers || {});
+    if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') opts.headers['Content-Type'] = 'application/json';
+    if (opts.method === 'PATCH' && !opts.headers['Prefer']) opts.headers['Prefer'] = 'return=minimal';
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, opts);
+    const text = await res.text();
+    return text ? JSON.parse(text) : [];
+}
+function empGetSession() { try { return JSON.parse(localStorage.getItem('atlas-session')); } catch (e) { return null; } }
+(function () { document.body.classList.add('light-mode'); })();
+
+// ── Sound engine: multiple viral/famous-style packs, WebAudio synthesized ──
+let empSoundVol = parseFloat(localStorage.getItem('atlas-sound-vol') || '1');
+let empRightPack = localStorage.getItem('emp-right-pack') || 'kahoot';
+let empWrongPack = localStorage.getItem('emp-wrong-pack') || 'ayhay';
+
+function empGetCtx() { if (!window._empCtx) window._empCtx = new (window.AudioContext || window.webkitAudioContext)(); return window._empCtx; }
+function empTone(ctx, freq, start, dur, type, peak) {
+    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.type = type || 'sine'; osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
+    gain.gain.setValueAtTime(0.0001, ctx.currentTime + start);
+    gain.gain.exponentialRampToValueAtTime(peak, ctx.currentTime + start + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+    osc.start(ctx.currentTime + start); osc.stop(ctx.currentTime + start + dur);
+}
+function empSweep(ctx, f1, f2, start, dur, type, peak) {
+    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.type = type || 'sawtooth'; osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(f1, ctx.currentTime + start);
+    osc.frequency.exponentialRampToValueAtTime(f2, ctx.currentTime + start + dur);
+    gain.gain.setValueAtTime(0.0001, ctx.currentTime + start);
+    gain.gain.exponentialRampToValueAtTime(peak, ctx.currentTime + start + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+    osc.start(ctx.currentTime + start); osc.stop(ctx.currentTime + start + dur);
+}
+
+const EMP_RIGHT_PACKS = {
+    kahoot:  { label: 'Kahoot Ding',  play: (ctx, v) => { empTone(ctx,1046.5,0,.12,'sine',v); empTone(ctx,1318.5,.08,.12,'sine',v); empTone(ctx,1568,.16,.22,'sine',v); } },
+    coin:    { label: 'Mario Coin',   play: (ctx, v) => { empTone(ctx,988,0,.08,'square',v*.7); empTone(ctx,1568,.06,.25,'square',v*.7); } },
+    tada:    { label: 'Ta-Da!',       play: (ctx, v) => { empTone(ctx,523,0,.1,'triangle',v); empTone(ctx,659,.06,.1,'triangle',v); empTone(ctx,784,.12,.1,'triangle',v); empTone(ctx,1047,.18,.3,'triangle',v); } },
+    correct: { label: 'Duolingo',     play: (ctx, v) => { empTone(ctx,1318,0,.1,'sine',v); empTone(ctx,1760,.09,.2,'sine',v); } },
+    bell:    { label: 'Bell Chime',   play: (ctx, v) => { empTone(ctx,1760,0,.35,'sine',v*.8); empTone(ctx,2637,.02,.3,'sine',v*.5); } }
+};
+const EMP_WRONG_PACKS = {
+    ayhay:   { label: 'আয়হায়!',     play: (ctx, v) => { empTone(ctx,330,0,.16,'sawtooth',v*.8); empTone(ctx,220,.12,.16,'sawtooth',v*.8); empTone(ctx,150,.24,.22,'sawtooth',v*.8); } },
+    buzzer:  { label: 'Buzzer',       play: (ctx, v) => { empTone(ctx,180,0,.35,'sawtooth',v); } },
+    wompwomp:{ label: 'Womp Womp',    play: (ctx, v) => { empSweep(ctx,300,150,0,.3,'triangle',v); empSweep(ctx,300,120,.28,.35,'triangle',v); } },
+    fail:    { label: 'Sad Trombone', play: (ctx, v) => { empTone(ctx,392,0,.18,'sawtooth',v*.8); empTone(ctx,349,.16,.18,'sawtooth',v*.8); empTone(ctx,294,.32,.18,'sawtooth',v*.8); empTone(ctx,262,.48,.35,'sawtooth',v*.8); } },
+    vine:    { label: 'Vine Boom',    play: (ctx, v) => { empSweep(ctx,150,40,0,.35,'sine',v); } }
+};
+
+function empPlayPack(packMap, key, v) {
+    const ctx = empGetCtx();
+    const pack = packMap[key] || Object.values(packMap)[0];
+    pack.play(ctx, v);
+}
+function empPlaySound(correct) {
+    if (empSoundVol <= 0) return;
+    try {
+        const v = 0.6 * empSoundVol;
+        if (correct) empPlayPack(EMP_RIGHT_PACKS, empRightPack, v);
+        else empPlayPack(EMP_WRONG_PACKS, empWrongPack, v);
+    } catch (e) { /* audio not available, silently skip */ }
+}
+
+function empSetVol(v) {
+    empSoundVol = v;
+    localStorage.setItem('atlas-sound-vol', v);
+    document.querySelectorAll('.emp-vol-opt').forEach(el => el.classList.toggle('active', +el.dataset.v === v));
+    document.getElementById('empVolIcon').textContent = v <= 0 ? '🔇' : (v < 1 ? '🔉' : '🔊');
+}
+function empRenderSoundLists() {
+    const rEl = document.getElementById('empRightSoundList');
+    const wEl = document.getElementById('empWrongSoundList');
+    rEl.innerHTML = Object.entries(EMP_RIGHT_PACKS).map(([k, p]) =>
+        `<div class="emp-sound-opt ${k === empRightPack ? 'active' : ''}" data-k="${k}" onclick="empChooseSound('right','${k}')">${p.label}</div>`
+    ).join('');
+    wEl.innerHTML = Object.entries(EMP_WRONG_PACKS).map(([k, p]) =>
+        `<div class="emp-sound-opt ${k === empWrongPack ? 'active' : ''}" data-k="${k}" onclick="empChooseSound('wrong','${k}')">${p.label}</div>`
+    ).join('');
+}
+function empChooseSound(type, key) {
+    const v = 0.6 * (empSoundVol || 1);
+    try {
+        const ctx = empGetCtx();
+        if (type === 'right') { empRightPack = key; localStorage.setItem('emp-right-pack', key); empPlayPack(EMP_RIGHT_PACKS, key, v); }
+        else { empWrongPack = key; localStorage.setItem('emp-wrong-pack', key); empPlayPack(EMP_WRONG_PACKS, key, v); }
+    } catch (e) {}
+    empRenderSoundLists();
+}
+function empToggleVolMenu() {
+    document.getElementById('empVolMenu').classList.toggle('open');
+}
+document.addEventListener('click', e => {
+    const wrap = document.getElementById('empVolWrap');
+    if (wrap && !wrap.contains(e.target)) document.getElementById('empVolMenu')?.classList.remove('open');
+});
+empSetVol(empSoundVol);
+empRenderSoundLists();
+
+// ── State ──
+let empMcqs = [];             // [{id, question, option1..5, answer, explanation, subjectName, chapterName}]
+let empCurrent = 0;
+let empAnswered = [];         // per-question: null | {selectedIdx, correct}
+let empSessionCorrect = 0;
+let empSessionWrong = 0;
+
+async function empInit() {
+    const modeRaw = sessionStorage.getItem('em_practice_mode');
+    if (!modeRaw) { location.href = 'english-master.html'; return; }
+    const mode = JSON.parse(modeRaw);
+
+    // Try resume from saved progress (survives reload within same session)
+    const savedRaw = sessionStorage.getItem('em_practice_state');
+    if (savedRaw) {
+        try {
+            const saved = JSON.parse(savedRaw);
+            if (saved.modeKey === JSON.stringify(mode)) {
+                empMcqs = saved.empMcqs;
+                empCurrent = saved.empCurrent;
+                empAnswered = saved.empAnswered;
+                empSessionCorrect = saved.empSessionCorrect;
+                empSessionWrong = saved.empSessionWrong;
+                document.getElementById('empQuestionWrap').style.display = 'block';
+                document.getElementById('empNav').style.display = 'flex';
+                empRenderQuestion();
+                return;
+            }
+        } catch (e) {}
+    }
+
+    let rows = [];
+    const emCacheKey = 'em_mcqs_' + mode.category;
+    try {
+        if (mode.category === 'random') {
+            rows = await empFetch('em_mcqs?select=id,question,option1,option2,option3,option4,option5,answer,explanation,category');
+        } else {
+            rows = await empFetch(`em_mcqs?category=eq.${mode.category}&select=id,question,option1,option2,option3,option4,option5,answer,explanation,category`);
+        }
+        if (rows.length && window.offlineDB) window.offlineDB.cacheQuestions(emCacheKey, rows).catch(() => {});
+    } catch (netErr) {
+        if (window.offlineDB) rows = (await window.offlineDB.getCachedQuestions(emCacheKey)) || [];
+    }
+
+    if (!rows.length) {
+        document.getElementById('empEmpty').style.display = 'flex';
+        return;
+    }
+
+    // Fisher-Yates shuffle (random order প্রতি সেশনে)
+    for (let i = rows.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [rows[i], rows[j]] = [rows[j], rows[i]];
+    }
+
+    empMcqs = rows.map(r => ({
+        ...r,
+        subjectName: r.category === 'synonym' ? 'Synonym' : 'Antonym',
+        chapterName: ''
+    }));
+    empAnswered = new Array(empMcqs.length).fill(null);
+    empCurrent = 0;
+
+    document.getElementById('empQuestionWrap').style.display = 'block';
+    document.getElementById('empNav').style.display = 'flex';
+    empRenderQuestion();
+    empSaveState(mode);
+}
+
+function empSaveState(mode) {
+    try {
+        sessionStorage.setItem('em_practice_state', JSON.stringify({
+            modeKey: JSON.stringify(mode || JSON.parse(sessionStorage.getItem('em_practice_mode'))),
+            empMcqs, empCurrent, empAnswered, empSessionCorrect, empSessionWrong
+        }));
+    } catch (e) {}
+}
+
+function empEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+function empRenderQuestion() {
+    const q = empMcqs[empCurrent];
+    const total = empMcqs.length;
+    document.getElementById('empProgressText').textContent = `প্রশ্ন ${empCurrent + 1}/${total}`;
+    document.getElementById('empProgressFill').style.width = `${((empCurrent + 1) / total) * 100}%`;
+    document.getElementById('empTag').textContent = `📘 ${q.subjectName}`;
+    document.getElementById('empQuestion').textContent = q.question;
+
+    const opts = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(o => o != null && o !== '');
+    const letters = ['A', 'B', 'C', 'D', 'E'];
+    const answered = empAnswered[empCurrent];
+
+    document.getElementById('empOptions').innerHTML = opts.map((opt, i) => {
+        let cls = '';
+        if (answered) {
+            cls = 'disabled ';
+            if (i === q.answer - 1) cls += 'correct';
+            else if (i === answered.selectedIdx) cls += 'wrong';
+            else cls += 'dim';
+        }
+        return `<div class="emp-opt ${cls}" onclick="empSelectOption(${i})">
+            <div class="emp-opt-letter">${letters[i]}</div>
+            <div>${empEsc(opt)}</div>
+        </div>`;
+    }).join('');
+
+    const expEl = document.getElementById('empExplanation');
+    if (answered && q.explanation) {
+        document.getElementById('empExplanationText').textContent = q.explanation;
+        expEl.classList.add('show');
+    } else {
+        expEl.classList.remove('show');
+    }
+
+    document.getElementById('empPrevBtn').disabled = empCurrent === 0;
+    document.getElementById('empNextBtn').textContent = empCurrent === total - 1 ? 'শেষ করো' : 'Next →';
+}
+
+function empSelectOption(idx) {
+    if (empAnswered[empCurrent]) return; // already answered, ignore re-click
+    const q = empMcqs[empCurrent];
+    const correct = (idx === q.answer - 1);
+    empAnswered[empCurrent] = { selectedIdx: idx, correct };
+    if (correct) empSessionCorrect++; else empSessionWrong++;
+    empPlaySound(correct);
+    empRenderQuestion();
+    empSaveState();
+}
+
+function empPrev() {
+    if (empCurrent > 0) { empCurrent--; empRenderQuestion(); empSaveState(); }
+}
+function empNext() {
+    if (empCurrent < empMcqs.length - 1) { empCurrent++; empRenderQuestion(); empSaveState(); }
+    else empFinish();
+}
+
+function empExitConfirm() {
+    if (empSessionCorrect + empSessionWrong > 0) {
+        if (!confirm('কুইজ থেকে বের হতে চান? অগ্রগতি সেভ হয়ে যাবে।')) return;
+        empSaveProgress();
+    }
+    sessionStorage.removeItem('em_practice_state');
+    sessionStorage.removeItem('em_practice_mode');
+    location.href = 'english-master.html';
+}
+
+async function empFinish() {
+    document.getElementById('empQuestionWrap').style.display = 'none';
+    document.getElementById('empNav').style.display = 'none';
+    document.getElementById('empFinishBtn').style.display = 'none';
+
+    const attempted = empSessionCorrect + empSessionWrong;
+    document.getElementById('empResultSub').textContent = `মোট ${attempted}টি প্রশ্ন খেলেছেন`;
+    document.getElementById('empRCorrect').textContent = empSessionCorrect;
+    document.getElementById('empRWrong').textContent = empSessionWrong;
+    document.getElementById('empRPoints').textContent = `+${empSessionCorrect}`;
+    document.getElementById('empResult').classList.add('show');
+
+    sessionStorage.removeItem('em_practice_state');
+    sessionStorage.removeItem('em_practice_mode');
+    await empSaveProgress();
+}
+
+async function empSaveProgress() {
+    const session = empGetSession();
+    if (!session || !session.phone) return;
+    const phone = session.phone;
+    const attempted = empSessionCorrect + empSessionWrong;
+    try {
+        const cats = [...new Set((empMcqs || []).map(m => m.subjectName).filter(Boolean))];
+        const topicLabel = cats.length ? cats.join(' + ') : 'Random Practice';
+        if (attempted > 0) {
+            empFetch('em_points_history', {
+                method: 'POST',
+                body: JSON.stringify({
+                    user_phone: phone,
+                    topic: topicLabel,
+                    correct: empSessionCorrect,
+                    wrong: empSessionWrong,
+                    points: empSessionCorrect
+                })
+            }).catch(() => {});
+        }
+        const existing = await empFetch(`em_user_points?user_phone=eq.${phone}&select=*`);
+        if (existing.length) {
+            const cur = existing[0];
+            await empFetch(`em_user_points?user_phone=eq.${phone}`, {
+                method: 'PATCH',
+                body: JSON.stringify({
+                    total_points: cur.total_points + empSessionCorrect,
+                    total_correct: cur.total_correct + empSessionCorrect,
+                    total_wrong: cur.total_wrong + empSessionWrong,
+                    total_quizzes: cur.total_quizzes + (attempted > 0 ? 1 : 0),
+                    updated_at: new Date().toISOString()
+                })
+            });
+        } else {
+            await empFetch('em_user_points', {
+                method: 'POST',
+                body: JSON.stringify({
+                    user_phone: phone,
+                    total_points: empSessionCorrect,
+                    total_correct: empSessionCorrect,
+                    total_wrong: empSessionWrong,
+                    total_quizzes: attempted > 0 ? 1 : 0
+                })
+            });
+        }
+    } catch (netErr) {
+        // অফলাইনে পয়েন্ট হারাবে না — delta queue করো, অনলাইন হলে sync হবে
+        if (window.offlineDB) {
+            await window.offlineDB.saveMistakeOffline({
+                type: 'em_points_delta', phone,
+                correct: empSessionCorrect, wrong: empSessionWrong,
+                quiz: attempted > 0 ? 1 : 0
+            }).catch(() => {});
+        }
+    }
+}
+
+window.addEventListener('online', async () => {
+    if (!window.offlineDB) return;
+    try {
+        const db = await window.offlineDB.ensureDB();
+        const tx = db.transaction(['pending_mistakes'], 'readonly');
+        const all = await new Promise((res, rej) => {
+            const req = tx.objectStore('pending_mistakes').getAll();
+            req.onsuccess = () => res(req.result);
+            req.onerror = () => rej(req.error);
+        });
+        const deltas = all.filter(m => m.type === 'em_points_delta');
+        for (const d of deltas) {
+            try {
+                const existing = await empFetch(`em_user_points?user_phone=eq.${d.phone}&select=*`);
+                if (existing.length) {
+                    const cur = existing[0];
+                    await empFetch(`em_user_points?user_phone=eq.${d.phone}`, {
+                        method: 'PATCH',
+                        body: JSON.stringify({
+                            total_points: cur.total_points + d.correct,
+                            total_correct: cur.total_correct + d.correct,
+                            total_wrong: cur.total_wrong + d.wrong,
+                            total_quizzes: cur.total_quizzes + d.quiz,
+                            updated_at: new Date().toISOString()
+                        })
+                    });
+                } else {
+                    await empFetch('em_user_points', {
+                        method: 'POST',
+                        body: JSON.stringify({ user_phone: d.phone, total_points: d.correct, total_correct: d.correct, total_wrong: d.wrong, total_quizzes: d.quiz })
+                    });
+                }
+                const delTx = db.transaction(['pending_mistakes'], 'readwrite');
+                delTx.objectStore('pending_mistakes').delete(d.id);
+            } catch (e) {}
+        }
+    } catch (e) {}
+});
+
+empInit();
+</script>
+</body>
+</html>

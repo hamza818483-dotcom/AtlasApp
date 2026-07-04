@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GK-English Master — ATLAS APP</title>
+<style>
+    :root {
+        --bg: #0D1117; --card-bg: #161B22; --card-hover: #1C2129;
+        --text: #E6EDF3; --text-secondary: #8B949E;
+        --accent: #7C83FF; --accent-hover: #9499FF;
+        --border: #30363D;
+        --radius: 14px; --radius-full: 999px;
+        --gold: #F5C542;
+    }
+    body.light-mode {
+        --bg: #F6F8FA; --card-bg: #FFFFFF; --card-hover: #F0F2F5;
+        --text: #1C2129; --text-secondary: #57606A; --border: #D0D7DE;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; padding-bottom:100px; }
+
+    .em-header { position:sticky; top:0; z-index:50; display:flex; align-items:center; gap:10px; padding:14px 16px; background:var(--card-bg); border-bottom:1px solid var(--border); }
+    .em-back { width:36px; height:36px; border-radius:var(--radius-full); border:1px solid var(--border); background:var(--bg); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text); }
+    .em-title { font-size:17px; font-weight:800; flex:1; }
+
+    .em-row { display:flex; gap:12px; padding:16px 16px 0; }
+    .em-btn { flex:1; background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius); padding:20px 12px; display:flex; flex-direction:column; align-items:center; gap:10px; cursor:pointer; }
+    .em-btn-icon { width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; }
+    .em-btn-syn .em-btn-icon { background:rgba(63,185,80,.15); color:#3FB950; }
+    .em-btn-ant .em-btn-icon { background:rgba(248,81,73,.15); color:#F85149; }
+    .em-btn-text { font-weight:800; font-size:14.5px; }
+    .em-btn-count { font-size:11px; color:var(--text-secondary); }
+
+    .em-random-btn { position:relative; overflow:hidden; margin:14px 16px 0; padding:16px; border-radius:var(--radius); background:linear-gradient(120deg,#6A6FFF,#8C7CFF,#9F6FFF,#7C83FF); background-size:300% 300%; animation:emGradientShift 6s ease infinite; display:flex; align-items:center; gap:12px; cursor:pointer; box-shadow:0 4px 18px rgba(124,131,255,.4); }
+    .em-random-btn::before { content:''; position:absolute; inset:0; background:linear-gradient(120deg, transparent 30%, rgba(255,255,255,.16) 50%, transparent 70%); background-size:200% 100%; animation:emShine 3.5s ease-in-out infinite; pointer-events:none; }
+    @keyframes emGradientShift { 0%{background-position:0% 50%;} 50%{background-position:100% 50%;} 100%{background-position:0% 50%;} }
+    @keyframes emShine { 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
+    .em-random-icon { width:38px; height:38px; border-radius:10px; background:rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; flex-shrink:0; position:relative; z-index:1; }
+    .em-random-text { color:#fff; position:relative; z-index:1; }
+    .em-random-text .t1 { font-weight:800; font-size:14.5px; }
+    .em-random-text .t2 { font-size:11.5px; opacity:.85; margin-top:2px; }
+    .em-random-text .t3 { font-size:10.5px; opacity:.75; margin-top:4px; font-weight:700; }
+    .em-random-text .t3 b { font-weight:900; }
+
+    .em-empty { padding:40px 16px; text-align:center; color:var(--text-secondary); font-size:13px; }
+</style>
+</head>
+<body>
+
+<div class="em-header">
+    <div class="em-back" onclick="goBackGlobal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="em-title">📖 GK-English Master</div>
+</div>
+
+<div class="em-row">
+    <div class="em-btn em-btn-syn" onclick="emSelectCategory('synonym')">
+        <div class="em-btn-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 00-2 2v4M15 3h4a2 2 0 012 2v4M9 21H5a2 2 0 01-2-2v-4M15 21h4a2 2 0 002-2v-4"/></svg>
+        </div>
+        <div class="em-btn-text">Synonym</div>
+        <div class="em-btn-count" id="emSynCount"></div>
+    </div>
+    <div class="em-btn em-btn-ant" onclick="emSelectCategory('antonym')">
+        <div class="em-btn-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4-4 4M7 21l-4-4 4-4M21 7H9M3 17h12"/></svg>
+        </div>
+        <div class="em-btn-text">Antonym</div>
+        <div class="em-btn-count" id="emAntCount"></div>
+    </div>
+</div>
+
+<div class="em-random-btn" onclick="emSelectCategory('random')">
+    <div class="em-random-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0113.6-5.7L19.5 8"/><path d="M19.5 4v4h-4"/><path d="M20 12a8 8 0 01-13.6 5.7L4.5 16"/><path d="M4.5 20v-4h4"/></svg>
+    </div>
+    <div class="em-random-text">
+        <div class="t1">🎲 Random</div>
+        <div class="t2">Synonym + Antonym mixed MCQ</div>
+        <div class="t3" id="emTotalCount"></div>
+    </div>
+</div>
+
+<script src="offline-db.js"></script>
+<script src="global-nav.js"></script>
+<script>
+const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
+
+(function () { document.body.classList.add('light-mode'); })();
+
+async function emCount(category) {
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/em_mcqs?category=eq.${category}&select=id`, {
+            headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, Prefer: 'count=exact', Range: '0-0' }
+        });
+        const range = res.headers.get('content-range');
+        return range ? parseInt(range.split('/')[1]) || 0 : 0;
+    } catch (e) { return 0; }
+}
+
+async function emInit() {
+    const [synCount, antCount] = await Promise.all([emCount('synonym'), emCount('antonym')]);
+    document.getElementById('emSynCount').textContent = synCount > 0 ? `${synCount}টি MCQ` : 'Coming soon';
+    document.getElementById('emAntCount').textContent = antCount > 0 ? `${antCount}টি MCQ` : 'Coming soon';
+    const total = synCount + antCount;
+    document.getElementById('emTotalCount').innerHTML = total > 0 ? `মোট <b>${total}</b>টি MCQ` : '';
+}
+
+function emSelectCategory(cat) {
+    sessionStorage.setItem('em_practice_mode', JSON.stringify({ category: cat }));
+    location.href = 'english-master-play.html';
+}
+
+emInit();
+</script>
+</body>
+</html>
