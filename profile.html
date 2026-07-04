@@ -824,14 +824,17 @@
             <span style="color:#1C1300;font-weight:800;font-size:13px" id="qpPointsPremiumVal">0</span>
             <span style="color:#1C1300;font-weight:700;font-size:11px;opacity:.8">Quiz Points</span>
         </div>
-        <div id="qpHistoryModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;padding:16px;">
-            <div style="background:var(--card,#111c22);border:1px solid var(--border,#2a3a42);border-radius:16px;max-width:420px;width:100%;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;">
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border,#2a3a42);">
-                    <span style="font-weight:800;font-size:15px;color:#F5C542;">🏆 Quiz Points হিস্টোরি</span>
-                    <button onclick="qpCloseHistoryModal()" style="background:none;border:none;color:var(--text,#fff);font-size:20px;cursor:pointer;line-height:1;">&times;</button>
+        <div id="qpHistoryModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;align-items:center;justify-content:center;padding:12px;">
+            <div style="background:linear-gradient(160deg,#0f1a20,#0a1216);border:1px solid rgba(245,197,66,.25);border-radius:20px;max-width:460px;width:100%;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5);">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px;background:linear-gradient(135deg,#F5C542,#F5A623);">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="#1C1300"><path d="M12 2.5l1.8 5.7 5.7 1.8-5.7 1.8L12 17.5l-1.8-5.7-5.7-1.8 5.7-1.8z"/></svg>
+                        <span style="font-weight:800;font-size:16px;color:#1C1300;">Quiz Points হিস্টোরি</span>
+                    </div>
+                    <button onclick="qpCloseHistoryModal()" style="background:rgba(28,19,0,.15);border:none;color:#1C1300;width:28px;height:28px;border-radius:50%;font-size:18px;cursor:pointer;line-height:1;">&times;</button>
                 </div>
-                <div id="qpHistoryList" style="overflow-y:auto;padding:10px 14px;flex:1;">
-                    <div style="text-align:center;color:var(--text-muted,#888);padding:30px 0;">লোড হচ্ছে...</div>
+                <div id="qpHistoryList" style="overflow-y:auto;padding:14px;flex:1;display:flex;flex-direction:column;gap:10px;">
+                    <div style="text-align:center;color:var(--text-muted,#888);padding:40px 0;">লোড হচ্ছে...</div>
                 </div>
             </div>
         </div>
@@ -3812,19 +3815,41 @@ async function qpOpenHistoryModal() {
             { headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY } });
         const rows = await res.json();
         if (!rows || !rows.length) {
-            list.innerHTML = '<div style="text-align:center;color:var(--text-muted,#888);padding:30px 0;">এখনো কোনো কুইজ খেলেননি</div>';
+            list.innerHTML = '<div style="text-align:center;color:var(--text-muted,#888);padding:40px 0;">এখনো কোনো কুইজ খেলেননি</div>';
             return;
         }
         list.innerHTML = rows.map(r => {
             const d = new Date(r.created_at);
             const dateStr = d.toLocaleDateString('bn-BD', { day: '2-digit', month: 'short', year: 'numeric' });
             const timeStr = d.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
-            return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border,#2a3a42);">
-                <div style="flex:1;min-width:0;">
-                    <div style="font-weight:700;font-size:13px;color:var(--text,#fff);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.topic || 'Random Practice'}</div>
-                    <div style="font-size:11px;color:var(--text-muted,#888);margin-top:2px;">${dateStr} • ${timeStr} • ✅${r.correct} ❌${r.wrong}</div>
+            return `<div style="background:linear-gradient(135deg,rgba(245,197,66,.08),rgba(245,166,35,.03));border:1px solid rgba(245,197,66,.2);border-radius:14px;padding:14px 16px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <div style="font-weight:800;font-size:14px;color:var(--text,#fff);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px;">${r.topic || 'Random Practice'}</div>
+                    <div style="display:flex;align-items:center;gap:4px;background:linear-gradient(135deg,#F5C542,#F5A623);border-radius:999px;padding:4px 10px;flex-shrink:0;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="#1C1300"><path d="M12 2.5l1.8 5.7 5.7 1.8-5.7 1.8L12 17.5l-1.8-5.7-5.7-1.8 5.7-1.8z"/></svg>
+                        <span style="color:#1C1300;font-weight:800;font-size:13px;">+${r.points}</span>
+                    </div>
                 </div>
-                <div style="color:#F5C542;font-weight:800;font-size:14px;margin-left:10px;white-space:nowrap;">+${r.points}</div>
+                <div style="display:flex;align-items:center;gap:14px;font-size:12px;color:var(--text-muted,#8a9aa2);">
+                    <span style="display:flex;align-items:center;gap:5px;">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                        ${dateStr}
+                    </span>
+                    <span style="display:flex;align-items:center;gap:5px;">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+                        ${timeStr}
+                    </span>
+                </div>
+                <div style="display:flex;align-items:center;gap:14px;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.06);font-size:12px;">
+                    <span style="display:flex;align-items:center;gap:5px;color:#4ADE80;font-weight:700;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                        সঠিক: ${r.correct}
+                    </span>
+                    <span style="display:flex;align-items:center;gap:5px;color:#F87171;font-weight:700;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                        ভুল: ${r.wrong}
+                    </span>
+                </div>
             </div>`;
         }).join('');
     } catch (e) {
