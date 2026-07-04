@@ -160,6 +160,7 @@
     </div>
 </div>
 
+<script src="offline-db.js"></script>
 <script>
 const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
@@ -297,11 +298,17 @@ async function qppInit() {
     }
 
     let rows = [];
-    if (mode.type === 'random') {
-        rows = await qppFetch('qp_mcqs?select=id,question,option1,option2,option3,option4,option5,answer,explanation,subject_id,chapter_id');
-    } else {
-        const ids = mode.chapterIds.join(',');
-        rows = await qppFetch(`qp_mcqs?chapter_id=in.(${ids})&select=id,question,option1,option2,option3,option4,option5,answer,explanation,subject_id,chapter_id`);
+    const qpCacheKey = mode.type === 'random' ? 'qp_random_all' : 'qp_chapters_' + mode.chapterIds.slice().sort().join('-');
+    try {
+        if (mode.type === 'random') {
+            rows = await qppFetch('qp_mcqs?select=id,question,option1,option2,option3,option4,option5,answer,explanation,subject_id,chapter_id');
+        } else {
+            const ids = mode.chapterIds.join(',');
+            rows = await qppFetch(`qp_mcqs?chapter_id=in.(${ids})&select=id,question,option1,option2,option3,option4,option5,answer,explanation,subject_id,chapter_id`);
+        }
+        if (rows.length && window.offlineDB) window.offlineDB.cacheQuestions(qpCacheKey, rows).catch(() => {});
+    } catch (netErr) {
+        if (window.offlineDB) rows = (await window.offlineDB.getCachedQuestions(qpCacheKey)) || [];
     }
 
     if (!rows.length) {
@@ -318,8 +325,17 @@ async function qppInit() {
     // Tag resolution (subject/chapter name)
     const subjIds = [...new Set(rows.map(r => r.subject_id))];
     const chapIds = [...new Set(rows.map(r => r.chapter_id))];
-    const subjs = await qppFetch(`qp_subjects?id=in.(${subjIds.join(',')})&select=id,name`);
-    const chaps = await qppFetch(`qp_chapters?id=in.(${chapIds.join(',')})&select=id,name`);
+    let subjs = [], chaps = [];
+    try {
+        subjs = await qppFetch(`qp_subjects?id=in.(${subjIds.join(',')})&select=id,name`);
+        chaps = await qppFetch(`qp_chapters?id=in.(${chapIds.join(',')})&select=id,name`);
+        if (window.offlineDB) window.offlineDB.cacheQuestions('qp_tags_all', { subjs, chaps }).catch(() => {});
+    } catch (netErr) {
+        if (window.offlineDB) {
+            const cached = await window.offlineDB.getCachedQuestions('qp_tags_all');
+            if (cached) { subjs = cached.subjs || []; chaps = cached.chaps || []; }
+        }
+    }
     const subjMap = Object.fromEntries(subjs.map(s => [s.id, s.name]));
     const chapMap = Object.fromEntries(chaps.map(c => [c.id, c.name]));
 
@@ -436,33 +452,83 @@ async function qppSaveProgress() {
     const session = qppGetSession();
     if (!session || !session.phone) return;
     const phone = session.phone;
-    const existing = await qppFetch(`qp_user_points?user_phone=eq.${phone}&select=*`);
     const attempted = qppSessionCorrect + qppSessionWrong;
-    if (existing.length) {
-        const cur = existing[0];
-        await qppFetch(`qp_user_points?user_phone=eq.${phone}`, {
-            method: 'PATCH',
-            body: JSON.stringify({
-                total_points: cur.total_points + qppSessionCorrect,
-                total_correct: cur.total_correct + qppSessionCorrect,
-                total_wrong: cur.total_wrong + qppSessionWrong,
-                total_quizzes: cur.total_quizzes + (attempted > 0 ? 1 : 0),
-                updated_at: new Date().toISOString()
-            })
-        });
-    } else {
-        await qppFetch('qp_user_points', {
-            method: 'POST',
-            body: JSON.stringify({
-                user_phone: phone,
-                total_points: qppSessionCorrect,
-                total_correct: qppSessionCorrect,
-                total_wrong: qppSessionWrong,
-                total_quizzes: attempted > 0 ? 1 : 0
-            })
-        });
+    try {
+        const existing = await qppFetch(`qp_user_points?user_phone=eq.${phone}&select=*`);
+        if (existing.length) {
+            const cur = existing[0];
+            await qppFetch(`qp_user_points?user_phone=eq.${phone}`, {
+                method: 'PATCH',
+                body: JSON.stringify({
+                    total_points: cur.total_points + qppSessionCorrect,
+                    total_correct: cur.total_correct + qppSessionCorrect,
+                    total_wrong: cur.total_wrong + qppSessionWrong,
+                    total_quizzes: cur.total_quizzes + (attempted > 0 ? 1 : 0),
+                    updated_at: new Date().toISOString()
+                })
+            });
+        } else {
+            await qppFetch('qp_user_points', {
+                method: 'POST',
+                body: JSON.stringify({
+                    user_phone: phone,
+                    total_points: qppSessionCorrect,
+                    total_correct: qppSessionCorrect,
+                    total_wrong: qppSessionWrong,
+                    total_quizzes: attempted > 0 ? 1 : 0
+                })
+            });
+        }
+    } catch (netErr) {
+        // অফলাইনে পয়েন্ট হারাবে না — delta queue করো, অনলাইন হলে sync হবে
+        if (window.offlineDB) {
+            await window.offlineDB.saveMistakeOffline({
+                type: 'qp_points_delta', phone,
+                correct: qppSessionCorrect, wrong: qppSessionWrong,
+                quiz: attempted > 0 ? 1 : 0
+            }).catch(() => {});
+        }
     }
 }
+
+window.addEventListener('online', async () => {
+    if (!window.offlineDB) return;
+    try {
+        const db = await window.offlineDB.ensureDB();
+        const tx = db.transaction(['pending_mistakes'], 'readonly');
+        const all = await new Promise((res, rej) => {
+            const req = tx.objectStore('pending_mistakes').getAll();
+            req.onsuccess = () => res(req.result);
+            req.onerror = () => rej(req.error);
+        });
+        const deltas = all.filter(m => m.type === 'qp_points_delta');
+        for (const d of deltas) {
+            try {
+                const existing = await qppFetch(`qp_user_points?user_phone=eq.${d.phone}&select=*`);
+                if (existing.length) {
+                    const cur = existing[0];
+                    await qppFetch(`qp_user_points?user_phone=eq.${d.phone}`, {
+                        method: 'PATCH',
+                        body: JSON.stringify({
+                            total_points: cur.total_points + d.correct,
+                            total_correct: cur.total_correct + d.correct,
+                            total_wrong: cur.total_wrong + d.wrong,
+                            total_quizzes: cur.total_quizzes + d.quiz,
+                            updated_at: new Date().toISOString()
+                        })
+                    });
+                } else {
+                    await qppFetch('qp_user_points', {
+                        method: 'POST',
+                        body: JSON.stringify({ user_phone: d.phone, total_points: d.correct, total_correct: d.correct, total_wrong: d.wrong, total_quizzes: d.quiz })
+                    });
+                }
+                const delTx = db.transaction(['pending_mistakes'], 'readwrite');
+                delTx.objectStore('pending_mistakes').delete(d.id);
+            } catch (e) {}
+        }
+    } catch (e) {}
+});
 
 qppInit();
 </script>
