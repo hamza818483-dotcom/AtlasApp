@@ -225,7 +225,7 @@
 <!-- ██ SCREEN 1: SUBJECTS ██ -->
 <div class="screen active" id="s-subj">
   <div class="study-hdr">
-    <button class="back-btn" onclick="goTo('study-aid.html')"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <button class="back-btn" onclick="goBackGlobal()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
     <span class="scr-title">মূলবই পেইজভিত্তিক প্রস্তুতি</span>
   </div>
   <div class="subj-banner">
@@ -342,6 +342,13 @@ function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('da
 function toggleSidebar(){isSidebarOpen=!isSidebarOpen;document.getElementById('sidebarOverlay').classList.toggle('active',isSidebarOpen);document.getElementById('sidebar').classList.toggle('active',isSidebarOpen);}
 function closeSidebar(){isSidebarOpen=false;document.getElementById('sidebarOverlay').classList.remove('active');document.getElementById('sidebar').classList.remove('active');}
 function goTo(u){location.href=u;}
+function goBackGlobal(){
+  try{
+    const stack=JSON.parse(sessionStorage.getItem('atlas_nav_stack_v1')||'[]');
+    if(stack.length>1){stack.pop();location.href=stack[stack.length-1];return;}
+  }catch(_){}
+  location.href='index.html';
+}
 function navigateTo(p){const r={home:'index.html',profile:'profile.html',class:'class.html',exam:'exam.html'};goTo(r[p]||'index.html');}
 function logout(){localStorage.removeItem('atlas-session');goTo('index.html');}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
