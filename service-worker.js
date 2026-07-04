@@ -1,5 +1,5 @@
 // ATLAS APP - Service Worker v1
-const CACHE_NAME = 'atlas-app-v1';
+const CACHE_NAME = 'atlas-app-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -9,11 +9,31 @@ const ASSETS_TO_CACHE = [
   '/ai.html',
   '/class.html',
   '/mock-test.html',
+  '/model-test.html',
   '/auth.html',
+  '/focus.html',
+  '/profile.html',
+  '/study.html',
+  '/study-aid.html',
+  '/study-history.html',
+  '/study-tracker.html',
+  '/quick-practice.html',
+  '/quick-practice-play.html',
+  '/quick-practice-leaderboard.html',
   '/style.css',
-  '/api.js',
+  '/dashboard-styles.css',
+  '/app.js',
   '/storage.js',
   '/prompts.js',
+  '/global-nav.js',
+  '/atlas-ui.js',
+  '/dashboard-utils.js',
+  '/home-features.js',
+  '/offline-db.js',
+  '/admin-quick-practice.js',
+  '/admin-study-tracker.js',
+  '/atlas-admin-zoom.js',
+  '/mulboi-mcq-admin.js',
   '/manifest.json',
   '/offline.html'
 ];
