@@ -2701,6 +2701,7 @@ function restoreSession(){
     else if(mood==='sleep') sleepSecs+=elapsed;
   }
   timerRunning=true;
+  if(mood==='break'||mood==='sleep') bsRunning=true;
   showTimerScreen();
   updateMoodButtons(); renderTimer(); saveState();
 
