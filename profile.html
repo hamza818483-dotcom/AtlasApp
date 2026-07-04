@@ -3777,10 +3777,9 @@ async function qpLoadPremiumPoints() {
             { headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY } });
         const data = await res.json();
         const badge = document.getElementById('qpPointsPremium');
-        if (data && data.length) {
-            document.getElementById('qpPointsPremiumVal').textContent = data[0].total_points;
-            badge.style.display = 'flex';
-        }
+        const pts = (data && data.length) ? (data[0].total_points || 0) : 0;
+        document.getElementById('qpPointsPremiumVal').textContent = pts;
+        badge.style.display = 'flex';
     } catch (e) { /* silently skip - non-critical premium display */ }
 }
 
