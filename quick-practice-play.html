@@ -454,6 +454,20 @@ async function qppSaveProgress() {
     const phone = session.phone;
     const attempted = qppSessionCorrect + qppSessionWrong;
     try {
+        const topics = [...new Set((qppMcqs || []).map(m => m.chapterName || m.subjectName).filter(Boolean))];
+        const topicLabel = topics.length ? topics.slice(0, 3).join(', ') + (topics.length > 3 ? ` +${topics.length - 3}` : '') : 'Random Practice';
+        if (attempted > 0) {
+            qppFetch('qp_points_history', {
+                method: 'POST',
+                body: JSON.stringify({
+                    user_phone: phone,
+                    topic: topicLabel,
+                    correct: qppSessionCorrect,
+                    wrong: qppSessionWrong,
+                    points: qppSessionCorrect
+                })
+            }).catch(() => {});
+        }
         const existing = await qppFetch(`qp_user_points?user_phone=eq.${phone}&select=*`);
         if (existing.length) {
             const cur = existing[0];
