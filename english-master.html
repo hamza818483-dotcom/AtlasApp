@@ -49,7 +49,7 @@
 <body>
 
 <div class="em-header">
-    <button class="em-back" style="font:inherit;padding:0;" onclick="(window.goBackGlobal ? goBackGlobal() : (history.length>1?history.back():location.href='index.html'))">
+    <button class="em-back" style="font:inherit;padding:0;" onclick="if(history.length>1){history.back();}else{location.href='index.html';}">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
     <div class="em-title">📖 English Master</div>
