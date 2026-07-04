@@ -1210,6 +1210,7 @@ let sessionId = null;
 let studySecs = 0, breakSecs = 0, sleepSecs = 0, breaksUsed = 0;
 let sessionNumber = 1;          // increments each time Stop->Start happens same day, shown as (Session N)
 let accumulatedStudySecs = 0;   // total study time carried across stop/start cycles (for "Total Pora Time")
+let accumulatedBreakSecs = 0, accumulatedSleepSecs = 0;  // break/sleep carried across stop/start cycles (24hr daily total)
 let ticker = null, pollInterval = null;
 let allStudents = [], selectedBatch = 'all';
 let activeStudyPeriod = 1; // ১=আজকে(live), ৩/৭/১৫/৩০ — কোনটা সিলেক্টেড তা track করে যাতে live-update পুরনো period overwrite না করে
@@ -1249,7 +1250,7 @@ function clearState(){localStorage.removeItem(STATE_KEY);}
 function saveDailyProgress(){
   if(!currentUser) return;
   const today=new Date().toISOString().slice(0,10);
-  localStorage.setItem(DAILY_PROGRESS_KEY, JSON.stringify({phone:currentUser.phone,date:today,accumulatedStudySecs,sessionNumber}));
+  localStorage.setItem(DAILY_PROGRESS_KEY, JSON.stringify({phone:currentUser.phone,date:today,accumulatedStudySecs,accumulatedBreakSecs,accumulatedSleepSecs,sessionNumber}));
 }
 function loadDailyProgress(){
   if(!currentUser) return;
@@ -1258,11 +1259,13 @@ function loadDailyProgress(){
     const today=new Date().toISOString().slice(0,10);
     if(d && d.phone===currentUser.phone && d.date===today){
       accumulatedStudySecs=d.accumulatedStudySecs||0;
+      accumulatedBreakSecs=d.accumulatedBreakSecs||0;
+      accumulatedSleepSecs=d.accumulatedSleepSecs||0;
       sessionNumber=d.sessionNumber||1;
     } else {
-      accumulatedStudySecs=0; sessionNumber=1;
+      accumulatedStudySecs=0; accumulatedBreakSecs=0; accumulatedSleepSecs=0; sessionNumber=1;
     }
-  }catch(_){ accumulatedStudySecs=0; sessionNumber=1; }
+  }catch(_){ accumulatedStudySecs=0; accumulatedBreakSecs=0; accumulatedSleepSecs=0; sessionNumber=1; }
 }
 
 /* ═══ SESSION START ═══ */
@@ -1378,8 +1381,8 @@ function updateSelfInList(){
   const idx=allStudents.findIndex(s=>s.phone===currentUser.phone);
   if(idx===-1) return;
   allStudents[idx].study_seconds=accumulatedStudySecs + studySecs;
-  allStudents[idx].break_seconds=breakSecs;
-  allStudents[idx].sleep_seconds=sleepSecs;
+  allStudents[idx].break_seconds=accumulatedBreakSecs+breakSecs;
+  allStudents[idx].sleep_seconds=accumulatedSleepSecs+sleepSecs;
   allStudents[idx].breaks_used=breaksUsed;
   // 'paused' status should ONLY apply while actually in Study Mood and paused.
   // In break/sleep mode, `paused` is just an internal flag meaning "study timer
@@ -1468,8 +1471,8 @@ async function syncSession(){
     body:JSON.stringify({
       status:mood,
       study_seconds: accumulatedStudySecs + studySecs,  // accumulated + current
-      break_seconds:breakSecs,
-      sleep_seconds:sleepSecs,
+      break_seconds:accumulatedBreakSecs+breakSecs,
+      sleep_seconds:accumulatedSleepSecs+sleepSecs,
       breaks_used:breaksUsed,
       updated_at:new Date().toISOString()
     })
@@ -1653,7 +1656,7 @@ function pauseTimer(){
   if(sessionId){
     safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${sessionId}`,{
       method:'PATCH',
-      body:JSON.stringify({status:'paused',study_seconds:accumulatedStudySecs+studySecs,break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,updated_at:new Date().toISOString()})
+      body:JSON.stringify({status:'paused',study_seconds:accumulatedStudySecs+studySecs,break_seconds:accumulatedBreakSecs+breakSecs,sleep_seconds:accumulatedSleepSecs+sleepSecs,breaks_used:breaksUsed,updated_at:new Date().toISOString()})
     });
   }
   showToast('⏸ Timer pause হলো');
@@ -1671,7 +1674,7 @@ function resumeTimer(){
   if(sessionId){
     safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${sessionId}`,{
       method:'PATCH',
-      body:JSON.stringify({status:mood,study_seconds:accumulatedStudySecs+studySecs,break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,updated_at:new Date().toISOString()})
+      body:JSON.stringify({status:mood,study_seconds:accumulatedStudySecs+studySecs,break_seconds:accumulatedBreakSecs+breakSecs,sleep_seconds:accumulatedSleepSecs+sleepSecs,breaks_used:breaksUsed,updated_at:new Date().toISOString()})
     });
   }
   showToast('▶ Timer চালু হলো');
@@ -1682,8 +1685,8 @@ function resumeTimer(){
 function showModal(){
   document.getElementById('ms-time').textContent=fmtDisplay(accumulatedStudySecs+studySecs);
   document.getElementById('ms-breaks').textContent=breaksUsed;
-  document.getElementById('ms-sleep').textContent=fmtDisplay(sleepSecs);
-  document.getElementById('ms-total').textContent=fmtDisplay(accumulatedStudySecs+studySecs+breakSecs+sleepSecs);
+  document.getElementById('ms-sleep').textContent=fmtDisplay(accumulatedSleepSecs+sleepSecs);
+  document.getElementById('ms-total').textContent=fmtDisplay(accumulatedStudySecs+studySecs+accumulatedBreakSecs+breakSecs+accumulatedSleepSecs+sleepSecs);
   // rank hint
   const rankEl=document.getElementById('ms-rank-info');
   if(studySecs>=600){
@@ -1729,9 +1732,11 @@ async function doEnd(auto){
   // যতটুকু আগে count হয়েছিল সেখান থেকেই বাড়বে। শুধু upore main display timer
   // শূন্য থেকে শুরু হবে নতুন session-এর জন্য (Session No. দিয়ে চিহ্নিত)।
   accumulatedStudySecs += studySecs;
+  accumulatedBreakSecs += breakSecs;
+  accumulatedSleepSecs += sleepSecs;
   sessionNumber++;
   saveDailyProgress();
-  // studySecs = 0 — নতুন session এ timer 0 থেকে শুরু হবে; accumulatedStudySecs আলাদা থাকে, display-এ যোগ হয়
+  // studySecs/breakSecs/sleepSecs = 0 — নতুন session এ timer 0 থেকে শুরু হবে; accumulated* আলাদা থাকে, display-এ যোগ হয়
   studySecs=0; breakSecs=0; sleepSecs=0; breaksUsed=0;
   sessionId=null; mood='study'; paused=false; bsRunning=false;
 
@@ -1841,8 +1846,8 @@ function startLiveSecTicker(){
       const selfIdx=allStudents.findIndex(s=>s.phone===currentUser.phone);
       if(selfIdx!==-1){
         allStudents[selfIdx].study_seconds=accumulatedStudySecs+studySecs;
-        allStudents[selfIdx].break_seconds=breakSecs;
-        allStudents[selfIdx].sleep_seconds=sleepSecs;
+        allStudents[selfIdx].break_seconds=accumulatedBreakSecs+breakSecs;
+        allStudents[selfIdx].sleep_seconds=accumulatedSleepSecs+sleepSecs;
       }
     }
     // Non-self users: fetchedAt থেকে elapsed time হিসাব করো — flicker বন্ধ
@@ -1981,7 +1986,7 @@ async function renderLive(){
         college:currentUser.college||null,premium:currentUser.premium||false,
         photo_url:currentUser.photo_url||null,
         status:(mood==='study' && paused)?'paused':mood,study_seconds:accumulatedStudySecs+studySecs,
-        break_seconds:breakSecs,sleep_seconds:sleepSecs,breaks_used:breaksUsed,
+        break_seconds:accumulatedBreakSecs+breakSecs,sleep_seconds:accumulatedSleepSecs+sleepSecs,breaks_used:breaksUsed,
         phone:currentUser.phone,_isSelf:true
       };
       if(selfIdx===-1) allStudents.unshift(selfData);
