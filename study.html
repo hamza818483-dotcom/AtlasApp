@@ -676,13 +676,17 @@ async function logPageView(p) {
 }
 
 function backFromViewer() {
-    // PDF viewer থেকে ← চাপলে — PDF list reload করো (loading দেখাবে না)
-    pdfDoc = null; // current doc clear
-    if (curChapterId) {
-        openChapter(curChapterId, curChapterName);
-    } else {
-        go('s-pdfs');
-    }
+    // PDF viewer থেকে ← চাপলে — single-PDF chapter হলে renderPdfList() আবার
+    // auto-open করে viewer-এ ফিরিয়ে আনতো (loop bug), তাই cache থেকে PDF সংখ্যা
+    // চেক করে single হলে সরাসরি subject/chapter screen-এ পাঠানো হচ্ছে।
+    pdfDoc = null;
+    try {
+        const cached = curChapterId ? localStorage.getItem('atlas_pdfs_cache_' + curChapterId) : null;
+        const pdfs = cached ? JSON.parse(cached) : null;
+        if (pdfs && pdfs.length === 1) { go('s-chap'); return; }
+    } catch (_) {}
+    if (curChapterId) { openChapter(curChapterId, curChapterName); }
+    else { go('s-pdfs'); }
 }
 
 async function renderPage(p) {
