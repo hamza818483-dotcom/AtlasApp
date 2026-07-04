@@ -774,6 +774,7 @@
         <button class="tab-btn" onclick="switchSection('social',this)">🔗 Social</button>
         <button class="tab-btn" onclick="switchSection('subadmin',this)">👮 Sub-Admin</button>
         <button class="tab-btn" onclick="switchSection('reports',this)">🚩 Reports</button>
+        <button class="tab-btn" onclick="switchSection('feedback',this)">💬 Feedback</button>
         <button class="tab-btn" onclick="switchSection('owner',this)">👤 Owner</button>
         <button class="tab-btn" onclick="switchSection('mentors',this)">👨‍🏫 Mentors</button>
         <button class="tab-btn" onclick="switchSection('special',this)">🃏 Special Card</button>
@@ -1401,6 +1402,14 @@
         </div>
     </div>
 
+    <!-- ══════════════ TAB: FEEDBACK ══════════════ -->
+    <div class="admin-section" id="secFeedback">
+        <div class="form-card">
+            <h3 style="margin:0 0 10px;">💬 ইউজার ফিডব্যাক</h3>
+            <div id="feedbackList"></div>
+        </div>
+    </div>
+
     <!-- ══════════════ TAB 11: OWNER ══════════════ -->
     <div class="admin-section" id="secOwner">
         <div class="form-card">
@@ -1916,6 +1925,7 @@ function switchSection(sec, el) {
         social:    loadSocial,
         subadmin:  loadSubAdmins,
         reports:   loadReports,
+        feedback:  loadFeedback,
         owner:     loadOwner,
         mentors:   loadMentors,
         special:   loadSpecials,
@@ -2953,6 +2963,18 @@ async function loadReports(){
 }
 async function openReportModal(rid,qid,reporterPhone){document.getElementById('reportModal').classList.add('active');document.getElementById('reportModalContent').innerHTML='<p style="text-align:center;padding:20px;color:var(--text2);">⏳ লোড হচ্ছে...</p>';try{let qHtml='';if(qid){const qData=await safeFetch(`${SUPABASE_URL}/rest/v1/questions?id=eq.${qid}&select=*`);if(qData?.length){const q=qData[0];const opts=[q.option1,q.option2,q.option3,q.option4,q.option5].filter(Boolean);qHtml=`<div class="report-q-box"><p style="font-weight:600;margin-bottom:8px;">${q.question_text||'প্রশ্ন পাওয়া যায়নি'}</p>${opts.map((o,i)=>`<div class="report-option ${i+1===q.answer_index?'correct':''}">${String.fromCharCode(2453+i)}. ${o} ${i+1===q.answer_index?'✅':''}</div>`).join('')}${q.explanation?`<p style="font-size:11px;color:var(--accent);margin-top:8px;">💡 ${q.explanation}</p>`:''}</div>`;}}document.getElementById('reportModalContent').innerHTML=`${qHtml}<div class="input-group" style="margin-top:10px;"><label>সঠিক উত্তর (1-5)</label><input type="number" id="modalCorrectAns" min="1" max="5" placeholder="1"></div><div class="input-group"><label>Admin Response</label><textarea id="modalAdminResp" rows="3" placeholder="ব্যাখ্যা লিখুন..."></textarea></div><div style="display:flex;gap:6px;margin-top:8px;"><button class="btn btn-success" style="flex:1;" onclick="approveReport('${rid}','${qid}','${reporterPhone}')">✅ Approve</button><button class="btn btn-danger" style="flex:1;" onclick="rejectReport('${rid}','${reporterPhone}')">❌ Reject</button></div>`;}catch(e){document.getElementById('reportModalContent').innerHTML='<p style="color:var(--red);">লোড এরর</p>';}}
 function closeReportModal(){document.getElementById('reportModal').classList.remove('active');}
+
+async function loadFeedback(){
+    try{
+        const data=await safeFetch(`${SUPABASE_URL}/rest/v1/feedback?select=*&order=created_at.desc&limit=100`);
+        if(!data?.length){document.getElementById('feedbackList').innerHTML='<p style="color:var(--text2);text-align:center;padding:20px;">কোনো ফিডব্যাক নেই</p>';return;}
+        let html='';
+        data.forEach(f=>{
+            html+=`<div class="form-card" style="margin-bottom:8px;"><p style="font-size:12px;color:var(--text2);">👤 ${f.name||'অজানা'} ${f.phone?('• '+f.phone):''}</p><p style="margin-top:4px;">${(f.message||'').replace(/</g,'&lt;')}</p><p style="font-size:10px;color:var(--text2);margin-top:4px;">${f.created_at?new Date(f.created_at).toLocaleString('bn-BD'):''}</p></div>`;
+        });
+        document.getElementById('feedbackList').innerHTML=html;
+    }catch(e){document.getElementById('feedbackList').innerHTML='<p style="color:var(--red);">লোড এরর</p>';}
+}
 async function approveReport(rid,qid,reporterPhone){const correct=document.getElementById('modalCorrectAns')?.value||prompt('সঠিক উত্তর (1-5):');if(!correct)return;const explanation=document.getElementById('modalAdminResp')?.value||prompt('ব্যাখ্যা:')||'এপ্রুভ';try{await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}`,{method:'PATCH',body:JSON.stringify({status:'approved',admin_response:explanation,corrected_answer:correct,admin_phone:ADMIN_PHONE})});if(correct&&qid)await safeFetch(`${SUPABASE_URL}/rest/v1/questions?id=eq.${qid}`,{method:'PATCH',body:JSON.stringify({answer_index:parseInt(correct),explanation})});if(reporterPhone)await safeFetch(`${SUPABASE_URL}/rest/v1/notifications`,{method:'POST',body:JSON.stringify({phone:reporterPhone,title:'✅ রিপোর্ট এপ্রুভ',message:`প্রশ্ন #${qid} আপডেট: ${explanation}`,type:'report_approved',is_read:false})});await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}`,{method:'DELETE'});showToast('✅ এপ্রুভ হয়েছে');closeReportModal();loadReports();}catch(e){showToast('❌ এরর: '+e.message);}}
 async function quickApprove(rid,qid,reporterPhone){const correct=prompt('সঠিক উত্তর নম্বর (1-5):');if(!correct)return;const explanation=prompt('ব্যাখ্যা (ঐচ্ছিক):')||'এপ্রুভ';try{await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}`,{method:'PATCH',body:JSON.stringify({status:'approved',admin_response:explanation,corrected_answer:correct,admin_phone:ADMIN_PHONE})});if(correct&&qid)await safeFetch(`${SUPABASE_URL}/rest/v1/questions?id=eq.${qid}`,{method:'PATCH',body:JSON.stringify({answer_index:parseInt(correct),explanation})});if(reporterPhone)await safeFetch(`${SUPABASE_URL}/rest/v1/notifications`,{method:'POST',body:JSON.stringify({phone:reporterPhone,title:'✅ রিপোর্ট এপ্রুভ',message:`প্রশ্ন আপডেট: ${explanation}`,type:'report_approved',is_read:false})});await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}`,{method:'DELETE'});showToast('✅ এপ্রুভ হয়েছে');loadReports();}catch(e){showToast('❌ এরর: '+e.message);}}
 async function rejectReport(rid,reporterPhone){const reason=prompt('রিজেক্ট কারণ লিখুন:');if(!reason)return;try{await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}`,{method:'PATCH',body:JSON.stringify({status:'rejected',admin_response:reason,admin_phone:ADMIN_PHONE})});if(reporterPhone)await safeFetch(`${SUPABASE_URL}/rest/v1/notifications`,{method:'POST',body:JSON.stringify({phone:reporterPhone,title:'❌ রিপোর্ট রিজেক্ট',message:'কারণ: '+reason,type:'report_rejected',is_read:false})});await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports?id=eq.${rid}`,{method:'DELETE'});showToast('❌ রিজেক্ট হয়েছে');closeReportModal();loadReports();}catch(e){showToast('❌ এরর: '+e.message);}}
