@@ -1752,7 +1752,7 @@ async function doEnd(auto){
         college:currentUser.college||null,premium:currentUser.premium||false,
         photo_url:currentUser.photo_url||null,
         status:'resting',study_seconds:accumulatedStudySecs,
-        break_seconds:0,sleep_seconds:0,breaks_used:0,
+        break_seconds:accumulatedBreakSecs,sleep_seconds:accumulatedSleepSecs,breaks_used:0,
         phone:currentUser.phone,_isSelf:true
       };
       if(idx===-1) allStudents.unshift(selfData); else allStudents[idx]=selfData;
@@ -2002,7 +2002,7 @@ async function renderLive(){
         college:currentUser.college||null,premium:currentUser.premium||false,
         photo_url:currentUser.photo_url||null,
         status:'resting',study_seconds:accumulatedStudySecs,
-        break_seconds:0,sleep_seconds:0,breaks_used:0,
+        break_seconds:accumulatedBreakSecs,sleep_seconds:accumulatedSleepSecs,breaks_used:0,
         phone:currentUser.phone,_isSelf:true
       };
       if(selfIdx===-1) allStudents.unshift(selfData);
