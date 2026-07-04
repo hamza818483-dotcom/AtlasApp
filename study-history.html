@@ -367,10 +367,17 @@ let allSessions=[], allDaily=[];
 async function loadAllData(){
   if(!currentUser) return;
   const ph = encodeURIComponent(currentUser.phone);
-  [allSessions, allDaily] = await Promise.all([
-    safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?user_phone=eq.${ph}&select=*&order=updated_at.desc&limit=500`),
-    safeFetch(`${SUPABASE_URL}/rest/v1/study_tracker_daily?user_phone=eq.${ph}&select=*&order=study_date.desc&limit=200`),
-  ]);
+  try{
+    [allSessions, allDaily] = await Promise.all([
+      safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?user_phone=eq.${ph}&select=*&order=updated_at.desc&limit=500`),
+      safeFetch(`${SUPABASE_URL}/rest/v1/study_tracker_daily?user_phone=eq.${ph}&select=*&order=study_date.desc&limit=200`),
+    ]);
+    if(window.offlineDB) window.offlineDB.cacheQuestions('study_history_'+currentUser.phone, {allSessions, allDaily}).catch(()=>{});
+  }catch(netErr){
+    const cached = window.offlineDB ? await window.offlineDB.getCachedQuestions('study_history_'+currentUser.phone) : null;
+    if(cached){ allSessions=cached.allSessions||[]; allDaily=cached.allDaily||[]; }
+    else { allSessions=[]; allDaily=[]; }
+  }
   renderChart();
   updateTodayBoxes();
   updatePeriodSummary(currentPeriodDays);
@@ -745,6 +752,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 </script>
 
+<script src="offline-db.js"></script>
 <script src="global-nav.js"></script>
 <script src="atlas-ui.js"></script>
 </body>
