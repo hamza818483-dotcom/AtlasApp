@@ -2183,13 +2183,22 @@ async function loadMoodRanking(moodType, days, btn){
       grouped[p].break_seconds += (r.break_seconds||0);
       grouped[p].sleep_seconds += (r.sleep_seconds||0);
     });
-    // Live (self) সময়ও যোগ করো
-    if(currentUser && (studySecs||breakSecs||sleepSecs)){
+    // Live (self) সময়ও যোগ করো — DB row-এ ইতিমধ্যে accumulated+current আছে (syncSession),
+    // তাই এখানে raw studySecs/breakSecs/sleepSecs আবার যোগ করলে double-count হবে।
+    // sessionId না থাকলে (session শুরুই হয়নি/এখনো sync হয়নি) শুধু তখনই যোগ করো।
+    if(currentUser && !sessionId && (studySecs||breakSecs||sleepSecs)){
       const p=currentUser.phone;
       if(!grouped[p]) grouped[p]={phone:p,name:currentUser.name,batch:currentUser.batch,college:currentUser.college,premium:currentUser.premium,photo_url:currentUser.photo_url,study_seconds:0,break_seconds:0,sleep_seconds:0};
       grouped[p].study_seconds += studySecs;
       grouped[p].break_seconds += breakSecs;
       grouped[p].sleep_seconds += sleepSecs;
+    } else if(currentUser && sessionId && grouped[currentUser.phone]){
+      // sessionId থাকলে DB row-ই সঠিক accumulated+current মান রাখে — কিন্তু accumulatedStudySecs
+      // (আগের session, DB-তে নেই) যোগ করে দাও যদি সেটা এই row-এ না থাকে
+      const p=currentUser.phone;
+      grouped[p].study_seconds = Math.max(grouped[p].study_seconds, accumulatedStudySecs+studySecs);
+      grouped[p].break_seconds = Math.max(grouped[p].break_seconds, accumulatedBreakSecs+breakSecs);
+      grouped[p].sleep_seconds = Math.max(grouped[p].sleep_seconds, accumulatedSleepSecs+sleepSecs);
     }
 
     const sortKey = moodType==='study'?'study_seconds':moodType==='break'?'break_seconds':'sleep_seconds';
