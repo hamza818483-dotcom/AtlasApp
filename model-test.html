@@ -252,7 +252,12 @@ async function startModelTest(){
 
 async function init(){
     render('<div class="mt-loading">⏳ লোড হচ্ছে...</div>');
-    allTests=await safeFetch(`${SUPABASE_URL}/rest/v1/model_tests?select=*&order=sort_order.asc,created_at.desc`);
+    try{
+        allTests=await safeFetch(`${SUPABASE_URL}/rest/v1/model_tests?select=*&order=sort_order.asc,created_at.desc`);
+        if(allTests?.length && window.offlineDB) window.offlineDB.cacheQuestions('model_tests_list', allTests).catch(()=>{});
+    }catch(netErr){
+        allTests = window.offlineDB ? await window.offlineDB.getCachedQuestions('model_tests_list') : null;
+    }
     if(!allTests||!allTests.length){render('<div class="mt-empty"><div class="mt-empty-icon">📭</div><div class="mt-empty-text">কোনো মডেল টেস্ট এখনো যোগ করা হয়নি</div></div>');return;}
     renderTypeStep();
 }
@@ -260,6 +265,7 @@ async function init(){
 document.addEventListener('DOMContentLoaded',init);
 
 </script>
+<script src="offline-db.js"></script>
 <script src="global-nav.js"></script>
 <script src="atlas-ui.js"></script>
 </body>

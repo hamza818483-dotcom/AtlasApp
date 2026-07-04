@@ -182,8 +182,16 @@ async function startMock(customMins){
     if(!s||!c){showToast('⚠️ সাবজেক্ট ও চ্যাপ্টার নির্বাচন করুন');return;}
     let query=`subject=eq.${encodeURIComponent(s)}&chapter=eq.${encodeURIComponent(c)}&standard=eq.${selectedStd}`;
     if(t)query+=`&topic=eq.${encodeURIComponent(t)}`;
+    const cacheKey=`mock_${s}_${c}_${t||''}_${selectedStd}`;
     try{
-        const data=await safeFetch(`${SUPABASE_URL}/rest/v1/mock_questions?${query}&select=*`);
+        let data;
+        try{
+            data=await safeFetch(`${SUPABASE_URL}/rest/v1/mock_questions?${query}&select=*`);
+            if(data?.length && window.offlineDB) window.offlineDB.cacheQuestions(cacheKey, data).catch(()=>{});
+        }catch(netErr){
+            if(window.offlineDB) data=await window.offlineDB.getCachedQuestions(cacheKey);
+            if(!data){ showToast('⚠️ অফলাইনে এই প্রশ্নগুলো এখনো ক্যাশ হয়নি'); return; }
+        }
         if(!data?.length){showToast('⚠️ প্রশ্ন পাওয়া যায়নি');return;}
         let all=[];data.forEach(d=>{all=all.concat(JSON.parse(d.questions_json||'[]'));});
         all.sort(()=>Math.random()-0.5);
@@ -206,6 +214,7 @@ async function startMock(customMins){
 document.addEventListener('DOMContentLoaded',()=>{loadSubjects();});
 
 </script>
+<script src="offline-db.js"></script>
 <script src="global-nav.js"></script>
 <script src="atlas-ui.js"></script>
 </body>
