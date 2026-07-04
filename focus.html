@@ -1460,6 +1460,8 @@ function checkAutoSleepFromPause(){
 
 function autoEndBreak(){
   showToast('⏰ বিরতির সময় শেষ — Study Mood এ ফিরে এলে');
+  accumulatedBreakSecs += breakSecs;
+  saveDailyProgress();
   mood='study'; breakSecs=0; breaksUsed++;
   renderTimer(); updateMoodButtons(); saveState(); syncSession();
 }
