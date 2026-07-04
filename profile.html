@@ -3769,9 +3769,11 @@ function buildProfileStats(examResults) {
     document.getElementById('profileStatsRow').style.display='flex';
 }
 
+function getSession() { try{return JSON.parse(localStorage.getItem('atlas-session'));}catch(e){return null;} }
+
 async function qpLoadPremiumPoints() {
     try {
-        const user = getSession();
+        const user = getSession() || currentUser;
         if (!user || !user.phone) return;
         const res = await fetch(`${SUPABASE_URL}/rest/v1/qp_user_points?user_phone=eq.${user.phone}&select=total_points`,
             { headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY } });
