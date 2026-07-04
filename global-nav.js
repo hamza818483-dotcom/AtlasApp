@@ -81,3 +81,57 @@
     // pure-ভাবে "পেজ লোড হলে push করো, back চাপলে pop করে আগের পেজে যাও"
     // এই behavior-টুকুই যোগ করে, বাকি সব navigation যেমন ছিল তেমনই থাকে।
 })();
+
+// ============================================================
+// GLOBAL STUCK-PAGE WATCHDOG
+// সমস্যা: কোনো page-এ ডাটা লোড হতে দেরি হলে (স্লো নেট/সার্ভার ডাউন)
+// loading spinner অনন্তকাল ধরে ঘুরতে থাকে, page effectively stuck
+// দেখায়। এটা কোনো existing fetch/logic touch করে না — শুধু ১২
+// সেকেন্ড পরও যদি স্ক্রিনে "লোড হচ্ছে/Loading" টাইপ টেক্সট visible
+// থাকে, একটা非-blocking "রিলোড করো" hint দেখায় যাতে user আটকে না
+// থাকে। Reload করলে page fresh state-এ শুরু হবে, স্টাক থাকবে না।
+// ============================================================
+(function () {
+    const HINT_ID = 'atlas-stuck-hint';
+    const CHECK_AFTER_MS = 12000;
+
+    function looksLikeLoadingText(el) {
+        const t = (el.textContent || '').trim();
+        if (!t || t.length > 60) return false;
+        return /লোড হচ্ছে|Loading\.\.\.|লোডিং|⏳/i.test(t);
+    }
+
+    function isVisible(el) {
+        if (!el || !el.getClientRects().length) return false;
+        const cs = getComputedStyle(el);
+        return cs.display !== 'none' && cs.visibility !== 'hidden' && cs.opacity !== '0';
+    }
+
+    function showStuckHint() {
+        if (document.getElementById(HINT_ID)) return;
+        const bar = document.createElement('div');
+        bar.id = HINT_ID;
+        bar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99999;' +
+            'background:#1a1a2e;color:#fff;padding:12px 16px;display:flex;' +
+            'align-items:center;justify-content:space-between;gap:10px;' +
+            'font-family:inherit;font-size:13px;box-shadow:0 -2px 12px rgba(0,0,0,.3);';
+        bar.innerHTML = '<span>⏳ লোড হতে দেরি হচ্ছে, নেট চেক করো</span>' +
+            '<button style="background:#7C83FF;color:#fff;border:none;border-radius:6px;padding:8px 14px;font-weight:700;font-family:inherit;cursor:pointer;" onclick="location.reload()">রিলোড</button>';
+        document.body.appendChild(bar);
+    }
+
+    window.addEventListener('load', function () {
+        setTimeout(function () {
+            try {
+                const candidates = document.querySelectorAll('body *');
+                for (let i = 0; i < candidates.length; i++) {
+                    const el = candidates[i];
+                    if (el.children.length === 0 && isVisible(el) && looksLikeLoadingText(el)) {
+                        showStuckHint();
+                        return;
+                    }
+                }
+            } catch (_) { /* কোনো কারণে fail করলে চুপচাপ স্কিপ — মূল page-এ কোনো প্রভাব পড়বে না */ }
+        }, CHECK_AFTER_MS);
+    });
+})();
