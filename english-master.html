@@ -21,11 +21,11 @@
     body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; padding-bottom:100px; }
 
     .em-header { position:sticky; top:0; z-index:50; display:flex; align-items:center; gap:10px; padding:14px 16px; background:var(--card-bg); border-bottom:1px solid var(--border); }
-    .em-back { width:36px; height:36px; border-radius:var(--radius-full); border:1px solid var(--border); background:var(--bg); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text); }
+    .em-back { width:36px; height:36px; border-radius:var(--radius-full); border:1px solid var(--border); background:var(--bg); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text); appearance:none; -webkit-appearance:none; }
     .em-title { font-size:17px; font-weight:800; flex:1; }
 
     .em-row { display:flex; gap:12px; padding:16px 16px 0; }
-    .em-btn { flex:1; background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius); padding:20px 12px; display:flex; flex-direction:column; align-items:center; gap:10px; cursor:pointer; }
+    .em-btn { flex:1; background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius); padding:20px 12px; display:flex; flex-direction:column; align-items:center; gap:10px; cursor:pointer; appearance:none; -webkit-appearance:none; color:var(--text); }
     .em-btn-icon { width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; }
     .em-btn-syn .em-btn-icon { background:rgba(63,185,80,.15); color:#3FB950; }
     .em-btn-ant .em-btn-icon { background:rgba(248,81,73,.15); color:#F85149; }
@@ -49,27 +49,27 @@
 <body>
 
 <div class="em-header">
-    <div class="em-back" onclick="(window.goBackGlobal ? goBackGlobal() : (history.length>1?history.back():location.href='index.html'))">
+    <button class="em-back" style="font:inherit;padding:0;" onclick="(window.goBackGlobal ? goBackGlobal() : (history.length>1?history.back():location.href='index.html'))">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </div>
+    </button>
     <div class="em-title">📖 English Master</div>
 </div>
 
 <div class="em-row">
-    <div class="em-btn em-btn-syn" onclick="emSelectCategory('synonym')">
+    <button class="em-btn em-btn-syn" style="font:inherit;" onclick="emSelectCategory('synonym')">
         <div class="em-btn-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 00-2 2v4M15 3h4a2 2 0 012 2v4M9 21H5a2 2 0 01-2-2v-4M15 21h4a2 2 0 002-2v-4"/></svg>
         </div>
         <div class="em-btn-text">Synonym</div>
         <div class="em-btn-count" id="emSynCount"></div>
-    </div>
-    <div class="em-btn em-btn-ant" onclick="emSelectCategory('antonym')">
+    </button>
+    <button class="em-btn em-btn-ant" style="font:inherit;" onclick="emSelectCategory('antonym')">
         <div class="em-btn-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4-4 4M7 21l-4-4 4-4M21 7H9M3 17h12"/></svg>
         </div>
         <div class="em-btn-text">Antonym</div>
         <div class="em-btn-count" id="emAntCount"></div>
-    </div>
+    </button>
 </div>
 
 <div class="em-random-btn" onclick="emSelectCategory('random')">
