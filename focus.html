@@ -1273,7 +1273,7 @@ async function startSession(){
   if(!currentUser){ showToast('⚠️ লগইন করো'); goTo('auth.html'); return; }
   mood='study'; timerRunning=true; paused=false;
   // accumulated থেকে শুরু — studySecs already set in doEnd
-  breakSecs=0; sleepSecs=0; breaksUsed=0;
+  breaksUsed=0;
   // accumulatedStudySecs ও sessionNumber এখানে reset হয় না — আগের session(গুলোর)
   // মোট সময় বজায় থাকে, নতুন session শুধু upore visible timer-কে শূন্য থেকে শুরু করায়।
 
@@ -1416,7 +1416,7 @@ function tick(){
     }
     studySecs++;
   } else if(mood==='break'){
-    if(bsRunning){ breakSecs++; if(breakSecs>=MAX_BREAK_SEC){ autoEndBreak(); return; } }
+    if(bsRunning){ breakSecs++; if((accumulatedBreakSecs+breakSecs)>=MAX_BREAK_SEC){ autoEndBreak(); return; } }
   } else if(mood==='sleep'){
     if(bsRunning) sleepSecs++;
   } else return;
@@ -1490,16 +1490,16 @@ function renderTimer(){
     moodNameText=sessionNumber>1?`Study Mode (Session ${sessionNumber})`:'Study Mode';
     moodNameClass='t-mood-name-study'; moodBarClass='t-mood-bar-study'; boxMoodClass='mood-study';
   } else if(mood==='break'){
-    displaySecs=breakSecs;
+    displaySecs=accumulatedBreakSecs+breakSecs;
     moodIcon=`<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 2v3M10 2v3M14 2v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M4 5h12l-1.5 9H5.5L4 5z" stroke="currentColor" stroke-width="1.8"/><path d="M16 8c2 0 4 1 4 3s-2 3-4 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
     moodNameText='Break Mode';
     moodNameClass='t-mood-name-break'; moodBarClass='t-mood-bar-break'; boxMoodClass='mood-break';
-    const remain=MAX_BREAK_SEC-breakSecs;
+    const remain=MAX_BREAK_SEC-(accumulatedBreakSecs+breakSecs);
     const wb=document.getElementById('breakWarn');
     if(remain<=300){ wb.textContent=`⚠️ বিরতি শেষ হতে ${fmtDisplay(remain)} বাকি`; wb.classList.add('show'); }
     else wb.classList.remove('show');
   } else {
-    displaySecs=sleepSecs;
+    displaySecs=accumulatedSleepSecs+sleepSecs;
     moodIcon=`<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.8" fill="rgba(255,255,255,.08)"/></svg>`;
     moodNameText='Sleep Mode';
     moodNameClass='t-mood-name-sleep'; moodBarClass='t-mood-bar-sleep'; boxMoodClass='mood-sleep';
@@ -2704,7 +2704,7 @@ function restoreSession(){
   // Add elapsed to active mood (unless paused)
   if(!paused){
     if(mood==='study') studySecs+=elapsed;
-    else if(mood==='break'){ breakSecs+=elapsed; if(breakSecs>=MAX_BREAK_SEC){breakSecs=MAX_BREAK_SEC;} }
+    else if(mood==='break'){ breakSecs+=elapsed; if((accumulatedBreakSecs+breakSecs)>=MAX_BREAK_SEC){breakSecs=MAX_BREAK_SEC-accumulatedBreakSecs;} }
     else if(mood==='sleep') sleepSecs+=elapsed;
   }
   timerRunning=true;
