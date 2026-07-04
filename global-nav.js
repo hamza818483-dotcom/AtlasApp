@@ -47,11 +47,24 @@
     const isBackNavigation = sessionStorage.getItem('atlas_nav_going_back') === '1';
     sessionStorage.removeItem('atlas_nav_going_back');
 
-    if (!isBackNavigation && (stack.length === 0 || stack[stack.length - 1] !== currentFull)) {
-        stack.push(currentFull);
-        // স্ট্যাক অতিরিক্ত বড় না হোক — সর্বোচ্চ ৩০টা এন্ট্রি যথেষ্ট
-        if (stack.length > 30) stack = stack.slice(stack.length - 30);
-        saveStack(stack);
+    if (!isBackNavigation) {
+        // একই page-এর মধ্যে বারবার ঢোকা (যেমন HSC বাটনে কয়েকবার ক্লিক) হলে
+        // স্ট্যাকে ডুপ্লিকেট এন্ট্রি জমতে দেওয়া হবে না — শুধু query বদলালে নতুন এন্ট্রি।
+        const currentBase = currentPage;
+        const lastFull = stack.length ? stack[stack.length - 1] : null;
+        const lastBase = lastFull ? lastFull.split('?')[0] : null;
+        if (stack.length === 0 || lastFull !== currentFull) {
+            // আগের এন্ট্রি যদি একই পেজ হয় (query ভিন্ন হলেও), সেটাকে replace করো —
+            // যাতে exam.html-এর ভেতরের একাধিক ভিজিট স্ট্যাকে একগাদা এন্ট্রি না বানায়
+            // এবং back চাপলে সরাসরি exam.html-এর *আগের* আসল পেজে চলে যায়।
+            if (lastBase === currentBase) {
+                stack[stack.length - 1] = currentFull;
+            } else {
+                stack.push(currentFull);
+            }
+            if (stack.length > 30) stack = stack.slice(stack.length - 30);
+            saveStack(stack);
+        }
     }
 
     // ---------- গ্লোবাল ব্যাক ফাংশন (window.goBackGlobal ওভাররাইড) ----------
