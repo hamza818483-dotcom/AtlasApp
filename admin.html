@@ -4,7 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ATLAS EXAM · অ্যাডমিন</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- defer: pdf.js শুধু PDF preview খোলার সময় লাগে (async ফাংশনের ভেতরে,
+         typeof-চেক গার্ড সহ) — পুরো পেজের HTML parse/render এই বহিরাগত CDN
+         script এর জন্য আটকে থাকার দরকার নেই, যেটাই admin panel-এর প্রথম
+         লোড ধীর হওয়ার একটা বড় কারণ ছিল। -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
     <style>
         /* ══════════════════════════════════════════════
            FLUTTER-READY CSS VARIABLES
