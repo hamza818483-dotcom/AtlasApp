@@ -90,6 +90,7 @@ export default {
         const skipGemini = !!body.skipGemini; // এই request-এর জন্য Gemini আগেই অন্য পথে (PDF-native) একবার
                                                 // চেষ্টা হয়ে থাকলে ফ্রন্টএন্ড এটা true পাঠায় — quota বাঁচাতে
                                                 // এখানে Gemini আবার কল না করে বাকি provider চেইন সরাসরি চলে।
+        const skipGroq = !!body.skipGroq; // retry কলে Groq আগেই একবার চেষ্টা হয়ে থাকলে ডুপ্লিকেট Groq কল এড়াতে
 
         if (!question && !image) {
             return jsonResponse({ success: false, error: "question বা image এর একটি দিতে হবে" }, 400);
@@ -104,7 +105,10 @@ export default {
             { name: "cerebras", fn: () => callCerebras(env, question, systemPrompt, image) },
             { name: "cloudflare", fn: () => callCloudflareAI(env, question, systemPrompt, image) },
         ];
-        const providers = (skipGemini ? allProviders.filter(p => p.name !== "gemini") : allProviders).map(p => p.fn);
+        const providers = allProviders
+            .filter(p => !(skipGemini && p.name === "gemini"))
+            .filter(p => !(skipGroq && p.name === "groq"))
+            .map(p => p.fn);
 
         // প্রতিটা provider নিজের ভেতরেই key/model rotation + backoff করে (উপরে দেখো)।
         // এখানে শুধু provider-চেইন ক্রমে চালানো হয় — কোনো একটায় সব key/model fail করলে

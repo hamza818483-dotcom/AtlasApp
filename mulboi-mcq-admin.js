@@ -1804,7 +1804,7 @@ async function mbAiGenerate() {
                     `প্রতিটা string properly escaped থাকতে হবে। Format:\n${jsonFormat}`;
                 const retryImg = pageImageData || await mbGetPageImageBase64(mbCurrentPage);
                 if (retryImg) {
-                    const retryRaw = await mbCallAiApi('', retryImg, strictSys, false);
+                    const retryRaw = await mbCallAiApi('', retryImg, strictSys, false, true); // skipGroq=true — retry-তে ডুপ্লিকেট Groq call এড়াতে
                     parsed = mbParseAiJson(retryRaw);
                 }
             } catch (_) { /* retry ব্যর্থ হলে নিচের error handling চলবে */ }
@@ -1911,7 +1911,7 @@ async function mbAiGenerateSpecial() {
 // All AI calls now go through the centralized proxy worker — no API key lives in
 // this file or any client-side code. See atlas-ai-proxy-worker.js for the actual
 // provider fallback chain (Gemini → OpenRouter → Groq → Cerebras → Cloudflare AI).
-async function mbCallAiApi(prompt, image, customSystemPrompt, skipGemini) {
+async function mbCallAiApi(prompt, image, customSystemPrompt, skipGemini, skipGroq) {
     const res = await fetch(AI_PROXY_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1919,8 +1919,10 @@ async function mbCallAiApi(prompt, image, customSystemPrompt, skipGemini) {
             question: prompt || '',
             image: image ? { base64: image.base64, mimeType: image.mimeType } : null,
             systemPrompt: customSystemPrompt || 'তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।',
-            skipGemini: !!skipGemini // এই page-এর জন্য Gemini আগেই একবার (PDF-native) চেষ্টা হয়ে থাকলে,
+            skipGemini: !!skipGemini, // এই page-এর জন্য Gemini আগেই একবার (PDF-native) চেষ্টা হয়ে থাকলে,
                                        // fallback chain-এ আবার Gemini-কে ডাবল-কল না করার জন্য
+            skipGroq: !!skipGroq      // retry কলে Groq আগেই একবার চেষ্টা হয়ে থাকলে দ্বিতীয়বার একই
+                                       // provider-এ কল না করে সরাসরি Gemini/অন্য provider দিয়ে শুরু করার জন্য
         })
     });
     let data = null;
@@ -2370,7 +2372,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
         try {
             const strictSys = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePrompt}\n` +
                 `শুধু valid JSON array রিটার্ন করো। কোনো markdown code fence, preamble, বা extra text দিও না। Format:\n${jsonFormat}`;
-            const retryRaw = await mbCallAiApi('', pageImageData, strictSys, false);
+            const retryRaw = await mbCallAiApi('', pageImageData, strictSys, false, true); // skipGroq=true — retry-তে ডুপ্লিকেট Groq call এড়াতে
             parsed = mbParseAiJson(retryRaw);
         } catch (_) {}
     }
