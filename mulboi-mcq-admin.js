@@ -1705,11 +1705,9 @@ async function mbCropExplanationImage(pageNum, box) {
 async function mbGetPageImageBase64(pageNum) {
     if (!mbPdfDoc) return null;
     try {
-        const canvas = document.getElementById('mbPreviewCanvas');
-        if (canvas && canvas.width > 100 && canvas.height > 100) {
-            return { base64: canvas.toDataURL('image/jpeg', 0.85).split(',')[1], mimeType: 'image/jpeg' };
-        }
-        // Render fresh if canvas not ready
+        // canvas reuse বাদ দেওয়া হলো — mbPreviewCanvas অন্য পেইজের রেন্ডার হয়ে থাকতে পারে
+        // (user pageNum পাঠানোর আগেই সরে গেলে), যা ভুল পেইজের ছবি AI-কে পাঠিয়ে ভুল/broken
+        // JSON তৈরির একটা কারণ ছিল। এখন সবসময় নির্দিষ্ট pageNum fresh render করা হয়।
         const page = await mbPdfDoc.getPage(pageNum);
         const vp = page.getViewport({ scale: 1.5 });
         const tmp = document.createElement('canvas');
