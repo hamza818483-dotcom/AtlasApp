@@ -1158,11 +1158,33 @@ function showPreExamFromData(exam,questions){
         ${(exam._pageImages&&exam._pageImages.length)?`<div class="pre-exam-card" style="padding:10px 12px;">
             <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">📄 পেইজ প্রিভিউ</div>
             <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;">
-                ${exam._pageImages.map(img=>`<div style="flex-shrink:0;text-align:center;"><img src="${img.src}" style="height:110px;border-radius:6px;border:1px solid var(--border);display:block;"><div style="font-size:9px;color:var(--text2);margin-top:3px;">পেইজ ${img.page}</div></div>`).join('')}
+                ${exam._pageImages.map(img=>`<div style="flex-shrink:0;text-align:center;"><img src="${img.src}" onclick="openPagePreviewLightbox('${img.src.replace(/'/g,"\\'")}',${img.page})" style="height:110px;border-radius:6px;border:1px solid var(--border);display:block;cursor:pointer;"><div style="font-size:9px;color:var(--text2);margin-top:3px;">পেইজ ${img.page}</div></div>`).join('')}
             </div></div>`:''}
         `;
     document.getElementById('preExamContent').innerHTML=html;
     switchMode('PreExam');
+}
+
+// পেইজ প্রিভিউ থাম্বনেইলে ক্লিক করলে বড় করে দেখানোর জন্য fullscreen lightbox
+function openPagePreviewLightbox(src, page){
+    let lb = document.getElementById('pagePreviewLightbox');
+    if (!lb){
+        lb = document.createElement('div');
+        lb.id = 'pagePreviewLightbox';
+        lb.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;cursor:zoom-out;';
+        lb.onclick = closePagePreviewLightbox;
+        lb.innerHTML = `<img id="pagePreviewLightboxImg" style="max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,0.5);" />
+            <div id="pagePreviewLightboxLabel" style="position:absolute;top:16px;left:50%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:600;background:rgba(0,0,0,0.5);padding:4px 12px;border-radius:20px;"></div>
+            <div style="position:absolute;top:16px;right:16px;color:#fff;font-size:24px;cursor:pointer;">✕</div>`;
+        document.body.appendChild(lb);
+    }
+    document.getElementById('pagePreviewLightboxImg').src = src;
+    document.getElementById('pagePreviewLightboxLabel').textContent = 'পেইজ ' + page;
+    lb.style.display = 'flex';
+}
+function closePagePreviewLightbox(){
+    const lb = document.getElementById('pagePreviewLightbox');
+    if (lb) lb.style.display = 'none';
 }
 
 // =============================================================
