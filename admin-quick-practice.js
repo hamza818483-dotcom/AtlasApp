@@ -33,14 +33,14 @@ function qpRenderSubjList(data) {
     list.innerHTML = data.map(s => {
         const isOpen = qpExpandedSubj === s.id;
         return `
-        <div style="border-bottom:1px solid var(--border)">
-            <div style="display:flex;align-items:center;gap:6px;padding:8px 4px;cursor:pointer" onclick="qpToggleSubj(${s.id})">
+        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden">
+            <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer" onclick="qpToggleSubj(${s.id})">
                 <span style="font-size:11px;color:var(--accent);transition:transform .2s;display:inline-block;transform:rotate(${isOpen?90:0}deg)">▶</span>
-                <div style="flex:1"><div style="font-weight:600;font-size:13px">📘 ${qpEscHtml(s.name)}</div></div>
+                <div style="flex:1"><div style="font-weight:700;font-size:13px">📘 ${qpEscHtml(s.name)}</div></div>
                 <button class="btn btn-sm" onclick="qpEditSubjPrompt(${s.id},'${qpEsc(s.name)}');event.stopPropagation()" style="padding:3px 8px;font-size:10px">✏️</button>
                 <button class="btn btn-sm" onclick="qpDelSubject(${s.id});event.stopPropagation()" style="padding:3px 8px;font-size:10px;color:var(--error);border-color:var(--error)">🗑</button>
             </div>
-            <div id="qpChapDrop_${s.id}" style="display:${isOpen?'block':'none'};padding:6px 4px 12px 22px;background:var(--bg)">
+            <div id="qpChapDrop_${s.id}" style="display:${isOpen?'block':'none'};padding:10px 12px;background:var(--bg);border-top:1px solid var(--border)">
                 ${isOpen ? '<div style="color:var(--text2);font-size:12px">লোড হচ্ছে...</div>' : ''}
             </div>
         </div>`;
@@ -102,11 +102,11 @@ async function qpLoadChapters(subjId) {
 
     drop.innerHTML = `
         <div style="display:flex;gap:6px;margin-bottom:10px">
-            <input type="text" id="qpNewChapName_${subjId}" placeholder="+ নতুন অধ্যায়ের নাম" style="flex:1;padding:8px 10px;font-size:12px;border-radius:8px;border:1px solid var(--border);background:var(--card-bg);color:var(--text)">
-            <button class="btn btn-sm" onclick="qpAddChapter(${subjId})" style="padding:8px 12px;font-size:12px">+ যোগ</button>
+            <input type="text" id="qpNewChapName_${subjId}" placeholder="+ নতুন অধ্যায়ের নাম" style="flex:1;padding:9px 12px;font-size:12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--card-bg);color:var(--text)">
+            <button class="btn btn-sm btn-primary" onclick="qpAddChapter(${subjId})" style="padding:8px 14px;font-size:12px;white-space:nowrap">+ যোগ</button>
         </div>
         <div id="qpChapList_${subjId}">
-            ${data.length ? data.map(ch => qpRenderChapterRow(ch, counts[ch.id] || 0)).join('') : '<div style="color:var(--text2);font-size:12px">কোনো অধ্যায় নেই।</div>'}
+            ${data.length ? data.map(ch => qpRenderChapterRow(ch, counts[ch.id] || 0)).join('') : '<div style="color:var(--text2);font-size:12px;padding:8px 0">কোনো অধ্যায় নেই।</div>'}
         </div>
     `;
 }
@@ -114,14 +114,14 @@ async function qpLoadChapters(subjId) {
 function qpRenderChapterRow(ch, mcqCount) {
     const isOpen = qpExpandedChap === ch.id;
     return `
-    <div style="border-bottom:1px solid var(--border);margin-bottom:4px">
-        <div style="display:flex;align-items:center;gap:6px;padding:6px 4px;cursor:pointer" onclick="qpToggleChap(${ch.id})">
-            <span style="font-size:10px;color:var(--accent);transition:transform .2s;display:inline-block;transform:rotate(${isOpen?90:0}deg)">▶</span>
-            <div style="flex:1;font-size:12.5px">📄 ${qpEscHtml(ch.name)} <span style="color:var(--text2);font-size:10.5px">(${mcqCount}টি MCQ)</span></div>
-            <button class="btn btn-sm" onclick="qpEditChapPrompt(${ch.id},'${qpEsc(ch.name)}');event.stopPropagation()" style="padding:2px 7px;font-size:9.5px">✏️</button>
-            <button class="btn btn-sm" onclick="qpDelChapter(${ch.id});event.stopPropagation()" style="padding:2px 7px;font-size:9.5px;color:var(--error);border-color:var(--error)">🗑</button>
+    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:8px;padding:9px 10px;cursor:pointer" onclick="qpToggleChap(${ch.id})">
+            <span style="font-size:11px;color:var(--accent);transition:transform .2s;display:inline-block;transform:rotate(${isOpen?90:0}deg)">▶</span>
+            <div style="flex:1;font-size:12.5px;font-weight:600">📄 ${qpEscHtml(ch.name)} <span style="color:var(--text2);font-weight:400;font-size:10.5px">(${mcqCount}টি MCQ)</span></div>
+            <button class="btn btn-sm" onclick="qpEditChapPrompt(${ch.id},'${qpEsc(ch.name)}');event.stopPropagation()" style="padding:3px 8px;font-size:10px">✏️</button>
+            <button class="btn btn-sm" onclick="qpDelChapter(${ch.id});event.stopPropagation()" style="padding:3px 8px;font-size:10px;color:var(--error);border-color:var(--error)">🗑</button>
         </div>
-        <div id="qpMcqDrop_${ch.id}" style="display:${isOpen?'block':'none'};padding:8px 4px 14px 18px;background:var(--card-bg);border-radius:8px;margin-top:4px">
+        <div id="qpMcqDrop_${ch.id}" style="display:${isOpen?'block':'none'};padding:10px;background:var(--bg);border-top:1px solid var(--border)">
             ${isOpen ? qpRenderMcqManager(ch.id) : ''}
         </div>
     </div>`;
@@ -166,12 +166,13 @@ async function qpDelChapter(id) {
 // ══════════════════════════════════════
 function qpRenderMcqManager(chapId) {
     return `
-        <div style="margin-bottom:8px">
-            <input type="file" accept=".csv" id="qpCsvInput_${chapId}" onchange="qpHandleCSV(${chapId}, this)" style="font-size:11px">
-            <span id="qpCsvLabel_${chapId}" style="font-size:11px;color:var(--text2)"></span>
+        <div class="csv-upload" onclick="document.getElementById('qpCsvInput_${chapId}').click()">
+            <p>📄 CSV আপলোড করুন</p>
+            <input type="file" accept=".csv" id="qpCsvInput_${chapId}" onchange="qpHandleCSV(${chapId}, this)">
+            <p id="qpCsvLabel_${chapId}" style="color:var(--accent);font-size:11px;margin-top:4px;"></p>
         </div>
-        <button class="btn btn-sm" onclick="qpSaveCSV(${chapId})" style="padding:6px 12px;font-size:11px;margin-bottom:10px" id="qpSaveBtn_${chapId}" disabled>💾 CSV সেইভ করুন</button>
-        <div style="font-weight:700;font-size:11.5px;margin:8px 0 6px">📋 সেইভ করা MCQ তালিকা</div>
+        <button class="btn btn-primary" onclick="qpSaveCSV(${chapId})" style="width:100%;padding:8px 12px;font-size:12px;margin-bottom:12px" id="qpSaveBtn_${chapId}" disabled>💾 CSV সেইভ করুন</button>
+        <div style="font-weight:700;font-size:11.5px;margin:8px 0 6px;color:var(--text2)">📋 সেইভ করা MCQ তালিকা</div>
         <div id="qpMcqListInner_${chapId}"><div style="color:var(--text2);font-size:11px">লোড হচ্ছে...</div></div>
     `;
 }

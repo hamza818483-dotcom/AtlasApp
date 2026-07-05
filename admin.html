@@ -1762,23 +1762,25 @@
     <div class="admin-section" id="secEnglishmaster">
         <div class="form-card">
             <h3>📗 Synonym <span id="emCount_synonym" style="font-size:11px;color:var(--text2);font-weight:400"></span></h3>
-            <div style="margin-bottom:8px">
-                <input type="file" accept=".csv" id="emCsvInput_synonym" onchange="emHandleCSV('synonym', this)" style="font-size:11px">
-                <span id="emCsvLabel_synonym" style="font-size:11px;color:var(--text2)"></span>
+            <div class="csv-upload" onclick="document.getElementById('emCsvInput_synonym').click()">
+                <p>📄 CSV আপলোড করুন</p>
+                <input type="file" accept=".csv" id="emCsvInput_synonym" onchange="emHandleCSV('synonym', this)">
+                <p id="emCsvLabel_synonym" style="color:var(--accent);font-size:11px;margin-top:4px;"></p>
             </div>
-            <button class="btn btn-sm" onclick="emSaveCSV('synonym')" style="padding:6px 12px;font-size:11px;margin-bottom:10px" id="emSaveBtn_synonym" disabled>💾 CSV সেইভ করুন</button>
-            <div style="font-weight:700;font-size:11.5px;margin:8px 0 6px">📋 সেইভ করা MCQ তালিকা</div>
+            <button class="btn btn-primary" onclick="emSaveCSV('synonym')" style="width:100%;padding:8px 12px;font-size:12px;margin-bottom:12px" id="emSaveBtn_synonym" disabled>💾 CSV সেইভ করুন</button>
+            <div style="font-weight:700;font-size:11.5px;margin:8px 0 6px;color:var(--text2)">📋 সেইভ করা MCQ তালিকা</div>
             <div id="emMcqListInner_synonym"><div style="color:var(--text2);font-size:11px">লোড হচ্ছে...</div></div>
         </div>
 
         <div class="form-card">
             <h3>📕 Antonym <span id="emCount_antonym" style="font-size:11px;color:var(--text2);font-weight:400"></span></h3>
-            <div style="margin-bottom:8px">
-                <input type="file" accept=".csv" id="emCsvInput_antonym" onchange="emHandleCSV('antonym', this)" style="font-size:11px">
-                <span id="emCsvLabel_antonym" style="font-size:11px;color:var(--text2)"></span>
+            <div class="csv-upload" onclick="document.getElementById('emCsvInput_antonym').click()">
+                <p>📄 CSV আপলোড করুন</p>
+                <input type="file" accept=".csv" id="emCsvInput_antonym" onchange="emHandleCSV('antonym', this)">
+                <p id="emCsvLabel_antonym" style="color:var(--accent);font-size:11px;margin-top:4px;"></p>
             </div>
-            <button class="btn btn-sm" onclick="emSaveCSV('antonym')" style="padding:6px 12px;font-size:11px;margin-bottom:10px" id="emSaveBtn_antonym" disabled>💾 CSV সেইভ করুন</button>
-            <div style="font-weight:700;font-size:11.5px;margin:8px 0 6px">📋 সেইভ করা MCQ তালিকা</div>
+            <button class="btn btn-primary" onclick="emSaveCSV('antonym')" style="width:100%;padding:8px 12px;font-size:12px;margin-bottom:12px" id="emSaveBtn_antonym" disabled>💾 CSV সেইভ করুন</button>
+            <div style="font-weight:700;font-size:11.5px;margin:8px 0 6px;color:var(--text2)">📋 সেইভ করা MCQ তালিকা</div>
             <div id="emMcqListInner_antonym"><div style="color:var(--text2);font-size:11px">লোড হচ্ছে...</div></div>
         </div>
     </div>
