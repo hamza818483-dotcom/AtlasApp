@@ -1835,7 +1835,7 @@ async function mbAiGenerate() {
         }
 
         const header = document.getElementById('mbAiResultHeader');
-        if (header) header.textContent = mbAiData.length + 'টি AI-প্রস্তুত প্রশ্ন (সংরক্ষণ করতে নিচের বোতাম চাপুন)';
+        if (header) header.textContent = mbAiData.length + 'টি AI-প্রস্তুত প্রশ্ন — স্বয়ংক্রিয়ভাবে সংরক্ষণ হচ্ছে...';
 
         const previewList = document.getElementById('mbAiPreviewList');
         if (previewList) {
@@ -1854,6 +1854,9 @@ async function mbAiGenerate() {
                 </div>`).join('');
         }
         if (resultEl) resultEl.style.display = 'block';
+
+        // Save button চাপার দরকার নেই — generate হওয়ার সাথে সাথেই automatically 'All'-এ জমা হয়ে যায়
+        await mbSaveAiMcqs();
 
     } catch (ex) {
         mbToast('AI ব্যর্থ: ' + ex.message, 'error');
@@ -1882,7 +1885,7 @@ async function mbAiGenerateSpecial() {
         mbAiData = parsed.map(m => ({ id: uid(), ...mbShuffleSpecialOptions(m), type: 'special' }));
 
         const header = document.getElementById('mbAiResultHeader');
-        if (header) header.textContent = mbAiData.length + 'টি এক্সট্র্যাক্ট করা প্রশ্ন (সংরক্ষণ করতে নিচের বোতাম চাপুন)';
+        if (header) header.textContent = mbAiData.length + 'টি এক্সট্র্যাক্ট করা প্রশ্ন — স্বয়ংক্রিয়ভাবে সংরক্ষণ হচ্ছে...';
 
         const previewList = document.getElementById('mbAiPreviewList');
         if (previewList) {
@@ -1900,6 +1903,9 @@ async function mbAiGenerateSpecial() {
                 </div>`).join('');
         }
         if (resultEl) resultEl.style.display = 'block';
+
+        // Save button চাপার দরকার নেই — extract হওয়ার সাথে সাথেই automatically 'All'-এ জমা হয়ে যায়
+        await mbSaveAiMcqs();
     } catch (ex) {
         mbToast('এক্সট্র্যাকশন ব্যর্থ: ' + ex.message, 'error');
     } finally {
