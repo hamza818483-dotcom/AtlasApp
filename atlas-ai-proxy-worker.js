@@ -675,50 +675,81 @@ async function handleMcqFromPdf(body, env) {
     if (!prompt) return jsonResponse({ success: false, error: "prompt প্রয়োজন" }, 400);
 
     const keys = getGeminiKeys(env);
-    if (!keys.length) return jsonResponse({ success: false, error: "GEMINI_API_KEY not set" }, 500);
 
-    let pdfBase64;
+    let pdfBase64 = null;
+    let fetchErr = null;
     try {
         const pdfRes = await fetch(pdf_url);
-        if (!pdfRes.ok) return jsonResponse({ success: false, error: `PDF fetch failed: HTTP ${pdfRes.status}` }, 502);
-        const buf = await pdfRes.arrayBuffer();
-        // Reject PDFs that are too large for Gemini's inline-data limit (~20MB raw, smaller after base64
-        // overhead) — large files were also causing the worker to crash/timeout during base64 conversion.
-        if (buf.byteLength > 15 * 1024 * 1024) {
-            return jsonResponse({ success: false, error: "PDF too large (max ~15MB) for direct AI processing" }, 413);
-        }
-        const u8 = new Uint8Array(buf);
-        const CHUNK = 0x8000; // 32KB — safe chunk size, avoids spread-operator stack issues on large arrays
-        const chunks = [];
-        for (let i = 0; i < u8.length; i += CHUNK) {
-            chunks.push(String.fromCharCode.apply(null, u8.subarray(i, i + CHUNK)));
-        }
-        pdfBase64 = btoa(chunks.join(""));
-    } catch (e) {
-        return jsonResponse({ success: false, error: `PDF fetch exception: ${e?.message || e}` }, 502);
-    }
-
-    const pdfParts = [
-        { inline_data: { mime_type: "application/pdf", data: pdfBase64 } },
-        { text: prompt },
-    ];
-
-    let lastError = "Gemini: no keys/models worked";
-    for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
-        for (const model of GEMINI_MODELS) {
-            for (const key of keys) {
-                const outcome = await attemptWithStatus(() => callGeminiOnce(key, model, pdfParts, 8192));
-                if (outcome.__exception) { lastError = `Gemini(${model}) exception: ${outcome.message}`; continue; }
-                if (!outcome.ok) { lastError = `Gemini(${model}) HTTP ${outcome.status}`; continue; }
-                const data = await outcome.json().catch(() => null);
-                const answer = data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
-                if (answer) return jsonResponse({ success: true, answer, provider: `gemini-pdf:${model}` });
-                lastError = `Gemini(${model}): empty response`;
+        if (!pdfRes.ok) { fetchErr = `PDF fetch failed: HTTP ${pdfRes.status}`; }
+        else {
+            const buf = await pdfRes.arrayBuffer();
+            if (buf.byteLength > 15 * 1024 * 1024) {
+                fetchErr = "PDF too large (max ~15MB) for direct AI processing";
+            } else {
+                const u8 = new Uint8Array(buf);
+                const CHUNK = 0x8000;
+                const chunks = [];
+                for (let i = 0; i < u8.length; i += CHUNK) {
+                    chunks.push(String.fromCharCode.apply(null, u8.subarray(i, i + CHUNK)));
+                }
+                pdfBase64 = btoa(chunks.join(""));
             }
         }
-        if (round < MAX_ROTATION_ROUNDS - 1) await sleep(400 * (round + 1));
+    } catch (e) {
+        fetchErr = `PDF fetch exception: ${e?.message || e}`;
     }
-    return jsonResponse({ success: false, error: lastError }, 502);
+
+    const errors = [];
+    if (fetchErr) errors.push(fetchErr);
+
+    // Step 1: Gemini PDF-native (best quality — reads the actual PDF pages/images)
+    if (pdfBase64 && keys.length) {
+        const pdfParts = [
+            { inline_data: { mime_type: "application/pdf", data: pdfBase64 } },
+            { text: prompt },
+        ];
+        for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
+            for (const model of GEMINI_MODELS) {
+                for (const key of keys) {
+                    const outcome = await attemptWithStatus(() => callGeminiOnce(key, model, pdfParts, 8192));
+                    if (outcome.__exception) { errors.push(`Gemini(${model}) exception: ${outcome.message}`); continue; }
+                    if (!outcome.ok) { errors.push(`Gemini(${model}) HTTP ${outcome.status}`); continue; }
+                    const data = await outcome.json().catch(() => null);
+                    const answer = data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
+                    if (answer) return jsonResponse({ success: true, answer, provider: `gemini-pdf:${model}` });
+                    errors.push(`Gemini(${model}): empty response`);
+                }
+            }
+            if (round < MAX_ROTATION_ROUNDS - 1) await sleep(400 * (round + 1));
+        }
+    } else if (!keys.length) {
+        errors.push("GEMINI_API_KEY not set");
+    }
+
+    // Step 2 (fallback): Gemini either isn't configured or every key/model failed
+    // (commonly: quota exhausted). Rather than dead-ending, fall back to the
+    // other text-capable providers using the same prompt — they can't read the
+    // PDF file directly, but the client already sends full page text/instructions
+    // inside `prompt` for this endpoint's callers, so a text-only pass still works
+    // in most cases instead of returning a hard failure.
+    const fallbackProviders = [
+        { name: "groq", fn: () => callGroq(env, prompt, "তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।", null) },
+        { name: "openrouter", fn: () => callOpenRouter(env, prompt, "তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।", null) },
+        { name: "cerebras", fn: () => callCerebras(env, prompt, "তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।", null) },
+    ];
+    for (const p of fallbackProviders) {
+        try {
+            const result = await p.fn();
+            if (result && result.answer && result.answer.trim().length > 5) {
+                return jsonResponse({ success: true, answer: result.answer, provider: `${p.name}-fallback` });
+            }
+            if (result?.error) errors.push(`${p.name}: ${result.error}`);
+        } catch (e) {
+            errors.push(`${p.name} exception: ${e?.message || e}`);
+        }
+    }
+
+    return jsonResponse({ success: false, error: "সব AI provider ব্যর্থ হয়েছে। আবার চেষ্টা করো।", details: errors }, 502);
 }
 
 /* ════════════════════════════════════════════════════════════
