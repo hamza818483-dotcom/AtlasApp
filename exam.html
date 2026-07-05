@@ -1199,7 +1199,7 @@ function renderPreviewQuestions(showAnswers){
         });
         // Show explanation and AI box when answers revealed
         if(q.explanation){
-            html+=`<div class="explanation-box csv-box preview-exp" id="preExp${q.id}" style="display:${showAnswers?'block':'none'};"><div class="exp-header">📋 ব্যাখ্যা</div><div class="exp-content">${q.explanation}</div></div>`;
+            html+=`<div class="explanation-box csv-box preview-exp" id="preExp${q.id}" style="display:${showAnswers?'block':'none'};"><div class="exp-header">📋 ব্যাখ্যা</div><div class="exp-content">${q.explanation}</div>${q.explanation_image?`<img src="data:image/jpeg;base64,${q.explanation_image}" style="max-width:100%;border-radius:6px;margin-top:6px;display:block">`:''}</div>`;
         }
         html+=`<div class="explanation-box ai-box preview-ai-box" id="preAiBox${q.id}" style="display:${showAnswers?'block':'none'};">
             <div class="exp-header" onclick="toggleAIBox(this,'${q.id}')">🤖 ATLAS AI ব্যাখ্যা <span class="exp-arrow">▼</span></div>
@@ -1332,7 +1332,7 @@ async function startModelExam(modelId){
             id:`mt_${i+1}`,question_text:q.questions||q.question_text||'',
             option1:q.option1||'',option2:q.option2||'',option3:q.option3||'',
             option4:q.option4||'',option5:q.option5||null,
-            answer_index:parseInt(q.answer)||1,explanation:q.explanation||''
+            answer_index:parseInt(q.answer)||1,explanation:q.explanation||'',explanation_image:q.explanation_image||null
         }));
         currentExam={title:m.subject_name||m.paper_name||'Model Test',subject:m.subject_name||'',chapter:m.paper_name||'',exam_type:'model',sub_type:m.sub_type,total_marks:examQuestions.length,duration_minutes:Math.ceil(examQuestions.length/1.5),id:'model_'+modelId,allow_preview:true,allow_solve_sheet:true};
         if(!examQuestions.length){showNoQuestions();return;}

@@ -137,6 +137,7 @@
         <div class="qpp-explanation" id="qppExplanation">
             <div class="lbl">💡 ব্যাখ্যা</div>
             <div id="qppExplanationText"></div>
+            <img id="qppExplanationImg" style="max-width:100%;border-radius:6px;margin-top:6px;display:none">
         </div>
 
         <div class="qpp-nav" id="qppNav" style="display:none">
@@ -394,6 +395,9 @@ function qppRenderQuestion() {
     const expEl = document.getElementById('qppExplanation');
     if (answered && q.explanation) {
         document.getElementById('qppExplanationText').textContent = q.explanation;
+        const qppImgEl = document.getElementById('qppExplanationImg');
+        if (q.explanation_image) { qppImgEl.src = 'data:image/jpeg;base64,' + q.explanation_image; qppImgEl.style.display = 'block'; }
+        else { qppImgEl.style.display = 'none'; }
         expEl.classList.add('show');
     } else {
         expEl.classList.remove('show');

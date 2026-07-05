@@ -1721,7 +1721,7 @@ function showExamResultFullPage(resultData) {
             });
             
             if (q.explanation) {
-                html += `<div class="explanation-box csv-box"><div class="exp-header">📋 ব্যাখ্যা</div><div class="exp-content">${q.explanation}</div></div>`;
+                html += `<div class="explanation-box csv-box"><div class="exp-header">📋 ব্যাখ্যা</div><div class="exp-content">${q.explanation}</div>${q.explanation_image?`<img src="data:image/jpeg;base64,${q.explanation_image}" style="max-width:100%;border-radius:6px;margin-top:6px;display:block">`:''}</div>`;
             }
             html += `</div>`;
         });
