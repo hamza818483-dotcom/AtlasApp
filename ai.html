@@ -907,7 +907,11 @@ function showEditMenu(wrapper) {
     document.querySelectorAll('.msg-edit-menu').forEach(m => m.remove());
     const menu = document.createElement('div');
     menu.className = 'msg-edit-menu';
-    menu.innerHTML = `<button onclick="editUserMessage(this)">✏️ এডিট করো</button>`;
+    menu.innerHTML = `
+        <button onclick="resendUserMessage(this)">🔄 রিসেন্ড</button>
+        <button onclick="copyUserMessage(this)">📋 কপি</button>
+        <button onclick="editUserMessage(this)">✏️ এডিট</button>
+    `;
     wrapper.style.position = 'relative';
     wrapper.appendChild(menu);
     setTimeout(() => {
@@ -915,6 +919,28 @@ function showEditMenu(wrapper) {
             if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', closeMenu); }
         });
     }, 50);
+}
+
+function copyUserMessage(btn) {
+    const wrapper = btn.closest('.msg-wrapper');
+    const msgIndex = parseInt(wrapper.dataset.msgIndex);
+    const text = chatHistory[msgIndex]?.text || '';
+    navigator.clipboard.writeText(text).then(() => showToast('📋 কপি হয়েছে'));
+    btn.closest('.msg-edit-menu').remove();
+}
+
+async function resendUserMessage(btn) {
+    if (isAIBusy) { showToast('⚠️ AI উত্তর দিচ্ছে, একটু অপেক্ষা করো'); return; }
+    const wrapper = btn.closest('.msg-wrapper');
+    btn.closest('.msg-edit-menu').remove();
+    const msgIndex = parseInt(wrapper.dataset.msgIndex);
+    const text = chatHistory[msgIndex]?.text || '';
+    if (!text) return;
+
+    const input = document.getElementById('chatInput');
+    input.value = text;
+    autoResizeTextarea(input);
+    await sendMessage();
 }
 
 function editUserMessage(btn) {
