@@ -361,9 +361,11 @@ async function callCloudflareAI(env, question, systemPrompt, image) {
         const model = image ? "@cf/meta/llama-3.2-11b-vision-instruct" : "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
         let input;
         if (image) {
+            // vision model schema আলাদা — messages array না, prompt string নেয়
             input = {
-                messages: [{ role: "user", content: question || "এই ছবিটি বিশ্লেষণ করো।" }],
+                prompt: question || "এই ছবিটি বিশ্লেষণ করো এবং বাংলায় ব্যাখ্যা দাও।",
                 image: Array.from(base64ToBytes(image.base64)),
+                max_tokens: 4096,
             };
         } else {
             input = {
