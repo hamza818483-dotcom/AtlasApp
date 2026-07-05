@@ -813,6 +813,9 @@ function showCategory(cat){
     } else if(cat==='onushiloni'){
         loadExamsByType('onushiloni','');
         return;
+    } else if(cat==='topicwise'){
+        loadTopicwiseSubjects();
+        return;
     } else {
         html+=`<p style="text-align:center;color:var(--text-secondary);padding:20px;">শীঘ্রই আসছে...</p>`;
     }
@@ -949,6 +952,118 @@ function renderExamListForSubject(subject){
 window.__examBackToSubjects = function(){
     renderExamSubjectList();
 };
+
+// =============================================================
+// TOPICWISE EXAM — Subject → Chapter → Topic dropdown → Exam list
+// =============================================================
+window.__twState = { data: [], subject: null, chapter: null };
+
+async function loadTopicwiseSubjects(){
+    try{
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/exams?exam_type=eq.topicwise&select=*&order=sort_order.asc,created_at.desc&limit=500`);
+        if(!data?.length){ document.getElementById('categoryContent').innerHTML='<p style="text-align:center;color:var(--text-secondary);padding:20px;">কোনো টপিকওয়াইজ এক্সাম নেই</p>'; switchMode('Category'); return; }
+        window.__twState = { data, subject:null, chapter:null };
+        renderTwSubjects();
+    }catch(e){ document.getElementById('categoryContent').innerHTML='<p style="text-align:center;color:var(--text-secondary);padding:20px;">লোড করতে সমস্যা হয়েছে</p>'; switchMode('Category'); }
+}
+
+function renderTwSubjects(){
+    const { data } = window.__twState;
+    const bySubject = {};
+    data.forEach(e=>{ const s=e.subject||'সাধারণ'; if(!bySubject[s]) bySubject[s]=[]; bySubject[s].push(e); });
+    const subjects = Object.keys(bySubject);
+    let html = `<div class="section-header"><div class="section-title">🟢 Topicwise Exam</div></div>`;
+    html += `<div class="kcq-header-info">📚 মোট সাবজেক্ট: <b>${subjects.length}</b></div><div class="kcq-box-list">`;
+    subjects.forEach(s=>{
+        html += `<div class="kcq-box" onclick="window.__twOpenSubject('${s.replace(/'/g,"\\'")}')">
+            <div class="kcq-box-main"><div class="kcq-box-title">📘 ${s}</div><div class="kcq-box-sub">${bySubject[s].length}টি এক্সাম</div></div>
+            <span class="kcq-box-count">${bySubject[s].length}</span><span class="kcq-box-arrow">→</span>
+        </div>`;
+    });
+    html += `</div>`;
+    document.getElementById('categoryContent').innerHTML = html;
+    switchMode('Category');
+}
+
+window.__twOpenSubject = function(subject){
+    window.__twState.subject = subject;
+    window.__twState.chapter = null;
+    renderTwChapters();
+};
+
+function renderTwChapters(){
+    const { data, subject } = window.__twState;
+    const list = data.filter(e => (e.subject||'সাধারণ') === subject);
+    const byChapter = {};
+    list.forEach(e=>{ const c=e.chapter||'সাধারণ'; if(!byChapter[c]) byChapter[c]=[]; byChapter[c].push(e); });
+    const chapters = Object.keys(byChapter);
+    let html = `<button class="back-btn" onclick="renderTwSubjects()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> সাবজেক্ট তালিকায় ফিরুন</button>`;
+    html += `<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;">📘 ${subject}</div><div class="kcq-box-list">`;
+    chapters.forEach(c=>{
+        html += `<div class="kcq-box" onclick="window.__twOpenChapter('${c.replace(/'/g,"\\'")}')">
+            <div class="kcq-box-main"><div class="kcq-box-title">📖 ${c}</div><div class="kcq-box-sub">${byChapter[c].length}টি টপিক/এক্সাম</div></div>
+            <span class="kcq-box-count">${byChapter[c].length}</span><span class="kcq-box-arrow">→</span>
+        </div>`;
+    });
+    html += `</div>`;
+    document.getElementById('categoryContent').innerHTML = html;
+    switchMode('Category');
+}
+
+window.__twOpenChapter = function(chapter){
+    window.__twState.chapter = chapter;
+    renderTwTopicDropdown();
+};
+
+function renderTwTopicDropdown(){
+    const { data, subject, chapter } = window.__twState;
+    const list = data.filter(e => (e.subject||'সাধারণ')===subject && (e.chapter||'সাধারণ')===chapter);
+    const topics = [...new Set(list.map(e=>e.topic).filter(Boolean))];
+    let html = `<button class="back-btn" onclick="renderTwChapters()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> চ্যাপ্টার তালিকায় ফিরুন</button>`;
+    html += `<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;">📘 ${subject} → 📖 ${chapter}</div>`;
+    if(topics.length){
+        html += `<div class="input-group" style="margin-bottom:10px;">
+            <label>টপিক নির্বাচন করুন</label>
+            <select id="twTopicSelect" onchange="window.__twSelectTopic(this.value)">
+                <option value="">— সব টপিক —</option>
+                ${topics.map(t=>`<option value="${t.replace(/"/g,'&quot;')}">${t}</option>`).join('')}
+            </select>
+        </div>`;
+    }
+    html += `<div id="twExamListArea"></div>`;
+    document.getElementById('categoryContent').innerHTML = html;
+    switchMode('Category');
+    renderTwExamList(list);
+}
+
+window.__twSelectTopic = function(topic){
+    const { data, subject, chapter } = window.__twState;
+    let list = data.filter(e => (e.subject||'সাধারণ')===subject && (e.chapter||'সাধারণ')===chapter);
+    if(topic) list = list.filter(e => e.topic === topic);
+    renderTwExamList(list);
+};
+
+function renderTwExamList(list){
+    const area = document.getElementById('twExamListArea');
+    if(!area) return;
+    if(!list.length){ area.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:20px;">কোনো এক্সাম নেই</p>'; return; }
+    let html = '';
+    list.forEach(e=>{
+        const info = e.topic ? `${e.title||e.chapter} — ${e.topic}` : (e.title||e.chapter||'—');
+        if(e.is_locked===true||e.is_locked==='true'){
+            html += `<div class="list-item locked-exam" onclick="showLockedExamBanner('${(e.title||info).replace(/'/g,'')}')">
+                <div><div class="list-item-title">🔒 ${info}</div><div class="list-item-sub">${e.total_marks||0} প্রশ্ন</div></div>
+                <span class="lock-badge">🔒 Locked</span>
+            </div>`;
+        } else {
+            html += `<div class="list-item" onclick="loadExamById(${e.id})">
+                <div><div class="list-item-title">📖 ${info}</div><div class="list-item-sub">${e.total_marks||0} প্রশ্ন</div></div>
+                <span class="list-item-arrow">→</span>
+            </div>`;
+        }
+    });
+    area.innerHTML = html;
+}
 
 function showLockedExamBanner(examTitle){
     document.getElementById('preExamContent').innerHTML=`
