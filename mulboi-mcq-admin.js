@@ -1021,6 +1021,12 @@ function mbFindMcqSourceType(pageNum, mcqId) {
             if (qs.some(q => String(q.id) === String(mcqId))) return r.mcq_type;
         } catch (_) {}
     }
+    // native id দিয়ে না পেলে — synthetic id ফরম্যাট "rowId_index" থেকে সরাসরি rowId ধরে row খুঁজে বের করো
+    const rowIdMatch = String(mcqId).match(/^(\d+)_\d+$/);
+    if (rowIdMatch) {
+        const row = rows.find(r => String(r.id) === rowIdMatch[1]);
+        if (row) return row.mcq_type;
+    }
     return 'admin'; // fallback — না পেলে admin ধরে নাও
 }
 
@@ -1325,8 +1331,24 @@ async function mbDeleteMcq(mcqId) {
     if (!confirm('এই প্রশ্নটি মুছে ফেলবেন?')) return;
     try {
         const sourceType = mbFindMcqSourceType(mbCurrentPage, mcqId);
-        const rawMcqs = mbGetPageMcqsByType(mbCurrentPage, sourceType).filter(m => String(m.id) !== String(mcqId));
-        await mbUpsertPageMcqs(mbCurrentPage, rawMcqs, sourceType);
+        const rawMcqs = mbGetPageMcqsByType(mbCurrentPage, sourceType);
+
+        const hasNativeMatch = rawMcqs.some(m => m.id && String(m.id) === String(mcqId));
+        let finalMcqs;
+        if (hasNativeMatch) {
+            finalMcqs = rawMcqs.filter(m => !(m.id && String(m.id) === String(mcqId)));
+        } else {
+            // পুরনো data-তে কিছু MCQ-র নিজস্ব id নেই — display-এর সময় synthetic id
+            // (rowId_index ফরম্যাট) বসানো হয়, সেই index parse করে বাদ দেওয়া হচ্ছে
+            const idxMatch = String(mcqId).match(/_(\d+)$/);
+            const idx = idxMatch ? parseInt(idxMatch[1]) : -1;
+            finalMcqs = (idx >= 0 && idx < rawMcqs.length)
+                ? rawMcqs.filter((_, i) => i !== idx)
+                : rawMcqs;
+        }
+
+        await mbUpsertPageMcqs(mbCurrentPage, finalMcqs, sourceType);
+        await mbLoadAllPageMcqs(); // server থেকে fresh data টেনে instant-accurate UI নিশ্চিত করা
         mbToast('✓ প্রশ্ন মুছে গেছে', 'success');
         mbRenderPageMcqList();
         mbUpdatePageCount();
@@ -1361,7 +1383,7 @@ function mbRenderPageMcqList() {
     userRows.forEach(r => {
         try {
             const qs = JSON.parse(r.questions_json || '[]');
-            qs.forEach(q => userMcqs.push({ ...mbNormalizeMcqShape({ ...q, type: r.mcq_type }), _source: 'user', id: q.id || (r.id + '_' + userMcqs.length) }));
+            qs.forEach((q, qi) => userMcqs.push({ ...mbNormalizeMcqShape({ ...q, type: r.mcq_type }), _source: 'user', id: q.id || (r.id + '_' + qi), _rawIndex: qi, _hadNativeId: !!q.id }));
         } catch (_) {}
     });
 
