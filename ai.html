@@ -51,7 +51,7 @@
             max-width: 700px;
             margin: 0 auto;
             padding: 10px 12px;
-            padding-bottom: calc(58px + 10px);
+            padding-bottom: calc(58px + 16px);
             display: flex;
             flex-direction: column;
             min-height: 100vh;
@@ -142,6 +142,7 @@
             padding: 0 0 8px;
             scrollbar-width: none;
             margin-bottom: 4px;
+            flex-shrink: 0;
         }
         .suggest-bar::-webkit-scrollbar { display: none; }
         .suggest-chip {
@@ -346,6 +347,7 @@
             gap: 8px;
             box-shadow: var(--shadow-float);
             transition: border-color 0.2s, box-shadow 0.2s;
+            flex-shrink: 0;
         }
         .input-panel:focus-within {
             border-color: var(--ai-primary);
@@ -408,6 +410,7 @@
             display: flex;
             justify-content: center;
             margin-top: 6px;
+            flex-shrink: 0;
         }
         .clear-btn {
             background: transparent;
@@ -851,6 +854,8 @@ function addUserMessage(text, imageObj) {
     const anchor = document.getElementById('chatScrollAnchor');
     const wrapper = document.createElement('div');
     wrapper.className = 'msg-wrapper user';
+    const msgIndex = chatHistory.length;
+    wrapper.dataset.msgIndex = msgIndex;
 
     let bubbleContent = '';
     if (imageObj) {
@@ -864,7 +869,10 @@ function addUserMessage(text, imageObj) {
             <div class="msg-bubble${imageObj ? ' has-image' : ''}">${bubbleContent}</div>
             <div class="msg-avatar-sm user-av">👤</div>
         </div>
-        <div class="msg-meta"><span class="msg-time">${getTime()}</span></div>
+        <div class="msg-meta">
+            <span class="msg-time">${getTime()}</span>
+            ${!imageObj && text ? `<button class="copy-btn" onclick="editUserMessage(this)">✏️ এডিট</button>` : ''}
+        </div>
     `;
     if (anchor) area.insertBefore(wrapper, anchor);
     else area.appendChild(wrapper);
@@ -872,6 +880,43 @@ function addUserMessage(text, imageObj) {
 
     chatHistory.push({ type: 'user', text, image: imageObj ? `[ছবি: ${imageObj.name}]` : null, time: getTime() });
     saveChat();
+}
+
+function editUserMessage(btn) {
+    if (isAIBusy) { showToast('⚠️ AI উত্তর দিচ্ছে, একটু অপেক্ষা করো'); return; }
+    const wrapper = btn.closest('.msg-wrapper');
+    const msgIndex = parseInt(wrapper.dataset.msgIndex);
+    if (isNaN(msgIndex)) return;
+    if (!confirm('এই মেসেজ এডিট করলে এর পরের সব রিপ্লাই মুছে যাবে। চালিয়ে যেতে চাও?')) return;
+
+    const msg = chatHistory[msgIndex];
+    const originalText = msg.text || '';
+
+    // DOM থেকে এই মেসেজ ও এর পরের সব মেসেজ সরাও
+    const area = document.getElementById('chatArea');
+    let node = wrapper;
+    const toRemove = [];
+    while (node && node.id !== 'chatScrollAnchor') {
+        toRemove.push(node);
+        node = node.nextElementSibling;
+    }
+    toRemove.forEach(n => n.remove());
+
+    // history থেকেও কেটে ফেলো
+    chatHistory = chatHistory.slice(0, msgIndex);
+    saveChat();
+
+    if (chatHistory.length === 0) {
+        document.getElementById('chatEmpty').style.display = '';
+        document.getElementById('suggestBar').style.display = '';
+    }
+
+    // ইনপুট বক্সে টেক্সট ফেরত দাও
+    const input = document.getElementById('chatInput');
+    input.value = originalText;
+    autoResizeTextarea(input);
+    input.focus();
+    showToast('✏️ এডিট করো এবং আবার পাঠাও');
 }
 
 function addAIMessage(text) {
