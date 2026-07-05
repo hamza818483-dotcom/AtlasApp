@@ -714,6 +714,21 @@ function mbOpenMcqPanel(pdfId, pdfTitle, pdfUrl) {
         localStorage.setItem('atlasMbOpenPanel', JSON.stringify({ pdfId, pdfTitle, pdfUrl, page: keepPage }));
     } catch (_) {}
 
+    // Instant pill render: আগের network fetch থেকে cache করা counts থাকলে সাথে সাথে দেখাও,
+    // fresh network data আসার আগ পর্যন্ত pill গুলো ফাঁকা/০ দেখানোর বদলে। fresh data এলে
+    // নিচের .then() ব্লক আবার সঠিক তথ্য দিয়ে re-render করে দেবে।
+    try {
+        const cacheKey = 'atlasMbPillCache_' + pdfId;
+        const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+        if (cached && cached.allTypes) {
+            mbAllPageDataAllTypes = cached.allTypes;
+            mbAllPageData = cached.adminOnly || [];
+            mbRenderPageSummary();
+            mbRenderPageMcqList();
+            mbUpdatePageCount();
+        }
+    } catch (_) {}
+
     mbLoadAllPageMcqs().then(() => {
         // mbPdfDoc তখনো load না-ও হয়ে থাকতে পারে (mbLoadPdfPreview আলাদা async call,
         // নিচে শুরু হয়) — তাই এখানে render করলে numPages=0/stale অবস্থায় pill count
@@ -722,6 +737,15 @@ function mbOpenMcqPanel(pdfId, pdfTitle, pdfUrl) {
         if (mbPdfDoc) mbRenderPageSummary();
         mbRenderPageMcqList();
         mbUpdatePageCount();
+
+        // network থেকে আসা true/fresh data cache করে রাখো পরবর্তী instant-load এর জন্য
+        try {
+            localStorage.setItem('atlasMbPillCache_' + pdfId, JSON.stringify({
+                allTypes: mbAllPageDataAllTypes,
+                adminOnly: mbAllPageData,
+                ts: Date.now()
+            }));
+        } catch (_) {}
     });
 
     if (pdfUrl) mbLoadPdfPreview(pdfUrl);
@@ -951,6 +975,18 @@ async function mbLoadAllPageMcqs() {
     } catch {
         mbAllPageDataAllTypes = [];
     }
+
+    // pill instant-load cache আপডেট — mbUpsertPageMcqs (save/bulk) এর পরেও এই function
+    // কল হয়, তাই এখানে রাখলে সবসময় সর্বশেষ true count cache-এ থাকে
+    try {
+        if (mbPdfId) {
+            localStorage.setItem('atlasMbPillCache_' + mbPdfId, JSON.stringify({
+                allTypes: mbAllPageDataAllTypes,
+                adminOnly: mbAllPageData,
+                ts: Date.now()
+            }));
+        }
+    } catch (_) {}
 }
 
 function mbGetPageMcqs(pageNum) {
@@ -1737,6 +1773,25 @@ async function mbAiGenerate() {
 
         let parsed  = mbParseAiJson(rawJson);
 
+        // JSON parse ব্যর্থ হলে একবার automatic retry — strict-JSON reminder সহ প্রম্পট পাঠিয়ে,
+        // যাতে user কে ম্যানুয়ালি বাটন চেপে আবার চেষ্টা করতে না হয়
+        if ((!parsed || !parsed.length) && mbPdfUrl) {
+            try {
+                const strictPrompt = `এই PDF-এর পেইজ ${mbCurrentPage} দেখো এবং নিচের নির্দেশ অনুসরণ করো:\n${basePrompt}\n\n` +
+                    `শুধু valid JSON array রিটার্ন করো। কোনো markdown code fence (\`\`\`), preamble, বা extra text দিও না। ` +
+                    `প্রতিটা string properly escaped থাকতে হবে। Format:\n${jsonFormat}`;
+                const res2 = await fetch(AI_PROXY_URL.replace(/\/$/, '') + '/mcq-from-pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pdf_url: mbPdfUrl, prompt: strictPrompt })
+                });
+                const data2 = await res2.json().catch(() => null);
+                if (res2.ok && data2?.success && data2.answer) {
+                    parsed = mbParseAiJson(data2.answer);
+                }
+            } catch (_) { /* retry ব্যর্থ হলে নিচের error handling চলবে */ }
+        }
+
         if (!parsed || !parsed.length) {
             mbToast('AI সঠিক JSON দেয়নি। পুনরায় চেষ্টা করুন।', 'error');
             return;
@@ -1865,9 +1920,54 @@ async function mbCallAiApi(prompt, image, customSystemPrompt, skipGemini) {
 
 function mbParseAiJson(raw) {
     if (!raw) return null;
-    const match = raw.match(/\[[\s\S]*\]/);
-    if (!match) return null;
-    try { return JSON.parse(match[0]); } catch { return null; }
+
+    // code-fence থাকলে (```json ... ``` বা ``` ... ```) সেটা প্রথমে সরিয়ে দাও
+    let cleaned = raw.split('```').length > 1
+        ? raw.split('```').filter((_, i) => i % 2 === 1).join('\n') || raw
+        : raw;
+
+    const tryParse = (s) => {
+        if (!s) return null;
+        try { return JSON.parse(s); } catch (_) {}
+        try { return JSON.parse(s.replace(/,\s*([\]}])/g, '$1')); } catch (_) {}
+        return null;
+    };
+
+    const extractBalanced = (s, openCh, closeCh) => {
+        const start = s.indexOf(openCh);
+        if (start === -1) return null;
+        let depth = 0;
+        for (let i = start; i < s.length; i++) {
+            if (s[i] === openCh) depth++;
+            else if (s[i] === closeCh) {
+                depth--;
+                if (depth === 0) return s.slice(start, i + 1);
+            }
+        }
+        return null;
+    };
+
+    let candidate = extractBalanced(cleaned, '[', ']');
+    let parsed = tryParse(candidate);
+    if (parsed) return Array.isArray(parsed) ? parsed : (parsed ? [parsed] : null);
+
+    candidate = extractBalanced(cleaned, '{', '}');
+    parsed = tryParse(candidate);
+    if (parsed) return [parsed];
+
+    // truncated/broken JSON — শেষের incomplete element কেটে বাকিটা parse করার চেষ্টা
+    const rough = cleaned.match(/\[[\s\S]*/);
+    if (rough) {
+        let s = rough[0];
+        const lastGoodEnd = s.lastIndexOf('},');
+        if (lastGoodEnd > -1) {
+            const attempt = s.slice(0, lastGoodEnd + 1) + ']';
+            parsed = tryParse(attempt);
+            if (parsed && parsed.length) return parsed;
+        }
+    }
+
+    return null;
 }
 
 async function mbSaveAiMcqs() {
