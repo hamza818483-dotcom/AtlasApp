@@ -267,6 +267,16 @@
             box-shadow: 0 2px 12px rgba(0,0,0,0.15);
         }
         .msg-bubble.has-image { padding: 8px; }
+        .msg-edit-menu {
+            position: absolute; top: -6px; right: 40px; z-index: 50;
+            background: var(--ai-surface); border: 1px solid var(--ai-border);
+            border-radius: 10px; box-shadow: var(--shadow-float); overflow: hidden;
+        }
+        .msg-edit-menu button {
+            display: block; width: 100%; padding: 10px 16px; border: none;
+            background: none; color: var(--ai-text); font-size: 12.5px; cursor: pointer; white-space: nowrap;
+        }
+        .msg-edit-menu button:hover { background: var(--ai-card2); }
         .msg-bubble img {
             max-width: 200px;
             border-radius: 12px;
@@ -869,17 +879,42 @@ function addUserMessage(text, imageObj) {
             <div class="msg-bubble${imageObj ? ' has-image' : ''}">${bubbleContent}</div>
             <div class="msg-avatar-sm user-av">👤</div>
         </div>
-        <div class="msg-meta">
-            <span class="msg-time">${getTime()}</span>
-            ${!imageObj && text ? `<button class="copy-btn" onclick="editUserMessage(this)">✏️ এডিট</button>` : ''}
-        </div>
+        <div class="msg-meta"><span class="msg-time">${getTime()}</span></div>
     `;
+    if (!imageObj && text) attachLongPress(wrapper);
     if (anchor) area.insertBefore(wrapper, anchor);
     else area.appendChild(wrapper);
     stableScrollToBottom();
 
     chatHistory.push({ type: 'user', text, image: imageObj ? `[ছবি: ${imageObj.name}]` : null, time: getTime() });
     saveChat();
+}
+
+function attachLongPress(wrapper) {
+    const bubble = wrapper.querySelector('.msg-bubble');
+    let timer;
+    const start = () => { timer = setTimeout(() => showEditMenu(wrapper), 500); };
+    const cancel = () => clearTimeout(timer);
+    bubble.addEventListener('touchstart', start, { passive: true });
+    bubble.addEventListener('touchend', cancel);
+    bubble.addEventListener('touchmove', cancel);
+    bubble.addEventListener('mousedown', start);
+    bubble.addEventListener('mouseup', cancel);
+    bubble.addEventListener('mouseleave', cancel);
+}
+
+function showEditMenu(wrapper) {
+    document.querySelectorAll('.msg-edit-menu').forEach(m => m.remove());
+    const menu = document.createElement('div');
+    menu.className = 'msg-edit-menu';
+    menu.innerHTML = `<button onclick="editUserMessage(this)">✏️ এডিট করো</button>`;
+    wrapper.style.position = 'relative';
+    wrapper.appendChild(menu);
+    setTimeout(() => {
+        document.addEventListener('click', function closeMenu(e) {
+            if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', closeMenu); }
+        });
+    }, 50);
 }
 
 function editUserMessage(btn) {
