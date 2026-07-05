@@ -48,7 +48,7 @@
 
         /* ===== MAIN LAYOUT ===== */
         .ai-page {
-            max-width: 600px;
+            max-width: 700px;
             margin: 0 auto;
             padding: 10px 12px;
             padding-bottom: calc(58px + 10px);
@@ -60,6 +60,19 @@
             height: 100dvh;
             overflow: hidden;
         }
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0; height: 58px;
+            background: var(--ai-surface); border-top: 1px solid var(--ai-border);
+            display: flex; align-items: center; justify-content: space-around; z-index: 100;
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center; gap: 2px;
+            background: none; border: none; color: var(--ai-text2);
+            font-size: 10px; cursor: pointer; padding: 6px 10px;
+            border-radius: 8px; transition: .2s; font-family: inherit;
+        }
+        .nav-item.active { color: var(--ai-primary); }
+        .nav-icon { font-size: 20px; }
 
         /* ===== HEADER CARD — Flutter AppBar Style ===== */
         .ai-appbar {
