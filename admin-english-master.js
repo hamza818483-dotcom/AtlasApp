@@ -1,10 +1,10 @@
 /* ══════════════════════════════════════
    ENGLISH MASTER ADMIN (Synonym / Antonym)
-   Uses: SUPABASE_URL, SUPABASE_KEY, safeFetch, showToast, parseCSV (from admin.html)
-   Structure: flat category (synonym/antonym) -> CSV MCQ upload (additive, same CSV format as Quick Practice)
+   One-step form: pick category + CSV -> save together.
+   Below: two saved lists (Synonym, Antonym) with delete.
    ══════════════════════════════════════ */
 
-let emCSVData = {};   // category -> parsed CSV rows waiting to be saved
+let emFormCSVData = null;
 
 function emEscHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
@@ -13,9 +13,9 @@ async function loadEmCategories() {
     emRefreshMcqList('antonym');
 }
 
-function emHandleCSV(category, input) {
+function emHandleFormCSV(input) {
     const file = input.files[0]; if (!file) return;
-    document.getElementById(`emCsvLabel_${category}`).textContent = '📄 ' + file.name;
+    document.getElementById('emFormCSVName').textContent = '📄 ' + file.name;
     const reader = new FileReader();
     reader.onload = e => {
         let text = e.target.result.replace(/\t/g, ',');
@@ -40,25 +40,29 @@ function emHandleCSV(category, input) {
                 explanation: eIdx >= 0 ? (cols[eIdx] || '') : ''
             });
         }
-        emCSVData[category] = data;
-        document.getElementById(`emSaveBtn_${category}`).disabled = false;
-        showToast(`✅ ${data.length} প্রশ্ন লোড হয়েছে — এখন সেইভ করুন`);
+        emFormCSVData = data;
+        showToast(`✅ ${data.length} প্রশ্ন লোড হয়েছে`);
     };
     reader.readAsText(file);
 }
 
-async function emSaveCSV(category) {
-    const data = emCSVData[category];
-    if (!data || !data.length) { showToast('⚠️ আগে CSV আপলোড করুন'); return; }
-    const rows = data.map(d => ({ category, ...d }));
+async function emSaveAll() {
+    const category = document.getElementById('emFormCategory').value;
+    if (!emFormCSVData?.length) { showToast('⚠️ CSV আপলোড করুন'); return; }
+    const rows = emFormCSVData.map(d => ({ category, ...d }));
     try {
+        showToast('⏳ সেইভ হচ্ছে...');
         await safeFetch(`${SUPABASE_URL}/rest/v1/em_mcqs`, { method: 'POST', body: JSON.stringify(rows) });
-        showToast(`✅ ${rows.length}টি MCQ যোগ হয়েছে (আগেরগুলোর সাথে)`);
-        delete emCSVData[category];
-        document.getElementById(`emSaveBtn_${category}`).disabled = true;
-        document.getElementById(`emCsvLabel_${category}`).textContent = '';
+        showToast(`✅ ${rows.length}টি MCQ সেইভ হয়েছে`, 4000);
+        emClearForm();
         emRefreshMcqList(category);
-    } catch (e) { showToast('❌ Error: ' + e.message); }
+    } catch (e) { showToast('❌ এরর: ' + e.message, 5000); }
+}
+
+function emClearForm() {
+    document.getElementById('emFormCSVName').textContent = '';
+    document.getElementById('emFormCSV').value = '';
+    emFormCSVData = null;
 }
 
 async function emRefreshMcqList(category) {

@@ -1744,14 +1744,22 @@
     <!-- ══════════════ TAB: QUICK PRACTICE ══════════════ -->
     <div class="admin-section" id="secQuickpractice">
         <div class="form-card">
-            <h3>➕ নতুন বিষয় যোগ</h3>
-            <div class="input-group">
-                <label>বিষয়ের নাম</label>
-                <input type="text" id="qpSubjectName" placeholder="যেমন: Physics 1st Paper">
+            <h3>➕ Quick Practice যোগ/এডিট</h3>
+            <input type="hidden" id="qpEditChapId">
+            <div class="input-group"><label>বিষয়ের নাম</label><input type="text" id="qpFormSubject" list="qpSubjectList" placeholder="যেমন: Physics 1st Paper"></div>
+            <datalist id="qpSubjectList"></datalist>
+            <div class="input-group"><label>অধ্যায়ের নাম</label><input type="text" id="qpFormChapter" placeholder="অধ্যায়ের নাম"></div>
+            <div class="csv-upload" onclick="document.getElementById('qpFormCSV').click()">
+                <p>📄 CSV আপলোড করুন</p>
+                <p style="font-size:10px;color:var(--text2);margin-top:2px;">Columns: question, option1-5, answer, explanation</p>
+                <input type="file" id="qpFormCSV" accept=".csv" onchange="qpHandleFormCSV(this)">
+                <p id="qpFormCSVName" style="color:var(--accent);font-size:11px;margin-top:4px;"></p>
             </div>
-            <button class="btn-save" onclick="qpSaveSubject()">💾 বিষয় সেইভ করুন</button>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-primary" onclick="qpSaveAll()" style="flex:1;">✅ সেইভ</button>
+                <button class="btn btn-outline btn-sm" onclick="qpClearForm()" style="white-space:nowrap;">🔄 ক্লিয়ার</button>
+            </div>
         </div>
-
         <div class="form-card">
             <h3>📘 বিষয় সমূহ <span id="qpSubjCount" style="font-size:11px;color:var(--text2);font-weight:400"></span></h3>
             <div id="qpSubjList"><div style="color:var(--text2);font-size:12px">লোড হচ্ছে...</div></div>
@@ -1761,26 +1769,33 @@
     <!-- ══════════════ TAB: ENGLISH MASTER ══════════════ -->
     <div class="admin-section" id="secEnglishmaster">
         <div class="form-card">
-            <h3>📗 Synonym <span id="emCount_synonym" style="font-size:11px;color:var(--text2);font-weight:400"></span></h3>
-            <div class="csv-upload" onclick="document.getElementById('emCsvInput_synonym').click()">
-                <p>📄 CSV আপলোড করুন</p>
-                <input type="file" accept=".csv" id="emCsvInput_synonym" onchange="emHandleCSV('synonym', this)">
-                <p id="emCsvLabel_synonym" style="color:var(--accent);font-size:11px;margin-top:4px;"></p>
+            <h3>➕ English Master যোগ</h3>
+            <div class="input-group">
+                <label>ক্যাটেগরি</label>
+                <select id="emFormCategory">
+                    <option value="synonym">📗 Synonym</option>
+                    <option value="antonym">📕 Antonym</option>
+                </select>
             </div>
-            <button class="btn btn-primary" onclick="emSaveCSV('synonym')" style="width:100%;padding:8px 12px;font-size:12px;margin-bottom:12px" id="emSaveBtn_synonym" disabled>💾 CSV সেইভ করুন</button>
-            <div style="font-weight:700;font-size:11.5px;margin:8px 0 6px;color:var(--text2)">📋 সেইভ করা MCQ তালিকা</div>
+            <div class="csv-upload" onclick="document.getElementById('emFormCSV').click()">
+                <p>📄 CSV আপলোড করুন</p>
+                <p style="font-size:10px;color:var(--text2);margin-top:2px;">Columns: question, option1-5, answer, explanation</p>
+                <input type="file" id="emFormCSV" accept=".csv" onchange="emHandleFormCSV(this)">
+                <p id="emFormCSVName" style="color:var(--accent);font-size:11px;margin-top:4px;"></p>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-primary" onclick="emSaveAll()" style="flex:1;">✅ সেইভ</button>
+                <button class="btn btn-outline btn-sm" onclick="emClearForm()" style="white-space:nowrap;">🔄 ক্লিয়ার</button>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <h3>📗 Synonym <span id="emCount_synonym" style="font-size:11px;color:var(--text2);font-weight:400"></span></h3>
             <div id="emMcqListInner_synonym"><div style="color:var(--text2);font-size:11px">লোড হচ্ছে...</div></div>
         </div>
 
         <div class="form-card">
             <h3>📕 Antonym <span id="emCount_antonym" style="font-size:11px;color:var(--text2);font-weight:400"></span></h3>
-            <div class="csv-upload" onclick="document.getElementById('emCsvInput_antonym').click()">
-                <p>📄 CSV আপলোড করুন</p>
-                <input type="file" accept=".csv" id="emCsvInput_antonym" onchange="emHandleCSV('antonym', this)">
-                <p id="emCsvLabel_antonym" style="color:var(--accent);font-size:11px;margin-top:4px;"></p>
-            </div>
-            <button class="btn btn-primary" onclick="emSaveCSV('antonym')" style="width:100%;padding:8px 12px;font-size:12px;margin-bottom:12px" id="emSaveBtn_antonym" disabled>💾 CSV সেইভ করুন</button>
-            <div style="font-weight:700;font-size:11.5px;margin:8px 0 6px;color:var(--text2)">📋 সেইভ করা MCQ তালিকা</div>
             <div id="emMcqListInner_antonym"><div style="color:var(--text2);font-size:11px">লোড হচ্ছে...</div></div>
         </div>
     </div>
