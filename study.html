@@ -960,24 +960,46 @@ async function finishStartExam(allQuestions, pages) {
         if (src) pageImageMap[pg] = src;
     }
 
-    sessionStorage.setItem('practiceTitle', curPdfTitle + ' — পেইজ ' + pages.join(','));
-    sessionStorage.setItem('practiceSource', 'study');
-    sessionStorage.setItem('practiceTime', Math.ceil(shuffled.length/1.5));
-    sessionStorage.setItem('practicePages', curPdfTitle + ' — পেইজ ' + pages.join(', '));
-    if (previewImgs.length) sessionStorage.setItem('practicePageImages', JSON.stringify(previewImgs));
-    else sessionStorage.removeItem('practicePageImages');
+    // ── quota safeguard ──
+    // sessionStorage-এর সাইজ লিমিটেড (সাধারণত ~5MB)। আগে পুরনো/অব্যবহৃত key জমে
+    // থাকলে বা এই সেশনে অনেক পেইজের বেস৬৪ ছবি + প্রশ্ন মিলিয়ে সহজেই কোটা শেষ
+    // হয়ে যায়। তাই: (১) লেখার আগে পুরনো practice* key গুলো ক্লিয়ার করি, (২) সব
+    // setItem একই try-catch এ রাখি, (৩) ব্যর্থ হলে ক্রমান্বয়ে ভারী অংশ (page image
+    // map → preview images) বাদ দিয়ে অন্তত প্রশ্নগুলো নিয়ে exam চালু রাখার চেষ্টা করি।
+    ['practiceTitle','practiceSource','practiceTime','practicePages','practicePageImages','practiceQuestions','practicePageImageMap'].forEach(k => {
+        try { sessionStorage.removeItem(k); } catch (_) {}
+    });
+
+    const baseMeta = () => {
+        sessionStorage.setItem('practiceTitle', curPdfTitle + ' — পেইজ ' + pages.join(','));
+        sessionStorage.setItem('practiceSource', 'study');
+        sessionStorage.setItem('practiceTime', Math.ceil(shuffled.length/1.5));
+        sessionStorage.setItem('practicePages', curPdfTitle + ' — পেইজ ' + pages.join(', '));
+    };
 
     try {
-        sessionStorage.setItem('practiceQuestions', JSON.stringify(shuffled));
+        // ১ম চেষ্টা: সবকিছুসহ (preview images + page image map + questions)
+        baseMeta();
+        if (previewImgs.length) sessionStorage.setItem('practicePageImages', JSON.stringify(previewImgs));
         sessionStorage.setItem('practicePageImageMap', JSON.stringify(pageImageMap));
+        sessionStorage.setItem('practiceQuestions', JSON.stringify(shuffled));
     } catch (e) {
-        // quota exceeded হলে (অনেক পেইজ/প্রশ্ন) — page image map বাদ দিয়ে অন্তত exam-টা চালু রাখো
-        sessionStorage.removeItem('practicePageImageMap');
         try {
+            // ২য় চেষ্টা: page image map বাদ (ব্যাখ্যার full-page zoom কাজ করবে না, বাকি সব ঠিক থাকবে)
+            sessionStorage.removeItem('practicePageImageMap');
+            baseMeta();
+            if (previewImgs.length) sessionStorage.setItem('practicePageImages', JSON.stringify(previewImgs));
             sessionStorage.setItem('practiceQuestions', JSON.stringify(shuffled));
         } catch (e2) {
-            showToast('❌ অনেক বেশি পেইজ/প্রশ্ন নির্বাচিত — কম পেইজ দিয়ে আবার চেষ্টা করো');
-            return;
+            try {
+                // ৩য় চেষ্টা: preview images-ও বাদ, শুধু প্রশ্ন
+                sessionStorage.removeItem('practicePageImages');
+                baseMeta();
+                sessionStorage.setItem('practiceQuestions', JSON.stringify(shuffled));
+            } catch (e3) {
+                showToast('❌ অনেক বেশি পেইজ/প্রশ্ন নির্বাচিত — কম পেইজ দিয়ে আবার চেষ্টা করো');
+                return;
+            }
         }
     }
     goTo('exam.html?practice=mock');
