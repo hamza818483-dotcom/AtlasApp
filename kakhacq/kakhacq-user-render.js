@@ -288,7 +288,7 @@
 
         let html = `
             <div class="section-header"><div class="section-title">📘 ${escapeHtml(subject)}</div></div>
-            <button class="back-btn" onclick="window.__kcqBackToSubjects()">← সাবজেক্ট তালিকায় ফিরুন</button>
+            <button class="back-btn" onclick="window.__kcqBackToSubjects()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> সাবজেক্ট তালিকায় ফিরুন</button>
             <div class="kcq-header-info">📖 মোট চ্যাপ্টার: <b>${chapters.length}</b></div>
             <div class="kcq-box-list">`;
 
@@ -343,7 +343,7 @@
 
         container.innerHTML = `
             <div class="section-header"><div class="section-title">📖 ${escapeHtml(entry.chapter || 'সাধারণ')}</div></div>
-            <button class="back-btn" onclick="window.__kcqBackToChapters()">← চ্যাপ্টার তালিকায় ফিরুন</button>
+            <button class="back-btn" onclick="window.__kcqBackToChapters()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> চ্যাপ্টার তালিকায় ফিরুন</button>
             <div class="kcq-toggle-all-wrap">
                 <button class="kcq-toggle-all-btn" onclick="window.__kcqToggleAllAccordions(this)">🔓 সব উত্তর দেখাও</button>
             </div>

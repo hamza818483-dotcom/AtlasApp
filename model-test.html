@@ -163,7 +163,7 @@ function renderExamStep(type){
     if(!tests.length){render('<div class="mt-empty"><div class="mt-empty-icon">📭</div><div class="mt-empty-text">কোনো টেস্ট পাওয়া যায়নি</div></div>');return;}
     const groups={};
     tests.forEach(t=>{const grp=t.sub_type||t.varsity_sub_type||'অন্যান্য';if(!groups[grp])groups[grp]=[];groups[grp].push(t);});
-    let html=`<button class="mt-back" onclick="renderTypeStep()">← ফিরে যান</button>
+    let html=`<button class="mt-back" onclick="renderTypeStep()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> ফিরে যান</button>
         <div class="section-header"><div class="section-title">${info.icon} ${info.label}</div></div>`;
     Object.entries(groups).forEach(([grp,items])=>{
         html+=`<div class="mt-section">${SUB_TYPE_LABEL[grp]||grp}</div>`;
@@ -198,7 +198,7 @@ function renderExamDetail(id){
 
     if(t.link&&!qCount){
         render(`
-            <button class="mt-back" onclick="renderExamStep('${t.type}')">← ফিরে যান</button>
+            <button class="mt-back" onclick="renderExamStep('${t.type}')"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> ফিরে যান</button>
             <div style="background:var(--card-bg);border:1.5px solid var(--border);border-radius:14px;padding:20px;text-align:center;">
                 <div style="font-size:36px;margin-bottom:10px;">${info.icon}</div>
                 <div style="font-size:18px;font-weight:900;color:var(--text);font-family:'Noto Sans Bengali',sans-serif;">${escHtml(title)}</div>
@@ -210,7 +210,7 @@ function renderExamDetail(id){
 
     selectedCount=Math.min(50,qCount);
     render(`
-        <button class="mt-back" onclick="renderExamStep('${t.type}')">← ফিরে যান</button>
+        <button class="mt-back" onclick="renderExamStep('${t.type}')"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> ফিরে যান</button>
         <div style="background:var(--card-bg);border:1.5px solid var(--border);border-radius:14px;padding:20px;text-align:center;margin-bottom:14px;">
             <div style="font-size:36px;margin-bottom:8px;">${info.icon}</div>
             <div style="font-size:18px;font-weight:900;color:var(--text);font-family:'Noto Sans Bengali',sans-serif;">${escHtml(title)}</div>

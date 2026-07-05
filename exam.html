@@ -494,7 +494,7 @@
 <!-- MODE 2: Category -->
 <div class="mode-container" id="modeCategory">
     <div class="exam-list-wrap">
-        <button class="back-btn" onclick="goBackGlobal()">← ফিরে যান</button>
+        <button class="back-btn" onclick="goBackGlobal()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> ফিরে যান</button>
         <div id="categoryContent"></div>
     </div>
 </div>
@@ -502,7 +502,7 @@
 <!-- MODE 3: Pre-Exam -->
 <div class="mode-container" id="modePreExam">
     <div class="pre-exam-wrap">
-        <button class="back-btn" onclick="goBackGlobal()">← ফিরে যান</button>
+        <button class="back-btn" onclick="goBackGlobal()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> ফিরে যান</button>
         <div id="preExamContent"></div>
         <!-- Req #11: "প্রশ্ন দেখো" button always shown (if allow_preview) -->
         <div class="pre-exam-actions">
@@ -515,7 +515,7 @@
 <!-- MODE 4: Preview (req #11, #12) -->
 <div class="mode-container" id="modePreview">
     <div class="preview-wrap">
-        <button class="back-btn" onclick="goBackGlobal()">← ফিরে যান</button>
+        <button class="back-btn" onclick="goBackGlobal()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> ফিরে যান</button>
         <div class="preview-exam-info">
             <div class="preview-exam-name" id="previewExamName">লোড হচ্ছে...</div>
             <div class="preview-exam-meta" id="previewExamMeta"></div>
@@ -919,7 +919,7 @@ function renderExamListForSubject(subject){
     const list = data.filter(e => (e.subject||'সাধারণ') === subject);
     const showBack = Object.keys(data.reduce((a,e)=>{a[e.subject||'সাধারণ']=1;return a;},{})).length > 1;
 
-    let html = showBack ? `<button class="back-btn" onclick="window.__examBackToSubjects()">← সাবজেক্ট তালিকায় ফিরুন</button>` : '';
+    let html = showBack ? `<button class="back-btn" onclick="window.__examBackToSubjects()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> সাবজেক্ট তালিকায় ফিরুন</button>` : '';
     html += `<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;">📘 ${subject}</div>`;
     list.forEach(e=>{
         const info=e.chapter||e.title||'—';
