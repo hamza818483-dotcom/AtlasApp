@@ -1037,11 +1037,14 @@
                     <option value="varsity">🟣 ভার্সিটি</option>
                     <option value="onushiloni">🟠 অনুশীলনী</option>
                     <option value="model">📖 Model Test</option>
+                    <option value="topicwise">🟢 Topicwise Exam</option>
                 </select>
             </div>
             <div id="examSubTypeField" style="display:none;">
                 <div class="input-group"><label>সাব-টাইপ</label><select id="examSubType"><option value="">— নির্বাচন —</option></select></div>
             </div>
+            <div class="input-group" id="examTopicField" style="display:none;"><label>টপিক</label><input type="text" id="examTopic" list="topicList" placeholder="টপিকের নাম"></div>
+            <datalist id="topicList"></datalist>
             <div class="input-row" id="examBoardYear" style="display:none;">
                 <div class="input-group"><label id="examBoardLabel">বোর্ড/ভার্সিটি</label><input type="text" id="examBoard" placeholder="নাম"></div>
                 <div class="input-group"><label>সাল</label><input type="text" id="examYear" placeholder="যেমন: ২০২৩"></div>
@@ -2304,6 +2307,7 @@ function toggleExamFields() {
     const ss = document.getElementById('examSubType');
     const bl = document.getElementById('examBoardLabel');
     sf.style.display = by.style.display = wf.style.display = uf.style.display = 'none';
+    document.getElementById('examTopicField').style.display = (t === 'topicwise') ? 'block' : 'none';
     if (t === 'medical' || t === 'dental' || t === 'afmc') {
         sf.style.display = 'block';
         ss.innerHTML = `<option value="">— নির্বাচন —</option><option value="demo">🏥 Demo</option><option value="chapter">📖 চাপ্টারভিত্তিক</option><option value="year">📅 সালভিত্তিক</option>`;
@@ -2333,6 +2337,7 @@ async function saveExam() {
         chapter: document.getElementById('examChapter').value.trim(),
         exam_type: document.getElementById('examType').value,
         sub_type: document.getElementById('examSubType').value || null,
+        topic: document.getElementById('examTopic').value.trim() || null,
         board:   document.getElementById('examBoard').value.trim() || null,
         year:    document.getElementById('examYear').value.trim()  || null,
         unit:    document.getElementById('examUnit').value.trim()  || null,
@@ -2386,11 +2391,11 @@ async function saveExam() {
 }
 
 function clearExamForm() {
-    ['examSubject','examChapter','examType','examSubType','examBoard','examYear','examUnit','examWriter','examStart','examEnd','examEditId'
+    ['examSubject','examChapter','examType','examSubType','examTopic','examBoard','examYear','examUnit','examWriter','examStart','examEnd','examEditId'
     ].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
     examCSVData = null;
     document.getElementById('examCSVName').textContent = '';
-    ['examSubTypeField','examBoardYear','examWriterField','examUnitField'].forEach(id => { const el = document.getElementById(id); if(el) el.style.display = 'none'; });
+    ['examSubTypeField','examBoardYear','examWriterField','examUnitField','examTopicField'].forEach(id => { const el = document.getElementById(id); if(el) el.style.display = 'none'; });
     // Reset toggles to defaults: allow_preview=true, is_locked=false
     setSwitchVal('examAllowPreview', true);
     setSwitchVal('examIsLocked', false);
@@ -2663,6 +2668,7 @@ async function editExam(id) {
         document.getElementById('examType').value    = d.exam_type|| '';
         toggleExamFields();
         document.getElementById('examSubType').value = d.sub_type || '';
+        document.getElementById('examTopic').value   = d.topic    || '';
         document.getElementById('examBoard').value   = d.board    || '';
         document.getElementById('examYear').value    = d.year     || '';
         document.getElementById('examUnit').value    = d.unit     || '';
