@@ -977,6 +977,19 @@ async function finishStartExam(allQuestions, pages) {
         try { sessionStorage.removeItem(k); } catch (_) {}
     });
 
+    // ── back-navigation resume state ──
+    // উপরের বাম কোণের গ্লোবাল "ফিরে যান" বাটন (goBackGlobal, global-nav.js)
+    // stack থেকে সরাসরি 'study.html' এ পাঠায়, যেটা page reload করে এবং
+    // সবসময় subject list দিয়ে শুরু হয় (viewer state মনে রাখে না)। তাই এখানে
+    // ঠিক কোন PDF/পেইজে ছিলাম সেটা আলাদা করে সেভ রাখছি — study.html লোড হওয়ার
+    // সময় এটা থাকলে সরাসরি সেই viewer-এ ফিরিয়ে দেবে, chapter list স্কিপ করে।
+    try {
+        sessionStorage.setItem('atlas_study_resume', JSON.stringify({
+            pdfId: curPdfId, pdfTitle: curPdfTitle, isPremium: curPdfPremium,
+            chapterId: curChapterId, chapterName: curChapterName
+        }));
+    } catch (_) {}
+
     const baseMeta = () => {
         sessionStorage.setItem('practiceTitle', curPdfTitle + ' — পেইজ ' + pages.join(','));
         sessionStorage.setItem('practiceSource', 'study');
@@ -1272,7 +1285,34 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!currentUser) { location.replace('auth.html'); return; }
 
     loadAdminPrompts();
-    loadSubjects();
+
+    // ── exam.html থেকে "ফিরে যান" চাপার পর এখানে ফিরে এলে — সেভ করা viewer
+    // state থাকলে সরাসরি সেই PDF-এর সেই viewer-এ ফিরিয়ে দাও, সবসময় subject
+    // list দিয়ে শুরু করার বদলে। state একবার ব্যবহার হলেই মুছে ফেলা হয়, যাতে
+    // পরবর্তী স্বাভাবিক ভিজিটে (home/sidebar দিয়ে সরাসরি) এটা প্রভাব না ফেলে।
+    let resumed = false;
+    try {
+        const resume = JSON.parse(sessionStorage.getItem('atlas_study_resume') || 'null');
+        sessionStorage.removeItem('atlas_study_resume');
+        if (resume && resume.pdfId) {
+            curChapterId = resume.chapterId; curChapterName = resume.chapterName;
+            let pageCount = 0, fileUrl = null;
+            try {
+                const cachedPdfs = resume.chapterId ? JSON.parse(localStorage.getItem('atlas_pdfs_cache_' + resume.chapterId) || '[]') : [];
+                const match = cachedPdfs.find(p => p.id === resume.pdfId);
+                if (match) { pageCount = match.page_count || 0; fileUrl = match.file_url || null; }
+            } catch (_) {}
+            loadSubjects(); // sidebar/subject cache warm রাখার জন্য পেছনে চালু থাকুক, viewer উপরে দেখাবে
+            if (!resume.isPremium && fileUrl) {
+                openPdfFast(resume.pdfId, resume.pdfTitle, fileUrl, pageCount);
+            } else {
+                openPdf(resume.pdfId, resume.pdfTitle, resume.isPremium, pageCount);
+            }
+            resumed = true;
+        }
+    } catch (_) {}
+
+    if (!resumed) loadSubjects();
 });
 </script>
 
