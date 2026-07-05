@@ -1106,13 +1106,34 @@ async function loadKaKhaContent(type){
 
 async function loadExamById(examId){
     try{
+        // Instant cache-first: আগে থেকে বানানো MCQ থাকলে localStorage cache থেকে সাথে সাথে
+        // দেখানো হয়, network এর জন্য অপেক্ষা করতে হয় না। fresh data এলে নিচে silently sync হয়।
+        const cacheKey = 'atlasExamCache_' + examId;
+        let usedCache = false;
+        try {
+            const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+            if (cached && cached.examData && cached.examQuestions?.length) {
+                if ((cached.examData.is_locked===true||cached.examData.is_locked==='true')&&!checkUserHasAccess()){
+                    showLockedExamBanner(cached.examData.title||cached.examData.chapter);
+                } else {
+                    currentExam = cached.examData;
+                    examQuestions = cached.examQuestions;
+                    showPreExamFromData(currentExam, examQuestions);
+                    usedCache = true;
+                }
+            }
+        } catch(_) {}
+
         const [examData]=await safeFetch(`${SUPABASE_URL}/rest/v1/exams?id=eq.${examId}&select=*`);
-        if(!examData){showToast('❌ এক্সাম পাওয়া যায়নি');return;}
+        if(!examData){ if(!usedCache) showToast('❌ এক্সাম পাওয়া যায়নি'); return; }
         if((examData.is_locked===true||examData.is_locked==='true')&&!checkUserHasAccess()){showLockedExamBanner(examData.title||examData.chapter);return;}
         currentExam=examData;
         examQuestions=await safeFetch(`${SUPABASE_URL}/rest/v1/questions?exam_id=eq.${examId}&select=*&order=id.asc`);
-        if(!examQuestions?.length){showNoQuestions();return;}
+        if(!examQuestions?.length){ if(!usedCache) showNoQuestions(); return; }
         showPreExamFromData(currentExam,examQuestions);
+
+        // fresh/true data cache করে রাখো পরের বার instant-load এর জন্য
+        try { localStorage.setItem(cacheKey, JSON.stringify({ examData, examQuestions, ts: Date.now() })); } catch(_) {}
     }catch(e){showToast('❌ লোড করতে সমস্যা');}
 }
 
