@@ -51,7 +51,7 @@
             max-width: 700px;
             margin: 0 auto;
             padding: 10px 12px;
-            padding-bottom: calc(58px + 16px);
+            padding-bottom: calc(58px + 40px);
             display: flex;
             flex-direction: column;
             min-height: 100vh;
@@ -892,15 +892,27 @@ function addUserMessage(text, imageObj) {
 
 function attachLongPress(wrapper) {
     const bubble = wrapper.querySelector('.msg-bubble');
-    let timer;
-    const start = () => { timer = setTimeout(() => showEditMenu(wrapper), 500); };
+    let timer, startX = 0, startY = 0, moved = false;
+    const start = (e) => {
+        moved = false;
+        const t = e.touches ? e.touches[0] : e;
+        startX = t.clientX; startY = t.clientY;
+        timer = setTimeout(() => { if (!moved) showEditMenu(wrapper); }, 450);
+    };
+    const move = (e) => {
+        const t = e.touches ? e.touches[0] : e;
+        if (Math.abs(t.clientX - startX) > 10 || Math.abs(t.clientY - startY) > 10) {
+            moved = true; clearTimeout(timer);
+        }
+    };
     const cancel = () => clearTimeout(timer);
     bubble.addEventListener('touchstart', start, { passive: true });
     bubble.addEventListener('touchend', cancel);
-    bubble.addEventListener('touchmove', cancel);
+    bubble.addEventListener('touchmove', move, { passive: true });
     bubble.addEventListener('mousedown', start);
     bubble.addEventListener('mouseup', cancel);
     bubble.addEventListener('mouseleave', cancel);
+    bubble.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
 function showEditMenu(wrapper) {
