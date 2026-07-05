@@ -104,6 +104,18 @@ const MB_PERMANENT_RULES = (
     `নিয়ে লিখতে হবে, কোনো উৎস/অবস্থান নির্দেশ করা যাবে না।\n` +
     `৩. ঠিক যত সংখ্যক প্রশ্ন চাওয়া হয়েছে, তার চেয়ে কম বা বেশি দেওয়া যাবে না — সংখ্যাটি অবশ্যই হুবহু মানতে হবে।`
 );
+
+// exp_box: এই MCQ যে টপিক/উদ্দীপক অংশ থেকে বানানো হয়েছে, সেই অংশের bounding box —
+// উপরে ও নিচে কয়েক লাইন বেশি নিয়ে (buffer) — পুরো পেইজের সাপেক্ষে % (0-100) এককে।
+// ক্লায়েন্ট সাইডে এই coords দিয়ে page canvas থেকে crop করে explanation image বানানো হয়।
+const MB_EXP_BOX_RULE = (
+    `\\n\\n৪. প্রতিটি প্রশ্নের জন্য \"exp_box\" নামে একটি object দিতে হবে যা নির্দেশ করে পেইজের কোন অংশ থেকে ` +
+    `প্রশ্নটি/টপিকটি নেওয়া হয়েছে — সেই অংশের উপরে ও নিচে ২-৩ লাইন অতিরিক্ত বাফার নিয়ে (যাতে পুরো টপিক/উদ্দীপক ` +
+    `প্যারাগ্রাফ বোঝা যায়)। এই object-এ চারটি key থাকবে: x, y, w, h — সবগুলো পুরো পেইজের width/height এর ` +
+    `শতকরা হিসেবে (0 থেকে 100 এর মধ্যে সংখ্যা, % চিহ্ন ছাড়া)। x,y মানে বাম-উপরের কোণা, w,h মানে width ও height। ` +
+    `যদি একাধিক প্রশ্ন একই টপিক/উদ্দীপক থেকে বানানো হয়, তাদের exp_box একই রকম বা কাছাকাছি হতে পারে — সমস্যা নেই।`
+);
+
 let mbCsvData     = [];
 let mbAiData      = [];
 
@@ -113,7 +125,7 @@ let mbAiData      = [];
    নির্দিষ্ট count বাধ্যতামূলক করে) — এর বদলে আলাদা extraction-only rule সেট।
    ════════════════════════════════════════════════════ */
 function mbSpecialExtractPrompt() {
-    const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","type":"special"}]`;
+    const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","exp_box":{"x":0,"y":0,"w":0,"h":0},"type":"special"}]`;
     return (
         `তুমি একজন নিখুঁত ডেটা-এক্সট্র্যাকশন এক্সপার্ট। তোমার কাজ শুধুমাত্র এই পেইজে ইতিমধ্যে ছাপা/লেখা MCQ প্রশ্নগুলো ` +
         `হুবহু এক্সট্র্যাক্ট করা — নতুন কোনো MCQ কখনোই বানাবে না।\n\n` +
@@ -128,7 +140,8 @@ function mbSpecialExtractPrompt() {
         `   গ) পেইজে একেবারেই কোনো তথ্য না থাকলে, তুমি নিজে সবচেয়ে প্রাসঙ্গিক ও সঠিক ব্যাখ্যা লিখবে — কেন সঠিক অপশনটি সঠিক এবং বাকি অপশনগুলো কেন ভুল, তা সংক্ষেপে বলবে।\n` +
         `৬. গাণিতিক/রাসায়নিক রাশি লেখার সময় সঠিক সাব/সুপারস্ক্রিপ্ট ইউনিকোড ব্যবহার করবে (x², H₂O ইত্যাদি), সাধারণ সংখ্যা দিয়ে লিখবে না।\n` +
         `৭. প্রশ্ন বা ব্যাখ্যায় কখনো "উল্লেখিত চিত্রে", "বক্সে", "উদ্দীপকে", "পৃষ্ঠায়" জাতীয় সোর্স-রেফারেন্স বাক্য ব্যবহার করবে না — স্বয়ংসম্পূর্ণ রাখবে।\n` +
-        `৮. এটাই সবচেয়ে গুরুত্বপূর্ণ নিয়ম: তুমি একজন এক্সট্র্যাক্টর, জেনারেটর নও — কোনো অবস্থাতেই নিজের থেকে নতুন প্রশ্ন কল্পনা করে বানাবে না।\n\n` +
+        `৮. এটাই সবচেয়ে গুরুত্বপূর্ণ নিয়ম: তুমি একজন এক্সট্র্যাক্টর, জেনারেটর নও — কোনো অবস্থাতেই নিজের থেকে নতুন প্রশ্ন কল্পনা করে বানাবে না।\n` +
+        `৯. প্রতিটি প্রশ্নের জন্য "exp_box" object দিবে — যে টপিক/উদ্দীপক অংশ থেকে প্রশ্নটি নেওয়া হয়েছে তার bounding box, উপরে-নিচে ২-৩ লাইন বাফার সহ, পুরো পেইজের সাপেক্ষে শতকরা (0-100) হিসেবে {x,y,w,h}।\n\n` +
         `শুধুমাত্র নিচের JSON ফরম্যাটে উত্তর দিবে, অন্য কোনো লেখা/markdown/backtick ছাড়া:\n${jsonFormat}`
     );
 }
@@ -151,7 +164,7 @@ function mbShuffleSpecialOptions(m) {
 // একটা পেইজ থেকে শুধু existing MCQ এক্সট্র্যাক্ট করে — retry + reliability check সহ।
 // রেজাল্ট খালি [] হলে অর্থ পেইজে সত্যিই কোনো MCQ নেই (silently skip, error না)।
 async function mbSpecialExtractPage(pageNum) {
-    const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","type":"special"}]`;
+    const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","exp_box":{"x":0,"y":0,"w":0,"h":0},"type":"special"}]`;
     const basePrompt = mbSpecialExtractPrompt();
     const MAX_ATTEMPTS = 3;
 
@@ -1332,6 +1345,7 @@ function mbRenderPageMcqList() {
                     </div>`).join('')}
             </div>
             ${m.explanation ? `<div style="font-size:10px;color:var(--text3);margin-top:4px;padding:4px 8px;background:rgba(108,99,255,0.05);border-radius:4px">💡 ${esc(m.explanation)}</div>` : ''}
+            ${m.explanation_image ? `<img src="data:image/jpeg;base64,${m.explanation_image}" style="max-width:100%;border-radius:6px;margin-top:6px;border:1px solid rgba(108,99,255,0.15)" />` : ''}
             <div style="margin-top:6px;display:flex;gap:6px">
                 <span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(108,99,255,0.1);color:#9C8BFF;text-transform:uppercase">${typeLabel[m.type]||m.type||'standard'}</span>
                 ${m._source === 'user' ? '<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(16,185,129,0.1);color:var(--green)">ইউজার-জেনারেটেড</span>' : ''}
@@ -1567,6 +1581,41 @@ async function mbSavePromptForType(type, text) {
     } catch(_) {}
 }
 
+/* ─── exp_box (% coords) থেকে page-এর নির্দিষ্ট অংশ crop করে base64 JPEG বানায় ───
+   AI যে bounding box দেয় সেটা full page width/height এর % হিসেবে — এই function
+   page টাকে বেশি scale (2.5x) দিয়ে fresh render করে সেখান থেকে সঠিক pixel অংশ crop করে,
+   যাতে ছোট টেক্সটও পড়া যায়। box পাওয়া না গেলে বা invalid হলে null রিটার্ন করে। */
+async function mbCropExplanationImage(pageNum, box) {
+    if (!mbPdfDoc || !box) return null;
+    const x = Number(box.x), y = Number(box.y), w = Number(box.w), h = Number(box.h);
+    if (![x, y, w, h].every(n => Number.isFinite(n)) || w <= 0 || h <= 0) return null;
+    try {
+        const page  = await mbPdfDoc.getPage(pageNum);
+        const scale = 2.5; // ভালো readability-র জন্য বেশি রেজোলিউশনে render
+        const vp    = page.getViewport({ scale });
+        const full  = document.createElement('canvas');
+        full.width  = vp.width;
+        full.height = vp.height;
+        await page.render({ canvasContext: full.getContext('2d'), viewport: vp }).promise;
+
+        // % coords কে actual pixel-এ রূপান্তর, সামান্য padding + বাউন্ডারি-ক্ল্যাম্প সহ
+        const padPct = 1.5; // অতিরিক্ত ১.৫% padding চারপাশে, crop যেন খুব টাইট না হয়
+        const px = Math.max(0, (x - padPct) / 100 * full.width);
+        const py = Math.max(0, (y - padPct) / 100 * full.height);
+        const pw = Math.min(full.width  - px, (w + padPct * 2) / 100 * full.width);
+        const ph = Math.min(full.height - py, (h + padPct * 2) / 100 * full.height);
+        if (pw < 10 || ph < 10) return null;
+
+        const cropped = document.createElement('canvas');
+        cropped.width  = pw;
+        cropped.height = ph;
+        cropped.getContext('2d').drawImage(full, px, py, pw, ph, 0, 0, pw, ph);
+        return cropped.toDataURL('image/jpeg', 0.85).split(',')[1]; // শুধু base64 অংশ ফেরত
+    } catch (_) {
+        return null;
+    }
+}
+
 /* ─── Get canvas image from current PDF page ─── */
 async function mbGetPageImageBase64(pageNum) {
     if (!mbPdfDoc) return null;
@@ -1622,13 +1671,13 @@ async function mbAiGenerate() {
 
     try {
         const typeLabel = { standard: 'সাধারণ', true_false: 'সত্য/মিথ্যা', hard: 'কঠিন' };
-        const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","type":"${type}"}]`;
+        const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","exp_box":{"x":0,"y":0,"w":0,"h":0},"type":"${type}"}]`;
         const savedP = mbGetSavedPrompt(type);
         const basePrompt = (customP || savedP || (
             `${typeLabel[type]||type} ধরনের ${count.label} MCQ তৈরি করো। ` +
             `Content যে ভাষায় আছে সেই ভাষায় রাখো। ` +
             `প্রতিটিতে চারটি বিকল্প (option_k, option_kh, option_g, option_gh) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে।`
-        )) + MB_PERMANENT_RULES;
+        )) + MB_PERMANENT_RULES + MB_EXP_BOX_RULE;
 
         let rawJson;
         let geminiAlreadyTried = false; // এই page-এ Gemini PDF-native ইতিমধ্যে চেষ্টা হয়েছে কি না —
@@ -1686,6 +1735,18 @@ async function mbAiGenerate() {
 
         mbAiData = parsed.map(m => ({ id: uid(), ...m, type: m.type || type }));
 
+        // exp_box দিয়ে প্রতিটা MCQ-র জন্য topic-crop explanation image বানানো — একই box একাধিক
+        // MCQ শেয়ার করতে পারে, তাই ডুপ্লিকেট crop এড়াতে cache করে নেওয়া
+        const cropCache = new Map();
+        for (const m of mbAiData) {
+            if (!m.exp_box) continue;
+            const key = JSON.stringify(m.exp_box);
+            if (!cropCache.has(key)) cropCache.set(key, await mbCropExplanationImage(mbCurrentPage, m.exp_box));
+            const img = cropCache.get(key);
+            if (img) m.explanation_image = img;
+            delete m.exp_box; // raw box আর দরকার নেই, save হবে না
+        }
+
         const header = document.getElementById('mbAiResultHeader');
         if (header) header.textContent = mbAiData.length + 'টি AI-প্রস্তুত প্রশ্ন (সংরক্ষণ করতে নিচের বোতাম চাপুন)';
 
@@ -1702,6 +1763,7 @@ async function mbAiGenerate() {
                                 background:${m.correct===k?'rgba(16,185,129,0.08)':'var(--hover)'}"
                             >${lMap[k]}. ${esc(m['option_'+k]||'')}${m.correct===k?' ✓':''}</div>`).join('')}
                     </div>
+                    ${m.explanation_image ? `<img src="data:image/jpeg;base64,${m.explanation_image}" style="max-width:100%;border-radius:6px;margin-top:6px;border:1px solid rgba(108,99,255,0.15)" />` : ''}
                 </div>`).join('');
         }
         if (resultEl) resultEl.style.display = 'block';
@@ -2115,13 +2177,13 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
 
     const count = mbParseCountInput(countRaw);
     const typeLabel = { standard: 'সাধারণ', true_false: 'সত্য/মিথ্যা', hard: 'কঠিন' };
-    const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","type":"${type}"}]`;
+    const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","exp_box":{"x":0,"y":0,"w":0,"h":0},"type":"${type}"}]`;
     const savedP = mbGetSavedPrompt(type);
     const basePrompt = (savedP || (
         `${typeLabel[type]||type} ধরনের ${count.label} MCQ তৈরি করো। ` +
         `Content যে ভাষায় আছে সেই ভাষায় রাখো। ` +
         `প্রতিটিতে চারটি বিকল্প (option_k, option_kh, option_g, option_gh) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে।`
-    )) + MB_PERMANENT_RULES;
+    )) + MB_PERMANENT_RULES + MB_EXP_BOX_RULE;
 
     let rawJson;
     let geminiAlreadyTried = false; // এই page-এ Gemini PDF-native ইতিমধ্যে চেষ্টা হয়েছে কি না —
@@ -2172,6 +2234,18 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     }
 
     const newMcqs = parsed.map(m => ({ id: uid(), ...m, type: m.type || type }));
+
+    // exp_box থেকে topic-crop explanation image বানানো (bulk generation-এও একই লজিক প্রয়োজন)
+    const cropCache = new Map();
+    for (const m of newMcqs) {
+        if (!m.exp_box) continue;
+        const key = JSON.stringify(m.exp_box);
+        if (!cropCache.has(key)) cropCache.set(key, await mbCropExplanationImage(pageNum, m.exp_box));
+        const img = cropCache.get(key);
+        if (img) m.explanation_image = img;
+        delete m.exp_box;
+    }
+
     // bug fix: এটা admin panel-এর AI generate (single/bulk উভয়), তাই mcq_type অবশ্যই 'admin' হবে —
     // আগে এখানে mcq_type:type (standard/true_false/hard) সেভ হতো, যার ফলে এই MCQ গুলো
     // ভুলভাবে "ইউজার-জেনারেটেড" হিসেবে দেখাতো এবং edit/delete করা যেতো না।
