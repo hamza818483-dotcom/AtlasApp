@@ -1748,10 +1748,13 @@ async function mbAiGenerate() {
         mbAiData = parsed.map(m => ({ id: uid(), ...m, type: m.type || type }));
 
         // exp_box দিয়ে প্রতিটা MCQ-র জন্য topic-crop explanation image বানানো — একই box একাধিক
-        // MCQ শেয়ার করতে পারে, তাই ডুপ্লিকেট crop এড়াতে cache করে নেওয়া
+        // MCQ শেয়ার করতে পারে সেক্ষেত্রে dedupe করা হয়, কিন্তু exp_box missing/null থাকলে
+        // প্রতিটা MCQ-র জন্য আলাদা ভাবে (id দিয়ে unique key) crop করা হয় — নাহলে সব
+        // missing-exp_box MCQ একই cache key ('FULL') শেয়ার করে ভুলবশত একে অপরের
+        // explanation image (এমনকি ভুল/অন্য প্রশ্নের crop) পেয়ে যেত।
         const cropCache = new Map();
         for (const m of mbAiData) {
-            const key = JSON.stringify(m.exp_box || 'FULL');
+            const key = m.exp_box ? JSON.stringify(m.exp_box) : `NOBBOX_${m.id}`;
             if (!cropCache.has(key)) cropCache.set(key, await mbCropExplanationImage(mbCurrentPage, m.exp_box));
             const img = cropCache.get(key);
             if (img) m.explanation_image = img; // exp_box না থাকলেও fallback (full page) দেওয়া হয় — কখনো miss হবে না
@@ -2247,9 +2250,11 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     const newMcqs = parsed.map(m => ({ id: uid(), ...m, type: m.type || type }));
 
     // exp_box থেকে topic-crop explanation image বানানো (bulk generation-এও একই লজিক প্রয়োজন)
+    // — exp_box missing হলে unique per-MCQ key ব্যবহার করা হয়, নাহলে সব missing-exp_box
+    // MCQ একই cache entry শেয়ার করে ভুল/অন্য প্রশ্নের crop image পেয়ে যায়।
     const cropCache = new Map();
     for (const m of newMcqs) {
-        const key = JSON.stringify(m.exp_box || 'FULL');
+        const key = m.exp_box ? JSON.stringify(m.exp_box) : `NOBBOX_${m.id}`;
         if (!cropCache.has(key)) cropCache.set(key, await mbCropExplanationImage(pageNum, m.exp_box));
         const img = cropCache.get(key);
         if (img) m.explanation_image = img;
