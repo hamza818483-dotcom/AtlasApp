@@ -2318,11 +2318,28 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     )) + MB_PERMANENT_RULES + MB_EXP_BOX_RULE;
 
     let rawJson;
-    let geminiAlreadyTried = false; // এই page-এ Gemini PDF-native ইতিমধ্যে চেষ্টা হয়েছে কি না —
-                                      // fallback chain-এ আবার Gemini কল করে quota নষ্ট না করার জন্য
-    if (mbPdfUrl) {
+    let geminiAlreadyTried = false;
+
+    // Step 1 (preferred, page-accurate): render ONLY this page as an image — guarantees
+    // AI sees exactly pageNum, cannot drift to wrong page (same fix as single-page generate).
+    const page = await mbPdfDoc.getPage(pageNum);
+    const vp = page.getViewport({ scale: 1.5 });
+    const tmp = document.createElement('canvas');
+    tmp.width = vp.width; tmp.height = vp.height;
+    await page.render({ canvasContext: tmp.getContext('2d'), viewport: vp }).promise;
+    const pageImageData = { base64: tmp.toDataURL('image/jpeg', 0.85).split(',')[1], mimeType: 'image/jpeg' };
+
+    try {
+        const sysPrompt = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePrompt}\n` +
+            `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}`;
+        rawJson = await mbCallAiApi('', pageImageData, sysPrompt, false);
+        geminiAlreadyTried = true;
+    } catch (_) { /* fall through */ }
+
+    // Step 2 (fallback): whole-PDF direct-to-Gemini
+    if (!rawJson && mbPdfUrl) {
         try {
-            const pdfPrompt = `এই PDF-এর পেইজ ${pageNum} দেখো এবং নিচের নির্দেশ অনুসরণ করো:\n${basePrompt}\n\n` +
+            const pdfPrompt = `এই PDF-এর শুধুমাত্র পেইজ ${pageNum} দেখো (অন্য কোনো পেইজ থেকে না) এবং নিচের নির্দেশ অনুসরণ করো:\n${basePrompt}\n\n` +
                 `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}`;
             const res = await fetch(AI_PROXY_URL.replace(/\/$/, '') + '/mcq-from-pdf', {
                 method: 'POST',
@@ -2334,28 +2351,29 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
             if (res.ok && data?.success && data.answer) rawJson = data.answer;
         } catch (_) {}
     }
+
+    // Step 3 (last resort): text-extraction
     if (!rawJson) {
-        const page = await mbPdfDoc.getPage(pageNum);
         const textCont = await page.getTextContent();
         const pageText = textCont.items.map(i => i.str).join(' ').trim();
         if (pageText && pageText.length >= 30) {
-            const prompt = `নিচের টেক্সট থেকে ${basePrompt}\n` +
+            const prompt = `নিচের টেক্সট (পেইজ ${pageNum} থেকে নেওয়া) থেকে ${basePrompt}\n` +
                 `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}\n\n` +
                 `টেক্সট:\n${pageText.slice(0, 4000)}`;
             rawJson = await mbCallAiApi(prompt, null, null, geminiAlreadyTried);
-        } else {
-            const vp = page.getViewport({ scale: 1.5 });
-            const tmp = document.createElement('canvas');
-            tmp.width = vp.width; tmp.height = vp.height;
-            await page.render({ canvasContext: tmp.getContext('2d'), viewport: vp }).promise;
-            const imageData = { base64: tmp.toDataURL('image/jpeg', 0.85).split(',')[1], mimeType: 'image/jpeg' };
-            const sysPrompt = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে ${basePrompt}\n` +
-                `শুধু JSON array রিটার্ন করো: ${jsonFormat}`;
-            rawJson = await mbCallAiApi('', imageData, sysPrompt, geminiAlreadyTried);
         }
     }
 
+    // Retry once with page-image if still no valid JSON (page-accurate retry, not text-blind)
     let parsed = mbParseAiJson(rawJson);
+    if (!parsed || !parsed.length) {
+        try {
+            const strictSys = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePrompt}\n` +
+                `শুধু valid JSON array রিটার্ন করো। কোনো markdown code fence, preamble, বা extra text দিও না। Format:\n${jsonFormat}`;
+            const retryRaw = await mbCallAiApi('', pageImageData, strictSys, false);
+            parsed = mbParseAiJson(retryRaw);
+        } catch (_) {}
+    }
     if (!parsed || !parsed.length) throw new Error('AI সঠিক JSON দেয়নি');
 
     // Count must-follow: AI যদি চাহিদার চেয়ে কম প্রশ্ন দেয়, এক্সট্রা দিলে সংখ্যা কেটে দেওয়া হয়,
