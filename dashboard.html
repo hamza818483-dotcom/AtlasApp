@@ -1361,6 +1361,29 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 // AI calls go through the centralized proxy worker — no provider key lives here.
 const AI_PROXY_URL = 'https://atlas-ai-proxy.hamza818483.workers.dev/';
 
+// ব্যাখ্যার ছবি ফুল-সাইজে দেখানোর জন্য লাইটবক্স (ছবির ওপর ক্লিক করলে পুরো ছবি দেখাবে)
+function ensurePagePreviewLightbox(){
+    if (document.getElementById('pagePreviewLightbox')) return;
+    const lb = document.createElement('div');
+    lb.id = 'pagePreviewLightbox';
+    lb.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:99999;display:none;align-items:center;justify-content:center;padding:20px;cursor:zoom-out;';
+    lb.onclick = closePagePreviewLightbox;
+    lb.innerHTML = `<img id="pagePreviewLightboxImg" style="max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,0.5);" />
+        <div id="pagePreviewLightboxLabel" style="position:absolute;top:16px;left:50%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:600;background:rgba(0,0,0,0.5);padding:4px 12px;border-radius:20px;"></div>
+        <div style="position:absolute;top:16px;right:16px;color:#fff;font-size:24px;cursor:pointer;">✕</div>`;
+    document.body.appendChild(lb);
+}
+function openPagePreviewLightbox(src, label){
+    ensurePagePreviewLightbox();
+    document.getElementById('pagePreviewLightboxImg').src = src;
+    document.getElementById('pagePreviewLightboxLabel').textContent = label || '';
+    document.getElementById('pagePreviewLightbox').style.display = 'flex';
+}
+function closePagePreviewLightbox(){
+    const lb = document.getElementById('pagePreviewLightbox');
+    if (lb) lb.style.display = 'none';
+}
+
 let isDarkMode = true;
 let isSidebarOpen = false;
 let currentUser = null;
@@ -1721,7 +1744,7 @@ function showExamResultFullPage(resultData) {
             });
             
             if (q.explanation) {
-                html += `<div class="explanation-box csv-box"><div class="exp-header">📋 ব্যাখ্যা</div><div class="exp-content">${q.explanation}</div>${q.explanation_image?`<img src="data:image/jpeg;base64,${q.explanation_image}" style="max-width:100%;border-radius:6px;margin-top:6px;display:block">`:''}</div>`;
+                html += `<div class="explanation-box csv-box"><div class="exp-header">📋 ব্যাখ্যা</div><div class="exp-content">${q.explanation}</div>${q.explanation_image?`<img src="data:image/jpeg;base64,${q.explanation_image}" onclick="openPagePreviewLightbox(this.src,'ব্যাখ্যা')" style="max-width:100%;border-radius:6px;margin-top:6px;display:block;cursor:pointer;">`:''}</div>`;
             }
             html += `</div>`;
         });
@@ -1730,6 +1753,7 @@ function showExamResultFullPage(resultData) {
     html += `<button class="btn btn-outline" onclick="backToList()" style="width:100%;margin-top:8px;">🏠 এক্সাম লিস্টে যান</button>`;
     
     document.getElementById('resultContent').innerHTML = html;
+    ensurePagePreviewLightbox();
     
     // Draw pie chart
     setTimeout(() => {
