@@ -83,6 +83,7 @@ let mbPdfUrl       = null;  // current PDF's public URL, used to send the full P
 let mbCurrentPage = 1;
 let mbAllPageData = [];
 let mbAllPageDataAllTypes = []; // admin + user-generated সব types একসাথে — count summary এর জন্য
+let mbCachedNumPages = 0; // cache থেকে instant-load এর সময় PDF-এর মোট পেইজ সংখ্যা (mbPdfDoc লোড হওয়ার আগেই ব্যবহারের জন্য)
 let mbEditingId   = null;
 let mbAnswerKey   = null;
 let mbTypeKey     = 'standard';
@@ -723,6 +724,7 @@ function mbOpenMcqPanel(pdfId, pdfTitle, pdfUrl) {
         if (cached && cached.allTypes) {
             mbAllPageDataAllTypes = cached.allTypes;
             mbAllPageData = cached.adminOnly || [];
+            if (cached.numPages) mbCachedNumPages = cached.numPages;
             mbRenderPageSummary();
             mbRenderPageMcqList();
             mbUpdatePageCount();
@@ -743,6 +745,7 @@ function mbOpenMcqPanel(pdfId, pdfTitle, pdfUrl) {
             localStorage.setItem('atlasMbPillCache_' + pdfId, JSON.stringify({
                 allTypes: mbAllPageDataAllTypes,
                 adminOnly: mbAllPageData,
+                numPages: mbPdfDoc ? mbPdfDoc.numPages : mbCachedNumPages,
                 ts: Date.now()
             }));
         } catch (_) {}
@@ -800,6 +803,17 @@ async function mbLoadPdfPreview(url) {
         // প্রথমবারে আসতো না (numPages তখনো অজানা থাকায় খালি render হতো)।
         mbRenderPageSummary();
         await mbRenderPdfPage(mbCurrentPage);
+        // numPages জানা গেলে pill cache আপডেট করে দাও, পরের বার instant-load এ পুরো page range দেখানোর জন্য
+        try {
+            if (mbPdfId) {
+                const ck = 'atlasMbPillCache_' + mbPdfId;
+                const c = JSON.parse(localStorage.getItem(ck) || 'null') || {};
+                c.numPages = mbPdfDoc.numPages;
+                c.allTypes = mbAllPageDataAllTypes;
+                c.adminOnly = mbAllPageData;
+                localStorage.setItem(ck, JSON.stringify(c));
+            }
+        } catch (_) {}
     } catch (e) {
         if (loadingEl) loadingEl.classList.remove('show');
         console.warn('PDF preview failed:', e);
@@ -884,7 +898,7 @@ function mbRenderPageSummary() {
 
     // Total pages = max of (pages with MCQs, currentPage, numPages from PDF.js) capped at 50
     const maxFromMcqs = Object.keys(pageCounts).length ? Math.max(...Object.keys(pageCounts).map(Number)) : 0;
-    const numPdfPages = mbPdfDoc ? mbPdfDoc.numPages : 0;
+    const numPdfPages = mbPdfDoc ? mbPdfDoc.numPages : mbCachedNumPages;
     // bug fix: আগে totalPages কে হার্ডকোড 50 তে cap করা ছিল, ফলে ৫০+ পেইজের PDF (যেমন ৬৭ পেইজ)
     // এ শেষের পেইজগুলোর pill কখনোই দেখাতো না। এখন pure PDF page count ব্যবহার হচ্ছে, কোনো cap নেই।
     const totalPages = Math.max(maxFromMcqs, mbCurrentPage, numPdfPages, 1);
@@ -983,6 +997,7 @@ async function mbLoadAllPageMcqs() {
             localStorage.setItem('atlasMbPillCache_' + mbPdfId, JSON.stringify({
                 allTypes: mbAllPageDataAllTypes,
                 adminOnly: mbAllPageData,
+                numPages: mbPdfDoc ? mbPdfDoc.numPages : mbCachedNumPages,
                 ts: Date.now()
             }));
         }
