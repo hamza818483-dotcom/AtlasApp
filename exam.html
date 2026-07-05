@@ -1806,7 +1806,7 @@ function showResult(correct,wrong,skipped,negMark,finalScore,withGpa,gpaScore,de
                 </div>`;
             }
         });
-        if(q.explanation) html+=`<div class="explanation-box csv-box"><div class="exp-header">📋 ব্যাখ্যা</div><div class="exp-content">${q.explanation}</div>${q.explanation_image?`<img src="data:image/jpeg;base64,${q.explanation_image}" data-fullpage="${q.full_page_image||''}" onclick="openPagePreviewLightbox(this.dataset.fullpage||this.src,'ব্যাখ্যা')" style="max-width:100%;border-radius:6px;margin-top:6px;display:block;cursor:pointer;">`:''}</div>`;
+        if(q.explanation) html+=`<div class="explanation-box csv-box"><div class="exp-header">📋 ব্যাখ্যা</div><div class="exp-content">${q.explanation}</div>${q.explanation_image?`<img src="data:image/jpeg;base64,${q.explanation_image}" data-fullpage="${(currentExam&&currentExam._pageImageMap&&currentExam._pageImageMap[q.page_number])||''}" onclick="openPagePreviewLightbox(this.dataset.fullpage||this.src,'ব্যাখ্যা')" style="max-width:100%;border-radius:6px;margin-top:6px;display:block;cursor:pointer;">`:''}</div>`;
         html+=`<div class="explanation-box ai-box">
             <div class="exp-header" onclick="toggleAIBox(this,'${q.id}')">🤖 ATLAS AI ব্যাখ্যা <span class="exp-arrow">▼</span></div>
             <div class="exp-content" id="aiExp${q.id}"></div>
@@ -2028,7 +2028,7 @@ function openSolveSheetPDF(){
                     html+=`<div class="opt ${cls}"><span class="opt-label">${['ক','খ','গ','ঘ','ঙ'][oi]})</span><span>${opt}</span>${oi+1===q.answer_index?' ✅':oi+1===ua&&ua!==q.answer_index?' ❌':''}</div>`;
                 }
             });
-            if(q.explanation) html+=`<div class="exp-box"><strong>💡 ব্যাখ্যা</strong>${q.explanation}${q.explanation_image?`<img src="data:image/jpeg;base64,${q.explanation_image}" data-fullpage="${q.full_page_image||''}" onclick="openPagePreviewLightbox(this.dataset.fullpage||this.src,'ব্যাখ্যা')" style="max-width:100%;border-radius:6px;margin-top:6px;display:block;cursor:pointer;">`:''}</div>`;
+            if(q.explanation) html+=`<div class="exp-box"><strong>💡 ব্যাখ্যা</strong>${q.explanation}${q.explanation_image?`<img src="data:image/jpeg;base64,${q.explanation_image}" data-fullpage="${(currentExam&&currentExam._pageImageMap&&currentExam._pageImageMap[q.page_number])||''}" onclick="openPagePreviewLightbox(this.dataset.fullpage||this.src,'ব্যাখ্যা')" style="max-width:100%;border-radius:6px;margin-top:6px;display:block;cursor:pointer;">`:''}</div>`;
             html+=`</div>`;
         });
         html+=`</div><div class="pdf-footer">ATLAS APP © 2026 | atlasprep.pages.dev | পৃষ্ঠা ${page+1}/${totalPages}</div></div>`;
@@ -2102,12 +2102,13 @@ if(practice==='mock'){
         try{
             examQuestions=JSON.parse(qData);
             const practiceImgs = JSON.parse(sessionStorage.getItem('practicePageImages')||'[]');
+            const pageImageMap = JSON.parse(sessionStorage.getItem('practicePageImageMap')||'{}');
             currentExam={
                 title,subject:'Mock',chapter:'Mock',
                 exam_type:'mock',total_marks:examQuestions.length,
                 duration_minutes:time||Math.ceil(examQuestions.length/1.5),
                 id:'mock_'+Date.now(),allow_preview:false,allow_solve_sheet:true,
-                pages, _pageImages: practiceImgs
+                pages, _pageImages: practiceImgs, _pageImageMap: pageImageMap
             };
             showPreExamFromData(currentExam,examQuestions);
         }catch(e){showToast('❌ প্রশ্ন লোড করতে সমস্যা');}
