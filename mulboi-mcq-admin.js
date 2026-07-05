@@ -1588,9 +1588,7 @@ async function mbSavePromptForType(type, text) {
    page টাকে বেশি scale (2.5x) দিয়ে fresh render করে সেখান থেকে সঠিক pixel অংশ crop করে,
    যাতে ছোট টেক্সটও পড়া যায়। box পাওয়া না গেলে বা invalid হলে null রিটার্ন করে। */
 async function mbCropExplanationImage(pageNum, box) {
-    if (!mbPdfDoc || !box) return null;
-    const x = Number(box.x), y = Number(box.y), w = Number(box.w), h = Number(box.h);
-    if (![x, y, w, h].every(n => Number.isFinite(n)) || w <= 0 || h <= 0) return null;
+    if (!mbPdfDoc) return null;
     try {
         const page  = await mbPdfDoc.getPage(pageNum);
         const scale = 2.5; // ভালো readability-র জন্য বেশি রেজোলিউশনে render
@@ -1600,18 +1598,30 @@ async function mbCropExplanationImage(pageNum, box) {
         full.height = vp.height;
         await page.render({ canvasContext: full.getContext('2d'), viewport: vp }).promise;
 
-        // % coords কে actual pixel-এ রূপান্তর, সামান্য padding + বাউন্ডারি-ক্ল্যাম্প সহ
-        const padPct = 2.5; // অতিরিক্ত padding চারপাশে, পুরো টপিক যেন টাইট crop-এ কাটা না পড়ে
-        const px = Math.max(0, (x - padPct) / 100 * full.width);
-        const py = Math.max(0, (y - padPct) / 100 * full.height);
-        const pw = Math.min(full.width  - px, (w + padPct * 2) / 100 * full.width);
-        const ph = Math.min(full.height - py, (h + padPct * 2) / 100 * full.height);
-        if (pw < 10 || ph < 10) return null;
+        const y = box ? Number(box.y) : NaN;
+        const h = box ? Number(box.h) : NaN;
+        const validBox = Number.isFinite(y) && Number.isFinite(h) && h > 0;
+
+        // x,w কখনো ব্যবহার করা হয় না — সবসময় পুরো পেইজ width (0-100%) নেওয়া হয়, নাহলে
+        // ডান/বাম পাশের টেক্সট কাটা পড়ার সমস্যা হয় (AI-র width estimate ভুল হলে)।
+        // শুধু y,h (vertical position) AI থেকে নেওয়া হয়, সেটাও generous padding সহ।
+        const padPct = 4; // উপরে-নিচে অতিরিক্ত ৪% বাফার, টপিক কাটা পড়া এড়াতে
+        let py, ph;
+        if (validBox) {
+            py = Math.max(0, (y - padPct) / 100 * full.height);
+            ph = Math.min(full.height - py, (h + padPct * 2) / 100 * full.height);
+        } else {
+            // exp_box না পাওয়া গেলে fallback: পুরো পেইজটাই explanation image হিসেবে দেওয়া হয়,
+            // যাতে কোনো MCQ-তেই image সম্পূর্ণ miss না হয়।
+            py = 0;
+            ph = full.height;
+        }
+        if (ph < 10) return null;
 
         const cropped = document.createElement('canvas');
-        cropped.width  = pw;
+        cropped.width  = full.width;
         cropped.height = ph;
-        cropped.getContext('2d').drawImage(full, px, py, pw, ph, 0, 0, pw, ph);
+        cropped.getContext('2d').drawImage(full, 0, py, full.width, ph, 0, 0, full.width, ph);
         return cropped.toDataURL('image/jpeg', 0.85).split(',')[1]; // শুধু base64 অংশ ফেরত
     } catch (_) {
         return null;
@@ -1741,11 +1751,10 @@ async function mbAiGenerate() {
         // MCQ শেয়ার করতে পারে, তাই ডুপ্লিকেট crop এড়াতে cache করে নেওয়া
         const cropCache = new Map();
         for (const m of mbAiData) {
-            if (!m.exp_box) continue;
-            const key = JSON.stringify(m.exp_box);
+            const key = JSON.stringify(m.exp_box || 'FULL');
             if (!cropCache.has(key)) cropCache.set(key, await mbCropExplanationImage(mbCurrentPage, m.exp_box));
             const img = cropCache.get(key);
-            if (img) m.explanation_image = img;
+            if (img) m.explanation_image = img; // exp_box না থাকলেও fallback (full page) দেওয়া হয় — কখনো miss হবে না
             delete m.exp_box; // raw box আর দরকার নেই, save হবে না
         }
 
@@ -2240,8 +2249,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     // exp_box থেকে topic-crop explanation image বানানো (bulk generation-এও একই লজিক প্রয়োজন)
     const cropCache = new Map();
     for (const m of newMcqs) {
-        if (!m.exp_box) continue;
-        const key = JSON.stringify(m.exp_box);
+        const key = JSON.stringify(m.exp_box || 'FULL');
         if (!cropCache.has(key)) cropCache.set(key, await mbCropExplanationImage(pageNum, m.exp_box));
         const img = cropCache.get(key);
         if (img) m.explanation_image = img;
