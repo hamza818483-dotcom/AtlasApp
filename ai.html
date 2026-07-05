@@ -637,7 +637,7 @@
             <button class="icon-btn" onclick="document.getElementById('imageInput').click()" title="ছবি পাঠাও">📸</button>
             <button class="icon-btn" onclick="document.getElementById('fileInput').click()" title="ফাইল পাঠাও">📎</button>
         </div>
-        <textarea id="chatInput" rows="1"
+        <textarea id="chatInput" rows="1" enterkeyhint="send"
             placeholder="প্রশ্ন লিখো... MCQ দিলে সঠিক উত্তর পাবে 🎯"
             maxlength="3000"></textarea>
         <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
@@ -1280,7 +1280,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const textarea = document.getElementById('chatInput');
     textarea.addEventListener('input', () => autoResizeTextarea(textarea));
     textarea.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        if ((e.key === 'Enter' || e.keyCode === 13) && !e.shiftKey && !e.isComposing) {
             e.preventDefault();
             sendMessage();
         }
