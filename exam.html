@@ -961,7 +961,7 @@ window.__twState = { data: [], subject: null, chapter: null };
 async function loadTopicwiseSubjects(){
     try{
         const data = await safeFetch(`${SUPABASE_URL}/rest/v1/exams?exam_type=eq.topicwise&select=*&order=sort_order.asc,created_at.desc&limit=500`);
-        if(!data?.length){ document.getElementById('categoryContent').innerHTML='<p style="text-align:center;color:var(--text-secondary);padding:20px;">কোনো টপিকওয়াইজ এক্সাম নেই</p>'; switchMode('Category'); return; }
+        if(!data?.length){ document.getElementById('categoryContent').innerHTML='<div style="text-align:center;color:var(--text-secondary);padding:40px 20px;">📭 কোনো টপিকওয়াইজ এক্সাম যোগ করা হয়নি<br><span style="font-size:12px;">এডমিন প্যানেল থেকে যোগ করুন</span></div>'; switchMode('Category'); return; }
         window.__twState = { data, subject:null, chapter:null };
         renderTwSubjects();
     }catch(e){ document.getElementById('categoryContent').innerHTML='<p style="text-align:center;color:var(--text-secondary);padding:20px;">লোড করতে সমস্যা হয়েছে</p>'; switchMode('Category'); }
