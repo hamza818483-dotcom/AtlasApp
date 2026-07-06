@@ -1072,10 +1072,13 @@ function mbRenderPageSummary() {
     const pageTypeCounts = {}; // {pageNum: {admin:3, standard:5, true_false:2, hard:1}}
     mbAllPageDataAllTypes.forEach(row => {
         try {
+            // bug fix: page_number bigint column আসে string আকারে (PostgREST), তাই Number() দিয়ে
+            // normalize না করলে key mismatch হয়ে pill count/All-list ফাঁকা দেখাত।
+            const pn = Number(row.page_number);
             const qs = JSON.parse(row.questions_json || '[]');
-            pageCounts[row.page_number] = (pageCounts[row.page_number] || 0) + qs.length;
-            if (!pageTypeCounts[row.page_number]) pageTypeCounts[row.page_number] = {};
-            pageTypeCounts[row.page_number][row.mcq_type] = qs.length;
+            pageCounts[pn] = (pageCounts[pn] || 0) + qs.length;
+            if (!pageTypeCounts[pn]) pageTypeCounts[pn] = {};
+            pageTypeCounts[pn][row.mcq_type] = qs.length;
         } catch {}
     });
     window._mbPageTypeCounts = pageTypeCounts; // অন্য জায়গা থেকে access করার জন্য
@@ -1185,7 +1188,7 @@ async function mbLoadAllPageMcqs() {
 }
 
 function mbGetPageMcqs(pageNum) {
-    const row = mbAllPageData.find(r => r.page_number === pageNum);
+    const row = mbAllPageData.find(r => Number(r.page_number) === Number(pageNum));
     if (!row) return [];
     try { return JSON.parse(row.questions_json || '[]'); } catch { return []; }
 }
@@ -1194,7 +1197,7 @@ function mbGetPageMcqs(pageNum) {
 // user-generated MCQ edit করার সময় সঠিক row-এ save করার জন্য দরকার, নাহলে সবসময় 'admin'-এ
 // লেখার চেষ্টা হয় আর duplicate-key constraint এ আটকে যায়।
 function mbFindMcqSourceType(pageNum, mcqId) {
-    const rows = mbAllPageDataAllTypes.filter(r => r.page_number === pageNum);
+    const rows = mbAllPageDataAllTypes.filter(r => Number(r.page_number) === Number(pageNum));
     for (const r of rows) {
         try {
             const qs = JSON.parse(r.questions_json || '[]');
@@ -1212,7 +1215,7 @@ function mbFindMcqSourceType(pageNum, mcqId) {
 
 // একটা নির্দিষ্ট mcq_type row-এর raw MCQ array (normalize না করা, আসল shape যেমন আছে) ফেরত দেয়
 function mbGetPageMcqsByType(pageNum, mcqType) {
-    const row = mbAllPageDataAllTypes.find(r => r.page_number === pageNum && r.mcq_type === mcqType);
+    const row = mbAllPageDataAllTypes.find(r => Number(r.page_number) === Number(pageNum) && r.mcq_type === mcqType);
     if (!row) return [];
     try { return JSON.parse(row.questions_json || '[]'); } catch { return []; }
 }
@@ -1237,12 +1240,12 @@ async function mbUpsertPageMcqs(pageNum, mcqs, mcqType) {
     const data = await res.json();
     const newRow = Array.isArray(data) ? data[0] : data;
     if (mcqType === 'admin') {
-        const idx = mbAllPageData.findIndex(r => r.page_number === pageNum);
+        const idx = mbAllPageData.findIndex(r => Number(r.page_number) === Number(pageNum));
         if (idx >= 0) mbAllPageData[idx] = newRow;
         else mbAllPageData.push(newRow);
     }
     // mbAllPageDataAllTypes (সব ধরনের row একসাথে রাখে, All ট্যাব + count-এর জন্য) — সেখানেও sync রাখা দরকার
-    const idxAll = mbAllPageDataAllTypes.findIndex(r => r.page_number === pageNum && r.mcq_type === mcqType);
+    const idxAll = mbAllPageDataAllTypes.findIndex(r => Number(r.page_number) === Number(pageNum) && r.mcq_type === mcqType);
     if (idxAll >= 0) mbAllPageDataAllTypes[idxAll] = newRow;
     else mbAllPageDataAllTypes.push(newRow);
 }
@@ -1250,7 +1253,7 @@ async function mbUpsertPageMcqs(pageNum, mcqs, mcqType) {
 function mbUpdatePageCount() {
     const adminMcqs = mbGetPageMcqs(mbCurrentPage);
     let totalCount = adminMcqs.length;
-    const userRows = mbAllPageDataAllTypes.filter(r => r.page_number === mbCurrentPage && r.mcq_type !== 'admin');
+    const userRows = mbAllPageDataAllTypes.filter(r => Number(r.page_number) === Number(mbCurrentPage) && r.mcq_type !== 'admin');
     userRows.forEach(r => {
         try { totalCount += JSON.parse(r.questions_json || '[]').length; } catch (_) {}
     });
@@ -1558,7 +1561,7 @@ function mbRenderPageMcqList() {
 
     // admin-added MCQ (edit/delete করা যায়) + এই পেইজের user-generated MCQ (read-only, সব ধরন একসাথে)
     const adminMcqs = mbGetPageMcqs(mbCurrentPage).map(m => ({ ...mbNormalizeMcqShape(m), _source: 'admin' }));
-    const userRows = mbAllPageDataAllTypes.filter(r => r.page_number === mbCurrentPage && r.mcq_type !== 'admin');
+    const userRows = mbAllPageDataAllTypes.filter(r => Number(r.page_number) === Number(mbCurrentPage) && r.mcq_type !== 'admin');
     let userMcqs = [];
     userRows.forEach(r => {
         try {
@@ -2697,7 +2700,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     // bug fix: এটা admin panel-এর AI generate (single/bulk উভয়), তাই mcq_type অবশ্যই 'admin' হবে —
     // আগে এখানে mcq_type:type (standard/true_false/hard) সেভ হতো, যার ফলে এই MCQ গুলো
     // ভুলভাবে "ইউজার-জেনারেটেড" হিসেবে দেখাতো এবং edit/delete করা যেতো না।
-    const existingRow = mbAllPageData.find(r => r.page_number === pageNum);
+    const existingRow = mbAllPageData.find(r => Number(r.page_number) === Number(pageNum));
     let currentMcqs = [];
     if (existingRow) { try { currentMcqs = JSON.parse(existingRow.questions_json || '[]'); } catch (_) {} }
     currentMcqs.push(...newMcqs);
@@ -2710,7 +2713,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     try {
         const data = await res.json();
         const newRow = Array.isArray(data) ? data[0] : data;
-        const idx = mbAllPageData.findIndex(r => r.page_number === pageNum);
+        const idx = mbAllPageData.findIndex(r => Number(r.page_number) === Number(pageNum));
         if (idx >= 0) mbAllPageData[idx] = newRow; else mbAllPageData.push(newRow);
     } catch (_) {}
 
@@ -2728,7 +2731,7 @@ async function mbGenerateForPageSpecial(pageNum) {
 
     const newMcqs = parsed.map(m => ({ id: uid(), ...mbShuffleSpecialOptions(m), type: 'special' }));
 
-    const existingRow = mbAllPageData.find(r => r.page_number === pageNum);
+    const existingRow = mbAllPageData.find(r => Number(r.page_number) === Number(pageNum));
     let currentMcqs = [];
     if (existingRow) { try { currentMcqs = JSON.parse(existingRow.questions_json || '[]'); } catch (_) {} }
     currentMcqs.push(...newMcqs);
@@ -2741,7 +2744,7 @@ async function mbGenerateForPageSpecial(pageNum) {
     try {
         const data = await res.json();
         const newRow = Array.isArray(data) ? data[0] : data;
-        const idx = mbAllPageData.findIndex(r => r.page_number === pageNum);
+        const idx = mbAllPageData.findIndex(r => Number(r.page_number) === Number(pageNum));
         if (idx >= 0) mbAllPageData[idx] = newRow; else mbAllPageData.push(newRow);
     } catch (_) {}
 
