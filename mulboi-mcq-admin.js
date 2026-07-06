@@ -1229,29 +1229,22 @@ async function mbLoadAllPageMcqs() {
     // এ প্রয়োজনীয় index যোগ করা হয়েছে (Supabase SQL Editor এ একবার রান করলেই স্থায়ী সমাধান)।
     // এখানে order+limit যোগ করে ও retry বাড়িয়ে client-side দিক থেকেও query টাকে আরেকটু
     // resilient করা হলো, যাতে index apply হওয়ার আগে/পরে উভয় ক্ষেত্রেই আচরণ predictable থাকে।
-    const [res, res2] = await Promise.all([
-        mbApiWithRetry('/book_page_mcqs?pdf_id=eq.' + mbPdfId + '&mcq_type=eq.admin&select=id,page_number,questions_json&order=page_number.asc&limit=500', 2),
-        mbApiWithRetry('/book_page_mcqs?pdf_id=eq.' + mbPdfId + '&select=id,page_number,mcq_type,questions_json&order=page_number.asc&limit=500', 2)
-    ]);
+    // perf fix: আগে admin-only আর all-types দুইটা আলাদা query চলতো, কিন্তু all-types
+    // query-ই admin rows সহ সবকিছু নিয়ে আসে — তাই admin-only query pure duplicate ছিল,
+    // প্রতিবার panel open এ ভারী questions_json (base64 image সহ) দ্বিগুণ ডাউনলোড হতো এবং
+    // Disk IO/egress দ্বিগুণ খরচ হতো। এখন একটাই query চলে, mbAllPageData তা থেকেই derive হয়।
+    const res2 = await mbApiWithRetry('/book_page_mcqs?pdf_id=eq.' + mbPdfId + '&select=id,page_number,mcq_type,questions_json&order=page_number.asc&limit=500', 2);
 
     let failed = false;
     let errMsg = '';
     try {
-        if (!res.ok) { const t = await res.text().catch(()=>''); throw new Error('(' + res.status + ') ' + t); }
-        mbAllPageData = await res.json() || [];
-    } catch (e) {
-        console.error('mbLoadAllPageMcqs: admin fetch failed', e);
-        failed = true;
-        errMsg = e.message || String(e);
-    }
-
-    try {
         if (!res2.ok) { const t = await res2.text().catch(()=>''); throw new Error('(' + res2.status + ') ' + t); }
         mbAllPageDataAllTypes = await res2.json() || [];
+        mbAllPageData = mbAllPageDataAllTypes.filter(r => r.mcq_type === 'admin');
     } catch (e) {
-        console.error('mbLoadAllPageMcqs: all-types fetch failed', e);
+        console.error('mbLoadAllPageMcqs: fetch failed', e);
         failed = true;
-        errMsg = errMsg || e.message || String(e);
+        errMsg = e.message || String(e);
     }
 
     if (failed && typeof mbToast === 'function') {
