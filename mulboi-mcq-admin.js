@@ -78,6 +78,9 @@ let mbSubjectId   = null;
 let mbChapterId   = null;
 let mbPdfId       = null;
 let mbPdfFile     = null;
+let mbqPdfFile    = null; // Quick-Add ফর্মের জন্য আলাদা ফাইল স্টেট (existing mbPdfFile এর সাথে conflict এড়াতে)
+let mbqSubjectsCache = []; // Quick-Add datalist cache: [{id,name,icon}]
+let mbqChaptersCache = []; // Quick-Add datalist cache: [{id,name,subject_id}]
 let mbPdfDoc      = null;
 let mbPdfUrl       = null;  // current PDF's public URL, used to send the full PDF to Gemini for reliable MCQ generation
 let mbCurrentPage = 1;
@@ -130,12 +133,17 @@ const MB_EXP_BOX_RULE = (
     `বর্ডার/সীমানাসহ) অবশ্যই থাকবে, সাথে উপরে-নিচে সম্পর্কিত (relevant) অংশও থাকবে। ` +
     `y নির্ধারণের সময় বরং একটু আগে থেকে শুরু করো (under-estimate না করে over-estimate করা ভালো) এবং h নির্ধারণের সময় বরং ` +
     `একটু বেশি ধরো, যাতে মূল অংশ কোনোভাবেই y বা y+h এর ঠিক সীমানায় গিয়ে কেটে না যায়। ` +
-    `উপরে টপিক/বক্স শুরুর ঠিক আগ থেকে এবং নিচে শেষ হওয়ার ঠিক পর থেকে অতিরিক্ত ৩-৪ লাইনের সমান বাফার (buffer) যোগ করবে — ` +
-    `এই বাফার-জোনে (মূল অংশের ঠিক উপরে/নিচে) যদি আগের/পরের অন্য প্যারার অংশ আংশিকভাবে (partial/cut) চলে আসে সেটা সমস্যা না, ` +
+    `উপরে টপিক/বক্স শুরুর ঠিক আগ থেকে এবং নিচে শেষ হওয়ার ঠিক পর থেকে সামান্য (আধা লাইনের কম) সেফটি বাফার যোগ করবে, বেশি বাফার না — ` +
+    `অতিরিক্ত বাফার দিলে পাশের অন্য প্যারা/প্রশ্নের অংশ ভুলভাবে চলে আসতে পারে, তাই বাফার যতটা সম্ভব ছোট রাখবে। ` +
+    `এছাড়া "line_box" নামে আরেকটি object দিবে — শুধুমাত্র সেই নির্দিষ্ট লাইন/বাক্যের bounding box (y,h একই % এককে, x/w লাগবে না) ` +
+    `যেখান থেকে সরাসরি এই প্রশ্নের উত্তর/মূল তথ্যটি এসেছে (পুরো প্যারা/টপিক না, শুধু ঐ এক বা দুই লাইন)। ` +
+    `exp_box পুরো প্রসঙ্গ/প্যারা/বক্স কভার করবে, কিন্তু line_box শুধু সেই exact লাইনটুকু নির্দেশ করবে যেটা highlight করা হবে। ` +
     `কিন্তু মূল টপিক/বক্স অংশ কখনোই আংশিক/partial বা কাটা হবে না — সেটা সবসময় ১০০% সম্পূর্ণ থাকবে, এটাই সবচেয়ে জরুরি শর্ত। ` +
     `এই object-এ চারটি key থাকবে: x, y, w, h — সবগুলো পুরো পেইজের width/height এর ` +
     `শতকরা হিসেবে (0 থেকে 100 এর মধ্যে সংখ্যা, % চিহ্ন ছাড়া)। x,y মানে বাম-উপরের কোণা, w,h মানে width ও height। ` +
-    `একই টপিক/উদ্দীপক/বক্স থেকে একাধিক প্রশ্ন বানানো হলে, সবগুলোর exp_box একই (পুরো অংশ কভার করা) হবে — এটাই সঠিক, আলাদা করার দরকার নেই।`
+    `একই টপিক/উদ্দীপক/বক্স থেকে একাধিক প্রশ্ন বানানো হলে, সবগুলোর exp_box একই (পুরো অংশ কভার করা) হবে — এটাই সঠিক, আলাদা করার দরকার নেই। ` +
+    `গুরুত্বপূর্ণ: y,h এমনভাবে নির্ধারণ করো যাতে মূল টপিক/অংশের ঠিক শুরু ও শেষ y ও y+h বরাবর পড়ে (tight-fit) — ` +
+    `উপরে/নিচে অপ্রয়োজনীয় বাড়তি ফাঁকা জায়গা না রেখে, শুধু কোনো লাইন/বক্স যেন না কাটা পড়ে তা নিশ্চিত করতে সামান্য (১ লাইনের কম) বাফার রাখো।`
 );
 
 let mbCsvData     = [];
@@ -147,7 +155,7 @@ let mbAiData      = [];
    নির্দিষ্ট count বাধ্যতামূলক করে) — এর বদলে আলাদা extraction-only rule সেট।
    ════════════════════════════════════════════════════ */
 function mbSpecialExtractPrompt() {
-    const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","exp_box":{"x":0,"y":0,"w":0,"h":0},"type":"special"}]`;
+    const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","exp_box":{"x":0,"y":0,"w":0,"h":0},"line_box":{"y":0,"h":0},"type":"special"}]`;
     return (
         `তুমি একজন নিখুঁত ডেটা-এক্সট্র্যাকশন এক্সপার্ট। তোমার কাজ শুধুমাত্র এই পেইজে ইতিমধ্যে ছাপা/লেখা MCQ প্রশ্নগুলো ` +
         `হুবহু এক্সট্র্যাক্ট করা — নতুন কোনো MCQ কখনোই বানাবে না।\n\n` +
@@ -163,7 +171,7 @@ function mbSpecialExtractPrompt() {
         `৬. গাণিতিক/রাসায়নিক রাশি লেখার সময় সঠিক সাব/সুপারস্ক্রিপ্ট ইউনিকোড ব্যবহার করবে (x², H₂O ইত্যাদি), সাধারণ সংখ্যা দিয়ে লিখবে না।\n` +
         `৭. প্রশ্ন বা ব্যাখ্যায় কখনো "উল্লেখিত চিত্রে", "বক্সে", "উদ্দীপকে", "পৃষ্ঠায়" জাতীয় সোর্স-রেফারেন্স বাক্য ব্যবহার করবে না — স্বয়ংসম্পূর্ণ রাখবে।\n` +
         `৮. এটাই সবচেয়ে গুরুত্বপূর্ণ নিয়ম: তুমি একজন এক্সট্র্যাক্টর, জেনারেটর নও — কোনো অবস্থাতেই নিজের থেকে নতুন প্রশ্ন কল্পনা করে বানাবে না।\n` +
-        `৯. প্রতিটি প্রশ্নের জন্য "exp_box" object দিবে — যে টপিক/উদ্দীপক/paragraph থেকে প্রশ্নটি নেওয়া হয়েছে তার শুরু থেকে শেষ পর্যন্ত সম্পূর্ণ অংশের bounding box (partial না, পুরো টপিক), সাথে ১-২ লাইন সেফটি বাফার, পুরো পেইজের সাপেক্ষে শতকরা (0-100) হিসেবে {x,y,w,h}।\n\n` +
+        `৯. প্রতিটি প্রশ্নের জন্য "exp_box" object দিবে — যে টপিক/উদ্দীপক/paragraph থেকে প্রশ্নটি নেওয়া হয়েছে তার শুরু থেকে শেষ পর্যন্ত সম্পূর্ণ অংশের bounding box (partial না, পুরো টপিক), সাথে খুব সামান্য (১ লাইনের কম) সেফটি বাফার — কোনো লাইন/বক্স যেন কাটা না পড়ে কিন্তু অপ্রয়োজনীয় বাড়তি ফাঁকা অংশও না থাকে — পুরো পেইজের সাপেক্ষে শতকরা (0-100) হিসেবে {x,y,w,h}। এছাড়া "line_box" object দিবে — শুধু সেই নির্দিষ্ট লাইন/বাক্য যেখান থেকে সরাসরি উত্তর/তথ্য এসেছে তার bounding box (y,h), পুরো প্যারা না।\n\n` +
         `শুধুমাত্র নিচের JSON ফরম্যাটে উত্তর দিবে, অন্য কোনো লেখা/markdown/backtick ছাড়া:\n${jsonFormat}`
     );
 }
@@ -186,7 +194,7 @@ function mbShuffleSpecialOptions(m) {
 // একটা পেইজ থেকে শুধু existing MCQ এক্সট্র্যাক্ট করে — retry + reliability check সহ।
 // রেজাল্ট খালি [] হলে অর্থ পেইজে সত্যিই কোনো MCQ নেই (silently skip, error না)।
 async function mbSpecialExtractPage(pageNum) {
-    const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","exp_box":{"x":0,"y":0,"w":0,"h":0},"type":"special"}]`;
+    const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","exp_box":{"x":0,"y":0,"w":0,"h":0},"line_box":{"y":0,"h":0},"type":"special"}]`;
     const basePrompt = mbSpecialExtractPrompt();
     const MAX_ATTEMPTS = 3;
 
@@ -422,6 +430,160 @@ async function mbCreateChapter() {
 }
 
 /* ════════════════════════════════════════════════════
+   4B. QUICK ADD — Subject + Chapter + PDF একসাথে (Exam Tab স্টাইল)
+   ════════════════════════════════════════════════════ */
+async function mbqLoadDatalists() {
+    try {
+        const res = await mbApi('/book_subjects?select=id,name,icon&order=sort_order.asc,created_at.asc&limit=200');
+        mbqSubjectsCache = res.ok ? (await res.json() || []) : [];
+        const dl = document.getElementById('mbqSubjectList');
+        if (dl) dl.innerHTML = mbqSubjectsCache.map(s => `<option value="${esc(s.name)}">`).join('');
+    } catch { mbqSubjectsCache = []; }
+    try {
+        const res = await mbApi('/book_chapters?select=id,name,subject_id&order=sort_order.asc,created_at.asc&limit=500');
+        mbqChaptersCache = res.ok ? (await res.json() || []) : [];
+        const dl = document.getElementById('mbqChapterList');
+        if (dl) dl.innerHTML = mbqChaptersCache.map(c => `<option value="${esc(c.name)}">`).join('');
+    } catch { mbqChaptersCache = []; }
+}
+
+function mbqDzOver(e) { e.preventDefault(); document.getElementById('mbqDropZone').classList.add('dragover'); }
+function mbqDzLeave() { document.getElementById('mbqDropZone').classList.remove('dragover'); }
+function mbqDzDrop(e) {
+    e.preventDefault();
+    document.getElementById('mbqDropZone').classList.remove('dragover');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type === 'application/pdf') mbqSetFile(f);
+    else mbToast('শুধু PDF ফাইল গ্রহণযোগ্য', 'error');
+}
+function mbqOnFileSelect(e) { const f = e.target.files[0]; if (f) mbqSetFile(f); }
+function mbqSetFile(f) {
+    mbqPdfFile = f;
+    const fc = document.getElementById('mbqFileChosen');
+    if (fc) { fc.textContent = '📄 ' + f.name; fc.style.display = 'block'; }
+    const titleEl = document.getElementById('mbqPdfTitle');
+    if (titleEl && !titleEl.value) titleEl.value = f.name.replace(/\.pdf$/i, '');
+}
+
+// নাম দিয়ে subject খুঁজে বের করে, না পেলে নতুন তৈরি করে — id রিটার্ন করে
+async function mbqResolveSubjectId(name) {
+    const existing = mbqSubjectsCache.find(s => s.name.trim().toLowerCase() === name.trim().toLowerCase());
+    if (existing) return existing.id;
+    const res = await mbApi('/book_subjects', {
+        method: 'POST',
+        body: JSON.stringify({ name: name.trim(), icon: '📚', description: '', sort_order: 0 })
+    });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.message || 'বিষয় তৈরি ব্যর্থ'); }
+    const data = await res.json();
+    const newId = Array.isArray(data) ? data[0]?.id : data?.id;
+    mbqSubjectsCache.push({ id: newId, name: name.trim(), icon: '📚' });
+    return newId;
+}
+
+// নাম + subjectId দিয়ে chapter খুঁজে বের করে, না পেলে নতুন তৈরি করে — id রিটার্ন করে
+async function mbqResolveChapterId(name, subjectId) {
+    const existing = mbqChaptersCache.find(c => c.subject_id == subjectId && c.name.trim().toLowerCase() === name.trim().toLowerCase());
+    if (existing) return existing.id;
+    const res = await mbApi('/book_chapters', {
+        method: 'POST',
+        body: JSON.stringify({ subject_id: parseInt(subjectId), name: name.trim(), sort_order: 0 })
+    });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.message || 'অধ্যায় তৈরি ব্যর্থ'); }
+    const data = await res.json();
+    const newId = Array.isArray(data) ? data[0]?.id : data?.id;
+    mbqChaptersCache.push({ id: newId, name: name.trim(), subject_id: subjectId });
+    return newId;
+}
+
+async function mbqUploadPdf() {
+    const subjectName = (document.getElementById('mbqSubject').value || '').trim();
+    const chapterName = (document.getElementById('mbqChapter').value || '').trim();
+    const title = (document.getElementById('mbqPdfTitle').value || '').trim();
+    if (!subjectName) { mbToast('বিষয়ের নাম লিখুন', 'error'); return; }
+    if (!chapterName) { mbToast('অধ্যায়ের নাম লিখুন', 'error'); return; }
+    if (!mbqPdfFile)   { mbToast('PDF ফাইল নির্বাচন করুন', 'error'); return; }
+    if (!title)        { mbToast('শিরোনাম লিখুন', 'error'); return; }
+
+    const btn = document.getElementById('mbqUploadBtn');
+    const pw  = document.getElementById('mbqProgressWrap');
+    const pf  = document.getElementById('mbqProgressFill');
+    const pl  = document.getElementById('mbqProgressLabel');
+
+    btn.disabled = true;
+    btn.textContent = 'আপলোড হচ্ছে...';
+    if (pw) pw.style.display = 'block';
+    if (pf) pf.style.width = '0%';
+
+    try {
+        if (pl) pl.textContent = 'বিষয়/অধ্যায় প্রস্তুত হচ্ছে...';
+        const subjectId = await mbqResolveSubjectId(subjectName);
+        const chapterId = await mbqResolveChapterId(chapterName, subjectId);
+
+        if (pl) pl.textContent = 'PDF আপলোড হচ্ছে...';
+        const fileName = Date.now() + '_' + mbqPdfFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+
+        await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', window.SUPABASE_URL + '/storage/v1/object/pdfs/' + fileName);
+            xhr.setRequestHeader('apikey', window.SUPABASE_KEY);
+            xhr.setRequestHeader('Authorization', 'Bearer ' + window.SUPABASE_KEY);
+            xhr.setRequestHeader('x-upsert', 'true');
+            xhr.upload.onprogress = ev => {
+                if (ev.lengthComputable && pf) {
+                    const pct = Math.round(ev.loaded / ev.total * 90);
+                    pf.style.width = pct + '%';
+                    if (pl) pl.textContent = 'আপলোড হচ্ছে... ' + pct + '%';
+                }
+            };
+            xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 300) resolve();
+                else { try { reject(new Error(JSON.parse(xhr.responseText).error || 'আপলোড ব্যর্থ')); }
+                       catch { reject(new Error('আপলোড ব্যর্থ (' + xhr.status + ')')); } }
+            };
+            xhr.onerror = () => reject(new Error('নেটওয়ার্ক ত্রুটি'));
+            xhr.send(mbqPdfFile);
+        });
+
+        const fileUrl = window.SUPABASE_URL + '/storage/v1/object/public/pdfs/' + fileName;
+
+        if (pl) pl.textContent = 'রেকর্ড সংরক্ষণ করছে...';
+        if (pf) pf.style.width = '95%';
+
+        const dbRes = await mbApi('/book_pdfs', {
+            method: 'POST',
+            body: JSON.stringify({
+                chapter_id: parseInt(chapterId),
+                title, file_url: fileUrl, page_count: 0, is_premium: false, sort_order: 0
+            })
+        });
+        if (!dbRes.ok) { const err = await dbRes.json(); throw new Error(err.message || 'DB রেকর্ড তৈরি ব্যর্থ'); }
+
+        if (pf) pf.style.width = '100%';
+        mbToast('✓ PDF আপলোড সম্পন্ন', 'success');
+
+        // ফর্ম রিসেট
+        mbqPdfFile = null;
+        document.getElementById('mbqPdfTitle').value = '';
+        document.getElementById('mbqPdfFileInput').value = '';
+        document.getElementById('mbqSubject').value = '';
+        document.getElementById('mbqChapter').value = '';
+        const fc = document.getElementById('mbqFileChosen');
+        if (fc) fc.style.display = 'none';
+
+        mbqLoadDatalists();
+        mbLoadAllPdfs();
+        if (mbChapterId == chapterId) mbLoadChapterPdfs();
+
+    } catch (e) {
+        mbToast('আপলোড ব্যর্থ: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'আপলোড করো';
+        setTimeout(() => { if (pw) pw.style.display = 'none'; }, 2000);
+    }
+}
+
+/* ════════════════════════════════════════════════════
    5. PDF UPLOAD
    ════════════════════════════════════════════════════ */
 
@@ -621,34 +783,50 @@ function mbRenderAllPdfs(pdfs) {
         listEl.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📂</div><div class="empty-state-title">কোনো PDF নেই</div></div>';
         return;
     }
-    listEl.innerHTML = pdfs.map(p => {
-        try {
-            const ch  = p.book_chapters || {};
-            const sub = ch.book_subjects || {};
-            const ctx = (sub.name && ch.name)
-                ? `<div style="font-size:10px;color:var(--text3);margin-top:2px">${esc(sub.icon||'')} ${esc(sub.name)} &gt; ${esc(ch.name)}</div>`
-                : '';
-            return `
-            <div class="pdf-card">
-                <div class="pdf-card-top">
-                    <div class="pdf-card-icon">📕</div>
-                    <div class="pdf-card-info">
-                        <div class="pdf-card-title">${esc(p.title)}</div>
-                        <div class="pdf-card-meta">${p.file_size ? fmtSize(p.file_size) + ' · ' : ''}${p.page_count ? p.page_count + ' পৃষ্ঠা · ' : ''}${fmtDate(p.created_at)}</div>
-                        ${ctx}
-                    </div>
-                    <div class="pdf-card-actions">
-                        <button class="act-btn act-toggle" title="${p.is_premium ? 'Free করো' : 'Premium করো'}" onclick="mbTogglePremium(${p.id}, ${!p.is_premium})">${p.is_premium ? '⭐' : '🔓'}</button>
-                        <button class="act-btn act-edit" title="MCQ সম্পাদনা" onclick="mbOpenMcqPanel(${p.id}, '${esc(p.title)}', '${esc(p.file_url)}')">📝</button>
-                        <button class="act-btn act-delete" title="মুছুন" onclick="mbDeletePdf(${p.id}, '${esc(p.title)}')">🗑️</button>
-                    </div>
-                </div>
-            </div>`;
-        } catch (e) {
-            console.error('PDF card render failed for id', p && p.id, e);
-            return '';
-        }
-    }).join('');
+    // ── Subject > Chapter অনুযায়ী গ্রুপ করা (Exam Tab স্টাইল organized list) ──
+    const groups = {}; // key: "subjectName" -> { icon, chapters: { chapterName: [pdfs] } }
+    pdfs.forEach(p => {
+        const ch  = p.book_chapters || {};
+        const sub = ch.book_subjects || {};
+        const subName = sub.name || 'অজানা বিষয়';
+        const chName  = ch.name || 'অজানা অধ্যায়';
+        if (!groups[subName]) groups[subName] = { icon: sub.icon || '📚', chapters: {} };
+        if (!groups[subName].chapters[chName]) groups[subName].chapters[chName] = [];
+        groups[subName].chapters[chName].push(p);
+    });
+
+    let html = '';
+    Object.keys(groups).forEach(subName => {
+        const g = groups[subName];
+        const subTotal = Object.values(g.chapters).reduce((n, arr) => n + arr.length, 0);
+        html += `<div class="section-header" style="margin-top:8px;"><div class="section-title">${esc(g.icon)} ${esc(subName)} (${subTotal})</div></div>`;
+        Object.keys(g.chapters).forEach(chName => {
+            const items = g.chapters[chName];
+            html += `<div style="font-size:11px;font-weight:600;color:var(--text2);margin:6px 0 4px 4px;">📖 ${esc(chName)} (${items.length})</div>`;
+            items.forEach(p => {
+                try {
+                    html += `
+                    <div class="pdf-card">
+                        <div class="pdf-card-top">
+                            <div class="pdf-card-icon">📕</div>
+                            <div class="pdf-card-info">
+                                <div class="pdf-card-title">${esc(p.title)}</div>
+                                <div class="pdf-card-meta">${p.file_size ? fmtSize(p.file_size) + ' · ' : ''}${p.page_count ? p.page_count + ' পৃষ্ঠা · ' : ''}${fmtDate(p.created_at)}</div>
+                            </div>
+                            <div class="pdf-card-actions">
+                                <button class="act-btn act-toggle" title="${p.is_premium ? 'Free করো' : 'Premium করো'}" onclick="mbTogglePremium(${p.id}, ${!p.is_premium})">${p.is_premium ? '⭐' : '🔓'}</button>
+                                <button class="act-btn act-edit" title="MCQ সম্পাদনা" onclick="mbOpenMcqPanel(${p.id}, '${esc(p.title)}', '${esc(p.file_url)}')">📝</button>
+                                <button class="act-btn act-delete" title="মুছুন" onclick="mbDeletePdf(${p.id}, '${esc(p.title)}')">🗑️</button>
+                            </div>
+                        </div>
+                    </div>`;
+                } catch (e) {
+                    console.error('PDF card render failed for id', p && p.id, e);
+                }
+            });
+        });
+    });
+    listEl.innerHTML = html;
 }
 
 async function mbTogglePremium(pdfId, newState) {
@@ -685,6 +863,8 @@ function mbOpenMcqPanel(pdfId, pdfTitle, pdfUrl) {
     mbCurrentPage = 1;
     mbPdfDoc      = null;
     mbAllPageData = [];
+    mbAllPageDataAllTypes = [];
+    mbCachedNumPages = 0;
     mbEditingId   = null;
     mbAnswerKey   = null;
     mbTypeKey     = 'standard';
@@ -719,10 +899,10 @@ function mbOpenMcqPanel(pdfId, pdfTitle, pdfUrl) {
     }
 
     const ml = document.getElementById('mbMcqList');
-    if (ml) ml.innerHTML = '';
+    if (ml) ml.innerHTML = '<div style="text-align:center;padding:20px;font-size:12px;color:var(--text3)">লোড হচ্ছে...</div>';
 
     const ps = document.getElementById('mbPageSummary');
-    if (ps) ps.innerHTML = '';
+    if (ps) ps.innerHTML = '<div style="font-size:11px;color:var(--text3);padding:4px 0">পেইজ তালিকা লোড হচ্ছে...</div>';
 
     mbUpdatePageCount();
 
@@ -737,15 +917,20 @@ function mbOpenMcqPanel(pdfId, pdfTitle, pdfUrl) {
     // Instant pill render: আগের network fetch থেকে cache করা counts থাকলে সাথে সাথে দেখাও,
     // fresh network data আসার আগ পর্যন্ত pill গুলো ফাঁকা/০ দেখানোর বদলে। fresh data এলে
     // নিচের .then() ব্লক আবার সঠিক তথ্য দিয়ে re-render করে দেবে।
+    // bug fix: আগে পুরো mbAllPageDataAllTypes (সব questions_json সহ) cache করা হতো, যা
+    // বড় PDF-এ localStorage quota (5MB) ছাড়িয়ে গেলে setItem silently fail করত — ফলে cache
+    // কখনোই সেভ হতো না আর pill count কোনোদিন instant দেখাত না। এখন mbWriteLightPillCache
+    // দিয়ে শুধু count summary cache হয় (questions_json ছাড়া), quota-safe ও দ্রুত।
     try {
-        const cacheKey = 'atlasMbPillCache_' + pdfId;
-        const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
-        if (cached && cached.allTypes) {
-            mbAllPageDataAllTypes = cached.allTypes;
-            mbAllPageData = cached.adminOnly || [];
+        const cached = JSON.parse(localStorage.getItem('atlasMbPillCache_' + pdfId) || 'null');
+        if (cached && cached.counts) {
+            mbAllPageDataAllTypes = cached.counts.map(r => ({
+                page_number: r.page_number,
+                mcq_type: r.mcq_type,
+                questions_json: JSON.stringify(new Array(r.count).fill({}))
+            }));
             if (cached.numPages) mbCachedNumPages = cached.numPages;
             mbRenderPageSummary();
-            mbRenderPageMcqList();
             mbUpdatePageCount();
         }
     } catch (_) {}
@@ -758,16 +943,6 @@ function mbOpenMcqPanel(pdfId, pdfTitle, pdfUrl) {
         mbRenderPageSummary();
         mbRenderPageMcqList();
         mbUpdatePageCount();
-
-        // network থেকে আসা true/fresh data cache করে রাখো পরবর্তী instant-load এর জন্য
-        try {
-            localStorage.setItem('atlasMbPillCache_' + pdfId, JSON.stringify({
-                allTypes: mbAllPageDataAllTypes,
-                adminOnly: mbAllPageData,
-                numPages: mbPdfDoc ? mbPdfDoc.numPages : mbCachedNumPages,
-                ts: Date.now()
-            }));
-        } catch (_) {}
     });
 
     if (pdfUrl) mbLoadPdfPreview(pdfUrl);
@@ -823,16 +998,7 @@ async function mbLoadPdfPreview(url) {
         mbRenderPageSummary();
         await mbRenderPdfPage(mbCurrentPage);
         // numPages জানা গেলে pill cache আপডেট করে দাও, পরের বার instant-load এ পুরো page range দেখানোর জন্য
-        try {
-            if (mbPdfId) {
-                const ck = 'atlasMbPillCache_' + mbPdfId;
-                const c = JSON.parse(localStorage.getItem(ck) || 'null') || {};
-                c.numPages = mbPdfDoc.numPages;
-                c.allTypes = mbAllPageDataAllTypes;
-                c.adminOnly = mbAllPageData;
-                localStorage.setItem(ck, JSON.stringify(c));
-            }
-        } catch (_) {}
+        mbWriteLightPillCache(mbPdfId);
     } catch (e) {
         if (loadingEl) loadingEl.classList.remove('show');
         console.warn('PDF preview failed:', e);
@@ -863,6 +1029,10 @@ async function mbRenderPdfPage(pageNum) {
     } finally {
         if (loadingEl) loadingEl.classList.remove('show');
     }
+    // সার্ভার-সাইড (cron) generate হওয়া কোনো pending-crop MCQ এই পেইজে থাকলে এখন
+    // (canvas রেন্ডার হয়ে যাওয়ার পর) crop করে normal 'admin' রো-তে merge করে দাও —
+    // fire-and-forget, UI ব্লক করবে না।
+    mbPromotePendingCropMcqs(pageNum);
 }
 
 function mbPageStep(delta) {
@@ -907,10 +1077,13 @@ function mbRenderPageSummary() {
     const pageTypeCounts = {}; // {pageNum: {admin:3, standard:5, true_false:2, hard:1}}
     mbAllPageDataAllTypes.forEach(row => {
         try {
+            // bug fix: page_number bigint column আসে string আকারে (PostgREST), তাই Number() দিয়ে
+            // normalize না করলে key mismatch হয়ে pill count/All-list ফাঁকা দেখাত।
+            const pn = Number(row.page_number);
             const qs = JSON.parse(row.questions_json || '[]');
-            pageCounts[row.page_number] = (pageCounts[row.page_number] || 0) + qs.length;
-            if (!pageTypeCounts[row.page_number]) pageTypeCounts[row.page_number] = {};
-            pageTypeCounts[row.page_number][row.mcq_type] = qs.length;
+            pageCounts[pn] = (pageCounts[pn] || 0) + qs.length;
+            if (!pageTypeCounts[pn]) pageTypeCounts[pn] = {};
+            pageTypeCounts[pn][row.mcq_type] = qs.length;
         } catch {}
     });
     window._mbPageTypeCounts = pageTypeCounts; // অন্য জায়গা থেকে access করার জন্য
@@ -982,49 +1155,82 @@ function mbGoToPagePill(p) {
    10. MCQ DATA LAYER  (book_page_mcqs, mcq_type='admin')
    ════════════════════════════════════════════════════ */
 
+// bug fix: Supabase মাঝে মাঝে 500 (server error, cold-start/timeout) ফেরত দিচ্ছিল আর সেটা silently
+// swallow করে [] বসিয়ে দিত — ফলে pill count/All-list ফাঁকা দেখাত যদিও ডেটা আসলে ছিল। এখন ৫০০/network
+// error এ ১বার retry করে, তারপরও ব্যর্থ হলে console এ error log + user কে toast দিয়ে জানানো হয়
+// (আগের cache করা ডেটা মুছে ফেলা হয় না, পুরনো cache-ই থেকে যায়)।
+async function mbApiWithRetry(path, retries = 1) {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+            const res = await mbApi(path);
+            if (res.ok) return res;
+            if (res.status !== 500 || attempt === retries) return res;
+        } catch (e) {
+            if (attempt === retries) throw e;
+        }
+        await new Promise(r => setTimeout(r, 600 * (attempt + 1)));
+    }
+}
+
+// pill instant-load cache-এ পুরো questions_json না রেখে শুধু count রাখা হয় — বড় PDF-এ
+// localStorage 5MB quota ছাড়িয়ে setItem silently fail করে cache-কে চিরতরে অকার্যকর করে দিত,
+// এটাই ছিল "pill count instant load হয় না" সমস্যার root cause।
+function mbWriteLightPillCache(pdfId) {
+    try {
+        if (!pdfId) return;
+        const rows = mbAllPageDataAllTypes.map(row => {
+            let cnt = 0;
+            try { cnt = JSON.parse(row.questions_json || '[]').length; } catch (_) {}
+            return { page_number: row.page_number, mcq_type: row.mcq_type, count: cnt };
+        });
+        localStorage.setItem('atlasMbPillCache_' + pdfId, JSON.stringify({
+            counts: rows,
+            numPages: mbPdfDoc ? mbPdfDoc.numPages : mbCachedNumPages,
+            ts: Date.now()
+        }));
+    } catch (_) {}
+}
+
 async function mbLoadAllPageMcqs() {
     if (!mbPdfId) return;
     mbResumeBulkJob();
+
+    const [res, res2] = await Promise.all([
+        mbApiWithRetry('/book_page_mcqs?pdf_id=eq.' + mbPdfId + '&mcq_type=eq.admin&select=id,page_number,questions_json&limit=500'),
+        mbApiWithRetry('/book_page_mcqs?pdf_id=eq.' + mbPdfId + '&select=id,page_number,mcq_type,questions_json&limit=500')
+    ]);
+
+    let failed = false;
+    let errMsg = '';
     try {
-        // admin manually-added MCQ — editing/preview এর জন্য আলাদা রাখা হয়
-        const res = await mbApi(
-            '/book_page_mcqs?pdf_id=eq.' + mbPdfId +
-            '&mcq_type=eq.admin&select=id,page_number,questions_json&limit=500'
-        );
-        if (!res.ok) throw new Error();
+        if (!res.ok) { const t = await res.text().catch(()=>''); throw new Error('(' + res.status + ') ' + t); }
         mbAllPageData = await res.json() || [];
-    } catch {
-        mbAllPageData = [];
+    } catch (e) {
+        console.error('mbLoadAllPageMcqs: admin fetch failed', e);
+        failed = true;
+        errMsg = e.message || String(e);
     }
 
-    // সব ধরনের MCQ (admin + user-generated standard/true_false/hard) — count summary এর জন্য
     try {
-        const res2 = await mbApi(
-            '/book_page_mcqs?pdf_id=eq.' + mbPdfId +
-            '&select=id,page_number,mcq_type,questions_json&limit=500'
-        );
-        if (!res2.ok) throw new Error();
+        if (!res2.ok) { const t = await res2.text().catch(()=>''); throw new Error('(' + res2.status + ') ' + t); }
         mbAllPageDataAllTypes = await res2.json() || [];
-    } catch {
-        mbAllPageDataAllTypes = [];
+    } catch (e) {
+        console.error('mbLoadAllPageMcqs: all-types fetch failed', e);
+        failed = true;
+        errMsg = errMsg || e.message || String(e);
+    }
+
+    if (failed && typeof mbToast === 'function') {
+        mbToast('⚠️ MCQ লোড ব্যর্থ: ' + errMsg.slice(0, 160), 'error');
     }
 
     // pill instant-load cache আপডেট — mbUpsertPageMcqs (save/bulk) এর পরেও এই function
     // কল হয়, তাই এখানে রাখলে সবসময় সর্বশেষ true count cache-এ থাকে
-    try {
-        if (mbPdfId) {
-            localStorage.setItem('atlasMbPillCache_' + mbPdfId, JSON.stringify({
-                allTypes: mbAllPageDataAllTypes,
-                adminOnly: mbAllPageData,
-                numPages: mbPdfDoc ? mbPdfDoc.numPages : mbCachedNumPages,
-                ts: Date.now()
-            }));
-        }
-    } catch (_) {}
+    mbWriteLightPillCache(mbPdfId);
 }
 
 function mbGetPageMcqs(pageNum) {
-    const row = mbAllPageData.find(r => r.page_number === pageNum);
+    const row = mbAllPageData.find(r => Number(r.page_number) === Number(pageNum));
     if (!row) return [];
     try { return JSON.parse(row.questions_json || '[]'); } catch { return []; }
 }
@@ -1033,7 +1239,7 @@ function mbGetPageMcqs(pageNum) {
 // user-generated MCQ edit করার সময় সঠিক row-এ save করার জন্য দরকার, নাহলে সবসময় 'admin'-এ
 // লেখার চেষ্টা হয় আর duplicate-key constraint এ আটকে যায়।
 function mbFindMcqSourceType(pageNum, mcqId) {
-    const rows = mbAllPageDataAllTypes.filter(r => r.page_number === pageNum);
+    const rows = mbAllPageDataAllTypes.filter(r => Number(r.page_number) === Number(pageNum));
     for (const r of rows) {
         try {
             const qs = JSON.parse(r.questions_json || '[]');
@@ -1051,7 +1257,7 @@ function mbFindMcqSourceType(pageNum, mcqId) {
 
 // একটা নির্দিষ্ট mcq_type row-এর raw MCQ array (normalize না করা, আসল shape যেমন আছে) ফেরত দেয়
 function mbGetPageMcqsByType(pageNum, mcqType) {
-    const row = mbAllPageDataAllTypes.find(r => r.page_number === pageNum && r.mcq_type === mcqType);
+    const row = mbAllPageDataAllTypes.find(r => Number(r.page_number) === Number(pageNum) && r.mcq_type === mcqType);
     if (!row) return [];
     try { return JSON.parse(row.questions_json || '[]'); } catch { return []; }
 }
@@ -1064,7 +1270,7 @@ async function mbUpsertPageMcqs(pageNum, mcqs, mcqType) {
         mcq_type:       mcqType,
         questions_json: JSON.stringify(mcqs)
     };
-    const res = await mbApi('/book_page_mcqs', {
+    const res = await mbApi('/book_page_mcqs?on_conflict=pdf_id,page_number,mcq_type', {
         method:  'POST',
         headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
         body:    JSON.stringify(body)
@@ -1076,12 +1282,12 @@ async function mbUpsertPageMcqs(pageNum, mcqs, mcqType) {
     const data = await res.json();
     const newRow = Array.isArray(data) ? data[0] : data;
     if (mcqType === 'admin') {
-        const idx = mbAllPageData.findIndex(r => r.page_number === pageNum);
+        const idx = mbAllPageData.findIndex(r => Number(r.page_number) === Number(pageNum));
         if (idx >= 0) mbAllPageData[idx] = newRow;
         else mbAllPageData.push(newRow);
     }
     // mbAllPageDataAllTypes (সব ধরনের row একসাথে রাখে, All ট্যাব + count-এর জন্য) — সেখানেও sync রাখা দরকার
-    const idxAll = mbAllPageDataAllTypes.findIndex(r => r.page_number === pageNum && r.mcq_type === mcqType);
+    const idxAll = mbAllPageDataAllTypes.findIndex(r => Number(r.page_number) === Number(pageNum) && r.mcq_type === mcqType);
     if (idxAll >= 0) mbAllPageDataAllTypes[idxAll] = newRow;
     else mbAllPageDataAllTypes.push(newRow);
 }
@@ -1089,7 +1295,7 @@ async function mbUpsertPageMcqs(pageNum, mcqs, mcqType) {
 function mbUpdatePageCount() {
     const adminMcqs = mbGetPageMcqs(mbCurrentPage);
     let totalCount = adminMcqs.length;
-    const userRows = mbAllPageDataAllTypes.filter(r => r.page_number === mbCurrentPage && r.mcq_type !== 'admin');
+    const userRows = mbAllPageDataAllTypes.filter(r => Number(r.page_number) === Number(mbCurrentPage) && r.mcq_type !== 'admin');
     userRows.forEach(r => {
         try { totalCount += JSON.parse(r.questions_json || '[]').length; } catch (_) {}
     });
@@ -1368,11 +1574,11 @@ async function mbDeleteMcq(mcqId) {
         }
 
         await mbUpsertPageMcqs(mbCurrentPage, finalMcqs, sourceType);
-        await mbLoadAllPageMcqs(); // server থেকে fresh data টেনে instant-accurate UI নিশ্চিত করা
         mbToast('✓ প্রশ্ন মুছে গেছে', 'success');
         mbRenderPageMcqList();
         mbUpdatePageCount();
         mbRenderPageSummary();
+        mbLoadAllPageMcqs(); // background sync, UI আগেই instant আপডেট হয়ে গেছে (double round-trip আর নেই)
     } catch (ex) {
         mbToast('মুছতে ব্যর্থ: ' + ex.message, 'error');
     }
@@ -1398,7 +1604,7 @@ function mbRenderPageMcqList() {
 
     // admin-added MCQ (edit/delete করা যায়) + এই পেইজের user-generated MCQ (read-only, সব ধরন একসাথে)
     const adminMcqs = mbGetPageMcqs(mbCurrentPage).map(m => ({ ...mbNormalizeMcqShape(m), _source: 'admin' }));
-    const userRows = mbAllPageDataAllTypes.filter(r => r.page_number === mbCurrentPage && r.mcq_type !== 'admin');
+    const userRows = mbAllPageDataAllTypes.filter(r => Number(r.page_number) === Number(mbCurrentPage) && r.mcq_type !== 'admin');
     let userMcqs = [];
     userRows.forEach(r => {
         try {
@@ -1708,7 +1914,7 @@ function mbRowHasInk(imgData, width, rowY, threshold) {
    এবং তার আশেপাশে সত্যিকারের blank/whitespace gap কোথায় আছে সেটা বের করে, এবং crop
    ঠিক সেই blank gap বরাবর snap করা হয় — ফলে কোনো লাইন, প্যারা, বা বক্সের বর্ডার
    কখনোই মাঝপথে কাটা পড়ে না, AI-র y/h অনুমান কিছুটা ভুল হলেও। */
-async function mbCropExplanationImage(pageNum, box) {
+async function mbCropExplanationImage(pageNum, box, lineBox) {
     if (!mbPdfDoc) return null;
     try {
         const page  = await mbPdfDoc.getPage(pageNum);
@@ -1736,7 +1942,7 @@ async function mbCropExplanationImage(pageNum, box) {
 
         // ধাপ ১: AI-র অনুমান থেকে একটা generous initial window বানানো — যথেষ্ট চওড়া যাতে
         // প্রকৃত টপিক/বক্সের শুরু ও শেষ নিশ্চিতভাবে এই window-এর ভেতরেই থাকে।
-        const seedPadPct = 12; // AI-র estimate ভুল হওয়ার সম্ভাবনা ধরেই বড় প্রাথমিক বাফার
+        const seedPadPct = 6; // আগে ১২% ছিল — কমিয়ে আনায় scan window ছোট, তাই পাশের অংশ ধরার সম্ভাবনা কম
         const seedTop    = Math.max(0, Math.round((y - seedPadPct) / 100 * full.height));
         const seedBottom = Math.min(full.height, Math.round((y + h + seedPadPct) / 100 * full.height));
 
@@ -1757,7 +1963,7 @@ async function mbCropExplanationImage(pageNum, box) {
             // ধাপ ৩: seed window-এর একদম উপরে ও নিচে (buffer zone) থেকে বাইরের দিকে হেঁটে
             // real content-এর প্রকৃত প্রথম ও শেষ row বের করা — তারপর সেই content-এর ঠিক
             // বাইরের blank gap পর্যন্ত crop বাড়ানো হয়, যাতে বর্ডার লাইনও পুরোপুরি থাকে।
-            const minGapRows = Math.max(4, Math.round(full.height * 0.006)); // ~lines এর মাঝের ফাঁকা জায়গা যতটুকু হলে "gap" ধরা হবে
+            const minGapRows = Math.max(2, Math.round(full.height * 0.003)); // gap threshold কমানো হলো — আগে বেশি বড় gap দরকার হতো বলে পাশের প্রশ্নের অংশ পর্যন্ত হেঁটে যেত
 
             // মূল topic/box অংশের top boundary: AI-র estimate করা y বরাবর থেকে উপরের
             // দিকে হাঁটতে থাকি যতক্ষণ কনটেন্ট (ink) পাওয়া যায়; থামি যখন একটানা blank gap পাই।
@@ -1785,18 +1991,34 @@ async function mbCropExplanationImage(pageNum, box) {
                 bottomRow = lastContentRow;
             }
 
-            // ধাপ ৪: content-এর প্রকৃত top/bottom পাওয়ার পর, তার সাথে অতিরিক্ত নিরাপদ বাফার
-            // (কয়েক লাইনের সমান) যোগ করা হয় যাতে সীমানার একদম কাছাকাছি কোনো আংশিক অক্ষর/বর্ডার
-            // থাকলেও তা সম্পূর্ণ দেখা যায়।
-            const extraPadPx = Math.round(full.height * 0.02); // ~২% অতিরিক্ত visual safety margin
-            py = Math.max(0, seedTop + topRow - extraPadPx);
-            const bottomAbs = Math.min(full.height, seedTop + bottomRow + extraPadPx);
+            // ধাপ ৪: content-এর প্রকৃত top/bottom বের হওয়ার পর উভয় পাশে ঠিক সমান safety margin
+            // যোগ করা হয় (একই pixel value top ও bottom-এ) — এতে মূল লাইন/টপিক crop-এর ঠিক
+            // মাঝখানে (centered) থাকে, আবার বেশি বাফার না দেওয়ায় বাড়তি ফাঁকা জায়গাও থাকে না।
+            const safetyPad = Math.max(3, Math.round(full.height * 0.003));
+            // exp_box-এর প্রকৃত (tight) top/bottom — red border এই বাউন্ডারিতেই আঁকা হবে
+            const boxTopAbs    = Math.max(0, (seedTop + topRow) - safetyPad);
+            const boxBottomAbs = Math.min(full.height, (seedTop + bottomRow) + safetyPad);
+
+            // crop-টা exp_box-এর চেয়ে সামান্য বড় রাখা হয় (ছোট context margin) — আগে বেশি বড়
+            // margin থাকায় crop অনেক বড় হয়ে যেত এবং specific line খুঁজে পাওয়া কঠিন হতো।
+            // এখন margin ছোট রাখা হলো যাতে crop টাইট থাকে, specific line সহজে চোখে পড়ে।
+            const contextMargin = Math.max(2, Math.round(full.height * 0.003));
+            py = Math.max(0, boxTopAbs - contextMargin);
+            const bottomAbs = Math.min(full.height, boxBottomAbs + contextMargin);
             ph = bottomAbs - py;
+            var mbBoxTopInCrop = boxTopAbs - py;
+            var mbBoxBottomInCrop = boxBottomAbs - py;
         } else {
             // rowInk বের করা না গেলে (edge-case), AI-র মূল estimate + বড় fixed padding fallback
-            const padPct = 10;
-            py = Math.max(0, (y - padPct) / 100 * full.height);
-            ph = Math.min(full.height - py, (h + padPct * 2) / 100 * full.height);
+            const padPct = 3;
+            const boxTopAbs    = Math.max(0, (y - padPct) / 100 * full.height);
+            const boxBottomAbs = Math.min(full.height, boxTopAbs + (h + padPct * 2) / 100 * full.height);
+            const contextMargin = Math.max(2, Math.round(full.height * 0.003));
+            py = Math.max(0, boxTopAbs - contextMargin);
+            const bottomAbs = Math.min(full.height, boxBottomAbs + contextMargin);
+            ph = bottomAbs - py;
+            var mbBoxTopInCrop = boxTopAbs - py;
+            var mbBoxBottomInCrop = boxBottomAbs - py;
         }
 
         if (ph < 10) return null;
@@ -1806,7 +2028,43 @@ async function mbCropExplanationImage(pageNum, box) {
         const cropped = document.createElement('canvas');
         cropped.width  = full.width;
         cropped.height = ph;
-        cropped.getContext('2d').drawImage(full, 0, py, full.width, ph, 0, 0, full.width, ph);
+        const cropCtx = cropped.getContext('2d');
+        cropCtx.drawImage(full, 0, py, full.width, ph, 0, 0, full.width, ph);
+
+        // exp_box (যে প্যারা/টপিক/বক্স থেকে MCQ বানানো হয়েছে) ঠিক তার বাউন্ডারিতেই অনেক বেশি
+        // বোল্ড red border আঁকা হয় (thick + double-stroke) — যাতে খুব স্পষ্টভাবে চোখে পড়ে।
+        const bTop = Math.max(0, Math.round(mbBoxTopInCrop));
+        const bBottom = Math.min(ph, Math.round(mbBoxBottomInCrop));
+        const bH = bBottom - bTop;
+        if (bH > 0) {
+            cropCtx.strokeStyle = 'rgba(220, 38, 38, 1)';
+            cropCtx.lineWidth = 14;
+            cropCtx.strokeRect(6, bTop + 6, full.width - 12, Math.max(1, bH - 12));
+            cropCtx.lineWidth = 5;
+            cropCtx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+            cropCtx.strokeRect(6, bTop + 6, full.width - 12, Math.max(1, bH - 12));
+            cropCtx.lineWidth = 14;
+            cropCtx.strokeStyle = 'rgba(220, 38, 38, 1)';
+            cropCtx.strokeRect(6, bTop + 6, full.width - 12, Math.max(1, bH - 12));
+        }
+
+        // line_box থাকলে শুধু সেই নির্দিষ্ট লাইন/বাক্যে কমলা (orange) highlight — পুরো অংশ না,
+        // যাতে ঠিক কোন লাইন থেকে সরাসরি উত্তরটা এসেছে সেটা আলাদাভাবে চোখে পড়ে (টেক্সট পড়া যায় এমন opacity)।
+        const ly = lineBox ? Number(lineBox.y) : NaN;
+        const lh = lineBox ? Number(lineBox.h) : NaN;
+        if (Number.isFinite(ly) && Number.isFinite(lh) && lh > 0) {
+            const hlTop = Math.round((ly / 100 * full.height) - py);
+            const hlBottom = Math.round(((ly + lh) / 100 * full.height) - py);
+            const hlY = Math.max(0, hlTop);
+            const hlH = Math.min(ph, hlBottom) - hlY;
+            if (hlH > 0) {
+                cropCtx.fillStyle = 'rgba(255, 140, 0, 0.40)';
+                cropCtx.fillRect(0, hlY, full.width, hlH);
+                cropCtx.strokeStyle = 'rgba(255, 100, 0, 1)';
+                cropCtx.lineWidth = 3;
+                cropCtx.strokeRect(0, hlY, full.width, hlH);
+            }
+        }
         return cropped.toDataURL('image/jpeg', 0.85).split(',')[1]; // শুধু base64 অংশ ফেরত
     } catch (_) {
         return null;
@@ -1842,6 +2100,16 @@ function mbParseCountInput(raw) {
     return { min: n, max: n, label: `${n}টি`, forApi: n };
 }
 
+// % progress bar আপডেট করে — label + fill-width + percentage text একসাথে (AI generate/extract-এ ব্যবহৃত)
+function mbSetAiProgress(pct, label) {
+    const fill = document.getElementById('mbAiProgressFill');
+    const pctEl = document.getElementById('mbAiProgressPct');
+    const lbl = document.getElementById('mbAiSpinnerLabel');
+    if (fill) fill.style.width = pct + '%';
+    if (pctEl) pctEl.textContent = pct + '%';
+    if (lbl && label) lbl.textContent = label;
+}
+
 async function mbAiGenerate() {
     if (!mbPdfDoc) { mbToast('আগে একটি PDF খুলুন', 'error'); return; }
 
@@ -1863,10 +2131,11 @@ async function mbAiGenerate() {
     if (genBtn)   genBtn.style.display   = 'none';
     if (resultEl) resultEl.style.display = 'none';
     mbAiData = [];
+    mbSetAiProgress(5, 'পেইজ প্রস্তুত হচ্ছে...');
 
     try {
         const typeLabel = { standard: 'সাধারণ', true_false: 'সত্য/মিথ্যা', hard: 'কঠিন' };
-        const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","exp_box":{"x":0,"y":0,"w":0,"h":0},"type":"${type}"}]`;
+        const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","exp_box":{"x":0,"y":0,"w":0,"h":0},"line_box":{"y":0,"h":0},"type":"${type}"}]`;
         const savedP = mbGetSavedPrompt(type);
         const basePrompt = (customP || savedP || (
             `${typeLabel[type]||type} ধরনের ${count.label} MCQ তৈরি করো। ` +
@@ -1879,6 +2148,7 @@ async function mbAiGenerate() {
         // send that — this guarantees the AI sees exactly page mbCurrentPage and cannot drift
         // to another page (whole-PDF + "page N" text was unreliable — Gemini often ignored
         // the page number and generated from a random/wrong page).
+        mbSetAiProgress(20, 'AI-কে পাঠানো হচ্ছে...');
         const pageImageData = await mbGetPageImageBase64(mbCurrentPage);
         if (pageImageData) {
             try {
@@ -1923,6 +2193,7 @@ async function mbAiGenerate() {
             }
         }
 
+        mbSetAiProgress(60, 'AI রেসপন্স যাচাই হচ্ছে...');
         let parsed  = mbParseAiJson(rawJson);
 
         // JSON parse ব্যর্থ হলে একবার automatic retry — page-image + strict-JSON reminder সহ,
@@ -1949,6 +2220,7 @@ async function mbAiGenerate() {
         if (parsed.length < count.min) console.warn(`চাহিদা ছিল ${count.label}, AI দিয়েছে ${parsed.length}টি`);
 
         mbAiData = parsed.map(m => ({ id: uid(), ...m, type: m.type || type }));
+        mbSetAiProgress(75, 'ব্যাখ্যার ছবি বানানো হচ্ছে...');
 
         // exp_box দিয়ে প্রতিটা MCQ-র জন্য topic-crop explanation image বানানো — একই box একাধিক
         // MCQ শেয়ার করতে পারে সেক্ষেত্রে dedupe করা হয়, কিন্তু exp_box missing/null থাকলে
@@ -1957,11 +2229,11 @@ async function mbAiGenerate() {
         // explanation image (এমনকি ভুল/অন্য প্রশ্নের crop) পেয়ে যেত।
         const cropCache = new Map();
         for (const m of mbAiData) {
-            const key = m.exp_box ? JSON.stringify(m.exp_box) : `NOBBOX_${m.id}`;
-            if (!cropCache.has(key)) cropCache.set(key, await mbCropExplanationImage(mbCurrentPage, m.exp_box));
+            const key = m.exp_box ? JSON.stringify(m.exp_box) + JSON.stringify(m.line_box||null) : `NOBBOX_${m.id}`;
+            if (!cropCache.has(key)) cropCache.set(key, await mbCropExplanationImage(mbCurrentPage, m.exp_box, m.line_box));
             const img = cropCache.get(key);
             if (img) m.explanation_image = img; // exp_box না থাকলেও fallback (full page) দেওয়া হয় — কখনো miss হবে না
-            delete m.exp_box; // raw box আর দরকার নেই, save হবে না
+            delete m.exp_box; delete m.line_box; // raw box আর দরকার নেই, save হবে না
         }
 
         const header = document.getElementById('mbAiResultHeader');
@@ -1986,12 +2258,15 @@ async function mbAiGenerate() {
         if (resultEl) resultEl.style.display = 'block';
 
         // Save button চাপার দরকার নেই — generate হওয়ার সাথে সাথেই automatically 'All'-এ জমা হয়ে যায়
+        mbSetAiProgress(90, 'সংরক্ষণ হচ্ছে...');
         await mbSaveAiMcqs();
+        mbSetAiProgress(100, 'সম্পন্ন!');
 
     } catch (ex) {
         mbToast('AI ব্যর্থ: ' + ex.message, 'error');
     } finally {
         if (spinner) spinner.style.display = 'none';
+        mbSetAiProgress(0, 'AI MCQ তৈরি করছে...');
         if (genBtn)  genBtn.style.display  = 'block';
     }
 }
@@ -2005,6 +2280,7 @@ async function mbAiGenerateSpecial() {
     if (genBtn)   genBtn.style.display   = 'none';
     if (resultEl) resultEl.style.display = 'none';
     mbAiData = [];
+    mbSetAiProgress(30, 'পেইজ থেকে extract হচ্ছে...');
 
     try {
         const parsed = await mbSpecialExtractPage(mbCurrentPage);
@@ -2013,6 +2289,7 @@ async function mbAiGenerateSpecial() {
             return;
         }
         mbAiData = parsed.map(m => ({ id: uid(), ...mbShuffleSpecialOptions(m), type: 'special' }));
+        mbSetAiProgress(70, 'প্রশ্ন প্রস্তুত হচ্ছে...');
 
         const header = document.getElementById('mbAiResultHeader');
         if (header) header.textContent = mbAiData.length + 'টি এক্সট্র্যাক্ট করা প্রশ্ন — স্বয়ংক্রিয়ভাবে সংরক্ষণ হচ্ছে...';
@@ -2035,11 +2312,14 @@ async function mbAiGenerateSpecial() {
         if (resultEl) resultEl.style.display = 'block';
 
         // Save button চাপার দরকার নেই — extract হওয়ার সাথে সাথেই automatically 'All'-এ জমা হয়ে যায়
+        mbSetAiProgress(90, 'সংরক্ষণ হচ্ছে...');
         await mbSaveAiMcqs();
+        mbSetAiProgress(100, 'সম্পন্ন!');
     } catch (ex) {
         mbToast('এক্সট্র্যাকশন ব্যর্থ: ' + ex.message, 'error');
     } finally {
         if (spinner) spinner.style.display = 'none';
+        mbSetAiProgress(0, 'AI MCQ তৈরি করছে...');
         if (genBtn)  genBtn.style.display  = 'block';
     }
 }
@@ -2342,10 +2622,28 @@ function mbUpdateRangeSummary() {
     }
 }
 
-// মূল Generate বাটন — mbGenMode অনুযায়ী single-page বা bulk (all/range) generate চালায়
+// মূল Generate বাটন — এখন single/range/all সবই একই persistent bulk-job pipeline দিয়ে চলে,
+// তাই refresh/page ছেড়ে গেলেও mbResumeBulkJob() ধরে নিয়ে কাজ শেষ পর্যন্ত চালিয়ে যাবে —
+// আগে single-page mbAiGenerate() সরাসরি কল হতো যা কোনো job সেভ করত না, ফলে মাঝপথে
+// refresh/tab বন্ধ হলে generation চিরতরে হারিয়ে যেত।
 function mbGenerateClick() {
-    if (mbGenMode === 'single') { mbAiGenerate(); return; }
+    if (mbGenMode === 'single') { mbStartSinglePageJob(); return; }
     mbStartBulkGenerate();
+}
+
+function mbStartSinglePageJob() {
+    const pageNum = mbCurrentPage;
+    const countRaw = (document.getElementById('mbAiCount').value || '10').trim();
+    const type = mbAiTypeKey;
+    const job = {
+        pdfId: mbPdfId, from: pageNum, to: pageNum, countRaw, type,
+        currentPage: pageNum, done: false, stopped: false,
+        startedAt: Date.now(), totalPages: 1, completedCount: 0
+    };
+    localStorage.setItem(MB_BULK_KEY, JSON.stringify(job));
+    mbBulkRunning = true;
+    mbRunBulkJob(job);
+    mbRegisterServerBackupJob(pageNum, pageNum, countRaw, type);
 }
 
 function mbStartBulkGenerate() {
@@ -2370,6 +2668,7 @@ function mbStartBulkGenerate() {
     localStorage.setItem(MB_BULK_KEY, JSON.stringify(job));
     mbBulkRunning = true;
     mbRunBulkJob(job);
+    mbRegisterServerBackupJob(from, to, countRaw, type);
 }
 
 function mbStopBulkGenerate() {
@@ -2380,6 +2679,74 @@ function mbStopBulkGenerate() {
     } catch (_) {}
     mbToast('⏹ Bulk generation থামানো হয়েছে', 'info');
     mbUpdateBulkUI(null);
+}
+
+// ব্রাউজার/ট্যাব বন্ধ/ফোন lock হয়ে গেলেও bulk generation যেন থেমে না যায়, তার জন্য
+// client-side job শুরু হওয়ার সাথে সাথে Worker-এ একটা backup job রেজিস্টার করা হয়
+// (fire-and-forget — fail করলেও client-side flow স্বাভাবিকভাবে চলতে থাকে, শুধু
+// bulletproof ব্যাকআপটা মিস হয়)। Worker cron প্রতি ২ মিনিটে এই job থেকে বাকি পেইজ
+// ধীরে ধীরে প্রসেস করে দেয়।
+async function mbRegisterServerBackupJob(from, to, countRaw, type) {
+    if (!mbPdfUrl) return; // pdf_url ছাড়া Worker PDF পড়তে পারবে না
+    try {
+        await fetch(AI_PROXY_URL.replace(/\/$/, '') + '/mcq-job/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                pdf_id: mbPdfId, pdf_url: mbPdfUrl,
+                from_page: from, to_page: to,
+                count_raw: countRaw, mcq_type: type,
+                supabase_url: window.SUPABASE_URL, supabase_key: window.SUPABASE_KEY
+            })
+        });
+    } catch (_) { /* ব্যর্থ হলেও client-side bulk job স্বাভাবিকভাবে চলবে */ }
+}
+
+// একটা পেইজ ভিউ করার সময় চেক করে — সার্ভার-সাইড cron job এই পেইজে কোনো MCQ
+// 'admin_pending_crop' হিসেবে সেভ করে রেখেছে কিনা (raw exp_box/line_box সহ, crop
+// ছাড়া, কারণ Worker-এ canvas নেই)। থাকলে client-side canvas দিয়ে crop করে normal
+// 'admin' সারিতে merge করে দেয় এবং pending সারিটা খালি করে দেয় — এভাবে ব্রাউজার
+// বন্ধ থাকা অবস্থায় সার্ভার-সাইড generate হওয়া MCQ ও পরে ঠিকমতো red border/orange
+// highlight সহ দেখা যায়, ঠিক client-generated MCQ-র মতোই।
+async function mbPromotePendingCropMcqs(pageNum) {
+    try {
+        const res = await mbApi(`/book_page_mcqs?pdf_id=eq.${mbPdfId}&page_number=eq.${pageNum}&mcq_type=eq.admin_pending_crop&select=*`);
+        const rows = await res.json().catch(() => []);
+        if (!rows || !rows.length || !rows[0].questions_json) return;
+
+        let pendingMcqs = [];
+        try { pendingMcqs = JSON.parse(rows[0].questions_json || '[]'); } catch (_) { return; }
+        if (!pendingMcqs.length) return;
+
+        const cropCache = new Map();
+        for (const m of pendingMcqs) {
+            const key = m.exp_box ? JSON.stringify(m.exp_box) + JSON.stringify(m.line_box || null) : `NOBBOX_${m.id}`;
+            if (!cropCache.has(key)) cropCache.set(key, await mbCropExplanationImage(pageNum, m.exp_box, m.line_box));
+            const img = cropCache.get(key);
+            if (img) m.explanation_image = img;
+            delete m.exp_box; delete m.line_box;
+        }
+
+        const existingRow = mbAllPageData.find(r => Number(r.page_number) === Number(pageNum));
+        let currentMcqs = [];
+        if (existingRow) { try { currentMcqs = JSON.parse(existingRow.questions_json || '[]'); } catch (_) {} }
+        currentMcqs.push(...pendingMcqs);
+
+        await mbApi('/book_page_mcqs?on_conflict=pdf_id,page_number,mcq_type', {
+            method: 'POST',
+            headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+            body: JSON.stringify({ pdf_id: parseInt(mbPdfId), page_number: pageNum, mcq_type: 'admin', questions_json: JSON.stringify(currentMcqs) })
+        });
+        // pending সারিটা খালি করে দেওয়া হয় যাতে পরের বার আবার promote না হয়ে ডুপ্লিকেট তৈরি না হয়
+        await mbApi(`/book_page_mcqs?pdf_id=eq.${mbPdfId}&page_number=eq.${pageNum}&mcq_type=eq.admin_pending_crop`, {
+            method: 'PATCH',
+            body: JSON.stringify({ questions_json: '[]' })
+        });
+
+        await mbLoadAllPageMcqs();
+        if (pageNum === mbCurrentPage) { mbRenderPageMcqList(); mbUpdatePageCount(); }
+        mbRenderPageSummary();
+    } catch (_) { /* silent — পরের বার পেইজ ভিউ করলে আবার চেষ্টা হবে */ }
 }
 
 function mbUpdateBulkUI(job) {
@@ -2453,7 +2820,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
 
     const count = mbParseCountInput(countRaw);
     const typeLabel = { standard: 'সাধারণ', true_false: 'সত্য/মিথ্যা', hard: 'কঠিন' };
-    const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","exp_box":{"x":0,"y":0,"w":0,"h":0},"type":"${type}"}]`;
+    const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","exp_box":{"x":0,"y":0,"w":0,"h":0},"line_box":{"y":0,"h":0},"type":"${type}"}]`;
     const savedP = mbGetSavedPrompt(type);
     const basePrompt = (savedP || (
         `${typeLabel[type]||type} ধরনের ${count.label} MCQ তৈরি করো। ` +
@@ -2534,22 +2901,22 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     // MCQ একই cache entry শেয়ার করে ভুল/অন্য প্রশ্নের crop image পেয়ে যায়।
     const cropCache = new Map();
     for (const m of newMcqs) {
-        const key = m.exp_box ? JSON.stringify(m.exp_box) : `NOBBOX_${m.id}`;
-        if (!cropCache.has(key)) cropCache.set(key, await mbCropExplanationImage(pageNum, m.exp_box));
+        const key = m.exp_box ? JSON.stringify(m.exp_box) + JSON.stringify(m.line_box||null) : `NOBBOX_${m.id}`;
+        if (!cropCache.has(key)) cropCache.set(key, await mbCropExplanationImage(pageNum, m.exp_box, m.line_box));
         const img = cropCache.get(key);
         if (img) m.explanation_image = img;
-        delete m.exp_box;
+        delete m.exp_box; delete m.line_box;
     }
 
     // bug fix: এটা admin panel-এর AI generate (single/bulk উভয়), তাই mcq_type অবশ্যই 'admin' হবে —
     // আগে এখানে mcq_type:type (standard/true_false/hard) সেভ হতো, যার ফলে এই MCQ গুলো
     // ভুলভাবে "ইউজার-জেনারেটেড" হিসেবে দেখাতো এবং edit/delete করা যেতো না।
-    const existingRow = mbAllPageData.find(r => r.page_number === pageNum);
+    const existingRow = mbAllPageData.find(r => Number(r.page_number) === Number(pageNum));
     let currentMcqs = [];
     if (existingRow) { try { currentMcqs = JSON.parse(existingRow.questions_json || '[]'); } catch (_) {} }
     currentMcqs.push(...newMcqs);
 
-    const res = await mbApi('/book_page_mcqs', {
+    const res = await mbApi('/book_page_mcqs?on_conflict=pdf_id,page_number,mcq_type', {
         method: 'POST',
         headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
         body: JSON.stringify({ pdf_id: parseInt(mbPdfId), page_number: pageNum, mcq_type: 'admin', questions_json: JSON.stringify(currentMcqs) })
@@ -2557,7 +2924,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     try {
         const data = await res.json();
         const newRow = Array.isArray(data) ? data[0] : data;
-        const idx = mbAllPageData.findIndex(r => r.page_number === pageNum);
+        const idx = mbAllPageData.findIndex(r => Number(r.page_number) === Number(pageNum));
         if (idx >= 0) mbAllPageData[idx] = newRow; else mbAllPageData.push(newRow);
     } catch (_) {}
 
@@ -2575,12 +2942,12 @@ async function mbGenerateForPageSpecial(pageNum) {
 
     const newMcqs = parsed.map(m => ({ id: uid(), ...mbShuffleSpecialOptions(m), type: 'special' }));
 
-    const existingRow = mbAllPageData.find(r => r.page_number === pageNum);
+    const existingRow = mbAllPageData.find(r => Number(r.page_number) === Number(pageNum));
     let currentMcqs = [];
     if (existingRow) { try { currentMcqs = JSON.parse(existingRow.questions_json || '[]'); } catch (_) {} }
     currentMcqs.push(...newMcqs);
 
-    const res = await mbApi('/book_page_mcqs', {
+    const res = await mbApi('/book_page_mcqs?on_conflict=pdf_id,page_number,mcq_type', {
         method: 'POST',
         headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
         body: JSON.stringify({ pdf_id: parseInt(mbPdfId), page_number: pageNum, mcq_type: 'admin', questions_json: JSON.stringify(currentMcqs) })
@@ -2588,7 +2955,7 @@ async function mbGenerateForPageSpecial(pageNum) {
     try {
         const data = await res.json();
         const newRow = Array.isArray(data) ? data[0] : data;
-        const idx = mbAllPageData.findIndex(r => r.page_number === pageNum);
+        const idx = mbAllPageData.findIndex(r => Number(r.page_number) === Number(pageNum));
         if (idx >= 0) mbAllPageData[idx] = newRow; else mbAllPageData.push(newRow);
     } catch (_) {}
 
@@ -2818,7 +3185,7 @@ async function mbConfirmSpecialExtract(scope) {
     try {
         for (let i = 0; i < pages.length; i++) {
             if (progressText) progressText.textContent = `পেইজ ${i + 1}/${pages.length} — existing MCQ যাচাই হচ্ছে...`;
-            const qs = await mbSpecialExtractPage(pages[i]);
+            const qs = await mbSpecialCsvExtractPage(pages[i]);
             if (qs && qs.length) {
                 allExtracted = allExtracted.concat(qs.map(q => mbSpecialShuffleOptions(mbSpecialConvertToAdminFormat(q, pages[i]))));
             }
@@ -2840,8 +3207,13 @@ async function mbConfirmSpecialExtract(scope) {
     }
 }
 
-// Extraction-only prompt — কখনো নতুন MCQ বানাবে না, শুধু পেইজে যা আছে হুবহু বের করবে
-function mbSpecialExtractPrompt() {
+// Extraction-only prompt (CSV export টুলের জন্য আলাদা, exp_box/line_box লাগে না কারণ এখানে
+// শুধু text/CSV বানানো হয়, কোনো image crop হয় না) — নাম আলাদা রাখা হলো যাতে উপরের
+// mbSpecialExtractPrompt() (যেটা admin panel-এর image-সহ MCQ generation flow ব্যবহার করে,
+// exp_box/line_box সহ) override না হয়ে যায় — আগে একই নামে দুটো ফাংশন থাকায় এই CSV-only
+// ভার্সনটা (exp_box ছাড়া) পুরোটাই override করে ফেলছিল, ফলে "existing MCQ" মোডে জেনারেট হওয়া
+// সব MCQ-তে exp_box/line_box null থাকতো এবং red border/orange highlight একদমই দেখাতো না।
+function mbSpecialCsvExtractPrompt() {
     const jsonFormat = `{"questions":[{"question":"...","options":["...","...","...","..."],"answer_index":0,"explanation":"..."}]}`;
     return (
         `তুমি একজন নিখুঁত ডেটা-এক্সট্র্যাকশন এক্সপার্ট। তোমার কাজ শুধুমাত্র এই পেইজে ইতিমধ্যে ছাপা/লেখা MCQ প্রশ্নগুলো ` +
@@ -2862,8 +3234,10 @@ function mbSpecialExtractPrompt() {
     );
 }
 
-// একটা পেইজ থেকে existing MCQ extract — 2-attempt retry (empty result হলে একবার recheck)
-async function mbSpecialExtractPage(pageNum) {
+// CSV export টুলের জন্য আলাদা extract function (উপরের mbSpecialExtractPage থেকে আলাদা নাম —
+// আগে একই নামে থাকায় এটাই override করে ফেলতো এবং exp_box/line_box সহ আসল ফাংশনটা কখনোই
+// কল হতো না) — 2-attempt retry (empty result হলে একবার recheck)
+async function mbSpecialCsvExtractPage(pageNum) {
     const MAX_ATTEMPTS = 2;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
         try {
@@ -2876,12 +3250,12 @@ async function mbSpecialExtractPage(pageNum) {
                 raw = await mbCallAiApi(
                     `নিচের টেক্সট বিশ্লেষণ করো:\n${pageText.slice(0, 8000)}`,
                     null,
-                    mbSpecialExtractPrompt()
+                    mbSpecialCsvExtractPrompt()
                 );
             } else {
                 const imageData = await mbGetPageImageBase64(pageNum);
                 if (!imageData) return [];
-                raw = await mbCallAiApi('', imageData, mbSpecialExtractPrompt());
+                raw = await mbCallAiApi('', imageData, mbSpecialCsvExtractPrompt());
             }
             const parsed = mbSpecialParseJson(raw);
             const questions = parsed?.questions || [];
