@@ -738,11 +738,11 @@ function mbOpenMcqPanel(pdfId, pdfTitle, pdfUrl) {
     } catch (_) {}
 
     mbLoadAllPageMcqs().then(() => {
-        // mbPdfDoc তখনো load না-ও হয়ে থাকতে পারে (mbLoadPdfPreview আলাদা async call,
-        // নিচে শুরু হয়) — তাই এখানে render করলে numPages=0/stale অবস্থায় pill count
-        // ভুল (কম) দেখাতে পারে। PDF doc load হয়ে গেলে mbLoadPdfPreview নিজেই আবার
-        // mbRenderPageSummary() call করবে সঠিক numPages সহ।
-        if (mbPdfDoc) mbRenderPageSummary();
+        // bug fix: আগে mbPdfDoc লোড না হওয়া পর্যন্ত render skip হতো, ফলে MCQ count
+        // fetch দ্রুত শেষ হলেও pill instantly আপডেট হতো না। এখন mbCachedNumPages
+        // fallback ব্যবহার করে সবসময় render হয়; PDF.js পরে numPages বাড়ালে
+        // mbLoadPdfPreview নিজে থেকেই আবার render করবে re-sync-এর জন্য।
+        mbRenderPageSummary();
         mbRenderPageMcqList();
         mbUpdatePageCount();
 
@@ -2025,9 +2025,14 @@ function mbParseAiJson(raw) {
 async function mbSaveAiMcqs() {
     if (!mbAiData.length) return;
     try {
-        const currentMcqs = mbGetPageMcqs(mbCurrentPage);
+        // bug fix: আগে এখানে mcqType পাস করা হতো না, ফলে mbUpsertPageMcqs ডিফল্ট
+        // 'admin' টাইপে সব সময় সেভ করে ফেলত। AI/special generate করা MCQ তার আসল
+        // mbAiTypeKey (standard/true_false/hard/special) টাইপেই সেভ হওয়া উচিত, নাহলে
+        // ইউজার-সাইড "All" ভিউ এই প্রশ্নগুলো mcq_type ভুল হওয়ায় দেখতে পায় না।
+        const saveType = mbAiTypeKey || 'admin';
+        const currentMcqs = mbGetPageMcqsByType(mbCurrentPage, saveType);
         mbAiData.forEach(m => currentMcqs.push(m));
-        await mbUpsertPageMcqs(mbCurrentPage, currentMcqs);
+        await mbUpsertPageMcqs(mbCurrentPage, currentMcqs, saveType);
         // AI দিয়ে generate হওয়া এই batch-টার CSV automatically তৈরি+save হয়ে যাবে — manual download লাগবে না।
         await mbSaveMcqsAsCsv(mbAiData, mbCurrentPage, mbAiTypeKey);
         mbToast('✓ ' + mbAiData.length + 'টি AI MCQ সংরক্ষিত হয়েছে (+ CSV)', 'success');
