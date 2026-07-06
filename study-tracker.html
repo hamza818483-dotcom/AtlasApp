@@ -1065,8 +1065,13 @@ updateDash();
 // noticeable delay তৈরি করতো। এখন delay ছাড়াই সাথে সাথে এবং parallel-এ (একটা
 // mode শেষ হওয়ার অপেক্ষা না করে) শুরু হয়, তাই cache তৈরি হতে কম সময় লাগে এবং
 // button click করার সময় ততক্ষণে data ready থাকার সম্ভাবনা অনেক বেশি।
-loadSyllabus('hsc');
-loadSyllabus('medical');
+// বাগ: updateDash() উপরে সাথে সাথেই কল হয় — কিন্তু overallPct(mode) সরাসরি
+// CACHE[mode] পড়ে, যেটা তখনো খালি (loadSyllabus এখনো শেষ হয়নি, async)। ফলে
+// Dashboard কার্ডে (Syllabus Tracker/Weak & Progress/Revision Planner) সবসময়
+// ০% দেখাতো প্রথমবার, এবং fetch শেষ হওয়ার পরেও dashboard কখনো re-render হতো না —
+// তাই ম্যানুয়ালি panel না খুললে ০% আটকেই থাকতো। এখন prefetch শেষ হওয়ার পর
+// আবার updateDash() কল করে dashboard কার্ড সঠিক %-এ রিফ্রেশ করা হয়।
+Promise.all([loadSyllabus('hsc'), loadSyllabus('medical')]).then(updateDash);
 </script>
 <script src="global-nav.js"></script>
 </body>
