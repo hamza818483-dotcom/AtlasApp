@@ -1997,11 +1997,11 @@ async function mbCropExplanationImage(pageNum, box) {
         const hlY      = Math.max(0, hlTop);
         const hlH      = Math.min(ph, hlBottom) - hlY;
         if (hlH > 0) {
-            cropCtx.fillStyle = 'rgba(255, 235, 59, 0.35)';
-            cropCtx.fillRect(0, hlY, full.width, hlH);
-            cropCtx.strokeStyle = 'rgba(255, 193, 7, 0.9)';
-            cropCtx.lineWidth = 2;
-            cropCtx.strokeRect(0, hlY, full.width, hlH);
+            // শুধু red border box — কোনো fill/overlay না, তাই ভেতরের মার্ক করা টেক্সট/অংশ
+            // সম্পূর্ণ visible থাকে, আগের মতো হলুদ fill দিয়ে ঢেকে যায় না।
+            cropCtx.strokeStyle = 'rgba(220, 38, 38, 0.95)';
+            cropCtx.lineWidth = 3;
+            cropCtx.strokeRect(2, hlY + 2, full.width - 4, Math.max(1, hlH - 4));
         }
         return cropped.toDataURL('image/jpeg', 0.85).split(',')[1]; // শুধু base64 অংশ ফেরত
     } catch (_) {
