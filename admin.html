@@ -944,6 +944,35 @@
     <!-- ══════════════ TAB: মূলবই পেইজভিত্তিক প্রস্তুতি ══════════════ -->
     <div class="admin-section" id="secMulboi">
 
+        <!-- Quick Add: Subject + Chapter + PDF একসাথে (Exam Tab স্টাইল) -->
+        <div class="section-card card-purple">
+            <div class="card-body">
+                <div class="card-title">⚡ Quick PDF Add (Subject+Chapter+PDF একসাথে)</div>
+                <div class="input-row">
+                    <div class="input-group"><label>বিষয়</label><input type="text" class="form-input" id="mbqSubject" list="mbqSubjectList" placeholder="বিষয়ের নাম"></div>
+                    <div class="input-group"><label>অধ্যায়</label><input type="text" class="form-input" id="mbqChapter" list="mbqChapterList" placeholder="অধ্যায়ের নাম"></div>
+                </div>
+                <datalist id="mbqSubjectList"></datalist>
+                <datalist id="mbqChapterList"></datalist>
+                <div class="form-group" style="margin-top:10px">
+                    <label class="form-label">PDF শিরোনাম</label>
+                    <input class="form-input" id="mbqPdfTitle" placeholder="PDF এর নাম লিখুন">
+                </div>
+                <div class="drop-zone" id="mbqDropZone"
+                    ondragover="mbqDzOver(event)" ondragleave="mbqDzLeave()" ondrop="mbqDzDrop(event)">
+                    <input type="file" id="mbqPdfFileInput" accept=".pdf" onchange="mbqOnFileSelect(event)">
+                    <div class="drop-zone-icon">📄</div>
+                    <div class="drop-zone-text">PDF ফাইল এখানে টানুন বা ক্লিক করুন</div>
+                </div>
+                <div class="file-chosen" id="mbqFileChosen"></div>
+                <div class="progress-wrap" id="mbqProgressWrap" style="display:none">
+                    <div class="progress-label" id="mbqProgressLabel">আপলোড হচ্ছে...</div>
+                    <div class="progress-bar-bg"><div class="progress-bar-fill" id="mbqProgressFill"></div></div>
+                </div>
+                <button class="btn btn-primary btn-full" id="mbqUploadBtn" onclick="mbqUploadPdf()" style="margin-top:10px">আপলোড করো</button>
+            </div>
+        </div>
+
         <!-- Subject & Chapter Cascade -->
         <div class="section-card card-purple">
             <div class="card-body">
@@ -1014,7 +1043,7 @@
         <div class="section-card card-amber" style="margin-top:14px">
             <div class="card-body">
                 <div class="card-title">📂 সংরক্ষিত সকল PDF</div>
-                <div class="pdf-list" id="mbAllPdfsList"></div>
+                <div id="mbAllPdfsList"></div>
             </div>
         </div>
 
@@ -2465,6 +2494,8 @@ async function loadMulboiSubjects() {
     // Load only the flat AtlasPro-style PDF list (doubling fix)
     // The old accordion-style subject/chapter list is hidden
     if (typeof mbLoadAllPdfs === 'function') mbLoadAllPdfs();
+    if (typeof mbLoadSubjects === 'function') mbLoadSubjects();
+    if (typeof mbqLoadDatalists === 'function') mbqLoadDatalists();
 }
 
 function toggleMbSubject(id) {

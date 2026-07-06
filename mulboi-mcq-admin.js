@@ -78,6 +78,9 @@ let mbSubjectId   = null;
 let mbChapterId   = null;
 let mbPdfId       = null;
 let mbPdfFile     = null;
+let mbqPdfFile    = null; // Quick-Add ফর্মের জন্য আলাদা ফাইল স্টেট (existing mbPdfFile এর সাথে conflict এড়াতে)
+let mbqSubjectsCache = []; // Quick-Add datalist cache: [{id,name,icon}]
+let mbqChaptersCache = []; // Quick-Add datalist cache: [{id,name,subject_id}]
 let mbPdfDoc      = null;
 let mbPdfUrl       = null;  // current PDF's public URL, used to send the full PDF to Gemini for reliable MCQ generation
 let mbCurrentPage = 1;
@@ -412,6 +415,160 @@ async function mbCreateChapter() {
 }
 
 /* ════════════════════════════════════════════════════
+   4B. QUICK ADD — Subject + Chapter + PDF একসাথে (Exam Tab স্টাইল)
+   ════════════════════════════════════════════════════ */
+async function mbqLoadDatalists() {
+    try {
+        const res = await mbApi('/book_subjects?select=id,name,icon&order=sort_order.asc,created_at.asc&limit=200');
+        mbqSubjectsCache = res.ok ? (await res.json() || []) : [];
+        const dl = document.getElementById('mbqSubjectList');
+        if (dl) dl.innerHTML = mbqSubjectsCache.map(s => `<option value="${esc(s.name)}">`).join('');
+    } catch { mbqSubjectsCache = []; }
+    try {
+        const res = await mbApi('/book_chapters?select=id,name,subject_id&order=sort_order.asc,created_at.asc&limit=500');
+        mbqChaptersCache = res.ok ? (await res.json() || []) : [];
+        const dl = document.getElementById('mbqChapterList');
+        if (dl) dl.innerHTML = mbqChaptersCache.map(c => `<option value="${esc(c.name)}">`).join('');
+    } catch { mbqChaptersCache = []; }
+}
+
+function mbqDzOver(e) { e.preventDefault(); document.getElementById('mbqDropZone').classList.add('dragover'); }
+function mbqDzLeave() { document.getElementById('mbqDropZone').classList.remove('dragover'); }
+function mbqDzDrop(e) {
+    e.preventDefault();
+    document.getElementById('mbqDropZone').classList.remove('dragover');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type === 'application/pdf') mbqSetFile(f);
+    else mbToast('শুধু PDF ফাইল গ্রহণযোগ্য', 'error');
+}
+function mbqOnFileSelect(e) { const f = e.target.files[0]; if (f) mbqSetFile(f); }
+function mbqSetFile(f) {
+    mbqPdfFile = f;
+    const fc = document.getElementById('mbqFileChosen');
+    if (fc) { fc.textContent = '📄 ' + f.name; fc.style.display = 'block'; }
+    const titleEl = document.getElementById('mbqPdfTitle');
+    if (titleEl && !titleEl.value) titleEl.value = f.name.replace(/\.pdf$/i, '');
+}
+
+// নাম দিয়ে subject খুঁজে বের করে, না পেলে নতুন তৈরি করে — id রিটার্ন করে
+async function mbqResolveSubjectId(name) {
+    const existing = mbqSubjectsCache.find(s => s.name.trim().toLowerCase() === name.trim().toLowerCase());
+    if (existing) return existing.id;
+    const res = await mbApi('/book_subjects', {
+        method: 'POST',
+        body: JSON.stringify({ name: name.trim(), icon: '📚', description: '', sort_order: 0 })
+    });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.message || 'বিষয় তৈরি ব্যর্থ'); }
+    const data = await res.json();
+    const newId = Array.isArray(data) ? data[0]?.id : data?.id;
+    mbqSubjectsCache.push({ id: newId, name: name.trim(), icon: '📚' });
+    return newId;
+}
+
+// নাম + subjectId দিয়ে chapter খুঁজে বের করে, না পেলে নতুন তৈরি করে — id রিটার্ন করে
+async function mbqResolveChapterId(name, subjectId) {
+    const existing = mbqChaptersCache.find(c => c.subject_id == subjectId && c.name.trim().toLowerCase() === name.trim().toLowerCase());
+    if (existing) return existing.id;
+    const res = await mbApi('/book_chapters', {
+        method: 'POST',
+        body: JSON.stringify({ subject_id: parseInt(subjectId), name: name.trim(), sort_order: 0 })
+    });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.message || 'অধ্যায় তৈরি ব্যর্থ'); }
+    const data = await res.json();
+    const newId = Array.isArray(data) ? data[0]?.id : data?.id;
+    mbqChaptersCache.push({ id: newId, name: name.trim(), subject_id: subjectId });
+    return newId;
+}
+
+async function mbqUploadPdf() {
+    const subjectName = (document.getElementById('mbqSubject').value || '').trim();
+    const chapterName = (document.getElementById('mbqChapter').value || '').trim();
+    const title = (document.getElementById('mbqPdfTitle').value || '').trim();
+    if (!subjectName) { mbToast('বিষয়ের নাম লিখুন', 'error'); return; }
+    if (!chapterName) { mbToast('অধ্যায়ের নাম লিখুন', 'error'); return; }
+    if (!mbqPdfFile)   { mbToast('PDF ফাইল নির্বাচন করুন', 'error'); return; }
+    if (!title)        { mbToast('শিরোনাম লিখুন', 'error'); return; }
+
+    const btn = document.getElementById('mbqUploadBtn');
+    const pw  = document.getElementById('mbqProgressWrap');
+    const pf  = document.getElementById('mbqProgressFill');
+    const pl  = document.getElementById('mbqProgressLabel');
+
+    btn.disabled = true;
+    btn.textContent = 'আপলোড হচ্ছে...';
+    if (pw) pw.style.display = 'block';
+    if (pf) pf.style.width = '0%';
+
+    try {
+        if (pl) pl.textContent = 'বিষয়/অধ্যায় প্রস্তুত হচ্ছে...';
+        const subjectId = await mbqResolveSubjectId(subjectName);
+        const chapterId = await mbqResolveChapterId(chapterName, subjectId);
+
+        if (pl) pl.textContent = 'PDF আপলোড হচ্ছে...';
+        const fileName = Date.now() + '_' + mbqPdfFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+
+        await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', window.SUPABASE_URL + '/storage/v1/object/pdfs/' + fileName);
+            xhr.setRequestHeader('apikey', window.SUPABASE_KEY);
+            xhr.setRequestHeader('Authorization', 'Bearer ' + window.SUPABASE_KEY);
+            xhr.setRequestHeader('x-upsert', 'true');
+            xhr.upload.onprogress = ev => {
+                if (ev.lengthComputable && pf) {
+                    const pct = Math.round(ev.loaded / ev.total * 90);
+                    pf.style.width = pct + '%';
+                    if (pl) pl.textContent = 'আপলোড হচ্ছে... ' + pct + '%';
+                }
+            };
+            xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 300) resolve();
+                else { try { reject(new Error(JSON.parse(xhr.responseText).error || 'আপলোড ব্যর্থ')); }
+                       catch { reject(new Error('আপলোড ব্যর্থ (' + xhr.status + ')')); } }
+            };
+            xhr.onerror = () => reject(new Error('নেটওয়ার্ক ত্রুটি'));
+            xhr.send(mbqPdfFile);
+        });
+
+        const fileUrl = window.SUPABASE_URL + '/storage/v1/object/public/pdfs/' + fileName;
+
+        if (pl) pl.textContent = 'রেকর্ড সংরক্ষণ করছে...';
+        if (pf) pf.style.width = '95%';
+
+        const dbRes = await mbApi('/book_pdfs', {
+            method: 'POST',
+            body: JSON.stringify({
+                chapter_id: parseInt(chapterId),
+                title, file_url: fileUrl, page_count: 0, is_premium: false, sort_order: 0
+            })
+        });
+        if (!dbRes.ok) { const err = await dbRes.json(); throw new Error(err.message || 'DB রেকর্ড তৈরি ব্যর্থ'); }
+
+        if (pf) pf.style.width = '100%';
+        mbToast('✓ PDF আপলোড সম্পন্ন', 'success');
+
+        // ফর্ম রিসেট
+        mbqPdfFile = null;
+        document.getElementById('mbqPdfTitle').value = '';
+        document.getElementById('mbqPdfFileInput').value = '';
+        document.getElementById('mbqSubject').value = '';
+        document.getElementById('mbqChapter').value = '';
+        const fc = document.getElementById('mbqFileChosen');
+        if (fc) fc.style.display = 'none';
+
+        mbqLoadDatalists();
+        mbLoadAllPdfs();
+        if (mbChapterId == chapterId) mbLoadChapterPdfs();
+
+    } catch (e) {
+        mbToast('আপলোড ব্যর্থ: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'আপলোড করো';
+        setTimeout(() => { if (pw) pw.style.display = 'none'; }, 2000);
+    }
+}
+
+/* ════════════════════════════════════════════════════
    5. PDF UPLOAD
    ════════════════════════════════════════════════════ */
 
@@ -611,34 +768,50 @@ function mbRenderAllPdfs(pdfs) {
         listEl.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📂</div><div class="empty-state-title">কোনো PDF নেই</div></div>';
         return;
     }
-    listEl.innerHTML = pdfs.map(p => {
-        try {
-            const ch  = p.book_chapters || {};
-            const sub = ch.book_subjects || {};
-            const ctx = (sub.name && ch.name)
-                ? `<div style="font-size:10px;color:var(--text3);margin-top:2px">${esc(sub.icon||'')} ${esc(sub.name)} &gt; ${esc(ch.name)}</div>`
-                : '';
-            return `
-            <div class="pdf-card">
-                <div class="pdf-card-top">
-                    <div class="pdf-card-icon">📕</div>
-                    <div class="pdf-card-info">
-                        <div class="pdf-card-title">${esc(p.title)}</div>
-                        <div class="pdf-card-meta">${p.file_size ? fmtSize(p.file_size) + ' · ' : ''}${p.page_count ? p.page_count + ' পৃষ্ঠা · ' : ''}${fmtDate(p.created_at)}</div>
-                        ${ctx}
-                    </div>
-                    <div class="pdf-card-actions">
-                        <button class="act-btn act-toggle" title="${p.is_premium ? 'Free করো' : 'Premium করো'}" onclick="mbTogglePremium(${p.id}, ${!p.is_premium})">${p.is_premium ? '⭐' : '🔓'}</button>
-                        <button class="act-btn act-edit" title="MCQ সম্পাদনা" onclick="mbOpenMcqPanel(${p.id}, '${esc(p.title)}', '${esc(p.file_url)}')">📝</button>
-                        <button class="act-btn act-delete" title="মুছুন" onclick="mbDeletePdf(${p.id}, '${esc(p.title)}')">🗑️</button>
-                    </div>
-                </div>
-            </div>`;
-        } catch (e) {
-            console.error('PDF card render failed for id', p && p.id, e);
-            return '';
-        }
-    }).join('');
+    // ── Subject > Chapter অনুযায়ী গ্রুপ করা (Exam Tab স্টাইল organized list) ──
+    const groups = {}; // key: "subjectName" -> { icon, chapters: { chapterName: [pdfs] } }
+    pdfs.forEach(p => {
+        const ch  = p.book_chapters || {};
+        const sub = ch.book_subjects || {};
+        const subName = sub.name || 'অজানা বিষয়';
+        const chName  = ch.name || 'অজানা অধ্যায়';
+        if (!groups[subName]) groups[subName] = { icon: sub.icon || '📚', chapters: {} };
+        if (!groups[subName].chapters[chName]) groups[subName].chapters[chName] = [];
+        groups[subName].chapters[chName].push(p);
+    });
+
+    let html = '';
+    Object.keys(groups).forEach(subName => {
+        const g = groups[subName];
+        const subTotal = Object.values(g.chapters).reduce((n, arr) => n + arr.length, 0);
+        html += `<div class="section-header" style="margin-top:8px;"><div class="section-title">${esc(g.icon)} ${esc(subName)} (${subTotal})</div></div>`;
+        Object.keys(g.chapters).forEach(chName => {
+            const items = g.chapters[chName];
+            html += `<div style="font-size:11px;font-weight:600;color:var(--text2);margin:6px 0 4px 4px;">📖 ${esc(chName)} (${items.length})</div>`;
+            items.forEach(p => {
+                try {
+                    html += `
+                    <div class="pdf-card">
+                        <div class="pdf-card-top">
+                            <div class="pdf-card-icon">📕</div>
+                            <div class="pdf-card-info">
+                                <div class="pdf-card-title">${esc(p.title)}</div>
+                                <div class="pdf-card-meta">${p.file_size ? fmtSize(p.file_size) + ' · ' : ''}${p.page_count ? p.page_count + ' পৃষ্ঠা · ' : ''}${fmtDate(p.created_at)}</div>
+                            </div>
+                            <div class="pdf-card-actions">
+                                <button class="act-btn act-toggle" title="${p.is_premium ? 'Free করো' : 'Premium করো'}" onclick="mbTogglePremium(${p.id}, ${!p.is_premium})">${p.is_premium ? '⭐' : '🔓'}</button>
+                                <button class="act-btn act-edit" title="MCQ সম্পাদনা" onclick="mbOpenMcqPanel(${p.id}, '${esc(p.title)}', '${esc(p.file_url)}')">📝</button>
+                                <button class="act-btn act-delete" title="মুছুন" onclick="mbDeletePdf(${p.id}, '${esc(p.title)}')">🗑️</button>
+                            </div>
+                        </div>
+                    </div>`;
+                } catch (e) {
+                    console.error('PDF card render failed for id', p && p.id, e);
+                }
+            });
+        });
+    });
+    listEl.innerHTML = html;
 }
 
 async function mbTogglePremium(pdfId, newState) {
