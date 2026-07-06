@@ -844,8 +844,28 @@ async function renderRevSubjects(){
 // ═══════════════════
 function updateDash(){
   const hp=overallPct('hsc'),mp=overallPct('medical');
+  const avg=Math.round((hp+mp)/2);
   $('d-syl-pct').textContent=Math.round((hp+mp)/2)+'%';
-  $('d-prog-pct').textContent=Math.round((hp+mp)/2)+'%';
+  // বাগ: "Weak & Progress" কার্ড (d-prog-pct) syllabus % (avg) দিয়ে সেট হতো —
+  // যেটা ভুল, কারণ renderProgress() (panel-এর ভেতরে) একই id-টাকেই আলাদা মান দেয়
+  // (যদিও এক্ষেত্রে দুটোই avg, তাই মিলে যায় — আসল সমস্যা ছিল d-rev-pct)।
+  // "Revision Planner" কার্ড (d-rev-pct) আগে এখানে সম্পূর্ণ বাদ পড়েছিল — শুধু
+  // renderRevSubjects() (panel খুললে) সেট হতো, page-load এ কখনোই না — তাই
+  // dashboard এ ঢোকার সাথে সাথে সবসময় ০% দেখাতো, ক্লিক করার আগ পর্যন্ত। এখন
+  // revision % ও এখানে একই ফর্মুলায় (panel-এর মতোই) হিসাব করে সেট করা হয়।
+  $('d-prog-pct').textContent=avg+'%';
+
+  let totalD=0,totalT=0;
+  for(const mode of ['hsc','medical']){
+    for(const s of (CACHE[mode]||[])){
+      for(const c of s.chapters) for(const tp of c.topics){
+        totalT++;
+        if(ST.revision[`rev|${mode}|${s.id}|${c.id}|${tp.id}`]) totalD++;
+      }
+    }
+  }
+  const revPct = totalT ? Math.round(totalD/totalT*100) : 0;
+  $('d-rev-pct').textContent=revPct+'%';
 }
 
 // ═══════════════════
