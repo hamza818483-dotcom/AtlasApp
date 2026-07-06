@@ -128,7 +128,10 @@ const MB_EXP_BOX_RULE = (
     `কিন্তু মূল টপিক/বক্স অংশ কখনোই আংশিক/partial বা কাটা হবে না — সেটা সবসময় ১০০% সম্পূর্ণ থাকবে, এটাই সবচেয়ে জরুরি শর্ত। ` +
     `এই object-এ চারটি key থাকবে: x, y, w, h — সবগুলো পুরো পেইজের width/height এর ` +
     `শতকরা হিসেবে (0 থেকে 100 এর মধ্যে সংখ্যা, % চিহ্ন ছাড়া)। x,y মানে বাম-উপরের কোণা, w,h মানে width ও height। ` +
-    `একই টপিক/উদ্দীপক/বক্স থেকে একাধিক প্রশ্ন বানানো হলে, সবগুলোর exp_box একই (পুরো অংশ কভার করা) হবে — এটাই সঠিক, আলাদা করার দরকার নেই।`
+    `একই টপিক/উদ্দীপক/বক্স থেকে একাধিক প্রশ্ন বানানো হলে, সবগুলোর exp_box একই (পুরো অংশ কভার করা) হবে — এটাই সঠিক, আলাদা করার দরকার নেই। ` +
+    `গুরুত্বপূর্ণ: y ও h এমনভাবে নির্ধারণ করো যাতে মূল টপিক/অংশটুকু y থেকে y+h এর মাঝ বরাবর (center-এ) থাকে — শুধু নিচের ` +
+    `দিকে h বাড়িয়ে বাফার না দিয়ে, উপরে ও নিচে সমান পরিমাণ বাফার যোগ করো, যাতে ক্রপ করা ছবিতে মূল অংশটি ঠিক মাঝখানে দেখা যায়, ` +
+    `উপরে বা নিচে ঝুঁকে (off-center) না থাকে।`
 );
 
 let mbCsvData     = [];
@@ -156,7 +159,7 @@ function mbSpecialExtractPrompt() {
         `৬. গাণিতিক/রাসায়নিক রাশি লেখার সময় সঠিক সাব/সুপারস্ক্রিপ্ট ইউনিকোড ব্যবহার করবে (x², H₂O ইত্যাদি), সাধারণ সংখ্যা দিয়ে লিখবে না।\n` +
         `৭. প্রশ্ন বা ব্যাখ্যায় কখনো "উল্লেখিত চিত্রে", "বক্সে", "উদ্দীপকে", "পৃষ্ঠায়" জাতীয় সোর্স-রেফারেন্স বাক্য ব্যবহার করবে না — স্বয়ংসম্পূর্ণ রাখবে।\n` +
         `৮. এটাই সবচেয়ে গুরুত্বপূর্ণ নিয়ম: তুমি একজন এক্সট্র্যাক্টর, জেনারেটর নও — কোনো অবস্থাতেই নিজের থেকে নতুন প্রশ্ন কল্পনা করে বানাবে না।\n` +
-        `৯. প্রতিটি প্রশ্নের জন্য "exp_box" object দিবে — যে টপিক/উদ্দীপক/paragraph থেকে প্রশ্নটি নেওয়া হয়েছে তার শুরু থেকে শেষ পর্যন্ত সম্পূর্ণ অংশের bounding box (partial না, পুরো টপিক), সাথে ১-২ লাইন সেফটি বাফার, পুরো পেইজের সাপেক্ষে শতকরা (0-100) হিসেবে {x,y,w,h}।\n\n` +
+        `৯. প্রতিটি প্রশ্নের জন্য "exp_box" object দিবে — যে টপিক/উদ্দীপক/paragraph থেকে প্রশ্নটি নেওয়া হয়েছে তার শুরু থেকে শেষ পর্যন্ত সম্পূর্ণ অংশের bounding box (partial না, পুরো টপিক), সাথে উপরে-নিচে সমান পরিমাণ (১-২ লাইন) সেফটি বাফার — যাতে মূল টপিক ক্রপ করা ছবির ঠিক মাঝখানে (center) থাকে, off-center না হয় — পুরো পেইজের সাপেক্ষে শতকরা (0-100) হিসেবে {x,y,w,h}।\n\n` +
         `শুধুমাত্র নিচের JSON ফরম্যাটে উত্তর দিবে, অন্য কোনো লেখা/markdown/backtick ছাড়া:\n${jsonFormat}`
     );
 }
@@ -1962,13 +1965,22 @@ async function mbCropExplanationImage(pageNum, box) {
                 bottomRow = lastContentRow;
             }
 
-            // ধাপ ৪: content-এর প্রকৃত top/bottom পাওয়ার পর, তার সাথে অতিরিক্ত নিরাপদ বাফার
-            // (কয়েক লাইনের সমান) যোগ করা হয় যাতে সীমানার একদম কাছাকাছি কোনো আংশিক অক্ষর/বর্ডার
-            // থাকলেও তা সম্পূর্ণ দেখা যায়।
-            const extraPadPx = Math.round(full.height * 0.004); // আগে ২% ছিল, যা content-এর বাইরে পাশের প্রশ্নের অংশও দেখিয়ে দিতো — এখন শুধু border-safety জন্য ছোট মার্জিন
-            py = Math.max(0, seedTop + topRow - extraPadPx);
-            const bottomAbs = Math.min(full.height, seedTop + bottomRow + extraPadPx);
-            ph = bottomAbs - py;
+            // ধাপ ৪: content-এর প্রকৃত top/bottom পাওয়ার পর, একই padding উভয় পাশে যোগ করা হয়
+            // (top ও bottom-এ ঠিক সমান pixel বাফার) — যাতে চূড়ান্ত crop-এর মধ্যে মূল অংশটি
+            // ঠিক মাঝখানে (center) থাকে, উপরে-নিচে অসম মার্জিন না হয়।
+            const extraPadPx = Math.round(full.height * 0.004);
+            const contentTopAbs    = seedTop + topRow;
+            const contentBottomAbs = seedTop + bottomRow;
+            const contentH = contentBottomAbs - contentTopAbs;
+            // symmetric padding: উভয় পাশে সমান রাখা হচ্ছে যাতে content ঠিক কেন্দ্রে বসে
+            const symPad = Math.max(extraPadPx, Math.round(contentH * 0.03));
+            let topAbs    = contentTopAbs - symPad;
+            let bottomAbs = contentBottomAbs + symPad;
+            // পেইজ সীমানার বাইরে গেলে, বিপরীত পাশে সমপরিমাণ বাড়িয়ে center ঠিক রাখার চেষ্টা করা হয়
+            if (topAbs < 0) { bottomAbs += (0 - topAbs); topAbs = 0; }
+            if (bottomAbs > full.height) { topAbs = Math.max(0, topAbs - (bottomAbs - full.height)); bottomAbs = full.height; }
+            py = topAbs;
+            ph = bottomAbs - topAbs;
         } else {
             // rowInk বের করা না গেলে (edge-case), AI-র মূল estimate + বড় fixed padding fallback
             const padPct = 3;
