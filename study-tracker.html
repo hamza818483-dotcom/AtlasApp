@@ -559,8 +559,18 @@ async function mbRestoreTrackerState(){
 function hidePanel(id){
   document.getElementById(id).classList.remove('open');
   panelStack.pop();
-  if(!panelStack.length) mbClearTrackerState();
-  else mbSaveTrackerState(panelStack[panelStack.length-1]);
+  if(!panelStack.length){
+    mbClearTrackerState();
+    // বাগ: panel বন্ধ করে dashboard এ ফেরত আসার সময় updateDash() কখনো আবার
+    // কল হতো না — ততক্ষণে panel-এ ঢুকে CACHE পূর্ণ হয়ে গেছে (সঠিক % জানা আছে),
+    // কিন্তু dashboard কার্ডের টেক্সট আগের (page-load এর সময়কার, প্রায়ই ০%)
+    // মানই দেখাতে থাকতো। তাই user Subject panel-এ ঢুকে ফিরে এলে ঠিক %
+    // (panel-এর ভেতরে দেখা) থাকা সত্ত্বেও dashboard এ ০% আটকে দেখাতো। এখন
+    // dashboard এ ফেরার সময় updateDash() পুনরায় কল হয়ে সঠিক % দেখায়।
+    updateDash();
+  } else {
+    mbSaveTrackerState(panelStack[panelStack.length-1]);
+  }
 }
 window.addEventListener('popstate',()=>{if(panelStack.length){hidePanel(panelStack[panelStack.length-1]);}});
 
