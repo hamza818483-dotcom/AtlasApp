@@ -1991,19 +1991,11 @@ async function mbCropExplanationImage(pageNum, box) {
 
         // যে নির্দিষ্ট লাইন/অংশ থেকে MCQ বানানো হয়েছে (AI-র মূল y..y+h অনুযায়ী), সেটা crop-এর
         // মধ্যে হলুদ highlight করে দেখানো হয় — যাতে বোঝা যায় ঠিক কোন অংশ থেকে প্রশ্নটা এসেছে।
-        const hlTop    = Math.round((y / 100 * full.height) - py);
-        const hlBottom = Math.round(((y + h) / 100 * full.height) - py);
-        const hlY      = Math.max(0, hlTop);
-        const hlH      = Math.min(ph, hlBottom) - hlY;
-        if (hlH > 0) {
-            // হলুদ semi-transparent fill (হালকা opacity, টেক্সট পড়া যায়) + চারপাশে বোল্ড বর্ডার —
-            // যাতে লাইনটা পেইজে আলাদাভাবে চোখে পড়ে কিন্তু টেক্সট ঢাকা না যায়।
-            cropCtx.fillStyle = 'rgba(255, 235, 59, 0.30)';
-            cropCtx.fillRect(0, hlY, full.width, hlH);
-            cropCtx.strokeStyle = 'rgba(234, 179, 8, 1)';
-            cropCtx.lineWidth = 4;
-            cropCtx.strokeRect(2, hlY + 2, full.width - 4, Math.max(1, hlH - 4));
-        }
+        cropCtx.fillStyle = 'rgba(255, 235, 59, 0.28)';
+        cropCtx.fillRect(0, 0, full.width, ph);
+        cropCtx.strokeStyle = 'rgba(220, 38, 38, 1)';
+        cropCtx.lineWidth = 5;
+        cropCtx.strokeRect(3, 3, full.width - 6, ph - 6);
         return cropped.toDataURL('image/jpeg', 0.85).split(',')[1]; // শুধু base64 অংশ ফেরত
     } catch (_) {
         return null;
