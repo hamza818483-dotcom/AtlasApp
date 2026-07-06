@@ -1554,11 +1554,11 @@ async function mbDeleteMcq(mcqId) {
         }
 
         await mbUpsertPageMcqs(mbCurrentPage, finalMcqs, sourceType);
-        await mbLoadAllPageMcqs(); // server থেকে fresh data টেনে instant-accurate UI নিশ্চিত করা
         mbToast('✓ প্রশ্ন মুছে গেছে', 'success');
         mbRenderPageMcqList();
         mbUpdatePageCount();
         mbRenderPageSummary();
+        mbLoadAllPageMcqs(); // background sync, UI আগেই instant আপডেট হয়ে গেছে (double round-trip আর নেই)
     } catch (ex) {
         mbToast('মুছতে ব্যর্থ: ' + ex.message, 'error');
     }
