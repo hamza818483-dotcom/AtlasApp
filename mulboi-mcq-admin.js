@@ -1150,27 +1150,52 @@ function mbGoToPagePill(p) {
    10. MCQ DATA LAYER  (book_page_mcqs, mcq_type='admin')
    ════════════════════════════════════════════════════ */
 
+// bug fix: Supabase মাঝে মাঝে 500 (server error, cold-start/timeout) ফেরত দিচ্ছিল আর সেটা silently
+// swallow করে [] বসিয়ে দিত — ফলে pill count/All-list ফাঁকা দেখাত যদিও ডেটা আসলে ছিল। এখন ৫০০/network
+// error এ ১বার retry করে, তারপরও ব্যর্থ হলে console এ error log + user কে toast দিয়ে জানানো হয়
+// (আগের cache করা ডেটা মুছে ফেলা হয় না, পুরনো cache-ই থেকে যায়)।
+async function mbApiWithRetry(path, retries = 1) {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+            const res = await mbApi(path);
+            if (res.ok) return res;
+            if (res.status !== 500 || attempt === retries) return res;
+        } catch (e) {
+            if (attempt === retries) throw e;
+        }
+        await new Promise(r => setTimeout(r, 600 * (attempt + 1)));
+    }
+}
+
 async function mbLoadAllPageMcqs() {
     if (!mbPdfId) return;
     mbResumeBulkJob();
 
     const [res, res2] = await Promise.all([
-        mbApi('/book_page_mcqs?pdf_id=eq.' + mbPdfId + '&mcq_type=eq.admin&select=id,page_number,questions_json&limit=500'),
-        mbApi('/book_page_mcqs?pdf_id=eq.' + mbPdfId + '&select=id,page_number,mcq_type,questions_json&limit=500')
+        mbApiWithRetry('/book_page_mcqs?pdf_id=eq.' + mbPdfId + '&mcq_type=eq.admin&select=id,page_number,questions_json&limit=500'),
+        mbApiWithRetry('/book_page_mcqs?pdf_id=eq.' + mbPdfId + '&select=id,page_number,mcq_type,questions_json&limit=500')
     ]);
 
+    let failed = false;
     try {
-        if (!res.ok) throw new Error();
+        if (!res.ok) throw new Error('status ' + res.status);
         mbAllPageData = await res.json() || [];
-    } catch {
-        mbAllPageData = [];
+    } catch (e) {
+        console.error('mbLoadAllPageMcqs: admin fetch failed', e);
+        failed = true;
+        // পুরনো cache থাকলে সেটাই রাখো, খালি [] দিয়ে overwrite করো না
     }
 
     try {
-        if (!res2.ok) throw new Error();
+        if (!res2.ok) throw new Error('status ' + res2.status);
         mbAllPageDataAllTypes = await res2.json() || [];
-    } catch {
-        mbAllPageDataAllTypes = [];
+    } catch (e) {
+        console.error('mbLoadAllPageMcqs: all-types fetch failed', e);
+        failed = true;
+    }
+
+    if (failed && typeof mbToast === 'function') {
+        mbToast('⚠️ MCQ ডেটা লোড করতে সমস্যা হয়েছে, আবার চেষ্টা করুন', 'error');
     }
 
     // pill instant-load cache আপডেট — mbUpsertPageMcqs (save/bulk) এর পরেও এই function
