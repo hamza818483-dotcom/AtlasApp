@@ -538,8 +538,28 @@ function switchSTab(mode,btn){
 
 async function renderSubjects(){
   const grid=document.getElementById('subjGrid');
-  grid.innerHTML='<div class="loading" style="grid-column:1/-1"><div class="spin"></div><br>লোড হচ্ছে...</div>';
-  const subjs=await loadSyllabus(sylMode,true);
+  // আগে এখানে loadSyllabus(sylMode, true) — অর্থাৎ forceRefresh=true — কল হতো,
+  // মানে প্রতিবার Syllabus Tracker panel খুললেই (এমনকি cache তৈরি থাকা সত্ত্বেও)
+  // জোর করে নতুন 3-query sequential fetch শুরু হতো। এজন্যই কয়েক পেইজ ঘুরে ফিরে
+  // এলে ডেটা "অনেকক্ষণ পর" আসতো। এখন cache থাকলে সেটা সাথে সাথে দেখানো হয়
+  // (instant), আর background-এ silently fresh data আনা হয় শুধু UI আপডেট
+  // করার জন্য — user blocking loading spinner আর দেখবে না যদি cache থাকে।
+  const hasCache = CACHE[sylMode] && CACHE[sylMode].length;
+  if(!hasCache){
+    grid.innerHTML='<div class="loading" style="grid-column:1/-1"><div class="spin"></div><br>লোড হচ্ছে...</div>';
+  }
+  const subjs=await loadSyllabus(sylMode, !hasCache);
+  renderSubjectCards(subjs);
+  if(hasCache){
+    // Cache থেকে instant দেখানোর পর, background এ silently সত্যিকারের fresh data
+    // আনা হয় — কোনো নতুন বিষয়/অধ্যায় যোগ হলে সেটাও পরে চোখে পড়বে, কিন্তু
+    // ইউজারকে অপেক্ষা করতে হবে না।
+    loadSyllabus(sylMode, true).then(fresh=>{ if(fresh && fresh.length) renderSubjectCards(fresh); }).catch(()=>{});
+  }
+}
+
+function renderSubjectCards(subjs){
+  const grid=document.getElementById('subjGrid');
   if(!subjs.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1">কোনো বিষয় পাওয়া যায়নি।<br><small>Admin থেকে বিষয় যোগ করুন।</small></div>';return;}
   let totalChaps=0,overallT=0,overallD=0;
   const cards=subjs.map(s=>{
