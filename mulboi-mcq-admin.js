@@ -125,6 +125,9 @@ const MB_EXP_BOX_RULE = (
     `একটু বেশি ধরো, যাতে মূল অংশ কোনোভাবেই y বা y+h এর ঠিক সীমানায় গিয়ে কেটে না যায়। ` +
     `উপরে টপিক/বক্স শুরুর ঠিক আগ থেকে এবং নিচে শেষ হওয়ার ঠিক পর থেকে সামান্য (আধা লাইনের কম) সেফটি বাফার যোগ করবে, বেশি বাফার না — ` +
     `অতিরিক্ত বাফার দিলে পাশের অন্য প্যারা/প্রশ্নের অংশ ভুলভাবে চলে আসতে পারে, তাই বাফার যতটা সম্ভব ছোট রাখবে। ` +
+    `এছাড়া "line_box" নামে আরেকটি object দিবে — শুধুমাত্র সেই নির্দিষ্ট লাইন/বাক্যের bounding box (y,h একই % এককে, x/w লাগবে না) ` +
+    `যেখান থেকে সরাসরি এই প্রশ্নের উত্তর/মূল তথ্যটি এসেছে (পুরো প্যারা/টপিক না, শুধু ঐ এক বা দুই লাইন)। ` +
+    `exp_box পুরো প্রসঙ্গ/প্যারা/বক্স কভার করবে, কিন্তু line_box শুধু সেই exact লাইনটুকু নির্দেশ করবে যেটা highlight করা হবে। ` +
     `কিন্তু মূল টপিক/বক্স অংশ কখনোই আংশিক/partial বা কাটা হবে না — সেটা সবসময় ১০০% সম্পূর্ণ থাকবে, এটাই সবচেয়ে জরুরি শর্ত। ` +
     `এই object-এ চারটি key থাকবে: x, y, w, h — সবগুলো পুরো পেইজের width/height এর ` +
     `শতকরা হিসেবে (0 থেকে 100 এর মধ্যে সংখ্যা, % চিহ্ন ছাড়া)। x,y মানে বাম-উপরের কোণা, w,h মানে width ও height। ` +
@@ -142,7 +145,7 @@ let mbAiData      = [];
    নির্দিষ্ট count বাধ্যতামূলক করে) — এর বদলে আলাদা extraction-only rule সেট।
    ════════════════════════════════════════════════════ */
 function mbSpecialExtractPrompt() {
-    const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","exp_box":{"x":0,"y":0,"w":0,"h":0},"type":"special"}]`;
+    const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","exp_box":{"x":0,"y":0,"w":0,"h":0},"line_box":{"y":0,"h":0},"type":"special"}]`;
     return (
         `তুমি একজন নিখুঁত ডেটা-এক্সট্র্যাকশন এক্সপার্ট। তোমার কাজ শুধুমাত্র এই পেইজে ইতিমধ্যে ছাপা/লেখা MCQ প্রশ্নগুলো ` +
         `হুবহু এক্সট্র্যাক্ট করা — নতুন কোনো MCQ কখনোই বানাবে না।\n\n` +
@@ -158,7 +161,7 @@ function mbSpecialExtractPrompt() {
         `৬. গাণিতিক/রাসায়নিক রাশি লেখার সময় সঠিক সাব/সুপারস্ক্রিপ্ট ইউনিকোড ব্যবহার করবে (x², H₂O ইত্যাদি), সাধারণ সংখ্যা দিয়ে লিখবে না।\n` +
         `৭. প্রশ্ন বা ব্যাখ্যায় কখনো "উল্লেখিত চিত্রে", "বক্সে", "উদ্দীপকে", "পৃষ্ঠায়" জাতীয় সোর্স-রেফারেন্স বাক্য ব্যবহার করবে না — স্বয়ংসম্পূর্ণ রাখবে।\n` +
         `৮. এটাই সবচেয়ে গুরুত্বপূর্ণ নিয়ম: তুমি একজন এক্সট্র্যাক্টর, জেনারেটর নও — কোনো অবস্থাতেই নিজের থেকে নতুন প্রশ্ন কল্পনা করে বানাবে না।\n` +
-        `৯. প্রতিটি প্রশ্নের জন্য "exp_box" object দিবে — যে টপিক/উদ্দীপক/paragraph থেকে প্রশ্নটি নেওয়া হয়েছে তার শুরু থেকে শেষ পর্যন্ত সম্পূর্ণ অংশের bounding box (partial না, পুরো টপিক), সাথে খুব সামান্য (১ লাইনের কম) সেফটি বাফার — কোনো লাইন/বক্স যেন কাটা না পড়ে কিন্তু অপ্রয়োজনীয় বাড়তি ফাঁকা অংশও না থাকে — পুরো পেইজের সাপেক্ষে শতকরা (0-100) হিসেবে {x,y,w,h}।\n\n` +
+        `৯. প্রতিটি প্রশ্নের জন্য "exp_box" object দিবে — যে টপিক/উদ্দীপক/paragraph থেকে প্রশ্নটি নেওয়া হয়েছে তার শুরু থেকে শেষ পর্যন্ত সম্পূর্ণ অংশের bounding box (partial না, পুরো টপিক), সাথে খুব সামান্য (১ লাইনের কম) সেফটি বাফার — কোনো লাইন/বক্স যেন কাটা না পড়ে কিন্তু অপ্রয়োজনীয় বাড়তি ফাঁকা অংশও না থাকে — পুরো পেইজের সাপেক্ষে শতকরা (0-100) হিসেবে {x,y,w,h}। এছাড়া "line_box" object দিবে — শুধু সেই নির্দিষ্ট লাইন/বাক্য যেখান থেকে সরাসরি উত্তর/তথ্য এসেছে তার bounding box (y,h), পুরো প্যারা না।\n\n` +
         `শুধুমাত্র নিচের JSON ফরম্যাটে উত্তর দিবে, অন্য কোনো লেখা/markdown/backtick ছাড়া:\n${jsonFormat}`
     );
 }
@@ -181,7 +184,7 @@ function mbShuffleSpecialOptions(m) {
 // একটা পেইজ থেকে শুধু existing MCQ এক্সট্র্যাক্ট করে — retry + reliability check সহ।
 // রেজাল্ট খালি [] হলে অর্থ পেইজে সত্যিই কোনো MCQ নেই (silently skip, error না)।
 async function mbSpecialExtractPage(pageNum) {
-    const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","exp_box":{"x":0,"y":0,"w":0,"h":0},"type":"special"}]`;
+    const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","exp_box":{"x":0,"y":0,"w":0,"h":0},"line_box":{"y":0,"h":0},"type":"special"}]`;
     const basePrompt = mbSpecialExtractPrompt();
     const MAX_ATTEMPTS = 3;
 
@@ -1887,7 +1890,7 @@ function mbRowHasInk(imgData, width, rowY, threshold) {
    এবং তার আশেপাশে সত্যিকারের blank/whitespace gap কোথায় আছে সেটা বের করে, এবং crop
    ঠিক সেই blank gap বরাবর snap করা হয় — ফলে কোনো লাইন, প্যারা, বা বক্সের বর্ডার
    কখনোই মাঝপথে কাটা পড়ে না, AI-র y/h অনুমান কিছুটা ভুল হলেও। */
-async function mbCropExplanationImage(pageNum, box) {
+async function mbCropExplanationImage(pageNum, box, lineBox) {
     if (!mbPdfDoc) return null;
     try {
         const page  = await mbPdfDoc.getPage(pageNum);
@@ -1989,13 +1992,29 @@ async function mbCropExplanationImage(pageNum, box) {
         const cropCtx = cropped.getContext('2d');
         cropCtx.drawImage(full, 0, py, full.width, ph, 0, 0, full.width, ph);
 
-        // যে নির্দিষ্ট লাইন/অংশ থেকে MCQ বানানো হয়েছে (AI-র মূল y..y+h অনুযায়ী), সেটা crop-এর
-        // মধ্যে হলুদ highlight করে দেখানো হয় — যাতে বোঝা যায় ঠিক কোন অংশ থেকে প্রশ্নটা এসেছে।
-        cropCtx.fillStyle = 'rgba(255, 235, 59, 0.28)';
-        cropCtx.fillRect(0, 0, full.width, ph);
+        // পুরো cropped অংশটাকে (exp_box) বোল্ড red border দিয়ে ঘেরা হয় —
+        // যাতে বোঝা যায় কোন প্যারা/টপিক/বক্স থেকে প্রশ্নটা এসেছে।
         cropCtx.strokeStyle = 'rgba(220, 38, 38, 1)';
         cropCtx.lineWidth = 5;
         cropCtx.strokeRect(3, 3, full.width - 6, ph - 6);
+
+        // line_box থাকলে শুধু সেই নির্দিষ্ট লাইন/বাক্যে হলুদ highlight — পুরো অংশ না,
+        // যাতে ঠিক কোন লাইন থেকে সরাসরি উত্তরটা এসেছে সেটা আলাদাভাবে চোখে পড়ে।
+        const ly = lineBox ? Number(lineBox.y) : NaN;
+        const lh = lineBox ? Number(lineBox.h) : NaN;
+        if (Number.isFinite(ly) && Number.isFinite(lh) && lh > 0) {
+            const hlTop = Math.round((ly / 100 * full.height) - py);
+            const hlBottom = Math.round(((ly + lh) / 100 * full.height) - py);
+            const hlY = Math.max(0, hlTop);
+            const hlH = Math.min(ph, hlBottom) - hlY;
+            if (hlH > 0) {
+                cropCtx.fillStyle = 'rgba(255, 235, 59, 0.45)';
+                cropCtx.fillRect(0, hlY, full.width, hlH);
+                cropCtx.strokeStyle = 'rgba(234, 179, 8, 1)';
+                cropCtx.lineWidth = 2;
+                cropCtx.strokeRect(0, hlY, full.width, hlH);
+            }
+        }
         return cropped.toDataURL('image/jpeg', 0.85).split(',')[1]; // শুধু base64 অংশ ফেরত
     } catch (_) {
         return null;
@@ -2066,7 +2085,7 @@ async function mbAiGenerate() {
 
     try {
         const typeLabel = { standard: 'সাধারণ', true_false: 'সত্য/মিথ্যা', hard: 'কঠিন' };
-        const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","exp_box":{"x":0,"y":0,"w":0,"h":0},"type":"${type}"}]`;
+        const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","exp_box":{"x":0,"y":0,"w":0,"h":0},"line_box":{"y":0,"h":0},"type":"${type}"}]`;
         const savedP = mbGetSavedPrompt(type);
         const basePrompt = (customP || savedP || (
             `${typeLabel[type]||type} ধরনের ${count.label} MCQ তৈরি করো। ` +
@@ -2162,11 +2181,11 @@ async function mbAiGenerate() {
         // explanation image (এমনকি ভুল/অন্য প্রশ্নের crop) পেয়ে যেত।
         const cropCache = new Map();
         for (const m of mbAiData) {
-            const key = m.exp_box ? JSON.stringify(m.exp_box) : `NOBBOX_${m.id}`;
-            if (!cropCache.has(key)) cropCache.set(key, await mbCropExplanationImage(mbCurrentPage, m.exp_box));
+            const key = m.exp_box ? JSON.stringify(m.exp_box) + JSON.stringify(m.line_box||null) : `NOBBOX_${m.id}`;
+            if (!cropCache.has(key)) cropCache.set(key, await mbCropExplanationImage(mbCurrentPage, m.exp_box, m.line_box));
             const img = cropCache.get(key);
             if (img) m.explanation_image = img; // exp_box না থাকলেও fallback (full page) দেওয়া হয় — কখনো miss হবে না
-            delete m.exp_box; // raw box আর দরকার নেই, save হবে না
+            delete m.exp_box; delete m.line_box; // raw box আর দরকার নেই, save হবে না
         }
 
         const header = document.getElementById('mbAiResultHeader');
@@ -2666,7 +2685,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
 
     const count = mbParseCountInput(countRaw);
     const typeLabel = { standard: 'সাধারণ', true_false: 'সত্য/মিথ্যা', hard: 'কঠিন' };
-    const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","exp_box":{"x":0,"y":0,"w":0,"h":0},"type":"${type}"}]`;
+    const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","exp_box":{"x":0,"y":0,"w":0,"h":0},"line_box":{"y":0,"h":0},"type":"${type}"}]`;
     const savedP = mbGetSavedPrompt(type);
     const basePrompt = (savedP || (
         `${typeLabel[type]||type} ধরনের ${count.label} MCQ তৈরি করো। ` +
@@ -2747,11 +2766,11 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     // MCQ একই cache entry শেয়ার করে ভুল/অন্য প্রশ্নের crop image পেয়ে যায়।
     const cropCache = new Map();
     for (const m of newMcqs) {
-        const key = m.exp_box ? JSON.stringify(m.exp_box) : `NOBBOX_${m.id}`;
-        if (!cropCache.has(key)) cropCache.set(key, await mbCropExplanationImage(pageNum, m.exp_box));
+        const key = m.exp_box ? JSON.stringify(m.exp_box) + JSON.stringify(m.line_box||null) : `NOBBOX_${m.id}`;
+        if (!cropCache.has(key)) cropCache.set(key, await mbCropExplanationImage(pageNum, m.exp_box, m.line_box));
         const img = cropCache.get(key);
         if (img) m.explanation_image = img;
-        delete m.exp_box;
+        delete m.exp_box; delete m.line_box;
     }
 
     // bug fix: এটা admin panel-এর AI generate (single/bulk উভয়), তাই mcq_type অবশ্যই 'admin' হবে —
