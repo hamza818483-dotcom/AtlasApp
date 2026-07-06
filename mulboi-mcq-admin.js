@@ -1917,7 +1917,7 @@ async function mbCropExplanationImage(pageNum, box) {
 
         // ধাপ ১: AI-র অনুমান থেকে একটা generous initial window বানানো — যথেষ্ট চওড়া যাতে
         // প্রকৃত টপিক/বক্সের শুরু ও শেষ নিশ্চিতভাবে এই window-এর ভেতরেই থাকে।
-        const seedPadPct = 12; // AI-র estimate ভুল হওয়ার সম্ভাবনা ধরেই বড় প্রাথমিক বাফার
+        const seedPadPct = 6; // আগে ১২% ছিল — কমিয়ে আনায় scan window ছোট, তাই পাশের অংশ ধরার সম্ভাবনা কম
         const seedTop    = Math.max(0, Math.round((y - seedPadPct) / 100 * full.height));
         const seedBottom = Math.min(full.height, Math.round((y + h + seedPadPct) / 100 * full.height));
 
@@ -1938,7 +1938,7 @@ async function mbCropExplanationImage(pageNum, box) {
             // ধাপ ৩: seed window-এর একদম উপরে ও নিচে (buffer zone) থেকে বাইরের দিকে হেঁটে
             // real content-এর প্রকৃত প্রথম ও শেষ row বের করা — তারপর সেই content-এর ঠিক
             // বাইরের blank gap পর্যন্ত crop বাড়ানো হয়, যাতে বর্ডার লাইনও পুরোপুরি থাকে।
-            const minGapRows = Math.max(4, Math.round(full.height * 0.006)); // ~lines এর মাঝের ফাঁকা জায়গা যতটুকু হলে "gap" ধরা হবে
+            const minGapRows = Math.max(2, Math.round(full.height * 0.003)); // gap threshold কমানো হলো — আগে বেশি বড় gap দরকার হতো বলে পাশের প্রশ্নের অংশ পর্যন্ত হেঁটে যেত
 
             // মূল topic/box অংশের top boundary: AI-র estimate করা y বরাবর থেকে উপরের
             // দিকে হাঁটতে থাকি যতক্ষণ কনটেন্ট (ink) পাওয়া যায়; থামি যখন একটানা blank gap পাই।
@@ -1969,13 +1969,13 @@ async function mbCropExplanationImage(pageNum, box) {
             // ধাপ ৪: content-এর প্রকৃত top/bottom পাওয়ার পর, তার সাথে অতিরিক্ত নিরাপদ বাফার
             // (কয়েক লাইনের সমান) যোগ করা হয় যাতে সীমানার একদম কাছাকাছি কোনো আংশিক অক্ষর/বর্ডার
             // থাকলেও তা সম্পূর্ণ দেখা যায়।
-            const extraPadPx = Math.round(full.height * 0.02); // ~২% অতিরিক্ত visual safety margin
+            const extraPadPx = Math.round(full.height * 0.004); // আগে ২% ছিল, যা content-এর বাইরে পাশের প্রশ্নের অংশও দেখিয়ে দিতো — এখন শুধু border-safety জন্য ছোট মার্জিন
             py = Math.max(0, seedTop + topRow - extraPadPx);
             const bottomAbs = Math.min(full.height, seedTop + bottomRow + extraPadPx);
             ph = bottomAbs - py;
         } else {
             // rowInk বের করা না গেলে (edge-case), AI-র মূল estimate + বড় fixed padding fallback
-            const padPct = 10;
+            const padPct = 3;
             py = Math.max(0, (y - padPct) / 100 * full.height);
             ph = Math.min(full.height - py, (h + padPct * 2) / 100 * full.height);
         }
