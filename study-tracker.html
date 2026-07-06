@@ -517,25 +517,50 @@ async function loadSyllabus(mode,forceRefresh=false){
 // PANEL NAV
 // ═══════════════════
 const panelStack=[];
-function showPanel(id){
+function showPanel(id, extra){
   const el=document.getElementById(id);
   el.classList.add('open');
   panelStack.push(id);
-  // বাগ: আগে এখানে history.pushState() কল হতো না — panelStack শুধু in-memory
-  // array ছিল, browser-এর real history-তে কোনো নতুন entry যোগ হতো না। ফলে
-  // Subject/Chapter panel খোলা অবস্থায় (যেমন loading এর সময়) কোনো popstate/back
-  // navigation এলে browser সরাসরি এই পেইজের *আগের* real history entry-তে চলে
-  // যেতো — অর্থাৎ পুরো Study Tracker থেকে বেরিয়ে মূল 4-card dashboard এ ফিরে
-  // আসতো, panel বন্ধ হওয়ার বদলে। এখন প্রতিটা panel open করার সময় একটা history
-  // state push করা হয়, তাই back/popstate প্রথমে শুধু এই panel-টাকেই বন্ধ করবে।
   history.pushState({stPanel:id}, '');
   if(id==='pSyllabus') renderSubjects();
   if(id==='pProgress') renderProgress();
   if(id==='pRevision') renderRevSubjects();
+  mbSaveTrackerState(id, extra);
+}
+// বাগ: Subject/Chapter panel-এ থাকা অবস্থায় ইউজার browser refresh করলে পুরো
+// পেইজ ফ্রেশ লোড হয় (এটা স্বাভাবিক), কিন্তু panel state কোথাও সেভ করা ছিল না —
+// panelStack ও cur.mode/subjId শুধু in-memory variable, refresh এ হারিয়ে যেতো।
+// ফলে user মনে করতো "loading দিলেই page থেকে বের করে দেয়" — আসলে refresh এর
+// পর dashboard এ ফিরিয়ে দেওয়াটাই default (কোনো state persist না থাকায়)। এখন
+// panel state sessionStorage এ সেভ থাকে, আর page load এ সেটা পড়ে ঠিক একই
+// panel/subject/chapter এ ফিরিয়ে আনা হয় — refresh করলে আর dashboard এ চলে যাবে না।
+const ST_PANEL_KEY='atlasTrackerPanelState';
+function mbSaveTrackerState(panelId, extra){
+  try{
+    sessionStorage.setItem(ST_PANEL_KEY, JSON.stringify({panelId, extra: extra||null, ts: Date.now()}));
+  }catch(_){}
+}
+function mbClearTrackerState(){
+  try{ sessionStorage.removeItem(ST_PANEL_KEY); }catch(_){}
+}
+async function mbRestoreTrackerState(){
+  let saved=null;
+  try{ saved=JSON.parse(sessionStorage.getItem(ST_PANEL_KEY)||'null'); }catch(_){ return; }
+  if(!saved || !saved.panelId) return;
+  if(saved.panelId==='pChapter' && saved.extra){
+    // pSyllabus প্রথমে খুলতে হয় (parent panel), তারপর chapter panel — ঠিক আগের
+    // মতোই drill-down state ফিরিয়ে আনার জন্য।
+    showPanel('pSyllabus');
+    await openChapters(saved.extra.mode, saved.extra.subjId);
+  } else if(saved.panelId==='pSyllabus' || saved.panelId==='pProgress' || saved.panelId==='pRevision' || saved.panelId==='pRoutine'){
+    showPanel(saved.panelId);
+  }
 }
 function hidePanel(id){
   document.getElementById(id).classList.remove('open');
   panelStack.pop();
+  if(!panelStack.length) mbClearTrackerState();
+  else mbSaveTrackerState(panelStack[panelStack.length-1]);
 }
 window.addEventListener('popstate',()=>{if(panelStack.length){hidePanel(panelStack[panelStack.length-1]);}});
 
@@ -625,7 +650,7 @@ function tk(mode,sId,cId,tpId){return`${mode}|${sId}|${cId}|${tpId}`;}
 async function openChapters(mode,subjId){
   cur.mode=mode;cur.subjId=subjId;
   // Instant panel open
-  showPanel('pChapter');
+  showPanel('pChapter', {mode, subjId});
   $('chapList').innerHTML='<div class="loading"><div class="spin"></div></div>';
   const subjs=await loadSyllabus(mode);
   const s=subjs.find(x=>x.id==subjId);
@@ -1080,6 +1105,7 @@ updateDash();
 // তাই ম্যানুয়ালি panel না খুললে ০% আটকেই থাকতো। এখন prefetch শেষ হওয়ার পর
 // আবার updateDash() কল করে dashboard কার্ড সঠিক %-এ রিফ্রেশ করা হয়।
 Promise.all([loadSyllabus('hsc'), loadSyllabus('medical')]).then(updateDash);
+mbRestoreTrackerState();
 </script>
 <script src="global-nav.js"></script>
 </body>
