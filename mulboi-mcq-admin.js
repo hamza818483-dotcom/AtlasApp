@@ -1255,7 +1255,7 @@ async function mbUpsertPageMcqs(pageNum, mcqs, mcqType) {
         mcq_type:       mcqType,
         questions_json: JSON.stringify(mcqs)
     };
-    const res = await mbApi('/book_page_mcqs', {
+    const res = await mbApi('/book_page_mcqs?on_conflict=pdf_id,page_number,mcq_type', {
         method:  'POST',
         headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
         body:    JSON.stringify(body)
@@ -2732,7 +2732,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     if (existingRow) { try { currentMcqs = JSON.parse(existingRow.questions_json || '[]'); } catch (_) {} }
     currentMcqs.push(...newMcqs);
 
-    const res = await mbApi('/book_page_mcqs', {
+    const res = await mbApi('/book_page_mcqs?on_conflict=pdf_id,page_number,mcq_type', {
         method: 'POST',
         headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
         body: JSON.stringify({ pdf_id: parseInt(mbPdfId), page_number: pageNum, mcq_type: 'admin', questions_json: JSON.stringify(currentMcqs) })
@@ -2763,7 +2763,7 @@ async function mbGenerateForPageSpecial(pageNum) {
     if (existingRow) { try { currentMcqs = JSON.parse(existingRow.questions_json || '[]'); } catch (_) {} }
     currentMcqs.push(...newMcqs);
 
-    const res = await mbApi('/book_page_mcqs', {
+    const res = await mbApi('/book_page_mcqs?on_conflict=pdf_id,page_number,mcq_type', {
         method: 'POST',
         headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
         body: JSON.stringify({ pdf_id: parseInt(mbPdfId), page_number: pageNum, mcq_type: 'admin', questions_json: JSON.stringify(currentMcqs) })
