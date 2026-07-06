@@ -1987,7 +1987,22 @@ async function mbCropExplanationImage(pageNum, box) {
         const cropped = document.createElement('canvas');
         cropped.width  = full.width;
         cropped.height = ph;
-        cropped.getContext('2d').drawImage(full, 0, py, full.width, ph, 0, 0, full.width, ph);
+        const cropCtx = cropped.getContext('2d');
+        cropCtx.drawImage(full, 0, py, full.width, ph, 0, 0, full.width, ph);
+
+        // যে নির্দিষ্ট লাইন/অংশ থেকে MCQ বানানো হয়েছে (AI-র মূল y..y+h অনুযায়ী), সেটা crop-এর
+        // মধ্যে হলুদ highlight করে দেখানো হয় — যাতে বোঝা যায় ঠিক কোন অংশ থেকে প্রশ্নটা এসেছে।
+        const hlTop    = Math.round((y / 100 * full.height) - py);
+        const hlBottom = Math.round(((y + h) / 100 * full.height) - py);
+        const hlY      = Math.max(0, hlTop);
+        const hlH      = Math.min(ph, hlBottom) - hlY;
+        if (hlH > 0) {
+            cropCtx.fillStyle = 'rgba(255, 235, 59, 0.35)';
+            cropCtx.fillRect(0, hlY, full.width, hlH);
+            cropCtx.strokeStyle = 'rgba(255, 193, 7, 0.9)';
+            cropCtx.lineWidth = 2;
+            cropCtx.strokeRect(0, hlY, full.width, hlH);
+        }
         return cropped.toDataURL('image/jpeg', 0.85).split(',')[1]; // শুধু base64 অংশ ফেরত
     } catch (_) {
         return null;
