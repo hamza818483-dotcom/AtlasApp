@@ -902,15 +902,20 @@ function mbOpenMcqPanel(pdfId, pdfTitle, pdfUrl) {
     // Instant pill render: আগের network fetch থেকে cache করা counts থাকলে সাথে সাথে দেখাও,
     // fresh network data আসার আগ পর্যন্ত pill গুলো ফাঁকা/০ দেখানোর বদলে। fresh data এলে
     // নিচের .then() ব্লক আবার সঠিক তথ্য দিয়ে re-render করে দেবে।
+    // bug fix: আগে পুরো mbAllPageDataAllTypes (সব questions_json সহ) cache করা হতো, যা
+    // বড় PDF-এ localStorage quota (5MB) ছাড়িয়ে গেলে setItem silently fail করত — ফলে cache
+    // কখনোই সেভ হতো না আর pill count কোনোদিন instant দেখাত না। এখন mbWriteLightPillCache
+    // দিয়ে শুধু count summary cache হয় (questions_json ছাড়া), quota-safe ও দ্রুত।
     try {
-        const cacheKey = 'atlasMbPillCache_' + pdfId;
-        const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
-        if (cached && cached.allTypes) {
-            mbAllPageDataAllTypes = cached.allTypes;
-            mbAllPageData = cached.adminOnly || [];
+        const cached = JSON.parse(localStorage.getItem('atlasMbPillCache_' + pdfId) || 'null');
+        if (cached && cached.counts) {
+            mbAllPageDataAllTypes = cached.counts.map(r => ({
+                page_number: r.page_number,
+                mcq_type: r.mcq_type,
+                questions_json: JSON.stringify(new Array(r.count).fill({}))
+            }));
             if (cached.numPages) mbCachedNumPages = cached.numPages;
             mbRenderPageSummary();
-            mbRenderPageMcqList();
             mbUpdatePageCount();
         }
     } catch (_) {}
@@ -923,16 +928,6 @@ function mbOpenMcqPanel(pdfId, pdfTitle, pdfUrl) {
         mbRenderPageSummary();
         mbRenderPageMcqList();
         mbUpdatePageCount();
-
-        // network থেকে আসা true/fresh data cache করে রাখো পরবর্তী instant-load এর জন্য
-        try {
-            localStorage.setItem('atlasMbPillCache_' + pdfId, JSON.stringify({
-                allTypes: mbAllPageDataAllTypes,
-                adminOnly: mbAllPageData,
-                numPages: mbPdfDoc ? mbPdfDoc.numPages : mbCachedNumPages,
-                ts: Date.now()
-            }));
-        } catch (_) {}
     });
 
     if (pdfUrl) mbLoadPdfPreview(pdfUrl);
@@ -988,16 +983,7 @@ async function mbLoadPdfPreview(url) {
         mbRenderPageSummary();
         await mbRenderPdfPage(mbCurrentPage);
         // numPages জানা গেলে pill cache আপডেট করে দাও, পরের বার instant-load এ পুরো page range দেখানোর জন্য
-        try {
-            if (mbPdfId) {
-                const ck = 'atlasMbPillCache_' + mbPdfId;
-                const c = JSON.parse(localStorage.getItem(ck) || 'null') || {};
-                c.numPages = mbPdfDoc.numPages;
-                c.allTypes = mbAllPageDataAllTypes;
-                c.adminOnly = mbAllPageData;
-                localStorage.setItem(ck, JSON.stringify(c));
-            }
-        } catch (_) {}
+        mbWriteLightPillCache(mbPdfId);
     } catch (e) {
         if (loadingEl) loadingEl.classList.remove('show');
         console.warn('PDF preview failed:', e);
@@ -1167,6 +1153,25 @@ async function mbApiWithRetry(path, retries = 1) {
     }
 }
 
+// pill instant-load cache-এ পুরো questions_json না রেখে শুধু count রাখা হয় — বড় PDF-এ
+// localStorage 5MB quota ছাড়িয়ে setItem silently fail করে cache-কে চিরতরে অকার্যকর করে দিত,
+// এটাই ছিল "pill count instant load হয় না" সমস্যার root cause।
+function mbWriteLightPillCache(pdfId) {
+    try {
+        if (!pdfId) return;
+        const rows = mbAllPageDataAllTypes.map(row => {
+            let cnt = 0;
+            try { cnt = JSON.parse(row.questions_json || '[]').length; } catch (_) {}
+            return { page_number: row.page_number, mcq_type: row.mcq_type, count: cnt };
+        });
+        localStorage.setItem('atlasMbPillCache_' + pdfId, JSON.stringify({
+            counts: rows,
+            numPages: mbPdfDoc ? mbPdfDoc.numPages : mbCachedNumPages,
+            ts: Date.now()
+        }));
+    } catch (_) {}
+}
+
 async function mbLoadAllPageMcqs() {
     if (!mbPdfId) return;
     mbResumeBulkJob();
@@ -1202,16 +1207,7 @@ async function mbLoadAllPageMcqs() {
 
     // pill instant-load cache আপডেট — mbUpsertPageMcqs (save/bulk) এর পরেও এই function
     // কল হয়, তাই এখানে রাখলে সবসময় সর্বশেষ true count cache-এ থাকে
-    try {
-        if (mbPdfId) {
-            localStorage.setItem('atlasMbPillCache_' + mbPdfId, JSON.stringify({
-                allTypes: mbAllPageDataAllTypes,
-                adminOnly: mbAllPageData,
-                numPages: mbPdfDoc ? mbPdfDoc.numPages : mbCachedNumPages,
-                ts: Date.now()
-            }));
-        }
-    } catch (_) {}
+    mbWriteLightPillCache(mbPdfId);
 }
 
 function mbGetPageMcqs(pageNum) {
