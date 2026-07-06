@@ -884,10 +884,10 @@ function mbOpenMcqPanel(pdfId, pdfTitle, pdfUrl) {
     }
 
     const ml = document.getElementById('mbMcqList');
-    if (ml) ml.innerHTML = '';
+    if (ml) ml.innerHTML = '<div style="text-align:center;padding:20px;font-size:12px;color:var(--text3)">লোড হচ্ছে...</div>';
 
     const ps = document.getElementById('mbPageSummary');
-    if (ps) ps.innerHTML = '';
+    if (ps) ps.innerHTML = '<div style="font-size:11px;color:var(--text3);padding:4px 0">পেইজ তালিকা লোড হচ্ছে...</div>';
 
     mbUpdatePageCount();
 
