@@ -113,13 +113,16 @@ const MB_EXP_BOX_RULE = (
     `\n\n৪. প্রতিটি প্রশ্নের জন্য "exp_box" নামে একটি object দিতে হবে যা নির্দেশ করে পেইজের ঠিক কোন অংশ (paragraph/topic/box) ` +
     `থেকে এই প্রশ্নটি বানানো হয়েছে। এটা সবচেয়ে গুরুত্বপূর্ণ নিয়ম: যে টপিক/উদ্দীপক/paragraph/box থেকে প্রশ্ন এসেছে সেই সম্পূর্ণ ` +
     `অংশটা (heading/title সহ যদি থাকে) নিখুঁতভাবে শুরু থেকে শেষ পর্যন্ত y,h এর মধ্যে থাকতে হবে। এই মূল টপিক/বক্স অংশের উপরের ` +
-    `বা নিচের কোনো লাইন, বাক্য, বা বক্সের বর্ডার কখনোই কাটা যাবে না বা বাদ পড়বে না — যতটুকু কন্টেন্ট আছে তার পুরোটাই সম্পূর্ণ ` +
-    `দেখা যেতে হবে। শুধু প্রশ্ন সম্পর্কিত এক-দুই লাইন দিলে চলবে না, পুরো প্যারা/টপিক/বক্সটাই থাকতে হবে যাতে একজন শিক্ষার্থী ` +
-    `সম্পূর্ণ প্রসঙ্গ পড়তে পারে। কোনো প্যারা থেকে প্রশ্ন হলে সেই সম্পূর্ণ প্যারাটা থাকবে; কোনো নির্দিষ্ট বক্স/টপিক থেকে হলে সেই ` +
-    `পুরো বক্স/টপিকটা অবশ্যই থাকবে, সাথে উপরে-নিচে সম্পর্কিত (relevant) অংশও থাকবে। ` +
-    `উপরে টপিক/বক্স শুরুর ঠিক আগ থেকে এবং নিচে শেষ হওয়ার ঠিক পর থেকে অতিরিক্ত ২-৩ লাইন বাফার (buffer) যোগ করবে — ` +
+    `বা নিচের কোনো লাইন, বাক্য, শব্দ, বা বক্সের বর্ডার কখনোই কাটা যাবে না বা বাদ পড়বে না — যতটুকু কন্টেন্ট আছে তার পুরোটাই সম্পূর্ণ ` +
+    `দেখা যেতে হবে, আংশিক (partial) কোনো লাইন/বক্স গ্রহণযোগ্য না। শুধু প্রশ্ন সম্পর্কিত এক-দুই লাইন দিলে চলবে না, পুরো ` +
+    `প্যারা/টপিক/বক্সটাই থাকতে হবে যাতে একজন শিক্ষার্থী সম্পূর্ণ প্রসঙ্গ পড়তে পারে। কোনো প্যারা থেকে প্রশ্ন হলে সেই সম্পূর্ণ ` +
+    `প্যারাটা (প্রথম লাইন থেকে শেষ লাইন পর্যন্ত) থাকবে; কোনো নির্দিষ্ট বক্স/টপিক থেকে হলে সেই পুরো বক্স/টপিকটা (তার সম্পূর্ণ ` +
+    `বর্ডার/সীমানাসহ) অবশ্যই থাকবে, সাথে উপরে-নিচে সম্পর্কিত (relevant) অংশও থাকবে। ` +
+    `y নির্ধারণের সময় বরং একটু আগে থেকে শুরু করো (under-estimate না করে over-estimate করা ভালো) এবং h নির্ধারণের সময় বরং ` +
+    `একটু বেশি ধরো, যাতে মূল অংশ কোনোভাবেই y বা y+h এর ঠিক সীমানায় গিয়ে কেটে না যায়। ` +
+    `উপরে টপিক/বক্স শুরুর ঠিক আগ থেকে এবং নিচে শেষ হওয়ার ঠিক পর থেকে অতিরিক্ত ৩-৪ লাইনের সমান বাফার (buffer) যোগ করবে — ` +
     `এই বাফার-জোনে (মূল অংশের ঠিক উপরে/নিচে) যদি আগের/পরের অন্য প্যারার অংশ আংশিকভাবে (partial/cut) চলে আসে সেটা সমস্যা না, ` +
-    `কিন্তু মূল টপিক/বক্স অংশ কখনোই আংশিক/partial বা কাটা হবে না — সেটা সবসময় ১০০% সম্পূর্ণ থাকবে। ` +
+    `কিন্তু মূল টপিক/বক্স অংশ কখনোই আংশিক/partial বা কাটা হবে না — সেটা সবসময় ১০০% সম্পূর্ণ থাকবে, এটাই সবচেয়ে জরুরি শর্ত। ` +
     `এই object-এ চারটি key থাকবে: x, y, w, h — সবগুলো পুরো পেইজের width/height এর ` +
     `শতকরা হিসেবে (0 থেকে 100 এর মধ্যে সংখ্যা, % চিহ্ন ছাড়া)। x,y মানে বাম-উপরের কোণা, w,h মানে width ও height। ` +
     `একই টপিক/উদ্দীপক/বক্স থেকে একাধিক প্রশ্ন বানানো হলে, সবগুলোর exp_box একই (পুরো অংশ কভার করা) হবে — এটাই সঠিক, আলাদা করার দরকার নেই।`
@@ -1662,10 +1665,29 @@ async function mbSavePromptForType(type, text) {
     } catch(_) {}
 }
 
+/* ─── row-scan helper: canvas-এর একটা pixel row-এ "কালি" (non-white/non-blank content)
+   আছে কিনা বলে দেয়। Text/line/box-border সব ক্ষেত্রেই কাজ করে, কারণ এটা raw pixel
+   brightness/threshold চেক করে — font বা layout নিয়ে কোনো ধারণা লাগে না। ───────────── */
+function mbRowHasInk(imgData, width, rowY, threshold) {
+    const data = imgData.data;
+    const rowStart = rowY * width * 4;
+    // পুরো row না ঘেঁটে প্রতি ৩ পিক্সেল পরপর sample করলেই যথেষ্ট নির্ভরযোগ্য এবং দ্রুত
+    for (let x = 0; x < width; x += 2) {
+        const idx = rowStart + x * 4;
+        const r = data[idx], g = data[idx + 1], b = data[idx + 2];
+        // সাদা/প্রায়-সাদা ব্যাকগ্রাউন্ড বাদ দিয়ে যেকোনো গাঢ় পিক্সেল (টেক্সট/লাইন/বর্ডার) ধরবে
+        if (r < threshold || g < threshold || b < threshold) return true;
+    }
+    return false;
+}
+
 /* ─── exp_box (% coords) থেকে page-এর নির্দিষ্ট অংশ crop করে base64 JPEG বানায় ───
-   AI যে bounding box দেয় সেটা full page width/height এর % হিসেবে — এই function
-   page টাকে বেশি scale (2.5x) দিয়ে fresh render করে সেখান থেকে সঠিক pixel অংশ crop করে,
-   যাতে ছোট টেক্সটও পড়া যায়। box পাওয়া না গেলে বা invalid হলে null রিটার্ন করে। */
+   AI যে bounding box দেয় সেটা শুরুর অনুমান (estimate) হিসেবে ব্যবহার করা হয়, কিন্তু
+   চূড়ান্ত crop boundary কখনোই শুধু AI-র সংখ্যার উপর নির্ভর করে ঠিক করা হয় না।
+   এর বদলে page-টা pixel-level এ scan করে প্রকৃত content (কালি) কোথায় শুরু/শেষ হচ্ছে
+   এবং তার আশেপাশে সত্যিকারের blank/whitespace gap কোথায় আছে সেটা বের করে, এবং crop
+   ঠিক সেই blank gap বরাবর snap করা হয় — ফলে কোনো লাইন, প্যারা, বা বক্সের বর্ডার
+   কখনোই মাঝপথে কাটা পড়ে না, AI-র y/h অনুমান কিছুটা ভুল হলেও। */
 async function mbCropExplanationImage(pageNum, box) {
     if (!mbPdfDoc) return null;
     try {
@@ -1675,28 +1697,92 @@ async function mbCropExplanationImage(pageNum, box) {
         const full  = document.createElement('canvas');
         full.width  = vp.width;
         full.height = vp.height;
-        await page.render({ canvasContext: full.getContext('2d'), viewport: vp }).promise;
+        const fullCtx = full.getContext('2d');
+        await page.render({ canvasContext: fullCtx, viewport: vp }).promise;
 
         const y = box ? Number(box.y) : NaN;
         const h = box ? Number(box.h) : NaN;
         const validBox = Number.isFinite(y) && Number.isFinite(h) && h > 0;
 
-        // x,w কখনো ব্যবহার করা হয় না — সবসময় পুরো পেইজ width (0-100%) নেওয়া হয়, নাহলে
-        // ডান/বাম পাশের টেক্সট কাটা পড়ার সমস্যা হয় (AI-র width estimate ভুল হলে)।
-        // শুধু y,h (vertical position) AI থেকে নেওয়া হয়, সেটাও generous padding সহ।
-        const padPct = 8; // উপরে-নিচে অতিরিক্ত ৮% বাফার, টপিক/বক্সের লাইন কাটা পড়া এড়াতে (আগে ৬% ছিল)
-        let py, ph;
-        if (validBox) {
-            py = Math.max(0, (y - padPct) / 100 * full.height);
-            ph = Math.min(full.height - py, (h + padPct * 2) / 100 * full.height);
-        } else {
+        if (!validBox) {
             // exp_box না পাওয়া গেলে fallback: পুরো পেইজটাই explanation image হিসেবে দেওয়া হয়,
             // যাতে কোনো MCQ-তেই image সম্পূর্ণ miss না হয়।
-            py = 0;
-            ph = full.height;
+            const cropped = document.createElement('canvas');
+            cropped.width  = full.width;
+            cropped.height = full.height;
+            cropped.getContext('2d').drawImage(full, 0, 0);
+            return cropped.toDataURL('image/jpeg', 0.85).split(',')[1];
         }
+
+        // ধাপ ১: AI-র অনুমান থেকে একটা generous initial window বানানো — যথেষ্ট চওড়া যাতে
+        // প্রকৃত টপিক/বক্সের শুরু ও শেষ নিশ্চিতভাবে এই window-এর ভেতরেই থাকে।
+        const seedPadPct = 12; // AI-র estimate ভুল হওয়ার সম্ভাবনা ধরেই বড় প্রাথমিক বাফার
+        const seedTop    = Math.max(0, Math.round((y - seedPadPct) / 100 * full.height));
+        const seedBottom = Math.min(full.height, Math.round((y + h + seedPadPct) / 100 * full.height));
+
+        // ধাপ ২: সেই window-এর pixel data নিয়ে প্রতিটা row-এ ইঙ্ক (content) আছে কিনা স্ক্যান করা।
+        const winHeight = seedBottom - seedTop;
+        let rowInk = null;
+        if (winHeight > 0) {
+            const winData = fullCtx.getImageData(0, seedTop, full.width, winHeight);
+            const threshold = 235; // এর নিচে brightness হলে "কালি" ধরা হয় (সাদা কাগজ থেকে আলাদা করতে)
+            rowInk = new Array(winHeight);
+            for (let ry = 0; ry < winHeight; ry++) {
+                rowInk[ry] = mbRowHasInk(winData, full.width, ry, threshold);
+            }
+        }
+
+        let py, ph;
+        if (rowInk) {
+            // ধাপ ৩: seed window-এর একদম উপরে ও নিচে (buffer zone) থেকে বাইরের দিকে হেঁটে
+            // real content-এর প্রকৃত প্রথম ও শেষ row বের করা — তারপর সেই content-এর ঠিক
+            // বাইরের blank gap পর্যন্ত crop বাড়ানো হয়, যাতে বর্ডার লাইনও পুরোপুরি থাকে।
+            const minGapRows = Math.max(4, Math.round(full.height * 0.006)); // ~lines এর মাঝের ফাঁকা জায়গা যতটুকু হলে "gap" ধরা হবে
+
+            // মূল topic/box অংশের top boundary: AI-র estimate করা y বরাবর থেকে উপরের
+            // দিকে হাঁটতে থাকি যতক্ষণ কনটেন্ট (ink) পাওয়া যায়; থামি যখন একটানা blank gap পাই।
+            const estTopInWin = Math.max(0, Math.min(winHeight - 1, Math.round((y - seedTop / full.height * 100) )));
+            let topRow = Math.max(0, Math.round((y / 100 * full.height) - seedTop));
+            // topRow থেকে উপরে হেঁটে শেষ blank gap-এর ঠিক নিচের row বের করা
+            {
+                let consecutiveBlank = 0;
+                let lastContentRow = topRow;
+                for (let ry = topRow; ry >= 0; ry--) {
+                    if (rowInk[ry]) { lastContentRow = ry; consecutiveBlank = 0; }
+                    else { consecutiveBlank++; if (consecutiveBlank >= minGapRows) break; }
+                }
+                topRow = lastContentRow;
+            }
+            // bottomRow: h অনুযায়ী নিচের প্রান্ত থেকে নিচের দিকে হেঁটে শেষ blank gap পর্যন্ত
+            let bottomRow = Math.min(winHeight - 1, Math.round(((y + h) / 100 * full.height) - seedTop));
+            {
+                let consecutiveBlank = 0;
+                let lastContentRow = bottomRow;
+                for (let ry = bottomRow; ry < winHeight; ry++) {
+                    if (rowInk[ry]) { lastContentRow = ry; consecutiveBlank = 0; }
+                    else { consecutiveBlank++; if (consecutiveBlank >= minGapRows) break; }
+                }
+                bottomRow = lastContentRow;
+            }
+
+            // ধাপ ৪: content-এর প্রকৃত top/bottom পাওয়ার পর, তার সাথে অতিরিক্ত নিরাপদ বাফার
+            // (কয়েক লাইনের সমান) যোগ করা হয় যাতে সীমানার একদম কাছাকাছি কোনো আংশিক অক্ষর/বর্ডার
+            // থাকলেও তা সম্পূর্ণ দেখা যায়।
+            const extraPadPx = Math.round(full.height * 0.02); // ~২% অতিরিক্ত visual safety margin
+            py = Math.max(0, seedTop + topRow - extraPadPx);
+            const bottomAbs = Math.min(full.height, seedTop + bottomRow + extraPadPx);
+            ph = bottomAbs - py;
+        } else {
+            // rowInk বের করা না গেলে (edge-case), AI-র মূল estimate + বড় fixed padding fallback
+            const padPct = 10;
+            py = Math.max(0, (y - padPct) / 100 * full.height);
+            ph = Math.min(full.height - py, (h + padPct * 2) / 100 * full.height);
+        }
+
         if (ph < 10) return null;
 
+        // x,w কখনো ব্যবহার করা হয় না — সবসময় পুরো পেইজ width (0-100%) নেওয়া হয়, নাহলে
+        // ডান/বাম পাশের টেক্সট কাটা পড়ার সমস্যা হয় (AI-র width estimate ভুল হলে)।
         const cropped = document.createElement('canvas');
         cropped.width  = full.width;
         cropped.height = ph;
