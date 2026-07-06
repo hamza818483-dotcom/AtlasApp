@@ -1971,15 +1971,30 @@ async function mbCropExplanationImage(pageNum, box, lineBox) {
             // যোগ করা হয় (একই pixel value top ও bottom-এ) — এতে মূল লাইন/টপিক crop-এর ঠিক
             // মাঝখানে (centered) থাকে, আবার বেশি বাফার না দেওয়ায় বাড়তি ফাঁকা জায়গাও থাকে না।
             const safetyPad = Math.max(3, Math.round(full.height * 0.003));
-            let topAbs    = Math.max(0, (seedTop + topRow) - safetyPad);
-            let bottomAbs = Math.min(full.height, (seedTop + bottomRow) + safetyPad);
-            py = topAbs;
-            ph = bottomAbs - topAbs;
+            // exp_box-এর প্রকৃত (tight) top/bottom — red border এই বাউন্ডারিতেই আঁকা হবে
+            const boxTopAbs    = Math.max(0, (seedTop + topRow) - safetyPad);
+            const boxBottomAbs = Math.min(full.height, (seedTop + bottomRow) + safetyPad);
+
+            // crop-টা exp_box-এর চেয়ে কিছুটা বড় রাখা হয় (context margin) — যাতে চারপাশে
+            // সামান্য প্রাসঙ্গিক অংশ দেখা যায় এবং red border cropped canvas-এর একদম কিনারায়
+            // না থেকে exp_box-কে স্পষ্টভাবে আলাদা করে দেখায় (নাহলে border-এর কোনো তাৎপর্য থাকে না)।
+            const contextMargin = Math.max(10, Math.round(full.height * 0.015));
+            py = Math.max(0, boxTopAbs - contextMargin);
+            const bottomAbs = Math.min(full.height, boxBottomAbs + contextMargin);
+            ph = bottomAbs - py;
+            var mbBoxTopInCrop = boxTopAbs - py;
+            var mbBoxBottomInCrop = boxBottomAbs - py;
         } else {
             // rowInk বের করা না গেলে (edge-case), AI-র মূল estimate + বড় fixed padding fallback
             const padPct = 3;
-            py = Math.max(0, (y - padPct) / 100 * full.height);
-            ph = Math.min(full.height - py, (h + padPct * 2) / 100 * full.height);
+            const boxTopAbs    = Math.max(0, (y - padPct) / 100 * full.height);
+            const boxBottomAbs = Math.min(full.height, boxTopAbs + (h + padPct * 2) / 100 * full.height);
+            const contextMargin = Math.max(10, Math.round(full.height * 0.015));
+            py = Math.max(0, boxTopAbs - contextMargin);
+            const bottomAbs = Math.min(full.height, boxBottomAbs + contextMargin);
+            ph = bottomAbs - py;
+            var mbBoxTopInCrop = boxTopAbs - py;
+            var mbBoxBottomInCrop = boxBottomAbs - py;
         }
 
         if (ph < 10) return null;
@@ -1992,11 +2007,17 @@ async function mbCropExplanationImage(pageNum, box, lineBox) {
         const cropCtx = cropped.getContext('2d');
         cropCtx.drawImage(full, 0, py, full.width, ph, 0, 0, full.width, ph);
 
-        // পুরো cropped অংশটাকে (exp_box) বোল্ড red border দিয়ে ঘেরা হয় —
-        // যাতে বোঝা যায় কোন প্যারা/টপিক/বক্স থেকে প্রশ্নটা এসেছে।
-        cropCtx.strokeStyle = 'rgba(220, 38, 38, 1)';
-        cropCtx.lineWidth = 5;
-        cropCtx.strokeRect(3, 3, full.width - 6, ph - 6);
+        // exp_box (যে প্যারা/টপিক/বক্স থেকে MCQ বানানো হয়েছে) ঠিক তার বাউন্ডারিতেই বোল্ড red
+        // border আঁকা হয় — পুরো cropped canvas-এর কিনারায় না, তাই context-এর মধ্যে এই
+        // specific অংশটা স্পষ্টভাবে আলাদা করে বোঝা যায়।
+        const bTop = Math.max(0, Math.round(mbBoxTopInCrop));
+        const bBottom = Math.min(ph, Math.round(mbBoxBottomInCrop));
+        const bH = bBottom - bTop;
+        if (bH > 0) {
+            cropCtx.strokeStyle = 'rgba(220, 38, 38, 1)';
+            cropCtx.lineWidth = 5;
+            cropCtx.strokeRect(3, bTop + 3, full.width - 6, Math.max(1, bH - 6));
+        }
 
         // line_box থাকলে শুধু সেই নির্দিষ্ট লাইন/বাক্যে হলুদ highlight — পুরো অংশ না,
         // যাতে ঠিক কোন লাইন থেকে সরাসরি উত্তরটা এসেছে সেটা আলাদাভাবে চোখে পড়ে।
