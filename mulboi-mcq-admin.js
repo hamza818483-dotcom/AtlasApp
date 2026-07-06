@@ -1978,7 +1978,7 @@ async function mbCropExplanationImage(pageNum, box, lineBox) {
             // crop-টা exp_box-এর চেয়ে সামান্য বড় রাখা হয় (ছোট context margin) — আগে বেশি বড়
             // margin থাকায় crop অনেক বড় হয়ে যেত এবং specific line খুঁজে পাওয়া কঠিন হতো।
             // এখন margin ছোট রাখা হলো যাতে crop টাইট থাকে, specific line সহজে চোখে পড়ে।
-            const contextMargin = Math.max(4, Math.round(full.height * 0.006));
+            const contextMargin = Math.max(2, Math.round(full.height * 0.003));
             py = Math.max(0, boxTopAbs - contextMargin);
             const bottomAbs = Math.min(full.height, boxBottomAbs + contextMargin);
             ph = bottomAbs - py;
@@ -1989,7 +1989,7 @@ async function mbCropExplanationImage(pageNum, box, lineBox) {
             const padPct = 3;
             const boxTopAbs    = Math.max(0, (y - padPct) / 100 * full.height);
             const boxBottomAbs = Math.min(full.height, boxTopAbs + (h + padPct * 2) / 100 * full.height);
-            const contextMargin = Math.max(4, Math.round(full.height * 0.006));
+            const contextMargin = Math.max(2, Math.round(full.height * 0.003));
             py = Math.max(0, boxTopAbs - contextMargin);
             const bottomAbs = Math.min(full.height, boxBottomAbs + contextMargin);
             ph = bottomAbs - py;
@@ -2014,14 +2014,14 @@ async function mbCropExplanationImage(pageNum, box, lineBox) {
         const bH = bBottom - bTop;
         if (bH > 0) {
             cropCtx.strokeStyle = 'rgba(220, 38, 38, 1)';
-            cropCtx.lineWidth = 9;
-            cropCtx.strokeRect(4, bTop + 4, full.width - 8, Math.max(1, bH - 8));
-            cropCtx.lineWidth = 4;
-            cropCtx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
-            cropCtx.strokeRect(4, bTop + 4, full.width - 8, Math.max(1, bH - 8));
-            cropCtx.lineWidth = 9;
+            cropCtx.lineWidth = 14;
+            cropCtx.strokeRect(6, bTop + 6, full.width - 12, Math.max(1, bH - 12));
+            cropCtx.lineWidth = 5;
+            cropCtx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+            cropCtx.strokeRect(6, bTop + 6, full.width - 12, Math.max(1, bH - 12));
+            cropCtx.lineWidth = 14;
             cropCtx.strokeStyle = 'rgba(220, 38, 38, 1)';
-            cropCtx.strokeRect(4, bTop + 4, full.width - 8, Math.max(1, bH - 8));
+            cropCtx.strokeRect(6, bTop + 6, full.width - 12, Math.max(1, bH - 12));
         }
 
         // line_box থাকলে শুধু সেই নির্দিষ্ট লাইন/বাক্যে কমলা (orange) highlight — পুরো অংশ না,
@@ -3093,7 +3093,7 @@ async function mbConfirmSpecialExtract(scope) {
     try {
         for (let i = 0; i < pages.length; i++) {
             if (progressText) progressText.textContent = `পেইজ ${i + 1}/${pages.length} — existing MCQ যাচাই হচ্ছে...`;
-            const qs = await mbSpecialExtractPage(pages[i]);
+            const qs = await mbSpecialCsvExtractPage(pages[i]);
             if (qs && qs.length) {
                 allExtracted = allExtracted.concat(qs.map(q => mbSpecialShuffleOptions(mbSpecialConvertToAdminFormat(q, pages[i]))));
             }
@@ -3115,8 +3115,13 @@ async function mbConfirmSpecialExtract(scope) {
     }
 }
 
-// Extraction-only prompt — কখনো নতুন MCQ বানাবে না, শুধু পেইজে যা আছে হুবহু বের করবে
-function mbSpecialExtractPrompt() {
+// Extraction-only prompt (CSV export টুলের জন্য আলাদা, exp_box/line_box লাগে না কারণ এখানে
+// শুধু text/CSV বানানো হয়, কোনো image crop হয় না) — নাম আলাদা রাখা হলো যাতে উপরের
+// mbSpecialExtractPrompt() (যেটা admin panel-এর image-সহ MCQ generation flow ব্যবহার করে,
+// exp_box/line_box সহ) override না হয়ে যায় — আগে একই নামে দুটো ফাংশন থাকায় এই CSV-only
+// ভার্সনটা (exp_box ছাড়া) পুরোটাই override করে ফেলছিল, ফলে "existing MCQ" মোডে জেনারেট হওয়া
+// সব MCQ-তে exp_box/line_box null থাকতো এবং red border/orange highlight একদমই দেখাতো না।
+function mbSpecialCsvExtractPrompt() {
     const jsonFormat = `{"questions":[{"question":"...","options":["...","...","...","..."],"answer_index":0,"explanation":"..."}]}`;
     return (
         `তুমি একজন নিখুঁত ডেটা-এক্সট্র্যাকশন এক্সপার্ট। তোমার কাজ শুধুমাত্র এই পেইজে ইতিমধ্যে ছাপা/লেখা MCQ প্রশ্নগুলো ` +
@@ -3137,8 +3142,10 @@ function mbSpecialExtractPrompt() {
     );
 }
 
-// একটা পেইজ থেকে existing MCQ extract — 2-attempt retry (empty result হলে একবার recheck)
-async function mbSpecialExtractPage(pageNum) {
+// CSV export টুলের জন্য আলাদা extract function (উপরের mbSpecialExtractPage থেকে আলাদা নাম —
+// আগে একই নামে থাকায় এটাই override করে ফেলতো এবং exp_box/line_box সহ আসল ফাংশনটা কখনোই
+// কল হতো না) — 2-attempt retry (empty result হলে একবার recheck)
+async function mbSpecialCsvExtractPage(pageNum) {
     const MAX_ATTEMPTS = 2;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
         try {
@@ -3151,12 +3158,12 @@ async function mbSpecialExtractPage(pageNum) {
                 raw = await mbCallAiApi(
                     `নিচের টেক্সট বিশ্লেষণ করো:\n${pageText.slice(0, 8000)}`,
                     null,
-                    mbSpecialExtractPrompt()
+                    mbSpecialCsvExtractPrompt()
                 );
             } else {
                 const imageData = await mbGetPageImageBase64(pageNum);
                 if (!imageData) return [];
-                raw = await mbCallAiApi('', imageData, mbSpecialExtractPrompt());
+                raw = await mbCallAiApi('', imageData, mbSpecialCsvExtractPrompt());
             }
             const parsed = mbSpecialParseJson(raw);
             const questions = parsed?.questions || [];
