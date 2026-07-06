@@ -94,17 +94,27 @@ let mbAiTypeKey   = 'standard';
    এগুলো কখনো admin-এর কাস্টম prompt দিয়ে override হবে না; প্রতিটা
    MCQ-generation কলে শেষে append হয় যাতে AI অবশ্যই মেনে চলে।
    ════════════════════════════════════════════════════ */
-const MB_PERMANENT_RULES = (
-    `\n\nবাধ্যতামূলক নিয়ম (এগুলো সবসময় মেনে চলতে হবে, কোনো ব্যতিক্রম নয়):\n` +
-    `১. গাণিতিক বা রাসায়নিক রাশি/সূত্র লেখার সময় সঠিকভাবে সাব-স্ক্রিপ্ট ও সুপার-স্ক্রিপ্ট ব্যবহার করো — ` +
-    `যেমন x² (x^2 না), H₂O (H2O না), CO₂, x₁+x₂, a^n, এই ধরনের ইউনিকোড সাব/সুপারস্ক্রিপ্ট ক্যারেক্টার ব্যবহার করবে, ` +
-    `সাধারণ সংখ্যা/অক্ষর দিয়ে লিখবে না।\n` +
-    `২. প্রশ্ন বা ব্যাখ্যায় কখনো সোর্স-রেফারেন্স করে কথা বলবে না — অর্থাৎ "উল্লেখিত চিত্রে", "বক্সে", "ছকে", ` +
-    `"উদ্দীপকে", "সারণিতে", "টপিকে", "পৃষ্ঠা নং এ দেখা যাচ্ছে", "বলা আছে", "উল্লেখ করা আছে", "লক্ষ করা যায়", ` +
-    `"বর্ণনা আছে" — এই ধরনের কোনো বাক্যাংশ ব্যবহার করবে না। প্রশ্ন ও ব্যাখ্যা সবসময় স্বয়ংসম্পূর্ণ ও সরাসরি বিষয়বস্তু ` +
-    `নিয়ে লিখতে হবে, কোনো উৎস/অবস্থান নির্দেশ করা যাবে না।\n` +
-    `৩. ঠিক যত সংখ্যক প্রশ্ন চাওয়া হয়েছে, তার চেয়ে কম বা বেশি দেওয়া যাবে না — সংখ্যাটি অবশ্যই হুবহু মানতে হবে।`
-);
+function mbPermanentRules(count) {
+    let countRule;
+    if (count && count.min !== count.max) {
+        countRule = `প্রশ্ন সংখ্যা অবশ্যই ${count.min} থেকে ${count.max} এর মধ্যে হতে হবে (দুই প্রান্ত সহ) — এই সীমার বাইরে (${count.min}টির কম বা ${count.max}টির বেশি) কখনো দেওয়া যাবে না। ` +
+            `এই রেঞ্জের মধ্যে যতগুলো প্রশ্ন পেইজের কনটেন্ট থেকে যৌক্তিকভাবে বানানো সম্ভব ততগুলোই দাও, কিন্তু রেঞ্জ ছাড়িয়ে কখনো যাবে না।`;
+    } else {
+        const n = count ? count.max : 10;
+        countRule = `ঠিক ${n}টি প্রশ্ন দিতে হবে — এর চেয়ে কম বা বেশি কখনো দেওয়া যাবে না, সংখ্যাটি অবশ্যই হুবহু ${n} হতে হবে।`;
+    }
+    return (
+        `\n\nবাধ্যতামূলক নিয়ম (এগুলো সবসময় মেনে চলতে হবে, কোনো ব্যতিক্রম নয়):\n` +
+        `১. গাণিতিক বা রাসায়নিক রাশি/সূত্র লেখার সময় সঠিকভাবে সাব-স্ক্রিপ্ট ও সুপার-স্ক্রিপ্ট ব্যবহার করো — ` +
+        `যেমন x² (x^2 না), H₂O (H2O না), CO₂, x₁+x₂, a^n, এই ধরনের ইউনিকোড সাব/সুপারস্ক্রিপ্ট ক্যারেক্টার ব্যবহার করবে, ` +
+        `সাধারণ সংখ্যা/অক্ষর দিয়ে লিখবে না।\n` +
+        `২. প্রশ্ন বা ব্যাখ্যায় কখনো সোর্স-রেফারেন্স করে কথা বলবে না — অর্থাৎ "উল্লেখিত চিত্রে", "বক্সে", "ছকে", ` +
+        `"উদ্দীপকে", "সারণিতে", "টপিকে", "পৃষ্ঠা নং এ দেখা যাচ্ছে", "বলা আছে", "উল্লেখ করা আছে", "লক্ষ করা যায়", ` +
+        `"বর্ণনা আছে" — এই ধরনের কোনো বাক্যাংশ ব্যবহার করবে না। প্রশ্ন ও ব্যাখ্যা সবসময় স্বয়ংসম্পূর্ণ ও সরাসরি বিষয়বস্তু ` +
+        `নিয়ে লিখতে হবে, কোনো উৎস/অবস্থান নির্দেশ করা যাবে না।\n` +
+        `৩. ${countRule}`
+    );
+}
 
 // exp_box: এই MCQ যে টপিক/উদ্দীপক অংশ থেকে বানানো হয়েছে, সেই অংশের bounding box —
 // উপরে ও নিচে কয়েক লাইন বেশি নিয়ে (buffer) — পুরো পেইজের সাপেক্ষে % (0-100) এককে।
@@ -1200,7 +1210,8 @@ async function mbSelectAiType(type) {
 async function mbSavePromptOnly() {
     const promptEl = document.getElementById('mbAiPrompt');
     const text = (promptEl?.value || '').trim();
-    await mbSavePromptForType(mbAiTypeKey, text);
+    const ok = await mbSavePromptForType(mbAiTypeKey, text);
+    if (!ok) return; // error toast ইতিমধ্যে mbSavePromptForType থেকে দেখানো হয়েছে
     const savedTag = document.getElementById('mbPromptSavedTag');
     if (savedTag) {
         savedTag.style.display = 'inline';
@@ -1657,12 +1668,21 @@ function mbGetSavedPrompt(type) {
 async function mbSavePromptForType(type, text) {
     mbPromptCache[type] = text;
     try {
-        await safeFetch(`${SUPABASE_URL}/rest/v1/book_ai_prompts`, {
+        // bug fix: on_conflict প্যারামিটার ছাড়া PostgREST-এ 'resolution=merge-duplicates'
+        // upsert কাজ করে না — duplicate pdf_id+mcq_type থাকলে unique constraint error হয়,
+        // যেটা এতদিন try/catch এ silently গিলে ফেলা হচ্ছিল (তাই সেভ হচ্ছিলো না মনে হতো,
+        // যদিও প্রথমবার insert successful হতো, দ্বিতীয়বার update এ গিয়ে fail করত)।
+        await safeFetch(`${SUPABASE_URL}/rest/v1/book_ai_prompts?on_conflict=pdf_id,mcq_type`, {
             method: 'POST',
             headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
             body: JSON.stringify({ pdf_id: 0, mcq_type: type, prompt: text, updated_at: new Date().toISOString() })
         });
-    } catch(_) {}
+        return true;
+    } catch (e) {
+        console.error('প্রম্পট সংরক্ষণ ব্যর্থ:', e.message);
+        mbToast('প্রম্পট সংরক্ষণ ব্যর্থ হয়েছে: ' + e.message, 'error');
+        return false;
+    }
 }
 
 /* ─── row-scan helper: canvas-এর একটা pixel row-এ "কালি" (non-white/non-blank content)
@@ -1852,9 +1872,7 @@ async function mbAiGenerate() {
             `${typeLabel[type]||type} ধরনের ${count.label} MCQ তৈরি করো। ` +
             `Content যে ভাষায় আছে সেই ভাষায় রাখো। ` +
             `প্রতিটিতে চারটি বিকল্প (option_k, option_kh, option_g, option_gh) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে।`
-        )) + MB_PERMANENT_RULES + MB_EXP_BOX_RULE;
-
-        let rawJson;
+        )) + mbPermanentRules(count) + MB_EXP_BOX_RULE;        let rawJson;
         let geminiAlreadyTried = false;
 
         // Step 1 (preferred, page-accurate): render ONLY the selected page as an image and
@@ -2441,7 +2459,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
         `${typeLabel[type]||type} ধরনের ${count.label} MCQ তৈরি করো। ` +
         `Content যে ভাষায় আছে সেই ভাষায় রাখো। ` +
         `প্রতিটিতে চারটি বিকল্প (option_k, option_kh, option_g, option_gh) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে।`
-    )) + MB_PERMANENT_RULES + MB_EXP_BOX_RULE;
+    )) + mbPermanentRules(count) + MB_EXP_BOX_RULE;
 
     let rawJson;
     let geminiAlreadyTried = false;
