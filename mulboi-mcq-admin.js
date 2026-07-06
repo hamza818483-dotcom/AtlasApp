@@ -1195,9 +1195,16 @@ async function mbLoadAllPageMcqs() {
     if (!mbPdfId) return;
     mbResumeBulkJob();
 
+    // bug fix (57014 statement timeout): book_page_mcqs-এ pdf_id column-এর উপর কোনো index
+    // ছিল না, তাই pdf_id=eq.X ফিল্টার টেবিল যত বড় হচ্ছে ততই ফুল টেবিল স্ক্যান করছিল এবং
+    // questions_json (এতে embedded base64 explanation image থাকতে পারে, তাই সাইজ বড়)
+    // টেনে আনায় Postgres statement_timeout ছাড়িয়ে যাচ্ছিল। sql/book_page_mcqs_index_fix.sql
+    // এ প্রয়োজনীয় index যোগ করা হয়েছে (Supabase SQL Editor এ একবার রান করলেই স্থায়ী সমাধান)।
+    // এখানে order+limit যোগ করে ও retry বাড়িয়ে client-side দিক থেকেও query টাকে আরেকটু
+    // resilient করা হলো, যাতে index apply হওয়ার আগে/পরে উভয় ক্ষেত্রেই আচরণ predictable থাকে।
     const [res, res2] = await Promise.all([
-        mbApiWithRetry('/book_page_mcqs?pdf_id=eq.' + mbPdfId + '&mcq_type=eq.admin&select=id,page_number,questions_json&limit=500'),
-        mbApiWithRetry('/book_page_mcqs?pdf_id=eq.' + mbPdfId + '&select=id,page_number,mcq_type,questions_json&limit=500')
+        mbApiWithRetry('/book_page_mcqs?pdf_id=eq.' + mbPdfId + '&mcq_type=eq.admin&select=id,page_number,questions_json&order=page_number.asc&limit=500', 2),
+        mbApiWithRetry('/book_page_mcqs?pdf_id=eq.' + mbPdfId + '&select=id,page_number,mcq_type,questions_json&order=page_number.asc&limit=500', 2)
     ]);
 
     let failed = false;
@@ -1221,7 +1228,11 @@ async function mbLoadAllPageMcqs() {
     }
 
     if (failed && typeof mbToast === 'function') {
-        mbToast('⚠️ MCQ লোড ব্যর্থ: ' + errMsg.slice(0, 160), 'error');
+        // "57014"/timeout এর ক্ষেত্রে user কে বুঝিয়ে বলা — শুধু raw error code দেখানোর বদলে
+        const isTimeout = /57014|timeout/i.test(errMsg);
+        mbToast(isTimeout
+            ? '⚠️ সার্ভার লোড বেশি — MCQ কাউন্ট লোড হতে দেরি হচ্ছে, একটু পর আবার চেষ্টা করুন'
+            : '⚠️ MCQ লোড ব্যর্থ: ' + errMsg.slice(0, 160), 'error');
     }
 
     // pill instant-load cache আপডেট — mbUpsertPageMcqs (save/bulk) এর পরেও এই function
