@@ -1134,7 +1134,21 @@ updateDash();
 // ০% দেখাতো প্রথমবার, এবং fetch শেষ হওয়ার পরেও dashboard কখনো re-render হতো না —
 // তাই ম্যানুয়ালি panel না খুললে ০% আটকেই থাকতো। এখন prefetch শেষ হওয়ার পর
 // আবার updateDash() কল করে dashboard কার্ড সঠিক %-এ রিফ্রেশ করা হয়।
-Promise.all([loadSyllabus('hsc'), loadSyllabus('medical')]).then(updateDash);
+Promise.all([loadSyllabus('hsc'), loadSyllabus('medical')]).then(updateDash).catch(()=>{});
+// অতিরিক্ত safety net: উপরের Promise.all().then() কোনো কারণে (race condition,
+// silent timing issue) dashboard আপডেট করতে ব্যর্থ হলেও, এই ছোট polling loop
+// নিশ্চিত করে যে CACHE পূর্ণ হওয়ার সাথে সাথেই (সর্বোচ্চ ৩০০ms দেরিতে) dashboard
+// সঠিক %-এ আপডেট হবে — user কে আর panel-এ ঢুকে ফিরে আসতে হবে না প্রথমবার
+// সঠিক % দেখার জন্য।
+(function mbDashPoll(){
+  let tries=0;
+  const iv=setInterval(()=>{
+    tries++;
+    const ready = (CACHE.hsc && CACHE.hsc.length) || (CACHE.medical && CACHE.medical.length);
+    if(ready){ updateDash(); clearInterval(iv); }
+    if(tries>20) clearInterval(iv); // সর্বোচ্চ ~৬ সেকেন্ড চেষ্টা করে থামবে
+  },300);
+})();
 mbRestoreTrackerState();
 </script>
 <script src="global-nav.js"></script>
