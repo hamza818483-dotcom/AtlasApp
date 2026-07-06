@@ -1150,24 +1150,20 @@ function mbGoToPagePill(p) {
 async function mbLoadAllPageMcqs() {
     if (!mbPdfId) return;
     mbResumeBulkJob();
+
+    const [res, res2] = await Promise.all([
+        mbApi('/book_page_mcqs?pdf_id=eq.' + mbPdfId + '&mcq_type=eq.admin&select=id,page_number,questions_json&limit=500'),
+        mbApi('/book_page_mcqs?pdf_id=eq.' + mbPdfId + '&select=id,page_number,mcq_type,questions_json&limit=500')
+    ]);
+
     try {
-        // admin manually-added MCQ — editing/preview এর জন্য আলাদা রাখা হয়
-        const res = await mbApi(
-            '/book_page_mcqs?pdf_id=eq.' + mbPdfId +
-            '&mcq_type=eq.admin&select=id,page_number,questions_json&limit=500'
-        );
         if (!res.ok) throw new Error();
         mbAllPageData = await res.json() || [];
     } catch {
         mbAllPageData = [];
     }
 
-    // সব ধরনের MCQ (admin + user-generated standard/true_false/hard) — count summary এর জন্য
     try {
-        const res2 = await mbApi(
-            '/book_page_mcqs?pdf_id=eq.' + mbPdfId +
-            '&select=id,page_number,mcq_type,questions_json&limit=500'
-        );
         if (!res2.ok) throw new Error();
         mbAllPageDataAllTypes = await res2.json() || [];
     } catch {
