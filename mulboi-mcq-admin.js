@@ -1177,25 +1177,27 @@ async function mbLoadAllPageMcqs() {
     ]);
 
     let failed = false;
+    let errMsg = '';
     try {
-        if (!res.ok) { const t = await res.text().catch(()=>''); throw new Error('status ' + res.status + ' :: ' + t); }
+        if (!res.ok) { const t = await res.text().catch(()=>''); throw new Error('(' + res.status + ') ' + t); }
         mbAllPageData = await res.json() || [];
     } catch (e) {
         console.error('mbLoadAllPageMcqs: admin fetch failed', e);
         failed = true;
-        // পুরনো cache থাকলে সেটাই রাখো, খালি [] দিয়ে overwrite করো না
+        errMsg = e.message || String(e);
     }
 
     try {
-        if (!res2.ok) { const t = await res2.text().catch(()=>''); throw new Error('status ' + res2.status + ' :: ' + t); }
+        if (!res2.ok) { const t = await res2.text().catch(()=>''); throw new Error('(' + res2.status + ') ' + t); }
         mbAllPageDataAllTypes = await res2.json() || [];
     } catch (e) {
         console.error('mbLoadAllPageMcqs: all-types fetch failed', e);
         failed = true;
+        errMsg = errMsg || e.message || String(e);
     }
 
     if (failed && typeof mbToast === 'function') {
-        mbToast('⚠️ MCQ ডেটা লোড করতে সমস্যা হয়েছে, আবার চেষ্টা করুন', 'error');
+        mbToast('⚠️ MCQ লোড ব্যর্থ: ' + errMsg.slice(0, 160), 'error');
     }
 
     // pill instant-load cache আপডেট — mbUpsertPageMcqs (save/bulk) এর পরেও এই function
