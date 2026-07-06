@@ -5,11 +5,6 @@ compatibility_date = "2024-01-01"
 [ai]
 binding = "AI"
 
-# প্রতি ২ মিনিটে চলে — pending bulk MCQ job (book_mcq_jobs) থেকে একটা করে বাকি
-# পেইজ প্রসেস করে দেয়, ব্রাউজার/ট্যাব বন্ধ থাকলেও কাজ ধীরে ধীরে এগোতে থাকে।
-[triggers]
-crons = ["*/2 * * * *"]
-
 # Secrets (GEMINI_API_KEY, OPENROUTER_API_KEY, GROQ_API_KEY, CEREBRAS_API_KEY)
 # are NOT set here — they stay in the Cloudflare dashboard as encrypted secrets
 # and persist across deploys automatically. Do not add them as plain vars here.

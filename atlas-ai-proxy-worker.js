@@ -83,20 +83,6 @@ export default {
             return handleMcqFromPdf(body, env);
         }
 
-        // ── Server-side bulk MCQ job endpoints ──
-        // ব্রাউজার/ট্যাব বন্ধ থাকলেও (ফোন lock, sleep, tab close) bulk MCQ generation যেন
-        // চলতেই থাকে — তার জন্য job টা এখানে DB-তে সেভ হয়, আর নিচের scheduled() cron
-        // handler প্রতি রানে বাকি থাকা এক-দুই পেইজ প্রসেস করে দেয়, ব্রাউজার লাগে না।
-        if (path === "/mcq-job/create") {
-            return handleMcqJobCreate(body, env);
-        }
-        if (path === "/mcq-job/status") {
-            return handleMcqJobStatus(body, env);
-        }
-        if (path === "/mcq-job/stop") {
-            return handleMcqJobStop(body, env);
-        }
-
         // ── Default AI proxy ──
         const question = (body.question || "").trim();
         const image = body.image || null; // { base64, mimeType }
@@ -149,17 +135,6 @@ export default {
             error: "সব AI provider ব্যর্থ হয়েছে। আবার চেষ্টা করো।",
             details: errors,
         }, 502);
-    },
-
-    // ── Cron trigger (wrangler.toml এ [triggers] crons সেট করা আছে) ──
-    // TEMPORARILY DISABLED: এই server-side bulk job system client-side generate-এর
-    // সাথে duplicate/uncontrolled ভাবে একই পেইজ আবার generate করছিল (কোনো dedupe ছিল না),
-    // এবং এই worker-এর prompt-এ প্রশ্ন-সংখ্যা রেঞ্জ enforcement rule ছিল না (client-side
-    // mbPermanentRules-এর সাথে sync ছিল না) — ফলে "প্রশ্ন সংখ্যা digit-wise কাজ করছে না" ও
-    // "select না করেই bulk চলছে" সমস্যা হচ্ছিল। ঠিক করে পুনরায় চালু না করা পর্যন্ত no-op।
-    async scheduled(event, env, ctx) {
-        // ctx.waitUntil(processPendingMcqJobs(env));
-        return;
     },
 };
 
@@ -698,198 +673,13 @@ async function ocrDbGet(url, key, path) {
 }
 
 /* ════════════════════════════════════════════════════════════
-   SERVER-SIDE BULK MCQ JOB SYSTEM
-   টেবিল: book_mcq_jobs (Supabase-এ আগে থেকে বানানো থাকতে হবে —
-   কলাম: id (identity/uuid), pdf_id, pdf_url, from_page, to_page,
-   count_raw, mcq_type, current_page, done, stopped, total_mcq,
-   created_at, updated_at)
-
-   এই সিস্টেম client-এর localStorage bulk-job এর সমান্তরাল/backup —
-   client bulk generate শুরু করলে একই সাথে এখানে একটা job row
-   তৈরি হয়, আর নিচের cron (scheduled handler) প্রতি রানে "running"
-   job গুলোর একটা করে বাকি পেইজ প্রসেস করে দেয় — ব্রাউজার/ট্যাব
-   বন্ধ, ফোন lock/sleep থাকলেও কাজ থামে না, ধীরে ধীরে শেষ হয়।
-
-   IMPORTANT: canvas না থাকায় Worker exp_box থেকে crop image বানাতে
-   পারে না (সেটা শুধু browser-এ সম্ভব) — তাই এখানে raw exp_box/
-   line_box % coordinates-সহ MCQ সেভ হয় (mcq_type = 'admin_pending_crop'),
-   এবং client পরে সেই পেইজ খুললে lazy crop করে normal 'admin' সারিতে
-   promote করে দেয় (mbPromoteServerGeneratedMcqs — client ফাইলে যোগ করা)।
+   NOTE: Server-side bulk MCQ job system (book_mcq_jobs + cron) has
+   been fully removed — it duplicate-generated pages with no dedupe
+   and its prompt rules were out of sync with client-side rules.
+   Bulk generation now runs purely client-side.
    ════════════════════════════════════════════════════════════ */
 
-async function handleMcqJobCreate(body, env) {
-    const { pdf_id, pdf_url, from_page, to_page, count_raw, mcq_type, supabase_url, supabase_key } = body;
-    if (!pdf_id || !pdf_url || !from_page || !to_page) {
-        return jsonResponse({ success: false, error: "pdf_id, pdf_url, from_page, to_page প্রয়োজন" }, 400);
-    }
-    const sbUrl = supabase_url || env.SUPABASE_URL;
-    const sbKey = supabase_key || env.SUPABASE_KEY;
-    if (!sbUrl || !sbKey) return jsonResponse({ success: false, error: "Supabase credentials missing" }, 500);
-
-    const jobRow = {
-        pdf_id: parseInt(pdf_id),
-        pdf_url,
-        from_page: parseInt(from_page),
-        to_page: parseInt(to_page),
-        count_raw: count_raw || "10",
-        mcq_type: mcq_type || "standard",
-        current_page: parseInt(from_page),
-        done: false,
-        stopped: false,
-        total_mcq: 0,
-        updated_at: new Date().toISOString()
-    };
-
-    const res = await fetch(`${sbUrl}/rest/v1/book_mcq_jobs`, {
-        method: "POST",
-        headers: {
-            apikey: sbKey, Authorization: `Bearer ${sbKey}`,
-            "Content-Type": "application/json",
-            "Prefer": "return=representation"
-        },
-        body: JSON.stringify(jobRow)
-    });
-    if (!res.ok) {
-        const errText = await res.text().catch(() => "");
-        return jsonResponse({ success: false, error: `Job create failed: ${errText}` }, 500);
-    }
-    const data = await res.json().catch(() => []);
-    return jsonResponse({ success: true, job: Array.isArray(data) ? data[0] : data });
-}
-
-async function handleMcqJobStatus(body, env) {
-    const { job_id, pdf_id, supabase_url, supabase_key } = body;
-    const sbUrl = supabase_url || env.SUPABASE_URL;
-    const sbKey = supabase_key || env.SUPABASE_KEY;
-    if (!sbUrl || !sbKey) return jsonResponse({ success: false, error: "Supabase credentials missing" }, 500);
-
-    let path;
-    if (job_id) path = `book_mcq_jobs?id=eq.${job_id}&select=*`;
-    else if (pdf_id) path = `book_mcq_jobs?pdf_id=eq.${pdf_id}&done=eq.false&stopped=eq.false&order=id.desc&limit=1&select=*`;
-    else return jsonResponse({ success: false, error: "job_id বা pdf_id প্রয়োজন" }, 400);
-
-    const rows = await ocrDbGet(sbUrl, sbKey, path);
-    return jsonResponse({ success: true, job: rows?.[0] || null });
-}
-
-async function handleMcqJobStop(body, env) {
-    const { job_id, supabase_url, supabase_key } = body;
-    if (!job_id) return jsonResponse({ success: false, error: "job_id প্রয়োজন" }, 400);
-    const sbUrl = supabase_url || env.SUPABASE_URL;
-    const sbKey = supabase_key || env.SUPABASE_KEY;
-    await ocrDbPatch(sbUrl, sbKey, `book_mcq_jobs?id=eq.${job_id}`, { stopped: true, updated_at: new Date().toISOString() });
-    return jsonResponse({ success: true });
-}
-
-// cron প্রতি রানে সব pending (done=false, stopped=false) job খুঁজে প্রতিটার একটামাত্র
-// পরের পেইজ প্রসেস করে — একসাথে সব পেইজ না করে ছোট ধাপে, যাতে Worker CPU-time limit
-// (cron trigger-এ সাধারণত ~30-50s) ছাড়িয়ে না যায়; cron বার বার চলে ধীরে ধীরে পুরোটা শেষ করে।
-async function processPendingMcqJobs(env) {
-    const sbUrl = env.SUPABASE_URL;
-    const sbKey = env.SUPABASE_KEY;
-    if (!sbUrl || !sbKey) return;
-
-    const jobs = await ocrDbGet(sbUrl, sbKey,
-        `book_mcq_jobs?done=eq.false&stopped=eq.false&select=*&order=updated_at.asc&limit=5`);
-    if (!jobs || !jobs.length) return;
-
-    for (const job of jobs) {
-        try {
-            await processOneMcqJobPage(env, sbUrl, sbKey, job);
-        } catch (e) {
-            // একটা job-এর একটা পেইজ fail করলেও বাকি job গুলো/পরের cron রান প্রভাবিত হবে না
-        }
-    }
-}
-
-async function processOneMcqJobPage(env, sbUrl, sbKey, job) {
-    const pageNum = job.current_page;
-    if (pageNum > job.to_page) {
-        await ocrDbPatch(sbUrl, sbKey, `book_mcq_jobs?id=eq.${job.id}`, { done: true, updated_at: new Date().toISOString() });
-        return;
-    }
-
-    const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","exp_box":{"x":0,"y":0,"w":0,"h":0},"line_box":{"y":0,"h":0},"type":"${job.mcq_type}"}]`;
-    const typeLabel = { standard: "সাধারণ", true_false: "সত্য/মিথ্যা", hard: "কঠিন" };
-    const countLabel = job.count_raw;
-    const basePrompt =
-        `${typeLabel[job.mcq_type] || job.mcq_type} ধরনের ${countLabel} MCQ তৈরি করো। Content যে ভাষায় আছে সেই ভাষায় রাখো। ` +
-        `প্রতিটিতে চারটি বিকল্প (option_k, option_kh, option_g, option_gh) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে। ` +
-        MB_EXP_BOX_RULE_SERVER;
-
-    const pdfPrompt = `এই PDF-এর শুধুমাত্র পেইজ ${pageNum} দেখো (অন্য কোনো পেইজ থেকে না) এবং নিচের নির্দেশ অনুসরণ করো:\n${basePrompt}\n\n` +
-        `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}`;
-
-    const result = await handleMcqFromPdf({ pdf_url: job.pdf_url, prompt: pdfPrompt }, env);
-    const data = await result.json().catch(() => null);
-
-    let parsed = [];
-    if (data?.success && data.answer) {
-        try {
-            const match = data.answer.match(/\[[\s\S]*\]/);
-            if (match) parsed = JSON.parse(match[0]);
-        } catch (_) { parsed = []; }
-    }
-
-    if (Array.isArray(parsed) && parsed.length) {
-        const newMcqs = parsed.map(m => ({ ...m, id: cryptoRandomId(), type: job.mcq_type }));
-
-        // Raw exp_box/line_box সহই সেভ হয় (mcq_type = admin_pending_crop) — client পরে
-        // সেই পেইজ খুললে lazy crop করে নিয়ে normal 'admin' row-এ merge করে দেয়, কারণ
-        // canvas crop এখানে (Worker-এ) সম্ভব না।
-        const existingRes = await ocrDbGet(sbUrl, sbKey,
-            `book_page_mcqs?pdf_id=eq.${job.pdf_id}&page_number=eq.${pageNum}&mcq_type=eq.admin_pending_crop&select=questions_json`);
-        let currentMcqs = [];
-        if (existingRes?.[0]) { try { currentMcqs = JSON.parse(existingRes[0].questions_json || "[]"); } catch (_) {} }
-        currentMcqs.push(...newMcqs);
-
-        await fetch(`${sbUrl}/rest/v1/book_page_mcqs?on_conflict=pdf_id,page_number,mcq_type`, {
-            method: "POST",
-            headers: {
-                apikey: sbKey, Authorization: `Bearer ${sbKey}`,
-                "Content-Type": "application/json",
-                "Prefer": "resolution=merge-duplicates,return=minimal"
-            },
-            body: JSON.stringify({
-                pdf_id: job.pdf_id, page_number: pageNum,
-                mcq_type: "admin_pending_crop",
-                questions_json: JSON.stringify(currentMcqs)
-            })
-        });
-
-        await ocrDbPatch(sbUrl, sbKey, `book_mcq_jobs?id=eq.${job.id}`, {
-            current_page: pageNum + 1,
-            total_mcq: (job.total_mcq || 0) + newMcqs.length,
-            updated_at: new Date().toISOString()
-        });
-    } else {
-        // এই পেইজে কিছু না পেলেও job আটকে না থেকে পরের পেইজে এগিয়ে যায়
-        await ocrDbPatch(sbUrl, sbKey, `book_mcq_jobs?id=eq.${job.id}`, {
-            current_page: pageNum + 1,
-            updated_at: new Date().toISOString()
-        });
-    }
-
-    if (pageNum + 1 > job.to_page) {
-        await ocrDbPatch(sbUrl, sbKey, `book_mcq_jobs?id=eq.${job.id}`, { done: true, updated_at: new Date().toISOString() });
-    }
-}
-
-function cryptoRandomId() {
-    return "srv_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 10);
-}
-
-// Client-এর MB_EXP_BOX_RULE-এর সাথে হুবহু মিল রাখা হলো (mulboi-mcq-admin.js এ দেখো) —
-// দুই জায়গায় আলাদা rule থাকলে server ও client generation-এর exp_box নির্ভুলতা আলাদা হয়ে যেত।
-const MB_EXP_BOX_RULE_SERVER = (
-    `প্রতিটি প্রশ্নের জন্য "exp_box" নামে একটি object দিতে হবে যা নির্দেশ করে পেইজের ঠিক কোন অংশ (paragraph/topic/box) ` +
-    `থেকে এই প্রশ্নটি বানানো হয়েছে। যে টপিক/উদ্দীপক/paragraph/box থেকে প্রশ্ন এসেছে সেই সম্পূর্ণ অংশটা (heading/title সহ যদি ` +
-    `থাকে) নিখুঁতভাবে শুরু থেকে শেষ পর্যন্ত y,h এর মধ্যে থাকতে হবে, কোনো লাইন/বাক্য/বক্সের বর্ডার কাটা যাবে না। ` +
-    `এছাড়া "line_box" object দিবে — শুধু সেই নির্দিষ্ট লাইন/বাক্য যেখান থেকে সরাসরি উত্তর এসেছে তার bounding box (y,h)। ` +
-    `x,y,w,h সবগুলো পুরো পেইজের width/height এর শতকরা হিসেবে (0-100, % চিহ্ন ছাড়া)।`
-);
-
-
+async function handleMcqFromPdf(body, env) {
     const { pdf_url, prompt } = body;
     if (!pdf_url) return jsonResponse({ success: false, error: "pdf_url প্রয়োজন" }, 400);
     if (!prompt) return jsonResponse({ success: false, error: "prompt প্রয়োজন" }, 400);
