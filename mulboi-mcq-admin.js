@@ -675,6 +675,8 @@ function mbOpenMcqPanel(pdfId, pdfTitle, pdfUrl) {
     mbCurrentPage = 1;
     mbPdfDoc      = null;
     mbAllPageData = [];
+    mbAllPageDataAllTypes = [];
+    mbCachedNumPages = 0;
     mbEditingId   = null;
     mbAnswerKey   = null;
     mbTypeKey     = 'standard';
