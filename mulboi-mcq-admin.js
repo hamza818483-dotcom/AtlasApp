@@ -1178,7 +1178,7 @@ async function mbLoadAllPageMcqs() {
 
     let failed = false;
     try {
-        if (!res.ok) throw new Error('status ' + res.status);
+        if (!res.ok) { const t = await res.text().catch(()=>''); throw new Error('status ' + res.status + ' :: ' + t); }
         mbAllPageData = await res.json() || [];
     } catch (e) {
         console.error('mbLoadAllPageMcqs: admin fetch failed', e);
@@ -1187,7 +1187,7 @@ async function mbLoadAllPageMcqs() {
     }
 
     try {
-        if (!res2.ok) throw new Error('status ' + res2.status);
+        if (!res2.ok) { const t = await res2.text().catch(()=>''); throw new Error('status ' + res2.status + ' :: ' + t); }
         mbAllPageDataAllTypes = await res2.json() || [];
     } catch (e) {
         console.error('mbLoadAllPageMcqs: all-types fetch failed', e);
