@@ -475,14 +475,20 @@ async function sbFetch(path){
 // Load subjects with chapters and topics
 async function loadSyllabus(mode,forceRefresh=false){
   if(CACHE[mode].length && !forceRefresh) return CACHE[mode];
-  CACHE[mode]=[];
+  // আগে এখানে "CACHE[mode]=[]" থাকতো — সাথে সাথেই, await এর আগেই — cache খালি করে
+  // দিতো। forceRefresh=true দিয়ে background এ silently refresh করার সময় এই লাইনের
+  // কারণে ওই মুহূর্তে CACHE[mode] শূন্য হয়ে যেতো, আর কোনো ফাংশন (যেমন overallPct,
+  // বা subjPct) network শেষ হওয়ার আগেই CACHE পড়লে data zero/খালি দেখাতো — এটাই
+  // ছিল "Loading দিলে data প্রথমের মতো zero হয়ে যাচ্ছে" সমস্যার আসল কারণ। এখন নতুন
+  // ডেটা একটা local variable এ বিল্ড হয়ে সফল হলেই CACHE[mode]-এ swap হয় — মাঝপথে
+  // CACHE কখনো খালি থাকে না, পুরনো ডেটা fresh ডেটা না আসা পর্যন্ত অক্ষত থাকে।
   // subjects table: id, name, short_name, mode ('hsc'|'medical'), sort_order
   // chapters table: id, subject_id, name, sort_order
   // topics table: id, chapter_id, name, weight, sort_order
   try{
     // 3 bulk queries total (instead of 1 + N + N*M sequential ones) — much faster on slow connections.
     const subjects = await sbFetch(`/rest/v1/st_subjects?mode=eq.${mode}&order=sort_order.asc&select=id,name,short_name`);
-    if(!subjects.length){ CACHE[mode]=[]; return []; }
+    if(!subjects.length){ if(forceRefresh || !CACHE[mode].length) CACHE[mode]=[]; return CACHE[mode]; }
     const subjIds = subjects.map(s=>s.id).join(',');
     const chapters = await sbFetch(`/rest/v1/st_chapters?subject_id=in.(${subjIds})&order=sort_order.asc&select=id,name,subject_id`);
     let topics=[];
@@ -499,11 +505,11 @@ async function loadSyllabus(mode,forceRefresh=false){
       (chaptersBySubj[c.subject_id]=chaptersBySubj[c.subject_id]||[]).push(c);
     }
     for(const s of subjects){ s.chapters = chaptersBySubj[s.id]||[]; }
-    CACHE[mode] = subjects;
+    CACHE[mode] = subjects; // network সফল হলেই একবারে swap — মাঝপথে খালি হয় না
     return subjects;
   }catch(e){
-    // Fallback to local data if Supabase tables not set up yet
-    return FALLBACK[mode]||[];
+    // Fallback to local data if Supabase tables not set up yet — পুরনো cache (থাকলে) অক্ষত থাকে
+    return CACHE[mode].length ? CACHE[mode] : (FALLBACK[mode]||[]);
   }
 }
 
