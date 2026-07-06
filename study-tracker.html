@@ -521,6 +521,14 @@ function showPanel(id){
   const el=document.getElementById(id);
   el.classList.add('open');
   panelStack.push(id);
+  // বাগ: আগে এখানে history.pushState() কল হতো না — panelStack শুধু in-memory
+  // array ছিল, browser-এর real history-তে কোনো নতুন entry যোগ হতো না। ফলে
+  // Subject/Chapter panel খোলা অবস্থায় (যেমন loading এর সময়) কোনো popstate/back
+  // navigation এলে browser সরাসরি এই পেইজের *আগের* real history entry-তে চলে
+  // যেতো — অর্থাৎ পুরো Study Tracker থেকে বেরিয়ে মূল 4-card dashboard এ ফিরে
+  // আসতো, panel বন্ধ হওয়ার বদলে। এখন প্রতিটা panel open করার সময় একটা history
+  // state push করা হয়, তাই back/popstate প্রথমে শুধু এই panel-টাকেই বন্ধ করবে।
+  history.pushState({stPanel:id}, '');
   if(id==='pSyllabus') renderSubjects();
   if(id==='pProgress') renderProgress();
   if(id==='pRevision') renderRevSubjects();
