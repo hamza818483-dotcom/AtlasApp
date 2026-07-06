@@ -66,8 +66,19 @@ async function mbApi(path, opts) {
         'Content-Type': 'application/json',
         'Prefer': 'return=representation'
     }, opts.headers || {});
-    const res = await fetch(url, Object.assign({}, opts, { headers }));
-    return res;
+    // bug fix: Supabase platform capacity issue এ fetch() network-layer TypeError
+    // ("Failed to fetch") ছুড়তো, single attempt এ পুরো panel ফাঁকা দেখাতো। এখন
+    // network-layer fail হলে ২ বার backoff দিয়ে retry করে (মোট ৩ চেষ্টা)।
+    let lastErr;
+    for (let attempt = 0; attempt <= 2; attempt++) {
+        try {
+            return await fetch(url, Object.assign({}, opts, { headers }));
+        } catch (e) {
+            lastErr = e;
+            if (attempt < 2) await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
+        }
+    }
+    throw lastErr;
 }
 
 /* ════════════════════════════════════════════════════
