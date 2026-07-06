@@ -152,11 +152,14 @@ export default {
     },
 
     // ── Cron trigger (wrangler.toml এ [triggers] crons সেট করা আছে) ──
-    // ব্রাউজার/tab বন্ধ থাকলেও bulk MCQ job এগিয়ে নিতে প্রতি রানে সব "running" job থেকে
-    // একটা করে বাকি পেইজ প্রসেস করে — ছোট ছোট ধাপে, যাতে Worker-এর CPU/time limit-এর
-    // মধ্যেই কাজ শেষ হয় এবং cron বার বার চলে পুরো job আস্তে আস্তে সম্পূর্ণ করে ফেলে।
+    // TEMPORARILY DISABLED: এই server-side bulk job system client-side generate-এর
+    // সাথে duplicate/uncontrolled ভাবে একই পেইজ আবার generate করছিল (কোনো dedupe ছিল না),
+    // এবং এই worker-এর prompt-এ প্রশ্ন-সংখ্যা রেঞ্জ enforcement rule ছিল না (client-side
+    // mbPermanentRules-এর সাথে sync ছিল না) — ফলে "প্রশ্ন সংখ্যা digit-wise কাজ করছে না" ও
+    // "select না করেই bulk চলছে" সমস্যা হচ্ছিল। ঠিক করে পুনরায় চালু না করা পর্যন্ত no-op।
     async scheduled(event, env, ctx) {
-        ctx.waitUntil(processPendingMcqJobs(env));
+        // ctx.waitUntil(processPendingMcqJobs(env));
+        return;
     },
 };
 

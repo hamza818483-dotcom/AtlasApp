@@ -2674,7 +2674,11 @@ function mbStartSinglePageJob() {
     localStorage.setItem(MB_BULK_KEY, JSON.stringify(job));
     mbBulkRunning = true;
     mbRunBulkJob(job);
-    mbRegisterServerBackupJob(pageNum, pageNum, countRaw, type);
+    // DISABLED: server-side backup job (Cloudflare cron) ছিল duplicate/uncontrolled generation-এর
+    // root cause — client generate ইতিমধ্যে page-টা প্রসেস করছে, একই সাথে cron ওই একই পেইজে
+    // আলাদা ভাবে (এবং প্রশ্ন-সংখ্যা রেঞ্জ নিয়ম ছাড়াই) আরেকবার generate করছিল, ফলে ডুপ্লিকেট
+    // MCQ ও ভুল সংখ্যা দেখা যাচ্ছিল। ঠিক না হওয়া পর্যন্ত বন্ধ রাখা হলো।
+    // mbRegisterServerBackupJob(pageNum, pageNum, countRaw, type);
 }
 
 function mbStartBulkGenerate() {
@@ -2699,7 +2703,8 @@ function mbStartBulkGenerate() {
     localStorage.setItem(MB_BULK_KEY, JSON.stringify(job));
     mbBulkRunning = true;
     mbRunBulkJob(job);
-    mbRegisterServerBackupJob(from, to, countRaw, type);
+    // DISABLED: একই কারণে bulk generate-এও বন্ধ রাখা হলো (দেখো mbStartSinglePageJob-এর কমেন্ট)
+    // mbRegisterServerBackupJob(from, to, countRaw, type);
 }
 
 function mbStopBulkGenerate() {
