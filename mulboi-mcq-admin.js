@@ -1019,6 +1019,10 @@ async function mbRenderPdfPage(pageNum) {
     } finally {
         if (loadingEl) loadingEl.classList.remove('show');
     }
+    // সার্ভার-সাইড (cron) generate হওয়া কোনো pending-crop MCQ এই পেইজে থাকলে এখন
+    // (canvas রেন্ডার হয়ে যাওয়ার পর) crop করে normal 'admin' রো-তে merge করে দাও —
+    // fire-and-forget, UI ব্লক করবে না।
+    mbPromotePendingCropMcqs(pageNum);
 }
 
 function mbPageStep(delta) {
@@ -2621,6 +2625,7 @@ function mbStartSinglePageJob() {
     localStorage.setItem(MB_BULK_KEY, JSON.stringify(job));
     mbBulkRunning = true;
     mbRunBulkJob(job);
+    mbRegisterServerBackupJob(pageNum, pageNum, countRaw, type);
 }
 
 function mbStartBulkGenerate() {
@@ -2645,6 +2650,7 @@ function mbStartBulkGenerate() {
     localStorage.setItem(MB_BULK_KEY, JSON.stringify(job));
     mbBulkRunning = true;
     mbRunBulkJob(job);
+    mbRegisterServerBackupJob(from, to, countRaw, type);
 }
 
 function mbStopBulkGenerate() {
@@ -2655,6 +2661,74 @@ function mbStopBulkGenerate() {
     } catch (_) {}
     mbToast('⏹ Bulk generation থামানো হয়েছে', 'info');
     mbUpdateBulkUI(null);
+}
+
+// ব্রাউজার/ট্যাব বন্ধ/ফোন lock হয়ে গেলেও bulk generation যেন থেমে না যায়, তার জন্য
+// client-side job শুরু হওয়ার সাথে সাথে Worker-এ একটা backup job রেজিস্টার করা হয়
+// (fire-and-forget — fail করলেও client-side flow স্বাভাবিকভাবে চলতে থাকে, শুধু
+// bulletproof ব্যাকআপটা মিস হয়)। Worker cron প্রতি ২ মিনিটে এই job থেকে বাকি পেইজ
+// ধীরে ধীরে প্রসেস করে দেয়।
+async function mbRegisterServerBackupJob(from, to, countRaw, type) {
+    if (!mbPdfUrl) return; // pdf_url ছাড়া Worker PDF পড়তে পারবে না
+    try {
+        await fetch(AI_PROXY_URL.replace(/\/$/, '') + '/mcq-job/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                pdf_id: mbPdfId, pdf_url: mbPdfUrl,
+                from_page: from, to_page: to,
+                count_raw: countRaw, mcq_type: type,
+                supabase_url: window.SUPABASE_URL, supabase_key: window.SUPABASE_KEY
+            })
+        });
+    } catch (_) { /* ব্যর্থ হলেও client-side bulk job স্বাভাবিকভাবে চলবে */ }
+}
+
+// একটা পেইজ ভিউ করার সময় চেক করে — সার্ভার-সাইড cron job এই পেইজে কোনো MCQ
+// 'admin_pending_crop' হিসেবে সেভ করে রেখেছে কিনা (raw exp_box/line_box সহ, crop
+// ছাড়া, কারণ Worker-এ canvas নেই)। থাকলে client-side canvas দিয়ে crop করে normal
+// 'admin' সারিতে merge করে দেয় এবং pending সারিটা খালি করে দেয় — এভাবে ব্রাউজার
+// বন্ধ থাকা অবস্থায় সার্ভার-সাইড generate হওয়া MCQ ও পরে ঠিকমতো red border/orange
+// highlight সহ দেখা যায়, ঠিক client-generated MCQ-র মতোই।
+async function mbPromotePendingCropMcqs(pageNum) {
+    try {
+        const res = await mbApi(`/book_page_mcqs?pdf_id=eq.${mbPdfId}&page_number=eq.${pageNum}&mcq_type=eq.admin_pending_crop&select=*`);
+        const rows = await res.json().catch(() => []);
+        if (!rows || !rows.length || !rows[0].questions_json) return;
+
+        let pendingMcqs = [];
+        try { pendingMcqs = JSON.parse(rows[0].questions_json || '[]'); } catch (_) { return; }
+        if (!pendingMcqs.length) return;
+
+        const cropCache = new Map();
+        for (const m of pendingMcqs) {
+            const key = m.exp_box ? JSON.stringify(m.exp_box) + JSON.stringify(m.line_box || null) : `NOBBOX_${m.id}`;
+            if (!cropCache.has(key)) cropCache.set(key, await mbCropExplanationImage(pageNum, m.exp_box, m.line_box));
+            const img = cropCache.get(key);
+            if (img) m.explanation_image = img;
+            delete m.exp_box; delete m.line_box;
+        }
+
+        const existingRow = mbAllPageData.find(r => Number(r.page_number) === Number(pageNum));
+        let currentMcqs = [];
+        if (existingRow) { try { currentMcqs = JSON.parse(existingRow.questions_json || '[]'); } catch (_) {} }
+        currentMcqs.push(...pendingMcqs);
+
+        await mbApi('/book_page_mcqs?on_conflict=pdf_id,page_number,mcq_type', {
+            method: 'POST',
+            headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+            body: JSON.stringify({ pdf_id: parseInt(mbPdfId), page_number: pageNum, mcq_type: 'admin', questions_json: JSON.stringify(currentMcqs) })
+        });
+        // pending সারিটা খালি করে দেওয়া হয় যাতে পরের বার আবার promote না হয়ে ডুপ্লিকেট তৈরি না হয়
+        await mbApi(`/book_page_mcqs?pdf_id=eq.${mbPdfId}&page_number=eq.${pageNum}&mcq_type=eq.admin_pending_crop`, {
+            method: 'PATCH',
+            body: JSON.stringify({ questions_json: '[]' })
+        });
+
+        await mbLoadAllPageMcqs();
+        if (pageNum === mbCurrentPage) { mbRenderPageMcqList(); mbUpdatePageCount(); }
+        mbRenderPageSummary();
+    } catch (_) { /* silent — পরের বার পেইজ ভিউ করলে আবার চেষ্টা হবে */ }
 }
 
 function mbUpdateBulkUI(job) {
