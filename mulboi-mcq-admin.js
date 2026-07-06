@@ -1964,9 +1964,9 @@ async function mbCropExplanationImage(pageNum, box) {
                 bottomRow = lastContentRow;
             }
 
-            // ধাপ ৪: content-এর প্রকৃত top/bottom বের হওয়ার পর ছোট্ট নিরাপত্তা মার্জিন (কয়েক pixel)
-            // যোগ করা হয় যাতে সীমানার একদম কাছের অক্ষর/বর্ডার কাটা না পড়ে — কিন্তু বেশি বাফার/
-            // ফাঁকা জায়গা যোগ করা হয় না, তাই উপরে/নিচে অপ্রয়োজনীয় বাড়তি অংশ দেখা যাবে না।
+            // ধাপ ৪: content-এর প্রকৃত top/bottom বের হওয়ার পর উভয় পাশে ঠিক সমান safety margin
+            // যোগ করা হয় (একই pixel value top ও bottom-এ) — এতে মূল লাইন/টপিক crop-এর ঠিক
+            // মাঝখানে (centered) থাকে, আবার বেশি বাফার না দেওয়ায় বাড়তি ফাঁকা জায়গাও থাকে না।
             const safetyPad = Math.max(3, Math.round(full.height * 0.003));
             let topAbs    = Math.max(0, (seedTop + topRow) - safetyPad);
             let bottomAbs = Math.min(full.height, (seedTop + bottomRow) + safetyPad);
