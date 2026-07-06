@@ -1975,10 +1975,10 @@ async function mbCropExplanationImage(pageNum, box, lineBox) {
             const boxTopAbs    = Math.max(0, (seedTop + topRow) - safetyPad);
             const boxBottomAbs = Math.min(full.height, (seedTop + bottomRow) + safetyPad);
 
-            // crop-টা exp_box-এর চেয়ে কিছুটা বড় রাখা হয় (context margin) — যাতে চারপাশে
-            // সামান্য প্রাসঙ্গিক অংশ দেখা যায় এবং red border cropped canvas-এর একদম কিনারায়
-            // না থেকে exp_box-কে স্পষ্টভাবে আলাদা করে দেখায় (নাহলে border-এর কোনো তাৎপর্য থাকে না)।
-            const contextMargin = Math.max(10, Math.round(full.height * 0.015));
+            // crop-টা exp_box-এর চেয়ে সামান্য বড় রাখা হয় (ছোট context margin) — আগে বেশি বড়
+            // margin থাকায় crop অনেক বড় হয়ে যেত এবং specific line খুঁজে পাওয়া কঠিন হতো।
+            // এখন margin ছোট রাখা হলো যাতে crop টাইট থাকে, specific line সহজে চোখে পড়ে।
+            const contextMargin = Math.max(4, Math.round(full.height * 0.006));
             py = Math.max(0, boxTopAbs - contextMargin);
             const bottomAbs = Math.min(full.height, boxBottomAbs + contextMargin);
             ph = bottomAbs - py;
@@ -1989,7 +1989,7 @@ async function mbCropExplanationImage(pageNum, box, lineBox) {
             const padPct = 3;
             const boxTopAbs    = Math.max(0, (y - padPct) / 100 * full.height);
             const boxBottomAbs = Math.min(full.height, boxTopAbs + (h + padPct * 2) / 100 * full.height);
-            const contextMargin = Math.max(10, Math.round(full.height * 0.015));
+            const contextMargin = Math.max(4, Math.round(full.height * 0.006));
             py = Math.max(0, boxTopAbs - contextMargin);
             const bottomAbs = Math.min(full.height, boxBottomAbs + contextMargin);
             ph = bottomAbs - py;
@@ -2007,20 +2007,25 @@ async function mbCropExplanationImage(pageNum, box, lineBox) {
         const cropCtx = cropped.getContext('2d');
         cropCtx.drawImage(full, 0, py, full.width, ph, 0, 0, full.width, ph);
 
-        // exp_box (যে প্যারা/টপিক/বক্স থেকে MCQ বানানো হয়েছে) ঠিক তার বাউন্ডারিতেই বোল্ড red
-        // border আঁকা হয় — পুরো cropped canvas-এর কিনারায় না, তাই context-এর মধ্যে এই
-        // specific অংশটা স্পষ্টভাবে আলাদা করে বোঝা যায়।
+        // exp_box (যে প্যারা/টপিক/বক্স থেকে MCQ বানানো হয়েছে) ঠিক তার বাউন্ডারিতেই অনেক বেশি
+        // বোল্ড red border আঁকা হয় (thick + double-stroke) — যাতে খুব স্পষ্টভাবে চোখে পড়ে।
         const bTop = Math.max(0, Math.round(mbBoxTopInCrop));
         const bBottom = Math.min(ph, Math.round(mbBoxBottomInCrop));
         const bH = bBottom - bTop;
         if (bH > 0) {
             cropCtx.strokeStyle = 'rgba(220, 38, 38, 1)';
-            cropCtx.lineWidth = 5;
-            cropCtx.strokeRect(3, bTop + 3, full.width - 6, Math.max(1, bH - 6));
+            cropCtx.lineWidth = 9;
+            cropCtx.strokeRect(4, bTop + 4, full.width - 8, Math.max(1, bH - 8));
+            cropCtx.lineWidth = 4;
+            cropCtx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+            cropCtx.strokeRect(4, bTop + 4, full.width - 8, Math.max(1, bH - 8));
+            cropCtx.lineWidth = 9;
+            cropCtx.strokeStyle = 'rgba(220, 38, 38, 1)';
+            cropCtx.strokeRect(4, bTop + 4, full.width - 8, Math.max(1, bH - 8));
         }
 
-        // line_box থাকলে শুধু সেই নির্দিষ্ট লাইন/বাক্যে হলুদ highlight — পুরো অংশ না,
-        // যাতে ঠিক কোন লাইন থেকে সরাসরি উত্তরটা এসেছে সেটা আলাদাভাবে চোখে পড়ে।
+        // line_box থাকলে শুধু সেই নির্দিষ্ট লাইন/বাক্যে কমলা (orange) highlight — পুরো অংশ না,
+        // যাতে ঠিক কোন লাইন থেকে সরাসরি উত্তরটা এসেছে সেটা আলাদাভাবে চোখে পড়ে (টেক্সট পড়া যায় এমন opacity)।
         const ly = lineBox ? Number(lineBox.y) : NaN;
         const lh = lineBox ? Number(lineBox.h) : NaN;
         if (Number.isFinite(ly) && Number.isFinite(lh) && lh > 0) {
@@ -2029,10 +2034,10 @@ async function mbCropExplanationImage(pageNum, box, lineBox) {
             const hlY = Math.max(0, hlTop);
             const hlH = Math.min(ph, hlBottom) - hlY;
             if (hlH > 0) {
-                cropCtx.fillStyle = 'rgba(255, 235, 59, 0.45)';
+                cropCtx.fillStyle = 'rgba(255, 140, 0, 0.40)';
                 cropCtx.fillRect(0, hlY, full.width, hlH);
-                cropCtx.strokeStyle = 'rgba(234, 179, 8, 1)';
-                cropCtx.lineWidth = 2;
+                cropCtx.strokeStyle = 'rgba(255, 100, 0, 1)';
+                cropCtx.lineWidth = 3;
                 cropCtx.strokeRect(0, hlY, full.width, hlH);
             }
         }
