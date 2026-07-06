@@ -1033,7 +1033,14 @@ async function syncProgress(){
 
 loadST();
 updateDash();
-setTimeout(()=>{ loadSyllabus('hsc'); loadSyllabus('medical'); }, 800);
+// আগে এখানে ৮০০ms artificial delay ছিল (setTimeout) — page load হওয়ার সাথে সাথে
+// সিলেবাস prefetch শুরু হতো না, ফলে user দ্রুত Tracker panel এ ক্লিক করলে cache
+// খালি পেত এবং তখন নতুন করে sequential fetch (subjects→chapters→topics) শুরু হয়ে
+// noticeable delay তৈরি করতো। এখন delay ছাড়াই সাথে সাথে এবং parallel-এ (একটা
+// mode শেষ হওয়ার অপেক্ষা না করে) শুরু হয়, তাই cache তৈরি হতে কম সময় লাগে এবং
+// button click করার সময় ততক্ষণে data ready থাকার সম্ভাবনা অনেক বেশি।
+loadSyllabus('hsc');
+loadSyllabus('medical');
 </script>
 <script src="global-nav.js"></script>
 </body>
