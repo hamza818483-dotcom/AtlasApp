@@ -2595,10 +2595,27 @@ function mbUpdateRangeSummary() {
     }
 }
 
-// মূল Generate বাটন — mbGenMode অনুযায়ী single-page বা bulk (all/range) generate চালায়
+// মূল Generate বাটন — এখন single/range/all সবই একই persistent bulk-job pipeline দিয়ে চলে,
+// তাই refresh/page ছেড়ে গেলেও mbResumeBulkJob() ধরে নিয়ে কাজ শেষ পর্যন্ত চালিয়ে যাবে —
+// আগে single-page mbAiGenerate() সরাসরি কল হতো যা কোনো job সেভ করত না, ফলে মাঝপথে
+// refresh/tab বন্ধ হলে generation চিরতরে হারিয়ে যেত।
 function mbGenerateClick() {
-    if (mbGenMode === 'single') { mbAiGenerate(); return; }
+    if (mbGenMode === 'single') { mbStartSinglePageJob(); return; }
     mbStartBulkGenerate();
+}
+
+function mbStartSinglePageJob() {
+    const pageNum = mbCurrentPage;
+    const countRaw = (document.getElementById('mbAiCount').value || '10').trim();
+    const type = mbAiTypeKey;
+    const job = {
+        pdfId: mbPdfId, from: pageNum, to: pageNum, countRaw, type,
+        currentPage: pageNum, done: false, stopped: false,
+        startedAt: Date.now(), totalPages: 1, completedCount: 0
+    };
+    localStorage.setItem(MB_BULK_KEY, JSON.stringify(job));
+    mbBulkRunning = true;
+    mbRunBulkJob(job);
 }
 
 function mbStartBulkGenerate() {
