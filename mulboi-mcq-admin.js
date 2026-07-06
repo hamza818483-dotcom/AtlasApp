@@ -246,12 +246,15 @@ async function mbSpecialExtractPage(pageNum) {
    4. SUBJECT / CHAPTER CASCADE
    ════════════════════════════════════════════════════ */
 
-async function mbLoadSubjects() {
+async function mbLoadSubjects(isRetry) {
     const sel = document.getElementById('mbSelSubject');
     if (!sel) return;
     try {
         const res = await mbApi('/book_subjects?select=id,name,icon&order=sort_order.asc,created_at.asc&limit=200');
-        if (!res.ok) throw new Error();
+        if (!res.ok) {
+            const t = await res.text().catch(() => '');
+            throw new Error('status ' + res.status + ' ' + t);
+        }
         const rows = await res.json();
         const curVal = sel.value;
         sel.innerHTML = '<option value="">-- বিষয় বেছে নিন --</option>';
@@ -262,8 +265,16 @@ async function mbLoadSubjects() {
             sel.appendChild(o);
         });
         if (curVal) sel.value = curVal;
-    } catch {
-        mbToast('বিষয় লোড ব্যর্থ', 'error');
+    } catch (e) {
+        // bug fix: আগে এখানে error silently swallow হতো (bare catch{}), তাই console-এ কোনো
+        // detail থাকতো না, শুধু generic টোস্ট দেখাতো। এখন actual error লগ হবে এবং
+        // network-layer failure (দুর্বল সংযোগ) হলে একবার automatic retry করা হবে।
+        console.error('mbLoadSubjects failed:', e);
+        if (!isRetry) {
+            await new Promise(r => setTimeout(r, 1000));
+            return mbLoadSubjects(true);
+        }
+        mbToast('বিষয় লোড ব্যর্থ: ' + (e.message || '').slice(0, 100), 'error');
     }
 }
 
