@@ -2038,6 +2038,16 @@ function mbParseCountInput(raw) {
     return { min: n, max: n, label: `${n}টি`, forApi: n };
 }
 
+// % progress bar আপডেট করে — label + fill-width + percentage text একসাথে (AI generate/extract-এ ব্যবহৃত)
+function mbSetAiProgress(pct, label) {
+    const fill = document.getElementById('mbAiProgressFill');
+    const pctEl = document.getElementById('mbAiProgressPct');
+    const lbl = document.getElementById('mbAiSpinnerLabel');
+    if (fill) fill.style.width = pct + '%';
+    if (pctEl) pctEl.textContent = pct + '%';
+    if (lbl && label) lbl.textContent = label;
+}
+
 async function mbAiGenerate() {
     if (!mbPdfDoc) { mbToast('আগে একটি PDF খুলুন', 'error'); return; }
 
@@ -2059,6 +2069,7 @@ async function mbAiGenerate() {
     if (genBtn)   genBtn.style.display   = 'none';
     if (resultEl) resultEl.style.display = 'none';
     mbAiData = [];
+    mbSetAiProgress(5, 'পেইজ প্রস্তুত হচ্ছে...');
 
     try {
         const typeLabel = { standard: 'সাধারণ', true_false: 'সত্য/মিথ্যা', hard: 'কঠিন' };
@@ -2077,6 +2088,7 @@ async function mbAiGenerate() {
         // send that — this guarantees the AI sees exactly page mbCurrentPage and cannot drift
         // to another page (whole-PDF + "page N" text was unreliable — Gemini often ignored
         // the page number and generated from a random/wrong page).
+        mbSetAiProgress(20, 'AI-কে পাঠানো হচ্ছে...');
         const pageImageData = await mbGetPageImageBase64(mbCurrentPage);
         if (pageImageData) {
             try {
@@ -2121,6 +2133,7 @@ async function mbAiGenerate() {
             }
         }
 
+        mbSetAiProgress(60, 'AI রেসপন্স যাচাই হচ্ছে...');
         let parsed  = mbParseAiJson(rawJson);
 
         // JSON parse ব্যর্থ হলে একবার automatic retry — page-image + strict-JSON reminder সহ,
@@ -2147,6 +2160,7 @@ async function mbAiGenerate() {
         if (parsed.length < count.min) console.warn(`চাহিদা ছিল ${count.label}, AI দিয়েছে ${parsed.length}টি`);
 
         mbAiData = parsed.map(m => ({ id: uid(), ...m, type: m.type || type }));
+        mbSetAiProgress(75, 'ব্যাখ্যার ছবি বানানো হচ্ছে...');
 
         // exp_box দিয়ে প্রতিটা MCQ-র জন্য topic-crop explanation image বানানো — একই box একাধিক
         // MCQ শেয়ার করতে পারে সেক্ষেত্রে dedupe করা হয়, কিন্তু exp_box missing/null থাকলে
@@ -2184,12 +2198,15 @@ async function mbAiGenerate() {
         if (resultEl) resultEl.style.display = 'block';
 
         // Save button চাপার দরকার নেই — generate হওয়ার সাথে সাথেই automatically 'All'-এ জমা হয়ে যায়
+        mbSetAiProgress(90, 'সংরক্ষণ হচ্ছে...');
         await mbSaveAiMcqs();
+        mbSetAiProgress(100, 'সম্পন্ন!');
 
     } catch (ex) {
         mbToast('AI ব্যর্থ: ' + ex.message, 'error');
     } finally {
         if (spinner) spinner.style.display = 'none';
+        mbSetAiProgress(0, 'AI MCQ তৈরি করছে...');
         if (genBtn)  genBtn.style.display  = 'block';
     }
 }
@@ -2203,6 +2220,7 @@ async function mbAiGenerateSpecial() {
     if (genBtn)   genBtn.style.display   = 'none';
     if (resultEl) resultEl.style.display = 'none';
     mbAiData = [];
+    mbSetAiProgress(30, 'পেইজ থেকে extract হচ্ছে...');
 
     try {
         const parsed = await mbSpecialExtractPage(mbCurrentPage);
@@ -2211,6 +2229,7 @@ async function mbAiGenerateSpecial() {
             return;
         }
         mbAiData = parsed.map(m => ({ id: uid(), ...mbShuffleSpecialOptions(m), type: 'special' }));
+        mbSetAiProgress(70, 'প্রশ্ন প্রস্তুত হচ্ছে...');
 
         const header = document.getElementById('mbAiResultHeader');
         if (header) header.textContent = mbAiData.length + 'টি এক্সট্র্যাক্ট করা প্রশ্ন — স্বয়ংক্রিয়ভাবে সংরক্ষণ হচ্ছে...';
@@ -2233,11 +2252,14 @@ async function mbAiGenerateSpecial() {
         if (resultEl) resultEl.style.display = 'block';
 
         // Save button চাপার দরকার নেই — extract হওয়ার সাথে সাথেই automatically 'All'-এ জমা হয়ে যায়
+        mbSetAiProgress(90, 'সংরক্ষণ হচ্ছে...');
         await mbSaveAiMcqs();
+        mbSetAiProgress(100, 'সম্পন্ন!');
     } catch (ex) {
         mbToast('এক্সট্র্যাকশন ব্যর্থ: ' + ex.message, 'error');
     } finally {
         if (spinner) spinner.style.display = 'none';
+        mbSetAiProgress(0, 'AI MCQ তৈরি করছে...');
         if (genBtn)  genBtn.style.display  = 'block';
     }
 }
