@@ -750,10 +750,10 @@ function mbRenderChapterPdfs(pdfs) {
         </div>`).join('');
 }
 
-async function mbLoadAllPdfs() {
+async function mbLoadAllPdfs(isRetry) {
     const listEl = document.getElementById('mbAllPdfsList');
     if (!listEl) return;
-    listEl.innerHTML = '<div class="skeleton skel-row"></div><div class="skeleton skel-sm"></div>';
+    if (!isRetry) listEl.innerHTML = '<div class="skeleton skel-row"></div><div class="skeleton skel-sm"></div>';
     let pdfs = [];
     try {
         const res = await mbApi('/book_pdfs?select=*,book_chapters(name,book_subjects(name,icon))&order=created_at.desc&limit=100');
@@ -765,7 +765,16 @@ async function mbLoadAllPdfs() {
         pdfs = await res.json();
     } catch (e) {
         console.error('mbLoadAllPdfs failed:', e);
-        listEl.innerHTML = '<div class="empty-state">লোড ব্যর্থ</div>';
+        // bug fix: "Failed to fetch" (network-layer error, যেমন দুর্বল/অস্থির মোবাইল নেটওয়ার্ক)
+        // হলে একবার automatic retry করা হয় — অনেক সময় সাথে সাথেই connection ফিরে আসে এবং
+        // দ্বিতীয় চেষ্টায় সফল হয়, user কে ম্যানুয়ালি কিছু করতে হয় না। এখনো fail করলে
+        // retry বাটন সহ error state দেখানো হয় যাতে user এক ট্যাপে আবার চেষ্টা করতে পারে।
+        if (!isRetry) {
+            await new Promise(r => setTimeout(r, 1000));
+            return mbLoadAllPdfs(true);
+        }
+        listEl.innerHTML = '<div class="empty-state">লোড ব্যর্থ — নেটওয়ার্ক সংযোগ চেক করুন ' +
+            '<button type="button" onclick="mbLoadAllPdfs()" style="margin-left:8px;padding:4px 12px;border-radius:6px;border:1px solid var(--accent);background:rgba(108,99,255,0.1);color:#9C8BFF;cursor:pointer;font-size:12px">🔄 আবার চেষ্টা করুন</button></div>';
         return;
     }
     try {
