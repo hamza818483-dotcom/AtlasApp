@@ -69,6 +69,14 @@ export default {
             return handleD1Table(d1Match[1], request, env, url);
         }
 
+        // ── R2 PDF storage (replaces Supabase Storage) ──
+        // POST /storage/pdfs/<fileName>  — upload (raw body = file bytes)
+        // GET  /storage/pdfs/<fileName>  — public read/serve
+        const storageMatch = path.match(/^\/storage\/pdfs\/(.+)$/);
+        if (storageMatch) {
+            return handlePdfStorage(storageMatch[1], request, env);
+        }
+
         if (request.method !== "POST") {
             return jsonResponse({ success: false, error: "Only POST allowed" }, 405);
         }
@@ -147,6 +155,38 @@ export default {
         }, 502);
     },
 };
+
+/* ───────── R2 PDF storage handler (replaces Supabase Storage) ───────── */
+async function handlePdfStorage(fileName, request, env) {
+    const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+
+    if (request.method === "POST" || request.method === "PUT") {
+        const apiKey = request.headers.get("apikey") || request.headers.get("Authorization")?.replace("Bearer ", "");
+        if (apiKey !== env.D1_API_KEY) {
+            return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+        }
+        try {
+            await env.PDF_BUCKET.put(safeName, request.body, {
+                httpMetadata: { contentType: request.headers.get("Content-Type") || "application/pdf" },
+            });
+            return jsonResponse({ success: true, fileName: safeName });
+        } catch (e) {
+            return jsonResponse({ success: false, error: String(e.message || e) }, 500);
+        }
+    }
+
+    if (request.method === "GET") {
+        const obj = await env.PDF_BUCKET.get(safeName);
+        if (!obj) return new Response("Not found", { status: 404, headers: CORS_HEADERS });
+        const headers = new Headers(CORS_HEADERS);
+        obj.writeHttpMetadata(headers);
+        headers.set("etag", obj.httpEtag);
+        headers.set("Content-Type", obj.httpMetadata?.contentType || "application/pdf");
+        return new Response(obj.body, { headers });
+    }
+
+    return jsonResponse({ success: false, error: "Method not allowed" }, 405);
+}
 
 function jsonResponse(obj, status = 200) {
     return new Response(JSON.stringify(obj), {

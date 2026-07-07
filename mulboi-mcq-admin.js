@@ -583,10 +583,8 @@ async function mbqUploadPdf() {
 
         await new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest();
-            xhr.open('POST', window.SUPABASE_URL + '/storage/v1/object/pdfs/' + fileName);
-            xhr.setRequestHeader('apikey', window.SUPABASE_KEY);
-            xhr.setRequestHeader('Authorization', 'Bearer ' + window.SUPABASE_KEY);
-            xhr.setRequestHeader('x-upsert', 'true');
+            xhr.open('POST', AI_PROXY_URL.replace(/\/$/, '') + '/storage/pdfs/' + fileName);
+            xhr.setRequestHeader('apikey', D1_API_KEY);
             xhr.upload.onprogress = ev => {
                 if (ev.lengthComputable && pf) {
                     const pct = Math.round(ev.loaded / ev.total * 90);
@@ -603,7 +601,7 @@ async function mbqUploadPdf() {
             xhr.send(mbqPdfFile);
         });
 
-        const fileUrl = window.SUPABASE_URL + '/storage/v1/object/public/pdfs/' + fileName;
+        const fileUrl = AI_PROXY_URL.replace(/\/$/, '') + '/storage/pdfs/' + fileName;
 
         if (pl) pl.textContent = 'রেকর্ড সংরক্ষণ করছে...';
         if (pf) pf.style.width = '95%';
@@ -696,10 +694,8 @@ async function mbUploadPdf() {
 
         await new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest();
-            xhr.open('POST', window.SUPABASE_URL + '/storage/v1/object/pdfs/' + fileName);
-            xhr.setRequestHeader('apikey', window.SUPABASE_KEY);
-            xhr.setRequestHeader('Authorization', 'Bearer ' + window.SUPABASE_KEY);
-            xhr.setRequestHeader('x-upsert', 'true');
+            xhr.open('POST', AI_PROXY_URL.replace(/\/$/, '') + '/storage/pdfs/' + fileName);
+            xhr.setRequestHeader('apikey', D1_API_KEY);
             xhr.upload.onprogress = ev => {
                 if (ev.lengthComputable && pf) {
                     const pct = Math.round(ev.loaded / ev.total * 90);
@@ -718,7 +714,7 @@ async function mbUploadPdf() {
             xhr.send(mbPdfFile);
         });
 
-        const fileUrl = window.SUPABASE_URL + '/storage/v1/object/public/pdfs/' + fileName;
+        const fileUrl = AI_PROXY_URL.replace(/\/$/, '') + '/storage/pdfs/' + fileName;
 
         // Create PDF record in database
         if (pl) pl.textContent = 'রেকর্ড সংরক্ষণ করছে...';
