@@ -1288,15 +1288,16 @@ async function mbLoadAllPageMcqs() {
     // এখন প্রথমে শুধু length (হালকা) আনা হয়, ছোট row গুলো bulk এ, বড় row গুলো lazily
     // (আলাদা per-row GET) আনা হয় — কোনো এক পেইজের bloat পুরো লোড ব্যর্থ করতে পারবে না।
     const HEAVY_ROW_THRESHOLD = 50000;
-    const res2 = await mbD1ApiWithRetry('book_page_mcqs', '?pdf_id=eq.' + mbPdfId + '&select=id,page_number,mcq_type,len:length(questions_json)&order=page_number.asc&limit=500', 2);
+    const res2 = await mbD1ApiWithRetry('book_page_mcqs', '?pdf_id=eq.' + mbPdfId + '&select=id,page_number,mcq_type,length(questions_json)&order=page_number.asc&limit=500', 2);
 
     let failed = false;
     let errMsg = '';
     try {
         if (!res2.ok) { const t = await res2.text().catch(()=>''); throw new Error('(' + res2.status + ') ' + t); }
         const meta = await res2.json() || [];
-        const lightRows = meta.filter(r => (r.len || 0) <= HEAVY_ROW_THRESHOLD);
-        const heavyRows = meta.filter(r => (r.len || 0) > HEAVY_ROW_THRESHOLD);
+        const getLen = r => r['length(questions_json)'] ?? r.len ?? 0;
+        const lightRows = meta.filter(r => getLen(r) <= HEAVY_ROW_THRESHOLD);
+        const heavyRows = meta.filter(r => getLen(r) > HEAVY_ROW_THRESHOLD);
         let fresh = [];
         if (lightRows.length) {
             const idList = lightRows.map(r => r.id).join(',');
