@@ -1287,28 +1287,31 @@ async function mbLoadAllPageMcqs() {
     // ফলে পুরো PDF-এর pill/All-tab data হারিয়ে যেত, যদিও individual row DB-তে ঠিকই ছিল।
     // এখন প্রথমে শুধু length (হালকা) আনা হয়, ছোট row গুলো bulk এ, বড় row গুলো lazily
     // (আলাদা per-row GET) আনা হয় — কোনো এক পেইজের bloat পুরো লোড ব্যর্থ করতে পারবে না।
-    const HEAVY_ROW_THRESHOLD = 50000;
-    const res2 = await mbD1ApiWithRetry('book_page_mcqs', '?pdf_id=eq.' + mbPdfId + '&select=id,page_number,mcq_type,length(questions_json)&order=page_number.asc&limit=500', 2);
+    const res2 = await mbD1ApiWithRetry('book_page_mcqs', '?pdf_id=eq.' + mbPdfId + '&select=id,page_number,mcq_type,questions_json&order=page_number.asc&limit=500', 2);
 
     let failed = false;
     let errMsg = '';
     try {
-        if (!res2.ok) { const t = await res2.text().catch(()=>''); throw new Error('(' + res2.status + ') ' + t); }
-        const meta = await res2.json() || [];
-        const getLen = r => r['length(questions_json)'] ?? r.len ?? 0;
-        const lightRows = meta.filter(r => getLen(r) <= HEAVY_ROW_THRESHOLD);
-        const heavyRows = meta.filter(r => getLen(r) > HEAVY_ROW_THRESHOLD);
-        let fresh = [];
-        if (lightRows.length) {
-            const idList = lightRows.map(r => r.id).join(',');
-            const resLight = await mbD1ApiWithRetry('book_page_mcqs', '?id=in.(' + idList + ')&select=id,page_number,mcq_type,questions_json', 2);
-            if (resLight.ok) fresh = await resLight.json() || [];
-        }
-        for (const hr of heavyRows) {
-            try {
-                const row = await mbFetchSingleMcqRow(hr.page_number, hr.mcq_type);
-                if (row) fresh.push(row);
-            } catch (_) {}
+        let fresh;
+        if (res2.ok) {
+            fresh = await res2.json() || [];
+        } else {
+            // bug fix (root cause of "page N pill/MCQ vanished for whole PDF"): bulk query
+            // ব্যর্থ হলে (কোনো এক পেইজের বড় questions_json এর কারণে payload limit ছাড়ালে),
+            // আগে পুরো PDF-এর data হারিয়ে যেত। এখন fallback হিসেবে প্রথমে শুধু id+page_number+
+            // mcq_type (হালকা) আনা হয়, তারপর প্রতিটা row আলাদাভাবে (per-row GET) আনা হয় —
+            // একটা row ব্যর্থ হলেও বাকি সব ঠিকমতো লোড হবে।
+            const t = await res2.text().catch(()=>'');
+            const resMeta = await mbD1ApiWithRetry('book_page_mcqs', '?pdf_id=eq.' + mbPdfId + '&select=id,page_number,mcq_type&order=page_number.asc&limit=500', 2);
+            if (!resMeta.ok) throw new Error('(' + res2.status + ') ' + t);
+            const meta = await resMeta.json() || [];
+            fresh = [];
+            for (const m of meta) {
+                try {
+                    const row = await mbFetchSingleMcqRow(m.page_number, m.mcq_type);
+                    if (row) fresh.push(row);
+                } catch (_) {}
+            }
         }
         // bug fix: fresh GET পুরো mbAllPageDataAllTypes replace করে দিত — কিন্তু ঠিক
         // save/upsert-এর পর পরই এই GET চললে D1 replica lag/eventual-consistency এর কারণে
