@@ -1,10 +1,15 @@
 <!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>Migrate to D1</title></head>
 <body style="font-family:monospace;background:#111;color:#0f0;padding:20px">
-<h3>Step 1: Export from Supabase (JSON file)</h3>
+<h3>One-click: Auto migrate (paginated, retry-safe)</h3>
+<button onclick="autoMigrate()">Start Auto Migration</button>
+<button onclick="autoMigrate(true)">Resume from last checkpoint</button>
+<pre id="log0"></pre>
+<h3>Manual fallback</h3>
+<h4>Step 1: Export from Supabase (JSON file)</h4>
 <button onclick="exportData()">Export JSON</button>
 <pre id="log1"></pre>
-<h3>Step 2: Import JSON into D1</h3>
+<h4>Step 2: Import JSON into D1</h4>
 <input type="file" id="fileInput" accept=".json">
 <button onclick="importData()">Import to D1</button>
 <pre id="log2"></pre>
@@ -13,8 +18,68 @@ const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
 const WORKER_URL = 'https://atlas-ai-proxy.hamza818483.workers.dev/d1/book_page_mcqs';
 const D1_API_KEY = 'mb_d1_9f2a7c6e1b4d8305';
+const log0 = (s) => { const el=document.getElementById('log0'); el.textContent += s + '\n'; el.scrollTop = el.scrollHeight; };
 const log1 = (s) => document.getElementById('log1').textContent += s + '\n';
 const log2 = (s) => document.getElementById('log2').textContent += s + '\n';
+const CKPT_KEY = 'mulboi_migrate_checkpoint';
+const PAGE_SIZE = 500;
+
+async function fetchWithRetry(url, opts, tries=6) {
+  for (let i=0; i<tries; i++) {
+    try {
+      const res = await fetch(url, opts);
+      if (res.status === 429 || res.status >= 500) throw new Error('status ' + res.status);
+      return res;
+    } catch (e) {
+      const wait = Math.min(2000 * Math.pow(2, i), 30000);
+      log0(`  retry ${i+1}/${tries} after ${wait}ms (${e.message})`);
+      await new Promise(r => setTimeout(r, wait));
+    }
+  }
+  return fetch(url, opts);
+}
+
+async function autoMigrate(resume=false) {
+  let offset = 0;
+  if (resume) {
+    offset = parseInt(localStorage.getItem(CKPT_KEY) || '0', 10);
+    log0(`Resuming from offset ${offset}...`);
+  } else {
+    localStorage.removeItem(CKPT_KEY);
+    log0('Starting fresh migration...');
+  }
+  let totalOk = 0, totalFail = 0;
+  while (true) {
+    log0(`Fetching rows ${offset}-${offset+PAGE_SIZE}...`);
+    const res = await fetchWithRetry(
+      `${SUPABASE_URL}/rest/v1/book_page_mcqs?select=pdf_id,page_number,mcq_type,questions_json&order=id.asc&offset=${offset}&limit=${PAGE_SIZE}`,
+      { headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY } }
+    );
+    if (!res.ok) {
+      log0(`Fetch failed at offset ${offset}: ${res.status}. Checkpoint saved — click "Resume" to retry later.`);
+      localStorage.setItem(CKPT_KEY, offset);
+      return;
+    }
+    const rows = await res.json();
+    if (rows.length === 0) {
+      log0(`No more rows. Migration complete. Total success: ${totalOk}, failed: ${totalFail}`);
+      localStorage.removeItem(CKPT_KEY);
+      return;
+    }
+    for (const r of rows) {
+      const impRes = await fetchWithRetry(WORKER_URL + '?on_conflict=pdf_id,page_number,mcq_type', {
+        method: 'POST',
+        headers: { apikey: D1_API_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify(r)
+      }, 3);
+      if (impRes && impRes.ok) totalOk++;
+      else { totalFail++; log0(`  import failed: pdf_id=${r.pdf_id} page=${r.page_number}`); }
+    }
+    log0(`Batch done. Running total — success: ${totalOk}, failed: ${totalFail}`);
+    offset += PAGE_SIZE;
+    localStorage.setItem(CKPT_KEY, offset);
+  }
+}
 
 async function exportData() {
   log1('Fetching all rows...');
