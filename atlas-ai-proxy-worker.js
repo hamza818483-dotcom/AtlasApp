@@ -176,11 +176,11 @@ async function handleMigrate(request, env, url) {
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw";
 
     const offset = parseInt(url.searchParams.get("offset") || "0", 10);
-    const limit = Math.min(parseInt(url.searchParams.get("limit") || "300", 10), 500);
+    const limit = Math.min(parseInt(url.searchParams.get("limit") || "100", 10), 150);
 
     let sbRes;
     let lastErr = null;
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 3; i++) {
         try {
             sbRes = await fetch(
                 `${SUPABASE_URL}/rest/v1/book_page_mcqs?select=pdf_id,page_number,mcq_type,questions_json&order=id.asc&offset=${offset}&limit=${limit}`,
@@ -191,7 +191,7 @@ async function handleMigrate(request, env, url) {
         } catch (e) {
             lastErr = String(e?.message || e);
         }
-        await sleep(Math.min(1000 * Math.pow(2, i), 15000));
+        await sleep(Math.min(1000 * Math.pow(2, i), 3000));
     }
     if (lastErr) {
         return jsonResponse({ done: false, error: "Supabase fetch failed after retries: " + lastErr, offset }, 502);

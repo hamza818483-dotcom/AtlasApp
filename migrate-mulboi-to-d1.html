@@ -9,7 +9,7 @@
 const WORKER_URL = 'https://atlas-ai-proxy.hamza818483.workers.dev/migrate-mulboi';
 const D1_API_KEY = 'mb_d1_9f2a7c6e1b4d8305';
 const CKPT_KEY = 'mulboi_migrate_checkpoint_v2';
-const BATCH = 300;
+const BATCH = 100;
 const log0 = (s) => { const el=document.getElementById('log0'); el.textContent += s + '\n'; el.scrollTop = el.scrollHeight; };
 
 async function serverMigrate(resume=false) {
@@ -21,10 +21,13 @@ async function serverMigrate(resume=false) {
     log0(`Requesting batch at offset ${offset}...`);
     let res, data;
     try {
-      res = await fetch(`${WORKER_URL}?offset=${offset}&limit=${BATCH}&key=${D1_API_KEY}`);
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 25000);
+      res = await fetch(`${WORKER_URL}?offset=${offset}&limit=${BATCH}&key=${D1_API_KEY}`, { signal: ctrl.signal });
+      clearTimeout(t);
       data = await res.json();
     } catch (e) {
-      log0(`Network error talking to Worker: ${e.message}. Checkpoint saved at ${offset}. Wait a bit and click Resume.`);
+      log0(`Timeout/network error: ${e.message}. Checkpoint saved at ${offset}. Click Resume.`);
       localStorage.setItem(CKPT_KEY, offset);
       return;
     }
