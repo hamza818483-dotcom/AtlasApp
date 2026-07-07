@@ -64,8 +64,9 @@ export default {
         //    Free-plan Disk IO throttling). Mimics the PostgREST query-string
         //    shape the frontend already sends so mulboi-mcq-admin.js only
         //    needs its base URL changed, not its query logic. ──
-        if (path === "/d1/book_page_mcqs") {
-            return handleD1BookPageMcqs(request, env, url);
+        const d1Match = path.match(/^\/d1\/([a-z_]+)$/);
+        if (d1Match) {
+            return handleD1Table(d1Match[1], request, env, url);
         }
 
         if (request.method !== "POST") {
@@ -161,7 +162,16 @@ function jsonResponse(obj, status = 200) {
      PATCH  ?id=eq.X                                    (body: partial row)
      DELETE ?id=eq.X
    Auth: requires header 'apikey' matching env.D1_API_KEY (same header name/spirit as Supabase). */
-async function handleD1BookPageMcqs(request, env, url) {
+const D1_TABLES = {
+    book_page_mcqs:       { cols: "id, pdf_id, page_number, mcq_type, questions_json" },
+    book_ai_prompts:      { cols: "id, pdf_id, mcq_type, prompt" },
+    book_mcq_csv_archive: { cols: "id, pdf_id, page_number, file_name, csv_content, question_count, mcq_type, created_at" },
+};
+
+async function handleD1Table(table, request, env, url) {
+    const cfg = D1_TABLES[table];
+    if (!cfg) return jsonResponse({ error: "Unknown D1 table: " + table }, 404);
+
     const apiKey = request.headers.get("apikey") || request.headers.get("Authorization")?.replace("Bearer ", "");
     if (!env.D1_API_KEY || apiKey !== env.D1_API_KEY) {
         return jsonResponse({ error: "Unauthorized" }, 401);
@@ -185,7 +195,7 @@ async function handleD1BookPageMcqs(request, env, url) {
     try {
         if (request.method === "GET") {
             const { where, args } = parseEqFilters();
-            let sql = "SELECT id, pdf_id, page_number, mcq_type, questions_json FROM book_page_mcqs";
+            let sql = `SELECT ${cfg.cols} FROM ${table}`;
             if (where.length) sql += " WHERE " + where.join(" AND ");
             const orderParam = params.get("order");
             if (orderParam) {
@@ -200,29 +210,29 @@ async function handleD1BookPageMcqs(request, env, url) {
 
         if (request.method === "POST") {
             const body = await request.json();
-            const { pdf_id, page_number, mcq_type, questions_json } = body;
-            if (pdf_id == null || page_number == null || !mcq_type) {
-                return jsonResponse({ error: "pdf_id, page_number, mcq_type required" }, 400);
-            }
+            const cols = Object.keys(body);
+            if (!cols.length) return jsonResponse({ error: "empty body" }, 400);
+            const placeholders = cols.map(() => "?").join(", ");
+            const args = cols.map(c => body[c]);
             const onConflict = params.get("on_conflict");
             let row;
             if (onConflict) {
+                const conflictCols = onConflict.split(",");
+                const updateSet = cols.filter(c => !conflictCols.includes(c))
+                    .map(c => `${c} = excluded.${c}`).join(", ");
                 await db.prepare(
-                    `INSERT INTO book_page_mcqs (pdf_id, page_number, mcq_type, questions_json, updated_at)
-                     VALUES (?, ?, ?, ?, datetime('now'))
-                     ON CONFLICT(pdf_id, page_number, mcq_type)
-                     DO UPDATE SET questions_json = excluded.questions_json, updated_at = datetime('now')`
-                ).bind(pdf_id, page_number, mcq_type, questions_json).run();
-                row = await db.prepare(
-                    "SELECT id, pdf_id, page_number, mcq_type, questions_json FROM book_page_mcqs WHERE pdf_id=? AND page_number=? AND mcq_type=?"
-                ).bind(pdf_id, page_number, mcq_type).first();
+                    `INSERT INTO ${table} (${cols.join(", ")}) VALUES (${placeholders})
+                     ON CONFLICT(${conflictCols.join(",")})
+                     DO UPDATE SET ${updateSet || cols[0] + " = excluded." + cols[0]}`
+                ).bind(...args).run();
+                const whereConf = conflictCols.map(c => `${c} = ?`).join(" AND ");
+                const confArgs = conflictCols.map(c => body[c]);
+                row = await db.prepare(`SELECT ${cfg.cols} FROM ${table} WHERE ${whereConf}`).bind(...confArgs).first();
             } else {
                 const ins = await db.prepare(
-                    "INSERT INTO book_page_mcqs (pdf_id, page_number, mcq_type, questions_json) VALUES (?, ?, ?, ?)"
-                ).bind(pdf_id, page_number, mcq_type, questions_json).run();
-                row = await db.prepare(
-                    "SELECT id, pdf_id, page_number, mcq_type, questions_json FROM book_page_mcqs WHERE id=?"
-                ).bind(ins.meta.last_row_id).first();
+                    `INSERT INTO ${table} (${cols.join(", ")}) VALUES (${placeholders})`
+                ).bind(...args).run();
+                row = await db.prepare(`SELECT ${cfg.cols} FROM ${table} WHERE id=?`).bind(ins.meta.last_row_id).first();
             }
             return jsonResponse([row], 201);
         }
@@ -233,21 +243,17 @@ async function handleD1BookPageMcqs(request, env, url) {
             const body = await request.json();
             const setCols = Object.keys(body);
             if (!setCols.length) return jsonResponse({ error: "no fields to update" }, 400);
-            const setSql = setCols.map(c => `${c} = ?`).join(", ") + ", updated_at = datetime('now')";
+            const setSql = setCols.map(c => `${c} = ?`).join(", ");
             const setArgs = setCols.map(c => body[c]);
-            await db.prepare(
-                `UPDATE book_page_mcqs SET ${setSql} WHERE ${where.join(" AND ")}`
-            ).bind(...setArgs, ...args).run();
-            const rows = await db.prepare(
-                `SELECT id, pdf_id, page_number, mcq_type, questions_json FROM book_page_mcqs WHERE ${where.join(" AND ")}`
-            ).bind(...args).all();
+            await db.prepare(`UPDATE ${table} SET ${setSql} WHERE ${where.join(" AND ")}`).bind(...setArgs, ...args).run();
+            const rows = await db.prepare(`SELECT ${cfg.cols} FROM ${table} WHERE ${where.join(" AND ")}`).bind(...args).all();
             return jsonResponse(rows.results || []);
         }
 
         if (request.method === "DELETE") {
             const { where, args } = parseEqFilters();
             if (!where.length) return jsonResponse({ error: "filter required for DELETE" }, 400);
-            await db.prepare(`DELETE FROM book_page_mcqs WHERE ${where.join(" AND ")}`).bind(...args).run();
+            await db.prepare(`DELETE FROM ${table} WHERE ${where.join(" AND ")}`).bind(...args).run();
             return jsonResponse([], 200);
         }
 

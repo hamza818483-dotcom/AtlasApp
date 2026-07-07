@@ -86,9 +86,9 @@ async function mbApi(path, opts) {
        to avoid Free-plan Disk IO throttling)
    ════════════════════════════════════════════════════ */
 const D1_API_KEY = 'mb_d1_9f2a7c6e1b4d8305';
-async function mbD1Api(query, opts) {
+async function mbD1Api(table, query, opts) {
     opts = opts || {};
-    const url = AI_PROXY_URL.replace(/\/$/, '') + '/d1/book_page_mcqs' + (query || '');
+    const url = AI_PROXY_URL.replace(/\/$/, '') + '/d1/' + table + (query || '');
     const headers = Object.assign({
         'apikey': D1_API_KEY,
         'Content-Type': 'application/json'
@@ -104,10 +104,10 @@ async function mbD1Api(query, opts) {
     }
     throw lastErr;
 }
-async function mbD1ApiWithRetry(query, retries = 1) {
+async function mbD1ApiWithRetry(table, query, retries = 1) {
     for (let attempt = 0; attempt <= retries; attempt++) {
         try {
-            const res = await mbD1Api(query);
+            const res = await mbD1Api(table, query);
             if (res.ok) return res;
             if (attempt === retries) return res;
         } catch (e) {
@@ -1270,7 +1270,7 @@ async function mbLoadAllPageMcqs() {
     // query-ই admin rows সহ সবকিছু নিয়ে আসে — তাই admin-only query pure duplicate ছিল,
     // প্রতিবার panel open এ ভারী questions_json (base64 image সহ) দ্বিগুণ ডাউনলোড হতো এবং
     // Disk IO/egress দ্বিগুণ খরচ হতো। এখন একটাই query চলে, mbAllPageData তা থেকেই derive হয়।
-    const res2 = await mbD1ApiWithRetry('?pdf_id=eq.' + mbPdfId + '&select=id,page_number,mcq_type,questions_json&order=page_number.asc&limit=500', 2);
+    const res2 = await mbD1ApiWithRetry('book_page_mcqs', '?pdf_id=eq.' + mbPdfId + '&select=id,page_number,mcq_type,questions_json&order=page_number.asc&limit=500', 2);
 
     let failed = false;
     let errMsg = '';
@@ -1338,7 +1338,7 @@ async function mbUpsertPageMcqs(pageNum, mcqs, mcqType) {
         mcq_type:       mcqType,
         questions_json: JSON.stringify(mcqs)
     };
-    const res = await mbD1Api('?on_conflict=pdf_id,page_number,mcq_type', {
+    const res = await mbD1Api('book_page_mcqs', '?on_conflict=pdf_id,page_number,mcq_type', {
         method:  'POST',
         headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
         body:    JSON.stringify(body)
@@ -1931,7 +1931,8 @@ async function mbImportCsv() {
 let mbPromptCache = {};
 async function mbLoadAllPrompts() {
     try {
-        const rows = await safeFetch(`${SUPABASE_URL}/rest/v1/book_ai_prompts?pdf_id=eq.0&select=mcq_type,prompt`);
+        const res = await mbD1Api('book_ai_prompts', '?pdf_id=eq.0&select=mcq_type,prompt');
+        const rows = res.ok ? await res.json() : [];
         mbPromptCache = {};
         (rows||[]).forEach(r => { mbPromptCache[r.mcq_type] = r.prompt; });
     } catch(_) {}
@@ -1946,10 +1947,9 @@ async function mbSavePromptForType(type, text) {
         // upsert কাজ করে না — duplicate pdf_id+mcq_type থাকলে unique constraint error হয়,
         // যেটা এতদিন try/catch এ silently গিলে ফেলা হচ্ছিল (তাই সেভ হচ্ছিলো না মনে হতো,
         // যদিও প্রথমবার insert successful হতো, দ্বিতীয়বার update এ গিয়ে fail করত)।
-        await safeFetch(`${SUPABASE_URL}/rest/v1/book_ai_prompts?on_conflict=pdf_id,mcq_type`, {
+        await mbD1Api('book_ai_prompts', '?on_conflict=pdf_id,mcq_type', {
             method: 'POST',
-            headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-            body: JSON.stringify({ pdf_id: 0, mcq_type: type, prompt: text, updated_at: new Date().toISOString() })
+            body: JSON.stringify({ pdf_id: 0, mcq_type: type, prompt: text })
         });
         return true;
     } catch (e) {
@@ -2547,7 +2547,7 @@ async function mbSaveMcqsAsCsv(mcqs, pageNum, type) {
         const csvContent = mbBuildCsvFromMcqs(mcqs);
         const ts = new Date().toISOString().replace(/[:.]/g, '-');
         const fileName = `page${pageNum}_${type}_${ts}.csv`;
-        await mbApi('/book_mcq_csv_archive', {
+        await mbD1Api('book_mcq_csv_archive', '', {
             method: 'POST',
             headers: { 'Prefer': 'return=minimal' },
             body: JSON.stringify({
@@ -2572,7 +2572,7 @@ async function mbLoadCsvArchive() {
     if (!wrap || !mbPdfId) return;
     wrap.innerHTML = '<div style="font-size:11px;color:var(--text3);text-align:center;padding:10px">লোড হচ্ছে...</div>';
     try {
-        const rows = await mbApi('/book_mcq_csv_archive?pdf_id=eq.' + mbPdfId + '&select=id,page_number,file_name,question_count,mcq_type,created_at&order=created_at.desc&limit=200')
+        const rows = await mbD1Api('book_mcq_csv_archive', '?pdf_id=eq.' + mbPdfId + '&select=id,page_number,file_name,question_count,mcq_type,created_at&order=created_at.desc&limit=200')
             .then(r => r.ok ? r.json() : []);
         if (!rows || !rows.length) {
             wrap.innerHTML = '<div style="font-size:11px;color:var(--text3);text-align:center;padding:10px">এখনো কোনো CSV তৈরি হয়নি</div>';
@@ -2600,7 +2600,7 @@ async function mbLoadCsvArchive() {
 
 async function mbDownloadCsvArchive(id, fileName) {
     try {
-        const rows = await mbApi('/book_mcq_csv_archive?id=eq.' + id + '&select=csv_content').then(r => r.ok ? r.json() : []);
+        const rows = await mbD1Api('book_mcq_csv_archive', '?id=eq.' + id + '&select=csv_content').then(r => r.ok ? r.json() : []);
         const csvContent = rows?.[0]?.csv_content;
         if (!csvContent) { mbToast('CSV পাওয়া যায়নি', 'error'); return; }
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -2617,7 +2617,7 @@ async function mbDownloadCsvArchive(id, fileName) {
 async function mbDeleteCsvArchive(id) {
     if (!confirm('এই CSV ফাইলটি মুছে ফেলতে চাও?')) return;
     try {
-        await mbApi('/book_mcq_csv_archive?id=eq.' + id, { method: 'DELETE' });
+        await mbD1Api('book_mcq_csv_archive', '?id=eq.' + id, { method: 'DELETE' });
         mbLoadCsvArchive();
     } catch (e) {
         mbToast('মুছে ফেলা ব্যর্থ: ' + e.message, 'error');
@@ -2914,7 +2914,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     if (existingRow) { try { currentMcqs = JSON.parse(existingRow.questions_json || '[]'); } catch (_) {} }
     currentMcqs.push(...newMcqs);
 
-    const res = await mbD1Api('?on_conflict=pdf_id,page_number,mcq_type', {
+    const res = await mbD1Api('book_page_mcqs', '?on_conflict=pdf_id,page_number,mcq_type', {
         method: 'POST',
         headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
         body: JSON.stringify({ pdf_id: parseInt(mbPdfId), page_number: pageNum, mcq_type: 'admin', questions_json: JSON.stringify(currentMcqs) })
@@ -2945,7 +2945,7 @@ async function mbGenerateForPageSpecial(pageNum) {
     if (existingRow) { try { currentMcqs = JSON.parse(existingRow.questions_json || '[]'); } catch (_) {} }
     currentMcqs.push(...newMcqs);
 
-    const res = await mbD1Api('?on_conflict=pdf_id,page_number,mcq_type', {
+    const res = await mbD1Api('book_page_mcqs', '?on_conflict=pdf_id,page_number,mcq_type', {
         method: 'POST',
         headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
         body: JSON.stringify({ pdf_id: parseInt(mbPdfId), page_number: pageNum, mcq_type: 'admin', questions_json: JSON.stringify(currentMcqs) })
