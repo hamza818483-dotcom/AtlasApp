@@ -1286,7 +1286,21 @@ async function mbLoadAllPageMcqs() {
     let errMsg = '';
     try {
         if (!res2.ok) { const t = await res2.text().catch(()=>''); throw new Error('(' + res2.status + ') ' + t); }
-        mbAllPageDataAllTypes = await res2.json() || [];
+        const fresh = await res2.json() || [];
+        // bug fix: fresh GET পুরো mbAllPageDataAllTypes replace করে দিত — কিন্তু ঠিক
+        // save/upsert-এর পর পরই এই GET চললে D1 replica lag/eventual-consistency এর কারণে
+        // fresh result-এ just-written row missing থাকতে পারে (write নিজে ঠিকঠাক হয়েছে,
+        // কিন্তু এই GET আলাদা replica থেকে read করেছে)। এতে just-generated MCQ আচমকা
+        // "All" ট্যাব/pill থেকে হারিয়ে যেত যদিও CSV/DB-তে আসলে সেভ হয়ে গিয়েছিল।
+        // এখন fresh data দিয়ে merge করা হয় (fresh-কে source-of-truth ধরে, কিন্তু fresh-এ
+        // অনুপস্থিত অথচ আগে in-memory তে ছিল এমন row বাদ দেওয়া হয় না — শুধু update হয়)।
+        const freshMap = new Map(fresh.map(r => [r.page_number + '_' + r.mcq_type, r]));
+        const merged = [...fresh];
+        mbAllPageDataAllTypes.forEach(oldRow => {
+            const k = oldRow.page_number + '_' + oldRow.mcq_type;
+            if (!freshMap.has(k)) merged.push(oldRow); // fresh এ নেই কিন্তু আগে ছিল — replica lag হতে পারে, হারাতে দেওয়া যাবে না
+        });
+        mbAllPageDataAllTypes = merged;
         mbAllPageData = mbAllPageDataAllTypes.filter(r => r.mcq_type === 'admin');
     } catch (e) {
         console.error('mbLoadAllPageMcqs: fetch failed', e);
@@ -2626,7 +2640,10 @@ async function mbSaveAiMcqs() {
         if (resultEl) resultEl.style.display = 'none';
         const previewList = document.getElementById('mbAiPreviewList');
         if (previewList) previewList.innerHTML = '';
-        await mbLoadAllPageMcqs();
+        // bug fix: এখানে আগে mbLoadAllPageMcqs() (পুরো re-fetch) কল হতো, যেটা D1 replica lag এর
+        // কারণে just-saved row miss করে সেই page-কে All-tab/pill থেকে হারিয়ে ফেলতে পারত।
+        // mbUpsertPageMcqs ইতিমধ্যে mbAllPageDataAllTypes-এ নতুন row বসিয়ে দিয়েছে (in-memory,
+        // guaranteed-fresh) — তাই এখানে re-fetch না করে সরাসরি সেই in-memory data দিয়ে render করাই নিরাপদ।
         mbRenderPageMcqList();
         mbUpdatePageCount();
         mbRenderPageSummary();
