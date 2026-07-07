@@ -3028,7 +3028,12 @@ async function mbRunBulkJob(job) {
         mbUpdateBulkUI(job);
         // current viewed page হলে summary/list রিফ্রেশ করো
         if (p === mbCurrentPage) { mbRenderPageMcqList(); mbUpdatePageCount(); }
-        await mbLoadAllPageMcqs();
+        // bug fix: এখানে আগে mbLoadAllPageMcqs() (full re-fetch) কল হতো প্রতি পেইজের পর —
+        // D1 replica-lag এর কারণে just-saved row এখনো fresh GET এ না আসতে পারে, ফলে
+        // in-memory-এ সদ্য sync হওয়া সঠিক ডেটা এই re-fetch দিয়ে overwrite/miss হয়ে যেত
+        // এবং All-tab/pill থেকে MCQ হারিয়ে যেত। mbGenerateForPage ইতিমধ্যে
+        // mbAllPageDataAllTypes-এ সরাসরি sync করে দিয়েছে (guaranteed fresh, in-memory) —
+        // তাই এখানে আর re-fetch দরকার নেই, শুধু render করলেই যথেষ্ট।
         mbRenderPageSummary();
     }
     mbStopBulkSubTicker();
@@ -3174,6 +3179,9 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
         const newRow = Array.isArray(data) ? data[0] : data;
         const idx = mbAllPageData.findIndex(r => Number(r.page_number) === Number(pageNum));
         if (idx >= 0) mbAllPageData[idx] = newRow; else mbAllPageData.push(newRow);
+        const idxAll = mbAllPageDataAllTypes.findIndex(r => Number(r.page_number) === Number(pageNum) && r.mcq_type === 'admin');
+        if (idxAll >= 0) mbAllPageDataAllTypes[idxAll] = newRow; else mbAllPageDataAllTypes.push(newRow);
+        mbWriteLightPillCache(mbPdfId);
     } catch (_) {}
 
     // প্রতিটা পেইজের জন্য আলাদা CSV ফাইল — ফাইলের নামে page no থাকে, শুধু এই batch-এর
@@ -3205,6 +3213,9 @@ async function mbGenerateForPageSpecial(pageNum) {
         const newRow = Array.isArray(data) ? data[0] : data;
         const idx = mbAllPageData.findIndex(r => Number(r.page_number) === Number(pageNum));
         if (idx >= 0) mbAllPageData[idx] = newRow; else mbAllPageData.push(newRow);
+        const idxAll = mbAllPageDataAllTypes.findIndex(r => Number(r.page_number) === Number(pageNum) && r.mcq_type === 'admin');
+        if (idxAll >= 0) mbAllPageDataAllTypes[idxAll] = newRow; else mbAllPageDataAllTypes.push(newRow);
+        mbWriteLightPillCache(mbPdfId);
     } catch (_) {}
 
     await mbSaveMcqsAsCsv(newMcqs, pageNum, 'special');
