@@ -3174,15 +3174,29 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
         headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
         body: JSON.stringify({ pdf_id: parseInt(mbPdfId), page_number: pageNum, mcq_type: 'admin', questions_json: JSON.stringify(currentMcqs) })
     });
-    try {
-        const data = await res.json();
-        const newRow = Array.isArray(data) ? data[0] : data;
-        const idx = mbAllPageData.findIndex(r => Number(r.page_number) === Number(pageNum));
-        if (idx >= 0) mbAllPageData[idx] = newRow; else mbAllPageData.push(newRow);
-        const idxAll = mbAllPageDataAllTypes.findIndex(r => Number(r.page_number) === Number(pageNum) && r.mcq_type === 'admin');
-        if (idxAll >= 0) mbAllPageDataAllTypes[idxAll] = newRow; else mbAllPageDataAllTypes.push(newRow);
-        mbWriteLightPillCache(mbPdfId);
-    } catch (_) {}
+    // bug fix (root cause): আগে res.ok চেক করা হতো না, ফলে সার্ভার এরর (৪xx/৫xx) দিলেও
+    // কোড silently এগিয়ে CSV সেভ করে ফেলত — এই কারণেই CSV জমা হতো কিন্তু আসল MCQ
+    // row DB-তে সেভ হতো না, ফলে All ট্যাব/pill এ দেখা যেত না। এখন ব্যর্থ হলে verify GET
+    // দিয়ে retry করা হয়, তাও ব্যর্থ হলে error throw করে (bulk loop এটা catch করে skip করবে,
+    // কিন্তু আর "silent success" হবে না)।
+    let newRow = null;
+    if (res.ok) {
+        try {
+            const data = await res.json();
+            newRow = Array.isArray(data) ? data[0] : data;
+        } catch (_) {}
+    }
+    if (!newRow) {
+        newRow = await mbFetchSingleMcqRow(pageNum, 'admin');
+    }
+    if (!newRow) {
+        throw new Error('Page ' + pageNum + ': MCQ সংরক্ষণ ব্যর্থ (সার্ভার এরর)');
+    }
+    const idx = mbAllPageData.findIndex(r => Number(r.page_number) === Number(pageNum));
+    if (idx >= 0) mbAllPageData[idx] = newRow; else mbAllPageData.push(newRow);
+    const idxAll = mbAllPageDataAllTypes.findIndex(r => Number(r.page_number) === Number(pageNum) && r.mcq_type === 'admin');
+    if (idxAll >= 0) mbAllPageDataAllTypes[idxAll] = newRow; else mbAllPageDataAllTypes.push(newRow);
+    mbWriteLightPillCache(mbPdfId);
 
     // প্রতিটা পেইজের জন্য আলাদা CSV ফাইল — ফাইলের নামে page no থাকে, শুধু এই batch-এর
     // নতুন প্রশ্নগুলো (পুরো accumulated history না) — যাতে প্রতি পেইজের জন্য পরিষ্কার আলাদা ফাইল তৈরি হয়।
@@ -3208,15 +3222,20 @@ async function mbGenerateForPageSpecial(pageNum) {
         headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
         body: JSON.stringify({ pdf_id: parseInt(mbPdfId), page_number: pageNum, mcq_type: 'admin', questions_json: JSON.stringify(currentMcqs) })
     });
-    try {
-        const data = await res.json();
-        const newRow = Array.isArray(data) ? data[0] : data;
-        const idx = mbAllPageData.findIndex(r => Number(r.page_number) === Number(pageNum));
-        if (idx >= 0) mbAllPageData[idx] = newRow; else mbAllPageData.push(newRow);
-        const idxAll = mbAllPageDataAllTypes.findIndex(r => Number(r.page_number) === Number(pageNum) && r.mcq_type === 'admin');
-        if (idxAll >= 0) mbAllPageDataAllTypes[idxAll] = newRow; else mbAllPageDataAllTypes.push(newRow);
-        mbWriteLightPillCache(mbPdfId);
-    } catch (_) {}
+    let newRow = null;
+    if (res.ok) {
+        try {
+            const data = await res.json();
+            newRow = Array.isArray(data) ? data[0] : data;
+        } catch (_) {}
+    }
+    if (!newRow) newRow = await mbFetchSingleMcqRow(pageNum, 'admin');
+    if (!newRow) throw new Error('Page ' + pageNum + ': MCQ সংরক্ষণ ব্যর্থ (সার্ভার এরর)');
+    const idx = mbAllPageData.findIndex(r => Number(r.page_number) === Number(pageNum));
+    if (idx >= 0) mbAllPageData[idx] = newRow; else mbAllPageData.push(newRow);
+    const idxAll = mbAllPageDataAllTypes.findIndex(r => Number(r.page_number) === Number(pageNum) && r.mcq_type === 'admin');
+    if (idxAll >= 0) mbAllPageDataAllTypes[idxAll] = newRow; else mbAllPageDataAllTypes.push(newRow);
+    mbWriteLightPillCache(mbPdfId);
 
     await mbSaveMcqsAsCsv(newMcqs, pageNum, 'special');
     return newMcqs.length;
