@@ -1939,7 +1939,7 @@ async function safeFetch(url, opts = {}) {
         if (!text || !text.trim())
             return (opts.method === 'DELETE' || opts.method === 'PATCH') ? null : [];
         const data = JSON.parse(text);
-        if (!res.ok) throw new Error(data.message || data.hint || 'API Error');
+        if (!res.ok) throw new Error(data.error || data.message || data.hint || 'API Error');
         return data;
     } catch(e) { console.error('❌', e.message); throw e; }
 }
