@@ -2426,6 +2426,39 @@ async function mbAiGenerate() {
             mbToast('AI সঠিক JSON দেয়নি। পুনরায় চেষ্টা করুন।', 'error');
             return;
         }
+
+        // bug fix: AI মাঝে মাঝে array দিত ঠিকই কিন্তু কিছু item-এ question/option ফিল্ড
+        // ফাঁকা/অনুপস্থিত/truncated থাকত (partial JSON) — সেগুলো আগে বিনা যাচাই সরাসরি সেভ
+        // হয়ে যেত, ফলে "প্রশ্ন/অপশন ভ্যানিশ" এবং exp_box missing থাকায় পুরো পেইজের ছবি
+        // explanation হিসেবে বসে যেত। এখন প্রতিটা MCQ কে কঠোরভাবে validate করে অসম্পূর্ণ
+        // item বাদ দেওয়া হয়, এবং valid count প্রয়োজনের চেয়ে কম হলে আরেকবার retry করা হয়।
+        function mbIsValidMcq(m) {
+            return m && typeof m.question === 'string' && m.question.trim().length > 3 &&
+                ['option_k','option_kh','option_g','option_gh'].every(k => typeof m[k] === 'string' && m[k].trim().length > 0) &&
+                ['k','kh','g','gh'].includes(m.correct);
+        }
+        let validParsed = parsed.filter(mbIsValidMcq);
+
+        if (validParsed.length < count.min) {
+            try {
+                const strictSys2 = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePrompt}\n` +
+                    `আগের বার প্রতিটা প্রশ্নে question/option_k/option_kh/option_g/option_gh/correct — সবগুলো ফিল্ড সম্পূর্ণভাবে দিতে হবে, ` +
+                    `কোনো ফিল্ড ফাঁকা/অসম্পূর্ণ রাখা যাবে না। শুধু valid, সম্পূর্ণ JSON array রিটার্ন করো, markdown/preamble ছাড়া। Format:\n${jsonFormat}`;
+                const retryImg2 = pageImageData || await mbGetPageImageBase64(mbCurrentPage);
+                if (retryImg2) {
+                    const retryRaw2 = await mbCallAiApi('', retryImg2, strictSys2, false, true);
+                    const parsed2 = mbParseAiJson(retryRaw2);
+                    const valid2 = (parsed2 || []).filter(mbIsValidMcq);
+                    if (valid2.length > validParsed.length) validParsed = valid2;
+                }
+            } catch (_) {}
+        }
+
+        if (!validParsed.length) {
+            mbToast('AI সম্পূর্ণ/সঠিক MCQ দিতে পারেনি। আবার চেষ্টা করুন।', 'error');
+            return;
+        }
+        parsed = validParsed;
         // Count must-follow: চাহিদার চেয়ে বেশি দিলে কেটে দাও, কম দিলে warning
         if (parsed.length > count.max) parsed = parsed.slice(0, count.max);
         if (parsed.length < count.min) console.warn(`চাহিদা ছিল ${count.label}, AI দিয়েছে ${parsed.length}টি`);
@@ -3079,6 +3112,28 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
         } catch (_) {}
     }
     if (!parsed || !parsed.length) throw new Error('AI সঠিক JSON দেয়নি');
+
+    // bug fix: bulk-mode এও একই কারণে question/option ভ্যানিশ হয়ে যেত (single-page fix,
+    // এখানে duplicate করা হলো) — প্রতিটা MCQ validate করে অসম্পূর্ণ item বাদ, প্রয়োজনে retry।
+    function mbIsValidMcqBulk(m) {
+        return m && typeof m.question === 'string' && m.question.trim().length > 3 &&
+            ['option_k','option_kh','option_g','option_gh'].every(k => typeof m[k] === 'string' && m[k].trim().length > 0) &&
+            ['k','kh','g','gh'].includes(m.correct);
+    }
+    let validParsed = parsed.filter(mbIsValidMcqBulk);
+    if (validParsed.length < count.min) {
+        try {
+            const strictSys3 = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePrompt}\n` +
+                `আগের বার প্রতিটা প্রশ্নে question/option_k/option_kh/option_g/option_gh/correct — সবগুলো ফিল্ড সম্পূর্ণভাবে দিতে হবে, ` +
+                `কোনো ফিল্ড ফাঁকা/অসম্পূর্ণ রাখা যাবে না। শুধু valid, সম্পূর্ণ JSON array রিটার্ন করো, markdown/preamble ছাড়া। Format:\n${jsonFormat}`;
+            const retryRaw3 = await mbCallAiApi('', pageImageData, strictSys3, false, true);
+            const parsed3 = mbParseAiJson(retryRaw3);
+            const valid3 = (parsed3 || []).filter(mbIsValidMcqBulk);
+            if (valid3.length > validParsed.length) validParsed = valid3;
+        } catch (_) {}
+    }
+    if (!validParsed.length) throw new Error('AI সম্পূর্ণ/সঠিক MCQ দিতে পারেনি');
+    parsed = validParsed;
 
     // Count must-follow: AI যদি চাহিদার চেয়ে কম প্রশ্ন দেয়, এক্সট্রা দিলে সংখ্যা কেটে দেওয়া হয়,
     // কম দিলে warning log রাখা হয় (silently truncate না করে exact min মানা হয় যতটা সম্ভব)।
