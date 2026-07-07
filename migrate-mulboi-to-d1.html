@@ -1,64 +1,57 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>Migrate book_page_mcqs -> D1</title></head>
+<html><head><meta charset="utf-8"><title>Migrate to D1</title></head>
 <body style="font-family:monospace;background:#111;color:#0f0;padding:20px">
-<h3>Supabase book_page_mcqs -> Cloudflare D1 migration</h3>
-<button onclick="run()">Start Migration</button>
-<pre id="log"></pre>
+<h3>Step 1: Export from Supabase (JSON file)</h3>
+<button onclick="exportData()">Export JSON</button>
+<pre id="log1"></pre>
+<h3>Step 2: Import JSON into D1</h3>
+<input type="file" id="fileInput" accept=".json">
+<button onclick="importData()">Import to D1</button>
+<pre id="log2"></pre>
 <script>
 const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
 const WORKER_URL = 'https://atlas-ai-proxy.hamza818483.workers.dev/d1/book_page_mcqs';
 const D1_API_KEY = 'mb_d1_9f2a7c6e1b4d8305';
-const log = (s) => { document.getElementById('log').textContent += s + '\n'; console.log(s); };
+const log1 = (s) => document.getElementById('log1').textContent += s + '\n';
+const log2 = (s) => document.getElementById('log2').textContent += s + '\n';
 
-function fetchWithTimeout(url, opts, ms) {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), ms);
-  return fetch(url, Object.assign({}, opts, { signal: ctrl.signal })).finally(() => clearTimeout(t));
+async function exportData() {
+  log1('Fetching all rows...');
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/book_page_mcqs?select=pdf_id,page_number,mcq_type,questions_json&order=id.asc`,
+      { headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY } });
+    if (!res.ok) { log1('Failed: ' + res.status + ' ' + await res.text()); return; }
+    const rows = await res.json();
+    log1(`Got ${rows.length} rows. Downloading file...`);
+    const blob = new Blob([JSON.stringify(rows)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'book_page_mcqs_export.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    log1('Downloaded. Now upload it below and click Import.');
+  } catch (e) {
+    log1('Error: ' + e.message + ' — Supabase may still be unreachable. Try again later.');
+  }
 }
 
-async function run() {
-  log('Fetching from Supabase (small batches, 15s timeout each)...');
-  let offset = 0, total = 0;
-  const PAGE = 50; // ছোট batch — Disk IO throttle এর সময়েও যেন কিছু data পাওয়া যায়
-  while (true) {
-    let res;
+async function importData() {
+  const f = document.getElementById('fileInput').files[0];
+  if (!f) { log2('Select the exported JSON file first.'); return; }
+  const rows = JSON.parse(await f.text());
+  log2(`Importing ${rows.length} rows into D1...`);
+  let ok = 0, fail = 0;
+  for (const r of rows) {
     try {
-      res = await fetchWithTimeout(
-        `${SUPABASE_URL}/rest/v1/book_page_mcqs?select=pdf_id,page_number,mcq_type,questions_json&order=id.asc&limit=${PAGE}&offset=${offset}`,
-        { headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY } },
-        15000
-      );
-    } catch (e) {
-      log(`Timeout/network error at offset ${offset}: ${e.message}. Retrying once...`);
-      try {
-        res = await fetchWithTimeout(
-          `${SUPABASE_URL}/rest/v1/book_page_mcqs?select=pdf_id,page_number,mcq_type,questions_json&order=id.asc&limit=${PAGE}&offset=${offset}`,
-          { headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY } },
-          15000
-        );
-      } catch (e2) {
-        log(`Failed again: ${e2.message}. Stopping. Migrated so far: ${total}. Re-run later to continue (Supabase is likely still throttled).`);
-        return;
-      }
-    }
-    if (!res.ok) { log('Supabase fetch failed: ' + res.status + ' ' + await res.text()); return; }
-    const rows = await res.json();
-    if (!rows.length) break;
-    log(`Fetched ${rows.length} rows (offset ${offset}), inserting into D1...`);
-    for (const r of rows) {
-      const ins = await fetch(WORKER_URL + '?on_conflict=pdf_id,page_number,mcq_type', {
+      const res = await fetch(WORKER_URL + '?on_conflict=pdf_id,page_number,mcq_type', {
         method: 'POST',
         headers: { apikey: D1_API_KEY, 'Content-Type': 'application/json' },
         body: JSON.stringify(r)
       });
-      if (!ins.ok) log('  insert failed for pdf_id=' + r.pdf_id + ' page=' + r.page_number + ': ' + await ins.text());
-      total++;
-    }
-    offset += PAGE;
-    if (rows.length < PAGE) break;
+      if (res.ok) ok++; else { fail++; log2('Failed: pdf_id=' + r.pdf_id + ' page=' + r.page_number); }
+    } catch (e) { fail++; }
   }
-  log(`Done. Total migrated: ${total}`);
+  log2(`Done. Success: ${ok}, Failed: ${fail}`);
 }
 </script>
 </body></html>
