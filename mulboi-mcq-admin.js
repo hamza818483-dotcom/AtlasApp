@@ -1281,13 +1281,34 @@ async function mbLoadAllPageMcqs() {
     // query-ই admin rows সহ সবকিছু নিয়ে আসে — তাই admin-only query pure duplicate ছিল,
     // প্রতিবার panel open এ ভারী questions_json (base64 image সহ) দ্বিগুণ ডাউনলোড হতো এবং
     // Disk IO/egress দ্বিগুণ খরচ হতো। এখন একটাই query চলে, mbAllPageData তা থেকেই derive হয়।
-    const res2 = await mbD1ApiWithRetry('book_page_mcqs', '?pdf_id=eq.' + mbPdfId + '&select=id,page_number,mcq_type,questions_json&order=page_number.asc&limit=500', 2);
+    // bug fix (root cause of "page N pill/MCQ vanished for whole PDF"): কোনো একটা পেইজের
+    // questions_json (embedded base64 explanation image সহ) অনেক বড় হয়ে গেলে, এই এক-কল-এ-
+    // সব-পেইজ query-র response payload অতিরিক্ত ভারী হয়ে proxy/D1 limit-এ ব্যর্থ হতো —
+    // ফলে পুরো PDF-এর pill/All-tab data হারিয়ে যেত, যদিও individual row DB-তে ঠিকই ছিল।
+    // এখন প্রথমে শুধু length (হালকা) আনা হয়, ছোট row গুলো bulk এ, বড় row গুলো lazily
+    // (আলাদা per-row GET) আনা হয় — কোনো এক পেইজের bloat পুরো লোড ব্যর্থ করতে পারবে না।
+    const HEAVY_ROW_THRESHOLD = 50000;
+    const res2 = await mbD1ApiWithRetry('book_page_mcqs', '?pdf_id=eq.' + mbPdfId + '&select=id,page_number,mcq_type,len:length(questions_json)&order=page_number.asc&limit=500', 2);
 
     let failed = false;
     let errMsg = '';
     try {
         if (!res2.ok) { const t = await res2.text().catch(()=>''); throw new Error('(' + res2.status + ') ' + t); }
-        const fresh = await res2.json() || [];
+        const meta = await res2.json() || [];
+        const lightRows = meta.filter(r => (r.len || 0) <= HEAVY_ROW_THRESHOLD);
+        const heavyRows = meta.filter(r => (r.len || 0) > HEAVY_ROW_THRESHOLD);
+        let fresh = [];
+        if (lightRows.length) {
+            const idList = lightRows.map(r => r.id).join(',');
+            const resLight = await mbD1ApiWithRetry('book_page_mcqs', '?id=in.(' + idList + ')&select=id,page_number,mcq_type,questions_json', 2);
+            if (resLight.ok) fresh = await resLight.json() || [];
+        }
+        for (const hr of heavyRows) {
+            try {
+                const row = await mbFetchSingleMcqRow(hr.page_number, hr.mcq_type);
+                if (row) fresh.push(row);
+            } catch (_) {}
+        }
         // bug fix: fresh GET পুরো mbAllPageDataAllTypes replace করে দিত — কিন্তু ঠিক
         // save/upsert-এর পর পরই এই GET চললে D1 replica lag/eventual-consistency এর কারণে
         // fresh result-এ just-written row missing থাকতে পারে (write নিজে ঠিকঠাক হয়েছে,
