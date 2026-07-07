@@ -3,8 +3,8 @@
 // Convert: Dart Supabase Client
 // ============================================
 
-const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
+const SUPABASE_URL  = 'https://atlas-ai-proxy.hamza818483.workers.dev';
+const SUPABASE_KEY  = 'mb_d1_9f2a7c6e1b4d8305';
 
 // FLUTTER_READY: Convert to Dart class
 const API = {

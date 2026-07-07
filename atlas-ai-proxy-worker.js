@@ -64,7 +64,7 @@ export default {
         //    Free-plan Disk IO throttling). Mimics the PostgREST query-string
         //    shape the frontend already sends so mulboi-mcq-admin.js only
         //    needs its base URL changed, not its query logic. ──
-        const d1Match = path.match(/^\/d1\/([a-z_]+)$/);
+        const d1Match = path.match(/^\/d1\/([a-z_][a-z0-9_]*)$/) || path.match(/^\/rest\/v1\/([a-z_][a-z0-9_]*)$/);
         if (d1Match) {
             return handleD1Table(d1Match[1], request, env, url);
         }

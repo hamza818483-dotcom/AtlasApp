@@ -248,8 +248,8 @@
     // শুধু মোট study_seconds-এ যোগ হবে (২৪ ঘণ্টার হিসাবে)।
     const FOCUS_PAGE = 'focus.html';
     const STATE_KEY = 'focus_state_v2';
-    const SUPABASE_URL_BG = 'https://btezborkuiqfogykrjrn.supabase.co';
-    const SUPABASE_KEY_BG = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
+    const SUPABASE_URL_BG = 'https://atlas-ai-proxy.hamza818483.workers.dev';
+    const SUPABASE_KEY_BG = 'mb_d1_9f2a7c6e1b4d8305';
 
     function setupBackgroundStudyTracking() {
         if (currentPage() === FOCUS_PAGE) return; // focus.html নিজেই নিজের timer চালায়, ডাবল কাউন্ট এড়াতে স্কিপ
