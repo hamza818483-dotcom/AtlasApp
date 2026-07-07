@@ -1042,7 +1042,17 @@ async function mbLoadPdfPreview(url) {
     const loadingEl = document.getElementById('mbPreviewLoading');
     if (loadingEl) loadingEl.classList.add('show');
     try {
-        if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js not loaded');
+        // pdf.js CDN script uses `defer`, so it may not be ready yet when this panel
+        // opens right after page load. Wait (poll) up to 8s instead of failing instantly —
+        // this was the root cause of "PDF page doesn't load instantly" on first open.
+        if (typeof pdfjsLib === 'undefined') {
+            let waited = 0;
+            while (typeof pdfjsLib === 'undefined' && waited < 8000) {
+                await new Promise(r => setTimeout(r, 100));
+                waited += 100;
+            }
+            if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js not loaded');
+        }
         if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
         }
@@ -1330,21 +1340,38 @@ async function mbUpsertPageMcqs(pageNum, mcqs, mcqType) {
     mcqType = mcqType || 'admin';
     const body = {
         pdf_id:         parseInt(mbPdfId),
-        page_number:    pageNum,
+        page_number:    parseInt(pageNum),
         mcq_type:       mcqType,
         questions_json: JSON.stringify(mcqs)
     };
-    const res = await mbD1Api('book_page_mcqs', '?on_conflict=pdf_id,page_number,mcq_type', {
-        method:  'POST',
-        headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
-        body:    JSON.stringify(body)
-    });
-    if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || 'সংরক্ষণ ব্যর্থ');
+
+    async function doUpsert() {
+        const res = await mbD1Api('book_page_mcqs', '?on_conflict=pdf_id,page_number,mcq_type', {
+            method:  'POST',
+            headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+            body:    JSON.stringify(body)
+        });
+        if (!res.ok) {
+            let err = {};
+            try { err = await res.json(); } catch (_) {}
+            throw new Error(err.error || err.message || 'সংরক্ষণ ব্যর্থ (' + res.status + ')');
+        }
+        return res;
     }
-    const data = await res.json();
-    const newRow = Array.isArray(data) ? data[0] : data;
+
+    await doUpsert();
+
+    // bug fix: worker POST কখনো ok/201 রিটার্ন করলেও write আসলে persist হয়নি এমন
+    // সিলেন্ট ফেইলিওর হতে পারে (D1 replica lag/transient) — তাই সেভের পর সাথে সাথে
+    // GET দিয়ে verify করা হচ্ছে যে row আসলেই আছে। না থাকলে ১ বার আবার POST করা হয়।
+    // এটাই "সেইভ হচ্ছে দেখায় কিন্তু ডাটা থাকে না" বাগের root-cause fix।
+    let newRow = await mbFetchSingleMcqRow(pageNum, mcqType);
+    if (!newRow) {
+        await doUpsert();
+        newRow = await mbFetchSingleMcqRow(pageNum, mcqType);
+        if (!newRow) throw new Error('সংরক্ষণ যাচাই ব্যর্থ — আবার চেষ্টা করুন');
+    }
+
     if (mcqType === 'admin') {
         const idx = mbAllPageData.findIndex(r => Number(r.page_number) === Number(pageNum));
         if (idx >= 0) mbAllPageData[idx] = newRow;
@@ -1354,6 +1381,18 @@ async function mbUpsertPageMcqs(pageNum, mcqs, mcqType) {
     const idxAll = mbAllPageDataAllTypes.findIndex(r => Number(r.page_number) === Number(pageNum) && r.mcq_type === mcqType);
     if (idxAll >= 0) mbAllPageDataAllTypes[idxAll] = newRow;
     else mbAllPageDataAllTypes.push(newRow);
+
+    mbWriteLightPillCache(mbPdfId);
+}
+
+async function mbFetchSingleMcqRow(pageNum, mcqType) {
+    try {
+        const res = await mbD1Api('book_page_mcqs',
+            '?pdf_id=eq.' + parseInt(mbPdfId) + '&page_number=eq.' + parseInt(pageNum) + '&mcq_type=eq.' + mcqType + '&limit=1');
+        if (!res.ok) return null;
+        const rows = await res.json();
+        return Array.isArray(rows) && rows.length ? rows[0] : null;
+    } catch (_) { return null; }
 }
 
 function mbUpdatePageCount() {
@@ -2493,6 +2532,18 @@ async function mbSaveAiMcqs() {
         mbRenderPageMcqList();
         mbUpdatePageCount();
         mbRenderPageSummary();
+
+        // feature: single-page AI generate সফল হওয়ার পর স্বয়ংক্রিয়ভাবে পরের পেইজে চলে যাও —
+        // bulk-job mode (একাধিক পেইজ একসাথে) নিজেই paging handle করে, তাই সেখানে এটা স্কিপ করা হয়।
+        const bulkRunning = (() => {
+            try {
+                const bj = JSON.parse(localStorage.getItem(MB_BULK_KEY) || 'null');
+                return !!(bj && !bj.done && !bj.stopped && bj.pdfId === mbPdfId);
+            } catch (_) { return false; }
+        })();
+        if (!bulkRunning && mbPdfDoc && mbCurrentPage < mbPdfDoc.numPages) {
+            mbGoToPagePill(mbCurrentPage + 1);
+        }
     } catch (ex) {
         mbToast('সংরক্ষণ ব্যর্থ: ' + ex.message, 'error');
     }
