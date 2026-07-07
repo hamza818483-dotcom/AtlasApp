@@ -44,7 +44,7 @@ function uid() {
 
 function mbToast(msg, type, dur) {
     const t = document.getElementById('toast');
-    if (!t) return;
+    if (!t) { console.warn('[mbToast fallback]', msg); return; }
     const colors = { success: 'var(--green)', error: 'var(--red)', info: 'var(--accent)' };
     t.textContent = msg;
     t.style.borderColor = colors[type] || colors.info;
@@ -52,6 +52,15 @@ function mbToast(msg, type, dur) {
     clearTimeout(t._mbTimer);
     t._mbTimer = setTimeout(() => t.classList.remove('show'), dur || 3000);
 }
+
+// bug fix (silent save failures): কোনো uncaught error/rejection হলে আগে user কিছুই
+// দেখতে পেতো না ("কিছুই হয়নি" মনে হতো) — এখন global safety net থেকেও toast দেখানো হয়।
+window.addEventListener('unhandledrejection', (e) => {
+    try { mbToast('⚠️ Error: ' + (e.reason?.message || String(e.reason)).slice(0,160), 'error'); } catch(_) {}
+});
+window.addEventListener('error', (e) => {
+    try { mbToast('⚠️ Error: ' + (e.error?.message || e.message || 'Unknown').slice(0,160), 'error'); } catch(_) {}
+});
 
 /* ════════════════════════════════════════════════════
    2. SUPABASE REST API HELPER
