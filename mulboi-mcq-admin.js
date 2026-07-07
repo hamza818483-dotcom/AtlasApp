@@ -3174,11 +3174,6 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
         const newRow = Array.isArray(data) ? data[0] : data;
         const idx = mbAllPageData.findIndex(r => Number(r.page_number) === Number(pageNum));
         if (idx >= 0) mbAllPageData[idx] = newRow; else mbAllPageData.push(newRow);
-        // bug fix: bulk generate এ mbAllPageDataAllTypes আপডেট হতো না, ফলে এই MCQ গুলো
-        // "All" ট্যাব ও page pill এ দেখা যেত না যতক্ষণ না পুরো পেইজ reload হতো।
-        const idxAll = mbAllPageDataAllTypes.findIndex(r => Number(r.page_number) === Number(pageNum) && r.mcq_type === 'admin');
-        if (idxAll >= 0) mbAllPageDataAllTypes[idxAll] = newRow; else mbAllPageDataAllTypes.push(newRow);
-        mbWriteLightPillCache(mbPdfId);
     } catch (_) {}
 
     // প্রতিটা পেইজের জন্য আলাদা CSV ফাইল — ফাইলের নামে page no থাকে, শুধু এই batch-এর
@@ -3210,10 +3205,6 @@ async function mbGenerateForPageSpecial(pageNum) {
         const newRow = Array.isArray(data) ? data[0] : data;
         const idx = mbAllPageData.findIndex(r => Number(r.page_number) === Number(pageNum));
         if (idx >= 0) mbAllPageData[idx] = newRow; else mbAllPageData.push(newRow);
-        // bug fix: bulk special generate এও mbAllPageDataAllTypes sync হতো না — All ট্যাব/pill এ মিসিং থাকতো।
-        const idxAll = mbAllPageDataAllTypes.findIndex(r => Number(r.page_number) === Number(pageNum) && r.mcq_type === 'admin');
-        if (idxAll >= 0) mbAllPageDataAllTypes[idxAll] = newRow; else mbAllPageDataAllTypes.push(newRow);
-        mbWriteLightPillCache(mbPdfId);
     } catch (_) {}
 
     await mbSaveMcqsAsCsv(newMcqs, pageNum, 'special');
