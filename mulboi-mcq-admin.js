@@ -133,6 +133,7 @@ let mbPdfDoc      = null;
 let mbPdfUrl       = null;  // current PDF's public URL, used to send the full PDF to Gemini for reliable MCQ generation
 let mbCurrentPage = 1;
 let mbAllPageData = [];
+let mbRealDataLoaded = false; // pill instant-cache placeholder vs real fetch data — All-tab safe-render এর জন্য
 let mbAllPageDataAllTypes = []; // admin + user-generated সব types একসাথে — count summary এর জন্য
 let mbCachedNumPages = 0; // cache থেকে instant-load এর সময় PDF-এর মোট পেইজ সংখ্যা (mbPdfDoc লোড হওয়ার আগেই ব্যবহারের জন্য)
 let mbEditingId   = null;
@@ -932,6 +933,7 @@ function mbOpenMcqPanel(pdfId, pdfTitle, pdfUrl) {
     mbPdfDoc      = null;
     mbAllPageData = [];
     mbAllPageDataAllTypes = [];
+    mbRealDataLoaded = false;
     mbCachedNumPages = 0;
     mbEditingId   = null;
     mbAnswerKey   = null;
@@ -992,6 +994,7 @@ function mbOpenMcqPanel(pdfId, pdfTitle, pdfUrl) {
     try {
         const cached = JSON.parse(localStorage.getItem('atlasMbPillCache_' + pdfId) || 'null');
         if (cached && cached.counts) {
+            mbRealDataLoaded = false;
             mbAllPageDataAllTypes = cached.counts.map(r => ({
                 page_number: r.page_number,
                 mcq_type: r.mcq_type,
@@ -1004,6 +1007,7 @@ function mbOpenMcqPanel(pdfId, pdfTitle, pdfUrl) {
     } catch (_) {}
 
     mbLoadAllPageMcqs().then(() => {
+        mbRealDataLoaded = true;
         // bug fix: আগে mbPdfDoc লোড না হওয়া পর্যন্ত render skip হতো, ফলে MCQ count
         // fetch দ্রুত শেষ হলেও pill instantly আপডেট হতো না। এখন mbCachedNumPages
         // fallback ব্যবহার করে সবসময় render হয়; PDF.js পরে numPages বাড়ালে
@@ -1488,7 +1492,17 @@ function mbSwitchTab(name) {
         if (btn) btn.classList.toggle('active', t === name);
         if (pan) pan.classList.toggle('active', t === name);
     });
-    if (name === 'all') mbRenderPageMcqList();
+    // bug fix (empty question/options shown in All tab): pill instant-cache placeholder
+    // rows ({} দিয়ে ভরা, শুধু count-এর জন্য) থাকা অবস্থায় ইউজার দ্রুত "All" ট্যাবে ক্লিক
+    // করলে আগে ওই খালি placeholder থেকেই লিস্ট রেন্ডার হয়ে যেত (প্রশ্ন/অপশন ফাঁকা দেখাতো)।
+    // এখন real fetch (mbLoadAllPageMcqs) শেষ না হওয়া পর্যন্ত "All" ট্যাবে loading দেখানো হয়।
+    if (name === 'all') {
+        if (mbRealDataLoaded) mbRenderPageMcqList();
+        else {
+            const listEl = document.getElementById('mbMcqList');
+            if (listEl) listEl.innerHTML = '<div style="text-align:center;padding:20px;font-size:12px;color:var(--text3)">লোড হচ্ছে...</div>';
+        }
+    }
     if (name === 'csv') mbLoadCsvArchive();
 }
 
