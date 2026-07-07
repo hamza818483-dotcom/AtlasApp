@@ -1,122 +1,52 @@
 <!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>Migrate to D1</title></head>
 <body style="font-family:monospace;background:#111;color:#0f0;padding:20px">
-<h3>One-click: Auto migrate (paginated, retry-safe)</h3>
-<button onclick="autoMigrate()">Start Auto Migration</button>
-<button onclick="autoMigrate(true)">Resume from last checkpoint</button>
+<h3>Server-side migration (recommended — Cloudflare calls Supabase directly)</h3>
+<button onclick="serverMigrate()">Start Server Migration</button>
+<button onclick="serverMigrate(true)">Resume from checkpoint</button>
 <pre id="log0"></pre>
-<h3>Manual fallback</h3>
-<h4>Step 1: Export from Supabase (JSON file)</h4>
-<button onclick="exportData()">Export JSON</button>
-<pre id="log1"></pre>
-<h4>Step 2: Import JSON into D1</h4>
-<input type="file" id="fileInput" accept=".json">
-<button onclick="importData()">Import to D1</button>
-<pre id="log2"></pre>
 <script>
-const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
-const WORKER_URL = 'https://atlas-ai-proxy.hamza818483.workers.dev/d1/book_page_mcqs';
+const WORKER_URL = 'https://atlas-ai-proxy.hamza818483.workers.dev/migrate-mulboi';
 const D1_API_KEY = 'mb_d1_9f2a7c6e1b4d8305';
+const CKPT_KEY = 'mulboi_migrate_checkpoint_v2';
+const BATCH = 300;
 const log0 = (s) => { const el=document.getElementById('log0'); el.textContent += s + '\n'; el.scrollTop = el.scrollHeight; };
-const log1 = (s) => document.getElementById('log1').textContent += s + '\n';
-const log2 = (s) => document.getElementById('log2').textContent += s + '\n';
-const CKPT_KEY = 'mulboi_migrate_checkpoint';
-const PAGE_SIZE = 500;
 
-async function fetchWithRetry(url, opts, tries=6) {
-  for (let i=0; i<tries; i++) {
-    try {
-      const res = await fetch(url, opts);
-      if (res.status === 429 || res.status >= 500) throw new Error('status ' + res.status);
-      return res;
-    } catch (e) {
-      const wait = Math.min(2000 * Math.pow(2, i), 30000);
-      log0(`  retry ${i+1}/${tries} after ${wait}ms (${e.message})`);
-      await new Promise(r => setTimeout(r, wait));
-    }
-  }
-  return fetch(url, opts);
-}
-
-async function autoMigrate(resume=false) {
-  let offset = 0;
-  if (resume) {
-    offset = parseInt(localStorage.getItem(CKPT_KEY) || '0', 10);
-    log0(`Resuming from offset ${offset}...`);
-  } else {
-    localStorage.removeItem(CKPT_KEY);
-    log0('Starting fresh migration...');
-  }
+async function serverMigrate(resume=false) {
+  let offset = resume ? parseInt(localStorage.getItem(CKPT_KEY) || '0', 10) : 0;
+  if (!resume) localStorage.removeItem(CKPT_KEY);
+  log0(resume ? `Resuming from offset ${offset}...` : 'Starting server-side migration...');
   let totalOk = 0, totalFail = 0;
   while (true) {
-    log0(`Fetching rows ${offset}-${offset+PAGE_SIZE}...`);
-    const res = await fetchWithRetry(
-      `${SUPABASE_URL}/rest/v1/book_page_mcqs?select=pdf_id,page_number,mcq_type,questions_json&order=id.asc&offset=${offset}&limit=${PAGE_SIZE}`,
-      { headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY } }
-    );
-    if (!res.ok) {
-      log0(`Fetch failed at offset ${offset}: ${res.status}. Checkpoint saved — click "Resume" to retry later.`);
+    log0(`Requesting batch at offset ${offset}...`);
+    let res, data;
+    try {
+      res = await fetch(`${WORKER_URL}?offset=${offset}&limit=${BATCH}&key=${D1_API_KEY}`);
+      data = await res.json();
+    } catch (e) {
+      log0(`Network error talking to Worker: ${e.message}. Checkpoint saved at ${offset}. Wait a bit and click Resume.`);
       localStorage.setItem(CKPT_KEY, offset);
       return;
     }
-    const rows = await res.json();
-    if (rows.length === 0) {
-      log0(`No more rows. Migration complete. Total success: ${totalOk}, failed: ${totalFail}`);
+    if (!res.ok) {
+      log0(`Worker reported error: ${data.error || res.status}. Checkpoint saved at ${offset}. Click Resume to retry.`);
+      localStorage.setItem(CKPT_KEY, offset);
+      return;
+    }
+    totalOk += data.migrated || 0;
+    totalFail += data.failed || 0;
+    if (data.failList && data.failList.length) {
+      data.failList.forEach(f => log0(`  failed: pdf_id=${f.pdf_id} page=${f.page_number} (${f.error})`));
+    }
+    log0(`Batch ok. migrated=${data.migrated}, failed=${data.failed}. Running total ok=${totalOk} fail=${totalFail}`);
+    if (data.done) {
+      log0(`MIGRATION COMPLETE. Total migrated: ${totalOk}, failed: ${totalFail}`);
       localStorage.removeItem(CKPT_KEY);
       return;
     }
-    for (const r of rows) {
-      const impRes = await fetchWithRetry(WORKER_URL + '?on_conflict=pdf_id,page_number,mcq_type', {
-        method: 'POST',
-        headers: { apikey: D1_API_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify(r)
-      }, 3);
-      if (impRes && impRes.ok) totalOk++;
-      else { totalFail++; log0(`  import failed: pdf_id=${r.pdf_id} page=${r.page_number}`); }
-    }
-    log0(`Batch done. Running total — success: ${totalOk}, failed: ${totalFail}`);
-    offset += PAGE_SIZE;
+    offset = data.nextOffset;
     localStorage.setItem(CKPT_KEY, offset);
   }
-}
-
-async function exportData() {
-  log1('Fetching all rows...');
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/book_page_mcqs?select=pdf_id,page_number,mcq_type,questions_json&order=id.asc`,
-      { headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY } });
-    if (!res.ok) { log1('Failed: ' + res.status + ' ' + await res.text()); return; }
-    const rows = await res.json();
-    log1(`Got ${rows.length} rows. Downloading file...`);
-    const blob = new Blob([JSON.stringify(rows)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'book_page_mcqs_export.json';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    log1('Downloaded. Now upload it below and click Import.');
-  } catch (e) {
-    log1('Error: ' + e.message + ' — Supabase may still be unreachable. Try again later.');
-  }
-}
-
-async function importData() {
-  const f = document.getElementById('fileInput').files[0];
-  if (!f) { log2('Select the exported JSON file first.'); return; }
-  const rows = JSON.parse(await f.text());
-  log2(`Importing ${rows.length} rows into D1...`);
-  let ok = 0, fail = 0;
-  for (const r of rows) {
-    try {
-      const res = await fetch(WORKER_URL + '?on_conflict=pdf_id,page_number,mcq_type', {
-        method: 'POST',
-        headers: { apikey: D1_API_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify(r)
-      });
-      if (res.ok) ok++; else { fail++; log2('Failed: pdf_id=' + r.pdf_id + ' page=' + r.page_number); }
-    } catch (e) { fail++; }
-  }
-  log2(`Done. Success: ${ok}, Failed: ${fail}`);
 }
 </script>
 </body></html>

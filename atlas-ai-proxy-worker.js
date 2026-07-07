@@ -69,6 +69,10 @@ export default {
             return handleD1Table(d1Match[1], request, env, url);
         }
 
+        if (path === "/migrate-mulboi") {
+            return handleMigrate(request, env, url);
+        }
+
         if (request.method !== "POST") {
             return jsonResponse({ success: false, error: "Only POST allowed" }, 405);
         }
@@ -152,6 +156,75 @@ function jsonResponse(obj, status = 200) {
     return new Response(JSON.stringify(obj), {
         status,
         headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
+}
+
+/* ───────── Server-side Supabase -> D1 migration (avoids phone/browser network flakiness) ─────────
+   GET /migrate-mulboi?offset=0&limit=500&key=D1_API_KEY
+   Cloudflare's own network calls Supabase directly (server-to-server), which is far
+   more reliable than a mobile browser retrying through a flaky connection.
+   Call repeatedly increasing offset (response tells you next offset) until done:true. */
+async function handleMigrate(request, env, url) {
+    const apiKey = url.searchParams.get("key");
+    if (!env.D1_API_KEY || apiKey !== env.D1_API_KEY) {
+        return jsonResponse({ error: "Unauthorized" }, 401);
+    }
+    const db = env.MULBOI_DB;
+    if (!db) return jsonResponse({ error: "D1 binding MULBOI_DB missing" }, 500);
+
+    const SUPABASE_URL = "https://btezborkuiqfogykrjrn.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw";
+
+    const offset = parseInt(url.searchParams.get("offset") || "0", 10);
+    const limit = Math.min(parseInt(url.searchParams.get("limit") || "300", 10), 500);
+
+    let sbRes;
+    let lastErr = null;
+    for (let i = 0; i < 8; i++) {
+        try {
+            sbRes = await fetch(
+                `${SUPABASE_URL}/rest/v1/book_page_mcqs?select=pdf_id,page_number,mcq_type,questions_json&order=id.asc&offset=${offset}&limit=${limit}`,
+                { headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY } }
+            );
+            if (sbRes.ok) { lastErr = null; break; }
+            lastErr = "status " + sbRes.status;
+        } catch (e) {
+            lastErr = String(e?.message || e);
+        }
+        await sleep(Math.min(1000 * Math.pow(2, i), 15000));
+    }
+    if (lastErr) {
+        return jsonResponse({ done: false, error: "Supabase fetch failed after retries: " + lastErr, offset }, 502);
+    }
+
+    const rows = await sbRes.json();
+    if (rows.length === 0) {
+        return jsonResponse({ done: true, migrated: 0, offset });
+    }
+
+    let ok = 0, failList = [];
+    for (const r of rows) {
+        try {
+            const cols = ["pdf_id", "page_number", "mcq_type", "questions_json"];
+            const args = cols.map(c => r[c]);
+            const placeholders = cols.map(() => "?").join(", ");
+            await db.prepare(
+                `INSERT INTO book_page_mcqs (${cols.join(", ")}) VALUES (${placeholders})
+                 ON CONFLICT(pdf_id,page_number,mcq_type)
+                 DO UPDATE SET questions_json = excluded.questions_json`
+            ).bind(...args).run();
+            ok++;
+        } catch (e) {
+            failList.push({ pdf_id: r.pdf_id, page_number: r.page_number, error: String(e?.message || e) });
+        }
+    }
+
+    return jsonResponse({
+        done: rows.length < limit,
+        migrated: ok,
+        failed: failList.length,
+        failList,
+        nextOffset: offset + rows.length,
     });
 }
 
