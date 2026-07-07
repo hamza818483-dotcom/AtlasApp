@@ -82,6 +82,43 @@ async function mbApi(path, opts) {
 }
 
 /* ════════════════════════════════════════════════════
+   2B. D1 API HELPER (book_page_mcqs only — migrated off Supabase
+       to avoid Free-plan Disk IO throttling)
+   ════════════════════════════════════════════════════ */
+const D1_API_KEY = 'mb_d1_9f2a7c6e1b4d8305';
+async function mbD1Api(query, opts) {
+    opts = opts || {};
+    const url = AI_PROXY_URL.replace(/\/$/, '') + '/d1/book_page_mcqs' + (query || '');
+    const headers = Object.assign({
+        'apikey': D1_API_KEY,
+        'Content-Type': 'application/json'
+    }, opts.headers || {});
+    let lastErr;
+    for (let attempt = 0; attempt <= 2; attempt++) {
+        try {
+            return await fetch(url, Object.assign({}, opts, { headers }));
+        } catch (e) {
+            lastErr = e;
+            if (attempt < 2) await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
+        }
+    }
+    throw lastErr;
+}
+async function mbD1ApiWithRetry(query, retries = 1) {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+            const res = await mbD1Api(query);
+            if (res.ok) return res;
+            if (attempt === retries) return res;
+        } catch (e) {
+            if (attempt === retries) throw e;
+        }
+        await new Promise(r => setTimeout(r, 600 * (attempt + 1)));
+    }
+}
+
+
+/* ════════════════════════════════════════════════════
    3. STATE
    ════════════════════════════════════════════════════ */
 
@@ -1233,7 +1270,7 @@ async function mbLoadAllPageMcqs() {
     // query-ই admin rows সহ সবকিছু নিয়ে আসে — তাই admin-only query pure duplicate ছিল,
     // প্রতিবার panel open এ ভারী questions_json (base64 image সহ) দ্বিগুণ ডাউনলোড হতো এবং
     // Disk IO/egress দ্বিগুণ খরচ হতো। এখন একটাই query চলে, mbAllPageData তা থেকেই derive হয়।
-    const res2 = await mbApiWithRetry('/book_page_mcqs?pdf_id=eq.' + mbPdfId + '&select=id,page_number,mcq_type,questions_json&order=page_number.asc&limit=500', 2);
+    const res2 = await mbD1ApiWithRetry('?pdf_id=eq.' + mbPdfId + '&select=id,page_number,mcq_type,questions_json&order=page_number.asc&limit=500', 2);
 
     let failed = false;
     let errMsg = '';
@@ -1301,7 +1338,7 @@ async function mbUpsertPageMcqs(pageNum, mcqs, mcqType) {
         mcq_type:       mcqType,
         questions_json: JSON.stringify(mcqs)
     };
-    const res = await mbApi('/book_page_mcqs?on_conflict=pdf_id,page_number,mcq_type', {
+    const res = await mbD1Api('?on_conflict=pdf_id,page_number,mcq_type', {
         method:  'POST',
         headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
         body:    JSON.stringify(body)
@@ -2877,7 +2914,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     if (existingRow) { try { currentMcqs = JSON.parse(existingRow.questions_json || '[]'); } catch (_) {} }
     currentMcqs.push(...newMcqs);
 
-    const res = await mbApi('/book_page_mcqs?on_conflict=pdf_id,page_number,mcq_type', {
+    const res = await mbD1Api('?on_conflict=pdf_id,page_number,mcq_type', {
         method: 'POST',
         headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
         body: JSON.stringify({ pdf_id: parseInt(mbPdfId), page_number: pageNum, mcq_type: 'admin', questions_json: JSON.stringify(currentMcqs) })
@@ -2908,7 +2945,7 @@ async function mbGenerateForPageSpecial(pageNum) {
     if (existingRow) { try { currentMcqs = JSON.parse(existingRow.questions_json || '[]'); } catch (_) {} }
     currentMcqs.push(...newMcqs);
 
-    const res = await mbApi('/book_page_mcqs?on_conflict=pdf_id,page_number,mcq_type', {
+    const res = await mbD1Api('?on_conflict=pdf_id,page_number,mcq_type', {
         method: 'POST',
         headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
         body: JSON.stringify({ pdf_id: parseInt(mbPdfId), page_number: pageNum, mcq_type: 'admin', questions_json: JSON.stringify(currentMcqs) })

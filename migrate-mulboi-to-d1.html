@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Migrate book_page_mcqs -> D1</title></head>
+<body style="font-family:monospace;background:#111;color:#0f0;padding:20px">
+<h3>Supabase book_page_mcqs -> Cloudflare D1 migration</h3>
+<button onclick="run()">Start Migration</button>
+<pre id="log"></pre>
+<script>
+const SUPABASE_URL = 'https://btezborkuiqfogykrjrn.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw';
+const WORKER_URL = 'https://atlas-ai-proxy.hamza818483.workers.dev/d1/book_page_mcqs';
+const D1_API_KEY = 'mb_d1_9f2a7c6e1b4d8305';
+const log = (s) => document.getElementById('log').textContent += s + '\n';
+
+async function run() {
+  log('Fetching from Supabase...');
+  let offset = 0, total = 0;
+  const PAGE = 500;
+  while (true) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/book_page_mcqs?select=pdf_id,page_number,mcq_type,questions_json&order=id.asc&limit=${PAGE}&offset=${offset}`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }
+    });
+    if (!res.ok) { log('Supabase fetch failed: ' + res.status + ' ' + await res.text()); return; }
+    const rows = await res.json();
+    if (!rows.length) break;
+    log(`Fetched ${rows.length} rows (offset ${offset}), inserting into D1...`);
+    for (const r of rows) {
+      const ins = await fetch(WORKER_URL + '?on_conflict=pdf_id,page_number,mcq_type', {
+        method: 'POST',
+        headers: { apikey: D1_API_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify(r)
+      });
+      if (!ins.ok) log('  insert failed for pdf_id=' + r.pdf_id + ' page=' + r.page_number + ': ' + await ins.text());
+      total++;
+    }
+    offset += PAGE;
+    if (rows.length < PAGE) break;
+  }
+  log(`Done. Total migrated: ${total}`);
+}
+</script>
+</body></html>
