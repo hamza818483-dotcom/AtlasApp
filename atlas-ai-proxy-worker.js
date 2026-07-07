@@ -69,10 +69,6 @@ export default {
             return handleD1Table(d1Match[1], request, env, url);
         }
 
-        if (path === "/migrate-mulboi") {
-            return handleMigrate(request, env, url);
-        }
-
         if (request.method !== "POST") {
             return jsonResponse({ success: false, error: "Only POST allowed" }, 405);
         }
@@ -159,74 +155,6 @@ function jsonResponse(obj, status = 200) {
     });
 }
 
-/* ───────── Server-side Supabase -> D1 migration (avoids phone/browser network flakiness) ─────────
-   GET /migrate-mulboi?offset=0&limit=500&key=D1_API_KEY
-   Cloudflare's own network calls Supabase directly (server-to-server), which is far
-   more reliable than a mobile browser retrying through a flaky connection.
-   Call repeatedly increasing offset (response tells you next offset) until done:true. */
-async function handleMigrate(request, env, url) {
-    const apiKey = url.searchParams.get("key");
-    if (!env.D1_API_KEY || apiKey !== env.D1_API_KEY) {
-        return jsonResponse({ error: "Unauthorized" }, 401);
-    }
-    const db = env.MULBOI_DB;
-    if (!db) return jsonResponse({ error: "D1 binding MULBOI_DB missing" }, 500);
-
-    const SUPABASE_URL = "https://btezborkuiqfogykrjrn.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXpib3JrdWlxZm9neWtyanJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTIyNzUsImV4cCI6MjA5NDIyODI3NX0.G4C7YTmk-AEvhWXnx-phMjTh9pxbdhCiapYVDpSVsEw";
-
-    const offset = parseInt(url.searchParams.get("offset") || "0", 10);
-    const limit = Math.min(parseInt(url.searchParams.get("limit") || "100", 10), 150);
-
-    let sbRes;
-    let lastErr = null;
-    for (let i = 0; i < 3; i++) {
-        try {
-            sbRes = await fetch(
-                `${SUPABASE_URL}/rest/v1/book_page_mcqs?select=pdf_id,page_number,mcq_type,questions_json&order=id.asc&offset=${offset}&limit=${limit}`,
-                { headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY } }
-            );
-            if (sbRes.ok) { lastErr = null; break; }
-            lastErr = "status " + sbRes.status;
-        } catch (e) {
-            lastErr = String(e?.message || e);
-        }
-        await sleep(Math.min(1000 * Math.pow(2, i), 3000));
-    }
-    if (lastErr) {
-        return jsonResponse({ done: false, error: "Supabase fetch failed after retries: " + lastErr, offset }, 502);
-    }
-
-    const rows = await sbRes.json();
-    if (rows.length === 0) {
-        return jsonResponse({ done: true, migrated: 0, offset });
-    }
-
-    let ok = 0, failList = [];
-    for (const r of rows) {
-        try {
-            const cols = ["pdf_id", "page_number", "mcq_type", "questions_json"];
-            const args = cols.map(c => r[c]);
-            const placeholders = cols.map(() => "?").join(", ");
-            await db.prepare(
-                `INSERT INTO book_page_mcqs (${cols.join(", ")}) VALUES (${placeholders})
-                 ON CONFLICT(pdf_id,page_number,mcq_type)
-                 DO UPDATE SET questions_json = excluded.questions_json`
-            ).bind(...args).run();
-            ok++;
-        } catch (e) {
-            failList.push({ pdf_id: r.pdf_id, page_number: r.page_number, error: String(e?.message || e) });
-        }
-    }
-
-    return jsonResponse({
-        done: rows.length < limit,
-        migrated: ok,
-        failed: failList.length,
-        failList,
-        nextOffset: offset + rows.length,
-    });
-}
 
 /* ───────── D1 REST layer for book_page_mcqs (replaces Supabase PostgREST) ─────────
    Parses the same query-string shape the frontend (mulboi-mcq-admin.js) sends:
@@ -235,15 +163,8 @@ async function handleMigrate(request, env, url) {
      PATCH  ?id=eq.X                                    (body: partial row)
      DELETE ?id=eq.X
    Auth: requires header 'apikey' matching env.D1_API_KEY (same header name/spirit as Supabase). */
-const D1_TABLES = {
-    book_page_mcqs:       { cols: "id, pdf_id, page_number, mcq_type, questions_json" },
-    book_ai_prompts:      { cols: "id, pdf_id, mcq_type, prompt" },
-    book_mcq_csv_archive: { cols: "id, pdf_id, page_number, file_name, csv_content, question_count, mcq_type, created_at" },
-};
-
 async function handleD1Table(table, request, env, url) {
-    const cfg = D1_TABLES[table];
-    if (!cfg) return jsonResponse({ error: "Unknown D1 table: " + table }, 404);
+    if (!/^[a-z_][a-z0-9_]*$/.test(table)) return jsonResponse({ error: "Invalid table name" }, 400);
 
     const apiKey = request.headers.get("apikey") || request.headers.get("Authorization")?.replace("Bearer ", "");
     if (!env.D1_API_KEY || apiKey !== env.D1_API_KEY) {
@@ -252,6 +173,12 @@ async function handleD1Table(table, request, env, url) {
     const db = env.MULBOI_DB;
     if (!db) return jsonResponse({ error: "D1 binding MULBOI_DB missing" }, 500);
 
+    // Verify table exists (guards against typos / SQL injection via table name)
+    const tblCheck = await db.prepare(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name = ?"
+    ).bind(table).first();
+    if (!tblCheck) return jsonResponse({ error: "Unknown table: " + table }, 404);
+
     const params = url.searchParams;
 
     function parseEqFilters() {
@@ -259,8 +186,14 @@ async function handleD1Table(table, request, env, url) {
         const args = [];
         for (const [key, val] of params.entries()) {
             if (["select", "order", "limit", "on_conflict"].includes(key)) continue;
-            const m = val.match(/^eq\.(.*)$/);
-            if (m) { where.push(`${key} = ?`); args.push(m[1]); }
+            const eqm = val.match(/^eq\.(.*)$/);
+            if (eqm) { where.push(`${key} = ?`); args.push(eqm[1]); continue; }
+            const inm = val.match(/^in\.\((.*)\)$/);
+            if (inm) {
+                const vals = inm[1].split(",").map(v => v.trim());
+                where.push(`${key} IN (${vals.map(() => "?").join(",")})`);
+                args.push(...vals);
+            }
         }
         return { where, args };
     }
@@ -268,12 +201,16 @@ async function handleD1Table(table, request, env, url) {
     try {
         if (request.method === "GET") {
             const { where, args } = parseEqFilters();
-            let sql = `SELECT ${cfg.cols} FROM ${table}`;
+            const selCols = params.get("select") || "*";
+            let sql = `SELECT ${selCols === "*" ? "*" : selCols} FROM ${table}`;
             if (where.length) sql += " WHERE " + where.join(" AND ");
             const orderParam = params.get("order");
             if (orderParam) {
-                const [col, dir] = orderParam.split(".");
-                sql += ` ORDER BY ${col} ${dir === "desc" ? "DESC" : "ASC"}`;
+                const orderParts = orderParam.split(",").map(part => {
+                    const [col, dir] = part.split(".");
+                    return `${col} ${dir === "desc" ? "DESC" : "ASC"}`;
+                });
+                sql += " ORDER BY " + orderParts.join(", ");
             }
             const limitParam = params.get("limit");
             if (limitParam) sql += ` LIMIT ${parseInt(limitParam, 10) || 500}`;
@@ -283,31 +220,37 @@ async function handleD1Table(table, request, env, url) {
 
         if (request.method === "POST") {
             const body = await request.json();
-            const cols = Object.keys(body);
-            if (!cols.length) return jsonResponse({ error: "empty body" }, 400);
-            const placeholders = cols.map(() => "?").join(", ");
-            const args = cols.map(c => body[c]);
+            const rowsIn = Array.isArray(body) ? body : [body];
+            if (!rowsIn.length) return jsonResponse({ error: "empty body" }, 400);
             const onConflict = params.get("on_conflict");
-            let row;
-            if (onConflict) {
-                const conflictCols = onConflict.split(",");
-                const updateSet = cols.filter(c => !conflictCols.includes(c))
-                    .map(c => `${c} = excluded.${c}`).join(", ");
-                await db.prepare(
-                    `INSERT INTO ${table} (${cols.join(", ")}) VALUES (${placeholders})
-                     ON CONFLICT(${conflictCols.join(",")})
-                     DO UPDATE SET ${updateSet || cols[0] + " = excluded." + cols[0]}`
-                ).bind(...args).run();
-                const whereConf = conflictCols.map(c => `${c} = ?`).join(" AND ");
-                const confArgs = conflictCols.map(c => body[c]);
-                row = await db.prepare(`SELECT ${cfg.cols} FROM ${table} WHERE ${whereConf}`).bind(...confArgs).first();
-            } else {
-                const ins = await db.prepare(
-                    `INSERT INTO ${table} (${cols.join(", ")}) VALUES (${placeholders})`
-                ).bind(...args).run();
-                row = await db.prepare(`SELECT ${cfg.cols} FROM ${table} WHERE id=?`).bind(ins.meta.last_row_id).first();
+            const insertedRows = [];
+            for (const r of rowsIn) {
+                const cols = Object.keys(r);
+                if (!cols.length) continue;
+                const placeholders = cols.map(() => "?").join(", ");
+                const args = cols.map(c => r[c]);
+                let row;
+                if (onConflict) {
+                    const conflictCols = onConflict.split(",");
+                    const updateSet = cols.filter(c => !conflictCols.includes(c))
+                        .map(c => `${c} = excluded.${c}`).join(", ");
+                    await db.prepare(
+                        `INSERT INTO ${table} (${cols.join(", ")}) VALUES (${placeholders})
+                         ON CONFLICT(${conflictCols.join(",")})
+                         DO UPDATE SET ${updateSet || cols[0] + " = excluded." + cols[0]}`
+                    ).bind(...args).run();
+                    const whereConf = conflictCols.map(c => `${c} = ?`).join(" AND ");
+                    const confArgs = conflictCols.map(c => r[c]);
+                    row = await db.prepare(`SELECT * FROM ${table} WHERE ${whereConf}`).bind(...confArgs).first();
+                } else {
+                    const ins = await db.prepare(
+                        `INSERT INTO ${table} (${cols.join(", ")}) VALUES (${placeholders})`
+                    ).bind(...args).run();
+                    row = await db.prepare(`SELECT * FROM ${table} WHERE rowid=?`).bind(ins.meta.last_row_id).first();
+                }
+                insertedRows.push(row);
             }
-            return jsonResponse([row], 201);
+            return jsonResponse(insertedRows, 201);
         }
 
         if (request.method === "PATCH") {
@@ -319,7 +262,7 @@ async function handleD1Table(table, request, env, url) {
             const setSql = setCols.map(c => `${c} = ?`).join(", ");
             const setArgs = setCols.map(c => body[c]);
             await db.prepare(`UPDATE ${table} SET ${setSql} WHERE ${where.join(" AND ")}`).bind(...setArgs, ...args).run();
-            const rows = await db.prepare(`SELECT ${cfg.cols} FROM ${table} WHERE ${where.join(" AND ")}`).bind(...args).all();
+            const rows = await db.prepare(`SELECT * FROM ${table} WHERE ${where.join(" AND ")}`).bind(...args).all();
             return jsonResponse(rows.results || []);
         }
 
