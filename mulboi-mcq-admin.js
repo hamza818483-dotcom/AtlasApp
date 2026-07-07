@@ -2639,12 +2639,8 @@ async function mbSaveAiMcqs() {
                 return !!(bj && !bj.done && !bj.stopped && bj.pdfId === mbPdfId);
             } catch (_) { return false; }
         })();
-        if (!bulkRunning && mbPdfDoc && mbCurrentPage < mbPdfDoc.numPages) {
-            // bug fix: আগে সেভ হওয়ার সাথে সাথেই পরের পেইজে চলে যেত, ফলে এই পেইজের
-            // "All" ট্যাবে just-generated MCQ দেখাই যেত না (render হওয়ার আগেই পেইজ বদলে যেত)।
-            // এখন একটু delay দেওয়া হচ্ছে যাতে ইউজার সেভ হওয়া MCQ প্রথমে দেখতে পায়।
-            setTimeout(() => mbGoToPagePill(mbCurrentPage + 1), 1200);
-        }
+        // fix: single-page generate এ আর auto-advance হবে না — এটা শুধু bulk (apply-to-all/range) mode এ হওয়ার কথা।
+
     } catch (ex) {
         mbToast('সংরক্ষণ ব্যর্থ: ' + ex.message, 'error');
     }
