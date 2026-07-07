@@ -1357,6 +1357,26 @@ function mbGetPageMcqsByType(pageNum, mcqType) {
 
 async function mbUpsertPageMcqs(pageNum, mcqs, mcqType) {
     mcqType = mcqType || 'admin';
+
+    // bug fix (root cause of "page pill/MCQ vanished"): শেষ MCQ ডিলিট করলে mcqs=[] হয়ে যেত,
+    // এবং আগে সরাসরি questions_json:"[]" আপসার্ট করে দিত — row থেকে যেতো কিন্তু খালি, ফলে
+    // pill count 0 দেখাতো আর All-tab এ দেখাতো না, ভবিষ্যতে generate করলেও পুরনো stale []
+    // row-এর উপর নির্ভর করা verify-check ভুলভাবে "already saved" ধরে নিতে পারতো। এখন খালি
+    // array মানে row পুরোপুরি DELETE, ঘোস্ট রো থাকবে না।
+    if (!mcqs || !mcqs.length) {
+        await mbD1Api('book_page_mcqs',
+            '?pdf_id=eq.' + parseInt(mbPdfId) + '&page_number=eq.' + parseInt(pageNum) + '&mcq_type=eq.' + mcqType,
+            { method: 'DELETE' });
+        if (mcqType === 'admin') {
+            const idx = mbAllPageData.findIndex(r => Number(r.page_number) === Number(pageNum));
+            if (idx >= 0) mbAllPageData.splice(idx, 1);
+        }
+        const idxAll = mbAllPageDataAllTypes.findIndex(r => Number(r.page_number) === Number(pageNum) && r.mcq_type === mcqType);
+        if (idxAll >= 0) mbAllPageDataAllTypes.splice(idxAll, 1);
+        mbWriteLightPillCache(mbPdfId);
+        return;
+    }
+
     const body = {
         pdf_id:         parseInt(mbPdfId),
         page_number:    parseInt(pageNum),
@@ -1385,10 +1405,16 @@ async function mbUpsertPageMcqs(pageNum, mcqs, mcqType) {
     // GET দিয়ে verify করা হচ্ছে যে row আসলেই আছে। না থাকলে ১ বার আবার POST করা হয়।
     // এটাই "সেইভ হচ্ছে দেখায় কিন্তু ডাটা থাকে না" বাগের root-cause fix।
     let newRow = await mbFetchSingleMcqRow(pageNum, mcqType);
-    if (!newRow) {
+    let savedLen = 0;
+    if (newRow) { try { savedLen = JSON.parse(newRow.questions_json || '[]').length; } catch (_) {} }
+    // bug fix: শুধু row থাকা যথেষ্ট না — row থাকতে পারে stale/পুরনো []। questions_json এর
+    // দৈর্ঘ্য আমরা যা পাঠিয়েছি তার সাথে না মিললে এটা silent failure, retry দরকার।
+    if (!newRow || savedLen !== mcqs.length) {
         await doUpsert();
         newRow = await mbFetchSingleMcqRow(pageNum, mcqType);
-        if (!newRow) throw new Error('সংরক্ষণ যাচাই ব্যর্থ — আবার চেষ্টা করুন');
+        savedLen = 0;
+        if (newRow) { try { savedLen = JSON.parse(newRow.questions_json || '[]').length; } catch (_) {} }
+        if (!newRow || savedLen !== mcqs.length) throw new Error('সংরক্ষণ যাচাই ব্যর্থ — আবার চেষ্টা করুন');
     }
 
     if (mcqType === 'admin') {
@@ -3188,11 +3214,33 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
             newRow = Array.isArray(data) ? data[0] : data;
         } catch (_) {}
     }
-    if (!newRow) {
+    // bug fix (page-8 class bug): row থাকলেই যথেষ্ট না — questions_json এর length আমরা
+    // যা পাঠিয়েছি (currentMcqs.length) তার সাথে না মিললে এটা stale/আংশিক write, রিট্রাই করো।
+    function savedLenOf(row) { try { return JSON.parse(row.questions_json || '[]').length; } catch (_) { return -1; } }
+    if (!newRow || savedLenOf(newRow) !== currentMcqs.length) {
         newRow = await mbFetchSingleMcqRow(pageNum, 'admin');
+        if (!newRow || savedLenOf(newRow) !== currentMcqs.length) {
+            const retryRes = await mbD1Api('book_page_mcqs', '?on_conflict=pdf_id,page_number,mcq_type', {
+                method: 'POST',
+                headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+                body: JSON.stringify({ pdf_id: parseInt(mbPdfId), page_number: pageNum, mcq_type: 'admin', questions_json: JSON.stringify(currentMcqs) })
+            });
+            if (retryRes.ok) {
+                try {
+                    const data2 = await retryRes.json();
+                    newRow = Array.isArray(data2) ? data2[0] : data2;
+                } catch (_) {}
+            }
+            if (!newRow || savedLenOf(newRow) !== currentMcqs.length) {
+                newRow = await mbFetchSingleMcqRow(pageNum, 'admin');
+            }
+        }
     }
     if (!newRow) {
         throw new Error('Page ' + pageNum + ': MCQ সংরক্ষণ ব্যর্থ (সার্ভার এরর)');
+    }
+    if (savedLenOf(newRow) !== currentMcqs.length) {
+        throw new Error('Page ' + pageNum + ': MCQ সংরক্ষণ যাচাই ব্যর্থ (' + savedLenOf(newRow) + '/' + currentMcqs.length + ')');
     }
     const idx = mbAllPageData.findIndex(r => Number(r.page_number) === Number(pageNum));
     if (idx >= 0) mbAllPageData[idx] = newRow; else mbAllPageData.push(newRow);
@@ -3231,8 +3279,30 @@ async function mbGenerateForPageSpecial(pageNum) {
             newRow = Array.isArray(data) ? data[0] : data;
         } catch (_) {}
     }
-    if (!newRow) newRow = await mbFetchSingleMcqRow(pageNum, 'admin');
+    function savedLenOfSp(row) { try { return JSON.parse(row.questions_json || '[]').length; } catch (_) { return -1; } }
+    if (!newRow || savedLenOfSp(newRow) !== currentMcqs.length) {
+        newRow = await mbFetchSingleMcqRow(pageNum, 'admin');
+        if (!newRow || savedLenOfSp(newRow) !== currentMcqs.length) {
+            const retryRes = await mbD1Api('book_page_mcqs', '?on_conflict=pdf_id,page_number,mcq_type', {
+                method: 'POST',
+                headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+                body: JSON.stringify({ pdf_id: parseInt(mbPdfId), page_number: pageNum, mcq_type: 'admin', questions_json: JSON.stringify(currentMcqs) })
+            });
+            if (retryRes.ok) {
+                try {
+                    const data2 = await retryRes.json();
+                    newRow = Array.isArray(data2) ? data2[0] : data2;
+                } catch (_) {}
+            }
+            if (!newRow || savedLenOfSp(newRow) !== currentMcqs.length) {
+                newRow = await mbFetchSingleMcqRow(pageNum, 'admin');
+            }
+        }
+    }
     if (!newRow) throw new Error('Page ' + pageNum + ': MCQ সংরক্ষণ ব্যর্থ (সার্ভার এরর)');
+    if (savedLenOfSp(newRow) !== currentMcqs.length) {
+        throw new Error('Page ' + pageNum + ': MCQ সংরক্ষণ যাচাই ব্যর্থ (' + savedLenOfSp(newRow) + '/' + currentMcqs.length + ')');
+    }
     const idx = mbAllPageData.findIndex(r => Number(r.page_number) === Number(pageNum));
     if (idx >= 0) mbAllPageData[idx] = newRow; else mbAllPageData.push(newRow);
     const idxAll = mbAllPageDataAllTypes.findIndex(r => Number(r.page_number) === Number(pageNum) && r.mcq_type === 'admin');
