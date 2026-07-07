@@ -1150,6 +1150,7 @@ function mbRenderPageSummary() {
     const pageCounts = {};
     const pageTypeCounts = {}; // {pageNum: {admin:3, standard:5, true_false:2, hard:1}}
     mbAllPageDataAllTypes.forEach(row => {
+        if (!row) return;
         try {
             // bug fix: page_number bigint column আসে string আকারে (PostgREST), তাই Number() দিয়ে
             // normalize না করলে key mismatch হয়ে pill count/All-list ফাঁকা দেখাত।
@@ -3021,6 +3022,7 @@ async function mbRunBulkJob(job) {
             mbStopBulkSubTicker();
             job.subProgress = 0;
             console.error('Bulk page ' + p + ' failed:', e.message);
+            if (typeof mbToast === 'function') mbToast('⚠️ পেইজ ' + p + ': ' + (e.message || 'ব্যর্থ'), 'error');
             // একটা পেইজ fail করলেও চালিয়ে যাও — পুরো job থামবে না
         }
         job.currentPage = p + 1;
