@@ -181,28 +181,110 @@ async function handleD1Table(table, request, env, url) {
 
     const params = url.searchParams;
 
+    function parseSingleFilter(key, val) {
+        const m = val.match(/^(eq|gte|lte|gt|lt|neq)\.(.*)$/);
+        if (m) {
+            const opMap = { eq: "=", gte: ">=", lte: "<=", gt: ">", lt: "<", neq: "!=" };
+            return { clause: `${key} ${opMap[m[1]]} ?`, args: [m[2]] };
+        }
+        const inm = val.match(/^in\.\((.*)\)$/);
+        if (inm) {
+            const vals = inm[1].split(",").map(v => v.trim());
+            return { clause: `${key} IN (${vals.map(() => "?").join(",")})`, args: vals };
+        }
+        const ism = val.match(/^is\.(null|true|false)$/i);
+        if (ism) {
+            const v = ism[1].toLowerCase();
+            if (v === "null") return { clause: `${key} IS NULL`, args: [] };
+            return { clause: `${key} = ?`, args: [v === "true" ? 1 : 0] };
+        }
+        return null;
+    }
+
     function parseEqFilters() {
         const where = [];
         const args = [];
         for (const [key, val] of params.entries()) {
             if (["select", "order", "limit", "on_conflict"].includes(key)) continue;
-            const eqm = val.match(/^eq\.(.*)$/);
-            if (eqm) { where.push(`${key} = ?`); args.push(eqm[1]); continue; }
-            const inm = val.match(/^in\.\((.*)\)$/);
-            if (inm) {
-                const vals = inm[1].split(",").map(v => v.trim());
-                where.push(`${key} IN (${vals.map(() => "?").join(",")})`);
-                args.push(...vals);
+            if (key === "or") {
+                const inner = val.match(/^\((.*)\)$/)?.[1] || val;
+                const parts = inner.split(",");
+                const orClauses = [];
+                for (const p of parts) {
+                    const pm = p.match(/^([a-z_][a-z0-9_]*)\.(.+)$/i);
+                    if (!pm) continue;
+                    const f = parseSingleFilter(pm[1], pm[2]);
+                    if (f) { orClauses.push(f.clause); args.push(...f.args); }
+                }
+                if (orClauses.length) where.push("(" + orClauses.join(" OR ") + ")");
+                continue;
             }
+            const f = parseSingleFilter(key, val);
+            if (f) { where.push(f.clause); args.push(...f.args); }
         }
         return { where, args };
+    }
+
+    function parseSelectEmbeds(selectParam) {
+        if (!selectParam || !selectParam.includes("(")) return null;
+        const embeds = [];
+        const baseCols = [];
+        let depth = 0, cur = "";
+        const tokens = [];
+        for (const ch of selectParam) {
+            if (ch === "(") depth++;
+            if (ch === ")") depth--;
+            if (ch === "," && depth === 0) { tokens.push(cur); cur = ""; }
+            else cur += ch;
+        }
+        if (cur) tokens.push(cur);
+        for (const tok of tokens) {
+            const m = tok.match(/^([a-z_][a-z0-9_]*)\((.*)\)$/i);
+            if (m) embeds.push({ table: m[1], inner: m[2] });
+            else if (tok.trim()) baseCols.push(tok.trim());
+        }
+        return { baseCols, embeds };
+    }
+
+    const EMBED_FK_MAP = {
+        users: { parentCol: "user_phone", childCol: "phone" },
+        book_chapters: { parentCol: "chapter_id", childCol: "id" },
+        book_subjects: { parentCol: "subject_id", childCol: "id" },
+    };
+
+    async function attachEmbeds(rows, embeds) {
+        if (!rows.length) return rows;
+        for (const emb of embeds) {
+            const fk = EMBED_FK_MAP[emb.table];
+            if (!fk || !(fk.parentCol in rows[0])) continue;
+            const subEmbedInfo = parseSelectEmbeds(emb.inner);
+            const cols = subEmbedInfo ? (subEmbedInfo.baseCols.length ? subEmbedInfo.baseCols.join(",") : "*") : emb.inner;
+            const keys = [...new Set(rows.map(r => r[fk.parentCol]).filter(v => v !== null && v !== undefined))];
+            if (!keys.length) continue;
+            const placeholders = keys.map(() => "?").join(",");
+            const selectCols = cols === "*" ? "*" : (cols.includes(fk.childCol) ? cols : cols + "," + fk.childCol);
+            const sub = await db.prepare(
+                `SELECT ${selectCols} FROM ${emb.table} WHERE ${fk.childCol} IN (${placeholders})`
+            ).bind(...keys).all();
+            let subRows = sub.results || [];
+            if (subEmbedInfo && subEmbedInfo.embeds.length) {
+                subRows = await attachEmbeds(subRows, subEmbedInfo.embeds);
+            }
+            const byKey = new Map(subRows.map(r => [r[fk.childCol], r]));
+            for (const row of rows) {
+                row[emb.table] = byKey.get(row[fk.parentCol]) || null;
+            }
+        }
+        return rows;
     }
 
     try {
         if (request.method === "GET") {
             const { where, args } = parseEqFilters();
             const selCols = params.get("select") || "*";
-            let sql = `SELECT ${selCols === "*" ? "*" : selCols} FROM ${table}`;
+            const embedInfo = parseSelectEmbeds(selCols);
+            const sqlSelCols = embedInfo ? (embedInfo.baseCols.length ? embedInfo.baseCols.join(",") : "*") : selCols;
+            let sql = `SELECT ${sqlSelCols === "*" ? "*" : sqlSelCols} FROM ${table}`;
             if (where.length) sql += " WHERE " + where.join(" AND ");
             const orderParam = params.get("order");
             if (orderParam) {
@@ -215,7 +297,9 @@ async function handleD1Table(table, request, env, url) {
             const limitParam = params.get("limit");
             if (limitParam) sql += ` LIMIT ${parseInt(limitParam, 10) || 500}`;
             const res = await db.prepare(sql).bind(...args).all();
-            return jsonResponse(res.results || []);
+            let rows = res.results || [];
+            if (embedInfo && embedInfo.embeds.length) rows = await attachEmbeds(rows, embedInfo.embeds);
+            return jsonResponse(rows);
         }
 
         if (request.method === "POST") {
