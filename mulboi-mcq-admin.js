@@ -1980,22 +1980,50 @@ function mbGetSavedPrompt(type) {
     return mbPromptCache[type] || '';
 }
 async function mbSavePromptForType(type, text) {
-    mbPromptCache[type] = text;
+    // bug fix: mbD1Api কখনো res.ok false হলেও throw করে না (শুধু network-fail এ throw করে),
+    // তাই আগের try/catch server-side error (constraint/validation) কখনো ধরতেই পারতো না —
+    // save silently fail হতো কিন্তু success দেখাতো। এখন res.ok explicitly check করা হচ্ছে,
+    // আর সেভের পর GET দিয়ে verify করা হচ্ছে যে prompt আসলেই persist হয়েছে।
     try {
-        // bug fix: on_conflict প্যারামিটার ছাড়া PostgREST-এ 'resolution=merge-duplicates'
-        // upsert কাজ করে না — duplicate pdf_id+mcq_type থাকলে unique constraint error হয়,
-        // যেটা এতদিন try/catch এ silently গিলে ফেলা হচ্ছিল (তাই সেভ হচ্ছিলো না মনে হতো,
-        // যদিও প্রথমবার insert successful হতো, দ্বিতীয়বার update এ গিয়ে fail করত)।
-        await mbD1Api('book_ai_prompts', '?on_conflict=pdf_id,mcq_type', {
+        const res = await mbD1Api('book_ai_prompts', '?on_conflict=pdf_id,mcq_type', {
             method: 'POST',
+            headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
             body: JSON.stringify({ pdf_id: 0, mcq_type: type, prompt: text })
         });
+        if (!res.ok) {
+            let err = {};
+            try { err = await res.json(); } catch (_) {}
+            throw new Error(err.error || err.message || ('সংরক্ষণ ব্যর্থ (' + res.status + ')'));
+        }
+
+        // persist verify: GET দিয়ে নিশ্চিত হও যে row আসলেই আছে; না থাকলে ১ বার retry
+        let ok = await mbVerifyPromptSaved(type, text);
+        if (!ok) {
+            const retryRes = await mbD1Api('book_ai_prompts', '?on_conflict=pdf_id,mcq_type', {
+                method: 'POST',
+                headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+                body: JSON.stringify({ pdf_id: 0, mcq_type: type, prompt: text })
+            });
+            if (!retryRes.ok) throw new Error('সংরক্ষণ ব্যর্থ, আবার চেষ্টা করুন');
+            ok = await mbVerifyPromptSaved(type, text);
+            if (!ok) throw new Error('সংরক্ষণ যাচাই ব্যর্থ, আবার চেষ্টা করুন');
+        }
+
+        mbPromptCache[type] = text;
         return true;
     } catch (e) {
         console.error('প্রম্পট সংরক্ষণ ব্যর্থ:', e.message);
         mbToast('প্রম্পট সংরক্ষণ ব্যর্থ হয়েছে: ' + e.message, 'error');
         return false;
     }
+}
+async function mbVerifyPromptSaved(type, text) {
+    try {
+        const res = await mbD1Api('book_ai_prompts', '?pdf_id=eq.0&mcq_type=eq.' + type + '&limit=1');
+        if (!res.ok) return false;
+        const rows = await res.json();
+        return Array.isArray(rows) && rows.length > 0 && rows[0].prompt === text;
+    } catch (_) { return false; }
 }
 
 /* ─── row-scan helper: canvas-এর একটা pixel row-এ "কালি" (non-white/non-blank content)
