@@ -2185,13 +2185,53 @@ async function mbCropExplanationImage(pageNum, box, lineBox) {
 
         // line_box থাকলে শুধু সেই নির্দিষ্ট লাইন/বাক্যে কমলা (orange) highlight — পুরো অংশ না,
         // যাতে ঠিক কোন লাইন থেকে সরাসরি উত্তরটা এসেছে সেটা আলাদাভাবে চোখে পড়ে (টেক্সট পড়া যায় এমন opacity)।
+        // bug fix: আগে line_box-এর raw AI y% সরাসরি ব্যবহার হতো, কিন্তু exp_box ইতিমধ্যে ink-scan
+        // দিয়ে snap/shift হয়ে যায় (py বদলে যায়) — ফলে line highlight ভুল জায়গায় পড়ত বা crop-এর
+        // বাইরে (negative/out-of-range) চলে গিয়ে একদমই দেখা যেত না। এখন line_box-ও একই পেইজ-পূর্ণ
+        // coordinate থেকে বের করে, crop-এর ভেতরের সীমায় ঠিকভাবে clamp করা হচ্ছে, এবং ছবির
+        // ভার্টিক্যাল কেন্দ্রে (centered) আনার জন্য crop window সেই লাইন বরাবর re-adjust হচ্ছে।
         const ly = lineBox ? Number(lineBox.y) : NaN;
         const lh = lineBox ? Number(lineBox.h) : NaN;
         if (Number.isFinite(ly) && Number.isFinite(lh) && lh > 0) {
-            const hlTop = Math.round((ly / 100 * full.height) - py);
-            const hlBottom = Math.round(((ly + lh) / 100 * full.height) - py);
-            const hlY = Math.max(0, hlTop);
-            const hlH = Math.min(ph, hlBottom) - hlY;
+            const lineTopAbs    = ly / 100 * full.height;
+            const lineBottomAbs = (ly + lh) / 100 * full.height;
+            const lineCenterAbs = (lineTopAbs + lineBottomAbs) / 2;
+
+            // crop window-টাকে এমনভাবে re-shift করা হয় যাতে highlighted line ছবির উল্লম্বভাবে
+            // মাঝখানে (centered) থাকে, তবে exp_box-এর মূল top/bottom (bTop/bBottom, red border)
+            // crop-এর বাইরে চলে না যায় সেটাও নিশ্চিত করা হয় — তাই shift-টা bounded।
+            const desiredPy = lineCenterAbs - ph / 2;
+            const maxPy = Math.max(0, boxBottomAbsSafe(py, ph, full.height) - ph); // page-এর মধ্যে থাকা নিশ্চিত করে
+            let shiftedPy = Math.min(Math.max(0, desiredPy), Math.max(0, full.height - ph));
+            // exp_box (red border) পুরোটা এখনো crop-এর মধ্যে আছে কিনা যাচাই — না থাকলে shift বাতিল
+            const redTopAbs = py + bTop, redBottomAbs = py + bBottom;
+            if (!(redTopAbs >= shiftedPy && redBottomAbs <= shiftedPy + ph)) {
+                shiftedPy = py; // shift করলে exp_box কাটা পড়বে, তাই আগের py-ই রাখা হলো
+            }
+
+            if (shiftedPy !== py) {
+                // নতুন py দিয়ে আবার crop draw করা হচ্ছে যাতে line ঠিক মাঝে থাকে
+                cropCtx.clearRect(0, 0, full.width, ph);
+                cropCtx.drawImage(full, 0, shiftedPy, full.width, ph, 0, 0, full.width, ph);
+                const newBTop = py + bTop - shiftedPy, newBBottom = py + bBottom - shiftedPy;
+                if (newBBottom - newBTop > 0) {
+                    cropCtx.strokeStyle = 'rgba(220, 38, 38, 1)';
+                    cropCtx.lineWidth = 14;
+                    cropCtx.strokeRect(6, newBTop + 6, full.width - 12, Math.max(1, (newBBottom - newBTop) - 12));
+                    cropCtx.lineWidth = 5;
+                    cropCtx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+                    cropCtx.strokeRect(6, newBTop + 6, full.width - 12, Math.max(1, (newBBottom - newBTop) - 12));
+                    cropCtx.lineWidth = 14;
+                    cropCtx.strokeStyle = 'rgba(220, 38, 38, 1)';
+                    cropCtx.strokeRect(6, newBTop + 6, full.width - 12, Math.max(1, (newBBottom - newBTop) - 12));
+                }
+                py = shiftedPy;
+            }
+
+            const hlTop = Math.round(lineTopAbs - py);
+            const hlBottom = Math.round(lineBottomAbs - py);
+            const hlY = Math.max(0, Math.min(ph, hlTop));
+            const hlH = Math.max(0, Math.min(ph, hlBottom) - hlY);
             if (hlH > 0) {
                 cropCtx.fillStyle = 'rgba(255, 140, 0, 0.40)';
                 cropCtx.fillRect(0, hlY, full.width, hlH);
@@ -2205,6 +2245,7 @@ async function mbCropExplanationImage(pageNum, box, lineBox) {
         return null;
     }
 }
+function boxBottomAbsSafe(py, ph, fullHeight) { return Math.min(fullHeight, py + ph); }
 
 /* ─── Get canvas image from current PDF page ─── */
 async function mbGetPageImageBase64(pageNum) {
@@ -2243,6 +2284,25 @@ function mbSetAiProgress(pct, label) {
     if (fill) fill.style.width = pct + '%';
     if (pctEl) pctEl.textContent = pct + '%';
     if (lbl && label) lbl.textContent = label;
+}
+
+// bug fix: আগে ২০% থেকে ৬০% (AI response এর অপেক্ষার সময়টা) এ কোনো progress update
+// হতো না — user দেখত অনেকক্ষণ ২০%-এ আটকে আছে, তারপর হঠাৎ ৬০%/১০০% হয়ে যায়, বোঝা যেত
+// না আদৌ কাজ চলছে কিনা। এখন একটা background ticker চালু হয়, যেটা পরের checkpoint না
+// আসা পর্যন্ত ধীরে ধীরে (asymptotically) বাড়তে থাকে যাতে চোখে "চলছে" মনে হয়।
+let mbAiProgressTicker = null;
+function mbStartAiProgressTicker(fromPct, towardPct, label) {
+    mbStopAiProgressTicker();
+    let current = fromPct;
+    mbSetAiProgress(Math.round(current), label);
+    mbAiProgressTicker = setInterval(() => {
+        current += (towardPct - current) * 0.08 + 0.15;
+        if (current >= towardPct - 0.5) current = towardPct - 0.5;
+        mbSetAiProgress(Math.round(current), label);
+    }, 350);
+}
+function mbStopAiProgressTicker() {
+    if (mbAiProgressTicker) { clearInterval(mbAiProgressTicker); mbAiProgressTicker = null; }
 }
 
 async function mbAiGenerate() {
@@ -2284,6 +2344,7 @@ async function mbAiGenerate() {
         // to another page (whole-PDF + "page N" text was unreliable — Gemini often ignored
         // the page number and generated from a random/wrong page).
         mbSetAiProgress(20, 'AI-কে পাঠানো হচ্ছে...');
+        mbStartAiProgressTicker(20, 58, 'AI ভাবছে ও প্রশ্ন বানাচ্ছে...');
         const pageImageData = await mbGetPageImageBase64(mbCurrentPage);
         if (pageImageData) {
             try {
@@ -2328,6 +2389,7 @@ async function mbAiGenerate() {
             }
         }
 
+        mbStopAiProgressTicker();
         mbSetAiProgress(60, 'AI রেসপন্স যাচাই হচ্ছে...');
         let parsed  = mbParseAiJson(rawJson);
 
@@ -2400,6 +2462,7 @@ async function mbAiGenerate() {
     } catch (ex) {
         mbToast('AI ব্যর্থ: ' + ex.message, 'error');
     } finally {
+        mbStopAiProgressTicker();
         if (spinner) spinner.style.display = 'none';
         mbSetAiProgress(0, 'AI MCQ তৈরি করছে...');
         if (genBtn)  genBtn.style.display  = 'block';
@@ -2416,9 +2479,11 @@ async function mbAiGenerateSpecial() {
     if (resultEl) resultEl.style.display = 'none';
     mbAiData = [];
     mbSetAiProgress(30, 'পেইজ থেকে extract হচ্ছে...');
+    mbStartAiProgressTicker(30, 68, 'পেইজ থেকে extract হচ্ছে...');
 
     try {
         const parsed = await mbSpecialExtractPage(mbCurrentPage);
+        mbStopAiProgressTicker();
         if (!parsed || !parsed.length) {
             mbToast('❌ এই পেইজে কোনো existing MCQ পাওয়া যায়নি', 'error');
             return;
@@ -2453,6 +2518,7 @@ async function mbAiGenerateSpecial() {
     } catch (ex) {
         mbToast('এক্সট্র্যাকশন ব্যর্থ: ' + ex.message, 'error');
     } finally {
+        mbStopAiProgressTicker();
         if (spinner) spinner.style.display = 'none';
         mbSetAiProgress(0, 'AI MCQ তৈরি করছে...');
         if (genBtn)  genBtn.style.display  = 'block';
@@ -2574,7 +2640,10 @@ async function mbSaveAiMcqs() {
             } catch (_) { return false; }
         })();
         if (!bulkRunning && mbPdfDoc && mbCurrentPage < mbPdfDoc.numPages) {
-            mbGoToPagePill(mbCurrentPage + 1);
+            // bug fix: আগে সেভ হওয়ার সাথে সাথেই পরের পেইজে চলে যেত, ফলে এই পেইজের
+            // "All" ট্যাবে just-generated MCQ দেখাই যেত না (render হওয়ার আগেই পেইজ বদলে যেত)।
+            // এখন একটু delay দেওয়া হচ্ছে যাতে ইউজার সেভ হওয়া MCQ প্রথমে দেখতে পায়।
+            setTimeout(() => mbGoToPagePill(mbCurrentPage + 1), 1200);
         }
     } catch (ex) {
         mbToast('সংরক্ষণ ব্যর্থ: ' + ex.message, 'error');
@@ -2696,7 +2765,12 @@ async function mbDownloadCsvArchive(id, fileName) {
 async function mbDeleteCsvArchive(id) {
     if (!confirm('এই CSV ফাইলটি মুছে ফেলতে চাও?')) return;
     try {
-        await mbD1Api('book_mcq_csv_archive', '?id=eq.' + id, { method: 'DELETE' });
+        const res = await mbD1Api('book_mcq_csv_archive', '?id=eq.' + id, { method: 'DELETE' });
+        if (!res.ok) {
+            let err = {};
+            try { err = await res.json(); } catch (_) {}
+            throw new Error(err.error || err.message || ('মুছে ফেলা ব্যর্থ (' + res.status + ')'));
+        }
         mbLoadCsvArchive();
     } catch (e) {
         mbToast('মুছে ফেলা ব্যর্থ: ' + e.message, 'error');
