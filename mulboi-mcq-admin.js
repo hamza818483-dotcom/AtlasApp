@@ -2918,9 +2918,18 @@ function mbUpdateBulkUI(job) {
     if (!box) return;
     if (!job || job.done || job.stopped) { box.style.display = 'none'; return; }
     box.style.display = 'block';
-    const pct = job.totalPages ? Math.round((job.completedCount / job.totalPages) * 100) : 0;
+    // bug fix: আগে completedCount শুধু পুরো পেইজ শেষ হলে +1 হতো — একটা পেইজের মধ্যে
+    // AI generate চলাকালীন % বার একদম স্থির থাকত (0% আটকে থেকে হঠাৎ jump করত), আর label-এ
+    // "পেইজ 8/8 (0/1)" এর মতো confusing সংখ্যা দেখাত (currentPage কে to-এর সমান দেখাত শেষ পেইজে,
+    // কিন্তু আসলে সেই পেইজটাই এখনো প্রসেস হচ্ছে)। এখন in-page fractional progress
+    // (job.subProgress: 0-1) যোগ করে % আর MCQ count স্মুথলি এগোয়, এবং লেবেলে স্পষ্ট করে
+    // "প্রসেস হচ্ছে: পেইজ X (মোট Y এর মধ্যে Z সম্পন্ন)" দেখানো হচ্ছে।
+    const sub = Math.max(0, Math.min(1, job.subProgress || 0));
+    const doneFraction = job.completedCount + sub;
+    const pct = job.totalPages ? Math.round((doneFraction / job.totalPages) * 100) : 0;
+    const pageLabel = job.currentPage > job.to ? job.to : job.currentPage;
     document.getElementById('mbBulkLabel').textContent =
-        `⚡ চলছে: পেইজ ${job.currentPage}/${job.to} (${job.completedCount}/${job.totalPages})`;
+        `⚡ প্রসেস হচ্ছে: পেইজ ${pageLabel} (মোট ${job.totalPages} এর মধ্যে ${job.completedCount} সম্পন্ন)`;
     document.getElementById('mbBulkBarFill').style.width = pct + '%';
 
     // ETA হিসাব — গড় সময়/পেইজ থেকে বাকি পেইজের আনুমানিক সময়
@@ -2928,7 +2937,7 @@ function mbUpdateBulkUI(job) {
     if (job.completedCount > 0 && job.startedAt) {
         const elapsedSec = (Date.now() - job.startedAt) / 1000;
         const avgPerPage = elapsedSec / job.completedCount;
-        const remainingPages = job.totalPages - job.completedCount;
+        const remainingPages = job.totalPages - doneFraction;
         const etaSec = Math.round(avgPerPage * remainingPages);
         etaStr = etaSec > 60 ? ` · বাকি ~${Math.ceil(etaSec/60)} মিনিট` : etaSec > 0 ? ` · বাকি ~${etaSec}s` : '';
     }
@@ -2938,8 +2947,22 @@ function mbUpdateBulkUI(job) {
 
     // চলমান bulk job-এর বর্তমান পেইজ অনুযায়ী page-pill dynamically highlight করো
     document.querySelectorAll('[id^="mbPill-"]').forEach(el => el.classList.remove('mb-pill-active-bulk'));
-    const activePill = document.getElementById('mbPill-' + job.currentPage);
+    const activePill = document.getElementById('mbPill-' + pageLabel);
     if (activePill) activePill.classList.add('mb-pill-active-bulk');
+}
+
+// পেইজ-ভেতরের (sub-page) progress ticker — mbGenerateForPage চলাকালীন smooth % দেখানোর জন্য
+let mbBulkSubTicker = null;
+function mbStartBulkSubTicker(job) {
+    mbStopBulkSubTicker();
+    job.subProgress = 0.05;
+    mbBulkSubTicker = setInterval(() => {
+        job.subProgress = Math.min(0.92, (job.subProgress || 0) + 0.04);
+        mbUpdateBulkUI(job);
+    }, 400);
+}
+function mbStopBulkSubTicker() {
+    if (mbBulkSubTicker) { clearInterval(mbBulkSubTicker); mbBulkSubTicker = null; }
 }
 
 // মূল bulk loop — serially প্রতিটা পেইজে MCQ generate করে save করে, live progress দেখায়।
@@ -2950,15 +2973,20 @@ async function mbRunBulkJob(job) {
         // প্রতি iteration এ localStorage থেকে stop flag চেক করো — থামানো হয়েছে কিনা
         try {
             const liveJob = JSON.parse(localStorage.getItem(MB_BULK_KEY) || 'null');
-            if (!liveJob || liveJob.stopped || liveJob.pdfId !== job.pdfId) { mbBulkRunning = false; mbUpdateBulkUI(null); return; }
+            if (!liveJob || liveJob.stopped || liveJob.pdfId !== job.pdfId) { mbStopBulkSubTicker(); mbBulkRunning = false; mbUpdateBulkUI(null); return; }
         } catch (_) {}
-        if (!mbBulkRunning) return;
+        if (!mbBulkRunning) { mbStopBulkSubTicker(); return; }
 
         try {
+            mbStartBulkSubTicker(job);
             const generatedCount = await mbGenerateForPage(p, job.countRaw, job.type);
+            mbStopBulkSubTicker();
+            job.subProgress = 0;
             job.completedCount++;
             job.totalMcqGenerated = (job.totalMcqGenerated || 0) + (generatedCount || 0);
         } catch (e) {
+            mbStopBulkSubTicker();
+            job.subProgress = 0;
             console.error('Bulk page ' + p + ' failed:', e.message);
             // একটা পেইজ fail করলেও চালিয়ে যাও — পুরো job থামবে না
         }
@@ -2970,6 +2998,7 @@ async function mbRunBulkJob(job) {
         await mbLoadAllPageMcqs();
         mbRenderPageSummary();
     }
+    mbStopBulkSubTicker();
     job.done = true;
     localStorage.setItem(MB_BULK_KEY, JSON.stringify(job));
     mbBulkRunning = false;
