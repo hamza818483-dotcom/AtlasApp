@@ -3255,9 +3255,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
 
     let rawJson;
     let geminiAlreadyTried = false;
-
-    // Step 1 (preferred, page-accurate): render ONLY this page as an image — guarantees
-    // AI sees exactly pageNum, cannot drift to wrong page (same fix as single-page generate).
+    const mbAiDebugErrs = [];
     const page = await mbPdfDoc.getPage(pageNum);
     const vp = page.getViewport({ scale: 1.5 });
     const tmp = document.createElement('canvas');
@@ -3270,7 +3268,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
             `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}`;
         rawJson = await mbCallAiApi('', pageImageData, sysPrompt, false);
         geminiAlreadyTried = true;
-    } catch (_) { /* fall through */ }
+    } catch (e1) { mbAiDebugErrs.push('s1:' + (e1 && e1.message || e1)); /* fall through */ }
 
     // Step 2 (fallback): whole-PDF direct-to-Gemini
     if (!rawJson && mbPdfUrl) {
@@ -3285,7 +3283,8 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
             geminiAlreadyTried = true;
             const data = await res.json().catch(() => null);
             if (res.ok && data?.success && data.answer) rawJson = data.answer;
-        } catch (_) {}
+            else mbAiDebugErrs.push('s2:' + (data?.error || ('http' + res.status)));
+        } catch (e2) { mbAiDebugErrs.push('s2:' + (e2 && e2.message || e2)); }
     }
 
     // Step 3 (last resort): text-extraction
@@ -3296,7 +3295,11 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
             const prompt = `নিচের টেক্সট (পেইজ ${pageNum} থেকে নেওয়া) থেকে ${basePrompt}\n` +
                 `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}\n\n` +
                 `টেক্সট:\n${pageText.slice(0, 4000)}`;
-            rawJson = await mbCallAiApi(prompt, null, null, geminiAlreadyTried);
+            try {
+                rawJson = await mbCallAiApi(prompt, null, null, geminiAlreadyTried);
+            } catch (e3) { mbAiDebugErrs.push('s3:' + (e3 && e3.message || e3)); }
+        } else {
+            mbAiDebugErrs.push('s3:pageText=' + (pageText ? pageText.length : 0) + 'chars');
         }
     }
 
@@ -3310,7 +3313,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
             parsed = mbParseAiJson(retryRaw);
         } catch (_) {}
     }
-    if (!parsed || !parsed.length) throw new Error('AI সঠিক JSON দেয়নি');
+    if (!parsed || !parsed.length) throw new Error('AI সঠিক JSON দেয়নি [' + mbAiDebugErrs.join('|') + '] raw:' + (rawJson ? rawJson.slice(0,100) : 'empty'));
 
     // bug fix: bulk-mode এও একই কারণে question/option ভ্যানিশ হয়ে যেত (single-page fix,
     // এখানে duplicate করা হলো) — প্রতিটা MCQ validate করে অসম্পূর্ণ item বাদ, প্রয়োজনে retry।
@@ -3364,7 +3367,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
             console.warn(`Page ${pageNum}: script validation fail korlo, structurally-complete MCQ diye fallback (script bhul thakte pare)`);
         }
     }
-    if (!validParsed.length) throw new Error('AI সম্পূর্ণ/সঠিক MCQ দিতে পারেনি');
+    if (!validParsed.length) throw new Error('AI সম্পূর্ণ/সঠিক MCQ দিতে পারেনি sample:' + JSON.stringify((parsed||[])[0]||{}).slice(0,150));
     parsed = validParsed;
 
     // bug fix (count guarantee জোরদার করা): retry3 এর পরেও যদি সংখ্যা কম থাকে (count.min এর
