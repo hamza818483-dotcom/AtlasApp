@@ -126,6 +126,26 @@ async function mbD1ApiWithRetry(table, query, retries = 1) {
     }
 }
 
+// feature: MCQ generate/extract ব্যর্থ হলে সেই এরর D1-এর mcq_error_logs টেবিলে সেভ করে —
+// যাতে ইউজারকে জিজ্ঞেস না করেই আসল এরর মেসেজ, পেইজ নম্বর, মোড ইত্যাদি সরাসরি DB থেকে দেখা যায়।
+// fire-and-forget (এই কল ব্যর্থ হলেও মূল generate flow-কে প্রভাবিত করবে না)।
+async function mbLogError(context, pageNum, errMsg, extra) {
+    try {
+        await mbD1Api('mcq_error_logs', '', {
+            method: 'POST',
+            headers: { 'Prefer': 'return=minimal' },
+            body: JSON.stringify({
+                pdf_id: mbPdfId ? parseInt(mbPdfId) : null,
+                page_number: pageNum || null,
+                context: context || '',
+                error_message: String(errMsg || '').slice(0, 2000),
+                extra: extra ? JSON.stringify(extra).slice(0, 2000) : null,
+                created_at: new Date().toISOString()
+            })
+        });
+    } catch (_) { /* logging কখনো মূল flow ভাঙবে না */ }
+}
+
 /* ════════════════════════════════════════════════════
    BACKGROUND JOB SYSTEM — ট্যাব বন্ধ/রিফ্রেশ হলেও MCQ generation চলতে থাকার জন্য।
    Client-side flow (উপরের mbGenerateForPage) স্বাভাবিকভাবে fast-path হিসেবে চলে; পাশাপাশি
@@ -408,8 +428,11 @@ async function mbSpecialExtractPage(pageNum) {
         } catch (e) {
             // bug fix: আগে এখানে এরর সম্পূর্ণ গিলে ফেলে খালি array রিটার্ন করত, ফলে ইউজার শুধু
             // generic "কোনো পেইজেই MCQ generate হয়নি" দেখতো, আসল কারণ (PDF লোড না হওয়া ইত্যাদি)
-            // কখনো জানতে পারতো না। এখন শেষ চেষ্টাতেও ব্যর্থ হলে আসল এরর ছুঁড়ে দেওয়া হচ্ছে।
-            if (attempt === MAX_ATTEMPTS) throw e;
+            // কখনো জানতে পারতো না। এখন শেষ চেষ্টাতেও ব্যর্থ হলে D1-এ লগ করে আসল এরর ছুঁড়ে দেওয়া হচ্ছে।
+            if (attempt === MAX_ATTEMPTS) {
+                mbLogError('mbSpecialExtractPage', pageNum, e && e.message || e, { attempt });
+                throw e;
+            }
         }
     }
     return [];
@@ -3377,6 +3400,7 @@ async function mbRunBulkJob(job) {
             job.subProgress = 0;
             console.error('Bulk page ' + p + ' failed:', e);
             lastErrorMsg = 'পেইজ ' + p + ': ' + (e.message || 'ব্যর্থ');
+            mbLogError('mbRunBulkJob', p, e && e.message || e, { type: job.type, countRaw: job.countRaw });
             // bug fix (debug visibility): শুধু bulk (একাধিক পেইজ) মোডে সাথে সাথে toast দেখাও —
             // single-page job এ এই toast আসলেই final summary দিয়ে সাথে সাথে overwrite হয়ে
             // যেত, তাই সেখানে শুধু final summary-তেই (lastErrorMsg জুড়ে) দেখানো হবে।
