@@ -2615,9 +2615,12 @@ async function mbAiGenerate() {
             return;
         }
         parsed = validParsed;
-        // Count must-follow: চাহিদার চেয়ে বেশি দিলে কেটে দাও, কম দিলে warning
+        // Count must-follow: চাহিদার চেয়ে বেশি দিলে কেটে দাও, কম দিলে ইউজারকে জানাও (আগে শুধু
+        // console.warn হতো, ইউজার কিছুই বুঝতে পারত না কেন সংখ্যা কম এলো)
         if (parsed.length > count.max) parsed = parsed.slice(0, count.max);
-        if (parsed.length < count.min) console.warn(`চাহিদা ছিল ${count.label}, AI দিয়েছে ${parsed.length}টি`);
+        if (parsed.length < count.min) {
+            mbToast(`⚠️ ${count.label} চেয়েছিলেন, AI ${parsed.length}টি দিতে পেরেছে (পেইজে যথেষ্ট কনটেন্ট না থাকতে পারে)`, 'info', 6000);
+        }
 
         mbAiData = parsed.map(m => ({ id: uid(), ...m, type: m.type || type }));
         mbSetAiProgress(75, 'ব্যাখ্যার ছবি বানানো হচ্ছে...');
@@ -3354,11 +3357,31 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     if (!validParsed.length) throw new Error('AI সম্পূর্ণ/সঠিক MCQ দিতে পারেনি');
     parsed = validParsed;
 
+    // bug fix (count guarantee জোরদার করা): retry3 এর পরেও যদি সংখ্যা কম থাকে (count.min এর
+    // চেয়ে কম), আরেকবার স্পষ্টভাবে বলা হচ্ছে ঠিক কতগুলো বাকি লাগবে — যাতে ইউজার যে digit
+    // লিখেছেন তার কাছাকাছি সংখ্যা পাওয়ার সম্ভাবনা বাড়ে।
+    if (parsed.length < count.min) {
+        try {
+            const stillNeed = count.min - parsed.length;
+            const strictSys4 = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ` +
+                `আরও ${stillNeed}টি নতুন MCQ বানাও (আগে যা বানানো হয়েছে তার থেকে ভিন্ন প্রশ্ন/কোণ থেকে)। ${basePrompt}\n` +
+                `প্রশ্ন/অপশন/ব্যাখ্যা অবশ্যই বাংলা ভাষায় ও বাংলা লিপিতে (বাংলা হরফ ব্যবহার করে) লিখতে হবে, দেবনাগরী/হিন্দি বা ইংরেজি হরফ নয়। ` +
+                `শুধু ঠিক ${stillNeed}টি প্রশ্নের valid JSON array রিটার্ন করো, markdown/preamble ছাড়া। Format:\n${jsonFormat}`;
+            const retryRaw4 = await mbCallAiApi('', pageImageData, strictSys4, false, true);
+            const parsed4 = mbParseAiJson(retryRaw4);
+            const valid4 = (parsed4 || []).filter(mbIsValidMcqBulk);
+            if (valid4.length) parsed = [...parsed, ...valid4];
+        } catch (_) {}
+    }
+
     // Count must-follow: AI যদি চাহিদার চেয়ে কম প্রশ্ন দেয়, এক্সট্রা দিলে সংখ্যা কেটে দেওয়া হয়,
-    // কম দিলে warning log রাখা হয় (silently truncate না করে exact min মানা হয় যতটা সম্ভব)।
+    // কম দিলে ইউজারকে জানানো হয় (আগে শুধু console.warn হতো, silent থাকত)।
     if (parsed.length > count.max) parsed = parsed.slice(0, count.max);
     if (parsed.length < count.min) {
         console.warn(`Page ${pageNum}: চাহিদা ছিল ${count.label}, AI দিয়েছে ${parsed.length}টি`);
+        if (typeof mbToast === 'function') {
+            mbToast(`⚠️ পেইজ ${pageNum}: ${count.label} চেয়েছিলেন, AI ${parsed.length}টি দিতে পেরেছে`, 'info', 6000);
+        }
     }
 
     const newMcqs = parsed.map(m => ({ id: uid(), ...m, type: m.type || type }));
