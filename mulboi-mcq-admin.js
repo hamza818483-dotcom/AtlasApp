@@ -3499,11 +3499,33 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
         if (valid4.length) parsed = [...parsed, ...valid4];
     } catch (_) {}
 
-    // Count must-follow: AI যদি চাহিদার চেয়ে কম প্রশ্ন দেয়, এক্সট্রা দিলে সংখ্যা কেটে দেওয়া হয়,
-    // কম দিলে ইউজারকে জানানো হয় (আগে শুধু console.warn হতো, silent থাকত)।
+    // Count must-follow: চাহিদার চেয়ে কম হলে silently warning দিয়ে থেমে যাওয়ার বদলে, এখন
+    // ঘাটতি (shortfall) যতক্ষণ না মেটে ততক্ষণ (নিরাপদ cap পর্যন্ত) আরও MCQ চাওয়া হয় —
+    // এটাই root cause fix ছিল "৭টা চাওয়া হলে ৪টা বানায়" সমস্যার: আগে মাত্র ২টা কল + ১টা
+    // retry-এর পরেই থেমে যেত, চাহিদা না মিটলেও।
+    let mbTopUpTries = 0;
+    while (parsed.length < count.min && mbTopUpTries < 4) {
+        mbTopUpTries++;
+        const need = count.min - parsed.length;
+        try {
+            const topUpSys = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ` +
+                `আরও ঠিক ${need}টি নতুন MCQ বানাও (আগে যা বানানো হয়েছে তার থেকে সম্পূর্ণ ভিন্ন প্রশ্ন/কোণ থেকে — একই প্রশ্ন repeat করা যাবে না)। ${basePrompt}\n` +
+                `প্রশ্ন/অপশন/ব্যাখ্যা অবশ্যই বাংলা ভাষায় ও বাংলা লিপিতে লিখতে হবে। ` +
+                `শুধু ঠিক ${need}টি প্রশ্নের valid JSON array রিটার্ন করো, markdown/preamble ছাড়া। Format:\n${jsonFormat}`;
+            const topUpRaw = await mbCallAiApi('', pageImageData, topUpSys, mbTopUpTries % 2 === 0, false); // alternate Gemini/Groq
+            const topUpParsed = mbParseAiJson(topUpRaw);
+            const topUpValid = (topUpParsed || []).filter(mbIsValidMcqBulk);
+            if (topUpValid.length) {
+                const existingQ = new Set(parsed.map(m => (m.question||'').trim()));
+                for (const m of topUpValid) {
+                    if (!existingQ.has((m.question||'').trim())) { parsed.push(m); existingQ.add((m.question||'').trim()); }
+                }
+            }
+        } catch (_) { /* এই round ব্যর্থ হলে পরের round-এ আবার চেষ্টা হবে */ }
+    }
     if (parsed.length > count.max) parsed = parsed.slice(0, count.max);
     if (parsed.length < count.min) {
-        console.warn(`Page ${pageNum}: চাহিদা ছিল ${count.label}, AI দিয়েছে ${parsed.length}টি`);
+        console.warn(`Page ${pageNum}: চাহিদা ছিল ${count.label}, AI দিয়েছে ${parsed.length}টি (${mbTopUpTries} বার top-up চেষ্টার পরেও)`);
         if (typeof mbToast === 'function') {
             mbToast(`⚠️ পেইজ ${pageNum}: ${count.label} চেয়েছিলেন, AI ${parsed.length}টি দিতে পেরেছে`, 'info', 6000);
         }
