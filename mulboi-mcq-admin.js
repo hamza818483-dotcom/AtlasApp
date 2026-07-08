@@ -170,6 +170,10 @@ function mbPermanentRules(count) {
     }
     return (
         `\n\nবাধ্যতামূলক নিয়ম (এগুলো সবসময় মেনে চলতে হবে, কোনো ব্যতিক্রম নয়):\n` +
+        `০. ভাষা নিয়ে কঠোর নিয়ম: পেইজের কনটেন্ট যে ভাষায় লেখা (এখানে বাংলা), প্রশ্ন/অপশন/উত্তর/ব্যাখ্যা — সবকিছু ` +
+        `অবশ্যই ঠিক সেই একই ভাষায় (বাংলা) লিখতে হবে। হিন্দি, ইংরেজি, বা অন্য কোনো ভাষায় কখনোই লেখা যাবে না, ` +
+        `এমনকি পেইজের কোনো অংশ অন্য ভাষায় থাকলেও (যেমন সংস্কৃত শ্লোক/উদ্ধৃতি) প্রশ্ন-উত্তর-ব্যাখ্যা বাংলাতেই লিখতে হবে। ` +
+        `এই নিয়ম অন্য সব নিয়মের চেয়ে অগ্রাধিকার পাবে।\n` +
         `১. গাণিতিক বা রাসায়নিক রাশি/সূত্র লেখার সময় সঠিকভাবে সাব-স্ক্রিপ্ট ও সুপার-স্ক্রিপ্ট ব্যবহার করো — ` +
         `যেমন x² (x^2 না), H₂O (H2O না), CO₂, x₁+x₂, a^n, এই ধরনের ইউনিকোড সাব/সুপারস্ক্রিপ্ট ক্যারেক্টার ব্যবহার করবে, ` +
         `সাধারণ সংখ্যা/অক্ষর দিয়ে লিখবে না।\n` +
@@ -1002,7 +1006,13 @@ function mbOpenMcqPanel(pdfId, pdfTitle, pdfUrl) {
     // দিয়ে শুধু count summary cache হয় (questions_json ছাড়া), quota-safe ও দ্রুত।
     try {
         const cached = JSON.parse(localStorage.getItem('atlasMbPillCache_' + pdfId) || 'null');
-        if (cached && cached.counts) {
+        // bug fix (root cause of "pill shudhu incognito-te thik dekhay"): আগে cache-এর কোনো
+        // expiry ছিল না — একবার লেখা হলে চিরকাল থেকে যেত, normal browser-এ পুরনো/স্ট্যাল
+        // count নিয়ে pill আটকে থাকত (fresh fetch পরে এলেও প্রথম impression ভুল দেখাত বা
+        // fetch slow/fail হলে স্ট্যাল ডেটাই রয়ে যেত)। Incognito-তে localStorage খালি থাকায়
+        // সমস্যা দেখা যেত না। এখন ৫ মিনিটের বেশি পুরনো cache আপনা-আপনি বাতিল হয়ে যাবে।
+        const isFresh = cached && cached.ts && (Date.now() - cached.ts) < 5 * 60 * 1000;
+        if (cached && cached.counts && isFresh) {
             mbRealDataLoaded = false;
             mbAllPageDataAllTypes = cached.counts.map(r => ({
                 page_number: r.page_number,
