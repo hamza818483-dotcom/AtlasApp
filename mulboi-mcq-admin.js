@@ -3058,28 +3058,47 @@ function mbUpdateRangeSummary() {
     }
 }
 
-// মূল Generate বাটন — এখন single/range/all সবই একই persistent bulk-job pipeline দিয়ে চলে,
-// তাই refresh/page ছেড়ে গেলেও mbResumeBulkJob() ধরে নিয়ে কাজ শেষ পর্যন্ত চালিয়ে যাবে —
-// আগে single-page mbAiGenerate() সরাসরি কল হতো যা কোনো job সেভ করত না, ফলে মাঝপথে
-// refresh/tab বন্ধ হলে generation চিরতরে হারিয়ে যেত।
+// মূল Generate বাটন — single page হলে সরাসরি ওই একটা পেইজেই কাজ করে (bulk job/localStorage
+// touch করে না), range/all হলে persistent bulk-job pipeline ব্যবহার করে (refresh-safe)।
 function mbGenerateClick() {
     if (mbGenMode === 'single') { mbStartSinglePageJob(); return; }
     mbStartBulkGenerate();
 }
 
-function mbStartSinglePageJob() {
-    const pageNum = mbCurrentPage;
-    const countRaw = (document.getElementById('mbAiCount').value || '10').trim();
-    const type = mbAiTypeKey;
-    const job = {
-        pdfId: mbPdfId, from: pageNum, to: pageNum, countRaw, type,
-        currentPage: pageNum, done: false, stopped: false,
-        startedAt: Date.now(), totalPages: 1, completedCount: 0
-    };
-    localStorage.setItem(MB_BULK_KEY, JSON.stringify(job));
-    mbBulkRunning = true;
-    mbRunBulkJob(job);
+// Single-page generate — সম্পূর্ণ standalone, bulk job/localStorage/mbBulkRunning এর সাথে
+// কোনো সম্পর্ক নেই। শুধু বর্তমান পেইজে mbGenerateForPage কল করে সরাসরি রেজাল্ট দেখায়।
+async function mbStartSinglePageJob() {
+    const pageNum   = mbCurrentPage;
+    const countRaw  = (document.getElementById('mbAiCount').value || '10').trim();
+    const type      = mbAiTypeKey;
+    const spinner   = document.getElementById('mbAiSpinner');
+    const genBtn    = document.getElementById('mbAiGenBtn');
+    const resultEl  = document.getElementById('mbAiResult');
+
+    if (spinner)  spinner.style.display  = 'block';
+    if (genBtn)   genBtn.style.display   = 'none';
+    if (resultEl) resultEl.style.display = 'none';
+    mbSetAiProgress(5, 'পেইজ প্রস্তুত হচ্ছে...');
+    mbStartAiProgressTicker(20, 90, 'AI ভাবছে ও প্রশ্ন বানাচ্ছে...');
+
+    try {
+        const generatedCount = await mbGenerateForPage(pageNum, countRaw, type);
+        mbStopAiProgressTicker();
+        mbSetAiProgress(100, 'সম্পন্ন!');
+        mbToast(`✓ পেইজ ${pageNum}: ${generatedCount}টি MCQ তৈরি ও সংরক্ষিত হয়েছে`, 'success');
+        if (pageNum === mbCurrentPage) { mbRenderPageMcqList(); mbUpdatePageCount(); }
+        mbRenderPageSummary();
+        mbSwitchTab('all');
+    } catch (e) {
+        mbStopAiProgressTicker();
+        console.error('Single-page generate failed:', e);
+        mbToast('❌ ' + (e && e.message || 'MCQ generate ব্যর্থ হয়েছে'), 'error', 10000);
+    } finally {
+        if (spinner)  spinner.style.display  = 'none';
+        if (genBtn)   genBtn.style.display   = '';
+    }
 }
+
 
 function mbStartBulkGenerate() {
     const totalPages = mbPdfDoc.numPages || 1;
