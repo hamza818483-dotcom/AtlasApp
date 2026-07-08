@@ -2488,6 +2488,7 @@ async function mbAiGenerate() {
             `প্রতিটিতে চারটি বিকল্প (option_k, option_kh, option_g, option_gh) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে।`
         )) + mbPermanentRules(count) + MB_EXP_BOX_RULE;        let rawJson;
         let geminiAlreadyTried = false;
+        const mbAiDebugErrs = [];
 
         // Step 1 (preferred, page-accurate): render ONLY the selected page as an image and
         // send that — this guarantees the AI sees exactly page mbCurrentPage and cannot drift
@@ -2502,7 +2503,7 @@ async function mbAiGenerate() {
                     `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}`;
                 rawJson = await mbCallAiApi('', pageImageData, sysPrompt, false);
                 geminiAlreadyTried = true;
-            } catch (_) { /* fall through to whole-PDF approach below */ }
+            } catch (e1) { mbAiDebugErrs.push('step1: ' + (e1 && e1.message || e1)); /* fall through to whole-PDF approach below */ }
         }
 
         // Step 2 (fallback): whole-PDF direct-to-Gemini — only used if page-image path failed
@@ -2519,7 +2520,8 @@ async function mbAiGenerate() {
                 geminiAlreadyTried = true;
                 const data = await res.json().catch(() => null);
                 if (res.ok && data?.success && data.answer) rawJson = data.answer;
-            } catch (_) { /* fall through to legacy text approach below */ }
+                else if (!rawJson) mbAiDebugErrs.push('step2: ' + (data?.error || ('http ' + res.status)));
+            } catch (e2) { mbAiDebugErrs.push('step2: ' + (e2 && e2.message || e2)); /* fall through to legacy text approach below */ }
         }
 
         // Step 3 (last resort): text-extraction approach
@@ -2532,9 +2534,15 @@ async function mbAiGenerate() {
                 const prompt = `নিচের টেক্সট (পেইজ ${mbCurrentPage} থেকে নেওয়া) থেকে ${basePrompt}\n` +
                     `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}\n\n` +
                     `টেক্সট:\n${pageText.slice(0, 4000)}`;
-                rawJson = await mbCallAiApi(prompt, null, null, geminiAlreadyTried);
+                try {
+                    rawJson = await mbCallAiApi(prompt, null, null, geminiAlreadyTried);
+                } catch (e3) { mbAiDebugErrs.push('step3: ' + (e3 && e3.message || e3)); }
             } else {
-                mbToast('পেইজের ছবি তৈরি করা যায়নি, আবার চেষ্টা করুন', 'error');
+                mbAiDebugErrs.push('step3: pageText too short (' + (pageText ? pageText.length : 0) + ' chars)');
+            }
+            if (!rawJson) {
+                mbToast('AI ব্যর্থ: ' + (mbAiDebugErrs.join(' | ') || 'অজানা কারণ'), 'error');
+                console.error('mbAiGenerate debug errors:', mbAiDebugErrs);
                 return;
             }
         }
@@ -2559,7 +2567,8 @@ async function mbAiGenerate() {
         }
 
         if (!parsed || !parsed.length) {
-            mbToast('AI সঠিক JSON দেয়নি। পুনরায় চেষ্টা করুন।', 'error');
+            mbToast('AI সঠিক JSON দেয়নি। raw: ' + (rawJson ? rawJson.slice(0,120) : '(খালি)'), 'error');
+            console.error('mbAiGenerate raw AI output (unparseable):', rawJson);
             return;
         }
 
@@ -2611,7 +2620,8 @@ async function mbAiGenerate() {
             if (fallbackParsed.length) validParsed = fallbackParsed;
         }
         if (!validParsed.length) {
-            mbToast('AI সম্পূর্ণ/সঠিক MCQ দিতে পারেনি। আবার চেষ্টা করুন।', 'error');
+            mbToast('AI সম্পূর্ণ/সঠিক MCQ দিতে পারেনি। sample: ' + JSON.stringify((parsed||[])[0]||{}).slice(0,150), 'error');
+            console.error('mbAiGenerate all items failed validation. parsed:', parsed);
             return;
         }
         parsed = validParsed;
