@@ -3408,7 +3408,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
                 const reformatSys = `নিচে একটা HSC শিক্ষামূলক কনটেন্ট (প্রশ্নোত্তর/টেক্সট আকারে) দেওয়া আছে। এটা থেকে ${basePromptA}\n` +
                     `শুধু valid JSON array রিটার্ন করো। কোনো markdown code fence, preamble, বা extra text দিও না। Format:\n${jsonFormat}`;
                 const reformatPrompt = `কনটেন্ট:\n${rawJson.slice(0, 4000)}`;
-                const reformatRaw = await mbCallAiApi(reformatPrompt, null, reformatSys, false, false);
+                const reformatRaw = await mbCallAiApi(reformatPrompt, null, reformatSys, false, false); // skipGemini=false but worker tries Groq first anyway (Groq→Gemini→OpenRouter chain)
                 parsed = mbParseAiJson(reformatRaw);
             } catch (_) {}
         }
@@ -3416,7 +3416,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
             try {
                 const strictSys = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePromptA}\n` +
                     `শুধু valid JSON array রিটার্ন করো। কোনো markdown code fence, preamble, বা extra text দিও না। Format:\n${jsonFormat}`;
-                const retryRaw = await mbCallAiApi('', pageImageData, strictSys, false, false); // skipGemini=false — Gemini বেশি JSON-compliant
+                const retryRaw = await mbCallAiApi('', pageImageData, strictSys, false, false); // skipGemini=false — worker chain already tries Groq (all keys) first, then Gemini
                 parsed = mbParseAiJson(retryRaw);
             } catch (_) {}
         }
@@ -3512,7 +3512,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
                 `আরও ঠিক ${need}টি নতুন MCQ বানাও (আগে যা বানানো হয়েছে তার থেকে সম্পূর্ণ ভিন্ন প্রশ্ন/কোণ থেকে — একই প্রশ্ন repeat করা যাবে না)। ${basePrompt}\n` +
                 `প্রশ্ন/অপশন/ব্যাখ্যা অবশ্যই বাংলা ভাষায় ও বাংলা লিপিতে লিখতে হবে। ` +
                 `শুধু ঠিক ${need}টি প্রশ্নের valid JSON array রিটার্ন করো, markdown/preamble ছাড়া। Format:\n${jsonFormat}`;
-            const topUpRaw = await mbCallAiApi('', pageImageData, topUpSys, mbTopUpTries % 2 === 0, false); // alternate Gemini/Groq
+            const topUpRaw = await mbCallAiApi('', pageImageData, topUpSys, false, false); // skipGemini=false, skipGroq=false — worker chain: Groq(all keys)→Gemini→OpenRouter, sequentially per call
             const topUpParsed = mbParseAiJson(topUpRaw);
             const topUpValid = (topUpParsed || []).filter(mbIsValidMcqBulk);
             if (topUpValid.length) {
