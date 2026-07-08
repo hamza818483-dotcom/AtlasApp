@@ -2660,6 +2660,14 @@ async function mbAiGenerate() {
         if (pageImageData) {
             const sysPrompt = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePrompt}\n` +
                 `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}`;
+            // bug fix (root cause of "মোবাইল নেটওয়ার্ক ড্রপ → পুরো generate হারিয়ে যায়"):
+            // আগে single-page generate-এ শুধু client-side call ছিল, bulk mode-এর মতো
+            // server-side backup job ছিল না। ফলে ফোনের কানেকশন সাময়িকভাবে ড্রপ করলে পুরো
+            // request-ই হারিয়ে যেত, কোনো fallback ছিল না। এখন bulk mode-এর মতোই একটা backup
+            // job worker-এ পাঠানো হচ্ছে (fire-and-forget) — client-side flow সফল হলে এটা
+            // অব্যবহৃত থেকে যাবে, ব্যর্থ হলে পরের বার panel খুললে mbCheckAndConsumePendingJobs()
+            // এটা তুলে নিয়ে সেভ করবে।
+            mbSubmitBackgroundJob(mbCurrentPage, type, count, sysPrompt, jsonFormat, pageImageData).catch(() => {});
             try {
                 rawJson = await mbCallAiApi('', pageImageData, sysPrompt, false);
                 geminiAlreadyTried = true;
