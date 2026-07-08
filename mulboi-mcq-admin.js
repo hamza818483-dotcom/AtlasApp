@@ -170,9 +170,11 @@ function mbPermanentRules(count) {
     }
     return (
         `\n\nবাধ্যতামূলক নিয়ম (এগুলো সবসময় মেনে চলতে হবে, কোনো ব্যতিক্রম নয়):\n` +
-        `০. ভাষা নিয়ে কঠোর নিয়ম: পেইজের কনটেন্ট যে ভাষায় লেখা (এখানে বাংলা), প্রশ্ন/অপশন/উত্তর/ব্যাখ্যা — সবকিছু ` +
-        `অবশ্যই ঠিক সেই একই ভাষায় (বাংলা) লিখতে হবে। হিন্দি, ইংরেজি, বা অন্য কোনো ভাষায় কখনোই লেখা যাবে না, ` +
-        `এমনকি পেইজের কোনো অংশ অন্য ভাষায় থাকলেও (যেমন সংস্কৃত শ্লোক/উদ্ধৃতি) প্রশ্ন-উত্তর-ব্যাখ্যা বাংলাতেই লিখতে হবে। ` +
+        `০. ভাষা ও লিপি (script) নিয়ে কঠোর নিয়ম: পেইজের কনটেন্ট যে ভাষায় লেখা (এখানে বাংলা), প্রশ্ন/অপশন/উত্তর/ব্যাখ্যা — ` +
+        `সবকিছু অবশ্যই ঠিক সেই ভাষায় এবং ঠিক বাংলা লিপিতে (বাংলা অক্ষর/হরফ ব্যবহার করে, যেমন: অ আ ই উ ক খ গ ঘ) লিখতে হবে। ` +
+        `কখনোই দেবনাগরী/হিন্দি লিপি (जैसे: क ख ग घ, या हिंदी अक्षर) ব্যবহার করা যাবে না, এমনকি বাংলা শব্দ/উচ্চারণ হলেও দেবনাগরী ` +
+        `হরফে লেখা সম্পূর্ণ নিষিদ্ধ। ইংরেজি হরফও ব্যবহার করা যাবে না। প্রতিটি অক্ষর/বর্ণ অবশ্যই বাংলা ইউনিকোড ব্লকের হতে হবে। ` +
+        `এমনকি পেইজের কোনো অংশ অন্য ভাষায়/লিপিতে থাকলেও প্রশ্ন-উত্তর-ব্যাখ্যা সবসময় বাংলা ভাষা ও বাংলা লিপিতেই লিখতে হবে। ` +
         `এই নিয়ম অন্য সব নিয়মের চেয়ে অগ্রাধিকার পাবে।\n` +
         `১. গাণিতিক বা রাসায়নিক রাশি/সূত্র লেখার সময় সঠিকভাবে সাব-স্ক্রিপ্ট ও সুপার-স্ক্রিপ্ট ব্যবহার করো — ` +
         `যেমন x² (x^2 না), H₂O (H2O না), CO₂, x₁+x₂, a^n, এই ধরনের ইউনিকোড সাব/সুপারস্ক্রিপ্ট ক্যারেক্টার ব্যবহার করবে, ` +
@@ -2527,9 +2529,13 @@ async function mbAiGenerate() {
         // explanation হিসেবে বসে যেত। এখন প্রতিটা MCQ কে কঠোরভাবে validate করে অসম্পূর্ণ
         // item বাদ দেওয়া হয়, এবং valid count প্রয়োজনের চেয়ে কম হলে আরেকবার retry করা হয়।
         function mbIsValidMcq(m) {
+            const hasDevanagari = (s) => typeof s === 'string' && /[\u0900-\u097F]/.test(s);
             return m && typeof m.question === 'string' && m.question.trim().length > 3 &&
                 ['option_k','option_kh','option_g','option_gh'].every(k => typeof m[k] === 'string' && m[k].trim().length > 0) &&
-                ['k','kh','g','gh'].includes(m.correct);
+                ['k','kh','g','gh'].includes(m.correct) &&
+                !hasDevanagari(m.question) &&
+                !['option_k','option_kh','option_g','option_gh'].some(k => hasDevanagari(m[k])) &&
+                !hasDevanagari(m.explanation);
         }
         let validParsed = parsed.filter(mbIsValidMcq);
 
@@ -3225,10 +3231,18 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
 
     // bug fix: bulk-mode এও একই কারণে question/option ভ্যানিশ হয়ে যেত (single-page fix,
     // এখানে duplicate করা হলো) — প্রতিটা MCQ validate করে অসম্পূর্ণ item বাদ, প্রয়োজনে retry।
+    // bug fix (root cause of "বাংলা content-এ হিন্দি/দেবনাগরী লিপিতে MCQ আসা"): আগে script
+    // চেক না থাকায় AI দেবনাগরী হরফে (हिंदी) লিখলেও সেটা "valid" ধরে নিত। এখন question টেক্সটে
+    // দেবনাগরী ইউনিকোড ব্লক (\u0900-\u097F) থাকলে সেটাকে invalid ধরে বাদ দেওয়া হয়, যাতে
+    // নিচের strict retry ট্রিগার হয়ে সঠিক বাংলা লিপিতে আবার generate হয়।
     function mbIsValidMcqBulk(m) {
+        const hasDevanagari = (s) => typeof s === 'string' && /[\u0900-\u097F]/.test(s);
         return m && typeof m.question === 'string' && m.question.trim().length > 3 &&
             ['option_k','option_kh','option_g','option_gh'].every(k => typeof m[k] === 'string' && m[k].trim().length > 0) &&
-            ['k','kh','g','gh'].includes(m.correct);
+            ['k','kh','g','gh'].includes(m.correct) &&
+            !hasDevanagari(m.question) &&
+            !['option_k','option_kh','option_g','option_gh'].some(k => hasDevanagari(m[k])) &&
+            !hasDevanagari(m.explanation);
     }
     let validParsed = parsed.filter(mbIsValidMcqBulk);
     if (validParsed.length < count.min) {
