@@ -980,6 +980,7 @@ async function ensureMcqJobTable(db) {
         page_image_r2_key TEXT,
         page_image_mime TEXT,
         result_json TEXT,
+        topup_tries INTEGER NOT NULL DEFAULT 0,
         error TEXT,
         attempts INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -1071,13 +1072,54 @@ async function handleMcqJobStatus(url, env) {
     return jsonResponse({ success: false, error: "jobId বা pdfId প্রয়োজন" }, 400);
 }
 
+// client-side mbParseAiJson-এর একটা lightweight port — worker-এও একই robust bracket-extraction
+// লজিক দরকার, কারণ AI মাঝেমধ্যে markdown code-fence বা prose-সহ জবাব দেয়।
+function workerParseAiJson(raw) {
+    if (!raw) return null;
+    let cleaned = raw.split("```").length > 1
+        ? raw.split("```").filter((_, i) => i % 2 === 1).join("\n") || raw
+        : raw;
+    const tryParse = (s) => {
+        if (!s) return null;
+        try { return JSON.parse(s); } catch (_) {}
+        try { return JSON.parse(s.replace(/,\s*([\]}])/g, "$1")); } catch (_) {}
+        return null;
+    };
+    const extractBalanced = (s, openCh, closeCh) => {
+        const start = s.indexOf(openCh);
+        if (start === -1) return null;
+        let depth = 0;
+        for (let i = start; i < s.length; i++) {
+            if (s[i] === openCh) depth++;
+            else if (s[i] === closeCh) { depth--; if (depth === 0) return s.slice(start, i + 1); }
+        }
+        return null;
+    };
+    let candidate = extractBalanced(cleaned, "[", "]");
+    let parsed = tryParse(candidate);
+    if (parsed) return Array.isArray(parsed) ? parsed : [parsed];
+    candidate = extractBalanced(cleaned, "{", "}");
+    parsed = tryParse(candidate);
+    if (parsed) return [parsed];
+    return null;
+}
+
 // cron দিয়ে প্রতি মিনিটে pending job গুলো process করা হয় — batch ছোট রাখা হয়েছে
 // (একবারে ৩টা) যাতে Worker-এর CPU-time limit-এ না আটকায়।
+// bug fix (STRICT count enforcement — client-side এর মতো): আগে প্রতি job-এ মাত্র ১ বার AI
+// call হতো এবং যা পাওয়া যেত তাই সরাসরি 'done' মার্ক হয়ে যেত, count কম হলেও accept হয়ে
+// যেত। এখন client-side এর মতোই — result_json-এ ইতিমধ্যে জমা হওয়া MCQ কে count_min এর
+// সাথে তুলনা করে, কম থাকলে job আবার 'pending' রাখা হয় (এই cron round-এই না, পরের cron
+// round-এ) এবং accumulated_json কলামে progress জমতে থাকে, যতক্ষণ না count_min মেটে বা
+// safety ceiling (attempts < 6 আগে থেকেই আছে, বাড়িয়ে top-up এর জন্য আলাদা কলাম রাখা হলো)।
 async function processPendingMcqJobs(env) {
     const db = env.MULBOI_DB;
     if (!db) return;
     await ensureMcqJobTable(db);
-    const pending = await db.prepare(`SELECT * FROM mcq_gen_jobs WHERE status = 'pending' AND attempts < 6 ORDER BY created_at ASC LIMIT 3`).all();
+    try { await db.prepare(`ALTER TABLE mcq_gen_jobs ADD COLUMN topup_tries INTEGER NOT NULL DEFAULT 0`).run(); } catch (_) {}
+    const MB_JOB_TOPUP_CEILING = 25; // client-side এর safety ceiling-এর সাথে সামঞ্জস্যপূর্ণ
+
+    const pending = await db.prepare(`SELECT * FROM mcq_gen_jobs WHERE status = 'pending' AND attempts < 8 ORDER BY created_at ASC LIMIT 3`).all();
     const rows = pending.results || [];
     for (const job of rows) {
         await db.prepare(`UPDATE mcq_gen_jobs SET status='processing', attempts=attempts+1, updated_at=? WHERE id=?`).bind(new Date().toISOString(), job.id).run();
@@ -1094,13 +1136,23 @@ async function processPendingMcqJobs(env) {
                     image = { base64: btoa(chunks.join("")), mimeType: job.page_image_mime || 'image/jpeg' };
                 }
             }
-            // client-এর মতোই একই provider chain (Groq প্রথমে, সব key শেষ হলে Gemini, তারপর বাকিরা)
+
+            // এই round-এ ইতিমধ্যে জমে থাকা MCQ (আগের round থেকে, থাকলে)
+            let accumulated = [];
+            if (job.result_json) {
+                try { accumulated = JSON.parse(job.result_json) || []; } catch (_) { accumulated = []; }
+            }
+            const need = Math.max(1, job.count_min - accumulated.length);
+            const roundPrompt = accumulated.length
+                ? `${job.system_prompt}\n\nএখন আরও ঠিক ${need}টি নতুন MCQ বানাও (আগে যা বানানো হয়েছে তার থেকে সম্পূর্ণ ভিন্ন প্রশ্ন — একই প্রশ্ন repeat করা যাবে না)।`
+                : job.system_prompt;
+
             const providers = [
-                () => callGroq(env, '', job.system_prompt, image),
-                () => callGemini(env, '', job.system_prompt, image),
-                () => callOpenRouter(env, '', job.system_prompt, image),
-                () => callCerebras(env, '', job.system_prompt, image),
-                () => callCloudflareAI(env, '', job.system_prompt, image),
+                () => callGroq(env, '', roundPrompt, image),
+                () => callGemini(env, '', roundPrompt, image),
+                () => callOpenRouter(env, '', roundPrompt, image),
+                () => callCerebras(env, '', roundPrompt, image),
+                () => callCloudflareAI(env, '', roundPrompt, image),
             ];
             let answer = null, lastErr = 'সব provider ব্যর্থ';
             for (const p of providers) {
@@ -1111,16 +1163,43 @@ async function processPendingMcqJobs(env) {
                 } catch (e) { lastErr = String(e?.message || e); }
             }
             if (!answer) throw new Error(lastErr);
-            await db.prepare(`UPDATE mcq_gen_jobs SET status='done', result_json=?, updated_at=? WHERE id=?`)
-                .bind(answer, new Date().toISOString(), job.id).run();
-            // job সফল হয়ে গেলে R2-এর ছবি আর দরকার নেই — storage বাঁচাতে ডিলিট করে দাও
-            if (job.page_image_r2_key && env.PDF_BUCKET) {
-                try { await env.PDF_BUCKET.delete(job.page_image_r2_key); } catch (_) {}
+
+            const parsedNew = workerParseAiJson(answer) || [];
+            const existingQ = new Set(accumulated.map(m => (m.question || '').trim()));
+            for (const m of parsedNew) {
+                if (m && typeof m.question === 'string' && !existingQ.has(m.question.trim())) {
+                    accumulated.push(m);
+                    existingQ.add(m.question.trim());
+                }
+            }
+            const trimmed = accumulated.length > job.count_max ? accumulated.slice(0, job.count_max) : accumulated;
+            const nextTopupTries = (job.topup_tries || 0) + 1;
+
+            if (trimmed.length >= job.count_min) {
+                // target count মিলে গেছে — job সম্পূর্ণ 'done'
+                await db.prepare(`UPDATE mcq_gen_jobs SET status='done', result_json=?, updated_at=? WHERE id=?`)
+                    .bind(JSON.stringify(trimmed), new Date().toISOString(), job.id).run();
+                if (job.page_image_r2_key && env.PDF_BUCKET) {
+                    try { await env.PDF_BUCKET.delete(job.page_image_r2_key); } catch (_) {}
+                }
+            } else if (nextTopupTries >= MB_JOB_TOPUP_CEILING) {
+                // safety ceiling-এও না মিললে (বিরল — পেইজে যথেষ্ট কনটেন্ট নেই), যা জমেছে
+                // তাই দিয়েই 'done' মার্ক করা হয় (silent hang-এর চেয়ে partial deliver ভালো,
+                // client পরে ইউজারকে toast দিয়ে জানাতে পারবে)
+                await db.prepare(`UPDATE mcq_gen_jobs SET status='done', result_json=?, topup_tries=?, updated_at=? WHERE id=?`)
+                    .bind(JSON.stringify(trimmed), nextTopupTries, new Date().toISOString(), job.id).run();
+                if (job.page_image_r2_key && env.PDF_BUCKET) {
+                    try { await env.PDF_BUCKET.delete(job.page_image_r2_key); } catch (_) {}
+                }
+            } else {
+                // এখনো ঘাটতি আছে — progress জমা রেখে পরের cron round-এর জন্য আবার 'pending'
+                await db.prepare(`UPDATE mcq_gen_jobs SET status='pending', result_json=?, topup_tries=?, updated_at=? WHERE id=?`)
+                    .bind(JSON.stringify(trimmed), nextTopupTries, new Date().toISOString(), job.id).run();
             }
         } catch (e) {
             const errMsg = String(e?.message || e);
-            const permanentlyFailed = job.attempts + 1 >= 6;
-            const nextStatus = permanentlyFailed ? 'error' : 'pending'; // ৬ বার fail করলে permanently error, নাহলে আবার pending (পরের cron round retry করবে)
+            const permanentlyFailed = job.attempts + 1 >= 8;
+            const nextStatus = permanentlyFailed ? 'error' : 'pending';
             await db.prepare(`UPDATE mcq_gen_jobs SET status=?, error=?, updated_at=? WHERE id=?`)
                 .bind(nextStatus, errMsg, new Date().toISOString(), job.id).run();
             if (permanentlyFailed && job.page_image_r2_key && env.PDF_BUCKET) {
