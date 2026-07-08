@@ -3402,10 +3402,16 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     if (!validParsed.length) throw new Error('AI সম্পূর্ণ/সঠিক MCQ দিতে পারেনি sample:' + JSON.stringify((parsed||[])[0]||{}).slice(0,150));
     parsed = validParsed;
 
-    // bug fix (count guarantee জোরদার করা): retry3 এর পরেও যদি সংখ্যা কম থাকে (count.min এর
-    // চেয়ে কম), আরেকবার স্পষ্টভাবে বলা হচ্ছে ঠিক কতগুলো বাকি লাগবে — যাতে ইউজার যে digit
-    // লিখেছেন তার কাছাকাছি সংখ্যা পাওয়ার সম্ভাবনা বাড়ে।
-    if (parsed.length < count.min) {
+    // bug fix (root cause of "10 চাইলেও সবসময় ১টা MCQ বানায়"): আগে top-up মাত্র একবার (single
+    // retry call) হতো — কিন্তু AI প্রায়ই output-token সীমার কারণে প্রতি কলে মাত্র ১টা (বা কয়েকটা)
+    // পূর্ণাঙ্গ MCQ ফেরত দেয় (explanation/exp_box সহ প্রতিটা MCQ ভারী, তাই বেশি চাইলেও এক কলে সব আসে
+    // না, JSON মাঝপথে কেটে যায় আর parser শুধু শেষ পূর্ণ item রাখে) — ফলে একবার top-up করেও 2/10-এই
+    // থেমে যেত। এখন count.min না পৌঁছানো পর্যন্ত (max ৬ রাউন্ড, no-progress হলে থামবে) বারবার
+    // ছোট ছোট ব্যাচে (প্রতিবারে যতটুকু বাকি, ততটুকুই) চাওয়া হচ্ছে যতক্ষণ না পুরো সংখ্যা পূর্ণ হয়।
+    let topUpRounds = 0;
+    while (parsed.length < count.min && topUpRounds < 6) {
+        topUpRounds++;
+        const beforeLen = parsed.length;
         try {
             const stillNeed = count.min - parsed.length;
             const strictSys4 = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ` +
@@ -3417,6 +3423,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
             const valid4 = (parsed4 || []).filter(mbIsValidMcqBulk);
             if (valid4.length) parsed = [...parsed, ...valid4];
         } catch (_) {}
+        if (parsed.length === beforeLen) break; // no progress এই রাউন্ডে — আর চেষ্টা না করে থেমে যাওয়া ভালো
     }
 
     // Count must-follow: AI যদি চাহিদার চেয়ে কম প্রশ্ন দেয়, এক্সট্রা দিলে সংখ্যা কেটে দেওয়া হয়,
