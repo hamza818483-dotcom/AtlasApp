@@ -3310,7 +3310,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     try {
         const sysPrompt = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePromptA}\n` +
             `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}`;
-        rawJson = await mbCallAiApi('', pageImageData, sysPrompt, false);
+        rawJson = await mbCallAiApi('', pageImageData, sysPrompt, true);
         geminiAlreadyTried = true;
     } catch (e1) { mbAiDebugErrs.push('s1:' + (e1 && e1.message || e1)); /* fall through */ }
 
@@ -3353,7 +3353,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
         try {
             const strictSys = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePromptA}\n` +
                 `শুধু valid JSON array রিটার্ন করো। কোনো markdown code fence, preamble, বা extra text দিও না। Format:\n${jsonFormat}`;
-            const retryRaw = await mbCallAiApi('', pageImageData, strictSys, false, true); // skipGroq=true — retry-তে ডুপ্লিকেট Groq call এড়াতে
+            const retryRaw = await mbCallAiApi('', pageImageData, strictSys, true, false); // skipGemini=true — Groq-এ রাখার জন্য
             parsed = mbParseAiJson(retryRaw);
         } catch (_) {}
     }
@@ -3389,7 +3389,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
                 `বাংলা ভাষায় এবং বাংলা লিপিতে (বাংলা হরফ ব্যবহার করে) লিখতে হবে, দেবনাগরী/হিন্দি হরফ (जैसे क ख ग) বা ইংরেজি হরফ ` +
                 `একদমই ব্যবহার করা যাবে না — আগের বারের উত্তরে এই ভুলটা হয়ে থাকলে এবার অবশ্যই ঠিক করে বাংলা হরফে দিতে হবে। ` +
                 `শুধু valid, সম্পূর্ণ JSON array রিটার্ন করো, markdown/preamble ছাড়া। Format:\n${jsonFormat}`;
-            const retryRaw3 = await mbCallAiApi('', pageImageData, strictSys3, false, true);
+            const retryRaw3 = await mbCallAiApi('', pageImageData, strictSys3, true, false);
             const parsed3 = mbParseAiJson(retryRaw3);
             const valid3 = (parsed3 || []).filter(mbIsValidMcqBulk);
             if (valid3.length > validParsed.length) validParsed = valid3;
