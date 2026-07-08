@@ -2581,9 +2581,14 @@ async function mbAiGenerate() {
 
         if (validParsed.length < count.min) {
             try {
+                // bug fix: retry prompt এ ভাষা/script নিয়ম আলাদাভাবে পুনরায় জোর দিয়ে বলা হচ্ছে
+                // (bulk-mode এর একই fix, দেখুন mbGenerateForPage-এ strictSys3)।
                 const strictSys2 = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePrompt}\n` +
                     `আগের বার প্রতিটা প্রশ্নে question/option_k/option_kh/option_g/option_gh/correct — সবগুলো ফিল্ড সম্পূর্ণভাবে দিতে হবে, ` +
-                    `কোনো ফিল্ড ফাঁকা/অসম্পূর্ণ রাখা যাবে না। শুধু valid, সম্পূর্ণ JSON array রিটার্ন করো, markdown/preamble ছাড়া। Format:\n${jsonFormat}`;
+                    `কোনো ফিল্ড ফাঁকা/অসম্পূর্ণ রাখা যাবে না। এছাড়া অত্যন্ত গুরুত্বপূর্ণ: question/option/explanation — সবকিছু অবশ্যই ` +
+                    `বাংলা ভাষায় এবং বাংলা লিপিতে (বাংলা হরফ ব্যবহার করে) লিখতে হবে, দেবনাগরী/হিন্দি হরফ বা ইংরেজি হরফ একদমই ` +
+                    `ব্যবহার করা যাবে না — আগের বারের উত্তরে এই ভুলটা হয়ে থাকলে এবার অবশ্যই ঠিক করে বাংলা হরফে দিতে হবে। ` +
+                    `শুধু valid, সম্পূর্ণ JSON array রিটার্ন করো, markdown/preamble ছাড়া। Format:\n${jsonFormat}`;
                 const retryImg2 = pageImageData || await mbGetPageImageBase64(mbCurrentPage);
                 if (retryImg2) {
                     const retryRaw2 = await mbCallAiApi('', retryImg2, strictSys2, false, true);
@@ -2594,6 +2599,17 @@ async function mbAiGenerate() {
             } catch (_) {}
         }
 
+        if (!validParsed.length) {
+            // bug fix (last-resort fallback): bulk-mode এর একই fix — script-invalid হলেও
+            // structurally-complete MCQ থাকলে সম্পূর্ণ ব্যর্থ না করে সেভ হতে দেওয়া হচ্ছে।
+            function mbIsStructurallyComplete(m) {
+                return m && typeof m.question === 'string' && m.question.trim().length > 3 &&
+                    ['option_k','option_kh','option_g','option_gh'].every(k => typeof m[k] === 'string' && m[k].trim().length > 0) &&
+                    ['k','kh','g','gh'].includes(m.correct);
+            }
+            const fallbackParsed = (parsed || []).filter(mbIsStructurallyComplete);
+            if (fallbackParsed.length) validParsed = fallbackParsed;
+        }
         if (!validParsed.length) {
             mbToast('AI সম্পূর্ণ/সঠিক MCQ দিতে পারেনি। আবার চেষ্টা করুন।', 'error');
             return;
@@ -3301,14 +3317,39 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     let validParsed = parsed.filter(mbIsValidMcqBulk);
     if (validParsed.length < count.min) {
         try {
+            // bug fix (root cause of "AI সম্পূর্ণ/সঠিক MCQ দিতে পারেনি" always hচ্ছে): আগে এই
+            // strict retry prompt শুধু field-completeness নিয়ে বলত, ভাষা/script নিয়ম আলাদা করে
+            // জোর দিয়ে বলা ছিল না (basePrompt-এ থাকলেও দূরে/আগে থাকায় AI প্রায়ই উপেক্ষা করত) —
+            // ফলে AI বারবার দেবনাগরী লিপিতেই দিত, script-check প্রতিবারই বাদ দিয়ে দিত, এবং শেষে
+            // validParsed=0 হয়ে exception হতো। এখন এই retry prompt-এও স্পষ্টভাবে বাংলা-লিপি
+            // নিয়মটা আলাদাভাবে পুনরায় বলা হচ্ছে যাতে AI সেটা মিস না করে।
             const strictSys3 = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePrompt}\n` +
                 `আগের বার প্রতিটা প্রশ্নে question/option_k/option_kh/option_g/option_gh/correct — সবগুলো ফিল্ড সম্পূর্ণভাবে দিতে হবে, ` +
-                `কোনো ফিল্ড ফাঁকা/অসম্পূর্ণ রাখা যাবে না। শুধু valid, সম্পূর্ণ JSON array রিটার্ন করো, markdown/preamble ছাড়া। Format:\n${jsonFormat}`;
+                `কোনো ফিল্ড ফাঁকা/অসম্পূর্ণ রাখা যাবে না। এছাড়া অত্যন্ত গুরুত্বপূর্ণ: question/option/explanation — সবকিছু অবশ্যই ` +
+                `বাংলা ভাষায় এবং বাংলা লিপিতে (বাংলা হরফ ব্যবহার করে) লিখতে হবে, দেবনাগরী/হিন্দি হরফ (जैसे क ख ग) বা ইংরেজি হরফ ` +
+                `একদমই ব্যবহার করা যাবে না — আগের বারের উত্তরে এই ভুলটা হয়ে থাকলে এবার অবশ্যই ঠিক করে বাংলা হরফে দিতে হবে। ` +
+                `শুধু valid, সম্পূর্ণ JSON array রিটার্ন করো, markdown/preamble ছাড়া। Format:\n${jsonFormat}`;
             const retryRaw3 = await mbCallAiApi('', pageImageData, strictSys3, false, true);
             const parsed3 = mbParseAiJson(retryRaw3);
             const valid3 = (parsed3 || []).filter(mbIsValidMcqBulk);
             if (valid3.length > validParsed.length) validParsed = valid3;
         } catch (_) {}
+    }
+    if (!validParsed.length) {
+        // bug fix (last-resort fallback): সব retry-তেও AI যদি script ঠিক না করে, তাহলে আগে
+        // পুরো generation-ই ব্যর্থ ধরে exception হতো (কোনো MCQ সেভ হতো না)। এখন সম্পূর্ণ
+        // ব্যর্থতার বদলে, অন্তত field-সম্পূর্ণ MCQ থাকলে (script ভুল হলেও) সেভ হয় — ইউজার
+        // পরে ম্যানুয়ালি এডিট করে ঠিক করতে পারবে, একেবারে কিছুই না পাওয়ার চেয়ে ভালো।
+        function mbIsStructurallyComplete(m) {
+            return m && typeof m.question === 'string' && m.question.trim().length > 3 &&
+                ['option_k','option_kh','option_g','option_gh'].every(k => typeof m[k] === 'string' && m[k].trim().length > 0) &&
+                ['k','kh','g','gh'].includes(m.correct);
+        }
+        const fallbackParsed = (parsed || []).filter(mbIsStructurallyComplete);
+        if (fallbackParsed.length) {
+            validParsed = fallbackParsed;
+            console.warn(`Page ${pageNum}: script validation fail korlo, structurally-complete MCQ diye fallback (script bhul thakte pare)`);
+        }
     }
     if (!validParsed.length) throw new Error('AI সম্পূর্ণ/সঠিক MCQ দিতে পারেনি');
     parsed = validParsed;
