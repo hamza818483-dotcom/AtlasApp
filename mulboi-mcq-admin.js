@@ -3571,9 +3571,17 @@ async function mbRunBulkJob(job) {
 async function mbGenerateForPage(pageNum, countRaw, type) {
     if (type === 'special') return await mbGenerateForPageSpecial(pageNum);
 
+    // timing instrumentation: প্রতিটা step-এর actual elapsed time track করে D1-এ log করে —
+    // যাতে "১টা পেইজে ১০টা MCQ বানাতে আসলে কত সময় লাগে" genuine ভাবে জানা যায় (আগে এটা
+    // শুধু code-path analysis দিয়ে অনুমান করা হতো, actual measured data ছিল না)।
+    const mbTimings = {};
+    const mbT0 = Date.now();
+    const mbMark = (label) => { mbTimings[label] = Date.now() - mbT0; };
+
     const count = mbParseCountInput(countRaw);
     const typeLabel = { standard: 'সাধারণ', true_false: 'সত্য/মিথ্যা', hard: 'কঠিন' };
     const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","exp_box":{"x":0,"y":0,"w":0,"h":0},"line_box":{"y":0,"h":0},"type":"${type}"}]`;
+
     const savedP = mbGetSavedPrompt(type);
     const basePrompt = (savedP || (
         `${typeLabel[type]||type} ধরনের ${count.label} MCQ তৈরি করো। ` +
@@ -3622,6 +3630,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
         rawJson = await mbCallAiApi('', pageImageData, sysPrompt, true);
         geminiAlreadyTried = true;
     } catch (e1) { mbAiDebugErrs.push('s1:' + (e1 && e1.message || e1)); /* fall through */ }
+    mbMark('callA');
 
     // Step 2 (fallback): whole-PDF direct-to-Gemini
     if (!rawJson && mbPdfUrl) {
@@ -3639,6 +3648,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
             else mbAiDebugErrs.push('s2:' + (data?.error || ('http' + res.status)));
         } catch (e2) { mbAiDebugErrs.push('s2:' + (e2 && e2.message || e2)); }
     }
+    mbMark('step2');
 
     // Step 3 (last resort): text-extraction
     if (!rawJson) {
@@ -3655,6 +3665,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
             mbAiDebugErrs.push('s3:pageText=' + (pageText ? pageText.length : 0) + 'chars');
         }
     }
+    mbMark('step3');
 
     // Retry once with page-image if still no valid JSON (page-accurate retry, not text-blind)
     let parsed = mbParseAiJson(rawJson);
@@ -3765,6 +3776,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
         const valid4 = (parsed4 || []).filter(mbIsValidMcqBulk);
         if (valid4.length) parsed = [...parsed, ...valid4];
     } catch (_) {}
+    mbMark('callB');
 
     // Count must-follow (STRICT): user যত MCQ চেয়েছে ততটাই বানাতে হবে — ঘাটতি থাকলে যতক্ষণ না
     // count.min মেটে ততক্ষণ top-up চলতে থাকে (unlimited retry, শুধু runaway loop থেকে বাঁচতে
@@ -3790,6 +3802,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
             }
         } catch (_) { /* এই round ব্যর্থ হলে পরের round-এ আবার চেষ্টা হবে */ }
     }
+    mbMark('topUp');
     if (parsed.length > count.max) parsed = parsed.slice(0, count.max);
     if (parsed.length < count.min) {
         // bug fix (user preference: কম MCQ হলেও save হওয়া উচিত): আগে এখানে সব progress ফেলে
@@ -3887,6 +3900,13 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     // প্রতিটা পেইজের জন্য আলাদা CSV ফাইল — ফাইলের নামে page no থাকে, শুধু এই batch-এর
     // নতুন প্রশ্নগুলো (পুরো accumulated history না) — যাতে প্রতি পেইজের জন্য পরিষ্কার আলাদা ফাইল তৈরি হয়।
     await mbSaveMcqsAsCsv(newMcqs, pageNum, type);
+    mbMark('total');
+    // timing log: fire-and-forget, মূল flow-কে প্রভাবিত করবে না — পরবর্তীতে D1-এর
+    // mcq_error_logs টেবিলে context='mbGenerateForPage_timing' filter করে real-world
+    // প্রতিটা step-এর genuine elapsed time (ms) দেখা যাবে।
+    mbLogError('mbGenerateForPage_timing', pageNum, `${newMcqs.length}টি MCQ, ${mbTimings.total}ms`, {
+        requestedLabel: count.label, gotCount: newMcqs.length, timingsMs: mbTimings
+    });
     return newMcqs.length; // bulk progress-এ total MCQ count ট্র্যাক করার জন্য
 }
 
