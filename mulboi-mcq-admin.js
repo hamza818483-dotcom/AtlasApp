@@ -3366,12 +3366,30 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     // Retry once with page-image if still no valid JSON (page-accurate retry, not text-blind)
     let parsed = mbParseAiJson(rawJson);
     if (!parsed || !parsed.length) {
-        try {
-            const strictSys = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePromptA}\n` +
-                `শুধু valid JSON array রিটার্ন করো। কোনো markdown code fence, preamble, বা extra text দিও না। Format:\n${jsonFormat}`;
-            const retryRaw = await mbCallAiApi('', pageImageData, strictSys, true, false); // skipGemini=true — Groq-এ রাখার জন্য
-            parsed = mbParseAiJson(retryRaw);
-        } catch (_) {}
+        // bug fix (root cause of "X AI সঠিক JSON দেয়নি — raw: ## রসায়ন প্রশ্নোত্তর...."): কখনো
+        // কখনো AI নির্দেশ উপেক্ষা করে সরাসরি মার্কডাউন প্রবন্ধ/প্রশ্নোত্তর আকারে জবাব দেয় (কোনো
+        // [ বা { ই থাকে না), ফলে আগের retry-ও একই ভুল করে বারবার। এখন raw text-এ যদি কোনো
+        // JSON bracket-ই না থাকে, তাহলে সেই prose-টাকেই context হিসেবে দিয়ে "এটাকেই নিচের
+        // format-এ JSON-এ রূপান্তর করো" — এমন targeted reformat কল করা হয়, নতুন করে ছবি না
+        // পাঠিয়ে (দ্রুত + বেশি reliable, কারণ AI নিজের আগের আউটপুটই structure করে দিচ্ছে)।
+        const hasBracket = rawJson && /[\[{]/.test(rawJson);
+        if (rawJson && !hasBracket) {
+            try {
+                const reformatSys = `নিচে একটা HSC শিক্ষামূলক কনটেন্ট (প্রশ্নোত্তর/টেক্সট আকারে) দেওয়া আছে। এটা থেকে ${basePromptA}\n` +
+                    `শুধু valid JSON array রিটার্ন করো। কোনো markdown code fence, preamble, বা extra text দিও না। Format:\n${jsonFormat}`;
+                const reformatPrompt = `কনটেন্ট:\n${rawJson.slice(0, 4000)}`;
+                const reformatRaw = await mbCallAiApi(reformatPrompt, null, reformatSys, true, false);
+                parsed = mbParseAiJson(reformatRaw);
+            } catch (_) {}
+        }
+        if (!parsed || !parsed.length) {
+            try {
+                const strictSys = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePromptA}\n` +
+                    `শুধু valid JSON array রিটার্ন করো। কোনো markdown code fence, preamble, বা extra text দিও না। Format:\n${jsonFormat}`;
+                const retryRaw = await mbCallAiApi('', pageImageData, strictSys, true, false); // skipGemini=true — Groq-এ রাখার জন্য
+                parsed = mbParseAiJson(retryRaw);
+            } catch (_) {}
+        }
     }
     if (!parsed || !parsed.length) throw new Error('AI সঠিক JSON দেয়নি [' + mbAiDebugErrs.join('|') + '] raw:' + (rawJson ? rawJson.slice(0,100) : 'empty'));
 
