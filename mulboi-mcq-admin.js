@@ -2197,7 +2197,13 @@ async function mbCropExplanationImage(pageNum, box, lineBox) {
     if (!mbPdfDoc) return null;
     try {
         const page  = await mbPdfDoc.getPage(pageNum);
-        const scale = 2.5; // ভালো readability-র জন্য বেশি রেজোলিউশনে render
+        // bug fix (root cause of "generate fail on pages after heavy usage"): scale=2.5 +
+        // quality=0.85 এ প্রতিটা explanation image বেশ বড় (কয়েকশ KB) হতো, আর একই পেইজে
+        // বারবার generate করলে questions_json row টা ক্রমশ MB-স্কেলে বেড়ে যেত (page 15-এ
+        // ~2MB, page 5-এ ~1.1MB পাওয়া গেছে DB-তে) — এত বড় payload POST করতে গিয়ে
+        // network/worker timeout এ silent/explicit fail হতো, বিশেষ করে দুর্বল/মোবাইল নেটওয়ার্কে।
+        // scale/quality কমিয়ে readability প্রায় অক্ষুণ্ণ রেখে সাইজ উল্লেখযোগ্যভাবে কমানো হলো।
+        const scale = 1.8;
         const vp    = page.getViewport({ scale });
         const full  = document.createElement('canvas');
         full.width  = vp.width;
@@ -2216,7 +2222,7 @@ async function mbCropExplanationImage(pageNum, box, lineBox) {
             cropped.width  = full.width;
             cropped.height = full.height;
             cropped.getContext('2d').drawImage(full, 0, 0);
-            return cropped.toDataURL('image/jpeg', 0.85).split(',')[1];
+            return cropped.toDataURL('image/jpeg', 0.72).split(',')[1];
         }
 
         // ধাপ ১: AI-র অনুমান থেকে একটা generous initial window বানানো — যথেষ্ট চওড়া যাতে
@@ -2384,7 +2390,7 @@ async function mbCropExplanationImage(pageNum, box, lineBox) {
                 cropCtx.strokeRect(0, hlY, full.width, hlH);
             }
         }
-        return cropped.toDataURL('image/jpeg', 0.85).split(',')[1]; // শুধু base64 অংশ ফেরত
+        return cropped.toDataURL('image/jpeg', 0.72).split(',')[1]; // শুধু base64 অংশ ফেরত
     } catch (_) {
         return null;
     }
