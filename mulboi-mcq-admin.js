@@ -3499,12 +3499,12 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
         if (valid4.length) parsed = [...parsed, ...valid4];
     } catch (_) {}
 
-    // Count must-follow: চাহিদার চেয়ে কম হলে silently warning দিয়ে থেমে যাওয়ার বদলে, এখন
-    // ঘাটতি (shortfall) যতক্ষণ না মেটে ততক্ষণ (নিরাপদ cap পর্যন্ত) আরও MCQ চাওয়া হয় —
-    // এটাই root cause fix ছিল "৭টা চাওয়া হলে ৪টা বানায়" সমস্যার: আগে মাত্র ২টা কল + ১টা
-    // retry-এর পরেই থেমে যেত, চাহিদা না মিটলেও।
+    // Count must-follow (STRICT): user যত MCQ চেয়েছে ততটাই বানাতে হবে — ঘাটতি থাকলে যতক্ষণ না
+    // count.min মেটে ততক্ষণ top-up চলতে থাকে (unlimited retry, শুধু runaway loop থেকে বাঁচতে
+    // একটা অনেক বড় safety ceiling — সাধারণ কোনো পেইজে এতবার লাগার কথা না)।
     let mbTopUpTries = 0;
-    while (parsed.length < count.min && mbTopUpTries < 4) {
+    const MB_TOPUP_SAFETY_CEILING = 25;
+    while (parsed.length < count.min && mbTopUpTries < MB_TOPUP_SAFETY_CEILING) {
         mbTopUpTries++;
         const need = count.min - parsed.length;
         try {
@@ -3525,10 +3525,9 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     }
     if (parsed.length > count.max) parsed = parsed.slice(0, count.max);
     if (parsed.length < count.min) {
-        console.warn(`Page ${pageNum}: চাহিদা ছিল ${count.label}, AI দিয়েছে ${parsed.length}টি (${mbTopUpTries} বার top-up চেষ্টার পরেও)`);
-        if (typeof mbToast === 'function') {
-            mbToast(`⚠️ পেইজ ${pageNum}: ${count.label} চেয়েছিলেন, AI ${parsed.length}টি দিতে পেরেছে`, 'info', 6000);
-        }
+        // safety ceiling-এও যদি না মেলে (অত্যন্ত বিরল — পেইজে যথেষ্ট কনটেন্টই নেই এমন কেসে),
+        // silent partial save না করে স্পষ্ট error দেওয়া হয় যাতে ইউজার আবার generate চাপতে পারে।
+        throw new Error(`চাহিদা ছিল ${count.label}, ${MB_TOPUP_SAFETY_CEILING} বার চেষ্টার পরেও AI মাত্র ${parsed.length}টি দিতে পেরেছে — আবার Generate চাপুন`);
     }
 
     const newMcqs = parsed.map(m => ({ id: uid(), ...m, type: m.type || type }));
