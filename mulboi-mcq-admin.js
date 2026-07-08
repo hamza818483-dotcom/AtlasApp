@@ -3285,6 +3285,18 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
         `প্রতিটিতে চারটি বিকল্প (option_k, option_kh, option_g, option_gh) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে।`
     )) + mbPermanentRules(count) + MB_EXP_BOX_RULE;
 
+    // feature (2-call split per image): একটা ভারী single call-এর বদলে টার্গেট সংখ্যাটা দুই কলে
+    // ভাগ করে চাওয়া হয় — প্রতি কলে output ছোট থাকায় AI-এর token-limit এ কাটা পড়ার সম্ভাবনা কমে
+    // (accuracy বাড়ে), সেইসাথে ২য় কলে Gemini স্কিপ করে সরাসরি Groq/OpenRouter ব্যবহার হয় (দ্রুত)।
+    const mbTargetTotal = count.min;
+    const mbCallACount  = Math.max(1, Math.ceil(mbTargetTotal / 2));
+    const mbCallBCount  = Math.max(1, mbTargetTotal - mbCallACount);
+    const mbCountAOverride = { min: mbCallACount, max: mbCallACount, label: `${mbCallACount}টি` };
+    const basePromptA = (savedP || (
+        `${typeLabel[type]||type} ধরনের ${mbCountAOverride.label} MCQ তৈরি করো। ` +
+        `Content যে ভাষায় আছে সেই ভাষায় রাখো। ` +
+        `প্রতিটিতে চারটি বিকল্প (option_k, option_kh, option_g, option_gh) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে।`
+    )) + mbPermanentRules(mbCountAOverride) + MB_EXP_BOX_RULE;
     let rawJson;
     let geminiAlreadyTried = false;
     const mbAiDebugErrs = [];
@@ -3296,7 +3308,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     const pageImageData = { base64: tmp.toDataURL('image/jpeg', 0.85).split(',')[1], mimeType: 'image/jpeg' };
 
     try {
-        const sysPrompt = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePrompt}\n` +
+        const sysPrompt = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePromptA}\n` +
             `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}`;
         rawJson = await mbCallAiApi('', pageImageData, sysPrompt, false);
         geminiAlreadyTried = true;
@@ -3305,7 +3317,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     // Step 2 (fallback): whole-PDF direct-to-Gemini
     if (!rawJson && mbPdfUrl) {
         try {
-            const pdfPrompt = `এই PDF-এর শুধুমাত্র পেইজ ${pageNum} দেখো (অন্য কোনো পেইজ থেকে না) এবং নিচের নির্দেশ অনুসরণ করো:\n${basePrompt}\n\n` +
+            const pdfPrompt = `এই PDF-এর শুধুমাত্র পেইজ ${pageNum} দেখো (অন্য কোনো পেইজ থেকে না) এবং নিচের নির্দেশ অনুসরণ করো:\n${basePromptA}\n\n` +
                 `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}`;
             const res = await fetch(AI_PROXY_URL.replace(/\/$/, '') + '/mcq-from-pdf', {
                 method: 'POST',
@@ -3324,7 +3336,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
         const textCont = await page.getTextContent();
         const pageText = textCont.items.map(i => i.str).join(' ').trim();
         if (pageText && pageText.length >= 30) {
-            const prompt = `নিচের টেক্সট (পেইজ ${pageNum} থেকে নেওয়া) থেকে ${basePrompt}\n` +
+            const prompt = `নিচের টেক্সট (পেইজ ${pageNum} থেকে নেওয়া) থেকে ${basePromptA}\n` +
                 `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}\n\n` +
                 `টেক্সট:\n${pageText.slice(0, 4000)}`;
             try {
@@ -3339,7 +3351,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     let parsed = mbParseAiJson(rawJson);
     if (!parsed || !parsed.length) {
         try {
-            const strictSys = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePrompt}\n` +
+            const strictSys = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePromptA}\n` +
                 `শুধু valid JSON array রিটার্ন করো। কোনো markdown code fence, preamble, বা extra text দিও না। Format:\n${jsonFormat}`;
             const retryRaw = await mbCallAiApi('', pageImageData, strictSys, false, true); // skipGroq=true — retry-তে ডুপ্লিকেট Groq call এড়াতে
             parsed = mbParseAiJson(retryRaw);
@@ -3371,7 +3383,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
             // ফলে AI বারবার দেবনাগরী লিপিতেই দিত, script-check প্রতিবারই বাদ দিয়ে দিত, এবং শেষে
             // validParsed=0 হয়ে exception হতো। এখন এই retry prompt-এও স্পষ্টভাবে বাংলা-লিপি
             // নিয়মটা আলাদাভাবে পুনরায় বলা হচ্ছে যাতে AI সেটা মিস না করে।
-            const strictSys3 = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePrompt}\n` +
+            const strictSys3 = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePromptA}\n` +
                 `আগের বার প্রতিটা প্রশ্নে question/option_k/option_kh/option_g/option_gh/correct — সবগুলো ফিল্ড সম্পূর্ণভাবে দিতে হবে, ` +
                 `কোনো ফিল্ড ফাঁকা/অসম্পূর্ণ রাখা যাবে না। এছাড়া অত্যন্ত গুরুত্বপূর্ণ: question/option/explanation — সবকিছু অবশ্যই ` +
                 `বাংলা ভাষায় এবং বাংলা লিপিতে (বাংলা হরফ ব্যবহার করে) লিখতে হবে, দেবনাগরী/হিন্দি হরফ (जैसे क ख ग) বা ইংরেজি হরফ ` +
@@ -3402,29 +3414,20 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     if (!validParsed.length) throw new Error('AI সম্পূর্ণ/সঠিক MCQ দিতে পারেনি sample:' + JSON.stringify((parsed||[])[0]||{}).slice(0,150));
     parsed = validParsed;
 
-    // bug fix (root cause of "10 চাইলেও সবসময় ১টা MCQ বানায়"): আগে top-up মাত্র একবার (single
-    // retry call) হতো — কিন্তু AI প্রায়ই output-token সীমার কারণে প্রতি কলে মাত্র ১টা (বা কয়েকটা)
-    // পূর্ণাঙ্গ MCQ ফেরত দেয় (explanation/exp_box সহ প্রতিটা MCQ ভারী, তাই বেশি চাইলেও এক কলে সব আসে
-    // না, JSON মাঝপথে কেটে যায় আর parser শুধু শেষ পূর্ণ item রাখে) — ফলে একবার top-up করেও 2/10-এই
-    // থেমে যেত। এখন count.min না পৌঁছানো পর্যন্ত (max ৬ রাউন্ড, no-progress হলে থামবে) বারবার
-    // ছোট ছোট ব্যাচে (প্রতিবারে যতটুকু বাকি, ততটুকুই) চাওয়া হচ্ছে যতক্ষণ না পুরো সংখ্যা পূর্ণ হয়।
-    let topUpRounds = 0;
-    while (parsed.length < count.min && topUpRounds < 6) {
-        topUpRounds++;
-        const beforeLen = parsed.length;
-        try {
-            const stillNeed = count.min - parsed.length;
-            const strictSys4 = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ` +
-                `আরও ${stillNeed}টি নতুন MCQ বানাও (আগে যা বানানো হয়েছে তার থেকে ভিন্ন প্রশ্ন/কোণ থেকে)। ${basePrompt}\n` +
-                `প্রশ্ন/অপশন/ব্যাখ্যা অবশ্যই বাংলা ভাষায় ও বাংলা লিপিতে (বাংলা হরফ ব্যবহার করে) লিখতে হবে, দেবনাগরী/হিন্দি বা ইংরেজি হরফ নয়। ` +
-                `শুধু ঠিক ${stillNeed}টি প্রশ্নের valid JSON array রিটার্ন করো, markdown/preamble ছাড়া। Format:\n${jsonFormat}`;
-            const retryRaw4 = await mbCallAiApi('', pageImageData, strictSys4, false, true);
-            const parsed4 = mbParseAiJson(retryRaw4);
-            const valid4 = (parsed4 || []).filter(mbIsValidMcqBulk);
-            if (valid4.length) parsed = [...parsed, ...valid4];
-        } catch (_) {}
-        if (parsed.length === beforeLen) break; // no progress এই রাউন্ডে — আর চেষ্টা না করে থেমে যাওয়া ভালো
-    }
+    // feature (2-call split per image, exactly 2 calls total): Call A (উপরে, Gemini দিয়ে) অর্ধেক
+    // MCQ বানিয়েছে। এখন Call B — বাকি অর্ধেক নতুন/ভিন্ন MCQ চাওয়া হচ্ছে, skipGemini:true দিয়ে যাতে
+    // worker সরাসরি Groq/OpenRouter ব্যবহার করে (দ্রুত + provider diversify)। মোট ঠিক ২টা কল —
+    // আগের মতো ৬-রাউন্ড পর্যন্ত loop করা হচ্ছে না, যাতে সময় predictable থাকে।
+    try {
+        const strictSys4 = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ` +
+            `আরও ${mbCallBCount}টি নতুন MCQ বানাও (আগে যা বানানো হয়েছে তার থেকে ভিন্ন প্রশ্ন/কোণ থেকে)। ${basePrompt}\n` +
+            `প্রশ্ন/অপশন/ব্যাখ্যা অবশ্যই বাংলা ভাষায় ও বাংলা লিপিতে (বাংলা হরফ ব্যবহার করে) লিখতে হবে, দেবনাগরী/হিন্দি বা ইংরেজি হরফ নয়। ` +
+            `শুধু ঠিক ${mbCallBCount}টি প্রশ্নের valid JSON array রিটার্ন করো, markdown/preamble ছাড়া। Format:\n${jsonFormat}`;
+        const retryRaw4 = await mbCallAiApi('', pageImageData, strictSys4, true, false); // skipGemini=true — Groq/OpenRouter দিয়ে
+        const parsed4 = mbParseAiJson(retryRaw4);
+        const valid4 = (parsed4 || []).filter(mbIsValidMcqBulk);
+        if (valid4.length) parsed = [...parsed, ...valid4];
+    } catch (_) {}
 
     // Count must-follow: AI যদি চাহিদার চেয়ে কম প্রশ্ন দেয়, এক্সট্রা দিলে সংখ্যা কেটে দেওয়া হয়,
     // কম দিলে ইউজারকে জানানো হয় (আগে শুধু console.warn হতো, silent থাকত)।
