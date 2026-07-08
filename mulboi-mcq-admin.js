@@ -3354,6 +3354,7 @@ async function mbStartSinglePageJob() {
         mbStopAiProgressTicker();
         console.error('Single-page generate failed:', e);
         mbToast('❌ ' + (e && e.message || 'MCQ generate ব্যর্থ হয়েছে'), 'error', 10000);
+        mbLogError('mbStartSinglePageJob', pageNum, e && e.message || e, { type, countRaw });
     } finally {
         if (spinner)  spinner.style.display  = 'none';
         if (genBtn)   genBtn.style.display   = '';
@@ -3743,9 +3744,16 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     }
     if (parsed.length > count.max) parsed = parsed.slice(0, count.max);
     if (parsed.length < count.min) {
-        // safety ceiling-এও যদি না মেলে (অত্যন্ত বিরল — পেইজে যথেষ্ট কনটেন্টই নেই এমন কেসে),
-        // silent partial save না করে স্পষ্ট error দেওয়া হয় যাতে ইউজার আবার generate চাপতে পারে।
-        throw new Error(`চাহিদা ছিল ${count.label}, ${MB_TOPUP_SAFETY_CEILING} বার চেষ্টার পরেও AI মাত্র ${parsed.length}টি দিতে পেরেছে — আবার Generate চাপুন`);
+        // bug fix (user preference: কম MCQ হলেও save হওয়া উচিত): আগে এখানে সব progress ফেলে
+        // দিয়ে exception থ্রো হতো (ইউজারকে আবার পুরো generate করতে হতো) — এখন যা পাওয়া গেছে
+        // (parsed.length > 0) সেটাই save হবে, শুধু একটা info toast দিয়ে জানানো হবে যে কম পাওয়া
+        // গেছে। সম্পূর্ণ শূন্য (0টি) হলে তখনই শুধু error থ্রো হবে, কারণ সেভ করার কিছুই নেই।
+        if (parsed.length > 0) {
+            mbToast(`⚠️ পেইজ ${pageNum}: চাহিদা ছিল ${count.label}, ${MB_TOPUP_SAFETY_CEILING} বার চেষ্টার পরেও AI মাত্র ${parsed.length}টি দিতে পেরেছে — যা পাওয়া গেছে তাই সংরক্ষণ হচ্ছে`, 'info', 8000);
+            mbLogError('mbGenerateForPage:partial', pageNum, `চাহিদা ${count.label}, পাওয়া গেছে ${parsed.length}টি (partial save)`, { type });
+        } else {
+            throw new Error(`চাহিদা ছিল ${count.label}, ${MB_TOPUP_SAFETY_CEILING} বার চেষ্টার পরেও AI একটিও দিতে পারেনি — আবার Generate চাপুন`);
+        }
     }
 
     const newMcqs = parsed.map(m => ({ id: uid(), ...m, type: m.type || type }));
