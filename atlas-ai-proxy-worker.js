@@ -36,18 +36,29 @@ const CORS_HEADERS = {
    চেষ্টা করবে (সর্বোচ্চ MAX_ROTATION_ROUNDS বার), যাতে সাময়িক
    rate-limit এ পুরো request fail না হয়ে যায়।
    ════════════════════════════════════════════════════════════ */
-const MAX_ROTATION_ROUNDS = 2; // পুরো key/model লিস্ট কতবার আবার চেষ্টা করবে
+const MAX_ROTATION_ROUNDS = 1; // পুরো key/model লিস্ট কতবার আবার চেষ্টা করবে (timeout যোগ হওয়ায় ১ round-ই যথেষ্ট, ২য় round শুধু worst-case সময় দ্বিগুণ করত)
 const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
 
 function sleep(ms) { return new Promise(res => setTimeout(res, ms)); }
 
 // একটা single fetch-attempt কে wrap করে — নির্দিষ্ট HTTP status এ retryable বলে চিহ্নিত করে,
 // network exception ধরেও সেটাকে retryable error হিসেবে ফেরত দেয় (throw করে caller থামায় না)।
+// bug fix (root cause of "10 min+" generation times): আগে কোনো fetch-এ timeout ছিল না —
+// একটা provider slow/hang করলে (network stall, server-side slow response) সেই single attempt-ই
+// অনির্দিষ্টকাল ধরে ঝুলে থাকতে পারত, এবং rotation chain-এর প্রতিটা key×model কম্বিনেশন এভাবে
+// আটকে গেলে পুরো chain মিনিটের পর মিনিট আটকে যেত। এখন প্রতিটা attempt-এ 12s hard timeout —
+// timeout হলে সেটাকেও exception হিসেবে ধরে পরের key/model-এ দ্রুত এগিয়ে যায়।
+const PROVIDER_TIMEOUT_MS = 12000;
 async function attemptWithStatus(fn) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS);
     try {
-        return await fn();
+        return await fn(controller.signal);
     } catch (e) {
-        return { __exception: true, message: String(e?.message || e) };
+        const isTimeout = e?.name === 'AbortError';
+        return { __exception: true, message: isTimeout ? `timeout after ${PROVIDER_TIMEOUT_MS}ms` : String(e?.message || e) };
+    } finally {
+        clearTimeout(timer);
     }
 }
 
@@ -490,13 +501,14 @@ function getGeminiKeys(env) {
 // নতুন মডেল আসলে/পুরনো deprecate হলে শুধু এই array আপডেট করলেই rotation এ যুক্ত হয়ে যাবে।
 const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
 
-async function callGeminiOnce(key, model, parts, maxOutputTokens) {
+async function callGeminiOnce(key, model, parts, maxOutputTokens, signal) {
     const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
         {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ contents: [{ parts }], generationConfig: { maxOutputTokens, temperature: 0.7 } }),
+            signal,
         }
     );
     return res;
@@ -515,7 +527,7 @@ async function callGemini(env, question, systemPrompt, image) {
     for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
         for (const model of GEMINI_MODELS) {
             for (const key of keys) {
-                const outcome = await attemptWithStatus(() => callGeminiOnce(key, model, parts, 16384));
+                const outcome = await attemptWithStatus((signal) => callGeminiOnce(key, model, parts, 16384, signal));
 
                 if (outcome.__exception) { lastError = `Gemini(${model}) exception: ${outcome.message}`; continue; }
 
@@ -563,9 +575,10 @@ async function callOpenRouter(env, question, systemPrompt, image) {
     for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
         for (const model of OPENROUTER_MODELS) {
             for (const key of keys) {
-                const outcome = await attemptWithStatus(() => fetch("https://openrouter.ai/api/v1/chat/completions", {
+                const outcome = await attemptWithStatus((signal) => fetch("https://openrouter.ai/api/v1/chat/completions", {
                     method: "POST",
                     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+                    signal,
                     body: JSON.stringify({
                         model,
                         messages: [
@@ -627,9 +640,10 @@ async function callGroq(env, question, systemPrompt, image) {
     for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
         for (const model of models) {
             for (const key of keys) {
-                const outcome = await attemptWithStatus(() => fetch("https://api.groq.com/openai/v1/chat/completions", {
+                const outcome = await attemptWithStatus((signal) => fetch("https://api.groq.com/openai/v1/chat/completions", {
                     method: "POST",
                     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+                    signal,
                     body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 8192 }),
                 }));
                 if (outcome.__exception) { lastError = `Groq(${model}) exception: ${outcome.message}`; continue; }
@@ -663,9 +677,10 @@ async function callCerebras(env, question, systemPrompt, image) {
     for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
         for (const model of CEREBRAS_MODELS) {
             for (const key of keys) {
-                const outcome = await attemptWithStatus(() => fetch("https://api.cerebras.ai/v1/chat/completions", {
+                const outcome = await attemptWithStatus((signal) => fetch("https://api.cerebras.ai/v1/chat/completions", {
                     method: "POST",
                     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+                    signal,
                     body: JSON.stringify({
                         model,
                         messages: [
@@ -1314,7 +1329,7 @@ async function handleMcqFromPdf(body, env) {
         for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
             for (const model of GEMINI_MODELS) {
                 for (const key of keys) {
-                    const outcome = await attemptWithStatus(() => callGeminiOnce(key, model, pdfParts, 8192));
+                    const outcome = await attemptWithStatus((signal) => callGeminiOnce(key, model, pdfParts, 8192, signal));
                     if (outcome.__exception) { errors.push(`Gemini(${model}) exception: ${outcome.message}`); continue; }
                     if (!outcome.ok) { errors.push(`Gemini(${model}) HTTP ${outcome.status}`); continue; }
                     const data = await outcome.json().catch(() => null);
