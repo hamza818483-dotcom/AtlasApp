@@ -3052,6 +3052,7 @@ async function mbSaveAiMcqs() {
 
     } catch (ex) {
         mbToast('সংরক্ষণ ব্যর্থ: ' + ex.message, 'error');
+        mbLogError('mbSaveAiMcqs', mbCurrentPage, ex && ex.message || ex, { type: mbAiTypeKey, count: mbAiData.length });
     }
 }
 
