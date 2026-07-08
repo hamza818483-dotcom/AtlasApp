@@ -77,6 +77,21 @@ export default {
             return handlePdfStorage(storageMatch[1], request, env);
         }
 
+        // ── R2 explanation-image storage (root-cause fix for D1's 1 MiB row-size
+        //    limit — explanation images used to be embedded as base64 directly inside
+        //    questions_json, which for pages with many MCQs (each image ~140KB) pushed
+        //    the row over 1 MiB and D1 silently rejected the INSERT, e.g.
+        //    "Page 28: MCQ সংরক্ষণ ব্যর্থ (সার্ভার এরর)". Now images live in R2 (same
+        //    bucket as PDFs, under an exp-images/ prefix) and only a small key is kept
+        //    in questions_json — row size stays tiny regardless of MCQ count. ──
+        // POST/PUT /storage/exp-images/<key>  — upload (raw body = jpeg bytes)
+        // GET      /storage/exp-images/<key>  — public read/serve
+        // DELETE   /storage/exp-images/<key>  — cleanup
+        const expImgMatch = path.match(/^\/storage\/exp-images\/(.+)$/);
+        if (expImgMatch) {
+            return handleExpImageStorage(expImgMatch[1], request, env);
+        }
+
         // ── Server-side background MCQ-JSON generation job status (GET, needs to be
         //    reachable before the POST-only gate below). ──
         if (path === "/mcq-job/status") {
@@ -196,6 +211,53 @@ async function handlePdfStorage(fileName, request, env) {
         headers.set("etag", obj.httpEtag);
         headers.set("Content-Type", obj.httpMetadata?.contentType || "application/pdf");
         return new Response(obj.body, { headers });
+    }
+
+    return jsonResponse({ success: false, error: "Method not allowed" }, 405);
+}
+
+/* ───────── R2 explanation-image storage handler (mirrors handlePdfStorage,
+   separate exp-images/ prefix in the same PDF_BUCKET bucket) ───────── */
+async function handleExpImageStorage(fileName, request, env) {
+    const safeName = "exp-images/" + fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+
+    if (request.method === "POST" || request.method === "PUT") {
+        const apiKey = request.headers.get("apikey") || request.headers.get("Authorization")?.replace("Bearer ", "");
+        if (apiKey !== env.D1_API_KEY) {
+            return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+        }
+        try {
+            await env.PDF_BUCKET.put(safeName, request.body, {
+                httpMetadata: { contentType: request.headers.get("Content-Type") || "image/jpeg" },
+            });
+            return jsonResponse({ success: true, key: fileName });
+        } catch (e) {
+            return jsonResponse({ success: false, error: String(e.message || e) }, 500);
+        }
+    }
+
+    if (request.method === "GET") {
+        const obj = await env.PDF_BUCKET.get(safeName);
+        if (!obj) return new Response("Not found", { status: 404, headers: CORS_HEADERS });
+        const headers = new Headers(CORS_HEADERS);
+        obj.writeHttpMetadata(headers);
+        headers.set("etag", obj.httpEtag);
+        headers.set("Content-Type", obj.httpMetadata?.contentType || "image/jpeg");
+        headers.set("Cache-Control", "public, max-age=31536000, immutable");
+        return new Response(obj.body, { headers });
+    }
+
+    if (request.method === "DELETE") {
+        const apiKey = request.headers.get("apikey") || request.headers.get("Authorization")?.replace("Bearer ", "");
+        if (apiKey !== env.D1_API_KEY) {
+            return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+        }
+        try {
+            await env.PDF_BUCKET.delete(safeName);
+            return jsonResponse({ success: true });
+        } catch (e) {
+            return jsonResponse({ success: false, error: String(e.message || e) }, 500);
+        }
     }
 
     return jsonResponse({ success: false, error: "Method not allowed" }, 405);

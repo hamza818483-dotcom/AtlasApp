@@ -95,6 +95,36 @@ async function mbApi(path, opts) {
        to avoid Free-plan Disk IO throttling)
    ════════════════════════════════════════════════════ */
 const D1_API_KEY = 'mb_d1_9f2a7c6e1b4d8305';
+
+// feature (root-cause fix for D1 1 MiB row-size limit): explanation images used to be
+// embedded as base64 directly inside questions_json — each image ~140KB, so pages
+// needing many MCQs (e.g. 10) pushed the row past D1's hard 1 MiB row limit and the
+// INSERT silently failed ("Page 28: MCQ সংরক্ষণ ব্যর্থ (সার্ভার এরর)"). Now images are
+// uploaded to R2 (via the worker's /storage/exp-images/ route) and only a small key
+// string is kept in questions_json — row size stays tiny no matter how many MCQs.
+async function mbUploadExpImage(base64Jpeg) {
+    if (!base64Jpeg) return null;
+    try {
+        const key = 'exp_' + mbPdfId + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8) + '.jpg';
+        const bin = atob(base64Jpeg);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        const res = await fetch(AI_PROXY_URL.replace(/\/$/, '') + '/storage/exp-images/' + key, {
+            method: 'POST',
+            headers: { 'Content-Type': 'image/jpeg', 'apikey': D1_API_KEY },
+            body: bytes
+        });
+        if (!res.ok) return null;
+        return key;
+    } catch (_) {
+        return null; // ব্যর্থ হলে explanation_image_key ছাড়াই MCQ save হবে (image miss হবে, কিন্তু MCQ হারাবে না)
+    }
+}
+function mbExpImageUrl(key) {
+    if (!key) return null;
+    return AI_PROXY_URL.replace(/\/$/, '') + '/storage/exp-images/' + key;
+}
+
 async function mbD1Api(table, query, opts) {
     opts = opts || {};
     const url = AI_PROXY_URL.replace(/\/$/, '') + '/d1/' + table + (query || '');
@@ -204,9 +234,12 @@ async function mbCheckAndConsumePendingJobs() {
             const cropCache = new Map();
             for (const m of newMcqs) {
                 const key = m.exp_box ? JSON.stringify(m.exp_box) + JSON.stringify(m.line_box||null) : `NOBBOX_${m.id}`;
-                if (!cropCache.has(key)) cropCache.set(key, await mbCropExplanationImage(job.page_number, m.exp_box, m.line_box));
-                const img = cropCache.get(key);
-                if (img) m.explanation_image = img;
+                if (!cropCache.has(key)) {
+                    const b64 = await mbCropExplanationImage(job.page_number, m.exp_box, m.line_box);
+                    cropCache.set(key, b64 ? await mbUploadExpImage(b64) : null);
+                }
+                const imgKey = cropCache.get(key);
+                if (imgKey) m.explanation_image_key = imgKey;
                 delete m.exp_box; delete m.line_box;
             }
             let currentMcqs = [];
@@ -2028,7 +2061,7 @@ function mbRenderPageMcqList() {
                     </div>`).join('')}
             </div>
             ${m.explanation ? `<div style="font-size:10px;color:var(--text3);margin-top:4px;padding:4px 8px;background:rgba(108,99,255,0.05);border-radius:4px">💡 ${esc(m.explanation)}</div>` : ''}
-            ${m.explanation_image ? `<img src="data:image/jpeg;base64,${m.explanation_image}" style="max-width:100%;border-radius:6px;margin-top:6px;border:1px solid rgba(108,99,255,0.15)" />` : ''}
+            ${(m.explanation_image_key || m.explanation_image) ? `<img src="${m.explanation_image_key ? mbExpImageUrl(m.explanation_image_key) : ('data:image/jpeg;base64,' + m.explanation_image)}" style="max-width:100%;border-radius:6px;margin-top:6px;border:1px solid rgba(108,99,255,0.15)" />` : ''}
             <div style="margin-top:6px;display:flex;gap:6px">
                 <span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(108,99,255,0.1);color:#9C8BFF;text-transform:uppercase">${typeLabel[m.type]||m.type||'standard'}</span>
                 ${m._source === 'user' ? '<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(16,185,129,0.1);color:var(--green)">ইউজার-জেনারেটেড</span>' : ''}
@@ -2838,9 +2871,12 @@ async function mbAiGenerate() {
         for (const m of mbAiData) {
             try {
                 const key = m.exp_box ? JSON.stringify(m.exp_box) + JSON.stringify(m.line_box||null) : `NOBBOX_${m.id}`;
-                if (!cropCache.has(key)) cropCache.set(key, await mbCropExplanationImage(mbCurrentPage, m.exp_box, m.line_box));
-                const img = cropCache.get(key);
-                if (img) m.explanation_image = img; // exp_box না থাকলেও fallback (full page) দেওয়া হয় — কখনো miss হবে না
+                if (!cropCache.has(key)) {
+                    const b64 = await mbCropExplanationImage(mbCurrentPage, m.exp_box, m.line_box);
+                    cropCache.set(key, b64 ? await mbUploadExpImage(b64) : null);
+                }
+                const imgKey = cropCache.get(key);
+                if (imgKey) m.explanation_image_key = imgKey; // exp_box না থাকলেও fallback (full page) দেওয়া হয় — কখনো miss হবে না
             } catch (cropErr) {
                 mbLogError('mbCropExplanationImage', mbCurrentPage, cropErr && cropErr.message || cropErr, { mcqId: m.id });
                 // crop ব্যর্থ হলেও এই MCQ explanation image ছাড়াই সেভ হবে
@@ -2864,7 +2900,7 @@ async function mbAiGenerate() {
                                 background:${m.correct===k?'rgba(16,185,129,0.08)':'var(--hover)'}"
                             >${lMap[k]}. ${esc(m['option_'+k]||'')}${m.correct===k?' ✓':''}</div>`).join('')}
                     </div>
-                    ${m.explanation_image ? `<img src="data:image/jpeg;base64,${m.explanation_image}" style="max-width:100%;border-radius:6px;margin-top:6px;border:1px solid rgba(108,99,255,0.15)" />` : ''}
+                    ${(m.explanation_image_key || m.explanation_image) ? `<img src="${m.explanation_image_key ? mbExpImageUrl(m.explanation_image_key) : ('data:image/jpeg;base64,' + m.explanation_image)}" style="max-width:100%;border-radius:6px;margin-top:6px;border:1px solid rgba(108,99,255,0.15)" />` : ''}
                 </div>`).join('');
         }
         if (resultEl) resultEl.style.display = 'block';
@@ -3765,9 +3801,12 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     for (const m of newMcqs) {
         try {
             const key = m.exp_box ? JSON.stringify(m.exp_box) + JSON.stringify(m.line_box||null) : `NOBBOX_${m.id}`;
-            if (!cropCache.has(key)) cropCache.set(key, await mbCropExplanationImage(pageNum, m.exp_box, m.line_box));
-            const img = cropCache.get(key);
-            if (img) m.explanation_image = img;
+            if (!cropCache.has(key)) {
+                const b64 = await mbCropExplanationImage(pageNum, m.exp_box, m.line_box);
+                cropCache.set(key, b64 ? await mbUploadExpImage(b64) : null);
+            }
+            const imgKey = cropCache.get(key);
+            if (imgKey) m.explanation_image_key = imgKey;
         } catch (cropErr) {
             mbLogError('mbCropExplanationImage:bulk', pageNum, cropErr && cropErr.message || cropErr, { mcqId: m.id });
         }

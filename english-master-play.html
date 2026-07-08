@@ -380,7 +380,7 @@ function empRenderQuestion() {
     if (answered && q.explanation) {
         document.getElementById('empExplanationText').textContent = q.explanation;
         const empImgEl = document.getElementById('empExplanationImg');
-        if (q.explanation_image) { empImgEl.src = 'data:image/jpeg;base64,' + q.explanation_image; empImgEl.style.display = 'block'; }
+        if (q.explanation_image_key) { empImgEl.src = 'https://atlas-ai-proxy.hamza818483.workers.dev/storage/exp-images/' + q.explanation_image_key; empImgEl.style.display = 'block'; } else if (q.explanation_image) { empImgEl.src = 'data:image/jpeg;base64,' + q.explanation_image; empImgEl.style.display = 'block'; }
         else { empImgEl.style.display = 'none'; }
         expEl.classList.add('show');
     } else {

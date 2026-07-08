@@ -238,7 +238,7 @@ async function startModelTest(){
         id:q.id?String(q.id):`mt_${i}_${Date.now()}`,question_text:q.question_text||q.questions||'',
         option1:q.option1||'',option2:q.option2||'',option3:q.option3||'',
         option4:q.option4||'',option5:q.option5||null,
-        answer_index:q.answer_index||q.answer||1,explanation:q.explanation||'',explanation_image:q.explanation_image||null,image_url:q.image_url||null,
+        answer_index:q.answer_index||q.answer||1,explanation:q.explanation||'',explanation_image:q.explanation_image||null,explanation_image_key:q.explanation_image_key||null,image_url:q.image_url||null,
     }));
     const title=selectedExam.subject||selectedExam.varsity_name||'মডেল টেস্ট';
     const time=Math.ceil(selectedCount/1.5);
