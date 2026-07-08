@@ -977,7 +977,7 @@ async function ensureMcqJobTable(db) {
         json_format TEXT NOT NULL,
         count_min INTEGER NOT NULL,
         count_max INTEGER NOT NULL,
-        page_image_b64 TEXT,
+        page_image_r2_key TEXT,
         page_image_mime TEXT,
         result_json TEXT,
         error TEXT,
@@ -985,6 +985,10 @@ async function ensureMcqJobTable(db) {
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )`).run();
+    // bug fix: আগে page_image_b64 column-এ raw base64 image D1 row-এ সরাসরি রাখা হতো —
+    // D1 row-size এর জন্য অদক্ষ (already R2 bucket আছে ঠিক এই কাজের জন্য, PDF storage-এও
+    // একই bucket ব্যবহার হয়)। এখন ছবি R2-তে রাখা হয়, D1-তে শুধু তার key রাখা হয়।
+    try { await db.prepare(`ALTER TABLE mcq_gen_jobs ADD COLUMN page_image_r2_key TEXT`).run(); } catch (_) { /* already exists */ }
 }
 
 async function handleMcqJobCreate(body, env) {
@@ -1000,6 +1004,17 @@ async function handleMcqJobCreate(body, env) {
     }
     const idempotencyKey = `${pdfId}:${pageNumber}:${mcqType}:${countMin}-${countMax}`;
 
+    // ছবি R2-তে আপলোড করা হয় (D1 row-এ raw base64 রাখার বদলে — একই bucket যেটা PDF
+    // storage-এর জন্য আগে থেকেই আছে, তাই আলাদা কোনো নতুন resource লাগেনি)।
+    let r2Key = null;
+    if (pageImageBase64 && env.PDF_BUCKET) {
+        try {
+            r2Key = `mcq-job-images/${pdfId}_${pageNumber}_${Date.now()}.jpg`;
+            const bin = Uint8Array.from(atob(pageImageBase64), c => c.charCodeAt(0));
+            await env.PDF_BUCKET.put(r2Key, bin, { httpMetadata: { contentType: pageImageMime || 'image/jpeg' } });
+        } catch (_) { r2Key = null; /* R2 upload fail হলেও job তৈরি হবে, শুধু image ছাড়া (fallback: pure text extraction) */ }
+    }
+
     // ইতিমধ্যে চলমান/সম্পন্ন job থাকলে সেটাই ফেরত দাও (dedupe — নতুন job তৈরি হবে না)
     const existing = await db.prepare(`SELECT * FROM mcq_gen_jobs WHERE idempotency_key = ?`).bind(idempotencyKey).first();
     if (existing && existing.status !== 'error') {
@@ -1010,15 +1025,15 @@ async function handleMcqJobCreate(body, env) {
     if (existing && existing.status === 'error') {
         // আগের ব্যর্থ job থাকলে সেটা reset করে আবার pending করা হয় (নতুন row না বানিয়ে)
         await db.prepare(`UPDATE mcq_gen_jobs SET status='pending', error=NULL, attempts=0, result_json=NULL,
-            page_image_b64=?, page_image_mime=?, system_prompt=?, json_format=?, count_min=?, count_max=?, updated_at=? WHERE id=?`)
-            .bind(pageImageBase64 || null, pageImageMime || null, systemPrompt, jsonFormat || '', countMin, countMax, now, existing.id).run();
+            page_image_r2_key=?, page_image_mime=?, system_prompt=?, json_format=?, count_min=?, count_max=?, updated_at=? WHERE id=?`)
+            .bind(r2Key, pageImageMime || null, systemPrompt, jsonFormat || '', countMin, countMax, now, existing.id).run();
         return jsonResponse({ success: true, jobId: existing.id, status: 'pending', reused: false });
     }
 
     const res = await db.prepare(`INSERT INTO mcq_gen_jobs
-        (idempotency_key, pdf_id, page_number, mcq_type, status, system_prompt, json_format, count_min, count_max, page_image_b64, page_image_mime, created_at, updated_at)
+        (idempotency_key, pdf_id, page_number, mcq_type, status, system_prompt, json_format, count_min, count_max, page_image_r2_key, page_image_mime, created_at, updated_at)
         VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?)`)
-        .bind(idempotencyKey, pdfId, pageNumber, mcqType, systemPrompt, jsonFormat || '', countMin, countMax, pageImageBase64 || null, pageImageMime || null, now, now).run();
+        .bind(idempotencyKey, pdfId, pageNumber, mcqType, systemPrompt, jsonFormat || '', countMin, countMax, r2Key, pageImageMime || null, now, now).run();
 
     return jsonResponse({ success: true, jobId: res.meta.last_row_id, status: 'pending', reused: false });
 }
@@ -1032,6 +1047,16 @@ async function handleMcqJobStatus(url, env) {
 
     const jobId = url.searchParams.get("jobId");
     const pdfId = url.searchParams.get("pdfId");
+    const consumeId = url.searchParams.get("consumeId");
+    if (consumeId) {
+        // client পড়ে ফেলার পর job-কে 'consumed' মার্ক করে, R2-এর ছবি (যদি এখনো থাকে) মুছে দেয়
+        const row = await db.prepare(`SELECT page_image_r2_key FROM mcq_gen_jobs WHERE id = ?`).bind(consumeId).first();
+        await db.prepare(`UPDATE mcq_gen_jobs SET status='consumed', updated_at=? WHERE id=?`).bind(new Date().toISOString(), consumeId).run();
+        if (row?.page_image_r2_key && env.PDF_BUCKET) {
+            try { await env.PDF_BUCKET.delete(row.page_image_r2_key); } catch (_) {}
+        }
+        return jsonResponse({ success: true });
+    }
     if (jobId) {
         const row = await db.prepare(`SELECT id, status, result_json, error, attempts, page_number, mcq_type FROM mcq_gen_jobs WHERE id = ?`).bind(jobId).first();
         if (!row) return jsonResponse({ success: false, error: "Job not found" }, 404);
@@ -1057,7 +1082,18 @@ async function processPendingMcqJobs(env) {
     for (const job of rows) {
         await db.prepare(`UPDATE mcq_gen_jobs SET status='processing', attempts=attempts+1, updated_at=? WHERE id=?`).bind(new Date().toISOString(), job.id).run();
         try {
-            const image = job.page_image_b64 ? { base64: job.page_image_b64, mimeType: job.page_image_mime || 'image/jpeg' } : null;
+            let image = null;
+            if (job.page_image_r2_key && env.PDF_BUCKET) {
+                const obj = await env.PDF_BUCKET.get(job.page_image_r2_key);
+                if (obj) {
+                    const buf = await obj.arrayBuffer();
+                    const u8 = new Uint8Array(buf);
+                    const CHUNK = 0x8000;
+                    const chunks = [];
+                    for (let i = 0; i < u8.length; i += CHUNK) chunks.push(String.fromCharCode.apply(null, u8.subarray(i, i + CHUNK)));
+                    image = { base64: btoa(chunks.join("")), mimeType: job.page_image_mime || 'image/jpeg' };
+                }
+            }
             // client-এর মতোই একই provider chain (Groq প্রথমে, সব key শেষ হলে Gemini, তারপর বাকিরা)
             const providers = [
                 () => callGroq(env, '', job.system_prompt, image),
@@ -1077,11 +1113,19 @@ async function processPendingMcqJobs(env) {
             if (!answer) throw new Error(lastErr);
             await db.prepare(`UPDATE mcq_gen_jobs SET status='done', result_json=?, updated_at=? WHERE id=?`)
                 .bind(answer, new Date().toISOString(), job.id).run();
+            // job সফল হয়ে গেলে R2-এর ছবি আর দরকার নেই — storage বাঁচাতে ডিলিট করে দাও
+            if (job.page_image_r2_key && env.PDF_BUCKET) {
+                try { await env.PDF_BUCKET.delete(job.page_image_r2_key); } catch (_) {}
+            }
         } catch (e) {
             const errMsg = String(e?.message || e);
-            const nextStatus = job.attempts + 1 >= 6 ? 'error' : 'pending'; // ৬ বার fail করলে permanently error, নাহলে আবার pending (পরের cron round retry করবে)
+            const permanentlyFailed = job.attempts + 1 >= 6;
+            const nextStatus = permanentlyFailed ? 'error' : 'pending'; // ৬ বার fail করলে permanently error, নাহলে আবার pending (পরের cron round retry করবে)
             await db.prepare(`UPDATE mcq_gen_jobs SET status=?, error=?, updated_at=? WHERE id=?`)
                 .bind(nextStatus, errMsg, new Date().toISOString(), job.id).run();
+            if (permanentlyFailed && job.page_image_r2_key && env.PDF_BUCKET) {
+                try { await env.PDF_BUCKET.delete(job.page_image_r2_key); } catch (_) {}
+            }
         }
     }
 }

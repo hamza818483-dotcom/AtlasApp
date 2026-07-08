@@ -208,8 +208,10 @@ async function mbCheckAndConsumePendingJobs() {
     } catch (_) { /* pending job check ব্যর্থ হলে silently skip, পরের panel-open এ আবার try হবে */ }
 }
 async function mbMarkJobConsumed(jobId) {
-    // এখনো worker-এ dedicated 'consume' endpoint নেই; status='done' জব দ্বিতীয়বার
-    // (already > 0 চেক দিয়ে) এমনিতেই safe-skip হয়, তাই আলাদা mark করার দরকার নেই আপাতত।
+    try {
+        await fetch(AI_PROXY_URL.replace(/\/$/, '') + '/mcq-job/status?' +
+            'apiKey=' + encodeURIComponent(D1_API_KEY) + '&consumeId=' + encodeURIComponent(jobId));
+    } catch (_) { /* consume mark ব্যর্থ হলেও পরের বার already>0 চেক দিয়ে safe-skip হবে */ }
 }
 
 
