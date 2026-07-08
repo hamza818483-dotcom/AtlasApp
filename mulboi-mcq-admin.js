@@ -139,7 +139,7 @@ async function mbLogError(context, pageNum, errMsg, extra) {
                 page_number: pageNum || null,
                 context: context || '',
                 error_message: String(errMsg || '').slice(0, 2000),
-                extra: extra ? JSON.stringify(extra).slice(0, 2000) : null,
+                extra: extra ? JSON.stringify(extra).slice(0, 4000) : null,
                 created_at: new Date().toISOString()
             })
         });
@@ -2729,6 +2729,7 @@ async function mbAiGenerate() {
         if (!parsed || !parsed.length) {
             mbToast('AI সঠিক JSON দেয়নি। raw: ' + (rawJson ? rawJson.slice(0,120) : '(খালি)'), 'error');
             console.error('mbAiGenerate raw AI output (unparseable):', rawJson);
+            mbLogError('mbAiGenerate:unparseable', mbCurrentPage, 'AI সঠিক JSON দেয়নি', { type, raw: (rawJson||'').slice(0,1500) });
             return;
         }
 
@@ -2783,7 +2784,7 @@ async function mbAiGenerate() {
             const sampleStr = JSON.stringify((parsed||[])[0]||{}).slice(0,150);
             mbToast('AI সম্পূর্ণ/সঠিক MCQ দিতে পারেনি। sample: ' + sampleStr, 'error');
             console.error('mbAiGenerate all items failed validation. parsed:', parsed);
-            mbLogError('mbAiGenerate:validation', mbCurrentPage, 'AI সম্পূর্ণ/সঠিক MCQ দিতে পারেনি', { type, sample: sampleStr });
+            mbLogError('mbAiGenerate:validation', mbCurrentPage, 'AI সম্পূর্ণ/সঠিক MCQ দিতে পারেনি', { type, sample: sampleStr, parsedAll: JSON.stringify(parsed||[]).slice(0,1500), raw: (rawJson||'').slice(0,1500) });
             return;
         }
         parsed = validParsed;
