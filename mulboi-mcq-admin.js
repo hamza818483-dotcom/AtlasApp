@@ -2800,6 +2800,32 @@ async function mbCallAiApi(prompt, image, customSystemPrompt, skipGemini, skipGr
     return data.answer || '';
 }
 
+// last-resort helper: prose-format ("### প্রশ্ন ১: ... ক) ... খ) ... গ) ... ঘ) ... সমাধান/উত্তর: ...")
+// থেকে regex দিয়ে MCQ বের করার চেষ্টা করে, যখন AI বারবার JSON না দিয়ে টেক্সট প্রবন্ধ দিয়ে দেয়।
+function mbExtractMcqFromProse(text) {
+    if (!text || typeof text !== 'string') return null;
+    const out = [];
+    const blocks = text.split(/(?=প্রশ্ন\s*[০-৯0-9]+\s*[:：])/);
+    for (const block of blocks) {
+        const qm = block.match(/প্রশ্ন\s*[০-৯0-9]+\s*[:：]\s*([\s\S]*?)(?=(?:ক\)|\(ক\)))/);
+        if (!qm) continue;
+        const question = qm[1].trim();
+        if (question.length < 3) continue;
+        const getOpt = (label) => {
+            const re = new RegExp('(?:\\(' + label + '\\)|' + label + '\\))\\s*([\\s\\S]*?)(?=(?:\\(ক\\)|\\(খ\\)|\\(গ\\)|\\(ঘ\\)|ক\\)|খ\\)|গ\\)|ঘ\\)|উত্তর|সমাধান|$))');
+            const m = block.match(re);
+            return m ? m[1].trim() : '';
+        };
+        const option_k = getOpt('ক'), option_kh = getOpt('খ'), option_g = getOpt('গ'), option_gh = getOpt('ঘ');
+        if (!option_k || !option_kh || !option_g || !option_gh) continue;
+        const ansM = block.match(/(?:উত্তর|সমাধান)\s*[:：]?\s*\(?(ক|খ|গ|ঘ)\)?/);
+        const map = { 'ক': 'k', 'খ': 'kh', 'গ': 'g', 'ঘ': 'gh' };
+        const correct = ansM ? map[ansM[1]] : 'k';
+        out.push({ question, option_k, option_kh, option_g, option_gh, correct, explanation: '', type: 'standard' });
+    }
+    return out.length ? out : null;
+}
+
 function mbParseAiJson(raw) {
     if (!raw) return null;
 
@@ -3373,12 +3399,16 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
         // format-এ JSON-এ রূপান্তর করো" — এমন targeted reformat কল করা হয়, নতুন করে ছবি না
         // পাঠিয়ে (দ্রুত + বেশি reliable, কারণ AI নিজের আগের আউটপুটই structure করে দিচ্ছে)।
         const hasBracket = rawJson && /[\[{]/.test(rawJson);
+        // bug fix (v2 — আগের fix কাজ করেনি কারণ reformat fail করলে পরের retry আবার শুধু
+        // Groq (skipGemini=true) দিয়ে page-image পাঠাতো, যেটা একই prose-উত্তর repeat করছিল।
+        // এখন reformat + retry দুটোতেই Gemini আগে try হয় (skipGemini=false), যেহেতু Gemini
+        // strict-JSON নির্দেশ Groq/OpenRouter এর চেয়ে বেশি নির্ভরযোগ্যভাবে মেনে চলে।
         if (rawJson && !hasBracket) {
             try {
                 const reformatSys = `নিচে একটা HSC শিক্ষামূলক কনটেন্ট (প্রশ্নোত্তর/টেক্সট আকারে) দেওয়া আছে। এটা থেকে ${basePromptA}\n` +
                     `শুধু valid JSON array রিটার্ন করো। কোনো markdown code fence, preamble, বা extra text দিও না। Format:\n${jsonFormat}`;
                 const reformatPrompt = `কনটেন্ট:\n${rawJson.slice(0, 4000)}`;
-                const reformatRaw = await mbCallAiApi(reformatPrompt, null, reformatSys, true, false);
+                const reformatRaw = await mbCallAiApi(reformatPrompt, null, reformatSys, false, false);
                 parsed = mbParseAiJson(reformatRaw);
             } catch (_) {}
         }
@@ -3386,9 +3416,15 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
             try {
                 const strictSys = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePromptA}\n` +
                     `শুধু valid JSON array রিটার্ন করো। কোনো markdown code fence, preamble, বা extra text দিও না। Format:\n${jsonFormat}`;
-                const retryRaw = await mbCallAiApi('', pageImageData, strictSys, true, false); // skipGemini=true — Groq-এ রাখার জন্য
+                const retryRaw = await mbCallAiApi('', pageImageData, strictSys, false, false); // skipGemini=false — Gemini বেশি JSON-compliant
                 parsed = mbParseAiJson(retryRaw);
             } catch (_) {}
+        }
+        // শেষ resort: এখনো ব্যর্থ হলে raw prose থেকে regex দিয়ে Q/A pattern বের করার চেষ্টা
+        // (কোনো AI কল ছাড়াই, instant) — যাতে পুরো পেইজ পুরোপুরি ফেল না হয়ে যায়।
+        if ((!parsed || !parsed.length) && rawJson) {
+            const extracted = mbExtractMcqFromProse(rawJson);
+            if (extracted && extracted.length) parsed = extracted;
         }
     }
     if (!parsed || !parsed.length) throw new Error('AI সঠিক JSON দেয়নি [' + mbAiDebugErrs.join('|') + '] raw:' + (rawJson ? rawJson.slice(0,100) : 'empty'));
