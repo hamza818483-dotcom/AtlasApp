@@ -3781,11 +3781,17 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     // Count must-follow (STRICT): user যত MCQ চেয়েছে ততটাই বানাতে হবে — ঘাটতি থাকলে যতক্ষণ না
     // count.min মেটে ততক্ষণ top-up চলতে থাকে (unlimited retry, শুধু runaway loop থেকে বাঁচতে
     // একটা অনেক বড় safety ceiling — সাধারণ কোনো পেইজে এতবার লাগার কথা না)।
+    // fix (root cause of "onek time nicche/hocche na"): ceiling আগে ২৫ ছিল — প্রতি round-এ
+    // একটা full AI round-trip (~১৫-৩০ sec), তাই worst-case ৮+ মিনিট লেগে যেতে পারত, একদম
+    // hang-এর মতো লাগত। এখন ceiling ৫-এ নামানো হলো, এবং কোনো round-এ নতুন কোনো valid MCQ
+    // না পেলে (no progress) সাথে সাথে loop থামিয়ে দেওয়া হচ্ছে — বাকি ceiling গুলো অপচয় না
+    // করে যা পাওয়া গেছে তা নিয়েই এগিয়ে যাওয়া হচ্ছে।
     let mbTopUpTries = 0;
-    const MB_TOPUP_SAFETY_CEILING = 25;
+    const MB_TOPUP_SAFETY_CEILING = 5;
     while (parsed.length < count.min && mbTopUpTries < MB_TOPUP_SAFETY_CEILING) {
         mbTopUpTries++;
         const need = count.min - parsed.length;
+        const beforeLen = parsed.length;
         try {
             const topUpSys = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ` +
                 `আরও ঠিক ${need}টি নতুন MCQ বানাও (আগে যা বানানো হয়েছে তার থেকে সম্পূর্ণ ভিন্ন প্রশ্ন/কোণ থেকে — একই প্রশ্ন repeat করা যাবে না)। ${basePrompt}\n` +
@@ -3801,6 +3807,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
                 }
             }
         } catch (topUpErr) { mbAiDebugErrs.push('topup' + mbTopUpTries + ':' + (topUpErr && topUpErr.message || topUpErr)); }
+        if (parsed.length === beforeLen) break; // no progress এই round-এ — আর সময় নষ্ট না করে থেমে যাওয়া
     }
     mbMark('topUp');
     if (parsed.length < count.min) {
