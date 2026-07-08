@@ -164,24 +164,36 @@ export default {
             .filter(p => !(skipGroq && p.name === "groq"))
             .map(p => p.fn);
 
-        // প্রতিটা provider নিজের ভেতরেই key/model rotation + backoff করে (উপরে দেখো)।
-        // এখানে শুধু provider-চেইন ক্রমে চালানো হয় — কোনো একটায় সব key/model fail করলে
-        // পরের provider এ চলে যায়, একদম শেষ পর্যন্ত কেউ সফল না হলে সংক্ষিপ্ত বিরতি দিয়ে
-        // পুরো চেইন আরেকবার চেষ্টা করে — তাই সাময়িক outage এ পুরো request ব্যর্থ হয় না।
+        // bug fix (root cause of slow MCQ generation): আগে সব provider সিরিয়ালি (একটার পর
+        // একটা) চলত, এবং পুরো চেইন ২ বার (chainRound) — worst case = 5 provider × নিজেদের
+        // key/model rotation × 12s timeout × 2 round, যা মিনিটের পর মিনিট লাগতে পারত।
+        // এখন সব provider একসাথে (parallel) ছোঁড়া হয় এবং যেটা প্রথমে ভালো answer দেয় সেটাই
+        // ব্যবহার হয় (race) — মোট সময় এখন ধীরতম provider-এর সমান না হয়ে দ্রুততম successful
+        // provider-এর সমান।
         const errors = [];
-        for (let chainRound = 0; chainRound < 2; chainRound++) {
+        const result = await new Promise((resolve) => {
+            let remaining = providers.length;
+            let settled = false;
             for (const tryProvider of providers) {
-                try {
-                    const result = await tryProvider();
-                    if (result && result.answer && result.answer.trim().length > 5) {
-                        return jsonResponse({ success: true, answer: result.answer, provider: result.provider });
+                tryProvider().then((r) => {
+                    if (!settled && r && r.answer && r.answer.trim().length > 5) {
+                        settled = true;
+                        resolve(r);
+                        return;
                     }
-                    if (result?.error) errors.push(result.error);
-                } catch (e) {
+                    if (r?.error) errors.push(r.error);
+                    remaining--;
+                    if (remaining === 0 && !settled) resolve(null);
+                }).catch((e) => {
                     errors.push(String(e.message || e));
-                }
+                    remaining--;
+                    if (remaining === 0 && !settled) resolve(null);
+                });
             }
-            if (chainRound === 0) await sleep(600); // পুরো চেইন একবার ব্যর্থ হলে ছোট বিরতি দিয়ে আবার
+        });
+
+        if (result) {
+            return jsonResponse({ success: true, answer: result.answer, provider: result.provider });
         }
 
         return jsonResponse({
