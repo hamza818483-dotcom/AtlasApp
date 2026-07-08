@@ -3022,8 +3022,22 @@ async function mbSaveAiMcqs() {
         // ইউজার-সাইড "All" ভিউ এই প্রশ্নগুলো mcq_type ভুল হওয়ায় দেখতে পায় না।
         const saveType = mbAiTypeKey || 'admin';
         const currentMcqs = mbGetPageMcqsByType(mbCurrentPage, saveType);
+        const expectedLen = currentMcqs.length + mbAiData.length;
         mbAiData.forEach(m => currentMcqs.push(m));
         await mbUpsertPageMcqs(mbCurrentPage, currentMcqs, saveType);
+        // bug fix (diagnosing "generate হলো কিন্তু পরে ডেটা নেই" বাগ): mbUpsertPageMcqs নিজেই
+        // verify করে, কিন্তু তারপরও যদি অন্য কোনো concurrent flow (bulk resume ইত্যাদি) এই
+        // পেইজকে খালি array দিয়ে overwrite/delete করে দেয়, সেটা এখানে ধরা পড়বে না। তাই এখানে
+        // সরাসরি D1 থেকে (cache বাদ দিয়ে) আরেকবার ফ্রেশ read করে length verify করা হচ্ছে,
+        // এবং mismatch হলে D1-এ log করা হচ্ছে যাতে root cause ধরা যায়।
+        const freshRow = await mbFetchSingleMcqRow(mbCurrentPage, saveType);
+        let freshLen = -1;
+        if (freshRow) { try { freshLen = JSON.parse(freshRow.questions_json || '[]').length; } catch (_) {} }
+        if (freshLen !== expectedLen) {
+            mbLogError('mbSaveAiMcqs:post-verify-mismatch', mbCurrentPage,
+                `Expected ${expectedLen}, D1 এ পাওয়া গেছে ${freshLen}`,
+                { type: saveType, expectedLen, freshLen });
+        }
         // AI দিয়ে generate হওয়া এই batch-টার CSV automatically তৈরি+save হয়ে যাবে — manual download লাগবে না।
         await mbSaveMcqsAsCsv(mbAiData, mbCurrentPage, mbAiTypeKey);
         mbToast('✓ ' + mbAiData.length + 'টি AI MCQ সংরক্ষিত হয়েছে (+ CSV)', 'success');
