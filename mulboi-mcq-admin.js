@@ -4077,6 +4077,7 @@ window.mbSaveMcq          = mbSaveMcq;
 window.mbEditMcq          = mbEditMcq;
 window.mbCancelInlineEdit = mbCancelInlineEdit;
 window.mbSaveInlineEdit   = mbSaveInlineEdit;
+window.mbSavePromptOnly   = mbSavePromptOnly;
 window.mbInlineSelectAnswer = mbInlineSelectAnswer;
 window.mbCancelMcqEdit    = mbCancelMcqEdit;
 window.mbDeleteMcq        = mbDeleteMcq;

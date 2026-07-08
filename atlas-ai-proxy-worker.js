@@ -138,11 +138,12 @@ export default {
             return jsonResponse({ success: false, error: "question বা image এর একটি দিতে হবে" }, 400);
         }
 
-        // Groq আগে চেষ্টা হয় (দ্রুত ও free-tier generous), fail করলে Gemini 2.5 Flash,
-        // তারপর বাকি provider গুলো fallback হিসেবে।
+        // bug fix: Groq আগে চেষ্টা হতো (দ্রুত হলেও ছোট/দুর্বল মডেল, strict প্রশ্ন-সংখ্যা
+        // নির্দেশনা প্রায়ই মানত না — যেমন ৮টি চাইলে বারবার ৪টি দিত)। Gemini 2.5 Flash
+        // instruction-following এ অনেক বেশি নির্ভরযোগ্য, তাই এখন Gemini আগে, Groq fallback।
         const allProviders = [
-            { name: "groq", fn: () => callGroq(env, question, systemPrompt, image) },
             { name: "gemini", fn: () => callGemini(env, question, systemPrompt, image) },
+            { name: "groq", fn: () => callGroq(env, question, systemPrompt, image) },
             { name: "openrouter", fn: () => callOpenRouter(env, question, systemPrompt, image) },
             { name: "cerebras", fn: () => callCerebras(env, question, systemPrompt, image) },
             { name: "cloudflare", fn: () => callCloudflareAI(env, question, systemPrompt, image) },
@@ -514,7 +515,7 @@ async function callGemini(env, question, systemPrompt, image) {
     for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
         for (const model of GEMINI_MODELS) {
             for (const key of keys) {
-                const outcome = await attemptWithStatus(() => callGeminiOnce(key, model, parts, 8192));
+                const outcome = await attemptWithStatus(() => callGeminiOnce(key, model, parts, 16384));
 
                 if (outcome.__exception) { lastError = `Gemini(${model}) exception: ${outcome.message}`; continue; }
 
@@ -629,7 +630,7 @@ async function callGroq(env, question, systemPrompt, image) {
                 const outcome = await attemptWithStatus(() => fetch("https://api.groq.com/openai/v1/chat/completions", {
                     method: "POST",
                     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-                    body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 4096 }),
+                    body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 8192 }),
                 }));
                 if (outcome.__exception) { lastError = `Groq(${model}) exception: ${outcome.message}`; continue; }
                 if (!outcome.ok) { lastError = `Groq(${model}) HTTP ${outcome.status}`; continue; }
