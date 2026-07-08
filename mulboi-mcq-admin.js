@@ -3104,8 +3104,12 @@ async function mbRunBulkJob(job) {
         } catch (e) {
             mbStopBulkSubTicker();
             job.subProgress = 0;
-            console.error('Bulk page ' + p + ' failed:', e.message);
-            if (typeof mbToast === 'function') mbToast('⚠️ পেইজ ' + p + ': ' + (e.message || 'ব্যর্থ'), 'error');
+            console.error('Bulk page ' + p + ' failed:', e);
+            // bug fix (debug visibility): আগে ৩ সেকেন্ডের error toast পরের "সম্পন্ন" toast
+            // দিয়ে সাথে সাথেই overwrite হয়ে যেত (একই #toast element শেয়ার হয়), ফলে
+            // single-page job এ error দেখাই যেত না — শুধু "0টি পেইজ সম্পন্ন" দেখাত।
+            // এখন error toast ৮ সেকেন্ড থাকবে যাতে আসল কারণ পড়া যায়।
+            if (typeof mbToast === 'function') mbToast('⚠️ পেইজ ' + p + ': ' + (e.message || 'ব্যর্থ'), 'error', 8000);
             // একটা পেইজ fail করলেও চালিয়ে যাও — পুরো job থামবে না
         }
         job.currentPage = p + 1;
@@ -3126,7 +3130,13 @@ async function mbRunBulkJob(job) {
     localStorage.setItem(MB_BULK_KEY, JSON.stringify(job));
     mbBulkRunning = false;
     mbUpdateBulkUI(null);
-    mbToast(`✓ Bulk generation সম্পন্ন — ${job.completedCount}টি পেইজ প্রসেস হয়েছে`, 'success');
+    // bug fix: completedCount=0 হলেও আগে "✓ Bulk generation সম্পন্ন — 0টি পেইজ" দেখাত,
+    // যেটা বিভ্রান্তিকর (আসলে ব্যর্থ হয়েছে, সফল হয়নি)। এখন স্পষ্ট failure message।
+    if (job.completedCount === 0) {
+        mbToast('❌ কোনো পেইজেই MCQ generate হয়নি — উপরের error দেখুন', 'error', 8000);
+    } else {
+        mbToast(`✓ Bulk generation সম্পন্ন — ${job.completedCount}টি পেইজ প্রসেস হয়েছে`, 'success');
+    }
 }
 
 // একটা নির্দিষ্ট পেইজের জন্য MCQ generate + save করে — mbAiGenerate এর core logic বিচ্ছিন্ন করে আলাদা করা হয়েছে
