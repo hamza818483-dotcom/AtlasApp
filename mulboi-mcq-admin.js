@@ -298,7 +298,12 @@ let mbAiTypeKey   = 'standard';
    ════════════════════════════════════════════════════ */
 function mbPermanentRules(count) {
     let countRule;
-    if (count && count.min !== count.max) {
+    if (count && count.auto) {
+        countRule = `প্রশ্ন সংখ্যা নির্দিষ্ট করা হয়নি — তাই সংখ্যা নিয়ে কোনো কৃত্রিম চাপ নেই। পেইজের কনটেন্ট থেকে যতগুলো ` +
+            `স্বতন্ত্র, অর্থপূর্ণ ও উচ্চমানের প্রশ্ন যৌক্তিকভাবে বানানো সম্ভব ততগুলোই দাও (কমপক্ষে ${count.min}টি চেষ্টা করো, ` +
+            `তবে মান নষ্ট করে সংখ্যা বাড়ানো নিষিদ্ধ)। প্রতিটি প্রশ্ন অবশ্যই পেইজের প্রকৃত কনটেন্ট থেকে সরাসরি উদ্ভূত হতে হবে — ` +
+            `দুর্বল/repetitive/filler প্রশ্ন বানানো নিষিদ্ধ। মানই এখানে সবচেয়ে গুরুত্বপূর্ণ, সংখ্যা নয়।`;
+    } else if (count && count.min !== count.max) {
         countRule = `এটি একটি কঠোর (STRICT) নিয়ম, কোনো ব্যতিক্রম নেই: মোট প্রশ্ন সংখ্যা অবশ্যই ${count.min} থেকে ${count.max} এর মধ্যে হতে হবে (দুই প্রান্ত সহ)। ` +
             `${count.min}টির কম দেওয়া নিষিদ্ধ এবং ${count.max}টির বেশি দেওয়াও নিষিদ্ধ — পেইজে কনটেন্ট কম মনে হলেও, বিদ্যমান কনটেন্ট থেকে ` +
             `অতিরিক্ত প্রশ্ন (ভিন্ন কোণ থেকে/সূক্ষ্ম পয়েন্ট থেকে) বানিয়ে হলেও কমপক্ষে ${count.min}টি প্রশ্ন অবশ্যই দিতে হবে। ` +
@@ -2609,7 +2614,11 @@ async function mbGetPageImageBase64(pageNum) {
 // "প্রশ্ন সংখ্যা" বক্সে single number ("10") বা range ("5-10") — দুটোই সাপোর্ট করে।
 // AI prompt-এ পাঠানোর জন্য একটা readable label এবং loop/validation এর জন্য min/max রিটার্ন করে।
 function mbParseCountInput(raw) {
-    const s = (raw || '10').trim();
+    const s = (raw || '').trim();
+    // খালি রাখলে: fixed সংখ্যা না চাপিয়ে, পেইজ থেকে যত সম্ভব high-quality MCQ বানানোর জন্য
+    // auto/max মোড — min একটা reasonable floor (৮), কোনো upper cap নেই (AI যতটা পেইজ থেকে
+    // যৌক্তিকভাবে বানাতে পারে ততটাই দেবে, gonelo range rule দিয়ে না আটকে)।
+    if (!s) return { min: 8, max: 999, label: 'পেইজ থেকে সর্বোচ্চ সম্ভব মানসম্পন্ন', forApi: 999, auto: true };
     const m = s.match(/^(\d+)\s*-\s*(\d+)$/);
     if (m) {
         const min = parseInt(m[1]), max = parseInt(m[2]);
@@ -2969,6 +2978,7 @@ async function mbAiGenerateSpecial() {
         mbSetAiProgress(100, 'সম্পন্ন!');
     } catch (ex) {
         mbToast('এক্সট্র্যাকশন ব্যর্থ: ' + ex.message, 'error');
+        mbLogError('mbAiGenerateSpecial', mbCurrentPage, ex && ex.message || ex, {});
     } finally {
         mbStopAiProgressTicker();
         if (spinner) spinner.style.display = 'none';
