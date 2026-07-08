@@ -991,6 +991,26 @@ function mbOpenMcqPanel(pdfId, pdfTitle, pdfUrl) {
 
     mbUpdatePageCount();
 
+    // bug fix (root cause of "shob browser e always pill show na kora"): localStorage pill
+    // cache per-browser (TTL সহ) এবং PDF.js load slow/fail হতে পারে — উভয় ক্ষেত্রেই numPages
+    // অজানা থেকে যেত, ফলে অন্য browser/device/incognito-তে (যেখানে cache নেই) pill (P1
+    // ছাড়া বাকিগুলো) দেখাত না। এখন সবচেয়ে নির্ভরযোগ্য সোর্স হিসেবে book_pdfs.page_count
+    // (DB-তে persist করা, সব browser/device-এ শেয়ার্ড) থেকে সরাসরি numPages জানার চেষ্টা করা
+    // হচ্ছে — PDF.js load হওয়ার আগেই এটা pill render-কে সঠিক করে দেয়।
+    (async () => {
+        try {
+            const res = await mbD1Api('book_pdfs', '?id=eq.' + pdfId + '&select=page_count', {});
+            if (res.ok) {
+                const rows = await res.json();
+                const pc = rows && rows[0] && rows[0].page_count;
+                if (pc && pc > 0 && mbPdfId === pdfId) {
+                    mbCachedNumPages = Math.max(mbCachedNumPages, pc);
+                    mbRenderPageSummary();
+                }
+            }
+        } catch (_) {}
+    })();
+
     // Refresh দিলেও একই PDF/page-এ ফিরে আসার জন্য সংরক্ষণ করা হচ্ছে —
     // একই PDF আগে থেকেই খোলা থাকলে তার page number বজায় রাখা হয় (overwrite করা হয় না)
     try {
@@ -1102,6 +1122,20 @@ async function mbLoadPdfPreview(url) {
         await mbRenderPdfPage(mbCurrentPage);
         // numPages জানা গেলে pill cache আপডেট করে দাও, পরের বার instant-load এ পুরো page range দেখানোর জন্য
         mbWriteLightPillCache(mbPdfId);
+        // bug fix (root cause of "shob browser e always pill show na kora"): numPages আগে
+        // শুধু localStorage cache-এ (per-browser, TTL-সহ) থাকত — অন্য browser/device/incognito-তে
+        // cache না থাকলে বা expire হলে PDF.js load fail/slow হওয়া মাত্রই pill (P1 ছাড়া বাকিগুলো)
+        // দেখাত না। এখন book_pdfs.page_count-এ persist করা হচ্ছে (DB-তে, সব browser/device শেয়ার্ড) —
+        // পরেরবার PDF.js load fail করলেও mbOpenMcqPanel এই DB মান থেকেই numPages জানতে পারবে।
+        if (mbPdfId) {
+            try {
+                await mbD1Api('book_pdfs', '?id=eq.' + mbPdfId, {
+                    method: 'PATCH',
+                    headers: { 'Prefer': 'return=minimal' },
+                    body: JSON.stringify({ page_count: mbPdfDoc.numPages })
+                });
+            } catch (_) {}
+        }
     } catch (e) {
         if (loadingEl) loadingEl.classList.remove('show');
         console.warn('PDF preview failed:', e);
