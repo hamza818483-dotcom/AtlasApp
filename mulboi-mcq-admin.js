@@ -3587,7 +3587,9 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     const mbTargetTotal = count.min;
     const mbCallACount  = Math.max(1, Math.ceil(mbTargetTotal / 2));
     const mbCallBCount  = Math.max(1, mbTargetTotal - mbCallACount);
-    const mbCountAOverride = { min: mbCallACount, max: mbCallACount, label: `${mbCallACount}টি` };
+    const mbCountAOverride = count.auto
+        ? { min: mbCallACount, max: 999, label: 'পেইজ থেকে সর্বোচ্চ সম্ভব মানসম্পন্ন', auto: true }
+        : { min: mbCallACount, max: mbCallACount, label: `${mbCallACount}টি` };
     const basePromptA = (savedP || (
         `${typeLabel[type]||type} ধরনের ${mbCountAOverride.label} MCQ তৈরি করো। ` +
         `Content যে ভাষায় আছে সেই ভাষায় রাখো। ` +
