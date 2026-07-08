@@ -2780,8 +2780,10 @@ async function mbAiGenerate() {
             if (fallbackParsed.length) validParsed = fallbackParsed;
         }
         if (!validParsed.length) {
-            mbToast('AI সম্পূর্ণ/সঠিক MCQ দিতে পারেনি। sample: ' + JSON.stringify((parsed||[])[0]||{}).slice(0,150), 'error');
+            const sampleStr = JSON.stringify((parsed||[])[0]||{}).slice(0,150);
+            mbToast('AI সম্পূর্ণ/সঠিক MCQ দিতে পারেনি। sample: ' + sampleStr, 'error');
             console.error('mbAiGenerate all items failed validation. parsed:', parsed);
+            mbLogError('mbAiGenerate:validation', mbCurrentPage, 'AI সম্পূর্ণ/সঠিক MCQ দিতে পারেনি', { type, sample: sampleStr });
             return;
         }
         parsed = validParsed;
@@ -2837,6 +2839,7 @@ async function mbAiGenerate() {
 
     } catch (ex) {
         mbToast('AI ব্যর্থ: ' + ex.message, 'error');
+        mbLogError('mbAiGenerate', mbCurrentPage, ex && ex.message || ex, { type });
     } finally {
         mbStopAiProgressTicker();
         if (spinner) spinner.style.display = 'none';
