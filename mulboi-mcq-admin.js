@@ -1183,7 +1183,11 @@ function mbRenderPageSummary() {
     // এ শেষের পেইজগুলোর pill কখনোই দেখাতো না। এখন pure PDF page count ব্যবহার হচ্ছে, কোনো cap নেই।
     const totalPages = Math.max(maxFromMcqs, mbCurrentPage, numPdfPages, 1);
 
-    if (totalPages <= 1 && !Object.keys(pageCounts).length) { wrap.innerHTML = ''; return; }
+    // bug fix (root cause of "pill/All-tab দেখাচ্ছে না"): আগে totalPages<=1 && কোনো MCQ
+    // না থাকলে wrap.innerHTML='' করে pill সম্পূর্ণ মুছে দেওয়া হতো — কিন্তু নতুন PDF প্রথমবার
+    // open হওয়ার সময় mbPdfDoc/mbCachedNumPages এখনো সেট না হলে totalPages স্বাভাবিকভাবেই ১
+    // হয়, ফলে এই guard ভুলভাবে ট্রিগার হয়ে P1 pill-টাও দেখাতো না। এখন early-return সরিয়ে
+    // দেওয়া হলো — কমপক্ষে P1 pill (0 count হলেও) সবসময় দেখাবে, নিচের loop-ই তা করে।
 
     const typeLabel = { admin:'Manual', standard:'Standard', true_false:'সত্য/মিথ্যা', hard:'Hard' };
     // বর্তমানে চলমান bulk job থাকলে কোন পেইজে এখন কাজ চলছে সেটা জেনে নাও — pill rebuild হলেও highlight টিকে থাকার জন্য
