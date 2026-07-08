@@ -2803,12 +2803,24 @@ async function mbAiGenerate() {
         // প্রতিটা MCQ-র জন্য আলাদা ভাবে (id দিয়ে unique key) crop করা হয় — নাহলে সব
         // missing-exp_box MCQ একই cache key ('FULL') শেয়ার করে ভুলবশত একে অপরের
         // explanation image (এমনকি ভুল/অন্য প্রশ্নের crop) পেয়ে যেত।
+        // bug fix (root cause of "MCQ generate হলো কিন্তু save-ই হয়নি" — উদাহরণ: page 26):
+        // mbCropExplanationImage() কোনো কারণে (canvas/getImageData এরর, করাপ্ট রেন্ডার ইত্যাদি)
+        // exception থ্রো করলে আগে সেটা পুরো try ব্লক ভেঙে সরাসরি বাইরের catch-এ চলে যেত —
+        // ফলে ইতিমধ্যে তৈরি হওয়া MCQ-গুলো mbSaveAiMcqs()-এ পৌঁছানোর আগেই হারিয়ে যেত, কোনো
+        // save-এরর টোস্টও দেখাতো না (কারণ crop এরর আর save এরর একই catch-এ মিশে যেত)।
+        // এখন প্রতিটা crop আলাদাভাবে try/catch করা হচ্ছে — crop ব্যর্থ হলেও সেই MCQ explanation
+        // image ছাড়াই save হবে, পুরো batch হারাবে না।
         const cropCache = new Map();
         for (const m of mbAiData) {
-            const key = m.exp_box ? JSON.stringify(m.exp_box) + JSON.stringify(m.line_box||null) : `NOBBOX_${m.id}`;
-            if (!cropCache.has(key)) cropCache.set(key, await mbCropExplanationImage(mbCurrentPage, m.exp_box, m.line_box));
-            const img = cropCache.get(key);
-            if (img) m.explanation_image = img; // exp_box না থাকলেও fallback (full page) দেওয়া হয় — কখনো miss হবে না
+            try {
+                const key = m.exp_box ? JSON.stringify(m.exp_box) + JSON.stringify(m.line_box||null) : `NOBBOX_${m.id}`;
+                if (!cropCache.has(key)) cropCache.set(key, await mbCropExplanationImage(mbCurrentPage, m.exp_box, m.line_box));
+                const img = cropCache.get(key);
+                if (img) m.explanation_image = img; // exp_box না থাকলেও fallback (full page) দেওয়া হয় — কখনো miss হবে না
+            } catch (cropErr) {
+                mbLogError('mbCropExplanationImage', mbCurrentPage, cropErr && cropErr.message || cropErr, { mcqId: m.id });
+                // crop ব্যর্থ হলেও এই MCQ explanation image ছাড়াই সেভ হবে
+            }
             delete m.exp_box; delete m.line_box; // raw box আর দরকার নেই, save হবে না
         }
 
@@ -3719,10 +3731,14 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     // MCQ একই cache entry শেয়ার করে ভুল/অন্য প্রশ্নের crop image পেয়ে যায়।
     const cropCache = new Map();
     for (const m of newMcqs) {
-        const key = m.exp_box ? JSON.stringify(m.exp_box) + JSON.stringify(m.line_box||null) : `NOBBOX_${m.id}`;
-        if (!cropCache.has(key)) cropCache.set(key, await mbCropExplanationImage(pageNum, m.exp_box, m.line_box));
-        const img = cropCache.get(key);
-        if (img) m.explanation_image = img;
+        try {
+            const key = m.exp_box ? JSON.stringify(m.exp_box) + JSON.stringify(m.line_box||null) : `NOBBOX_${m.id}`;
+            if (!cropCache.has(key)) cropCache.set(key, await mbCropExplanationImage(pageNum, m.exp_box, m.line_box));
+            const img = cropCache.get(key);
+            if (img) m.explanation_image = img;
+        } catch (cropErr) {
+            mbLogError('mbCropExplanationImage:bulk', pageNum, cropErr && cropErr.message || cropErr, { mcqId: m.id });
+        }
         delete m.exp_box; delete m.line_box;
     }
 
