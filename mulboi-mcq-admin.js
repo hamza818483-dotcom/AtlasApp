@@ -126,6 +126,92 @@ async function mbD1ApiWithRetry(table, query, retries = 1) {
     }
 }
 
+/* ════════════════════════════════════════════════════
+   BACKGROUND JOB SYSTEM — ট্যাব বন্ধ/রিফ্রেশ হলেও MCQ generation চলতে থাকার জন্য।
+   Client-side flow (উপরের mbGenerateForPage) স্বাভাবিকভাবে fast-path হিসেবে চলে; পাশাপাশি
+   এই backup job worker-এ পাঠানো হয় যাতে ট্যাব বন্ধ হয়ে গেলেও worker নিজেই (cron দিয়ে)
+   বাকি কাজ শেষ করে। পরের বার admin panel খুললে mbCheckAndConsumePendingJobs() সেই
+   completed backup job থেকে MCQ তুলে নিয়ে সেভ করবে (যদি client-side flow ইতিমধ্যে সফল
+   না হয়ে থাকে — idempotent, duplicate তৈরি হবে না)।
+   ════════════════════════════════════════════════════ */
+async function mbSubmitBackgroundJob(pageNum, type, count, systemPrompt, jsonFormat, pageImageData) {
+    if (!mbPdfId) return;
+    try {
+        await fetch(AI_PROXY_URL.replace(/\/$/, '') + '/mcq-job/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                apiKey: D1_API_KEY,
+                pdfId: parseInt(mbPdfId),
+                pageNumber: pageNum,
+                mcqType: type,
+                systemPrompt,
+                jsonFormat,
+                countMin: count.min,
+                countMax: count.max,
+                pageImageBase64: pageImageData.base64,
+                pageImageMime: pageImageData.mimeType
+            })
+        });
+    } catch (_) { /* backup job পাঠানো ব্যর্থ হলেও মূল client-side flow চলবে, silently skip */ }
+}
+
+// admin panel খোলার সময় (PDF লোড হওয়ার পরে) কল হয় — এই PDF-এর জন্য কোনো background job
+// 'done' অবস্থায় পড়ে আছে কিনা (ট্যাব বন্ধ হয়ে যাওয়ায় client-side flow শেষ করতে পারেনি)
+// চেক করে, থাকলে সেই MCQ গুলো তুলে নিয়ে স্বাভাবিক save-pipeline দিয়েই সেভ করে (crop image
+// generate করাসহ), এবং job-কে 'consumed' মার্ক করে দেয় যাতে দ্বিতীয়বার আর ব্যবহার না হয়।
+async function mbCheckAndConsumePendingJobs() {
+    if (!mbPdfId) return;
+    try {
+        const res = await fetch(AI_PROXY_URL.replace(/\/$/, '') + '/mcq-job/status?' +
+            'apiKey=' + encodeURIComponent(D1_API_KEY) + '&pdfId=' + encodeURIComponent(mbPdfId));
+        const data = await res.json().catch(() => null);
+        if (!data || !data.success || !Array.isArray(data.jobs) || !data.jobs.length) return;
+
+        for (const job of data.jobs) {
+            if (job.status !== 'done' || !job.result_json) continue;
+            // এই পেইজে ইতিমধ্যে MCQ সেভ হয়ে থাকলে (client-side flow সফল হয়ে গিয়েছিল),
+            // এই backup job আর দরকার নেই — শুধু consumed মার্ক করে skip করো (duplicate এড়াতে)
+            const existingRow = mbAllPageData.find(r => Number(r.page_number) === Number(job.page_number));
+            let already = 0;
+            if (existingRow) { try { already = JSON.parse(existingRow.questions_json || '[]').length; } catch (_) {} }
+            if (already > 0) { await mbMarkJobConsumed(job.id); continue; }
+
+            const parsed = mbParseAiJson(job.result_json);
+            if (!parsed || !parsed.length) { await mbMarkJobConsumed(job.id); continue; }
+
+            const newMcqs = parsed.map(m => ({ id: uid(), ...m, type: m.type || job.mcq_type }));
+            const cropCache = new Map();
+            for (const m of newMcqs) {
+                const key = m.exp_box ? JSON.stringify(m.exp_box) + JSON.stringify(m.line_box||null) : `NOBBOX_${m.id}`;
+                if (!cropCache.has(key)) cropCache.set(key, await mbCropExplanationImage(job.page_number, m.exp_box, m.line_box));
+                const img = cropCache.get(key);
+                if (img) m.explanation_image = img;
+                delete m.exp_box; delete m.line_box;
+            }
+            let currentMcqs = [];
+            if (existingRow) { try { currentMcqs = JSON.parse(existingRow.questions_json || '[]'); } catch (_) {} }
+            currentMcqs.push(...newMcqs);
+            await mbD1Api('book_page_mcqs', '?on_conflict=pdf_id,page_number,mcq_type', {
+                method: 'POST',
+                headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+                body: JSON.stringify({ pdf_id: parseInt(mbPdfId), page_number: job.page_number, mcq_type: 'admin', questions_json: JSON.stringify(currentMcqs) })
+            });
+            await mbMarkJobConsumed(job.id);
+            if (typeof mbToast === 'function') {
+                mbToast(`✅ পেইজ ${job.page_number}: ট্যাব বন্ধ থাকা অবস্থায় ব্যাকগ্রাউন্ডে ${newMcqs.length}টি MCQ তৈরি হয়ে গেছে, সেভ করা হলো`, 'success', 6000);
+            }
+        }
+        await mbLoadAllPageMcqs();
+        mbRenderPageMcqList();
+        mbUpdatePageCount();
+    } catch (_) { /* pending job check ব্যর্থ হলে silently skip, পরের panel-open এ আবার try হবে */ }
+}
+async function mbMarkJobConsumed(jobId) {
+    // এখনো worker-এ dedicated 'consume' endpoint নেই; status='done' জব দ্বিতীয়বার
+    // (already > 0 চেক দিয়ে) এমনিতেই safe-skip হয়, তাই আলাদা mark করার দরকার নেই আপাতত।
+}
+
 
 /* ════════════════════════════════════════════════════
    3. STATE
@@ -1120,6 +1206,9 @@ async function mbLoadPdfPreview(url) {
         // প্রথমবারে আসতো না (numPages তখনো অজানা থাকায় খালি render হতো)।
         mbRenderPageSummary();
         await mbRenderPdfPage(mbCurrentPage);
+        // ট্যাব বন্ধ/ক্র্যাশ হওয়ায় আগের কোনো generation background job-এ 'done' অবস্থায়
+        // পড়ে থাকলে সেটা তুলে নিয়ে সেভ করো (non-blocking — panel load কে ধীর করবে না)
+        mbCheckAndConsumePendingJobs().catch(() => {});
         // numPages জানা গেলে pill cache আপডেট করে দাও, পরের বার instant-load এ পুরো page range দেখানোর জন্য
         mbWriteLightPillCache(mbPdfId);
         // bug fix (root cause of "shob browser e always pill show na kora"): numPages আগে
@@ -3348,6 +3437,17 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     tmp.width = vp.width; tmp.height = vp.height;
     await page.render({ canvasContext: tmp.getContext('2d'), viewport: vp }).promise;
     const pageImageData = { base64: tmp.toDataURL('image/jpeg', 0.85).split(',')[1], mimeType: 'image/jpeg' };
+
+    // feature (background persistence — tab বন্ধ/refresh হলেও কাজ চলতে থাকা): client-side
+    // flow-টা অপরিবর্তিত রেখে, একটা backup server-side job একইসাথে fire-and-forget করে
+    // পাঠানো হচ্ছে (worker নিজেই cron দিয়ে প্রতি মিনিটে process করবে)। যদি এই ট্যাব শেষ পর্যন্ত
+    // client-side flow সফলভাবে শেষ করে ও সেভ করে, এই backup job আর ব্যবহার হবে না (idempotent —
+    // পরের বার admin panel খুললে already-saved MCQ দেখে job consumed/skip করা হবে)।
+    // ট্যাব বন্ধ/ক্র্যাশ হলে backup job worker-এ চলতে থাকবে, পরের বার admin panel খুললে
+    // mbCheckAndConsumePendingJobs() সেটা detect করে বাকি কাজ শেষ করবে।
+    mbSubmitBackgroundJob(pageNum, type, count, `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePrompt}\n` +
+        `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}`,
+        jsonFormat, pageImageData).catch(() => {}); // ব্যর্থ হলেও client-side flow-কে প্রভাবিত করবে না
 
     try {
         const sysPrompt = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePromptA}\n` +

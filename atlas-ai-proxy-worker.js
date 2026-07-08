@@ -77,6 +77,12 @@ export default {
             return handlePdfStorage(storageMatch[1], request, env);
         }
 
+        // ── Server-side background MCQ-JSON generation job status (GET, needs to be
+        //    reachable before the POST-only gate below). ──
+        if (path === "/mcq-job/status") {
+            return handleMcqJobStatus(url, env);
+        }
+
         if (request.method !== "POST") {
             return jsonResponse({ success: false, error: "Only POST allowed" }, 405);
         }
@@ -94,12 +100,15 @@ export default {
         if (path === "/ocr-page" || path === "/ocr-status") {
             return jsonResponse({ success: false, error: "OCR endpoint disabled — client-side Tesseract.js ব্যবহার করা হচ্ছে, AI quota বাঁচাতে" }, 410);
         }
-        // ── MCQ-from-PDF endpoint: fetches the PDF server-side and sends it directly
-        //    to Gemini (which reads PDFs natively), avoiding client-side text extraction
-        //    that fails on scanned/image-based pages. ──
-        if (path === "/mcq-from-pdf") {
-            return handleMcqFromPdf(body, env);
+        // ── Server-side background MCQ-JSON generation job (survives tab close/refresh).
+        //    Only the AI-JSON step runs here; explanation-image crop still happens
+        //    client-side next time the admin panel is opened (PDF-render/canvas is
+        //    browser-only, not available in Workers). ──
+        if (path === "/mcq-job/create" && request.method === "POST") {
+            return handleMcqJobCreate(body, env);
         }
+
+
 
         // ── Default AI proxy ──
         const question = (body.question || "").trim();
@@ -153,6 +162,10 @@ export default {
             error: "সব AI provider ব্যর্থ হয়েছে। আবার চেষ্টা করো।",
             details: errors,
         }, 502);
+    },
+
+    async scheduled(event, env, ctx) {
+        ctx.waitUntil(processPendingMcqJobs(env));
     },
 };
 
@@ -931,11 +944,147 @@ async function ocrDbGet(url, key, path) {
 }
 
 /* ════════════════════════════════════════════════════════════
-   NOTE: Server-side bulk MCQ job system (book_mcq_jobs + cron) has
-   been fully removed — it duplicate-generated pages with no dedupe
-   and its prompt rules were out of sync with client-side rules.
-   Bulk generation now runs purely client-side.
+   SERVER-SIDE MCQ-JSON BACKGROUND JOB (v2 — re-added, carefully)
+   ────────────────────────────────────────────────────────────
+   A previous version of this system was removed because it
+   (a) duplicate-generated pages with no dedupe, and (b) its prompt
+   rules drifted out of sync with the client-side rules over time.
+   This version fixes both:
+     - Single source of truth: the client (mulboi-mcq-admin.js) sends
+       the FULL exact prompt/systemPrompt/jsonFormat/count it would
+       have used itself — the worker never re-derives or duplicates
+       prompt-building logic, so there is no drift possible.
+     - Dedupe: job creation is idempotent per (pdf_id, page_number,
+       type, count_label) via an `idempotency_key` unique column —
+       re-clicking "generate" or a duplicate create call reuses the
+       existing job row instead of spawning a second one.
+     - Only the AI→JSON step runs server-side. Explanation-image
+       crop/highlight (needs canvas + pdf.js, browser-only) is done
+       client-side next time the page is opened — mcq_gen_jobs rows
+       with status='done' carry the raw MCQ JSON (no image yet); the
+       client applies crops and moves them into book_page_mcqs itself.
    ════════════════════════════════════════════════════════════ */
+
+async function ensureMcqJobTable(db) {
+    await db.prepare(`CREATE TABLE IF NOT EXISTS mcq_gen_jobs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        idempotency_key TEXT UNIQUE NOT NULL,
+        pdf_id INTEGER NOT NULL,
+        page_number INTEGER NOT NULL,
+        mcq_type TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        system_prompt TEXT NOT NULL,
+        json_format TEXT NOT NULL,
+        count_min INTEGER NOT NULL,
+        count_max INTEGER NOT NULL,
+        page_image_b64 TEXT,
+        page_image_mime TEXT,
+        result_json TEXT,
+        error TEXT,
+        attempts INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )`).run();
+}
+
+async function handleMcqJobCreate(body, env) {
+    const apiKey = body.apiKey;
+    if (!env.D1_API_KEY || apiKey !== env.D1_API_KEY) return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+    const db = env.MULBOI_DB;
+    if (!db) return jsonResponse({ success: false, error: "D1 binding MULBOI_DB missing" }, 500);
+    await ensureMcqJobTable(db);
+
+    const { pdfId, pageNumber, mcqType, systemPrompt, jsonFormat, countMin, countMax, pageImageBase64, pageImageMime } = body;
+    if (!pdfId || !pageNumber || !mcqType || !systemPrompt || !countMin || !countMax) {
+        return jsonResponse({ success: false, error: "pdfId, pageNumber, mcqType, systemPrompt, countMin, countMax প্রয়োজন" }, 400);
+    }
+    const idempotencyKey = `${pdfId}:${pageNumber}:${mcqType}:${countMin}-${countMax}`;
+
+    // ইতিমধ্যে চলমান/সম্পন্ন job থাকলে সেটাই ফেরত দাও (dedupe — নতুন job তৈরি হবে না)
+    const existing = await db.prepare(`SELECT * FROM mcq_gen_jobs WHERE idempotency_key = ?`).bind(idempotencyKey).first();
+    if (existing && existing.status !== 'error') {
+        return jsonResponse({ success: true, jobId: existing.id, status: existing.status, reused: true });
+    }
+
+    const now = new Date().toISOString();
+    if (existing && existing.status === 'error') {
+        // আগের ব্যর্থ job থাকলে সেটা reset করে আবার pending করা হয় (নতুন row না বানিয়ে)
+        await db.prepare(`UPDATE mcq_gen_jobs SET status='pending', error=NULL, attempts=0, result_json=NULL,
+            page_image_b64=?, page_image_mime=?, system_prompt=?, json_format=?, count_min=?, count_max=?, updated_at=? WHERE id=?`)
+            .bind(pageImageBase64 || null, pageImageMime || null, systemPrompt, jsonFormat || '', countMin, countMax, now, existing.id).run();
+        return jsonResponse({ success: true, jobId: existing.id, status: 'pending', reused: false });
+    }
+
+    const res = await db.prepare(`INSERT INTO mcq_gen_jobs
+        (idempotency_key, pdf_id, page_number, mcq_type, status, system_prompt, json_format, count_min, count_max, page_image_b64, page_image_mime, created_at, updated_at)
+        VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?)`)
+        .bind(idempotencyKey, pdfId, pageNumber, mcqType, systemPrompt, jsonFormat || '', countMin, countMax, pageImageBase64 || null, pageImageMime || null, now, now).run();
+
+    return jsonResponse({ success: true, jobId: res.meta.last_row_id, status: 'pending', reused: false });
+}
+
+async function handleMcqJobStatus(url, env) {
+    const apiKey = url.searchParams.get("apiKey");
+    if (!env.D1_API_KEY || apiKey !== env.D1_API_KEY) return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+    const db = env.MULBOI_DB;
+    if (!db) return jsonResponse({ success: false, error: "D1 binding MULBOI_DB missing" }, 500);
+    await ensureMcqJobTable(db);
+
+    const jobId = url.searchParams.get("jobId");
+    const pdfId = url.searchParams.get("pdfId");
+    if (jobId) {
+        const row = await db.prepare(`SELECT id, status, result_json, error, attempts, page_number, mcq_type FROM mcq_gen_jobs WHERE id = ?`).bind(jobId).first();
+        if (!row) return jsonResponse({ success: false, error: "Job not found" }, 404);
+        return jsonResponse({ success: true, job: row });
+    }
+    if (pdfId) {
+        // pdf-এর সব pending/processing job একসাথে দেখার জন্য (admin panel reopen হলে
+        // pending job গুলো detect করে auto-resume/poll করতে ব্যবহার হবে)
+        const rows = await db.prepare(`SELECT id, status, page_number, mcq_type, result_json, error FROM mcq_gen_jobs WHERE pdf_id = ? AND status != 'consumed' ORDER BY page_number ASC`).bind(pdfId).all();
+        return jsonResponse({ success: true, jobs: rows.results || [] });
+    }
+    return jsonResponse({ success: false, error: "jobId বা pdfId প্রয়োজন" }, 400);
+}
+
+// cron দিয়ে প্রতি মিনিটে pending job গুলো process করা হয় — batch ছোট রাখা হয়েছে
+// (একবারে ৩টা) যাতে Worker-এর CPU-time limit-এ না আটকায়।
+async function processPendingMcqJobs(env) {
+    const db = env.MULBOI_DB;
+    if (!db) return;
+    await ensureMcqJobTable(db);
+    const pending = await db.prepare(`SELECT * FROM mcq_gen_jobs WHERE status = 'pending' AND attempts < 6 ORDER BY created_at ASC LIMIT 3`).all();
+    const rows = pending.results || [];
+    for (const job of rows) {
+        await db.prepare(`UPDATE mcq_gen_jobs SET status='processing', attempts=attempts+1, updated_at=? WHERE id=?`).bind(new Date().toISOString(), job.id).run();
+        try {
+            const image = job.page_image_b64 ? { base64: job.page_image_b64, mimeType: job.page_image_mime || 'image/jpeg' } : null;
+            // client-এর মতোই একই provider chain (Groq প্রথমে, সব key শেষ হলে Gemini, তারপর বাকিরা)
+            const providers = [
+                () => callGroq(env, '', job.system_prompt, image),
+                () => callGemini(env, '', job.system_prompt, image),
+                () => callOpenRouter(env, '', job.system_prompt, image),
+                () => callCerebras(env, '', job.system_prompt, image),
+                () => callCloudflareAI(env, '', job.system_prompt, image),
+            ];
+            let answer = null, lastErr = 'সব provider ব্যর্থ';
+            for (const p of providers) {
+                try {
+                    const r = await p();
+                    if (r && r.answer && r.answer.trim().length > 5) { answer = r.answer; break; }
+                    if (r?.error) lastErr = r.error;
+                } catch (e) { lastErr = String(e?.message || e); }
+            }
+            if (!answer) throw new Error(lastErr);
+            await db.prepare(`UPDATE mcq_gen_jobs SET status='done', result_json=?, updated_at=? WHERE id=?`)
+                .bind(answer, new Date().toISOString(), job.id).run();
+        } catch (e) {
+            const errMsg = String(e?.message || e);
+            const nextStatus = job.attempts + 1 >= 6 ? 'error' : 'pending'; // ৬ বার fail করলে permanently error, নাহলে আবার pending (পরের cron round retry করবে)
+            await db.prepare(`UPDATE mcq_gen_jobs SET status=?, error=?, updated_at=? WHERE id=?`)
+                .bind(nextStatus, errMsg, new Date().toISOString(), job.id).run();
+        }
+    }
+}
 
 async function handleMcqFromPdf(body, env) {
     const { pdf_url, prompt } = body;
