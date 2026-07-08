@@ -1512,12 +1512,14 @@ function mbSwitchTab(name) {
     // rows ({} দিয়ে ভরা, শুধু count-এর জন্য) থাকা অবস্থায় ইউজার দ্রুত "All" ট্যাবে ক্লিক
     // করলে আগে ওই খালি placeholder থেকেই লিস্ট রেন্ডার হয়ে যেত (প্রশ্ন/অপশন ফাঁকা দেখাতো)।
     // এখন real fetch (mbLoadAllPageMcqs) শেষ না হওয়া পর্যন্ত "All" ট্যাবে loading দেখানো হয়।
+    // bug fix (root cause of "generate korar por All tab e dekhay na"): আগে শুধু
+    // mbRealDataLoaded===true হলেই render হতো, নাহলে চিরকাল "লোড হচ্ছে..." দেখিয়ে যেত।
+    // initial mbLoadAllPageMcqs() slow/fail হলে flag কখনো true না হওয়ায়, পরে AI generate
+    // সফল হয়ে in-memory data ready থাকলেও "All" ট্যাব খালি/লোডিং-এই আটকে থাকত। এখন সবসময়
+    // render করা হয় (in-memory data যা-ই থাকুক তাই দেখাবে); real fetch শেষ হলে
+    // mbLoadAllPageMcqs().then() নিজে থেকেই আবার সঠিক ডেটা দিয়ে re-render করে।
     if (name === 'all') {
-        if (mbRealDataLoaded) mbRenderPageMcqList();
-        else {
-            const listEl = document.getElementById('mbMcqList');
-            if (listEl) listEl.innerHTML = '<div style="text-align:center;padding:20px;font-size:12px;color:var(--text3)">লোড হচ্ছে...</div>';
-        }
+        mbRenderPageMcqList();
     }
     if (name === 'csv') mbLoadCsvArchive();
 }
