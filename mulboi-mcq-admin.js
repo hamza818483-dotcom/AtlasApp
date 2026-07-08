@@ -2658,12 +2658,27 @@ async function mbAiGenerate() {
         mbStartAiProgressTicker(20, 58, 'AI ভাবছে ও প্রশ্ন বানাচ্ছে...');
         const pageImageData = await mbGetPageImageBase64(mbCurrentPage);
         if (pageImageData) {
+            const sysPrompt = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePrompt}\n` +
+                `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}`;
             try {
-                const sysPrompt = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePrompt}\n` +
-                    `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}`;
                 rawJson = await mbCallAiApi('', pageImageData, sysPrompt, false);
                 geminiAlreadyTried = true;
-            } catch (e1) { mbAiDebugErrs.push('step1: ' + (e1 && e1.message || e1)); /* fall through to whole-PDF approach below */ }
+            } catch (e1) {
+                // bug fix: "Failed to fetch" প্রায়ই transient (মোবাইল নেটওয়ার্ক ড্রপ/সাময়িক
+                // ইন্টারাপশন) — permanent এরর ধরে সাথে সাথে পরের ধাপে না গিয়ে একবার রিট্রাই
+                // করলে scanned/image-only পেইজেও (যেখানে text fallback সম্ভব না) generate
+                // সফল হতে পারে।
+                const isNetworkErr = e1 && /Failed to fetch|NetworkError|network/i.test(e1.message || '');
+                if (isNetworkErr) {
+                    await new Promise(r => setTimeout(r, 1500));
+                    try {
+                        rawJson = await mbCallAiApi('', pageImageData, sysPrompt, false);
+                        geminiAlreadyTried = true;
+                    } catch (e1b) { mbAiDebugErrs.push('step1(retry): ' + (e1b && e1b.message || e1b)); }
+                } else {
+                    mbAiDebugErrs.push('step1: ' + (e1 && e1.message || e1));
+                }
+            }
         }
 
         // Step 2 (fallback): whole-PDF direct-to-Gemini — only used if page-image path failed
@@ -2703,6 +2718,7 @@ async function mbAiGenerate() {
             if (!rawJson) {
                 mbToast('AI ব্যর্থ: ' + (mbAiDebugErrs.join(' | ') || 'অজানা কারণ'), 'error');
                 console.error('mbAiGenerate debug errors:', mbAiDebugErrs);
+                mbLogError('mbAiGenerate:all-steps-failed', mbCurrentPage, mbAiDebugErrs.join(' | ') || 'অজানা কারণ', { type });
                 return;
             }
         }
