@@ -2908,20 +2908,40 @@ async function mbAiGenerateSpecial() {
 // All AI calls now go through the centralized proxy worker — no API key lives in
 // this file or any client-side code. See atlas-ai-proxy-worker.js for the actual
 // provider fallback chain (Gemini → OpenRouter → Groq → Cerebras → Cloudflare AI).
+//
+// bug fix (root cause of "generate করতে ২০ মিনিট লাগে"): আগে এই fetch-এর কোনো timeout
+// ছিল না, ফলে worker-এর ৫-provider fallback chain-এর কোনো ধাপ (rate-limit/slow response)
+// আটকে থাকলে পুরো generate flow-ও অনির্দিষ্টকালের জন্য আটকে থাকতো — এবং mbAiGenerate-এ
+// এরকম ২-৩টা sequential কল থাকায় (page-image → whole-pdf → text fallback) সবগুলো ধীরগতির
+// হলে মোট সময় ১৫-২০ মিনিটে পৌঁছাতো। এখন প্রতিটা কল সর্বোচ্চ ৪৫ সেকেন্ডে fail করবে (timeout),
+// এবং সাথে সাথে পরের fallback ধাপে চলে যাবে — ফলে ব্যর্থ হলেও দ্রুত জানা যাবে।
 async function mbCallAiApi(prompt, image, customSystemPrompt, skipGemini, skipGroq) {
-    const res = await fetch(AI_PROXY_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            question: prompt || '',
-            image: image ? { base64: image.base64, mimeType: image.mimeType } : null,
-            systemPrompt: customSystemPrompt || 'তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।',
-            skipGemini: !!skipGemini, // এই page-এর জন্য Gemini আগেই একবার (PDF-native) চেষ্টা হয়ে থাকলে,
-                                       // fallback chain-এ আবার Gemini-কে ডাবল-কল না করার জন্য
-            skipGroq: !!skipGroq      // retry কলে Groq আগেই একবার চেষ্টা হয়ে থাকলে দ্বিতীয়বার একই
-                                       // provider-এ কল না করে সরাসরি Gemini/অন্য provider দিয়ে শুরু করার জন্য
-        })
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
+    let res;
+    try {
+        res = await fetch(AI_PROXY_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
+            body: JSON.stringify({
+                question: prompt || '',
+                image: image ? { base64: image.base64, mimeType: image.mimeType } : null,
+                systemPrompt: customSystemPrompt || 'তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।',
+                skipGemini: !!skipGemini, // এই page-এর জন্য Gemini আগেই একবার (PDF-native) চেষ্টা হয়ে থাকলে,
+                                           // fallback chain-এ আবার Gemini-কে ডাবল-কল না করার জন্য
+                skipGroq: !!skipGroq      // retry কলে Groq আগেই একবার চেষ্টা হয়ে থাকলে দ্বিতীয়বার একই
+                                           // provider-এ কল না করে সরাসরি Gemini/অন্য provider দিয়ে শুরু করার জন্য
+            })
+        });
+    } catch (fetchErr) {
+        if (fetchErr && fetchErr.name === 'AbortError') {
+            throw new Error('AI প্রক্সি টাইমআউট (৪৫ সেকেন্ডে সাড়া দেয়নি)');
+        }
+        throw fetchErr;
+    } finally {
+        clearTimeout(timeoutId);
+    }
     let data = null;
     try { data = await res.json(); } catch (_) {}
     if (!res.ok) {
