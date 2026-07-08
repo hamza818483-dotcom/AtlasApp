@@ -373,6 +373,20 @@ async function mbSpecialExtractPage(pageNum) {
                 } catch (_) {}
             }
             if (!rawJson) {
+                // bug fix: panel খোলার সাথে সাথে mbPdfDoc = null সেট হয় এবং pdf.js এসিঙ্ক্রোনাসভাবে
+                // লোড হতে থাকে (mbOpenMcqPanel দ্রষ্টব্য)। যদি generate button সেই লোড শেষ হওয়ার
+                // আগেই ক্লিক হয় (বা network slow থাকায় লোড দেরি হয়), mbPdfDoc তখনো null থাকে এবং
+                // mbPdfDoc.getPage() করলে "Cannot read properties of null (reading 'getPage')"
+                // এরর দেয়। তাই এখানে সর্বোচ্চ ৮ সেকেন্ড অপেক্ষা করা হচ্ছে (poll), তারপরও null থাকলে
+                // স্পষ্ট বাংলা এরর মেসেজ দেওয়া হচ্ছে যাতে ইউজার বুঝতে পারে PDF লোড হয়নি।
+                if (!mbPdfDoc) {
+                    let waited = 0;
+                    while (!mbPdfDoc && waited < 8000) {
+                        await new Promise(r => setTimeout(r, 200));
+                        waited += 200;
+                    }
+                }
+                if (!mbPdfDoc) throw new Error('PDF এখনো লোড হয়নি — একটু অপেক্ষা করে আবার চেষ্টা করুন');
                 const page = await mbPdfDoc.getPage(pageNum);
                 const textCont = await page.getTextContent();
                 const pageText = textCont.items.map(i => i.str).join(' ').trim();
@@ -391,8 +405,11 @@ async function mbSpecialExtractPage(pageNum) {
             if (parsed && parsed.length) return parsed; // পাওয়া গেছে — নিশ্চিত
             if (parsed && parsed.length === 0 && attempt === 1) continue; // প্রথমবার খালি এলে একবার রি-চেক
             return []; // দ্বিতীয়বারও খালি → পেইজে সত্যিই কোনো MCQ নেই
-        } catch (_) {
-            if (attempt === MAX_ATTEMPTS) return [];
+        } catch (e) {
+            // bug fix: আগে এখানে এরর সম্পূর্ণ গিলে ফেলে খালি array রিটার্ন করত, ফলে ইউজার শুধু
+            // generic "কোনো পেইজেই MCQ generate হয়নি" দেখতো, আসল কারণ (PDF লোড না হওয়া ইত্যাদি)
+            // কখনো জানতে পারতো না। এখন শেষ চেষ্টাতেও ব্যর্থ হলে আসল এরর ছুঁড়ে দেওয়া হচ্ছে।
+            if (attempt === MAX_ATTEMPTS) throw e;
         }
     }
     return [];
