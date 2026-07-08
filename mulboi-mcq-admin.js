@@ -160,6 +160,13 @@ async function mbD1ApiWithRetry(table, query, retries = 1) {
 // যাতে ইউজারকে জিজ্ঞেস না করেই আসল এরর মেসেজ, পেইজ নম্বর, মোড ইত্যাদি সরাসরি DB থেকে দেখা যায়।
 // fire-and-forget (এই কল ব্যর্থ হলেও মূল generate flow-কে প্রভাবিত করবে না)।
 async function mbLogError(context, pageNum, errMsg, extra) {
+    const fullMsg = String(errMsg || '');
+    try {
+        if (typeof mbToast === 'function') {
+            const pageTxt = pageNum ? ` (পেইজ ${pageNum})` : '';
+            mbToast(`❌ [${context}]${pageTxt}: ${fullMsg.slice(0, 200)}`, 'error', 9000);
+        }
+    } catch (_) { /* toast ব্যর্থ হলেও D1 log চলবে */ }
     try {
         await mbD1Api('mcq_error_logs', '', {
             method: 'POST',
@@ -168,7 +175,7 @@ async function mbLogError(context, pageNum, errMsg, extra) {
                 pdf_id: mbPdfId ? parseInt(mbPdfId) : null,
                 page_number: pageNum || null,
                 context: context || '',
-                error_message: String(errMsg || '').slice(0, 2000),
+                error_message: fullMsg.slice(0, 2000),
                 extra: extra ? JSON.stringify(extra).slice(0, 4000) : null,
                 created_at: new Date().toISOString()
             })
