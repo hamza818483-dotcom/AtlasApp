@@ -3186,6 +3186,13 @@ async function mbRunBulkJob(job) {
         mbToast('❌ কোনো পেইজেই MCQ generate হয়নি — উপরের error দেখুন', 'error', 8000);
     } else {
         mbToast(`✓ Bulk generation সম্পন্ন — ${job.completedCount}টি পেইজ প্রসেস হয়েছে`, 'success');
+        // feature: single-page (AI ট্যাব থেকে) generate সফল হলে auto "All" ট্যাবে switch —
+        // ইউজারকে আলাদা করে ক্লিক করতে হবে না, generate হওয়া মাত্রই সব MCQ (Manual+AI+CSV
+        // মিলিয়ে) সরাসরি দেখা যাবে। শুধু single-page job-এ (bulk range/all-এ না, নাহলে
+        // প্রতি পেইজ শেষে বিরক্তিকরভাবে ট্যাব বদলে যেত)।
+        if (job.totalPages === 1 && job.from === job.to) {
+            mbSwitchTab('all');
+        }
     }
 }
 
