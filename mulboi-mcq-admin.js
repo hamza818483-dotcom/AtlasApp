@@ -3775,7 +3775,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
         const parsed4 = mbParseAiJson(retryRaw4);
         const valid4 = (parsed4 || []).filter(mbIsValidMcqBulk);
         if (valid4.length) parsed = [...parsed, ...valid4];
-    } catch (_) {}
+    } catch (callBErr) { mbLogError('mbGenerateForPage:callB', pageNum, callBErr && callBErr.message || callBErr, { type, need: mbCallBCount }); }
     mbMark('callB');
 
     // Count must-follow (STRICT): user যত MCQ চেয়েছে ততটাই বানাতে হবে — ঘাটতি থাকলে যতক্ষণ না
@@ -3800,9 +3800,12 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
                     if (!existingQ.has((m.question||'').trim())) { parsed.push(m); existingQ.add((m.question||'').trim()); }
                 }
             }
-        } catch (_) { /* এই round ব্যর্থ হলে পরের round-এ আবার চেষ্টা হবে */ }
+        } catch (topUpErr) { mbAiDebugErrs.push('topup' + mbTopUpTries + ':' + (topUpErr && topUpErr.message || topUpErr)); }
     }
     mbMark('topUp');
+    if (parsed.length < count.min) {
+        mbLogError('mbGenerateForPage:topUpShort', pageNum, `topUp শেষেও ঘাটতি: চাহিদা ${count.min}, পাওয়া ${parsed.length}`, { tries: mbTopUpTries, errs: mbAiDebugErrs.slice(-5) });
+    }
     if (parsed.length > count.max) parsed = parsed.slice(0, count.max);
     if (parsed.length < count.min) {
         // bug fix (user preference: কম MCQ হলেও save হওয়া উচিত): আগে এখানে সব progress ফেলে
