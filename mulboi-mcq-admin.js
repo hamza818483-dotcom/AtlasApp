@@ -3136,6 +3136,10 @@ function mbStopBulkSubTicker() {
 // Tab বন্ধ না করলে background এ চলতে থাকবে, refresh হলেও mbResumeBulkJob() আবার ধরে নেবে।
 async function mbRunBulkJob(job) {
     mbUpdateBulkUI(job);
+    let lastErrorMsg = ''; // bug fix: per-page error toast এর টেক্সট শেষের summary toast
+    // দিয়ে সাথে সাথেই overwrite হয়ে যেত (একই #toast element, দুটোই কয়েক সেকেন্ড পরপর
+    // আসত) — ফলে single-page job এ আসল error কখনো পড়া যেত না, শুধু generic
+    // "0টি পেইজ সম্পন্ন" দেখাত। এখন শেষ error message ধরে রেখে summary-তে জুড়ে দেওয়া হয়।
     for (let p = job.currentPage; p <= job.to; p++) {
         // প্রতি iteration এ localStorage থেকে stop flag চেক করো — থামানো হয়েছে কিনা
         try {
@@ -3155,11 +3159,13 @@ async function mbRunBulkJob(job) {
             mbStopBulkSubTicker();
             job.subProgress = 0;
             console.error('Bulk page ' + p + ' failed:', e);
-            // bug fix (debug visibility): আগে ৩ সেকেন্ডের error toast পরের "সম্পন্ন" toast
-            // দিয়ে সাথে সাথেই overwrite হয়ে যেত (একই #toast element শেয়ার হয়), ফলে
-            // single-page job এ error দেখাই যেত না — শুধু "0টি পেইজ সম্পন্ন" দেখাত।
-            // এখন error toast ৮ সেকেন্ড থাকবে যাতে আসল কারণ পড়া যায়।
-            if (typeof mbToast === 'function') mbToast('⚠️ পেইজ ' + p + ': ' + (e.message || 'ব্যর্থ'), 'error', 8000);
+            lastErrorMsg = 'পেইজ ' + p + ': ' + (e.message || 'ব্যর্থ');
+            // bug fix (debug visibility): শুধু bulk (একাধিক পেইজ) মোডে সাথে সাথে toast দেখাও —
+            // single-page job এ এই toast আসলেই final summary দিয়ে সাথে সাথে overwrite হয়ে
+            // যেত, তাই সেখানে শুধু final summary-তেই (lastErrorMsg জুড়ে) দেখানো হবে।
+            if (job.totalPages > 1 && typeof mbToast === 'function') {
+                mbToast('⚠️ ' + lastErrorMsg, 'error', 8000);
+            }
             // একটা পেইজ fail করলেও চালিয়ে যাও — পুরো job থামবে না
         }
         job.currentPage = p + 1;
@@ -3183,7 +3189,8 @@ async function mbRunBulkJob(job) {
     // bug fix: completedCount=0 হলেও আগে "✓ Bulk generation সম্পন্ন — 0টি পেইজ" দেখাত,
     // যেটা বিভ্রান্তিকর (আসলে ব্যর্থ হয়েছে, সফল হয়নি)। এখন স্পষ্ট failure message।
     if (job.completedCount === 0) {
-        mbToast('❌ কোনো পেইজেই MCQ generate হয়নি — উপরের error দেখুন', 'error', 8000);
+        const detail = lastErrorMsg ? (' — ' + lastErrorMsg) : '';
+        mbToast('❌ কোনো পেইজেই MCQ generate হয়নি' + detail, 'error', 10000);
     } else {
         mbToast(`✓ Bulk generation সম্পন্ন — ${job.completedCount}টি পেইজ প্রসেস হয়েছে`, 'success');
         // feature: single-page (AI ট্যাব থেকে) generate সফল হলে auto "All" ট্যাবে switch —
