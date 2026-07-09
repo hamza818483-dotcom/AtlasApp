@@ -2701,7 +2701,17 @@ function mbSetAiProgress(pct, label) {
     const lbl = document.getElementById('mbAiSpinnerLabel');
     if (fill) fill.style.width = pct + '%';
     if (pctEl) pctEl.textContent = pct + '%';
-    if (lbl && label) lbl.textContent = label;
+    if (lbl && label) lbl.textContent = label + mbElapsedSecLabel();
+}
+
+// feature (user request: % এর সাথে real elapsed সময়ও দেখানো): ticker/progress প্রতিবার
+// update হওয়ার সময় শুরু থেকে কত সেকেন্ড পেরিয়েছে সেটাও label-এ যোগ করা হয়, যাতে ইউজার
+// বুঝতে পারে % আসলে কত সময়ের প্রেক্ষিতে আছে (শুধু abstract percentage না)।
+let mbAiProgressStartTs = null;
+function mbResetAiProgressTimer() { mbAiProgressStartTs = Date.now(); }
+function mbElapsedSecLabel() {
+    if (!mbAiProgressStartTs) return '';
+    return ` (${Math.round((Date.now() - mbAiProgressStartTs) / 1000)}s)`;
 }
 
 // bug fix: আগে ২০% থেকে ৬০% (AI response এর অপেক্ষার সময়টা) এ কোনো progress update
@@ -2711,6 +2721,7 @@ function mbSetAiProgress(pct, label) {
 let mbAiProgressTicker = null;
 function mbStartAiProgressTicker(fromPct, towardPct, label) {
     mbStopAiProgressTicker();
+    if (!mbAiProgressStartTs) mbResetAiProgressTimer();
     let current = fromPct;
     mbSetAiProgress(Math.round(current), label);
     mbAiProgressTicker = setInterval(() => {
@@ -2744,6 +2755,7 @@ async function mbAiGenerate() {
     if (genBtn)   genBtn.style.display   = 'none';
     if (resultEl) resultEl.style.display = 'none';
     mbAiData = [];
+    mbResetAiProgressTimer();
     mbSetAiProgress(5, 'পেইজ প্রস্তুত হচ্ছে...');
 
     try {
@@ -3631,6 +3643,7 @@ async function mbStartSinglePageJob() {
     if (spinner)  spinner.style.display  = 'block';
     if (genBtn)   genBtn.style.display   = 'none';
     if (resultEl) resultEl.style.display = 'none';
+    mbResetAiProgressTimer();
     mbSetAiProgress(5, 'পেইজ প্রস্তুত হচ্ছে...');
     mbStartAiProgressTicker(20, 90, 'AI ভাবছে ও প্রশ্ন বানাচ্ছে...');
 
@@ -4040,7 +4053,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     // করে যা পাওয়া গেছে তা নিয়েই এগিয়ে যাওয়া হচ্ছে।
     let mbTopUpTries = 0;
     let mbNoProgressStreak = 0;
-    const MB_TOPUP_SAFETY_CEILING = 5;
+    const MB_TOPUP_SAFETY_CEILING = 7;
     // bug fix (root cause of "চাহিদা 10টি, পাওয়া গেছে 5টি" বারবার হওয়া): আগে ১ম round-এ AI
     // যদি সবগুলো duplicate/একই প্রশ্ন repeat করত (parsed.length === beforeLen), সাথে সাথেই
     // loop থেমে যেত — বাকি ৪-৫টা ceiling কখনো ব্যবহারই হতো না, ফলে "content কম নেই" এমন
@@ -4062,19 +4075,19 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
             `প্রশ্ন/অপশন/ব্যাখ্যা অবশ্যই বাংলা ভাষায় ও বাংলা লিপিতে লিখতে হবে। ` +
             `শুধু ঠিক ${need}টি প্রশ্নের valid JSON array রিটার্ন করো, markdown/preamble ছাড়া। Format:\n${jsonFormat}`;
         try {
-            const [r1, r2] = await Promise.allSettled([
-                mbCallAiApi('', pageImageData, makeTopUpSys(''), false, false),
-                mbCallAiApi('', pageImageData, makeTopUpSys('পেইজের অন্য অংশ/ভিন্ন concept/detail থেকে জোর দিয়ে — '), true, true),
-            ]);
+            // bug fix (root cause of "10 চাইলে 5-এ থেমে যাওয়া"): 2-parallel topUp call একসাথে
+            // Cloudflare Worker-এর subrequest limit ("Too many subrequests by single Worker
+            // invocation") হিট করছিল — প্রতিটা call নিজেই ৫-provider fallback chain, দুইটা
+            // parallel call মানে একসাথে অনেক বেশি subrequest, ফলে OpenRouter/Cloudflare-AI
+            // exception দিয়ে ফেল করছিল প্রতিবার। এখন sequential single call — সামান্য ধীর
+            // কিন্তু limit-এ hit করবে না, তাই actual valid MCQ পাওয়ার সম্ভাবনা বাড়বে।
+            const r1 = await mbCallAiApi('', pageImageData, makeTopUpSys(''), false, false);
             const existingQ = new Set(parsed.map(m => (m.question||'').trim()));
-            for (const r of [r1, r2]) {
-                if (r.status !== 'fulfilled' || !r.value) { if (r.reason) mbAiDebugErrs.push('topup' + mbTopUpTries + ':' + (r.reason?.message || r.reason)); continue; }
-                const topUpParsed = mbParseAiJson(r.value);
-                const topUpValid = (topUpParsed || []).filter(mbIsValidMcqBulk);
-                for (const m of topUpValid) {
-                    const key = (m.question||'').trim();
-                    if (key && !existingQ.has(key)) { parsed.push(m); existingQ.add(key); }
-                }
+            const topUpParsed = mbParseAiJson(r1);
+            const topUpValid = (topUpParsed || []).filter(mbIsValidMcqBulk);
+            for (const m of topUpValid) {
+                const key = (m.question||'').trim();
+                if (key && !existingQ.has(key)) { parsed.push(m); existingQ.add(key); }
             }
         } catch (topUpErr) { mbAiDebugErrs.push('topup' + mbTopUpTries + ':' + (topUpErr && topUpErr.message || topUpErr)); }
         if (parsed.length === beforeLen) {
