@@ -3963,18 +3963,26 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     // না পেলে (no progress) সাথে সাথে loop থামিয়ে দেওয়া হচ্ছে — বাকি ceiling গুলো অপচয় না
     // করে যা পাওয়া গেছে তা নিয়েই এগিয়ে যাওয়া হচ্ছে।
     let mbTopUpTries = 0;
+    let mbNoProgressStreak = 0;
     const MB_TOPUP_SAFETY_CEILING = 5;
-    // speed+accuracy fix: প্রতি round-এ আগে ১টা মাত্র call হতো (need-সংখ্যক নতুন MCQ চেয়ে) —
-    // যদি সেই ১টা call এ AI duplicate/invalid প্রশ্ন দিত, পুরো round-ই নষ্ট হতো। এখন প্রতি
-    // round-এ ২টা ভিন্ন angle-এর call parallel-এ পাঠানো হয় (একটা normal, একটা different
-    // section/concept থেকে জোর দিয়ে) — parallel বলে সময় বাড়ে না, কিন্তু একটা call fail/duplicate
-    // দিলেও অন্যটা থেকে valid MCQ পাওয়ার সম্ভাবনা বাড়ে (accuracy/completion rate বাড়ে)।
+    // bug fix (root cause of "চাহিদা 10টি, পাওয়া গেছে 5টি" বারবার হওয়া): আগে ১ম round-এ AI
+    // যদি সবগুলো duplicate/একই প্রশ্ন repeat করত (parsed.length === beforeLen), সাথে সাথেই
+    // loop থেমে যেত — বাকি ৪-৫টা ceiling কখনো ব্যবহারই হতো না, ফলে "content কম নেই" এমন
+    // পেইজেও শুধু ১ম round-এর duplicate-এর কারণে অর্ধেক MCQ নিয়েই থেমে যেত। এখন consecutive
+    // no-progress ২ round পর্যন্ত সহ্য করা হয় (already-asked প্রশ্নগুলোর তালিকা prompt-এ
+    // স্পষ্টভাবে দিয়ে "এগুলো বাদে" বলা হয়, যাতে AI সত্যিই ভিন্ন কিছু বানাতে বাধ্য হয়) — তারপরও
+    // যদি একেবারেই progress না হয় তখনই থামানো হয়, অযথা ceiling শেষ না করে।
+    const MB_MAX_NO_PROGRESS_STREAK = 2;
     while (parsed.length < count.min && mbTopUpTries < MB_TOPUP_SAFETY_CEILING) {
         mbTopUpTries++;
         const need = count.min - parsed.length;
         const beforeLen = parsed.length;
+        const askedList = parsed.map(m => (m.question||'').trim()).filter(Boolean).slice(0, 20).join(' | ');
+        const avoidClause = askedList
+            ? `\n\nআগে এই প্রশ্নগুলো ইতিমধ্যে বানানো হয়ে গেছে, এগুলোর হুবহু বা কাছাকাছি (rephrase করা) কোনো প্রশ্ন আবার দেওয়া যাবে না, সম্পূর্ণ নতুন/ভিন্ন প্রশ্ন দিতে হবে: ${askedList}`
+            : '';
         const makeTopUpSys = (angleHint) => `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ` +
-            `আরও ঠিক ${need}টি নতুন MCQ বানাও (আগে যা বানানো হয়েছে তার থেকে সম্পূর্ণ ভিন্ন প্রশ্ন/কোণ থেকে — একই প্রশ্ন repeat করা যাবে না)। ${angleHint}${basePrompt}\n` +
+            `আরও ঠিক ${need}টি নতুন MCQ বানাও (আগে যা বানানো হয়েছে তার থেকে সম্পূর্ণ ভিন্ন প্রশ্ন/কোণ থেকে — একই প্রশ্ন repeat করা যাবে না)। ${angleHint}${basePrompt}${avoidClause}\n` +
             `প্রশ্ন/অপশন/ব্যাখ্যা অবশ্যই বাংলা ভাষায় ও বাংলা লিপিতে লিখতে হবে। ` +
             `শুধু ঠিক ${need}টি প্রশ্নের valid JSON array রিটার্ন করো, markdown/preamble ছাড়া। Format:\n${jsonFormat}`;
         try {
@@ -3993,7 +4001,12 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
                 }
             }
         } catch (topUpErr) { mbAiDebugErrs.push('topup' + mbTopUpTries + ':' + (topUpErr && topUpErr.message || topUpErr)); }
-        if (parsed.length === beforeLen) break; // no progress এই round-এ — আর সময় নষ্ট না করে থেমে যাওয়া
+        if (parsed.length === beforeLen) {
+            mbNoProgressStreak++;
+            if (mbNoProgressStreak >= MB_MAX_NO_PROGRESS_STREAK) break; // পরপর কয়েকবার progress না হলেই থামা, ১ম বারেই না
+        } else {
+            mbNoProgressStreak = 0;
+        }
     }
     mbMark('topUp');
     if (parsed.length < count.min) {
