@@ -57,9 +57,11 @@ function mbToast(msg, type, dur) {
 // দেখতে পেতো না ("কিছুই হয়নি" মনে হতো) — এখন global safety net থেকেও toast দেখানো হয়।
 window.addEventListener('unhandledrejection', (e) => {
     try { mbToast('⚠️ Error: ' + (e.reason?.message || String(e.reason)).slice(0,160), 'error'); } catch(_) {}
+    try { if (typeof mbLogError === 'function') mbLogError('unhandledrejection', null, (e.reason?.message || String(e.reason)), {}); } catch(_) {}
 });
 window.addEventListener('error', (e) => {
     try { mbToast('⚠️ Error: ' + (e.error?.message || e.message || 'Unknown').slice(0,160), 'error'); } catch(_) {}
+    try { if (typeof mbLogError === 'function') mbLogError('window.error', null, (e.error?.message || e.message || 'Unknown'), {}); } catch(_) {}
 });
 
 /* ════════════════════════════════════════════════════
@@ -826,6 +828,7 @@ async function mbqUploadPdf() {
 
     } catch (e) {
         mbToast('আপলোড ব্যর্থ: ' + e.message, 'error');
+        mbLogError('mbqUploadWithNewSubjectChapter', null, e && e.message || e, {});
     } finally {
         btn.disabled = false;
         btn.textContent = 'আপলোড করো';
@@ -949,6 +952,7 @@ async function mbUploadPdf() {
 
     } catch (e) {
         mbToast('আপলোড ব্যর্থ: ' + e.message, 'error');
+        mbLogError('mbUploadPdfExisting', null, e && e.message || e, {});
     } finally {
         btn.disabled = false;
         btn.textContent = 'আপলোড করো';
@@ -1903,6 +1907,7 @@ async function mbSaveMcq(e) {
         mbRenderPageSummary();
     } catch (ex) {
         mbToast('সংরক্ষণ ব্যর্থ: ' + ex.message, 'error');
+        mbLogError('mbSaveManualMcq', mbCurrentPage, ex && ex.message || ex, {});
     } finally {
         if (btn) { btn.disabled = false; btn.textContent = mbEditingId ? '✓ আপডেট করো' : '✓ প্রশ্ন সংরক্ষণ'; }
     }
@@ -1967,6 +1972,7 @@ async function mbSaveInlineEdit(mcqId) {
         mbRenderPageSummary();
     } catch (ex) {
         mbToast('আপডেট ব্যর্থ: ' + ex.message, 'error');
+        mbLogError('mbInlineSaveEdit', mbCurrentPage, ex && ex.message || ex, {});
     }
 }
 
@@ -2008,6 +2014,7 @@ async function mbDeleteMcq(mcqId) {
         mbLoadAllPageMcqs(); // background sync, UI আগেই instant আপডেট হয়ে গেছে (double round-trip আর নেই)
     } catch (ex) {
         mbToast('মুছতে ব্যর্থ: ' + ex.message, 'error');
+        mbLogError('mbDeleteMcq', mbCurrentPage, ex && ex.message || ex, {});
     }
 }
 
@@ -2213,6 +2220,7 @@ function mbParseCsvFile(file) {
             else mbToast('কোনো বৈধ প্রশ্ন পাওয়া যায়নি', 'error');
         } catch (ex) {
             mbToast('CSV পার্স ব্যর্থ: ' + ex.message, 'error');
+            mbLogError('mbCsvParse', null, ex && ex.message || ex, {});
         }
     };
     reader.readAsText(file, 'UTF-8');
@@ -2275,6 +2283,7 @@ async function mbImportCsv() {
 
     } catch (ex) {
         mbToast('আমদানি ব্যর্থ: ' + ex.message, 'error');
+        mbLogError('mbCsvImport', mbCurrentPage, ex && ex.message || ex, {});
         if (pw)  pw.style.display  = 'none';
         if (btn) btn.style.display = 'block';
     }
@@ -2977,6 +2986,7 @@ async function mbAiGenerateSpecial() {
         mbStopAiProgressTicker();
         if (!parsed || !parsed.length) {
             mbToast('❌ এই পেইজে কোনো existing MCQ পাওয়া যায়নি', 'error');
+            mbLogError('mbAiGenerateSpecial:empty', mbCurrentPage, 'এই পেইজে কোনো existing MCQ পাওয়া যায়নি', {});
             return;
         }
         mbAiData = parsed.map(m => ({ id: uid(), ...mbShuffleSpecialOptions(m), type: 'special' }));
@@ -4247,6 +4257,7 @@ async function mbConfirmSpecialExtract(scope) {
         if (!allExtracted.length) {
             if (progress) progress.style.display = 'none';
             mbToast('নির্বাচিত পেইজে কোনো existing MCQ পাওয়া যায়নি', 'error');
+            mbLogError('mbSpecialCsvExtractRange:empty', null, 'নির্বাচিত পেইজে কোনো existing MCQ পাওয়া যায়নি', { pages: pages.join(',') });
             return;
         }
 
@@ -4255,6 +4266,7 @@ async function mbConfirmSpecialExtract(scope) {
         mbToast('✓ ' + allExtracted.length + 'টি MCQ এক্সট্র্যাক্ট + CSV ডাউনলোড হয়েছে', 'success');
     } catch (ex) {
         mbToast('এক্সট্র্যাক্ট ব্যর্থ: ' + ex.message, 'error');
+        mbLogError('mbSpecialCsvExtractRange', null, ex && ex.message || ex, {});
     } finally {
         if (progress) progress.style.display = 'none';
     }
