@@ -46,7 +46,7 @@ function mbToast(msg, type, dur) {
     const t = document.getElementById('toast');
     if (!t) { console.warn('[mbToast fallback]', msg); return; }
     const colors = { success: 'var(--green)', error: 'var(--red)', info: 'var(--accent)' };
-    t.textContent = msg;
+    t.innerHTML = msg;
     t.style.borderColor = colors[type] || colors.info;
     t.classList.add('show');
     clearTimeout(t._mbTimer);
@@ -56,11 +56,11 @@ function mbToast(msg, type, dur) {
 // bug fix (silent save failures): কোনো uncaught error/rejection হলে আগে user কিছুই
 // দেখতে পেতো না ("কিছুই হয়নি" মনে হতো) — এখন global safety net থেকেও toast দেখানো হয়।
 window.addEventListener('unhandledrejection', (e) => {
-    try { mbToast('⚠️ Error: ' + (e.reason?.message || String(e.reason)).slice(0,160), 'error'); } catch(_) {}
+    try { mbToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ Error: ' + (e.reason?.message || String(e.reason)).slice(0,160), 'error'); } catch(_) {}
     try { if (typeof mbLogError === 'function') mbLogError('unhandledrejection', null, (e.reason?.message || String(e.reason)), {}); } catch(_) {}
 });
 window.addEventListener('error', (e) => {
-    try { mbToast('⚠️ Error: ' + (e.error?.message || e.message || 'Unknown').slice(0,160), 'error'); } catch(_) {}
+    try { mbToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ Error: ' + (e.error?.message || e.message || 'Unknown').slice(0,160), 'error'); } catch(_) {}
     try { if (typeof mbLogError === 'function') mbLogError('window.error', null, (e.error?.message || e.message || 'Unknown'), {}); } catch(_) {}
 });
 
@@ -214,7 +214,7 @@ async function mbLogError(context, pageNum, errMsg, extra) {
     try {
         if (typeof mbToast === 'function') {
             const pageTxt = pageNum ? ` (পেইজ ${pageNum})` : '';
-            mbToast(`❌ [${context}]${pageTxt}: ${fullMsg.slice(0, 200)}`, 'error', 9000);
+            mbToast(`<svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><circle cx='12' cy='12' r='10' /> <path d='m15 9-6 6' /> <path d='m9 9 6 6' /></svg> [${context}]${pageTxt}: ${fullMsg.slice(0, 200)}`, 'error', 9000);
         }
     } catch (_) { /* toast ব্যর্থ হলেও D1 log চলবে */ }
     try {
@@ -311,7 +311,7 @@ async function mbCheckAndConsumePendingJobs() {
             });
             await mbMarkJobConsumed(job.id);
             if (typeof mbToast === 'function') {
-                mbToast(`✅ পেইজ ${job.page_number}: ট্যাব বন্ধ থাকা অবস্থায় ব্যাকগ্রাউন্ডে ${newMcqs.length}টি MCQ তৈরি হয়ে গেছে, সেভ করা হলো`, 'success', 6000);
+                mbToast(`<svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#22C55E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M21.801 10A10 10 0 1 1 17 3.335' /> <path d='m9 11 3 3L22 4' /></svg> পেইজ ${job.page_number}: ট্যাব বন্ধ থাকা অবস্থায় ব্যাকগ্রাউন্ডে ${newMcqs.length}টি MCQ তৈরি হয়ে গেছে, সেভ করা হলো`, 'success', 6000);
             }
         }
         await mbLoadAllPageMcqs();
@@ -667,7 +667,7 @@ async function mbCreateSubject() {
             throw new Error(err.message || 'ব্যর্থ');
         }
         const data = await res.json();
-        mbToast('✓ বিষয় যোগ হয়েছে', 'success');
+        mbToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 6 9 17l-5-5" /></svg> বিষয় যোগ হয়েছে', 'success');
         mbToggleNewSubject();
         await mbLoadSubjects();
         const newId = Array.isArray(data) ? data[0]?.id : data?.id;
@@ -706,7 +706,7 @@ async function mbCreateChapter() {
             throw new Error(err.message || 'ব্যর্থ');
         }
         const data = await res.json();
-        mbToast('✓ অধ্যায় যোগ হয়েছে', 'success');
+        mbToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 6 9 17l-5-5" /></svg> অধ্যায় যোগ হয়েছে', 'success');
         mbToggleNewChapter();
         const savedSubId = mbSubjectId;
         const newId = Array.isArray(data) ? data[0]?.id : data?.id;
@@ -859,7 +859,7 @@ async function mbqUploadPdf() {
         if (!dbRes.ok) { const err = await dbRes.json(); throw new Error(err.message || 'DB রেকর্ড তৈরি ব্যর্থ'); }
 
         if (pf) pf.style.width = '100%';
-        mbToast('✓ PDF আপলোড সম্পন্ন', 'success');
+        mbToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 6 9 17l-5-5" /></svg> PDF আপলোড সম্পন্ন', 'success');
 
         // ফর্ম রিসেট
         mbqPdfFile = null;
@@ -982,7 +982,7 @@ async function mbUploadPdf() {
 
         if (pf) pf.style.width = '100%';
         if (us) us.style.display = 'block';
-        mbToast('✓ PDF আপলোড সম্পন্ন — OCR শুরু হচ্ছে...', 'success');
+        mbToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 6 9 17l-5-5" /></svg> PDF আপলোড সম্পন্ন — OCR শুরু হচ্ছে...', 'success');
 
         // Get new PDF id for OCR
         const newPdfData = await dbRes.json();
@@ -1144,7 +1144,7 @@ async function mbTogglePremium(pdfId, newState) {
             method: 'PATCH',
             body: JSON.stringify({ is_premium: newState })
         });
-        mbToast(newState ? '⭐ Premium করা হয়েছে' : '🔓 Free করা হয়েছে', 'success');
+        mbToast(newState ? '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" /></svg> Premium করা হয়েছে' : '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /> <path d="M7 11V7a5 5 0 0 1 9.9-1" /></svg> Free করা হয়েছে', 'success');
         mbLoadAllPdfs();
     } catch {
         mbToast('আপডেট ব্যর্থ', 'error');
@@ -1155,7 +1155,7 @@ async function mbDeletePdf(id, title) {
     if (!confirm('"' + title + '" মুছে ফেলবেন? এই PDF এর সব MCQ ও ডেটা মুছে যাবে।')) return;
     try {
         await mbApi('/book_pdfs?id=eq.' + id, { method: 'DELETE' });
-        mbToast('✓ PDF মুছে গেছে', 'success');
+        mbToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 6 9 17l-5-5" /></svg> PDF মুছে গেছে', 'success');
         mbLoadChapterPdfs();
         mbLoadAllPdfs();
     } catch {
@@ -1829,9 +1829,9 @@ function mbResetMcqForm() {
     const cancelBtn = document.getElementById('mbMcqCancelBtn');
     if (cancelBtn) cancelBtn.style.display = 'none';
     const saveBtn = document.getElementById('mbMcqSaveBtn');
-    if (saveBtn) saveBtn.textContent = '✓ প্রশ্ন সংরক্ষণ';
+    if (saveBtn) saveBtn.innerHTML = '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 6 9 17l-5-5" /></svg> প্রশ্ন সংরক্ষণ';
     const title = document.getElementById('mbManualFormTitle');
-    if (title) title.textContent = '➕ নতুন প্রশ্ন যোগ';
+    if (title) title.innerHTML = '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" /> <path d="M12 5v14" /></svg> নতুন প্রশ্ন যোগ';
     mbEditingId = null;
 }
 
@@ -1880,7 +1880,7 @@ async function mbSelectAiType(type) {
     if (countLabel) countLabel.textContent = isSpecial ? 'পেইজ স্কোপ নির্বাচন করো' : 'প্রশ্ন সংখ্যা (প্রতি পেইজে)';
     if (promptGroup) promptGroup.style.display = isSpecial ? 'none' : '';
     if (specialInfo) specialInfo.style.display = isSpecial ? 'block' : 'none';
-    if (genBtn && mbGenMode === 'single') genBtn.textContent = isSpecial ? '⚡ এই পেইজের existing MCQ এক্সট্র্যাক্ট করো' : '🤖 এই পেইজ থেকে MCQ তৈরি করো';
+    if (genBtn && mbGenMode === 'single') genBtn.innerHTML = isSpecial ? '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" /></svg> এই পেইজের existing MCQ এক্সট্র্যাক্ট করো' : '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 8V4H8" /> <rect width="16" height="12" x="4" y="8" rx="2" /> <path d="M2 14h2" /> <path d="M20 14h2" /> <path d="M15 13v2" /> <path d="M9 13v2" /></svg> এই পেইজ থেকে MCQ তৈরি করো';
 
     const labelEl = document.getElementById('mbAiPromptLabel');
     if (labelEl) labelEl.textContent = `কাস্টম প্রম্পট (ঐচ্ছিক) — ${typeLabelBn[type]||type} টাইপের জন্য সংরক্ষিত হবে`;
@@ -1905,7 +1905,7 @@ async function mbSavePromptOnly() {
         clearTimeout(window._mbPromptTagTimer);
         window._mbPromptTagTimer = setTimeout(() => { savedTag.style.display = 'none'; }, 2500);
     }
-    mbToast('✓ প্রম্পট সংরক্ষণ করা হয়েছে', 'success');
+    mbToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 6 9 17l-5-5" /></svg> প্রম্পট সংরক্ষণ করা হয়েছে', 'success');
 }
 
 async function mbSaveMcq(e) {
@@ -1950,7 +1950,7 @@ async function mbSaveMcq(e) {
         }
 
         await mbUpsertPageMcqs(mbCurrentPage, currentMcqs);
-        mbToast(mbEditingId ? '✓ প্রশ্ন আপডেট হয়েছে' : '✓ প্রশ্ন যোগ হয়েছে', 'success');
+        mbToast(mbEditingId ? '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 6 9 17l-5-5" /></svg> প্রশ্ন আপডেট হয়েছে' : '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 6 9 17l-5-5" /></svg> প্রশ্ন যোগ হয়েছে', 'success');
         mbResetMcqForm();
         mbRenderPageMcqList();
         mbUpdatePageCount();
@@ -1959,7 +1959,7 @@ async function mbSaveMcq(e) {
         mbToast('সংরক্ষণ ব্যর্থ: ' + ex.message, 'error');
         mbLogError('mbSaveManualMcq', mbCurrentPage, ex && ex.message || ex, {});
     } finally {
-        if (btn) { btn.disabled = false; btn.textContent = mbEditingId ? '✓ আপডেট করো' : '✓ প্রশ্ন সংরক্ষণ'; }
+        if (btn) { btn.disabled = false; btn.innerHTML = mbEditingId ? '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 6 9 17l-5-5" /></svg> আপডেট করো' : '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 6 9 17l-5-5" /></svg> প্রশ্ন সংরক্ষণ'; }
     }
 }
 
@@ -2016,7 +2016,7 @@ async function mbSaveInlineEdit(mcqId) {
 
         await mbUpsertPageMcqs(mbCurrentPage, updatedRaw, sourceType);
         mbInlineEditId = null;
-        mbToast('✓ প্রশ্ন আপডেট হয়েছে', 'success');
+        mbToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 6 9 17l-5-5" /></svg> প্রশ্ন আপডেট হয়েছে', 'success');
         mbRenderPageMcqList();
         mbUpdatePageCount();
         mbRenderPageSummary();
@@ -2057,7 +2057,7 @@ async function mbDeleteMcq(mcqId) {
         }
 
         await mbUpsertPageMcqs(mbCurrentPage, finalMcqs, sourceType);
-        mbToast('✓ প্রশ্ন মুছে গেছে', 'success');
+        mbToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 6 9 17l-5-5" /></svg> প্রশ্ন মুছে গেছে', 'success');
         mbRenderPageMcqList();
         mbUpdatePageCount();
         mbRenderPageSummary();
@@ -2315,7 +2315,7 @@ async function mbImportCsv() {
         await mbUpsertPageMcqs(mbCurrentPage, currentMcqs);
 
         if (res) { res.textContent = '✓ ' + total + 'টি প্রশ্ন সফলভাবে আমদানি হয়েছে!'; res.style.display = 'block'; }
-        mbToast('✓ ' + total + 'টি প্রশ্ন আমদানি সম্পন্ন', 'success');
+        mbToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 6 9 17l-5-5" /></svg> ' + total + 'টি প্রশ্ন আমদানি সম্পন্ন', 'success');
         mbCsvData = [];
 
         mbRenderPageMcqList();
@@ -2984,7 +2984,7 @@ async function mbAiGenerate() {
         // console.warn হতো, ইউজার কিছুই বুঝতে পারত না কেন সংখ্যা কম এলো)
         if (parsed.length > count.max) parsed = parsed.slice(0, count.max);
         if (parsed.length < count.min) {
-            mbToast(`⚠️ ${count.label} চেয়েছিলেন, AI ${parsed.length}টি দিতে পেরেছে (পেইজে যথেষ্ট কনটেন্ট না থাকতে পারে)`, 'info', 6000);
+            mbToast(`<svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3' /> <path d='M12 9v4' /> <path d='M12 17h.01' /></svg>️ ${count.label} চেয়েছিলেন, AI ${parsed.length}টি দিতে পেরেছে (পেইজে যথেষ্ট কনটেন্ট না থাকতে পারে)`, 'info', 6000);
         }
 
         mbAiData = parsed.map(m => ({ id: uid(), ...m, type: m.type || type }));
@@ -3074,7 +3074,7 @@ async function mbAiGenerateSpecial() {
         const parsed = await mbSpecialExtractPage(mbCurrentPage);
         mbStopAiProgressTicker();
         if (!parsed || !parsed.length) {
-            mbToast('❌ এই পেইজে কোনো existing MCQ পাওয়া যায়নি', 'error');
+            mbToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> এই পেইজে কোনো existing MCQ পাওয়া যায়নি', 'error');
             mbLogError('mbAiGenerateSpecial:empty', mbCurrentPage, 'এই পেইজে কোনো existing MCQ পাওয়া যায়নি', {});
             return;
         }
@@ -3362,7 +3362,7 @@ async function mbSaveAiMcqs() {
         }
         // AI দিয়ে generate হওয়া এই batch-টার CSV automatically তৈরি+save হয়ে যাবে — manual download লাগবে না।
         await mbSaveMcqsAsCsv(mbAiData, mbCurrentPage, mbAiTypeKey);
-        mbToast('✓ ' + mbAiData.length + 'টি AI MCQ সংরক্ষিত হয়েছে (+ CSV)', 'success');
+        mbToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 6 9 17l-5-5" /></svg> ' + mbAiData.length + 'টি AI MCQ সংরক্ষিত হয়েছে (+ CSV)', 'success');
         mbAiData = [];
         const resultEl = document.getElementById('mbAiResult');
         if (resultEl) resultEl.style.display = 'none';
@@ -3588,7 +3588,7 @@ function mbUpdateRangeSummary() {
     const genBtn = document.getElementById('mbAiGenBtn');
 
     if (from > to) {
-        summaryEl.textContent = '⚠️ শুরুর পেইজ শেষের চেয়ে বড় হতে পারবে না';
+        summaryEl.innerHTML = '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ শুরুর পেইজ শেষের চেয়ে বড় হতে পারবে না';
         summaryEl.style.color = 'var(--error,#ef4444)';
         return;
     }
@@ -3651,14 +3651,14 @@ async function mbStartSinglePageJob() {
         const generatedCount = await mbGenerateForPage(pageNum, countRaw, type);
         mbStopAiProgressTicker();
         mbSetAiProgress(100, 'সম্পন্ন!');
-        mbToast(`✓ পেইজ ${pageNum}: ${generatedCount}টি MCQ তৈরি ও সংরক্ষিত হয়েছে`, 'success');
+        mbToast(`<svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#22C55E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M20 6 9 17l-5-5' /></svg> পেইজ ${pageNum}: ${generatedCount}টি MCQ তৈরি ও সংরক্ষিত হয়েছে`, 'success');
         if (pageNum === mbCurrentPage) { mbRenderPageMcqList(); mbUpdatePageCount(); }
         mbRenderPageSummary();
         mbSwitchTab('all');
     } catch (e) {
         mbStopAiProgressTicker();
         console.error('Single-page generate failed:', e);
-        mbToast('❌ ' + (e && e.message || 'MCQ generate ব্যর্থ হয়েছে'), 'error', 10000);
+        mbToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> ' + (e && e.message || 'MCQ generate ব্যর্থ হয়েছে'), 'error', 10000);
         mbLogError('mbStartSinglePageJob', pageNum, e && e.message || e, { type, countRaw });
     } finally {
         if (spinner)  spinner.style.display  = 'none';
@@ -3792,7 +3792,7 @@ async function mbRunBulkJob(job) {
             // single-page job এ এই toast আসলেই final summary দিয়ে সাথে সাথে overwrite হয়ে
             // যেত, তাই সেখানে শুধু final summary-তেই (lastErrorMsg জুড়ে) দেখানো হবে।
             if (job.totalPages > 1 && typeof mbToast === 'function') {
-                mbToast('⚠️ ' + lastErrorMsg, 'error', 8000);
+                mbToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ ' + lastErrorMsg, 'error', 8000);
             }
             // একটা পেইজ fail করলেও চালিয়ে যাও — পুরো job থামবে না
         }
@@ -3818,9 +3818,9 @@ async function mbRunBulkJob(job) {
     // যেটা বিভ্রান্তিকর (আসলে ব্যর্থ হয়েছে, সফল হয়নি)। এখন স্পষ্ট failure message।
     if (job.completedCount === 0) {
         const detail = lastErrorMsg ? (' — ' + lastErrorMsg) : '';
-        mbToast('❌ কোনো পেইজেই MCQ generate হয়নি' + detail, 'error', 10000);
+        mbToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> কোনো পেইজেই MCQ generate হয়নি' + detail, 'error', 10000);
     } else {
-        mbToast(`✓ Bulk generation সম্পন্ন — ${job.completedCount}টি পেইজ প্রসেস হয়েছে`, 'success');
+        mbToast(`<svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#22C55E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M20 6 9 17l-5-5' /></svg> Bulk generation সম্পন্ন — ${job.completedCount}টি পেইজ প্রসেস হয়েছে`, 'success');
         // feature: single-page (AI ট্যাব থেকে) generate সফল হলে auto "All" ট্যাবে switch —
         // ইউজারকে আলাদা করে ক্লিক করতে হবে না, generate হওয়া মাত্রই সব MCQ (Manual+AI+CSV
         // মিলিয়ে) সরাসরি দেখা যাবে। শুধু single-page job-এ (bulk range/all-এ না, নাহলে
@@ -4108,7 +4108,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
         // (parsed.length > 0) সেটাই save হবে, শুধু একটা info toast দিয়ে জানানো হবে যে কম পাওয়া
         // গেছে। সম্পূর্ণ শূন্য (0টি) হলে তখনই শুধু error থ্রো হবে, কারণ সেভ করার কিছুই নেই।
         if (parsed.length > 0) {
-            mbToast(`⚠️ পেইজ ${pageNum}: চাহিদা ছিল ${count.label}, ${MB_TOPUP_SAFETY_CEILING} বার চেষ্টার পরেও AI মাত্র ${parsed.length}টি দিতে পেরেছে — যা পাওয়া গেছে তাই সংরক্ষণ হচ্ছে`, 'info', 8000);
+            mbToast(`<svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3' /> <path d='M12 9v4' /> <path d='M12 17h.01' /></svg>️ পেইজ ${pageNum}: চাহিদা ছিল ${count.label}, ${MB_TOPUP_SAFETY_CEILING} বার চেষ্টার পরেও AI মাত্র ${parsed.length}টি দিতে পেরেছে — যা পাওয়া গেছে তাই সংরক্ষণ হচ্ছে`, 'info', 8000);
             mbLogError('mbGenerateForPage:partial', pageNum, `চাহিদা ${count.label}, পাওয়া গেছে ${parsed.length}টি (partial save)`, { type });
         } else {
             throw new Error(`চাহিদা ছিল ${count.label}, ${MB_TOPUP_SAFETY_CEILING} বার চেষ্টার পরেও AI একটিও দিতে পারেনি — আবার Generate চাপুন`);
@@ -4510,7 +4510,7 @@ async function mbConfirmSpecialExtract(scope) {
 
         mbCloseSpecialSheet();
         mbDownloadSpecialCsv(allExtracted, pages);
-        mbToast('✓ ' + allExtracted.length + 'টি MCQ এক্সট্র্যাক্ট + CSV ডাউনলোড হয়েছে', 'success');
+        mbToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 6 9 17l-5-5" /></svg> ' + allExtracted.length + 'টি MCQ এক্সট্র্যাক্ট + CSV ডাউনলোড হয়েছে', 'success');
     } catch (ex) {
         mbToast('এক্সট্র্যাক্ট ব্যর্থ: ' + ex.message, 'error');
         mbLogError('mbSpecialCsvExtractRange', null, ex && ex.message || ex, {});
