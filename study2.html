@@ -809,6 +809,25 @@ function updateMultiBtn() {
 }
 
 /* ── Exam Type Sheet ── */
+// pdf_id ভিত্তিক cache: true_false/hard এর জন্য admin কখনো কোনো MCQ বানিয়েছে কিনা (content
+// থাকা মানেই সেই type চালু, না থাকলে "Coming Soon" দেখাতে হবে — premium lock এর আলাদা স্তর)
+const _typeAvailCache = new Map();
+async function checkTypeAvailability(pdfId) {
+    if (!pdfId) return { true_false: false, hard: false };
+    if (_typeAvailCache.has(pdfId)) return _typeAvailCache.get(pdfId);
+    const result = { true_false: false, hard: false };
+    try {
+        const [tfRes, hardRes] = await Promise.allSettled([
+            safeFetch(`${D1_BASE}/d1/mb2_page_mcqs?pdf_id=eq.${pdfId}&mcq_type=eq.true_false&select=id&limit=1`),
+            safeFetch(`${D1_BASE}/d1/mb2_page_mcqs?pdf_id=eq.${pdfId}&mcq_type=eq.hard&select=id&limit=1`)
+        ]);
+        if (tfRes.status === 'fulfilled' && tfRes.value?.length) result.true_false = true;
+        if (hardRes.status === 'fulfilled' && hardRes.value?.length) result.hard = true;
+    } catch (_) { /* এরর হলে default false (Coming Soon দেখাবে, ক্র্যাশ করবে না) */ }
+    _typeAvailCache.set(pdfId, result);
+    return result;
+}
+
 function openSheet(page) {
     sheetTarget = page; sheetSinglePage = null;
     const perpageSection = document.getElementById('sheet-perpage');
@@ -829,16 +848,35 @@ function openSheet(page) {
             mainTitle.textContent = 'MCQ ধরন বেছে নাও';
         }
     }
-    // Premium lock badge update
-    const locked = !canUseAdvancedTypes();
+    document.getElementById('sheet').style.display = 'flex';
+    updateTypeButtonStates();
+}
+
+// Coming-Soon (admin এখনো content বানায়নি) বনাম Premium-lock (content আছে কিন্তু ইউজার premium না)
+// — দুই স্তরের badge/opacity এখানে একসাথে হ্যান্ডল হয়। admin content যোগ করলে পরের বার sheet
+// খোলার সময় (নতুন pdf/cache-miss হলে) auto detect হয়ে Coming Soon সরে যাবে।
+async function updateTypeButtonStates() {
+    const premiumLocked = !canUseAdvancedTypes();
+    const avail = await checkTypeAvailability(curPdfId);
+    const tfBtn = document.getElementById('typeBtnTF');
+    const hardBtn = document.getElementById('typeBtnHard');
     const tfBadge = document.getElementById('tfLockBadge');
     const hardBadge = document.getElementById('hardLockBadge');
-    if (tfBadge) tfBadge.textContent = locked ? '🔒' : '→';
-    if (hardBadge) hardBadge.textContent = locked ? '🔒' : '→';
-    document.getElementById('typeBtnTF')?.style.setProperty('opacity', locked ? '0.55' : '1');
-    document.getElementById('typeBtnHard')?.style.setProperty('opacity', locked ? '0.55' : '1');
 
-    document.getElementById('sheet').style.display = 'flex';
+    const applyState = (btn, badge, available) => {
+        if (!btn) return;
+        if (!available) {
+            btn.style.setProperty('opacity', '0.4');
+            btn.style.setProperty('pointer-events', 'none');
+            if (badge) badge.textContent = '🔜 Coming Soon';
+        } else {
+            btn.style.setProperty('pointer-events', 'auto');
+            btn.style.setProperty('opacity', premiumLocked ? '0.55' : '1');
+            if (badge) badge.textContent = premiumLocked ? '🔒' : '→';
+        }
+    };
+    applyState(tfBtn, tfBadge, avail.true_false);
+    applyState(hardBtn, hardBadge, avail.hard);
 }
 
 function pickSinglePage(p) {
@@ -854,7 +892,11 @@ function closeSheet(e) {
 function isAdmin() { try { return currentUser?.phone==='01754365403' || currentUser?.role==='admin' || currentUser?.role==='sub_admin'; } catch(_) { return false; } }
 function canUseAdvancedTypes() { return isAdmin() || !!(currentUser?.is_premium); }
 
-function startExamGuarded(type) {
+async function startExamGuarded(type) {
+    if (type === 'true_false' || type === 'hard') {
+        const avail = await checkTypeAvailability(curPdfId);
+        if (!avail[type]) { showToast('🔜 এই ধরনের MCQ শীঘ্রই আসছে'); return; }
+    }
     if ((type === 'true_false' || type === 'hard') && !canUseAdvancedTypes()) {
         showToast('⭐ এই ধরন শুধু Premium ইউজারদের জন্য — আপগ্রেড করো');
         return;
