@@ -2707,7 +2707,8 @@ async function mbAiGenerate() {
             `${typeLabel[type]||type} ধরনের ${count.label} MCQ তৈরি করো। ` +
             `Content যে ভাষায় আছে সেই ভাষায় রাখো। ` +
             `প্রতিটিতে চারটি বিকল্প (option_k, option_kh, option_g, option_gh) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে।`
-        )) + mbPermanentRules(count) + MB_EXP_BOX_RULE;        let rawJson;
+        )) + mbPermanentRules(count) + (mbGetExplanationImagePref() ? MB_EXP_BOX_RULE : '');
+        let rawJson;
         let geminiAlreadyTried = false;
         const mbAiDebugErrs = [];
 
@@ -3660,7 +3661,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
         `${typeLabel[type]||type} ধরনের ${count.label} MCQ তৈরি করো। ` +
         `Content যে ভাষায় আছে সেই ভাষায় রাখো। ` +
         `প্রতিটিতে চারটি বিকল্প (option_k, option_kh, option_g, option_gh) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে।`
-    )) + mbPermanentRules(count) + MB_EXP_BOX_RULE;
+    )) + mbPermanentRules(count) + (mbGetExplanationImagePref() ? MB_EXP_BOX_RULE : '');
 
     // feature (2-call split per image): একটা ভারী single call-এর বদলে টার্গেট সংখ্যাটা দুই কলে
     // ভাগ করে চাওয়া হয় — প্রতি কলে output ছোট থাকায় AI-এর token-limit এ কাটা পড়ার সম্ভাবনা কমে
@@ -3675,7 +3676,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
         `${typeLabel[type]||type} ধরনের ${mbCountAOverride.label} MCQ তৈরি করো। ` +
         `Content যে ভাষায় আছে সেই ভাষায় রাখো। ` +
         `প্রতিটিতে চারটি বিকল্প (option_k, option_kh, option_g, option_gh) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে।`
-    )) + mbPermanentRules(mbCountAOverride) + MB_EXP_BOX_RULE;
+    )) + mbPermanentRules(mbCountAOverride) + (mbGetExplanationImagePref() ? MB_EXP_BOX_RULE : '');
     let rawJson;
     let geminiAlreadyTried = false;
     const mbAiDebugErrs = [];
