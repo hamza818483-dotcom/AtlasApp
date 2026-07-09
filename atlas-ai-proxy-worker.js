@@ -166,32 +166,24 @@ export default {
 
         const errors = [];
 
+        // fix: parallel race (even just 2 "strong" providers) stacks with Gemini's own
+        // internal multi-key parallel rotation and can exceed CF Worker's per-invocation
+        // subrequest limit ("Too many subrequests by single Worker invocation"), causing
+        // every fallback provider to fail together. Made fully sequential like the cron path.
         async function raceRemaining(list) {
-            if (!list.length) return null;
-            const providers = list.map(p => STRONG_NAMES.has(p.name)
-                ? p.fn
-                : () => sleep(2500).then(() => (raceSettledFlag.done ? { error: "skipped: race already won" } : p.fn())));
-            return await new Promise((resolve) => {
-                let remaining = providers.length;
-                let settled = false;
-                for (const tryProvider of providers) {
-                    tryProvider().then((r) => {
-                        if (!settled && r && r.answer && r.answer.trim().length > 5) {
-                            settled = true;
-                            raceSettledFlag.done = true;
-                            resolve(r);
-                            return;
-                        }
-                        if (r?.error) errors.push(r.error);
-                        remaining--;
-                        if (remaining === 0 && !settled) resolve(null);
-                    }).catch((e) => {
-                        errors.push(String(e.message || e));
-                        remaining--;
-                        if (remaining === 0 && !settled) resolve(null);
-                    });
+            let lastErr = null;
+            for (const p of list) {
+                try {
+                    const r = await p.fn();
+                    if (r && r.answer && r.answer.trim().length > 5) {
+                        return r;
+                    }
+                    if (r?.error) { errors.push(r.error); lastErr = r.error; }
+                } catch (e) {
+                    errors.push(String(e.message || e));
                 }
-            });
+            }
+            return null;
         }
 
         let result = null;
@@ -1425,44 +1417,26 @@ async function processPendingMcqJobs(env) {
                 ? `${job.system_prompt}\n\nএখন আরও ঠিক ${need}টি নতুন MCQ বানাও (আগে যা বানানো হয়েছে তার থেকে সম্পূর্ণ ভিন্ন প্রশ্ন — একই প্রশ্ন repeat করা যাবে না)।`
                 : job.system_prompt;
 
-            const cronRaceSettled = { done: false };
-            // quality fix (একই fix client-side handler-এও, উপরে দেখো): cerebras/cloudflare
-            // দুর্বল মডেল ব্যবহার করে বলে race-এ এদের ২.৫s দেরিতে শুরু করানো হচ্ছে, যাতে
-            // gemini/groq/openrouter এর মধ্যে উত্তর দিলে দুর্বল provider কল-ই শুরু না হয়।
+            // fix: parallel race (Groq+Gemini+OpenRouter+Cerebras+CF-AI একসাথে) CF Worker-এর
+            // per-invocation subrequest limit hit করাচ্ছিল ("Too many subrequests by single
+            // Worker invocation") — সবগুলো fail করে ঘন ঘন shortfall/partial-save হচ্ছিল।
+            // client-side topUp (dd7ff22) এর মতোই এখানেও sequential single-call rounds করা হলো।
             const providers = [
                 () => callGroq(env, '', roundPrompt, image, true),
                 () => callGemini(env, '', roundPrompt, image),
                 () => callOpenRouter(env, '', roundPrompt, image),
-                () => sleep(2500).then(() => (cronRaceSettled.done ? { error: "skipped" } : callCerebras(env, '', roundPrompt, image))),
-                () => sleep(2500).then(() => (cronRaceSettled.done ? { error: "skipped" } : callCloudflareAI(env, '', roundPrompt, image))),
+                () => callCerebras(env, '', roundPrompt, image),
+                () => callCloudflareAI(env, '', roundPrompt, image),
             ];
             let answer = null, lastErr = 'সব provider ব্যর্থ';
-            // bug fix: এখানেও আগে provider সিরিয়ালি চলত (Groq→Gemini→OpenRouter→Cerebras→CF AI,
-            // একটার পর একটা) — client-side fix (atlas-ai-proxy-worker.js এর প্রধান হ্যান্ডলারে
-            // আগেই করা হয়েছে) এর মতোই এখানেও সব provider parallel-এ race করানো হলো, যাতে
-            // background cron round দ্রুত শেষ হয় ও পরের round-এর জন্য অপেক্ষা কম লাগে।
-            await new Promise((resolve) => {
-                let remaining = providers.length;
-                let settled = false;
-                for (const p of providers) {
-                    p().then((r) => {
-                        if (!settled && r && r.answer && r.answer.trim().length > 5) {
-                            settled = true;
-                            cronRaceSettled.done = true;
-                            answer = r.answer;
-                            resolve();
-                            return;
-                        }
-                        if (r?.error) lastErr = r.error;
-                        remaining--;
-                        if (remaining === 0) resolve();
-                    }).catch((e) => {
-                        lastErr = String(e?.message || e);
-                        remaining--;
-                        if (remaining === 0) resolve();
-                    });
+            for (const p of providers) {
+                const r = await p();
+                if (r && r.answer && r.answer.trim().length > 5) {
+                    answer = r.answer;
+                    break;
                 }
-            });
+                if (r?.error) lastErr = r.error;
+            }
             if (!answer) throw new Error(lastErr);
 
             const parsedNew = workerParseAiJson(answer) || [];
