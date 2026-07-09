@@ -160,7 +160,6 @@ export default {
             { name: "cloudflare", fn: () => callCloudflareAI(env, question, systemPrompt, image) },
         ];
         const STRONG_NAMES = new Set(["gemini", "groq", "openrouter"]);
-        const STRONG_NAMES = new Set(["gemini", "groq", "openrouter"]);
         const raceSettledFlag = { done: false };
         // quality fix: cerebras/cloudflare তুলনামূলক দুর্বল মডেল ব্যবহার করে — সব provider
         // ঠিক একই মুহূর্তে race করালে মাঝে মাঝে দুর্বল মডেল আগে সাড়া দিয়ে "জিতে" যেতে পারে,
