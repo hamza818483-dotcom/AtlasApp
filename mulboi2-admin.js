@@ -253,8 +253,8 @@ async function mb2DeletePdf(id, title) {
 }
 
 function mb2OpenEditPanel(pdfId, title, fileUrl, subName, chName) {
-    if (typeof mb2OpenMcqPanel === 'function') {
-        mb2OpenMcqPanel(pdfId, title, fileUrl, subName, chName);
+    if (typeof ed2Open === 'function') {
+        ed2Open(pdfId, title, fileUrl, subName, chName);
     } else {
         mbToast('এডিটর লোড হয়নি, পেইজ রিফ্রেশ করুন', 'error');
     }
