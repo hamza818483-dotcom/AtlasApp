@@ -192,10 +192,16 @@ export default {
             });
         }
 
+        // heuristic: systemPrompt-e "option_k" mention thakle eta MCQ-generation call dhora
+        // hoy — expectMcqArray flag true kore callGroq()-ke pathano hoy, jate strict schema +
+        // server-side shape-validation gate apply hoy (non-MCQ call jemon explanation-only
+        // text ke break na kore).
+        const expectMcqArray = /option_k/.test(systemPrompt);
+
         let result = null;
         if (!skipGroq) {
             try {
-                const groqResult = await callGroq(env, question, systemPrompt, image);
+                const groqResult = await callGroq(env, question, systemPrompt, image, expectMcqArray);
                 if (groqResult && groqResult.answer && groqResult.answer.trim().length > 5) {
                     result = groqResult;
                 } else if (groqResult?.error) {
@@ -702,7 +708,77 @@ function getGroqKeys(env) {
 const GROQ_TEXT_MODELS  = ["openai/gpt-oss-120b", "llama-3.3-70b-versatile"];
 const GROQ_IMAGE_MODELS = ["meta-llama/llama-4-maverick-17b-128e-instruct", "meta-llama/llama-4-scout-17b-16e-instruct"];
 
-async function callGroq(env, question, systemPrompt, image) {
+// code-level guarantee (prompt-follow-e nirvor na kore): text-model (openai/gpt-oss) call-e
+// pathanor jonno strict JSON schema -- Groq-er constrained decoding token-level e guarantee
+// dey shudhu ei shape-i ferot ashbe, tai option_k/kh/g/gh -er bodole option_a/b/c/d ba onno
+// bhul field name AR ashte parbe na (image/vision model e ei strict mode unsupported, tai
+// shegulor jonno mbGroqLooksLikeValidMcqArray() diye server-side validation kora hoy).
+const GROQ_MCQ_JSON_SCHEMA = {
+    name: "mcq_list",
+    strict: true,
+    schema: {
+        type: "object",
+        properties: {
+            questions: {
+                type: "array",
+                items: {
+                    type: "object",
+                    properties: {
+                        question:    { type: "string" },
+                        option_k:    { type: "string" },
+                        option_kh:   { type: "string" },
+                        option_g:    { type: "string" },
+                        option_gh:   { type: "string" },
+                        correct:     { type: "string", enum: ["k", "kh", "g", "gh"] },
+                        explanation: { type: "string" },
+                    },
+                    required: ["question", "option_k", "option_kh", "option_g", "option_gh", "correct", "explanation"],
+                    additionalProperties: false,
+                },
+            },
+        },
+        required: ["questions"],
+        additionalProperties: false,
+    },
+};
+
+// response_format:json_object/json_schema dile Groq ekta object dey ({"questions":[...]})
+// — caller-ra raw answer string theke [...] khunje array ber kore, tai wrapper theke bhetorer
+// questions array ber kore answer-ke shei array-string banano hocche.
+function mbGroqUnwrapAnswer(answer) {
+    try {
+        const parsedObj = JSON.parse(answer);
+        if (parsedObj && Array.isArray(parsedObj.questions)) {
+            return JSON.stringify(parsedObj.questions);
+        }
+    } catch (_) { /* JSON object na hole raw answer-i thakuk */ }
+    return answer;
+}
+
+// code-level validation gate: vision model (json_object mode, schema-unenforced) theke asha
+// answer-e proper MCQ shape ache kina server-side-e check kore -- na thakle shei attempt-ke
+// "fail" dhore porer key/model try kora hoy, client porjonto bhul-shape data kokhono jabe na.
+function mbGroqLooksLikeValidMcqArray(answer) {
+    let arr;
+    try {
+        arr = JSON.parse(answer);
+    } catch (_) {
+        // pure JSON na hole (prose mixed) — array bracket ache kina onnoto check, caller-er
+        // client-side regex/mbParseAiJson fallback ei ongsho handle korbe, ekhane reject na kora e valo
+        return /[\[{]/.test(answer);
+    }
+    if (!Array.isArray(arr)) return false;
+    if (!arr.length) return false;
+    const requiredKeys = ["question", "option_k", "option_kh", "option_g", "option_gh", "correct"];
+    // adhek-er beshi item shothik shape-e thakle "valid" dhora hoy (kichu item bad porleo
+    // client-side validation shegulo filter kore debe, kintu shob item-i bhul shape hole
+    // shei goto attempt-ke fail dhore onno key/model try kora better)
+    const validCount = arr.filter(m => m && typeof m === 'object' &&
+        requiredKeys.every(k => typeof m[k] === 'string' && m[k].trim().length > 0)).length;
+    return validCount >= Math.ceil(arr.length / 2);
+}
+
+async function callGroq(env, question, systemPrompt, image, expectMcqArray) {
     const keys = getGroqKeys(env);
     if (!keys.length) return { error: "GROQ_API_KEY not set" };
     const models = image ? GROQ_IMAGE_MODELS : GROQ_TEXT_MODELS;
@@ -738,8 +814,26 @@ async function callGroq(env, question, systemPrompt, image) {
     }
 
     let lastError = "Groq: no keys/models worked";
+    // bug fix (code-level guarantee, prompt-follow-e nirvor na kore): Groq vision model
+    // (llama-4-maverick/scout) strict json_schema support kore na (khali openai/gpt-oss e
+    // available), tai image call e response_format:json_object e-i thakte hocche, jetate
+    // field name/shape guarantee thake na. Age eta shudhu prompt-e "option_k/kh/g/gh dao"
+    // bolar upor nirvor korto, AI majhe majhe option_a/b/c/d ba onno shape dito, ferot data
+    // client porjonto pouchay giye validation fail hoto ("AI shomporno/sothik MCQ dite parni").
+    // Ekhon worker nijei response paoyar por, jodi text-model (gpt-oss) hoy, strict json_schema
+    // pathano hoy (100% guarantee); jodi vision model hoy (schema unsupported), worker nijei
+    // shei model-er answer-ke local-e validate kore -- proper option_k/kh/g/gh na thakle shei
+    // key/model try na kore porer key/model e move kore (server-side retry), client-ke
+    // shudhu already-valid-shape data pathay.
     for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
         for (const model of models) {
+            const isTextModel = GROQ_TEXT_MODELS.includes(model);
+            const requestBody = {
+                model, messages, temperature: 0.7, max_tokens: 8192,
+                response_format: (isTextModel && expectMcqArray)
+                    ? { type: "json_schema", json_schema: GROQ_MCQ_JSON_SCHEMA }
+                    : { type: "json_object" },
+            };
             // speed fix: same-model multi-key এখন serial না, parallel race — একটা key কাজ
             // করলেই দ্রুত ফলাফল, অন্য key শেষ হওয়া পর্যন্ত অপেক্ষা লাগে না।
             const keyResult = await new Promise((resolve) => {
@@ -750,27 +844,46 @@ async function callGroq(env, question, systemPrompt, image) {
                         method: "POST",
                         headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
                         signal,
-                        body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 8192, response_format: { type: "json_object" } }),
+                        body: JSON.stringify(requestBody),
                     })).then(async (outcome) => {
                         if (done) return;
                         if (outcome.__exception) { lastError = `Groq(${model}) exception: ${outcome.message}`; }
-                        else if (!outcome.ok) { lastError = `Groq(${model}) HTTP ${outcome.status}`; }
+                        else if (!outcome.ok) {
+                            // strict json_schema unsupported model/error hole (400 json_validate_failed
+                            // ba unsupported) json_object mode-e ekbar fallback retry kora hoy shei key-e-i
+                            if (isTextModel && expectMcqArray && outcome.status === 400) {
+                                try {
+                                    const fbOutcome = await attemptWithStatus((signal2) => fetch("https://api.groq.com/openai/v1/chat/completions", {
+                                        method: "POST",
+                                        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+                                        signal: signal2,
+                                        body: JSON.stringify({ ...requestBody, response_format: { type: "json_object" } }),
+                                    }));
+                                    if (fbOutcome.ok) {
+                                        const fbData = await fbOutcome.json().catch(() => null);
+                                        const fbAnswer = fbData?.choices?.[0]?.message?.content || null;
+                                        if (fbAnswer) { done = true; resolve(mbGroqUnwrapAnswer(fbAnswer)); return; }
+                                    }
+                                } catch (_) {}
+                            }
+                            lastError = `Groq(${model}) HTTP ${outcome.status}`;
+                        }
                         else {
                             const data = await outcome.json().catch(() => null);
                             let answer = data?.choices?.[0]?.message?.content || null;
                             if (answer) {
-                                // response_format:json_object দিলে Groq একটা object দেয় ({"questions":[...]})
-                                // — caller-রা raw answer string থেকে [...] খুঁজে array বের করে, তাই এখানেই
-                                // wrapper থেকে ভেতরের questions array বের করে answer-কে সেই array-string বানানো হচ্ছে।
-                                try {
-                                    const parsedObj = JSON.parse(answer);
-                                    if (parsedObj && Array.isArray(parsedObj.questions)) {
-                                        answer = JSON.stringify(parsedObj.questions);
-                                    }
-                                } catch (_) { /* JSON object না হলে raw answer-ই থাকুক, caller-এর নিজস্ব parse চেষ্টা করবে */ }
-                                done = true; resolve(answer); return;
+                                answer = mbGroqUnwrapAnswer(answer);
+                                // code-level validation gate: server-side-e-i shokol MCQ item
+                                // proper option_k/kh/g/gh + correct(k/kh/g/gh) shape-e ache kina
+                                // check kora hoy. Na thakle ei key/model-er result baad, porer
+                                // key/model try hobe (client porjonto bhul-shape data jabe na).
+                                if (!expectMcqArray || mbGroqLooksLikeValidMcqArray(answer)) {
+                                    done = true; resolve(answer); return;
+                                }
+                                lastError = `Groq(${model}): invalid MCQ shape, retrying other key/model`;
+                            } else {
+                                lastError = `Groq(${model}): empty response`;
                             }
-                            lastError = `Groq(${model}): empty response`;
                         }
                         remaining--;
                         if (remaining === 0 && !done) resolve(null);
@@ -1355,7 +1468,7 @@ async function processPendingMcqJobs(env) {
             // দুর্বল মডেল ব্যবহার করে বলে race-এ এদের ২.৫s দেরিতে শুরু করানো হচ্ছে, যাতে
             // gemini/groq/openrouter এর মধ্যে উত্তর দিলে দুর্বল provider কল-ই শুরু না হয়।
             const providers = [
-                () => callGroq(env, '', roundPrompt, image),
+                () => callGroq(env, '', roundPrompt, image, true),
                 () => callGemini(env, '', roundPrompt, image),
                 () => callOpenRouter(env, '', roundPrompt, image),
                 () => sleep(2500).then(() => (cronRaceSettled.done ? { error: "skipped" } : callCerebras(env, '', roundPrompt, image))),
@@ -1499,7 +1612,7 @@ async function handleMcqFromPdf(body, env) {
     // inside `prompt` for this endpoint's callers, so a text-only pass still works
     // in most cases instead of returning a hard failure.
     const fallbackProviders = [
-        { name: "groq", fn: () => callGroq(env, prompt, "তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।", null) },
+        { name: "groq", fn: () => callGroq(env, prompt, "তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।", null, true) },
         { name: "openrouter", fn: () => callOpenRouter(env, prompt, "তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।", null) },
         { name: "cerebras", fn: () => callCerebras(env, prompt, "তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।", null) },
     ];
