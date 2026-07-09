@@ -3787,7 +3787,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     try {
         const sysPrompt = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePromptA}\n` +
             `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}`;
-        rawJson = await mbCallAiApi('', pageImageData, sysPrompt, true);
+        rawJson = await mbCallAiApi('', pageImageData, sysPrompt, false);
         geminiAlreadyTried = true;
     } catch (e1) { mbAiDebugErrs.push('s1:' + (e1 && e1.message || e1)); /* fall through */ }
     mbMark('callA');

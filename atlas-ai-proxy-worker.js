@@ -149,17 +149,19 @@ export default {
             return jsonResponse({ success: false, error: "question বা image এর একটি দিতে হবে" }, 400);
         }
 
-        // Groq primary: ইউজার অনুরোধ অনুযায়ী Groq সবসময় প্রথমে, একা চেষ্টা করা হয় (parallel race
-        // এ না রেখে) — ফলাফল ঠিকঠাক (instruction অনুযায়ী, ৫টা চাইলে ৫টাই) পেলে সেটাই ব্যবহার হয়,
-        // দ্রুতও (ছোট মডেল)। Groq ব্যর্থ/খালি/timeout হলে তবেই বাকি provider-দের race শুরু হয়
-        // (Gemini → OpenRouter → Cerebras/Cloudflare), আগের মতোই।
+        // Gemini primary: user-request onujayi Gemini shobshomoy prothome, eka cheshta kora
+        // hoy (parallel race e na rekhe) — Gemini-er nijer multi-key rotation (callGemini()
+        // er bhitore) already shob "healthy" (rate-limit/quota-e ache emon na) key-er majhe
+        // parallel race kore, ekta kaj korlei fol pawa jay. Gemini shob key/model-e byartho
+        // hole tokhoni Groq + baki provider-der race shuru hoy (Groq -> OpenRouter -> Cerebras/
+        // Cloudflare), age Groq primary chilo eta ekhon reverse kora holo.
         const fallbackProviders = [
-            { name: "gemini", fn: () => callGemini(env, question, systemPrompt, image) },
+            { name: "groq", fn: () => callGroq(env, question, systemPrompt, image, /option_k/.test(systemPrompt)) },
             { name: "openrouter", fn: () => callOpenRouter(env, question, systemPrompt, image) },
             { name: "cerebras", fn: () => callCerebras(env, question, systemPrompt, image) },
             { name: "cloudflare", fn: () => callCloudflareAI(env, question, systemPrompt, image) },
         ];
-        const STRONG_NAMES = new Set(["gemini", "openrouter"]);
+        const STRONG_NAMES = new Set(["groq", "openrouter"]);
         const raceSettledFlag = { done: false };
 
         const errors = [];
@@ -192,20 +194,14 @@ export default {
             });
         }
 
-        // heuristic: systemPrompt-e "option_k" mention thakle eta MCQ-generation call dhora
-        // hoy — expectMcqArray flag true kore callGroq()-ke pathano hoy, jate strict schema +
-        // server-side shape-validation gate apply hoy (non-MCQ call jemon explanation-only
-        // text ke break na kore).
-        const expectMcqArray = /option_k/.test(systemPrompt);
-
         let result = null;
-        if (!skipGroq) {
+        if (!skipGemini) {
             try {
-                const groqResult = await callGroq(env, question, systemPrompt, image, expectMcqArray);
-                if (groqResult && groqResult.answer && groqResult.answer.trim().length > 5) {
-                    result = groqResult;
-                } else if (groqResult?.error) {
-                    errors.push(groqResult.error);
+                const geminiResult = await callGemini(env, question, systemPrompt, image);
+                if (geminiResult && geminiResult.answer && geminiResult.answer.trim().length > 5) {
+                    result = geminiResult;
+                } else if (geminiResult?.error) {
+                    errors.push(geminiResult.error);
                 }
             } catch (e) {
                 errors.push(String(e.message || e));
@@ -213,7 +209,7 @@ export default {
         }
 
         if (!result) {
-            let remaining = fallbackProviders.filter(p => !(skipGemini && p.name === "gemini"));
+            let remaining = fallbackProviders.filter(p => !(skipGroq && p.name === "groq"));
             result = await raceRemaining(remaining);
         }
 
@@ -610,21 +606,31 @@ async function callGemini(env, question, systemPrompt, image) {
     parts.push({ text: systemPrompt + "\n\nপ্রশ্ন: " + (question || "এই ছবিটি বিশ্লেষণ করো।") });
 
     let lastError = "Gemini: no keys/models worked";
+    // healthy-key rotation: ekbar 429 (rate-limited/quota-exhausted) pawa key porer round-e
+    // r try kora hoy na (shei ekই request-er moddhe) — deroto quota-shesh key bar bar try
+    // kore shomoy nosto na kore, shudhu "healthy" (ekhono kaj korte pare emon) key-gulor
+    // upor e round chole.
+    const exhaustedKeys = new Set();
 
     for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
+        const healthyKeys = keys.filter(k => !exhaustedKeys.has(k));
+        if (!healthyKeys.length) break; // shob key exhausted — ar try kore lav nai
         for (const model of GEMINI_MODELS) {
             // speed fix: আগে একই model-এ সব key সিরিয়ালি চেষ্টা হতো (key1 fail/slow →
             // key2 → ...), একাধিক key থাকলে worst-case latency কয়েকগুণ বাড়ত। এখন একই
             // model-এর সব key parallel-এ race করানো হয় — যেকোনো একটা key কাজ করলেই
             // দ্রুত উত্তর মেলে, বাকি key-গুলোর জন্য অপেক্ষা করতে হয় না।
             const keyResult = await new Promise((resolve) => {
-                let remaining = keys.length;
+                let remaining = healthyKeys.length;
                 let done = false;
-                for (const key of keys) {
+                for (const key of healthyKeys) {
                     attemptWithStatus((signal) => callGeminiOnce(key, model, parts, 16384, signal)).then(async (outcome) => {
                         if (done) return;
                         if (outcome.__exception) { lastError = `Gemini(${model}) exception: ${outcome.message}`; }
-                        else if (!outcome.ok) { lastError = `Gemini(${model}) HTTP ${outcome.status}`; }
+                        else if (!outcome.ok) {
+                            lastError = `Gemini(${model}) HTTP ${outcome.status}`;
+                            if (outcome.status === 429) exhaustedKeys.add(key); // quota shesh — porer round-e skip
+                        }
                         else {
                             const data = await outcome.json().catch(() => null);
                             const answer = data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
