@@ -2897,7 +2897,7 @@ async function mbAiGenerate() {
         }
 
         mbAiData = parsed.map(m => ({ id: uid(), ...m, type: m.type || type }));
-        mbSetAiProgress(75, 'ব্যাখ্যার ছবি বানানো হচ্ছে...');
+        mbSetAiProgress(75, mbAiData.length + 'টি MCQ পাওয়া গেছে — ব্যাখ্যার ছবি বানানো হচ্ছে...');
 
         // exp_box দিয়ে প্রতিটা MCQ-র জন্য topic-crop explanation image বানানো — একই box একাধিক
         // MCQ শেয়ার করতে পারে সেক্ষেত্রে dedupe করা হয়, কিন্তু exp_box missing/null থাকলে
@@ -2952,9 +2952,9 @@ async function mbAiGenerate() {
         if (resultEl) resultEl.style.display = 'block';
 
         // Save button চাপার দরকার নেই — generate হওয়ার সাথে সাথেই automatically 'All'-এ জমা হয়ে যায়
-        mbSetAiProgress(90, 'সংরক্ষণ হচ্ছে...');
+        mbSetAiProgress(90, mbAiData.length + 'টি MCQ সংরক্ষণ হচ্ছে...');
         await mbSaveAiMcqs();
-        mbSetAiProgress(100, 'সম্পন্ন!');
+        mbSetAiProgress(100, mbAiData.length + 'টি MCQ সম্পন্ন!');
 
     } catch (ex) {
         mbToast('AI ব্যর্থ: ' + ex.message, 'error');
@@ -3011,9 +3011,9 @@ async function mbAiGenerateSpecial() {
         if (resultEl) resultEl.style.display = 'block';
 
         // Save button চাপার দরকার নেই — extract হওয়ার সাথে সাথেই automatically 'All'-এ জমা হয়ে যায়
-        mbSetAiProgress(90, 'সংরক্ষণ হচ্ছে...');
+        mbSetAiProgress(90, mbAiData.length + 'টি MCQ সংরক্ষণ হচ্ছে...');
         await mbSaveAiMcqs();
-        mbSetAiProgress(100, 'সম্পন্ন!');
+        mbSetAiProgress(100, mbAiData.length + 'টি MCQ সম্পন্ন!');
     } catch (ex) {
         mbToast('এক্সট্র্যাকশন ব্যর্থ: ' + ex.message, 'error');
         mbLogError('mbAiGenerateSpecial', mbCurrentPage, ex && ex.message || ex, {});
