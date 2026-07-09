@@ -30,55 +30,90 @@
 </head>
 <body class="dark-mode">
 
-<button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">🌙</button>
+<button class="theme-toggle" onclick="toggleTheme()" id="themeToggle"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" /></svg></button>
 <div class="toast" id="toast"></div>
 
 <div class="auth-container">
     <div class="auth-logo">
-        <span class="logo-icon">🟥</span>
+        <span class="logo-icon"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="18" height="18" x="3" y="3" rx="2" /></svg></span>
         <div class="logo-text">ATLAS APP</div>
         <div class="logo-sub">বাংলাদেশের সেরা প্রস্তুতি প্ল্যাটফর্ম</div>
     </div>
 
     <div class="auth-tabs">
-        <button class="auth-tab active" id="tabLoginBtn" onclick="switchTab('login')">🔐 লগইন</button>
-        <button class="auth-tab" id="tabRegisterBtn" onclick="switchTab('register')">📝 রেজিস্টার</button>
-        <button class="auth-tab" id="tabForgetBtn" onclick="switchTab('forget')">🔑 ফরগেট</button>
+        <button class="auth-tab active" id="tabLoginBtn" onclick="switchTab('login')"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+  <path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg> লগইন</button>
+        <button class="auth-tab" id="tabRegisterBtn" onclick="switchTab('register')"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34" />
+  <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+  <path d="M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z" /></svg> রেজিস্টার</button>
+        <button class="auth-tab" id="tabForgetBtn" onclick="switchTab('forget')"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4" />
+  <path d="m21 2-9.6 9.6" />
+  <circle cx="7.5" cy="15.5" r="5.5" /></svg> ফরগেট</button>
     </div>
 
     <div class="auth-card">
         <!-- Login -->
         <div class="auth-form active" id="formLogin">
-            <div class="form-title">🔐 লগইন</div>
+            <div class="form-title"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+  <path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg> লগইন</div>
             <div class="form-subtitle">ফোন নম্বর ও পাসওয়ার্ড দিন</div>
-            <div class="input-group"><label>📱 ফোন নম্বর</label><input type="tel" id="loginPhone" placeholder="01XXXXXXXXX" maxlength="11"><span class="error-msg" id="loginPhoneErr">ফোন ১১ ডিজিট</span></div>
-            <div class="input-group"><label>🔒 পাসওয়ার্ড</label><input type="password" id="loginPass" placeholder="পাসওয়ার্ড"><span class="error-msg" id="loginPassErr">ন্যূনতম ৬ ক্যারেক্টার</span></div>
+            <div class="input-group"><label><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="14" height="20" x="5" y="2" rx="2" ry="2" />
+  <path d="M12 18h.01" /></svg> ফোন নম্বর</label><input type="tel" id="loginPhone" placeholder="01XXXXXXXXX" maxlength="11"><span class="error-msg" id="loginPhoneErr">ফোন ১১ ডিজিট</span></div>
+            <div class="input-group"><label><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+  <path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg> পাসওয়ার্ড</label><input type="password" id="loginPass" placeholder="পাসওয়ার্ড"><span class="error-msg" id="loginPassErr">ন্যূনতম ৬ ক্যারেক্টার</span></div>
             <button class="btn btn-primary" id="loginBtn" onclick="handleLogin()">লগইন করুন</button>
             <div class="auth-footer">একাউন্ট নেই? <a onclick="switchTab('register')">রেজিস্টার</a> | <a onclick="switchTab('forget')">পাসওয়ার্ড ভুলে গেছেন?</a></div>
         </div>
 
         <!-- Register -->
         <div class="auth-form" id="formRegister">
-            <div class="form-title">📝 রেজিস্ট্রেশন</div>
+            <div class="form-title"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34" />
+  <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+  <path d="M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z" /></svg> রেজিস্ট্রেশন</div>
             <div class="form-subtitle">সব তথ্য সঠিকভাবে পূরণ করুন</div>
-            <div class="input-group"><label>👤 নাম *</label><input type="text" id="regName" placeholder="আপনার পুরো নাম"><span class="error-msg" id="regNameErr">নাম আবশ্যক</span></div>
-            <div class="input-group"><label>🎓 HSC Batch *</label><input type="text" id="regBatch" placeholder="যেমন: ২০২৬"><span class="error-msg" id="regBatchErr">ব্যাচ আবশ্যক</span></div>
-            <div class="input-group"><label>🏫 কলেজ *</label><input type="text" id="regCollege" placeholder="কলেজের নাম"><span class="error-msg" id="regCollegeErr">কলেজ আবশ্যক</span></div>
-            <div class="input-row"><div class="input-group"><label>👨‍👦 পিতা</label><input type="text" id="regFather" placeholder="পিতার নাম"></div><div class="input-group"><label>👩‍👦 মাতা</label><input type="text" id="regMother" placeholder="মাতার নাম"></div></div>
-            <div class="input-row"><div class="input-group"><label>📊 SSC GPA *</label><input type="text" id="regSSC" placeholder="৫.০০"><span class="error-msg" id="regSSCErr">দশমিক (৫.০০)</span></div><div class="input-group"><label>📊 HSC GPA *</label><input type="text" id="regHSC" placeholder="৫.০০"><span class="error-msg" id="regHSCErr">দশমিক (৫.০০)</span></div></div>
-            <div class="input-group"><label>🔄 টাইমার *</label><select id="regTimer"><option value="">— নির্বাচন —</option><option value="first">ফার্স্ট টাইমার</option><option value="second">সেকেন্ড টাইমার</option></select><span class="error-msg" id="regTimerErr">অবশ্যই নির্বাচন করুন</span></div>
-            <div class="input-group"><label>📱 ফোন *</label><input type="tel" id="regPhone" placeholder="01XXXXXXXXX" maxlength="11"><span class="error-msg" id="regPhoneErr">ফোন ১১ ডিজিট</span></div>
-            <div class="input-group"><label>🔒 পাসওয়ার্ড *</label><input type="password" id="regPass" placeholder="ন্যূনতম ৬ ক্যারেক্টার"><span class="error-msg" id="regPassErr">ন্যূনতম ৬</span></div>
+            <div class="input-group"><label><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+  <circle cx="12" cy="7" r="4" /></svg> নাম *</label><input type="text" id="regName" placeholder="আপনার পুরো নাম"><span class="error-msg" id="regNameErr">নাম আবশ্যক</span></div>
+            <div class="input-group"><label><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z" />
+  <path d="M22 10v6" />
+  <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" /></svg> HSC Batch *</label><input type="text" id="regBatch" placeholder="যেমন: ২০২৬"><span class="error-msg" id="regBatchErr">ব্যাচ আবশ্যক</span></div>
+            <div class="input-group"><label><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M14 21v-3a2 2 0 0 0-4 0v3" />
+  <path d="M18 4.933V21" />
+  <path d="m4 6 7.106-3.79a2 2 0 0 1 1.788 0L20 6" />
+  <path d="m6 11-3.52 2.147a1 1 0 0 0-.48.854V19a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a1 1 0 0 0-.48-.853L18 11" />
+  <path d="M6 4.933V21" />
+  <circle cx="12" cy="9" r="2" /></svg> কলেজ *</label><input type="text" id="regCollege" placeholder="কলেজের নাম"><span class="error-msg" id="regCollegeErr">কলেজ আবশ্যক</span></div>
+            <div class="input-row"><div class="input-group"><label><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+  <circle cx="12" cy="7" r="4" /></svg>‍<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+  <circle cx="12" cy="7" r="4" /></svg> পিতা</label><input type="text" id="regFather" placeholder="পিতার নাম"></div><div class="input-group"><label><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+  <circle cx="12" cy="7" r="4" /></svg>‍<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+  <circle cx="12" cy="7" r="4" /></svg> মাতা</label><input type="text" id="regMother" placeholder="মাতার নাম"></div></div>
+            <div class="input-row"><div class="input-group"><label><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 21v-6" />
+  <path d="M12 21V3" />
+  <path d="M19 21V9" /></svg> SSC GPA *</label><input type="text" id="regSSC" placeholder="৫.০০"><span class="error-msg" id="regSSCErr">দশমিক (৫.০০)</span></div><div class="input-group"><label><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 21v-6" />
+  <path d="M12 21V3" />
+  <path d="M19 21V9" /></svg> HSC GPA *</label><input type="text" id="regHSC" placeholder="৫.০০"><span class="error-msg" id="regHSCErr">দশমিক (৫.০০)</span></div></div>
+            <div class="input-group"><label><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+  <path d="M21 3v5h-5" />
+  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+  <path d="M8 16H3v5" /></svg> টাইমার *</label><select id="regTimer"><option value="">— নির্বাচন —</option><option value="first">ফার্স্ট টাইমার</option><option value="second">সেকেন্ড টাইমার</option></select><span class="error-msg" id="regTimerErr">অবশ্যই নির্বাচন করুন</span></div>
+            <div class="input-group"><label><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="14" height="20" x="5" y="2" rx="2" ry="2" />
+  <path d="M12 18h.01" /></svg> ফোন *</label><input type="tel" id="regPhone" placeholder="01XXXXXXXXX" maxlength="11"><span class="error-msg" id="regPhoneErr">ফোন ১১ ডিজিট</span></div>
+            <div class="input-group"><label><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+  <path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg> পাসওয়ার্ড *</label><input type="password" id="regPass" placeholder="ন্যূনতম ৬ ক্যারেক্টার"><span class="error-msg" id="regPassErr">ন্যূনতম ৬</span></div>
             <button class="btn btn-primary" id="registerBtn" onclick="handleRegister()">রেজিস্টার করুন</button>
             <div class="auth-footer">একাউন্ট আছে? <a onclick="switchTab('login')">লগইন</a></div>
         </div>
 
         <!-- Forget -->
         <div class="auth-form" id="formForget">
-            <div class="form-title">🔑 পাসওয়ার্ড রিসেট</div>
+            <div class="form-title"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4" />
+  <path d="m21 2-9.6 9.6" />
+  <circle cx="7.5" cy="15.5" r="5.5" /></svg> পাসওয়ার্ড রিসেট</div>
             <div class="form-subtitle">ফোন দিয়ে নতুন পাসওয়ার্ড সেট করুন</div>
-            <div class="input-group"><label>📱 ফোন</label><input type="tel" id="forgetPhone" placeholder="01XXXXXXXXX" maxlength="11"><span class="error-msg" id="forgetPhoneErr">ফোন ১১ ডিজিট</span></div>
-            <div class="input-group"><label>🔒 নতুন পাসওয়ার্ড</label><input type="password" id="forgetPass" placeholder="ন্যূনতম ৬"><span class="error-msg" id="forgetPassErr">ন্যূনতম ৬</span></div>
+            <div class="input-group"><label><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="14" height="20" x="5" y="2" rx="2" ry="2" />
+  <path d="M12 18h.01" /></svg> ফোন</label><input type="tel" id="forgetPhone" placeholder="01XXXXXXXXX" maxlength="11"><span class="error-msg" id="forgetPhoneErr">ফোন ১১ ডিজিট</span></div>
+            <div class="input-group"><label><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+  <path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg> নতুন পাসওয়ার্ড</label><input type="password" id="forgetPass" placeholder="ন্যূনতম ৬"><span class="error-msg" id="forgetPassErr">ন্যূনতম ৬</span></div>
             <button class="btn btn-primary" id="forgetBtn" onclick="handleForget()">আপডেট করুন</button>
             <div class="auth-footer">মনে পড়েছে? <a onclick="switchTab('login')">লগইন</a></div>
         </div>
@@ -91,7 +126,15 @@ const SUPABASE_KEY = 'mb_d1_9f2a7c6e1b4d8305';
 let isDarkMode=true,currentTab='login';
 
 function showToast(m,d=2000){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
-function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'☀️':'🌙';}
+function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="4" />
+  <path d="M12 2v2" />
+  <path d="M12 20v2" />
+  <path d="m4.93 4.93 1.41 1.41" />
+  <path d="m17.66 17.66 1.41 1.41" />
+  <path d="M2 12h2" />
+  <path d="M20 12h2" />
+  <path d="m6.34 17.66-1.41 1.41" />
+  <path d="m19.07 4.93-1.41 1.41" /></svg>️':'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" /></svg>';}
 
 async function safeFetch(url,opts={}){
     opts.headers=Object.assign({apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY},opts.headers||{});
@@ -119,15 +162,22 @@ async function handleLogin(){
     const btn=document.getElementById('loginBtn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>লগইন...';
     try{
         const data=await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}&select=*`);
-        if(!data?.length){showToast('❌ রেজিস্টার্ড নয়');btn.disabled=false;btn.textContent='লগইন করুন';return;}
+        if(!data?.length){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
+  <path d="m15 9-6 6" />
+  <path d="m9 9 6 6" /></svg> রেজিস্টার্ড নয়');btn.disabled=false;btn.textContent='লগইন করুন';return;}
         const user=data[0];
-        if(user.password_hash!==pass){showToast('❌ ভুল পাসওয়ার্ড');btn.disabled=false;btn.textContent='লগইন করুন';return;}
+        if(user.password_hash!==pass){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
+  <path d="m15 9-6 6" />
+  <path d="m9 9 6 6" /></svg> ভুল পাসওয়ার্ড');btn.disabled=false;btn.textContent='লগইন করুন';return;}
         localStorage.setItem('atlas-session',JSON.stringify({phone:user.phone,name:user.name,batch:user.batch,college:user.college,father_name:user.father_name,mother_name:user.mother_name,ssc_gpa:user.ssc_gpa,hsc_gpa:user.hsc_gpa,timer_type:user.timer_type,role:user.role,photo_url:user.photo_url,premium:user.is_premium}));
-        showToast('✅ লগইন সফল!');
+        showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" />
+  <path d="m9 11 3 3L22 4" /></svg> লগইন সফল!');
         const returnUrl = sessionStorage.getItem('atlas_return_url') || 'index.html';
         sessionStorage.removeItem('atlas_return_url');
         setTimeout(()=>location.href=returnUrl,800);
-    }catch(e){showToast('❌ এরর');btn.disabled=false;btn.textContent='লগইন করুন';}
+    }catch(e){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
+  <path d="m15 9-6 6" />
+  <path d="m9 9 6 6" /></svg> এরর');btn.disabled=false;btn.textContent='লগইন করুন';}
 }
 
 async function handleRegister(){
@@ -140,14 +190,19 @@ async function handleRegister(){
     const btn=document.getElementById('registerBtn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>রেজিস্টার...';
     try{
         const exist=await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}&select=phone`);
-        if(exist?.length){showToast('❌ ফোন আগেই রেজিস্টার্ড');btn.disabled=false;btn.textContent='রেজিস্টার করুন';return;}
+        if(exist?.length){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
+  <path d="m15 9-6 6" />
+  <path d="m9 9 6 6" /></svg> ফোন আগেই রেজিস্টার্ড');btn.disabled=false;btn.textContent='রেজিস্টার করুন';return;}
         await safeFetch(`${SUPABASE_URL}/rest/v1/users`,{method:'POST',body:JSON.stringify({phone,name,batch,college,father_name:father||null,mother_name:mother||null,ssc_gpa:parseFloat(ssc),hsc_gpa:parseFloat(hsc),timer_type:timer,password_hash:pass})});
         localStorage.setItem('atlas-session',JSON.stringify({phone,name,batch,college,father_name:father,mother_name:mother,ssc_gpa:ssc,hsc_gpa:hsc,timer_type:timer}));
-        showToast('✅ রেজিস্ট্রেশন সফল!');
+        showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" />
+  <path d="m9 11 3 3L22 4" /></svg> রেজিস্ট্রেশন সফল!');
         const returnUrl2 = sessionStorage.getItem('atlas_return_url') || 'index.html';
         sessionStorage.removeItem('atlas_return_url');
         setTimeout(()=>location.href=returnUrl2,800);
-    }catch(e){showToast('❌ এরর');btn.disabled=false;btn.textContent='রেজিস্টার করুন';}
+    }catch(e){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
+  <path d="m15 9-6 6" />
+  <path d="m9 9 6 6" /></svg> এরর');btn.disabled=false;btn.textContent='রেজিস্টার করুন';}
 }
 
 async function handleForget(){
@@ -156,10 +211,15 @@ async function handleForget(){
     const btn=document.getElementById('forgetBtn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>আপডেট...';
     try{
         const exist=await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}&select=phone`);
-        if(!exist?.length){showToast('❌ রেজিস্টার্ড নয়');btn.disabled=false;btn.textContent='আপডেট করুন';return;}
+        if(!exist?.length){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
+  <path d="m15 9-6 6" />
+  <path d="m9 9 6 6" /></svg> রেজিস্টার্ড নয়');btn.disabled=false;btn.textContent='আপডেট করুন';return;}
         await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}`,{method:'PATCH',body:JSON.stringify({password_hash:pass})});
-        showToast('✅ পাসওয়ার্ড আপডেট!');setTimeout(()=>switchTab('login'),600);
-    }catch(e){showToast('❌ এরর');}
+        showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" />
+  <path d="m9 11 3 3L22 4" /></svg> পাসওয়ার্ড আপডেট!');setTimeout(()=>switchTab('login'),600);
+    }catch(e){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
+  <path d="m15 9-6 6" />
+  <path d="m9 9 6 6" /></svg> এরর');}
     btn.disabled=false;btn.textContent='আপডেট করুন';
 }
 
@@ -170,12 +230,15 @@ function showError(title, message, details, retryFn) {
     overlay.className = 'error-popup-overlay';
     overlay.innerHTML = `
         <div class="error-popup" onclick="event.stopPropagation()">
-            <div class="error-popup-icon">⚠️</div>
+            <div class="error-popup-icon"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+  <path d="M12 9v4" />
+  <path d="M12 17h.01" /></svg>️</div>
             <div class="error-popup-title">${title || 'কিছু সমস্যা হয়েছে'}</div>
             <div class="error-popup-message">${message || 'পরে আবার চেষ্টা করুন'}</div>
             ${details ? `<div class="error-popup-details">${details}</div>` : ''}
             <div style="display:flex;justify-content:center;gap:8px;" id="errorPopupBtnRow">
-                <button class="error-popup-btn" id="errorPopupCloseBtn">✕ বন্ধ</button>
+                <button class="error-popup-btn" id="errorPopupCloseBtn"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M18 6 6 18" />
+  <path d="m6 6 12 12" /></svg> বন্ধ</button>
             </div>
         </div>
     `;
@@ -186,16 +249,24 @@ function showError(title, message, details, retryFn) {
     if (retryFn) {
         const retryBtn = document.createElement('button');
         retryBtn.className = 'error-popup-retry';
-        retryBtn.textContent = '🔄 আবার চেষ্টা';
+        retryBtn.textContent = '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+  <path d="M21 3v5h-5" />
+  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+  <path d="M8 16H3v5" /></svg> আবার চেষ্টা';
         retryBtn.addEventListener('click', () => { overlay.remove(); retryFn(); });
         overlay.querySelector('#errorPopupBtnRow').prepend(retryBtn);
     }
 }
-window.addEventListener('error',function(e){showError('💥 সমস্যা','পৃষ্ঠাটি রিলোড করুন',e.error?.message,()=>location.reload());});
-window.addEventListener('unhandledrejection',function(e){showError('⚠️ প্রসেসিং সমস্যা','অনুরোধ সম্পূর্ণ করা যায়নি',e.reason?.message,null);});
+window.addEventListener('error',function(e){showError('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" /></svg> সমস্যা','পৃষ্ঠাটি রিলোড করুন',e.error?.message,()=>location.reload());});
+window.addEventListener('unhandledrejection',function(e){showError('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+  <path d="M12 9v4" />
+  <path d="M12 17h.01" /></svg>️ প্রসেসিং সমস্যা','অনুরোধ সম্পূর্ণ করা যায়নি',e.reason?.message,null);});
 
 document.addEventListener('keydown',e=>{if(e.key==='Enter'){if(currentTab==='login')handleLogin();else if(currentTab==='register')handleRegister();else if(currentTab==='forget')handleForget();}});
-document.addEventListener('DOMContentLoaded',()=>{const sess=localStorage.getItem('atlas-session');if(sess){try{JSON.parse(sess);showToast('👋 ইতিমধ্যে লগইন');const ru=sessionStorage.getItem('atlas_return_url')||'index.html';sessionStorage.removeItem('atlas_return_url');setTimeout(()=>location.href=ru,600);}catch(e){}}});
+document.addEventListener('DOMContentLoaded',()=>{const sess=localStorage.getItem('atlas-session');if(sess){try{JSON.parse(sess);showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2" />
+  <path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2" />
+  <path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8" />
+  <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" /></svg> ইতিমধ্যে লগইন');const ru=sessionStorage.getItem('atlas_return_url')||'index.html';sessionStorage.removeItem('atlas_return_url');setTimeout(()=>location.href=ru,600);}catch(e){}}});
 </script>
 </body>
 </html>

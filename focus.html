@@ -818,7 +818,9 @@
 
 <header class="header">
   <div class="header-left">
-    <button class="hamburger" onclick="toggleSidebar()">☰</button>
+    <button class="hamburger" onclick="toggleSidebar()"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 5h16" />
+  <path d="M4 12h16" />
+  <path d="M4 19h16" /></svg></button>
     <div class="atlas-brand-box" onclick="goTo('index.html')" style="display:flex;align-items:center;gap:6px;background:#0c191e;border:1px solid var(--border);border-radius:8px;padding:2px 6px;height:52px;box-sizing:border-box;cursor:pointer;">
             <img src="logo-icon.png" alt="ATLAS icon" style="height:100%;width:auto;display:block;image-rendering:-webkit-optimize-contrast;" onerror="this.style.display='none'">
             <img src="logo-text.png" alt="ATLAS APP" style="height:68%;width:auto;display:block;image-rendering:-webkit-optimize-contrast;" onerror="this.style.display='none'">
@@ -852,7 +854,9 @@
 <!-- ═══════════ MOOD SWITCH POPUP ═══════════ -->
 <div class="mood-popup-bg" id="moodPopup">
   <div class="mood-popup">
-    <h3 id="moodPopupTitle">⚠️ মোড পরিবর্তন</h3>
+    <h3 id="moodPopupTitle"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+  <path d="M12 9v4" />
+  <path d="M12 17h.01" /></svg>️ মোড পরিবর্তন</h3>
     <p id="moodPopupMsg">Study Timer চলছে। Break / Sleep Mode on করতে হলে আগে বন্ধ করো। এই সময়গুলো Top Focused rank এ count হয়।</p>
     <button class="mood-popup-toggle popup-toggle-off" id="moodPopupConfirm" onclick="confirmMoodSwitch()">এই Mood বন্ধ করো</button>
     <button class="mood-popup-toggle popup-cancel" onclick="closeMoodPopup()">বাতিল</button>
@@ -864,11 +868,15 @@
   <div class="compare-modal">
     <div class="cm-header">
       <div class="cm-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:4px"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="#818CF8" stroke-width="1.8" stroke-linejoin="round" fill="rgba(129,140,248,.15)"/></svg>তুলনা</div>
-      <button class="cm-close" onclick="closeCompare()">✕</button>
+      <button class="cm-close" onclick="closeCompare()"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M18 6 6 18" />
+  <path d="m6 6 12 12" /></svg></button>
     </div>
     <div class="cm-vs-row">
       <div class="cm-person">
-        <div class="cm-avatar" id="cmMeAvatar">😊</div>
+        <div class="cm-avatar" id="cmMeAvatar"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FFD166" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
+  <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+  <line x1="9" x2="9.01" y1="9" y2="9" />
+  <line x1="15" x2="15.01" y1="9" y2="9" /></svg></div>
         <div class="cm-pname" id="cmMeName">তুমি</div>
         <div class="cm-pmeta" id="cmMeMeta"></div>
       </div>
@@ -1082,7 +1090,8 @@
       <div class="live-today-title">
         <div class="live-dot"></div>
         <span id="liveTitleText">এখন Live পড়ছে</span>
-        <button id="liveMoodClearBtn" onclick="clearLiveMoodFilter()" style="display:none;margin-left:auto;font-size:9px;font-weight:800;color:var(--text-secondary);background:none;border:1px solid var(--border);border-radius:6px;padding:2px 7px;cursor:pointer;font-family:inherit">সব দেখো ✕</button>
+        <button id="liveMoodClearBtn" onclick="clearLiveMoodFilter()" style="display:none;margin-left:auto;font-size:9px;font-weight:800;color:var(--text-secondary);background:none;border:1px solid var(--border);border-radius:6px;padding:2px 7px;cursor:pointer;font-family:inherit">সব দেখো <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M18 6 6 18" />
+  <path d="m6 6 12 12" /></svg></button>
       </div>
       <div class="batch-filter" id="batchFilter"></div>
 
@@ -1176,7 +1185,15 @@ const SUPABASE_KEY = 'mb_d1_9f2a7c6e1b4d8305';
 let isDarkMode = true, isSidebarOpen = false, currentUser = null;
 
 function showToast(m,d=2500){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
-function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').innerHTML=isDarkMode?'<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.8"/></svg>':'☀️';localStorage.setItem('atlas-theme',isDarkMode?'dark':'light');}
+function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').innerHTML=isDarkMode?'<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.8"/></svg>':'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="4" />
+  <path d="M12 2v2" />
+  <path d="M12 20v2" />
+  <path d="m4.93 4.93 1.41 1.41" />
+  <path d="m17.66 17.66 1.41 1.41" />
+  <path d="M2 12h2" />
+  <path d="M20 12h2" />
+  <path d="m6.34 17.66-1.41 1.41" />
+  <path d="m19.07 4.93-1.41 1.41" /></svg>️';localStorage.setItem('atlas-theme',isDarkMode?'dark':'light');}
 function toggleSidebar(){isSidebarOpen=!isSidebarOpen;document.getElementById('sidebarOverlay').classList.toggle('active',isSidebarOpen);document.getElementById('sidebar').classList.toggle('active',isSidebarOpen);}
 function closeSidebar(){isSidebarOpen=false;document.getElementById('sidebarOverlay').classList.remove('active');document.getElementById('sidebar').classList.remove('active');}
 function goTo(u){location.href=u;}
@@ -1270,7 +1287,9 @@ function loadDailyProgress(){
 
 /* ═══ SESSION START ═══ */
 async function startSession(){
-  if(!currentUser){ showToast('⚠️ লগইন করো'); goTo('auth.html'); return; }
+  if(!currentUser){ showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+  <path d="M12 9v4" />
+  <path d="M12 17h.01" /></svg>️ লগইন করো'); goTo('auth.html'); return; }
   mood='study'; timerRunning=true; paused=false;
   // accumulated থেকে শুরু — studySecs already set in doEnd
   breaksUsed=0;
@@ -1454,7 +1473,7 @@ function checkAutoSleepFromPause(){
     renderTimer();
     saveState(); syncSession();
     updateSelfInList(); renderLiveStudents(allStudents);
-    showToast('😴 রাতে দীর্ঘ বিরতি দেখে Sleep Mode চালু হলো');
+    showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" /></svg> রাতে দীর্ঘ বিরতি দেখে Sleep Mode চালু হলো');
   }
 }
 
@@ -1496,7 +1515,9 @@ function renderTimer(){
     moodNameClass='t-mood-name-break'; moodBarClass='t-mood-bar-break'; boxMoodClass='mood-break';
     const remain=MAX_BREAK_SEC-(accumulatedBreakSecs+breakSecs);
     const wb=document.getElementById('breakWarn');
-    if(remain<=300){ wb.textContent=`⚠️ বিরতি শেষ হতে ${fmtDisplay(remain)} বাকি`; wb.classList.add('show'); }
+    if(remain<=300){ wb.textContent=`<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+  <path d="M12 9v4" />
+  <path d="M12 17h.01" /></svg>️ বিরতি শেষ হতে ${fmtDisplay(remain)} বাকি`; wb.classList.add('show'); }
     else wb.classList.remove('show');
   } else {
     displaySecs=accumulatedSleepSecs+sleepSecs;
@@ -1528,7 +1549,9 @@ function renderTimer(){
 
 /* ═══ MOOD SWITCH ═══ */
 function switchMood(newMood){
-  if(!timerRunning){ showToast('⚠️ আগে পড়াশোনা শুরু করো'); return; }
+  if(!timerRunning){ showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+  <path d="M12 9v4" />
+  <path d="M12 17h.01" /></svg>️ আগে পড়াশোনা শুরু করো'); return; }
   if(newMood===mood) return;
   applyMoodSwitch(newMood);
 }
@@ -1566,7 +1589,11 @@ function applyMoodSwitch(newMood){
 
   updateMoodButtons(); renderTimer(); updateLsrCardHighlight(); saveState(); syncSession();
   updateSelfInList(); renderLiveStudents(allStudents);
-  const names={study:'📚 Study',break:'☕ বিরতি',sleep:'😴 ঘুম'};
+  const names={study:'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 7v14" />
+  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg> Study',break:'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 2v2" />
+  <path d="M14 2v2" />
+  <path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1" />
+  <path d="M6 2v2" /></svg> বিরতি',sleep:'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" /></svg> ঘুম'};
   showToast(`${names[newMood]} শুরু হলো`);
 }
 
@@ -1693,7 +1720,7 @@ function showModal(){
   const rankEl=document.getElementById('ms-rank-info');
   if(studySecs>=600){
     rankEl.style.display='block';
-    rankEl.textContent=`★ ${fmtCompact(studySecs)} পড়েছো — এটি তোমার rank-এ যোগ হবে!`;
+    rankEl.textContent=`<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" /></svg> ${fmtCompact(studySecs)} পড়েছো — এটি তোমার rank-এ যোগ হবে!`;
   } else {
     rankEl.style.display='none';
   }
@@ -1709,7 +1736,9 @@ async function doEnd(auto){
   // সবার আগে timer screen নিশ্চিত করো — intro screen এ থাকলেও চলে আসবে
   showTimerScreen();
 
-  // ⚠️ UI update সবার আগে
+  // <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+  <path d="M12 9v4" />
+  <path d="M12 17h.01" /></svg>️ UI update সবার আগে
   // UI reset — individually safe
   const _s = id => document.getElementById(id);
   if(_s('ctrlStudy'))    _s('ctrlStudy').style.display='none';
@@ -1726,7 +1755,8 @@ async function doEnd(auto){
   if(_s('btnBreak'))  _s('btnBreak').classList.remove('active');
   if(_s('btnSleep'))  _s('btnSleep').classList.remove('active');
 
-  const doneMsg = auto?'⏹ Auto ended':`✅ সম্পন্ন! ${fmtDisplay(studySecs)} পড়েছো`;
+  const doneMsg = auto?'⏹ Auto ended':`<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" />
+  <path d="m9 11 3 3L22 4" /></svg> সম্পন্ন! ${fmtDisplay(studySecs)} পড়েছো`;
   const endedSessionId=sessionId, endedBreakSecs=breakSecs, endedSleepSecs=sleepSecs, endedBreaksUsed=breaksUsed;
 
   // আগে সম্পন্ন হওয়া এই session-এর সময় accumulated total-এ যুক্ত করে রাখো —
@@ -1906,12 +1936,18 @@ function updateMoodInlineList(){
   box.className='mood-inline-list';
 
   if(!list.length){
-    box.innerHTML=`<span class="mil-empty">${mood==='break'?'☕ এখন তুমি একাই বিরতিতে':'😴 এখন তুমি একাই ঘুমে'}</span>`;
+    box.innerHTML=`<span class="mil-empty">${mood==='break'?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 2v2" />
+  <path d="M14 2v2" />
+  <path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1" />
+  <path d="M6 2v2" /></svg> এখন তুমি একাই বিরতিতে':'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" /></svg> এখন তুমি একাই ঘুমে'}</span>`;
     return;
   }
   box.innerHTML=list.map(s=>{
     const self=s._isSelf||s.phone===currentUser?.phone;
-    const icon=mood==='break'?'☕':'😴';
+    const icon=mood==='break'?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 2v2" />
+  <path d="M14 2v2" />
+  <path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1" />
+  <path d="M6 2v2" /></svg>':'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" /></svg>';
     return `<span class="mil-chip ${mood}${self?' is-self':''}">${icon} ${escHtml(self?'তুমি':s.name)}</span>`;
   }).join('');
 }
@@ -2168,7 +2204,8 @@ async function loadMoodRanking(moodType, days, btn){
       return;
     }
 
-    // Break/Sleep অথবা multi-day periods → focus_sessions থেকে aggregate করো
+    // Break/Sleep অথবা multi-day periods <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
+  <path d="m12 5 7 7-7 7" /></svg> focus_sessions থেকে aggregate করো
     const rows=await safeFetch(
       `${SUPABASE_URL}/rest/v1/focus_sessions?started_at=gte.${encodeURIComponent(since)}`+
       `&select=user_phone,study_seconds,break_seconds,sleep_seconds,users(name,batch,college,is_premium,photo_url)&limit=2000`
@@ -2360,7 +2397,18 @@ function renderLeaderboard(list){
     const top=list.slice(0,3);
     const maxS=Math.max(1,...top.map(s=>s.total_seconds));
     const colors=['#F59E0B','#9CA3AF','#B45309'];
-    const crowns=['👑','🥈','🥉'];
+    const crowns=['<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" />
+  <path d="M5 21h14" /></svg>','<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15" />
+  <path d="M11 12 5.12 2.2" />
+  <path d="m13 12 5.88-9.8" />
+  <path d="M8 7h8" />
+  <circle cx="12" cy="17" r="5" />
+  <path d="M12 18v-2h-.5" /></svg>','<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15" />
+  <path d="M11 12 5.12 2.2" />
+  <path d="m13 12 5.88-9.8" />
+  <path d="M8 7h8" />
+  <circle cx="12" cy="17" r="5" />
+  <path d="M12 18v-2h-.5" /></svg>'];
     const rankNames=['১ম','২য়','৩য়'];
     const bars=top.map((s,i)=>{
       const pct=Math.round((s.total_seconds/maxS)*72);
@@ -2377,7 +2425,12 @@ function renderLeaderboard(list){
     graphEl.style.display='block';
     graphEl.innerHTML=`
       <div style="background:linear-gradient(135deg,rgba(245,158,11,.06),rgba(99,102,241,.06));border:1px solid rgba(245,158,11,.2);border-radius:12px;padding:12px 8px 8px;margin-bottom:8px">
-        <div style="font-size:10px;font-weight:800;color:#F59E0B;text-align:center;margin-bottom:10px;letter-spacing:.5px">🏆 TOP PERFORMERS</div>
+        <div style="font-size:10px;font-weight:800;color:#F59E0B;text-align:center;margin-bottom:10px;letter-spacing:.5px"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 14.66v1.626a2 2 0 0 1-.976 1.696A5 5 0 0 0 7 21.978" />
+  <path d="M14 14.66v1.626a2 2 0 0 0 .976 1.696A5 5 0 0 1 17 21.978" />
+  <path d="M18 9h1.5a1 1 0 0 0 0-5H18" />
+  <path d="M4 22h16" />
+  <path d="M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z" />
+  <path d="M6 9H4.5a1 1 0 0 1 0-5H6" /></svg> TOP PERFORMERS</div>
         <div style="display:flex;gap:6px;align-items:flex-end;justify-content:center">${bars}</div>
       </div>`;
   }
@@ -2448,11 +2501,14 @@ function renderLiveStudents(students){
   let pool, emptyMsg, titleText;
   if(mood==='break'){
     pool=students.filter(s=>s.status==='break');
-    titleText='☕ বিরতিতে আছে';
+    titleText='<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 2v2" />
+  <path d="M14 2v2" />
+  <path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1" />
+  <path d="M6 2v2" /></svg> বিরতিতে আছে';
     emptyMsg='এই মুহূর্তে কেউ বিরতিতে নেই';
   } else if(mood==='sleep'){
     pool=students.filter(s=>s.status==='sleep');
-    titleText='😴 ঘুমাচ্ছে';
+    titleText='<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" /></svg> ঘুমাচ্ছে';
     emptyMsg='এই মুহূর্তে কেউ ঘুমাচ্ছে না';
   } else {
     // Study mood: সবাই দেখাবে — live (study) সবার আগে, তারপর paused, তারপর break/sleep
@@ -2518,7 +2574,10 @@ function buildRankCard(s,rank,showStatus){
     const bsSecs=(s.break_seconds||0)+(s.sleep_seconds||0);
     const breaksCount=s.breaks_used||0;
     if(bsSecs>0 || breaksCount>0){
-      metaLine=`<div class="r-meta-line">${breaksCount>0?`☕×${breaksCount}`:''}${bsSecs>0?` · বিরতি+ঘুম ${fmtCompact(bsSecs)}`:''}</div>`;
+      metaLine=`<div class="r-meta-line">${breaksCount>0?`<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 2v2" />
+  <path d="M14 2v2" />
+  <path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1" />
+  <path d="M6 2v2" /></svg>×${breaksCount}`:''}${bsSecs>0?` · বিরতি+ঘুম ${fmtCompact(bsSecs)}`:''}</div>`;
     }
   }
 
@@ -2560,7 +2619,10 @@ function openCompare(btn){
   const meAvatar=document.getElementById('cmMeAvatar');
   meAvatar.innerHTML=currentUser?.photo_url
     ?`<img src="${escHtml(currentUser.photo_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
-    :'😊';
+    :'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FFD166" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
+  <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+  <line x1="9" x2="9.01" y1="9" y2="9" />
+  <line x1="15" x2="15.01" y1="9" y2="9" /></svg>';
   document.getElementById('cmThemName').textContent=d.name||'—';
   document.getElementById('cmThemMeta').textContent=[d.batch?`HSC ${d.batch}`:'',d.college].filter(Boolean).join(' · ');
   const themAvatar=document.getElementById('cmThemAvatar');
@@ -2695,10 +2757,12 @@ function renderCompareStats(myStudy,myBreaks,theirStudy,theirBreaks,myDaily,thei
     verdict.innerHTML=`= সমান সমান! এখন একটু বেশি পড়লেই এগিয়ে যাবে।`;
   } else if(ahead){
     verdict.className='cm-verdict';
-    verdict.innerHTML=`↑ তুমি <b>${fmtCompact(diff)}</b> এগিয়ে আছো! এই ধারা বজায় রাখো — বিরতি কম নিলে rank আরো ভালো হবে।`;
+    verdict.innerHTML=`<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m5 12 7-7 7 7" />
+  <path d="M12 19V5" /></svg> তুমি <b>${fmtCompact(diff)}</b> এগিয়ে আছো! এই ধারা বজায় রাখো — বিরতি কম নিলে rank আরো ভালো হবে।`;
   } else {
     verdict.className='cm-verdict behind';
-    verdict.innerHTML=`↓ <b>${fmtCompact(diff)}</b> পিছিয়ে আছো। বিরতি কমাও এবং একটানা পড়ার session বাড়াও — তাহলে দ্রুত এগিয়ে যাবে।`;
+    verdict.innerHTML=`<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 5v14" />
+  <path d="m19 12-7 7-7-7" /></svg> <b>${fmtCompact(diff)}</b> পিছিয়ে আছো। বিরতি কমাও এবং একটানা পড়ার session বাড়াও — তাহলে দ্রুত এগিয়ে যাবে।`;
   }
 }
 
@@ -2790,7 +2854,15 @@ document.addEventListener('DOMContentLoaded',async ()=>{
   if(saved==='light'){isDarkMode=false;document.body.classList.add('light-mode');document.body.classList.remove('dark-mode');}
   else{isDarkMode=true;document.body.classList.add('dark-mode');document.body.classList.remove('light-mode');}
   const themeIcon=document.getElementById('themeToggle');
-  if(themeIcon)themeIcon.innerHTML=isDarkMode?'<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.8"/></svg>':'☀️';
+  if(themeIcon)themeIcon.innerHTML=isDarkMode?'<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.8"/></svg>':'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="4" />
+  <path d="M12 2v2" />
+  <path d="M12 20v2" />
+  <path d="m4.93 4.93 1.41 1.41" />
+  <path d="m17.66 17.66 1.41 1.41" />
+  <path d="M2 12h2" />
+  <path d="M20 12h2" />
+  <path d="m6.34 17.66-1.41 1.41" />
+  <path d="m19.07 4.93-1.41 1.41" /></svg>️';
   try{currentUser=JSON.parse(localStorage.getItem('atlas-session'));}catch(_){currentUser=null;}
   if(!currentUser){location.replace('auth.html');return;}
   loadDailyProgress();

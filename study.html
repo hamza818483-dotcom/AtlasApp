@@ -210,7 +210,9 @@
 
 <header class="header">
     <div class="header-left">
-        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+        <button class="hamburger" onclick="toggleSidebar()"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 5h16" />
+  <path d="M4 12h16" />
+  <path d="M4 19h16" /></svg></button>
         <div class="atlas-brand-box" onclick="goTo('index.html')" style="display:flex;align-items:center;gap:6px;background:#0c191e;border:1px solid var(--border);border-radius:8px;padding:2px 6px;height:52px;box-sizing:border-box;cursor:pointer;">
             <img src="logo-icon.png" alt="ATLAS icon" style="height:100%;width:auto;display:block;image-rendering:-webkit-optimize-contrast;" onerror="this.style.display='none'">
             <img src="logo-text.png" alt="ATLAS APP" style="height:68%;width:auto;display:block;image-rendering:-webkit-optimize-contrast;" onerror="this.style.display='none'">
@@ -229,7 +231,8 @@
     <span class="scr-title">মূলবই পেইজভিত্তিক প্রস্তুতি</span>
   </div>
   <div class="subj-banner">
-    <div class="subj-banner-t">📖 বিষয় নির্বাচন করো</div>
+    <div class="subj-banner-t"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 7v14" />
+  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg> বিষয় নির্বাচন করো</div>
     <div class="subj-banner-s" id="subj-banner-sub">যে বিষয় পড়তে চাও সেটি বেছে নাও</div>
   </div>
   <div id="subj-list"><div class="ctr"><div class="sp"></div><div>বিষয় লোড হচ্ছে...</div></div></div>
@@ -242,7 +245,7 @@
     <span class="scr-title" id="chap-title">অধ্যায়সমূহ</span>
   </div>
   <div class="subj-banner" id="chap-banner">
-    <div class="subj-banner-t" id="chap-banner-t">📂 অধ্যায় নির্বাচন করো</div>
+    <div class="subj-banner-t" id="chap-banner-t"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2" /></svg> অধ্যায় নির্বাচন করো</div>
     <div class="subj-banner-s" id="chap-banner-s">যে অধ্যায় পড়তে চাও সেটি বেছে নাও</div>
   </div>
   <div id="chap-list"><div class="ctr"><div class="sp"></div><div>লোড হচ্ছে...</div></div></div>
@@ -262,7 +265,9 @@
   <div class="pdf-toolbar">
     <button class="back-btn" onclick="backFromViewer()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
     <span class="scr-title" id="view-title">PDF</span>
-    <button class="nav-pg-btn" onclick="togglePgNav()" id="pgNavBtn"><span>☰</span><span id="pgNavLbl">পেইজ</span></button>
+    <button class="nav-pg-btn" onclick="togglePgNav()" id="pgNavBtn"><span><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 5h16" />
+  <path d="M4 12h16" />
+  <path d="M4 19h16" /></svg></span><span id="pgNavLbl">পেইজ</span></button>
     <div class="zoom-wrap">
       <button class="z-btn" onclick="zoom(-0.25)">−</button>
       <span class="z-lbl" id="zoom-lbl">50%</span>
@@ -276,7 +281,9 @@
   <div class="pages-wrap" id="pages-wrap"></div>
   <div class="multi-float" id="multi-float">
     <button class="multi-float-btn" onclick="openSheet(null)">
-      <span>📝</span><span><span id="sel-cnt">0</span> পেইজ ✓</span>
+      <span><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34" />
+  <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+  <path d="M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z" /></svg></span><span><span id="sel-cnt">0</span> পেইজ <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 6 9 17l-5-5" /></svg></span>
     </button>
   </div>
 </div>
@@ -287,22 +294,32 @@
     <div class="sheet-handle"></div>
     <div class="sheet-title" id="sheet-main-title">MCQ ধরন বেছে নাও</div>
     <div id="sheet-perpage" style="display:none;margin-bottom:16px">
-      <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:10px">📄 আলাদা পেইজ</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:10px"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
+  <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+  <path d="M10 9H8" />
+  <path d="M16 13H8" />
+  <path d="M16 17H8" /></svg> আলাদা পেইজ</div>
       <div id="sheet-perpage-btns" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px"></div>
       <div style="width:100%;height:1px;background:var(--border);margin-bottom:16px"></div>
-      <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:10px">📝 সব পেইজ একসাথে</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:10px"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34" />
+  <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+  <path d="M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z" /></svg> সব পেইজ একসাথে</div>
     </div>
     <div class="type-btns">
       <button class="type-btn" onclick="startExam('standard')">
-        <span class="type-icon">📝</span>
-        <div class="type-info"><div class="type-name">Standard MCQ</div><div class="type-desc">সাধারণ বহুনির্বাচনী প্রশ্ন</div></div>→
+        <span class="type-icon"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34" />
+  <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+  <path d="M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z" /></svg></span>
+        <div class="type-info"><div class="type-name">Standard MCQ</div><div class="type-desc">সাধারণ বহুনির্বাচনী প্রশ্ন</div></div><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
+  <path d="m12 5 7 7-7 7" /></svg>
       </button>
       <button class="type-btn" id="typeBtnTF" onclick="startExamGuarded('true_false')">
-        <span class="type-icon">✅</span>
+        <span class="type-icon"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" />
+  <path d="m9 11 3 3L22 4" /></svg></span>
         <div class="type-info"><div class="type-name">সত্য / মিথ্যা</div><div class="type-desc">True/False ধরনের প্রশ্ন</div></div><span id="tfLockBadge"></span>
       </button>
       <button class="type-btn" id="typeBtnHard" onclick="startExamGuarded('hard')">
-        <span class="type-icon">🔥</span>
+        <span class="type-icon"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4" /></svg></span>
         <div class="type-info"><div class="type-name">কঠিন প্রশ্ন</div><div class="type-desc">বিশ্লেষণমূলক কঠিন MCQ</div></div><span id="hardLockBadge"></span>
       </button>
     </div>
@@ -338,7 +355,15 @@ const AI_PROXY_URL = 'https://atlas-ai-proxy.hamza818483.workers.dev/';
 let isDarkMode = true, isSidebarOpen = false, currentUser = null;
 
 function showToast(m,d=2500){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
-function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'☀️':'🌙';localStorage.setItem('atlas-theme',isDarkMode?'dark':'light');}
+function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="4" />
+  <path d="M12 2v2" />
+  <path d="M12 20v2" />
+  <path d="m4.93 4.93 1.41 1.41" />
+  <path d="m17.66 17.66 1.41 1.41" />
+  <path d="M2 12h2" />
+  <path d="M20 12h2" />
+  <path d="m6.34 17.66-1.41 1.41" />
+  <path d="m19.07 4.93-1.41 1.41" /></svg>️':'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" /></svg>';localStorage.setItem('atlas-theme',isDarkMode?'dark':'light');}
 function toggleSidebar(){isSidebarOpen=!isSidebarOpen;document.getElementById('sidebarOverlay').classList.toggle('active',isSidebarOpen);document.getElementById('sidebar').classList.toggle('active',isSidebarOpen);}
 function closeSidebar(){isSidebarOpen=false;document.getElementById('sidebarOverlay').classList.remove('active');document.getElementById('sidebar').classList.remove('active');}
 function goTo(u){location.href=u;}
@@ -410,7 +435,7 @@ function renderSubjects(subjects) {
 
 async function openSubject(id, name) {
     document.getElementById('chap-title').textContent = name;
-    document.getElementById('chap-banner-t').textContent = '📂 ' + name;
+    document.getElementById('chap-banner-t').textContent = '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2" /></svg> ' + name;
     document.getElementById('chap-banner-s').textContent = 'যে অধ্যায় পড়তে চাও সেটি বেছে নাও';
     go('s-chap');
     const c = document.getElementById('chap-list');
@@ -467,7 +492,8 @@ async function openChapter(id, name) {
 
 function renderPdfList(pdfs, name, id) {
     const c = document.getElementById('pdf-list');
-    // Single PDF → instant open
+    // Single PDF <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
+  <path d="m12 5 7 7-7 7" /></svg> instant open
     if (pdfs.length === 1) {
         const p0 = pdfs[0];
         if (p0.is_premium) { openPdf(p0.id, p0.title, true, p0.page_count); }
@@ -477,12 +503,12 @@ function renderPdfList(pdfs, name, id) {
     document.getElementById('pdfs-title').textContent = name + ' (' + pdfs.length + ' টি PDF)';
     c.innerHTML = '<div class="item-list">' + pdfs.map(p => `
         <div class="list-item" onclick="openPdf(${p.id},'${esc(p.title)}',${!!p.is_premium},${p.page_count||0})">
-            <div style="font-size:26px">📕</div>
+            <div style="font-size:26px"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20" /></svg></div>
             <div class="list-info">
                 <div class="list-name">${esc(p.title)}</div>
                 <div class="list-sub">${p.page_count ? p.page_count+' পেইজ' : 'PDF ফাইল'}</div>
             </div>
-            ${p.is_premium ? '<span class="premium-lock">⭐ Premium</span>' : ''}
+            ${p.is_premium ? '<span class="premium-lock"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" /></svg> Premium</span>' : ''}
             <div class="list-arr">›</div>
         </div>`).join('') + '</div>';
 }
@@ -490,7 +516,7 @@ function renderPdfList(pdfs, name, id) {
 /* ── PDF Viewer ── */
 async function openPdf(id, title, isPremium, pageCount) {
     if (isPremium && !(currentUser?.is_premium)) {
-        showToast('⭐ এটি Premium কন্টেন্ট — আপগ্রেড করো');
+        showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" /></svg> এটি Premium কন্টেন্ট — আপগ্রেড করো');
         return;
     }
     curPdfId = id; curPdfTitle = title; curPdfPremium = !!isPremium; selPages.clear();
@@ -572,7 +598,9 @@ function makePage(p, tot) {
         </div>
         <div class="page-footer">
             <span class="p-num-lbl">পেইজ ${p}</span>
-            <button class="exam-btn" onclick="openSheet(${p})">📝 এক্সাম দাও</button>
+            <button class="exam-btn" onclick="openSheet(${p})"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34" />
+  <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+  <path d="M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z" /></svg> এক্সাম দাও</button>
         </div>`;
     return d;
 }
@@ -676,7 +704,8 @@ async function logPageView(p) {
 }
 
 function backFromViewer() {
-    // PDF viewer থেকে ← চাপলে — single-PDF chapter হলে renderPdfList() আবার
+    // PDF viewer থেকে <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m12 19-7-7 7-7" />
+  <path d="M19 12H5" /></svg> চাপলে — single-PDF chapter হলে renderPdfList() আবার
     // auto-open করে viewer-এ ফিরিয়ে আনতো (loop bug), তাই cache থেকে PDF সংখ্যা
     // চেক করে single হলে সরাসরি subject/chapter screen-এ পাঠানো হচ্ছে।
     pdfDoc = null;
@@ -706,7 +735,9 @@ async function renderPage(p) {
         await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
         if (ph) ph.style.display = 'none';
         cv.style.display = 'block';
-    } catch (e) { if (ph) ph.innerHTML = '❌ লোড হয়নি'; }
+    } catch (e) { if (ph) ph.innerHTML = '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
+  <path d="m15 9-6 6" />
+  <path d="m9 9 6 6" /></svg> লোড হয়নি'; }
 }
 
 function jumpToPage(p) {
@@ -791,7 +822,7 @@ function toggleSel(p) {
     } else {
         selPages.add(p);
         document.getElementById('pc-'+p)?.classList.add('sel');
-        if (cbv) { cbv.textContent='✓'; cbv.style.background='var(--accent)'; cbv.style.borderColor='var(--accent)'; cbv.style.color='#fff'; }
+        if (cbv) { cbv.textContent='<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 6 9 17l-5-5" /></svg>'; cbv.style.background='var(--accent)'; cbv.style.borderColor='var(--accent)'; cbv.style.color='#fff'; }
     }
     updateMultiBtn();
 }
@@ -863,11 +894,15 @@ async function updateTypeButtonStates() {
         if (!available) {
             btn.style.setProperty('opacity', '0.4');
             btn.style.setProperty('pointer-events', 'none');
-            if (badge) badge.textContent = '🔜 Coming Soon';
+            if (badge) badge.textContent = '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
+  <path d="m12 16 4-4-4-4" />
+  <path d="M8 12h8" /></svg> Coming Soon';
         } else {
             btn.style.setProperty('pointer-events', 'auto');
             btn.style.setProperty('opacity', premiumLocked ? '0.55' : '1');
-            if (badge) badge.textContent = premiumLocked ? '🔒' : '→';
+            if (badge) badge.textContent = premiumLocked ? '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+  <path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>' : '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
+  <path d="m12 5 7 7-7 7" /></svg>';
         }
     };
     applyState(tfBtn, tfBadge, avail.true_false);
@@ -890,10 +925,12 @@ function canUseAdvancedTypes() { return isAdmin() || !!(currentUser?.is_premium)
 async function startExamGuarded(type) {
     if (type === 'true_false' || type === 'hard') {
         const avail = await checkTypeAvailability(curPdfId);
-        if (!avail[type]) { showToast('🔜 এই ধরনের MCQ শীঘ্রই আসছে'); return; }
+        if (!avail[type]) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
+  <path d="m12 16 4-4-4-4" />
+  <path d="M8 12h8" /></svg> এই ধরনের MCQ শীঘ্রই আসছে'); return; }
     }
     if ((type === 'true_false' || type === 'hard') && !canUseAdvancedTypes()) {
-        showToast('⭐ এই ধরন শুধু Premium ইউজারদের জন্য — আপগ্রেড করো');
+        showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" /></svg> এই ধরন শুধু Premium ইউজারদের জন্য — আপগ্রেড করো');
         return;
     }
     startExam(type);
@@ -907,7 +944,9 @@ async function startExam(type) {
     else { pages = [...selPages].sort((a,b)=>a-b); if (!pages.length) { showToast('পেইজ নির্বাচন করো'); return; } }
     sheetSinglePage = null;
 
-    if (!currentUser) { showToast('⚠️ লগইন করো'); goTo('auth.html'); return; }
+    if (!currentUser) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+  <path d="M12 9v4" />
+  <path d="M12 17h.01" /></svg>️ লগইন করো'); goTo('auth.html'); return; }
 
     // ── ধাপ ১: সব পেইজ একসাথে (parallel) cache-check — admin আগে থেকে বানিয়ে রাখলে
     // এখানেই পাওয়া যাবে, তাই loading overlay না দেখিয়ে সরাসরি pre-exam এ যাওয়া যায়।
@@ -944,18 +983,23 @@ async function startExam(type) {
         if (pLabel) pLabel.textContent = `পেইজ ${pages.length}/${pages.length}`;
         if (pPct) pPct.textContent = '100%';
         if (pFill) pFill.style.width = '100%';
-        if (!allQuestions.length) { showToast('❌ প্রশ্ন তৈরি করা যায়নি। আবার চেষ্টা করো।'); showGenOverlay(false); return; }
+        if (!allQuestions.length) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
+  <path d="m15 9-6 6" />
+  <path d="m9 9 6 6" /></svg> প্রশ্ন তৈরি করা যায়নি। আবার চেষ্টা করো।'); showGenOverlay(false); return; }
         await finishStartExam(allQuestions, pages);
         showGenOverlay(false);
     } catch (e) {
         showGenOverlay(false);
-        showToast('❌ সমস্যা হয়েছে: ' + (e.message||'আবার চেষ্টা করো'));
+        showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
+  <path d="m15 9-6 6" />
+  <path d="m9 9 6 6" /></svg> সমস্যা হয়েছে: ' + (e.message||'আবার চেষ্টা করো'));
     }
 }
 
 // শুধু cache check করে (কোনো generation/AI call না) — সব পেইজ cache-এ থাকলে
 // instant load এর জন্য ব্যবহার হয়। cache miss হলে null রিটার্ন করে।
-// pageNum → dataURL ক্যাশ (একই সেশনে বারবার canvas render এড়াতে, যা delay-এর মূল কারণ ছিল)
+// pageNum <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
+  <path d="m12 5 7 7-7 7" /></svg> dataURL ক্যাশ (একই সেশনে বারবার canvas render এড়াতে, যা delay-এর মূল কারণ ছিল)
 const _pageImgCache = new Map();
 async function getPageImageDataUrlCached(pageNum) {
     if (_pageImgCache.has(pageNum)) return _pageImgCache.get(pageNum);
@@ -1001,7 +1045,8 @@ async function finishStartExam(allQuestions, pages) {
         if (src) previewImgs.push({ page: pg, src });
     }
 
-    // ব্যাখ্যায় full-page zoom দেখানোর জন্য pageNumber → image map — প্রতি প্রশ্নে
+    // ব্যাখ্যায় full-page zoom দেখানোর জন্য pageNumber <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
+  <path d="m12 5 7 7-7 7" /></svg> image map — প্রতি প্রশ্নে
     // আলাদা করে ছবি store না করে, unique পেইজ প্রতি একবার রাখা হয় (quota বাঁচাতে)।
     const pageImageMap = {};
     for (const pg of pages) {
@@ -1014,7 +1059,8 @@ async function finishStartExam(allQuestions, pages) {
     // থাকলে বা এই সেশনে অনেক পেইজের বেস৬৪ ছবি + প্রশ্ন মিলিয়ে সহজেই কোটা শেষ
     // হয়ে যায়। তাই: (১) লেখার আগে পুরনো practice* key গুলো ক্লিয়ার করি, (২) সব
     // setItem একই try-catch এ রাখি, (৩) ব্যর্থ হলে ক্রমান্বয়ে ভারী অংশ (page image
-    // map → preview images) বাদ দিয়ে অন্তত প্রশ্নগুলো নিয়ে exam চালু রাখার চেষ্টা করি।
+    // map <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
+  <path d="m12 5 7 7-7 7" /></svg> preview images) বাদ দিয়ে অন্তত প্রশ্নগুলো নিয়ে exam চালু রাখার চেষ্টা করি।
     ['practiceTitle','practiceSource','practiceTime','practicePages','practicePageImages','practiceQuestions','practicePageImageMap'].forEach(k => {
         try { sessionStorage.removeItem(k); } catch (_) {}
     });
@@ -1059,7 +1105,9 @@ async function finishStartExam(allQuestions, pages) {
                 baseMeta();
                 sessionStorage.setItem('practiceQuestions', JSON.stringify(shuffled));
             } catch (e3) {
-                showToast('❌ অনেক বেশি পেইজ/প্রশ্ন নির্বাচিত — কম পেইজ দিয়ে আবার চেষ্টা করো');
+                showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
+  <path d="m15 9-6 6" />
+  <path d="m9 9 6 6" /></svg> অনেক বেশি পেইজ/প্রশ্ন নির্বাচিত — কম পেইজ দিয়ে আবার চেষ্টা করো');
                 return;
             }
         }
@@ -1069,7 +1117,8 @@ async function finishStartExam(allQuestions, pages) {
 
 function showGenOverlay(show) { document.getElementById('genOverlay').classList.toggle('show', show); }
 
-/* ── MCQ generation: cache-first, then Gemini → Groq fallback ── */
+/* ── MCQ generation: cache-first, then Gemini <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
+  <path d="m12 5 7 7-7 7" /></svg> Groq fallback ── */
 async function getOrGenerateMCQs(pageNum, type) {
     // 1️⃣ + 2️⃣ Admin-saved ও type-specific cache একসাথে (parallel) চেক করা হয় —
     // আগে sequential ছিল বলে প্রতি পেইজে extra রাউন্ড-ট্রিপ লেগে দেরি হতো।
@@ -1322,7 +1371,7 @@ function parseQuestionsJSON(raw) {
 
 document.addEventListener('DOMContentLoaded', () => {
     const saved = localStorage.getItem('atlas-theme');
-    if (saved === 'light') { isDarkMode = false; document.body.classList.add('light-mode'); document.body.classList.remove('dark-mode'); document.getElementById('themeToggle').textContent = '🌙'; }
+    if (saved === 'light') { isDarkMode = false; document.body.classList.add('light-mode'); document.body.classList.remove('dark-mode'); document.getElementById('themeToggle').textContent = '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" /></svg>'; }
 
     try { currentUser = JSON.parse(localStorage.getItem('atlas-session')); } catch(_) { currentUser = null; }
     if (!currentUser) { location.replace('auth.html'); return; }
