@@ -127,6 +127,34 @@ function mbExpImageUrl(key) {
     return AI_PROXY_URL.replace(/\/$/, '') + '/storage/exp-images/' + key;
 }
 
+// fix: age shudhu MCQ generate/extract-er error D1 logs-e jeto (mbLogError), kintu baki
+// shob D1 operation (subject/chapter load, upload, delete, premium toggle, prompt save,
+// question add/edit ইত্যাদি) er error শুধু ২-৩ সেকেন্ডের toast dekhiye hariye jeto — porer
+// bar dekhar/track korar kono upay chilo na. Ekhon mbD1Api-i shob D1 call-er single choke
+// point, tai ekhane e ekbar instrument kore dile shob jaygar D1 error automatically shomoy
+// (created_at) + clear context (kon table, kon method, ki status/error) shoho D1-er
+// mcq_error_logs table-e shob shomoy save hoye jabe, alada kore protita call-site touch
+// korar dorkar nei.
+let _mbD1LoggingInProgress = false;
+async function _mbLogD1Error(table, opts, detail) {
+    if (_mbD1LoggingInProgress) return; // recursion guard — logging call nijei fail korle infinite loop na hoy
+    _mbD1LoggingInProgress = true;
+    try {
+        await fetch(AI_PROXY_URL.replace(/\/$/, '') + '/d1/mcq_error_logs', {
+            method: 'POST',
+            headers: { 'apikey': D1_API_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+            body: JSON.stringify({
+                pdf_id: (typeof mbPdfId !== 'undefined' && mbPdfId) ? parseInt(mbPdfId) : null,
+                page_number: (typeof mbCurrentPage !== 'undefined' && mbCurrentPage) || null,
+                context: `D1:${table}:${(opts && opts.method) || 'GET'}`,
+                error_message: String(detail || '').slice(0, 2000),
+                extra: JSON.stringify({ table, method: (opts && opts.method) || 'GET' }).slice(0, 4000),
+                created_at: new Date().toISOString()
+            })
+        });
+    } catch (_) { /* logging নিজেই ব্যর্থ হলে চুপচাপ ignore — মূল flow কখনো ভাঙবে না */ }
+    _mbD1LoggingInProgress = false;
+}
 async function mbD1Api(table, query, opts) {
     opts = opts || {};
     const url = AI_PROXY_URL.replace(/\/$/, '') + '/d1/' + table + (query || '');
@@ -137,12 +165,22 @@ async function mbD1Api(table, query, opts) {
     let lastErr;
     for (let attempt = 0; attempt <= 2; attempt++) {
         try {
-            return await fetch(url, Object.assign({}, opts, { headers }));
+            const res = await fetch(url, Object.assign({}, opts, { headers }));
+            if (!res.ok && table !== 'mcq_error_logs') {
+                // response body clone kore poRa hocche jate caller-er nijer .json()/.text() call
+                // consumed stream niye break na kore
+                try {
+                    const bodyText = (await res.clone().text()).slice(0, 500);
+                    _mbLogD1Error(table, opts, `HTTP ${res.status}: ${bodyText}`).catch(() => {});
+                } catch (_) { _mbLogD1Error(table, opts, `HTTP ${res.status}`).catch(() => {}); }
+            }
+            return res;
         } catch (e) {
             lastErr = e;
             if (attempt < 2) await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
         }
     }
+    if (table !== 'mcq_error_logs') _mbLogD1Error(table, opts, 'fetch exception: ' + (lastErr && lastErr.message || lastErr)).catch(() => {});
     throw lastErr;
 }
 async function mbD1ApiWithRetry(table, query, retries = 1) {
