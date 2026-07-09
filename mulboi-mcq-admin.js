@@ -3106,7 +3106,7 @@ function mbExtractMcqFromProse(text) {
         const correct = ansM ? map[ansM[1]] : 'k';
         out.push({ question, option_k, option_kh, option_g, option_gh, correct, explanation: '', type: 'standard' });
     }
-    return out.length ? out : null;
+    return out.length ? mbFixHasantoDeep(out) : null;
 }
 
 // bug fix (root cause of "স্ট্যান্ডার ্ ড", "ব্যালেন ্ স" ইত্যাদি ভাঙা যুক্তাক্ষর): কিছু AI
