@@ -49,7 +49,26 @@ function sleep(ms) { return new Promise(res => setTimeout(res, ms)); }
 // আটকে গেলে পুরো chain মিনিটের পর মিনিট আটকে যেত। এখন প্রতিটা attempt-এ 12s hard timeout —
 // timeout হলে সেটাকেও exception হিসেবে ধরে পরের key/model-এ দ্রুত এগিয়ে যায়।
 const PROVIDER_TIMEOUT_MS = 12000;
-async function attemptWithStatus(fn) {
+
+// bug fix (root cause of "Too many subrequests by single Worker invocation"): CF Workers
+// (free/bundled) hard-cap each invocation at 50 subrequests. Every fetch() to Gemini/Groq/
+// OpenRouter/Cerebras/CF-AI, across all key×model combos in the whole fallback chain, counts
+// toward this ONE shared limit — with several keys per provider it was easy for a single
+// page-generate call (which already does 2 AI calls: callA+callB, plus topUp) to silently
+// exceed 50 fetches deep into the chain, at which point the CF runtime throws mid-flight and
+// every remaining provider in that invocation fails together with a useless generic error.
+// A shared counter, checked before every fetch, now stops the chain gracefully (clear error,
+// no wasted attempts) several fetches before hitting the real platform ceiling.
+const MAX_SUBREQUESTS_PER_INVOCATION = 45; // real CF limit is 50; stop a bit early for safety margin
+function makeSubrequestBudget() {
+    return { count: 0, exhausted() { return this.count >= MAX_SUBREQUESTS_PER_INVOCATION; }, use() { this.count++; } };
+}
+
+async function attemptWithStatus(fn, budget) {
+    if (budget && budget.exhausted()) {
+        return { __exception: true, __budgetExhausted: true, message: `subrequest budget exhausted (${MAX_SUBREQUESTS_PER_INVOCATION}/invocation) — stopped before hitting CF's hard limit` };
+    }
+    if (budget) budget.use();
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS);
     try {
@@ -155,11 +174,12 @@ export default {
         // parallel race kore, ekta kaj korlei fol pawa jay. Gemini shob key/model-e byartho
         // hole tokhoni Groq + baki provider-der race shuru hoy (Groq -> OpenRouter -> Cerebras/
         // Cloudflare), age Groq primary chilo eta ekhon reverse kora holo.
+        const budget = makeSubrequestBudget();
         const fallbackProviders = [
-            { name: "groq", fn: () => callGroq(env, question, systemPrompt, image, /option_k/.test(systemPrompt)) },
-            { name: "openrouter", fn: () => callOpenRouter(env, question, systemPrompt, image) },
-            { name: "cerebras", fn: () => callCerebras(env, question, systemPrompt, image) },
-            { name: "cloudflare", fn: () => callCloudflareAI(env, question, systemPrompt, image) },
+            { name: "groq", fn: () => callGroq(env, question, systemPrompt, image, /option_k/.test(systemPrompt), budget) },
+            { name: "openrouter", fn: () => callOpenRouter(env, question, systemPrompt, image, budget) },
+            { name: "cerebras", fn: () => callCerebras(env, question, systemPrompt, image, budget) },
+            { name: "cloudflare", fn: () => callCloudflareAI(env, question, systemPrompt, image, budget) },
         ];
         const STRONG_NAMES = new Set(["groq", "openrouter"]);
         const raceSettledFlag = { done: false };
@@ -189,7 +209,7 @@ export default {
         let result = null;
         if (!skipGemini) {
             try {
-                const geminiResult = await callGemini(env, question, systemPrompt, image);
+                const geminiResult = await callGemini(env, question, systemPrompt, image, budget);
                 if (geminiResult && geminiResult.answer && geminiResult.answer.trim().length > 5) {
                     result = geminiResult;
                 } else if (geminiResult?.error) {
@@ -545,7 +565,7 @@ async function callGeminiOnce(key, model, parts, maxOutputTokens, signal) {
     return res;
 }
 
-async function callGemini(env, question, systemPrompt, image) {
+async function callGemini(env, question, systemPrompt, image, budget) {
     const keys = getGeminiKeys(env);
     if (!keys.length) return { error: "GEMINI_API_KEY not set" };
 
@@ -568,9 +588,10 @@ async function callGemini(env, question, systemPrompt, image) {
             // key try kora hoy (parallel na) -- subrequest count o kom thake, ar user-er
             // chawa onujayi "shob key ekta ekta kore try, tarpor onno model/provider".
             for (const key of healthyKeys) {
-                const outcome = await attemptWithStatus((signal) => callGeminiOnce(key, model, parts, 16384, signal));
+                const outcome = await attemptWithStatus((signal) => callGeminiOnce(key, model, parts, 16384, signal), budget);
                 if (outcome.__exception) {
                     lastError = `Gemini(${model}) exception: ${outcome.message}`;
+                    if (outcome.__budgetExhausted) return { error: lastError };
                     continue;
                 }
                 if (!outcome.ok) {
@@ -599,7 +620,7 @@ function getOpenRouterKeys(env) {
 }
 const OPENROUTER_MODELS = ["qwen/qwen2.5-vl-72b-instruct:free", "meta-llama/llama-3.2-11b-vision-instruct:free"];
 
-async function callOpenRouter(env, question, systemPrompt, image) {
+async function callOpenRouter(env, question, systemPrompt, image, budget) {
     const keys = getOpenRouterKeys(env);
     if (!keys.length) return { error: "OPENROUTER_API_KEY not set" };
 
@@ -630,8 +651,8 @@ async function callOpenRouter(env, question, systemPrompt, image) {
                         temperature: 0.7,
                         max_tokens: 8192,
                     }),
-                }));
-                if (outcome.__exception) { lastError = `OpenRouter(${model}) exception: ${outcome.message}`; continue; }
+                }), budget);
+                if (outcome.__exception) { lastError = `OpenRouter(${model}) exception: ${outcome.message}`; if (outcome.__budgetExhausted) return { error: lastError }; continue; }
                 if (!outcome.ok) { lastError = `OpenRouter(${model}) HTTP ${outcome.status}`; continue; }
                 const data = await outcome.json().catch(() => null);
                 const answer = data?.choices?.[0]?.message?.content || null;
@@ -724,7 +745,7 @@ function mbGroqLooksLikeValidMcqArray(answer) {
     return validCount >= Math.ceil(arr.length / 2);
 }
 
-async function callGroq(env, question, systemPrompt, image, expectMcqArray) {
+async function callGroq(env, question, systemPrompt, image, expectMcqArray, budget) {
     const keys = getGroqKeys(env);
     if (!keys.length) return { error: "GROQ_API_KEY not set" };
     const models = image ? GROQ_IMAGE_MODELS : GROQ_TEXT_MODELS;
@@ -780,62 +801,65 @@ async function callGroq(env, question, systemPrompt, image, expectMcqArray) {
                     ? { type: "json_schema", json_schema: GROQ_MCQ_JSON_SCHEMA }
                     : { type: "json_object" },
             };
-            // speed fix: same-model multi-key এখন serial না, parallel race — একটা key কাজ
-            // করলেই দ্রুত ফলাফল, অন্য key শেষ হওয়া পর্যন্ত অপেক্ষা লাগে না।
-            const keyResult = await new Promise((resolve) => {
-                let remaining = keys.length;
-                let done = false;
-                for (const key of keys) {
-                    attemptWithStatus((signal) => fetch("https://api.groq.com/openai/v1/chat/completions", {
-                        method: "POST",
-                        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-                        signal,
-                        body: JSON.stringify(requestBody),
-                    })).then(async (outcome) => {
-                        if (done) return;
-                        if (outcome.__exception) { lastError = `Groq(${model}) exception: ${outcome.message}`; }
-                        else if (!outcome.ok) {
-                            // strict json_schema unsupported model/error hole (400 json_validate_failed
-                            // ba unsupported) json_object mode-e ekbar fallback retry kora hoy shei key-e-i
-                            if (isTextModel && expectMcqArray && outcome.status === 400) {
-                                try {
-                                    const fbOutcome = await attemptWithStatus((signal2) => fetch("https://api.groq.com/openai/v1/chat/completions", {
-                                        method: "POST",
-                                        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-                                        signal: signal2,
-                                        body: JSON.stringify({ ...requestBody, response_format: { type: "json_object" } }),
-                                    }));
-                                    if (fbOutcome.ok) {
-                                        const fbData = await fbOutcome.json().catch(() => null);
-                                        const fbAnswer = fbData?.choices?.[0]?.message?.content || null;
-                                        if (fbAnswer) { done = true; resolve(mbGroqUnwrapAnswer(fbAnswer)); return; }
-                                    }
-                                } catch (_) {}
-                            }
-                            lastError = `Groq(${model}) HTTP ${outcome.status}`;
-                        }
-                        else {
-                            const data = await outcome.json().catch(() => null);
-                            let answer = data?.choices?.[0]?.message?.content || null;
-                            if (answer) {
-                                answer = mbGroqUnwrapAnswer(answer);
-                                // code-level validation gate: server-side-e-i shokol MCQ item
-                                // proper option_k/kh/g/gh + correct(k/kh/g/gh) shape-e ache kina
-                                // check kora hoy. Na thakle ei key/model-er result baad, porer
-                                // key/model try hobe (client porjonto bhul-shape data jabe na).
-                                if (!expectMcqArray || mbGroqLooksLikeValidMcqArray(answer)) {
-                                    done = true; resolve(answer); return;
-                                }
-                                lastError = `Groq(${model}): invalid MCQ shape, retrying other key/model`;
-                            } else {
-                                lastError = `Groq(${model}): empty response`;
-                            }
-                        }
-                        remaining--;
-                        if (remaining === 0 && !done) resolve(null);
-                    });
+            // bug fix (root cause of "Too many subrequests by single Worker invocation"):
+            // this used to fan out ALL keys for a model in parallel (Promise-based race) —
+            // "fastest key wins" but every key's fetch still counts toward the SAME shared
+            // per-invocation subrequest budget as everything else in the chain (Gemini,
+            // OpenRouter, Cerebras, CF-AI). With multiple Groq keys this alone could burn
+            // through a large chunk of the 50-subrequest cap in one shot. Now sequential,
+            // matching every other provider in this file (Gemini/OpenRouter/Cerebras) and the
+            // budget check — one key at a time, first success wins, stop immediately if the
+            // shared budget runs out.
+            let keyResult = null;
+            for (const key of keys) {
+                const outcome = await attemptWithStatus((signal) => fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    method: "POST",
+                    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+                    signal,
+                    body: JSON.stringify(requestBody),
+                }), budget);
+                if (outcome.__exception) {
+                    lastError = `Groq(${model}) exception: ${outcome.message}`;
+                    if (outcome.__budgetExhausted) return { error: lastError };
+                    continue;
                 }
-            });
+                if (!outcome.ok) {
+                    // strict json_schema unsupported model/error hole (400 json_validate_failed
+                    // ba unsupported) json_object mode-e ekbar fallback retry kora hoy shei key-e-i
+                    if (isTextModel && expectMcqArray && outcome.status === 400) {
+                        const fbOutcome = await attemptWithStatus((signal2) => fetch("https://api.groq.com/openai/v1/chat/completions", {
+                            method: "POST",
+                            headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+                            signal: signal2,
+                            body: JSON.stringify({ ...requestBody, response_format: { type: "json_object" } }),
+                        }), budget);
+                        if (fbOutcome.ok) {
+                            const fbData = await fbOutcome.json().catch(() => null);
+                            const fbAnswer = fbData?.choices?.[0]?.message?.content || null;
+                            if (fbAnswer) { keyResult = mbGroqUnwrapAnswer(fbAnswer); break; }
+                        } else if (fbOutcome.__budgetExhausted) {
+                            return { error: `Groq(${model}) exception: ${fbOutcome.message}` };
+                        }
+                    }
+                    lastError = `Groq(${model}) HTTP ${outcome.status}`;
+                    continue;
+                }
+                const data = await outcome.json().catch(() => null);
+                let answer = data?.choices?.[0]?.message?.content || null;
+                if (answer) {
+                    answer = mbGroqUnwrapAnswer(answer);
+                    // code-level validation gate: server-side-e-i shokol MCQ item
+                    // proper option_k/kh/g/gh + correct(k/kh/g/gh) shape-e ache kina
+                    // check kora hoy. Na thakle ei key/model-er result baad, porer
+                    // key/model try hobe (client porjonto bhul-shape data jabe na).
+                    if (!expectMcqArray || mbGroqLooksLikeValidMcqArray(answer)) {
+                        keyResult = answer; break;
+                    }
+                    lastError = `Groq(${model}): invalid MCQ shape, retrying other key/model`;
+                } else {
+                    lastError = `Groq(${model}): empty response`;
+                }
+            }
             if (keyResult) return { answer: keyResult, provider: `groq:${model}` };
         }
         if (round < MAX_ROTATION_ROUNDS - 1) await sleep(400 * (round + 1));
@@ -852,7 +876,7 @@ function getCerebrasKeys(env) {
 }
 const CEREBRAS_MODELS = ["gpt-oss-120b", "llama-3.3-70b"];
 
-async function callCerebras(env, question, systemPrompt, image) {
+async function callCerebras(env, question, systemPrompt, image, budget) {
     if (image) return { error: "Cerebras: vision not supported, skipped" };
     const keys = getCerebrasKeys(env);
     if (!keys.length) return { error: "CEREBRAS_API_KEY not set" };
@@ -874,8 +898,8 @@ async function callCerebras(env, question, systemPrompt, image) {
                         temperature: 0.7,
                         max_tokens: 4096,
                     }),
-                }));
-                if (outcome.__exception) { lastError = `Cerebras(${model}) exception: ${outcome.message}`; continue; }
+                }), budget);
+                if (outcome.__exception) { lastError = `Cerebras(${model}) exception: ${outcome.message}`; if (outcome.__budgetExhausted) return { error: lastError }; continue; }
                 if (!outcome.ok) { lastError = `Cerebras(${model}) HTTP ${outcome.status}`; continue; }
                 const data = await outcome.json().catch(() => null);
                 const answer = data?.choices?.[0]?.message?.content || null;
@@ -889,7 +913,7 @@ async function callCerebras(env, question, systemPrompt, image) {
 }
 
 /* ───────── 5. Cloudflare Workers AI (last resort, same account, no extra key needed) ───────── */
-async function callCloudflareAI(env, question, systemPrompt, image) {
+async function callCloudflareAI(env, question, systemPrompt, image, budget) {
     // env.AI is the Workers AI binding — must be added in wrangler config (see notes below),
     // NOT a secret, since it's a native binding rather than an external API key.
     if (!env.AI) return { error: "Workers AI binding not configured" };
@@ -1413,12 +1437,13 @@ async function processPendingMcqJobs(env) {
             // per-invocation subrequest limit hit করাচ্ছিল ("Too many subrequests by single
             // Worker invocation") — সবগুলো fail করে ঘন ঘন shortfall/partial-save হচ্ছিল।
             // client-side topUp (dd7ff22) এর মতোই এখানেও sequential single-call rounds করা হলো।
+            const cronBudget = makeSubrequestBudget(); // ei job-er round-er nijer subrequest budget (cron invocation-o CF-er 50-limit-er under)
             const providers = [
-                () => callGroq(env, '', roundPrompt, image, true),
-                () => callGemini(env, '', roundPrompt, image),
-                () => callOpenRouter(env, '', roundPrompt, image),
-                () => callCerebras(env, '', roundPrompt, image),
-                () => callCloudflareAI(env, '', roundPrompt, image),
+                () => callGroq(env, '', roundPrompt, image, true, cronBudget),
+                () => callGemini(env, '', roundPrompt, image, cronBudget),
+                () => callOpenRouter(env, '', roundPrompt, image, cronBudget),
+                () => callCerebras(env, '', roundPrompt, image, cronBudget),
+                () => callCloudflareAI(env, '', roundPrompt, image, cronBudget),
             ];
             let answer = null, lastErr = 'সব provider ব্যর্থ';
             for (const p of providers) {
@@ -1428,6 +1453,7 @@ async function processPendingMcqJobs(env) {
                     break;
                 }
                 if (r?.error) lastErr = r.error;
+                if (r?.error && /subrequest budget exhausted/.test(r.error)) break; // ei round-e ar try kore lav nai
             }
             if (!answer) throw new Error(lastErr);
 
@@ -1515,11 +1541,12 @@ async function handleMcqFromPdf(body, env) {
             { inline_data: { mime_type: "application/pdf", data: pdfBase64 } },
             { text: prompt },
         ];
+        const pdfBudget = makeSubrequestBudget();
         for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
             for (const model of GEMINI_MODELS) {
                 for (const key of keys) {
-                    const outcome = await attemptWithStatus((signal) => callGeminiOnce(key, model, pdfParts, 8192, signal));
-                    if (outcome.__exception) { errors.push(`Gemini(${model}) exception: ${outcome.message}`); continue; }
+                    const outcome = await attemptWithStatus((signal) => callGeminiOnce(key, model, pdfParts, 8192, signal), pdfBudget);
+                    if (outcome.__exception) { errors.push(`Gemini(${model}) exception: ${outcome.message}`); if (outcome.__budgetExhausted) break; continue; }
                     if (!outcome.ok) { errors.push(`Gemini(${model}) HTTP ${outcome.status}`); continue; }
                     const data = await outcome.json().catch(() => null);
                     const answer = data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
@@ -1539,10 +1566,11 @@ async function handleMcqFromPdf(body, env) {
     // PDF file directly, but the client already sends full page text/instructions
     // inside `prompt` for this endpoint's callers, so a text-only pass still works
     // in most cases instead of returning a hard failure.
+    const fallbackBudget = makeSubrequestBudget();
     const fallbackProviders = [
-        { name: "groq", fn: () => callGroq(env, prompt, "তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।", null, true) },
-        { name: "openrouter", fn: () => callOpenRouter(env, prompt, "তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।", null) },
-        { name: "cerebras", fn: () => callCerebras(env, prompt, "তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।", null) },
+        { name: "groq", fn: () => callGroq(env, prompt, "তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।", null, true, fallbackBudget) },
+        { name: "openrouter", fn: () => callOpenRouter(env, prompt, "তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।", null, fallbackBudget) },
+        { name: "cerebras", fn: () => callCerebras(env, prompt, "তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।", null, fallbackBudget) },
     ];
     for (const p of fallbackProviders) {
         try {
