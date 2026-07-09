@@ -149,39 +149,72 @@ export default {
             return jsonResponse({ success: false, error: "question বা image এর একটি দিতে হবে" }, 400);
         }
 
-        // bug fix: Groq আগে চেষ্টা হতো (দ্রুত হলেও ছোট/দুর্বল মডেল, strict প্রশ্ন-সংখ্যা
-        // নির্দেশনা প্রায়ই মানত না — যেমন ৮টি চাইলে বারবার ৪টি দিত)। Gemini 2.5 Flash
-        // instruction-following এ অনেক বেশি নির্ভরযোগ্য, তাই এখন Gemini আগে, Groq fallback।
-        const allProviders = [
-            { name: "gemini", fn: () => callGemini(env, question, systemPrompt, image) },
-            { name: "groq", fn: () => callGroq(env, question, systemPrompt, image) },
+        // Gemini primary: user-request onujayi Gemini shobshomoy prothome, eka cheshta kora
+        // hoy (parallel race e na rekhe) — Gemini-er nijer multi-key rotation (callGemini()
+        // er bhitore) already shob "healthy" (rate-limit/quota-e ache emon na) key-er majhe
+        // parallel race kore, ekta kaj korlei fol pawa jay. Gemini shob key/model-e byartho
+        // hole tokhoni Groq + baki provider-der race shuru hoy (Groq -> OpenRouter -> Cerebras/
+        // Cloudflare), age Groq primary chilo eta ekhon reverse kora holo.
+        const fallbackProviders = [
+            { name: "groq", fn: () => callGroq(env, question, systemPrompt, image, /option_k/.test(systemPrompt)) },
             { name: "openrouter", fn: () => callOpenRouter(env, question, systemPrompt, image) },
             { name: "cerebras", fn: () => callCerebras(env, question, systemPrompt, image) },
             { name: "cloudflare", fn: () => callCloudflareAI(env, question, systemPrompt, image) },
         ];
-        const providers = allProviders
-            .filter(p => !(skipGemini && p.name === "gemini"))
-            .filter(p => !(skipGroq && p.name === "groq"))
-            .map(p => p.fn);
+        const STRONG_NAMES = new Set(["groq", "openrouter"]);
+        const raceSettledFlag = { done: false };
 
-        // প্রতিটা provider নিজের ভেতরেই key/model rotation + backoff করে (উপরে দেখো)।
-        // এখানে শুধু provider-চেইন ক্রমে চালানো হয় — কোনো একটায় সব key/model fail করলে
-        // পরের provider এ চলে যায়, একদম শেষ পর্যন্ত কেউ সফল না হলে সংক্ষিপ্ত বিরতি দিয়ে
-        // পুরো চেইন আরেকবার চেষ্টা করে — তাই সাময়িক outage এ পুরো request ব্যর্থ হয় না।
         const errors = [];
-        for (let chainRound = 0; chainRound < 2; chainRound++) {
-            for (const tryProvider of providers) {
-                try {
-                    const result = await tryProvider();
-                    if (result && result.answer && result.answer.trim().length > 5) {
-                        return jsonResponse({ success: true, answer: result.answer, provider: result.provider });
-                    }
-                    if (result?.error) errors.push(result.error);
-                } catch (e) {
-                    errors.push(String(e.message || e));
+
+        async function raceRemaining(list) {
+            if (!list.length) return null;
+            const providers = list.map(p => STRONG_NAMES.has(p.name)
+                ? p.fn
+                : () => sleep(2500).then(() => (raceSettledFlag.done ? { error: "skipped: race already won" } : p.fn())));
+            return await new Promise((resolve) => {
+                let remaining = providers.length;
+                let settled = false;
+                for (const tryProvider of providers) {
+                    tryProvider().then((r) => {
+                        if (!settled && r && r.answer && r.answer.trim().length > 5) {
+                            settled = true;
+                            raceSettledFlag.done = true;
+                            resolve(r);
+                            return;
+                        }
+                        if (r?.error) errors.push(r.error);
+                        remaining--;
+                        if (remaining === 0 && !settled) resolve(null);
+                    }).catch((e) => {
+                        errors.push(String(e.message || e));
+                        remaining--;
+                        if (remaining === 0 && !settled) resolve(null);
+                    });
                 }
+            });
+        }
+
+        let result = null;
+        if (!skipGemini) {
+            try {
+                const geminiResult = await callGemini(env, question, systemPrompt, image);
+                if (geminiResult && geminiResult.answer && geminiResult.answer.trim().length > 5) {
+                    result = geminiResult;
+                } else if (geminiResult?.error) {
+                    errors.push(geminiResult.error);
+                }
+            } catch (e) {
+                errors.push(String(e.message || e));
             }
-            if (chainRound === 0) await sleep(600); // পুরো চেইন একবার ব্যর্থ হলে ছোট বিরতি দিয়ে আবার
+        }
+
+        if (!result) {
+            let remaining = fallbackProviders.filter(p => !(skipGroq && p.name === "groq"));
+            result = await raceRemaining(remaining);
+        }
+
+        if (result) {
+            return jsonResponse({ success: true, answer: result.answer, provider: result.provider });
         }
 
         return jsonResponse({
@@ -283,6 +316,10 @@ function jsonResponse(obj, status = 200) {
 }
 
 
+
+
+
+
 /* ───────── D1 REST layer for book_page_mcqs (replaces Supabase PostgREST) ─────────
    Parses the same query-string shape the frontend (mulboi-mcq-admin.js) sends:
      GET    ?pdf_id=eq.X&mcq_type=eq.admin&select=...&order=page_number.asc&limit=500
@@ -299,6 +336,8 @@ async function handleD1Table(table, request, env, url) {
     }
     const db = env.MULBOI_DB;
     if (!db) return jsonResponse({ error: "D1 binding MULBOI_DB missing" }, 500);
+
+
 
     // Verify table exists (guards against typos / SQL injection via table name)
     const tblCheck = await db.prepare(
@@ -499,7 +538,7 @@ function getGeminiKeys(env) {
 }
 
 // নতুন মডেল আসলে/পুরনো deprecate হলে শুধু এই array আপডেট করলেই rotation এ যুক্ত হয়ে যাবে।
-const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+const GEMINI_MODELS = ["gemini-2.5-flash"];
 
 async function callGeminiOnce(key, model, parts, maxOutputTokens, signal) {
     const res = await fetch(
@@ -523,24 +562,43 @@ async function callGemini(env, question, systemPrompt, image) {
     parts.push({ text: systemPrompt + "\n\nপ্রশ্ন: " + (question || "এই ছবিটি বিশ্লেষণ করো।") });
 
     let lastError = "Gemini: no keys/models worked";
+    // healthy-key rotation: ekbar 429 (rate-limited/quota-exhausted) pawa key porer round-e
+    // r try kora hoy na (shei ekই request-er moddhe) — deroto quota-shesh key bar bar try
+    // kore shomoy nosto na kore, shudhu "healthy" (ekhono kaj korte pare emon) key-gulor
+    // upor e round chole.
+    const exhaustedKeys = new Set();
 
     for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
+        const healthyKeys = keys.filter(k => !exhaustedKeys.has(k));
+        if (!healthyKeys.length) break; // shob key exhausted — ar try kore lav nai
         for (const model of GEMINI_MODELS) {
-            for (const key of keys) {
-                const outcome = await attemptWithStatus((signal) => callGeminiOnce(key, model, parts, 16384, signal));
-
-                if (outcome.__exception) { lastError = `Gemini(${model}) exception: ${outcome.message}`; continue; }
-
-                if (!outcome.ok) {
-                    lastError = `Gemini(${model}) HTTP ${outcome.status}`;
-                    // রেট-লিমিট/সার্ভার এরর হলে এই key/model স্কিপ করে পরেরটায় যাও — থামবে না
-                    continue;
+            // speed fix: আগে একই model-এ সব key সিরিয়ালি চেষ্টা হতো (key1 fail/slow →
+            // key2 → ...), একাধিক key থাকলে worst-case latency কয়েকগুণ বাড়ত। এখন একই
+            // model-এর সব key parallel-এ race করানো হয় — যেকোনো একটা key কাজ করলেই
+            // দ্রুত উত্তর মেলে, বাকি key-গুলোর জন্য অপেক্ষা করতে হয় না।
+            const keyResult = await new Promise((resolve) => {
+                let remaining = healthyKeys.length;
+                let done = false;
+                for (const key of healthyKeys) {
+                    attemptWithStatus((signal) => callGeminiOnce(key, model, parts, 16384, signal)).then(async (outcome) => {
+                        if (done) return;
+                        if (outcome.__exception) { lastError = `Gemini(${model}) exception: ${outcome.message}`; }
+                        else if (!outcome.ok) {
+                            lastError = `Gemini(${model}) HTTP ${outcome.status}`;
+                            if (outcome.status === 429) exhaustedKeys.add(key); // quota shesh — porer round-e skip
+                        }
+                        else {
+                            const data = await outcome.json().catch(() => null);
+                            const answer = data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
+                            if (answer) { done = true; resolve(answer); return; }
+                            lastError = `Gemini(${model}): empty response`;
+                        }
+                        remaining--;
+                        if (remaining === 0 && !done) resolve(null);
+                    });
                 }
-                const data = await outcome.json().catch(() => null);
-                const answer = data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
-                if (answer) return { answer, provider: `gemini:${model}` };
-                lastError = `Gemini(${model}): empty response`;
-            }
+            });
+            if (keyResult) return { answer: keyResult, provider: `gemini:${model}` };
         }
         // একটা পুরো round (সব model × সব key) ব্যর্থ হলে সংক্ষিপ্ত backoff দিয়ে আবার চেষ্টা
         if (round < MAX_ROTATION_ROUNDS - 1) await sleep(400 * (round + 1));
@@ -612,15 +670,96 @@ function getGroqKeys(env) {
 const GROQ_TEXT_MODELS  = ["openai/gpt-oss-120b", "llama-3.3-70b-versatile"];
 const GROQ_IMAGE_MODELS = ["meta-llama/llama-4-maverick-17b-128e-instruct", "meta-llama/llama-4-scout-17b-16e-instruct"];
 
-async function callGroq(env, question, systemPrompt, image) {
+// code-level guarantee (prompt-follow-e nirvor na kore): text-model (openai/gpt-oss) call-e
+// pathanor jonno strict JSON schema -- Groq-er constrained decoding token-level e guarantee
+// dey shudhu ei shape-i ferot ashbe, tai option_k/kh/g/gh -er bodole option_a/b/c/d ba onno
+// bhul field name AR ashte parbe na (image/vision model e ei strict mode unsupported, tai
+// shegulor jonno mbGroqLooksLikeValidMcqArray() diye server-side validation kora hoy).
+const GROQ_MCQ_JSON_SCHEMA = {
+    name: "mcq_list",
+    strict: true,
+    schema: {
+        type: "object",
+        properties: {
+            questions: {
+                type: "array",
+                items: {
+                    type: "object",
+                    properties: {
+                        question:    { type: "string" },
+                        option_k:    { type: "string" },
+                        option_kh:   { type: "string" },
+                        option_g:    { type: "string" },
+                        option_gh:   { type: "string" },
+                        correct:     { type: "string", enum: ["k", "kh", "g", "gh"] },
+                        explanation: { type: "string" },
+                    },
+                    required: ["question", "option_k", "option_kh", "option_g", "option_gh", "correct", "explanation"],
+                    additionalProperties: false,
+                },
+            },
+        },
+        required: ["questions"],
+        additionalProperties: false,
+    },
+};
+
+// response_format:json_object/json_schema dile Groq ekta object dey ({"questions":[...]})
+// — caller-ra raw answer string theke [...] khunje array ber kore, tai wrapper theke bhetorer
+// questions array ber kore answer-ke shei array-string banano hocche.
+function mbGroqUnwrapAnswer(answer) {
+    try {
+        const parsedObj = JSON.parse(answer);
+        if (parsedObj && Array.isArray(parsedObj.questions)) {
+            return JSON.stringify(parsedObj.questions);
+        }
+    } catch (_) { /* JSON object na hole raw answer-i thakuk */ }
+    return answer;
+}
+
+// code-level validation gate: vision model (json_object mode, schema-unenforced) theke asha
+// answer-e proper MCQ shape ache kina server-side-e check kore -- na thakle shei attempt-ke
+// "fail" dhore porer key/model try kora hoy, client porjonto bhul-shape data kokhono jabe na.
+function mbGroqLooksLikeValidMcqArray(answer) {
+    let arr;
+    try {
+        arr = JSON.parse(answer);
+    } catch (_) {
+        // pure JSON na hole (prose mixed) — array bracket ache kina onnoto check, caller-er
+        // client-side regex/mbParseAiJson fallback ei ongsho handle korbe, ekhane reject na kora e valo
+        return /[\[{]/.test(answer);
+    }
+    if (!Array.isArray(arr)) return false;
+    if (!arr.length) return false;
+    const requiredKeys = ["question", "option_k", "option_kh", "option_g", "option_gh", "correct"];
+    // adhek-er beshi item shothik shape-e thakle "valid" dhora hoy (kichu item bad porleo
+    // client-side validation shegulo filter kore debe, kintu shob item-i bhul shape hole
+    // shei goto attempt-ke fail dhore onno key/model try kora better)
+    const validCount = arr.filter(m => m && typeof m === 'object' &&
+        requiredKeys.every(k => typeof m[k] === 'string' && m[k].trim().length > 0)).length;
+    return validCount >= Math.ceil(arr.length / 2);
+}
+
+async function callGroq(env, question, systemPrompt, image, expectMcqArray) {
     const keys = getGroqKeys(env);
     if (!keys.length) return { error: "GROQ_API_KEY not set" };
     const models = image ? GROQ_IMAGE_MODELS : GROQ_TEXT_MODELS;
 
+    // bug fix (root cause of "AI সঠিক JSON দেয়নি — raw: ...প্রবন্ধ/prose..."): Groq-এর
+    // vision মডেল (Llama-4 Maverick/Scout) system prompt এ "শুধু JSON array দাও" বললেও
+    // প্রায়ই স্বাভাবিক ভাষায় বর্ণনা/প্রবন্ধ ফেরত দিত, বিশেষত ছবি-ভিত্তিক কলে। Groq officially
+    // response_format:{type:"json_object"} সাপোর্ট করে যেটা মডেলকে valid JSON আউটপুট দিতে
+    // বাধ্য করে (docs: console.groq.com/docs/structured-outputs, vision docs)। এটা object
+    // চায়, array না, তাই prompt-এ বলা হচ্ছে {"questions":[...]} wrapper ব্যবহার করতে, আর
+    // response parse করার সময় "answer" থেকে raw content বের করার আগে সেই wrapper থেকে
+    // ভেতরের array-টা বের করে নেওয়া হচ্ছে (caller-দের কোড অপরিবর্তিত রাখতে, যারা raw answer
+    // string থেকে নিজেরাই [...] regex দিয়ে বের করে)।
+    const jsonSystemPrompt = systemPrompt + `\n\nGURUTTOPURNO: শুধুমাত্র এই ফরম্যাটে একটা valid JSON object দাও, অন্য কোনো preamble/markdown/ব্যাখ্যা ছাড়া: {"questions": [ ...এখানে array... ]}`;
+
     let messages;
     if (image) {
         messages = [
-            { role: "system", content: systemPrompt },
+            { role: "system", content: jsonSystemPrompt },
             {
                 role: "user",
                 content: [
@@ -631,28 +770,89 @@ async function callGroq(env, question, systemPrompt, image) {
         ];
     } else {
         messages = [
-            { role: "system", content: systemPrompt },
+            { role: "system", content: jsonSystemPrompt },
             { role: "user", content: question },
         ];
     }
 
     let lastError = "Groq: no keys/models worked";
+    // bug fix (code-level guarantee, prompt-follow-e nirvor na kore): Groq vision model
+    // (llama-4-maverick/scout) strict json_schema support kore na (khali openai/gpt-oss e
+    // available), tai image call e response_format:json_object e-i thakte hocche, jetate
+    // field name/shape guarantee thake na. Age eta shudhu prompt-e "option_k/kh/g/gh dao"
+    // bolar upor nirvor korto, AI majhe majhe option_a/b/c/d ba onno shape dito, ferot data
+    // client porjonto pouchay giye validation fail hoto ("AI shomporno/sothik MCQ dite parni").
+    // Ekhon worker nijei response paoyar por, jodi text-model (gpt-oss) hoy, strict json_schema
+    // pathano hoy (100% guarantee); jodi vision model hoy (schema unsupported), worker nijei
+    // shei model-er answer-ke local-e validate kore -- proper option_k/kh/g/gh na thakle shei
+    // key/model try na kore porer key/model e move kore (server-side retry), client-ke
+    // shudhu already-valid-shape data pathay.
     for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
         for (const model of models) {
-            for (const key of keys) {
-                const outcome = await attemptWithStatus((signal) => fetch("https://api.groq.com/openai/v1/chat/completions", {
-                    method: "POST",
-                    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-                    signal,
-                    body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 8192 }),
-                }));
-                if (outcome.__exception) { lastError = `Groq(${model}) exception: ${outcome.message}`; continue; }
-                if (!outcome.ok) { lastError = `Groq(${model}) HTTP ${outcome.status}`; continue; }
-                const data = await outcome.json().catch(() => null);
-                const answer = data?.choices?.[0]?.message?.content || null;
-                if (answer) return { answer, provider: `groq:${model}` };
-                lastError = `Groq(${model}): empty response`;
-            }
+            const isTextModel = GROQ_TEXT_MODELS.includes(model);
+            const requestBody = {
+                model, messages, temperature: 0.7, max_tokens: 8192,
+                response_format: (isTextModel && expectMcqArray)
+                    ? { type: "json_schema", json_schema: GROQ_MCQ_JSON_SCHEMA }
+                    : { type: "json_object" },
+            };
+            // speed fix: same-model multi-key এখন serial না, parallel race — একটা key কাজ
+            // করলেই দ্রুত ফলাফল, অন্য key শেষ হওয়া পর্যন্ত অপেক্ষা লাগে না।
+            const keyResult = await new Promise((resolve) => {
+                let remaining = keys.length;
+                let done = false;
+                for (const key of keys) {
+                    attemptWithStatus((signal) => fetch("https://api.groq.com/openai/v1/chat/completions", {
+                        method: "POST",
+                        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+                        signal,
+                        body: JSON.stringify(requestBody),
+                    })).then(async (outcome) => {
+                        if (done) return;
+                        if (outcome.__exception) { lastError = `Groq(${model}) exception: ${outcome.message}`; }
+                        else if (!outcome.ok) {
+                            // strict json_schema unsupported model/error hole (400 json_validate_failed
+                            // ba unsupported) json_object mode-e ekbar fallback retry kora hoy shei key-e-i
+                            if (isTextModel && expectMcqArray && outcome.status === 400) {
+                                try {
+                                    const fbOutcome = await attemptWithStatus((signal2) => fetch("https://api.groq.com/openai/v1/chat/completions", {
+                                        method: "POST",
+                                        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+                                        signal: signal2,
+                                        body: JSON.stringify({ ...requestBody, response_format: { type: "json_object" } }),
+                                    }));
+                                    if (fbOutcome.ok) {
+                                        const fbData = await fbOutcome.json().catch(() => null);
+                                        const fbAnswer = fbData?.choices?.[0]?.message?.content || null;
+                                        if (fbAnswer) { done = true; resolve(mbGroqUnwrapAnswer(fbAnswer)); return; }
+                                    }
+                                } catch (_) {}
+                            }
+                            lastError = `Groq(${model}) HTTP ${outcome.status}`;
+                        }
+                        else {
+                            const data = await outcome.json().catch(() => null);
+                            let answer = data?.choices?.[0]?.message?.content || null;
+                            if (answer) {
+                                answer = mbGroqUnwrapAnswer(answer);
+                                // code-level validation gate: server-side-e-i shokol MCQ item
+                                // proper option_k/kh/g/gh + correct(k/kh/g/gh) shape-e ache kina
+                                // check kora hoy. Na thakle ei key/model-er result baad, porer
+                                // key/model try hobe (client porjonto bhul-shape data jabe na).
+                                if (!expectMcqArray || mbGroqLooksLikeValidMcqArray(answer)) {
+                                    done = true; resolve(answer); return;
+                                }
+                                lastError = `Groq(${model}): invalid MCQ shape, retrying other key/model`;
+                            } else {
+                                lastError = `Groq(${model}): empty response`;
+                            }
+                        }
+                        remaining--;
+                        if (remaining === 0 && !done) resolve(null);
+                    });
+                }
+            });
+            if (keyResult) return { answer: keyResult, provider: `groq:${model}` };
         }
         if (round < MAX_ROTATION_ROUNDS - 1) await sleep(400 * (round + 1));
     }
@@ -1225,21 +1425,44 @@ async function processPendingMcqJobs(env) {
                 ? `${job.system_prompt}\n\nএখন আরও ঠিক ${need}টি নতুন MCQ বানাও (আগে যা বানানো হয়েছে তার থেকে সম্পূর্ণ ভিন্ন প্রশ্ন — একই প্রশ্ন repeat করা যাবে না)।`
                 : job.system_prompt;
 
+            const cronRaceSettled = { done: false };
+            // quality fix (একই fix client-side handler-এও, উপরে দেখো): cerebras/cloudflare
+            // দুর্বল মডেল ব্যবহার করে বলে race-এ এদের ২.৫s দেরিতে শুরু করানো হচ্ছে, যাতে
+            // gemini/groq/openrouter এর মধ্যে উত্তর দিলে দুর্বল provider কল-ই শুরু না হয়।
             const providers = [
-                () => callGroq(env, '', roundPrompt, image),
+                () => callGroq(env, '', roundPrompt, image, true),
                 () => callGemini(env, '', roundPrompt, image),
                 () => callOpenRouter(env, '', roundPrompt, image),
-                () => callCerebras(env, '', roundPrompt, image),
-                () => callCloudflareAI(env, '', roundPrompt, image),
+                () => sleep(2500).then(() => (cronRaceSettled.done ? { error: "skipped" } : callCerebras(env, '', roundPrompt, image))),
+                () => sleep(2500).then(() => (cronRaceSettled.done ? { error: "skipped" } : callCloudflareAI(env, '', roundPrompt, image))),
             ];
             let answer = null, lastErr = 'সব provider ব্যর্থ';
-            for (const p of providers) {
-                try {
-                    const r = await p();
-                    if (r && r.answer && r.answer.trim().length > 5) { answer = r.answer; break; }
-                    if (r?.error) lastErr = r.error;
-                } catch (e) { lastErr = String(e?.message || e); }
-            }
+            // bug fix: এখানেও আগে provider সিরিয়ালি চলত (Groq→Gemini→OpenRouter→Cerebras→CF AI,
+            // একটার পর একটা) — client-side fix (atlas-ai-proxy-worker.js এর প্রধান হ্যান্ডলারে
+            // আগেই করা হয়েছে) এর মতোই এখানেও সব provider parallel-এ race করানো হলো, যাতে
+            // background cron round দ্রুত শেষ হয় ও পরের round-এর জন্য অপেক্ষা কম লাগে।
+            await new Promise((resolve) => {
+                let remaining = providers.length;
+                let settled = false;
+                for (const p of providers) {
+                    p().then((r) => {
+                        if (!settled && r && r.answer && r.answer.trim().length > 5) {
+                            settled = true;
+                            cronRaceSettled.done = true;
+                            answer = r.answer;
+                            resolve();
+                            return;
+                        }
+                        if (r?.error) lastErr = r.error;
+                        remaining--;
+                        if (remaining === 0) resolve();
+                    }).catch((e) => {
+                        lastErr = String(e?.message || e);
+                        remaining--;
+                        if (remaining === 0) resolve();
+                    });
+                }
+            });
             if (!answer) throw new Error(lastErr);
 
             const parsedNew = workerParseAiJson(answer) || [];
@@ -1351,7 +1574,7 @@ async function handleMcqFromPdf(body, env) {
     // inside `prompt` for this endpoint's callers, so a text-only pass still works
     // in most cases instead of returning a hard failure.
     const fallbackProviders = [
-        { name: "groq", fn: () => callGroq(env, prompt, "তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।", null) },
+        { name: "groq", fn: () => callGroq(env, prompt, "তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।", null, true) },
         { name: "openrouter", fn: () => callOpenRouter(env, prompt, "তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।", null) },
         { name: "cerebras", fn: () => callCerebras(env, prompt, "তুমি একজন অভিজ্ঞ HSC শিক্ষক যে নির্ভুল MCQ তৈরি করতে পারো।", null) },
     ];

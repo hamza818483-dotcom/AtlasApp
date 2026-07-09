@@ -57,9 +57,11 @@ function mbToast(msg, type, dur) {
 // দেখতে পেতো না ("কিছুই হয়নি" মনে হতো) — এখন global safety net থেকেও toast দেখানো হয়।
 window.addEventListener('unhandledrejection', (e) => {
     try { mbToast('⚠️ Error: ' + (e.reason?.message || String(e.reason)).slice(0,160), 'error'); } catch(_) {}
+    try { if (typeof mbLogError === 'function') mbLogError('unhandledrejection', null, (e.reason?.message || String(e.reason)), {}); } catch(_) {}
 });
 window.addEventListener('error', (e) => {
     try { mbToast('⚠️ Error: ' + (e.error?.message || e.message || 'Unknown').slice(0,160), 'error'); } catch(_) {}
+    try { if (typeof mbLogError === 'function') mbLogError('window.error', null, (e.error?.message || e.message || 'Unknown'), {}); } catch(_) {}
 });
 
 /* ════════════════════════════════════════════════════
@@ -125,6 +127,34 @@ function mbExpImageUrl(key) {
     return AI_PROXY_URL.replace(/\/$/, '') + '/storage/exp-images/' + key;
 }
 
+// fix: age shudhu MCQ generate/extract-er error D1 logs-e jeto (mbLogError), kintu baki
+// shob D1 operation (subject/chapter load, upload, delete, premium toggle, prompt save,
+// question add/edit ইত্যাদি) er error শুধু ২-৩ সেকেন্ডের toast dekhiye hariye jeto — porer
+// bar dekhar/track korar kono upay chilo na. Ekhon mbD1Api-i shob D1 call-er single choke
+// point, tai ekhane e ekbar instrument kore dile shob jaygar D1 error automatically shomoy
+// (created_at) + clear context (kon table, kon method, ki status/error) shoho D1-er
+// mcq_error_logs table-e shob shomoy save hoye jabe, alada kore protita call-site touch
+// korar dorkar nei.
+let _mbD1LoggingInProgress = false;
+async function _mbLogD1Error(table, opts, detail) {
+    if (_mbD1LoggingInProgress) return; // recursion guard — logging call nijei fail korle infinite loop na hoy
+    _mbD1LoggingInProgress = true;
+    try {
+        await fetch(AI_PROXY_URL.replace(/\/$/, '') + '/d1/mcq_error_logs', {
+            method: 'POST',
+            headers: { 'apikey': D1_API_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+            body: JSON.stringify({
+                pdf_id: (typeof mbPdfId !== 'undefined' && mbPdfId) ? parseInt(mbPdfId) : null,
+                page_number: (typeof mbCurrentPage !== 'undefined' && mbCurrentPage) || null,
+                context: `D1:${table}:${(opts && opts.method) || 'GET'}`,
+                error_message: String(detail || '').slice(0, 2000),
+                extra: JSON.stringify({ table, method: (opts && opts.method) || 'GET' }).slice(0, 4000),
+                created_at: new Date().toISOString()
+            })
+        });
+    } catch (_) { /* logging নিজেই ব্যর্থ হলে চুপচাপ ignore — মূল flow কখনো ভাঙবে না */ }
+    _mbD1LoggingInProgress = false;
+}
 async function mbD1Api(table, query, opts) {
     opts = opts || {};
     const url = AI_PROXY_URL.replace(/\/$/, '') + '/d1/' + table + (query || '');
@@ -135,12 +165,22 @@ async function mbD1Api(table, query, opts) {
     let lastErr;
     for (let attempt = 0; attempt <= 2; attempt++) {
         try {
-            return await fetch(url, Object.assign({}, opts, { headers }));
+            const res = await fetch(url, Object.assign({}, opts, { headers }));
+            if (!res.ok && table !== 'mcq_error_logs') {
+                // response body clone kore poRa hocche jate caller-er nijer .json()/.text() call
+                // consumed stream niye break na kore
+                try {
+                    const bodyText = (await res.clone().text()).slice(0, 500);
+                    _mbLogD1Error(table, opts, `HTTP ${res.status}: ${bodyText}`).catch(() => {});
+                } catch (_) { _mbLogD1Error(table, opts, `HTTP ${res.status}`).catch(() => {}); }
+            }
+            return res;
         } catch (e) {
             lastErr = e;
             if (attempt < 2) await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
         }
     }
+    if (table !== 'mcq_error_logs') _mbLogD1Error(table, opts, 'fetch exception: ' + (lastErr && lastErr.message || lastErr)).catch(() => {});
     throw lastErr;
 }
 async function mbD1ApiWithRetry(table, query, retries = 1) {
@@ -239,7 +279,9 @@ async function mbCheckAndConsumePendingJobs() {
 
             const newMcqs = parsed.map(m => ({ id: uid(), ...m, type: m.type || job.mcq_type }));
             const cropCache = new Map();
+            const wantImage = mbGetExplanationImagePref();
             for (const m of newMcqs) {
+                if (!wantImage) { delete m.exp_box; delete m.line_box; continue; }
                 const key = m.exp_box ? JSON.stringify(m.exp_box) + JSON.stringify(m.line_box||null) : `NOBBOX_${m.id}`;
                 if (!cropCache.has(key)) {
                     const b64 = await mbCropExplanationImage(job.page_number, m.exp_box, m.line_box);
@@ -287,6 +329,25 @@ let mbqPdfFile    = null; // Quick-Add ফর্মের জন্য আলা
 let mbqSubjectsCache = []; // Quick-Add datalist cache: [{id,name,icon}]
 let mbqChaptersCache = []; // Quick-Add datalist cache: [{id,name,subject_id}]
 let mbPdfDoc      = null;
+
+// bug fix (root cause of "Cannot read properties of null (reading 'getPage')"): panel
+// khular shathe shathe mbPdfDoc = null set hoy ar pdf.js asynchronously load hote thake
+// (mbOpenMcqPanel dekho). Generate button shei load shesh howar age click hole (ba network
+// slow thakle) mbPdfDoc tokhono null thake ar direct .getPage() call crash kore. Ei reusable
+// helper max 8 sec wait/poll kore, tarpor o null thakle explicit Bangla error dey — shob
+// jaygay (mbGenerateForPage, mbStartSinglePageJob, etc.) alada alada wait-loop copy-paste na
+// kore ekhane ekbar-i fix kora holo.
+async function mbWaitForPdfDoc() {
+    if (!mbPdfDoc) {
+        let waited = 0;
+        while (!mbPdfDoc && waited < 8000) {
+            await new Promise(r => setTimeout(r, 200));
+            waited += 200;
+        }
+    }
+    if (!mbPdfDoc) throw new Error('PDF এখনো লোড হয়নি — একটু অপেক্ষা করে আবার চেষ্টা করুন');
+    return mbPdfDoc;
+}
 let mbPdfUrl       = null;  // current PDF's public URL, used to send the full PDF to Gemini for reliable MCQ generation
 let mbCurrentPage = 1;
 let mbAllPageData = [];
@@ -336,7 +397,10 @@ function mbPermanentRules(count) {
         `"উদ্দীপকে", "সারণিতে", "টপিকে", "পৃষ্ঠা নং এ দেখা যাচ্ছে", "বলা আছে", "উল্লেখ করা আছে", "লক্ষ করা যায়", ` +
         `"বর্ণনা আছে" — এই ধরনের কোনো বাক্যাংশ ব্যবহার করবে না। প্রশ্ন ও ব্যাখ্যা সবসময় স্বয়ংসম্পূর্ণ ও সরাসরি বিষয়বস্তু ` +
         `নিয়ে লিখতে হবে, কোনো উৎস/অবস্থান নির্দেশ করা যাবে না।\n` +
-        `৩. ${countRule}`
+        `৩. ${countRule}\n` +
+        `৪. অপশন (option_k/kh/g/gh) কখনোই সম্পূর্ণ প্রশ্ন বা প্রশ্নবাচক বাক্য (যেমন "...কোনটি?", "...কী?") হতে পারবে না — ` +
+        `প্রতিটি অপশন অবশ্যই একটি সংক্ষিপ্ত, সরাসরি সম্ভাব্য উত্তর (শব্দ/টার্ম/সংখ্যা/সংক্ষিপ্ত বাক্যাংশ) হতে হবে, যেন সঠিকটা বসালে ` +
+        `প্রশ্নের সম্পূর্ণ ও সঠিক উত্তর হয়। ভুল (distractor) অপশনগুলোও একই ফরম্যাটে অন্য সম্ভাব্য উত্তর হতে হবে, অন্য কোনো প্রশ্ন কপি-পেস্ট করা যাবে না।`
     );
 }
 
@@ -424,35 +488,11 @@ async function mbSpecialExtractPage(pageNum) {
             let rawJson;
             let geminiAlreadyTried = false; // এই page-এ Gemini PDF-native ইতিমধ্যে চেষ্টা হয়েছে কি না —
                                               // fallback chain-এ আবার Gemini কল করে quota নষ্ট না করার জন্য
-            if (mbPdfUrl) {
-                try {
-                    const pdfPrompt = `এই PDF-এর পেইজ ${pageNum} দেখো এবং নিচের নির্দেশ অনুসরণ করো:\n${basePrompt}`;
-                    const res = await fetch(AI_PROXY_URL.replace(/\/$/, '') + '/mcq-from-pdf', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ pdf_url: mbPdfUrl, prompt: pdfPrompt })
-                    });
-                    geminiAlreadyTried = true; // এই কল Gemini-ই ব্যবহার করে (PDF-native একমাত্র Gemini করতে পারে)
-                    const data = await res.json().catch(() => null);
-                    if (res.ok && data?.success && data.answer) rawJson = data.answer;
-                } catch (_) {}
-            }
+            // bug fix: '/mcq-from-pdf' route worker-e kokhono define e chilo na (dead call,
+            // always fail hoto silently) — mudha ekta network round-trip nosto hoto protibar.
+            // Shorashori image-based path e jawa hocche, jeta actually kaj kore.
             if (!rawJson) {
-                // bug fix: panel খোলার সাথে সাথে mbPdfDoc = null সেট হয় এবং pdf.js এসিঙ্ক্রোনাসভাবে
-                // লোড হতে থাকে (mbOpenMcqPanel দ্রষ্টব্য)। যদি generate button সেই লোড শেষ হওয়ার
-                // আগেই ক্লিক হয় (বা network slow থাকায় লোড দেরি হয়), mbPdfDoc তখনো null থাকে এবং
-                // mbPdfDoc.getPage() করলে "Cannot read properties of null (reading 'getPage')"
-                // এরর দেয়। তাই এখানে সর্বোচ্চ ৮ সেকেন্ড অপেক্ষা করা হচ্ছে (poll), তারপরও null থাকলে
-                // স্পষ্ট বাংলা এরর মেসেজ দেওয়া হচ্ছে যাতে ইউজার বুঝতে পারে PDF লোড হয়নি।
-                if (!mbPdfDoc) {
-                    let waited = 0;
-                    while (!mbPdfDoc && waited < 8000) {
-                        await new Promise(r => setTimeout(r, 200));
-                        waited += 200;
-                    }
-                }
-                if (!mbPdfDoc) throw new Error('PDF এখনো লোড হয়নি — একটু অপেক্ষা করে আবার চেষ্টা করুন');
-                const page = await mbPdfDoc.getPage(pageNum);
+                const page = await (await mbWaitForPdfDoc()).getPage(pageNum);
                 const textCont = await page.getTextContent();
                 const pageText = textCont.items.map(i => i.str).join(' ').trim();
                 if (pageText && pageText.length >= 30) {
@@ -826,6 +866,7 @@ async function mbqUploadPdf() {
 
     } catch (e) {
         mbToast('আপলোড ব্যর্থ: ' + e.message, 'error');
+        mbLogError('mbqUploadWithNewSubjectChapter', null, e && e.message || e, {});
     } finally {
         btn.disabled = false;
         btn.textContent = 'আপলোড করো';
@@ -949,6 +990,7 @@ async function mbUploadPdf() {
 
     } catch (e) {
         mbToast('আপলোড ব্যর্থ: ' + e.message, 'error');
+        mbLogError('mbUploadPdfExisting', null, e && e.message || e, {});
     } finally {
         btn.disabled = false;
         btn.textContent = 'আপলোড করো';
@@ -1330,7 +1372,7 @@ async function mbRenderPdfPage(pageNum) {
     if (loadingEl) loadingEl.classList.add('show');
 
     try {
-        const page    = await mbPdfDoc.getPage(pageNum);
+        const page    = await (await mbWaitForPdfDoc()).getPage(pageNum);
         const canvas  = document.getElementById('mbPreviewCanvas');
         if (!canvas) return;
         const vp      = page.getViewport({ scale: 1.5 });
@@ -1723,6 +1765,8 @@ function mbUpdatePageCount() {
    ════════════════════════════════════════════════════ */
 
 function mbSwitchTab(name) {
+    const expModal = document.getElementById('mbExpImgChoiceModal');
+    if (expModal) expModal.classList.remove('active');
     const tabs = { manual: 'Manual', csv: 'Csv', ai: 'Ai', all: 'All' };
     Object.keys(tabs).forEach(t => {
         const btn = document.getElementById('mbTabBtn' + tabs[t]);
@@ -1903,6 +1947,7 @@ async function mbSaveMcq(e) {
         mbRenderPageSummary();
     } catch (ex) {
         mbToast('সংরক্ষণ ব্যর্থ: ' + ex.message, 'error');
+        mbLogError('mbSaveManualMcq', mbCurrentPage, ex && ex.message || ex, {});
     } finally {
         if (btn) { btn.disabled = false; btn.textContent = mbEditingId ? '✓ আপডেট করো' : '✓ প্রশ্ন সংরক্ষণ'; }
     }
@@ -1967,6 +2012,7 @@ async function mbSaveInlineEdit(mcqId) {
         mbRenderPageSummary();
     } catch (ex) {
         mbToast('আপডেট ব্যর্থ: ' + ex.message, 'error');
+        mbLogError('mbInlineSaveEdit', mbCurrentPage, ex && ex.message || ex, {});
     }
 }
 
@@ -2008,6 +2054,7 @@ async function mbDeleteMcq(mcqId) {
         mbLoadAllPageMcqs(); // background sync, UI আগেই instant আপডেট হয়ে গেছে (double round-trip আর নেই)
     } catch (ex) {
         mbToast('মুছতে ব্যর্থ: ' + ex.message, 'error');
+        mbLogError('mbDeleteMcq', mbCurrentPage, ex && ex.message || ex, {});
     }
 }
 
@@ -2213,6 +2260,7 @@ function mbParseCsvFile(file) {
             else mbToast('কোনো বৈধ প্রশ্ন পাওয়া যায়নি', 'error');
         } catch (ex) {
             mbToast('CSV পার্স ব্যর্থ: ' + ex.message, 'error');
+            mbLogError('mbCsvParse', null, ex && ex.message || ex, {});
         }
     };
     reader.readAsText(file, 'UTF-8');
@@ -2275,6 +2323,7 @@ async function mbImportCsv() {
 
     } catch (ex) {
         mbToast('আমদানি ব্যর্থ: ' + ex.message, 'error');
+        mbLogError('mbCsvImport', mbCurrentPage, ex && ex.message || ex, {});
         if (pw)  pw.style.display  = 'none';
         if (btn) btn.style.display = 'block';
     }
@@ -2372,7 +2421,7 @@ function mbRowHasInk(imgData, width, rowY, threshold) {
 async function mbCropExplanationImage(pageNum, box, lineBox) {
     if (!mbPdfDoc) return null;
     try {
-        const page  = await mbPdfDoc.getPage(pageNum);
+        const page  = await (await mbWaitForPdfDoc()).getPage(pageNum);
         // bug fix (root cause of "generate fail on pages after heavy usage"): scale=2.5 +
         // quality=0.85 এ প্রতিটা explanation image বেশ বড় (কয়েকশ KB) হতো, আর একই পেইজে
         // বারবার generate করলে questions_json row টা ক্রমশ MB-স্কেলে বেড়ে যেত (page 15-এ
@@ -2609,7 +2658,7 @@ async function mbGetPageImageBase64(pageNum) {
         // canvas reuse বাদ দেওয়া হলো — mbPreviewCanvas অন্য পেইজের রেন্ডার হয়ে থাকতে পারে
         // (user pageNum পাঠানোর আগেই সরে গেলে), যা ভুল পেইজের ছবি AI-কে পাঠিয়ে ভুল/broken
         // JSON তৈরির একটা কারণ ছিল। এখন সবসময় নির্দিষ্ট pageNum fresh render করা হয়।
-        const page = await mbPdfDoc.getPage(pageNum);
+        const page = await (await mbWaitForPdfDoc()).getPage(pageNum);
         const vp = page.getViewport({ scale: 1.5 });
         const tmp = document.createElement('canvas');
         tmp.width = vp.width; tmp.height = vp.height;
@@ -2695,7 +2744,7 @@ async function mbAiGenerate() {
             `${typeLabel[type]||type} ধরনের ${count.label} MCQ তৈরি করো। ` +
             `Content যে ভাষায় আছে সেই ভাষায় রাখো। ` +
             `প্রতিটিতে চারটি বিকল্প (option_k, option_kh, option_g, option_gh) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে।`
-        )) + mbPermanentRules(count) + MB_EXP_BOX_RULE;        let rawJson;
+        )) + mbPermanentRules(count) + (mbGetExplanationImagePref() ? MB_EXP_BOX_RULE : '');        let rawJson;
         let geminiAlreadyTried = false;
         const mbAiDebugErrs = [];
 
@@ -2738,27 +2787,21 @@ async function mbAiGenerate() {
             }
         }
 
-        // Step 2 (fallback): whole-PDF direct-to-Gemini — only used if page-image path failed
-        // (e.g. canvas render issue). Explicit page number still included as a hint.
-        if (!rawJson && mbPdfUrl) {
+        // Step 2 (fallback): image-based retry, Groq skip kore onno provider diye — only
+        // used if page-image path failed. bug fix: '/mcq-from-pdf' route worker-e kokhono
+        // define e chilo na, tai age eta always fail hoto silently.
+        if (!rawJson) {
             try {
-                const pdfPrompt = `এই PDF-এর শুধুমাত্র পেইজ ${mbCurrentPage} দেখো (অন্য কোনো পেইজ থেকে না) এবং নিচের নির্দেশ অনুসরণ করো:\n${basePrompt}\n\n` +
+                const sysPrompt2 = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePrompt}\n` +
                     `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}`;
-                const res = await fetch(AI_PROXY_URL.replace(/\/$/, '') + '/mcq-from-pdf', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pdf_url: mbPdfUrl, prompt: pdfPrompt })
-                });
+                rawJson = await mbCallAiApi('', pageImageData, sysPrompt2, geminiAlreadyTried, true);
                 geminiAlreadyTried = true;
-                const data = await res.json().catch(() => null);
-                if (res.ok && data?.success && data.answer) rawJson = data.answer;
-                else if (!rawJson) mbAiDebugErrs.push('step2: ' + (data?.error || ('http ' + res.status)));
-            } catch (e2) { mbAiDebugErrs.push('step2: ' + (e2 && e2.message || e2)); /* fall through to legacy text approach below */ }
+            } catch (e2) { mbAiDebugErrs.push('step2: ' + (e2 && e2.message || e2)); }
         }
 
         // Step 3 (last resort): text-extraction approach
         if (!rawJson) {
-            const page     = await mbPdfDoc.getPage(mbCurrentPage);
+            const page     = await (await mbWaitForPdfDoc()).getPage(mbCurrentPage);
             const textCont = await page.getTextContent();
             const pageText = textCont.items.map(i => i.str).join(' ').trim();
 
@@ -2795,8 +2838,31 @@ async function mbAiGenerate() {
                 if (retryImg) {
                     const retryRaw = await mbCallAiApi('', retryImg, strictSys, false, true); // skipGroq=true — retry-তে ডুপ্লিকেট Groq call এড়াতে
                     parsed = mbParseAiJson(retryRaw);
+                    if (!parsed || !parsed.length) rawJson = retryRaw || rawJson;
                 }
             } catch (_) { /* retry ব্যর্থ হলে নিচের error handling চলবে */ }
+        }
+
+        // bug fix (user-reported "AI JSON দেয়নি" popup আসছিল যেখানে mbGenerateForPage-এ আসত
+        // না): এই flow-এ আগে শুধু ১টা retry ছিল, তারপরেই hard error — কিন্তু কখনো কখনো AI
+        // JSON bracket ছাড়া prose/markdown answer দেয়, যেটা reformat করলেই ঠিক হয়ে যায়, বা
+        // অন্তত regex দিয়ে prose থেকে Q/A বের করা যায়। mbGenerateForPage-এর মতোই এখানেও একই
+        // last-resort ধাপগুলো যোগ করা হলো, যাতে সহজেই recoverable case-এ popup না আসে।
+        if ((!parsed || !parsed.length) && rawJson) {
+            const hasBracket = /[\[{]/.test(rawJson);
+            if (!hasBracket) {
+                try {
+                    const reformatSys = `নিচে একটা HSC শিক্ষামূলক কনটেন্ট (প্রশ্নোত্তর/টেক্সট আকারে) দেওয়া আছে। এটা থেকে ${basePrompt}\n` +
+                        `শুধু valid JSON array রিটার্ন করো। কোনো markdown code fence, preamble, বা extra text দিও না। Format:\n${jsonFormat}`;
+                    const reformatPrompt = `কনটেন্ট:\n${rawJson.slice(0, 4000)}`;
+                    const reformatRaw = await mbCallAiApi(reformatPrompt, null, reformatSys, false, false);
+                    parsed = mbParseAiJson(reformatRaw);
+                } catch (_) {}
+            }
+            if (!parsed || !parsed.length) {
+                const extracted = mbExtractMcqFromProse(rawJson);
+                if (extracted && extracted.length) parsed = extracted;
+            }
         }
 
         if (!parsed || !parsed.length) {
@@ -2861,6 +2927,37 @@ async function mbAiGenerate() {
             return;
         }
         parsed = validParsed;
+
+        // fix (root cause of "% box e generate howar somoy real update dekhay na"): age
+        // shortfall thakle count.min-er niche-i validParsed niye shesh hoye jeto, kono
+        // real extra call chalano hoto na — % box e purota shomoy ekbar-i fake ticker
+        // dekhiye shesh-e hothat count dekhato. Ekhon bulk-mode-er moto ekta real
+        // top-up call kora hocche jokhon shortfall thake — eta ekta genuine network call,
+        // tai completion-er por % box-e real (fake na) intermediate count dekhano jay.
+        if (parsed.length < count.min) {
+            mbSetAiProgress(58, parsed.length + '/' + count.min + 'টি MCQ পাওয়া গেছে — বাকিগুলো আনা হচ্ছে...');
+            try {
+                const need = count.min - parsed.length;
+                const askedList = parsed.map(m => (m.question||'').trim()).filter(Boolean).slice(0, 20).join(' | ');
+                const avoidClause = askedList
+                    ? `\n\nআগে এই প্রশ্নগুলো ইতিমধ্যে বানানো হয়ে গেছে, এগুলোর হুবহু বা কাছাকাছি (rephrase করা) কোনো প্রশ্ন আবার দেওয়া যাবে না, সম্পূর্ণ নতুন/ভিন্ন প্রশ্ন দিতে হবে: ${askedList}`
+                    : '';
+                const topUpImg = pageImageData || await mbGetPageImageBase64(mbCurrentPage);
+                if (topUpImg) {
+                    const topUpSys = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ` +
+                        `আরও ঠিক ${need}টি নতুন MCQ বানাও (আগে যা বানানো হয়েছে তার থেকে সম্পূর্ণ ভিন্ন প্রশ্ন/কোণ থেকে — একই প্রশ্ন repeat করা যাবে না)। ${basePrompt}${avoidClause}\n` +
+                        `শুধু ঠিক ${need}টি প্রশ্নের valid JSON array রিটার্ন করো, markdown/preamble ছাড়া। Format:\n${jsonFormat}`;
+                    const topUpRaw = await mbCallAiApi('', topUpImg, topUpSys, true, true); // skipGemini=true — Groq/OpenRouter দিয়ে, দ্রুত + provider diversify
+                    const topUpParsed = mbParseAiJson(topUpRaw);
+                    const topUpValid = (topUpParsed || []).filter(mbIsValidMcq);
+                    if (topUpValid.length) parsed = [...parsed, ...topUpValid];
+                }
+            } catch (topUpErr) {
+                mbLogError('mbAiGenerate:topup', mbCurrentPage, topUpErr && topUpErr.message || topUpErr, { type, need: count.min - parsed.length });
+            }
+            mbSetAiProgress(70, parsed.length + '/' + count.min + 'টি MCQ পাওয়া গেছে...');
+        }
+
         // Count must-follow: চাহিদার চেয়ে বেশি দিলে কেটে দাও, কম দিলে ইউজারকে জানাও (আগে শুধু
         // console.warn হতো, ইউজার কিছুই বুঝতে পারত না কেন সংখ্যা কম এলো)
         if (parsed.length > count.max) parsed = parsed.slice(0, count.max);
@@ -2869,7 +2966,7 @@ async function mbAiGenerate() {
         }
 
         mbAiData = parsed.map(m => ({ id: uid(), ...m, type: m.type || type }));
-        mbSetAiProgress(75, 'ব্যাখ্যার ছবি বানানো হচ্ছে...');
+        mbSetAiProgress(75, mbAiData.length + 'টি MCQ পাওয়া গেছে — ব্যাখ্যার ছবি বানানো হচ্ছে...');
 
         // exp_box দিয়ে প্রতিটা MCQ-র জন্য topic-crop explanation image বানানো — একই box একাধিক
         // MCQ শেয়ার করতে পারে সেক্ষেত্রে dedupe করা হয়, কিন্তু exp_box missing/null থাকলে
@@ -2884,7 +2981,9 @@ async function mbAiGenerate() {
         // এখন প্রতিটা crop আলাদাভাবে try/catch করা হচ্ছে — crop ব্যর্থ হলেও সেই MCQ explanation
         // image ছাড়াই save হবে, পুরো batch হারাবে না।
         const cropCache = new Map();
+        const wantImageSingle = mbGetExplanationImagePref();
         for (const m of mbAiData) {
+            if (!wantImageSingle) { delete m.exp_box; delete m.line_box; continue; }
             try {
                 const key = m.exp_box ? JSON.stringify(m.exp_box) + JSON.stringify(m.line_box||null) : `NOBBOX_${m.id}`;
                 if (!cropCache.has(key)) {
@@ -2922,9 +3021,9 @@ async function mbAiGenerate() {
         if (resultEl) resultEl.style.display = 'block';
 
         // Save button চাপার দরকার নেই — generate হওয়ার সাথে সাথেই automatically 'All'-এ জমা হয়ে যায়
-        mbSetAiProgress(90, 'সংরক্ষণ হচ্ছে...');
+        mbSetAiProgress(90, mbAiData.length + 'টি MCQ সংরক্ষণ হচ্ছে...');
         await mbSaveAiMcqs();
-        mbSetAiProgress(100, 'সম্পন্ন!');
+        mbSetAiProgress(100, mbAiData.length + 'টি MCQ সম্পন্ন!');
 
     } catch (ex) {
         mbToast('AI ব্যর্থ: ' + ex.message, 'error');
@@ -2954,6 +3053,7 @@ async function mbAiGenerateSpecial() {
         mbStopAiProgressTicker();
         if (!parsed || !parsed.length) {
             mbToast('❌ এই পেইজে কোনো existing MCQ পাওয়া যায়নি', 'error');
+            mbLogError('mbAiGenerateSpecial:empty', mbCurrentPage, 'এই পেইজে কোনো existing MCQ পাওয়া যায়নি', {});
             return;
         }
         mbAiData = parsed.map(m => ({ id: uid(), ...mbShuffleSpecialOptions(m), type: 'special' }));
@@ -2980,9 +3080,9 @@ async function mbAiGenerateSpecial() {
         if (resultEl) resultEl.style.display = 'block';
 
         // Save button চাপার দরকার নেই — extract হওয়ার সাথে সাথেই automatically 'All'-এ জমা হয়ে যায়
-        mbSetAiProgress(90, 'সংরক্ষণ হচ্ছে...');
+        mbSetAiProgress(90, mbAiData.length + 'টি MCQ সংরক্ষণ হচ্ছে...');
         await mbSaveAiMcqs();
-        mbSetAiProgress(100, 'সম্পন্ন!');
+        mbSetAiProgress(100, mbAiData.length + 'টি MCQ সম্পন্ন!');
     } catch (ex) {
         mbToast('এক্সট্র্যাকশন ব্যর্থ: ' + ex.message, 'error');
         mbLogError('mbAiGenerateSpecial', mbCurrentPage, ex && ex.message || ex, {});
@@ -3002,11 +3102,16 @@ async function mbAiGenerateSpecial() {
 // ছিল না, ফলে worker-এর ৫-provider fallback chain-এর কোনো ধাপ (rate-limit/slow response)
 // আটকে থাকলে পুরো generate flow-ও অনির্দিষ্টকালের জন্য আটকে থাকতো — এবং mbAiGenerate-এ
 // এরকম ২-৩টা sequential কল থাকায় (page-image → whole-pdf → text fallback) সবগুলো ধীরগতির
-// হলে মোট সময় ১৫-২০ মিনিটে পৌঁছাতো। এখন প্রতিটা কল সর্বোচ্চ ৪৫ সেকেন্ডে fail করবে (timeout),
+// হলে মোট সময় ১৫-২০ মিনিটে পৌঁছাতো। এখন প্রতিটা কল সর্বোচ্চ ৬০ সেকেন্ডে fail করবে (timeout),
 // এবং সাথে সাথে পরের fallback ধাপে চলে যাবে — ফলে ব্যর্থ হলেও দ্রুত জানা যাবে।
+// bug fix (root cause of "s1/s2: টাইমআউট" বারবার আসা): worker-এর ভিতরে Gemini
+// (internal key-rotation, প্রতি key ১২s) + Groq/OpenRouter/Cerebras/Cloudflare race —
+// পুরো chain worst-case ৩৫-৪০ সেকেন্ড পর্যন্ত নিতে পারে, client আগে মাত্র ৪৫s-এই abort
+// করত (margin কম ছিল) — worker আসলে সফল হতে যাচ্ছিল এমন call-ও মাঝপথে কেটে যেত।
+// এখন ৬০s দেওয়া হলো যাতে genuine-slow-কিন্তু-successful response-ও ধরা যায়।
 async function mbCallAiApi(prompt, image, customSystemPrompt, skipGemini, skipGroq) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 45000);
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
     let res;
     try {
         res = await fetch(AI_PROXY_URL, {
@@ -3025,7 +3130,7 @@ async function mbCallAiApi(prompt, image, customSystemPrompt, skipGemini, skipGr
         });
     } catch (fetchErr) {
         if (fetchErr && fetchErr.name === 'AbortError') {
-            throw new Error('AI প্রক্সি টাইমআউট (৪৫ সেকেন্ডে সাড়া দেয়নি)');
+            throw new Error('AI প্রক্সি টাইমআউট (৬০ সেকেন্ডে সাড়া দেয়নি)');
         }
         throw fetchErr;
     } finally {
@@ -3067,13 +3172,89 @@ function mbExtractMcqFromProse(text) {
         const correct = ansM ? map[ansM[1]] : 'k';
         out.push({ question, option_k, option_kh, option_g, option_gh, correct, explanation: '', type: 'standard' });
     }
-    return out.length ? out : null;
+    return out.length ? mbFixHasantoDeep(out) : null;
+}
+
+// bug fix (root cause of "স্ট্যান্ডার ্ ড", "ব্যালেন ্ স" ইত্যাদি ভাঙা যুক্তাক্ষর): কিছু AI
+// মডেল (Groq/Llama) বাংলা যুক্তাক্ষর তৈরির সময় হসন্ত (্) চিহ্নের আগে/পরে ভুল করে স্পেস
+// ঢুকিয়ে দেয় (conjunct rendering bug, JSON syntax ঠিকই থাকে তাই আগে এটা ধরা পড়ত না,
+// শুধু option/question টেক্সট নষ্ট দেখাত)। এই ফাংশন parse হওয়া প্রতিটা string field-এ
+// হসন্তের চারপাশের অবৈধ স্পেস সরিয়ে সঠিক যুক্তাক্ষর পুনর্গঠন করে।
+function mbFixHasantoSpacing(s) {
+    if (typeof s !== 'string' || !s) return s;
+    return s
+        .replace(/\s+্\s+/g, '্')   // " ্ " -> "্"
+        .replace(/\s+্/g, '্')      // " ্"  -> "্"
+        .replace(/্\s+/g, '্');     // "্ "  -> "্"
+}
+function mbFixHasantoDeep(obj) {
+    if (typeof obj === 'string') return mbFixHasantoSpacing(obj);
+    if (Array.isArray(obj)) return obj.map(mbFixHasantoDeep);
+    if (obj && typeof obj === 'object') {
+        const out = {};
+        for (const k in obj) out[k] = mbFixHasantoDeep(obj[k]);
+        return out;
+    }
+    return obj;
+}
+
+// bug fix (root cause of validation fail with "option_a"/"option_b" keys): kichu shomoy AI
+// (bishesh kore Groq/Llama) prompt-e option_k/kh/g/gh cheye dile-o nijer moto option_a/option_b/
+// option_c/option_d, ba options[0..3] array, ba answer(1-4 numeric) diye dey. Age eta shudhu
+// bhul field hisebe dhora porto (question/option_k na thakle mbIsValidMcqBulk fail), fole
+// "AI shomporno/sothik MCQ dite parni" error hoto যদিও AI আসলে data thik e diyechilo. Ei
+// function shokol common bhul field name/shape-ke internal option_k/kh/g/gh + correct(k/kh/g/gh)
+// shape-e normalize kore dey, kono MCQ jeno shudhu bhul naming-er jonno baad na pore.
+function mbNormalizeMcqFields(m) {
+    if (!m || typeof m !== 'object') return m;
+    if (m.option_k && m.option_kh && m.option_g && m.option_gh) return m; // already correct shape
+
+    const out = { ...m };
+    // option_a/b/c/d -> option_k/kh/g/gh
+    if (m.option_a !== undefined || m.option_b !== undefined) {
+        out.option_k  = out.option_k  || m.option_a || '';
+        out.option_kh = out.option_kh || m.option_b || '';
+        out.option_g  = out.option_g  || m.option_c || '';
+        out.option_gh = out.option_gh || m.option_d || '';
+    }
+    // option1/2/3/4 -> option_k/kh/g/gh
+    if (m.option1 !== undefined || m.option_1 !== undefined) {
+        out.option_k  = out.option_k  || m.option1 || m.option_1 || '';
+        out.option_kh = out.option_kh || m.option2 || m.option_2 || '';
+        out.option_g  = out.option_g  || m.option3 || m.option_3 || '';
+        out.option_gh = out.option_gh || m.option4 || m.option_4 || '';
+    }
+    // options: [a,b,c,d] array -> option_k/kh/g/gh
+    if (Array.isArray(m.options) && m.options.length >= 4) {
+        out.option_k  = out.option_k  || m.options[0] || '';
+        out.option_kh = out.option_kh || m.options[1] || '';
+        out.option_g  = out.option_g  || m.options[2] || '';
+        out.option_gh = out.option_gh || m.options[3] || '';
+    }
+    // correct/answer normalize: a/b/c/d, 1/2/3/4, answer_index(0-based) -> k/kh/g/gh
+    if (!['k','kh','g','gh'].includes(out.correct)) {
+        const letterMap = { a: 'k', b: 'kh', c: 'g', d: 'gh', A: 'k', B: 'kh', C: 'g', D: 'gh' };
+        const numMap    = { '1': 'k', '2': 'kh', '3': 'g', '4': 'gh' };
+        if (m.correct !== undefined && letterMap[m.correct]) out.correct = letterMap[m.correct];
+        else if (m.correct !== undefined && numMap[String(m.correct)]) out.correct = numMap[String(m.correct)];
+        else if (m.answer !== undefined && numMap[String(m.answer)]) out.correct = numMap[String(m.answer)];
+        else if (m.answer !== undefined && letterMap[m.answer]) out.correct = letterMap[m.answer];
+        else if (typeof m.answer_index === 'number') out.correct = numMap[String(m.answer_index + 1)] || out.correct;
+        else if (typeof m.correct_index === 'number') out.correct = numMap[String(m.correct_index + 1)] || out.correct;
+    }
+    return out;
 }
 
 function mbParseAiJson(raw) {
+    const result = mbParseAiJsonRaw(raw);
+    if (!result) return result;
+    const fixed = mbFixHasantoDeep(result);
+    return Array.isArray(fixed) ? fixed.map(mbNormalizeMcqFields) : fixed;
+}
+
+function mbParseAiJsonRaw(raw) {
     if (!raw) return null;
 
-    // code-fence থাকলে (```json ... ``` বা ``` ... ```) সেটা প্রথমে সরিয়ে দাও
     let cleaned = raw.split('```').length > 1
         ? raw.split('```').filter((_, i) => i % 2 === 1).join('\n') || raw
         : raw;
@@ -3105,9 +3286,19 @@ function mbParseAiJson(raw) {
 
     candidate = extractBalanced(cleaned, '{', '}');
     parsed = tryParse(candidate);
-    if (parsed) return [parsed];
+    if (parsed) {
+        // bug fix (root cause of "option_a" jemon bhul field name / MCQ validation fail):
+        // worker-side callGroq() nijer jsonSystemPrompt-e {"questions":[...]} wrapper chapiye
+        // dey, kintu shei wrapper theke .questions unwrap kokhono kokhono fail hoy (jemon
+        // Groq nijei broken/truncated array dile worker-er JSON.parse fail kore, raw answer
+        // e pura {"questions":[...]} object thake). Age eta [parsed] (mane [{questions:[...]}])
+        // banto — ekta "MCQ object" hisebe jar kono question/option field ei nei, tai validation
+        // e always fail hoto. Ekhon .questions/.mcqs/.data array thakle setai unwrap kora hoy.
+        const wrapKey = ['questions', 'mcqs', 'data', 'items'].find(k => Array.isArray(parsed[k]));
+        if (wrapKey) return parsed[wrapKey];
+        return [parsed];
+    }
 
-    // truncated/broken JSON — শেষের incomplete element কেটে বাকিটা parse করার চেষ্টা
     const rough = cleaned.match(/\[[\s\S]*/);
     if (rough) {
         let s = rough[0];
@@ -3316,6 +3507,23 @@ const MB_BULK_KEY = 'mbBulkJob';
 let mbBulkRunning = false;
 let mbGenMode = 'single'; // 'single' | 'all' | 'range' — মূল Generate বাটনের আচরণ নির্ধারণ করে
 
+// Explanation Image পছন্দ — With/Without modal থেকে সেট হয়, background-job resume-এর জন্য localStorage-এ persist থাকে
+// (temporarily disabled): explanation-এর শেষে cropped topic-image ফিচার বন্ধ রাখা হয়েছে,
+// শুধু normal pagewise MCQ (text-only explanation) জেনারেট হবে। কোড অক্ষত রাখা হয়েছে —
+// পরে চালু করতে চাইলে নিচের "return false" লাইনটা মুছে আগের logic ফিরিয়ে দিলেই হবে।
+function mbGetExplanationImagePref() {
+    return false;
+    /* --- আগের logic (disabled, কোড রাখা হলো ভবিষ্যতে চালু করার জন্য) ---
+    try {
+        const v = localStorage.getItem('mbWithExplanationImage');
+        return v === null ? true : v === '1'; // ডিফল্ট true — backward-compatible
+    } catch (_) { return true; }
+    --- */
+}
+function mbSetExplanationImagePref(withImage) {
+    try { localStorage.setItem('mbWithExplanationImage', withImage ? '1' : '0'); } catch (_) {}
+}
+
 // Apply-to-All / Page-Range টগল — ক্লিক করলে সেই মোড চালু হয়, আবার ক্লিক করলে single page এ ফিরে আসে
 function mbSetGenMode(mode) {
     if (!mbPdfDoc) { mbToast('আগে একটি PDF খুলুন', 'error'); return; }
@@ -3372,9 +3580,30 @@ function mbUpdateRangeSummary() {
     }
 }
 
-// মূল Generate বাটন — single page হলে সরাসরি ওই একটা পেইজেই কাজ করে (bulk job/localStorage
-// touch করে না), range/all হলে persistent bulk-job pipeline ব্যবহার করে (refresh-safe)।
+// মূল Generate বাটন — explanation-image ফিচার আপাতত বন্ধ থাকায় (mbGetExplanationImagePref
+// সবসময় false রিটার্ন করে) With/Without choice modal দেখানোর কোনো মানে নেই, তাই সরাসরি
+// generate শুরু হয়ে যায়। modal-এর কোড/মার্কআপ অক্ষত আছে, ভবিষ্যতে ফিচার ফিরিয়ে আনলে
+// নিচের লাইনটা আগের মতো modal দেখানো logic দিয়ে replace করে দিলেই হবে।
 function mbGenerateClick() {
+    mbGenerateClickReal();
+    /* --- আগের logic (disabled) ---
+    const m = document.getElementById('mbExpImgChoiceModal');
+    m.classList.add('active');
+    void m.offsetHeight; // force sync reflow/repaint
+    --- */
+}
+function mbCloseExpImgChoiceModal() {
+    document.getElementById('mbExpImgChoiceModal').classList.remove('active');
+}
+function mbConfirmExpImgChoice(withImage) {
+    mbSetExplanationImagePref(withImage);
+    mbCloseExpImgChoiceModal();
+    mbGenerateClickReal();
+}
+
+// আসল generate কাজ — single page হলে সরাসরি ওই একটা পেইজেই কাজ করে (bulk job/localStorage
+// touch করে না), range/all হলে persistent bulk-job pipeline ব্যবহার করে (refresh-safe)।
+function mbGenerateClickReal() {
     if (mbGenMode === 'single') { mbStartSinglePageJob(); return; }
     mbStartBulkGenerate();
 }
@@ -3460,12 +3689,13 @@ function mbUpdateBulkUI(job) {
     // কিন্তু আসলে সেই পেইজটাই এখনো প্রসেস হচ্ছে)। এখন in-page fractional progress
     // (job.subProgress: 0-1) যোগ করে % আর MCQ count স্মুথলি এগোয়, এবং লেবেলে স্পষ্ট করে
     // "প্রসেস হচ্ছে: পেইজ X (মোট Y এর মধ্যে Z সম্পন্ন)" দেখানো হচ্ছে।
-    const sub = Math.max(0, Math.min(1, job.subProgress || 0));
-    const doneFraction = job.completedCount + sub;
-    const pct = job.totalPages ? Math.round((doneFraction / job.totalPages) * 100) : 0;
+    // bug fix: doneFraction আগে fake subProgress যোগ করত (উপরে দেখো) — এখন % সম্পূর্ণভাবে
+    // completedCount/totalPages থেকে আসে, যেটা আসল সম্পন্ন-হওয়া পেইজ সংখ্যার সাথে হুবহু মেলে।
+    const pct = job.totalPages ? Math.round((job.completedCount / job.totalPages) * 100) : 0;
     const pageLabel = job.currentPage > job.to ? job.to : job.currentPage;
+    const generatingSuffix = job.inPageGenerating ? ' — MCQ তৈরি হচ্ছে...' : '';
     document.getElementById('mbBulkLabel').textContent =
-        `⚡ প্রসেস হচ্ছে: পেইজ ${pageLabel} (মোট ${job.totalPages} এর মধ্যে ${job.completedCount} সম্পন্ন)`;
+        `⚡ প্রসেস হচ্ছে: পেইজ ${pageLabel} (মোট ${job.totalPages} এর মধ্যে ${job.completedCount} সম্পন্ন)${generatingSuffix}`;
     document.getElementById('mbBulkBarFill').style.width = pct + '%';
 
     // ETA হিসাব — গড় সময়/পেইজ থেকে বাকি পেইজের আনুমানিক সময়
@@ -3473,7 +3703,7 @@ function mbUpdateBulkUI(job) {
     if (job.completedCount > 0 && job.startedAt) {
         const elapsedSec = (Date.now() - job.startedAt) / 1000;
         const avgPerPage = elapsedSec / job.completedCount;
-        const remainingPages = job.totalPages - doneFraction;
+        const remainingPages = job.totalPages - job.completedCount;
         const etaSec = Math.round(avgPerPage * remainingPages);
         etaStr = etaSec > 60 ? ` · বাকি ~${Math.ceil(etaSec/60)} মিনিট` : etaSec > 0 ? ` · বাকি ~${etaSec}s` : '';
     }
@@ -3487,15 +3717,18 @@ function mbUpdateBulkUI(job) {
     if (activePill) activePill.classList.add('mb-pill-active-bulk');
 }
 
-// পেইজ-ভেতরের (sub-page) progress ticker — mbGenerateForPage চলাকালীন smooth % দেখানোর জন্য
+// bug fix (user-reported: "% ta fake, actual MCQ banano-r sathe match kore na"): আগে এই
+// ticker প্রতি 400ms এ নিজের ইচ্ছামতো +4% করে বাড়িয়ে দিত (job.subProgress), যেটা আসল AI
+// response/MCQ generation progress-এর সাথে কোনো সম্পর্ক ছাড়াই কাল্পনিকভাবে এগোত। এখন এই
+// fake ticker সরিয়ে দেওয়া হলো — % বার এখন শুধু completedCount/totalPages (১০০% আসল, পুরো
+// পেইজ শেষ হলেই বাড়ে) দেখায়; চলমান পেইজে একটা honest "প্রসেস হচ্ছে..." টেক্সট থাকে, কোনো
+// মিথ্যা %-জাম্প ছাড়া।
 let mbBulkSubTicker = null;
 function mbStartBulkSubTicker(job) {
     mbStopBulkSubTicker();
-    job.subProgress = 0.05;
-    mbBulkSubTicker = setInterval(() => {
-        job.subProgress = Math.min(0.92, (job.subProgress || 0) + 0.04);
-        mbUpdateBulkUI(job);
-    }, 400);
+    job.subProgress = 0;
+    job.inPageGenerating = true;
+    mbUpdateBulkUI(job);
 }
 function mbStopBulkSubTicker() {
     if (mbBulkSubTicker) { clearInterval(mbBulkSubTicker); mbBulkSubTicker = null; }
@@ -3522,11 +3755,13 @@ async function mbRunBulkJob(job) {
             const generatedCount = await mbGenerateForPage(p, job.countRaw, job.type);
             mbStopBulkSubTicker();
             job.subProgress = 0;
+            job.inPageGenerating = false;
             job.completedCount++;
             job.totalMcqGenerated = (job.totalMcqGenerated || 0) + (generatedCount || 0);
         } catch (e) {
             mbStopBulkSubTicker();
             job.subProgress = 0;
+            job.inPageGenerating = false;
             console.error('Bulk page ' + p + ' failed:', e);
             lastErrorMsg = 'পেইজ ' + p + ': ' + (e.message || 'ব্যর্থ');
             mbLogError('mbRunBulkJob', p, e && e.message || e, { type: job.type, countRaw: job.countRaw });
@@ -3594,7 +3829,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
         `${typeLabel[type]||type} ধরনের ${count.label} MCQ তৈরি করো। ` +
         `Content যে ভাষায় আছে সেই ভাষায় রাখো। ` +
         `প্রতিটিতে চারটি বিকল্প (option_k, option_kh, option_g, option_gh) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে।`
-    )) + mbPermanentRules(count) + MB_EXP_BOX_RULE;
+    )) + mbPermanentRules(count) + (mbGetExplanationImagePref() ? MB_EXP_BOX_RULE : '');
 
     // feature (2-call split per image): একটা ভারী single call-এর বদলে টার্গেট সংখ্যাটা দুই কলে
     // ভাগ করে চাওয়া হয় — প্রতি কলে output ছোট থাকায় AI-এর token-limit এ কাটা পড়ার সম্ভাবনা কমে
@@ -3609,11 +3844,11 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
         `${typeLabel[type]||type} ধরনের ${mbCountAOverride.label} MCQ তৈরি করো। ` +
         `Content যে ভাষায় আছে সেই ভাষায় রাখো। ` +
         `প্রতিটিতে চারটি বিকল্প (option_k, option_kh, option_g, option_gh) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে।`
-    )) + mbPermanentRules(mbCountAOverride) + MB_EXP_BOX_RULE;
+    )) + mbPermanentRules(mbCountAOverride) + (mbGetExplanationImagePref() ? MB_EXP_BOX_RULE : '');
     let rawJson;
     let geminiAlreadyTried = false;
     const mbAiDebugErrs = [];
-    const page = await mbPdfDoc.getPage(pageNum);
+    const page = await (await mbWaitForPdfDoc()).getPage(pageNum);
     const vp = page.getViewport({ scale: 1.5 });
     const tmp = document.createElement('canvas');
     tmp.width = vp.width; tmp.height = vp.height;
@@ -3634,25 +3869,25 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     try {
         const sysPrompt = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePromptA}\n` +
             `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}`;
-        rawJson = await mbCallAiApi('', pageImageData, sysPrompt, true);
+        rawJson = await mbCallAiApi('', pageImageData, sysPrompt, false);
         geminiAlreadyTried = true;
     } catch (e1) { mbAiDebugErrs.push('s1:' + (e1 && e1.message || e1)); /* fall through */ }
     mbMark('callA');
 
-    // Step 2 (fallback): whole-PDF direct-to-Gemini
-    if (!rawJson && mbPdfUrl) {
+    // Step 2 (fallback): image-based retry, ekhon Gemini-first path e (skipGroq=true taki
+    // Groq abar call na hoy, kintu Gemini/OpenRouter chain try kore).
+    // bug fix (root cause of "s2:question ba image er ekti dite hobe"): age ekhane
+    // '/mcq-from-pdf' namer ekta route call hoto ja worker-e kokhono define e chilo na —
+    // fole eta default '/proxy' handler-e giye porto, jeta {pdf_url,prompt} body pele
+    // question/image dutoi na thakar karone 400 error dito. Route-i toiri na kore, ekhon
+    // shudhu shei image diyei alada angle/provider-e (Groq skip kore) retry kora hocche,
+    // jeta actually kaj kore.
+    if (!rawJson) {
         try {
-            const pdfPrompt = `এই PDF-এর শুধুমাত্র পেইজ ${pageNum} দেখো (অন্য কোনো পেইজ থেকে না) এবং নিচের নির্দেশ অনুসরণ করো:\n${basePromptA}\n\n` +
+            const sysPrompt2 = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePromptA}\n` +
                 `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}`;
-            const res = await fetch(AI_PROXY_URL.replace(/\/$/, '') + '/mcq-from-pdf', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pdf_url: mbPdfUrl, prompt: pdfPrompt })
-            });
+            rawJson = await mbCallAiApi('', pageImageData, sysPrompt2, geminiAlreadyTried, true); // skipGroq=true, s1 e Groq/Gemini try hoye thakle skip kore onno provider
             geminiAlreadyTried = true;
-            const data = await res.json().catch(() => null);
-            if (res.ok && data?.success && data.answer) rawJson = data.answer;
-            else mbAiDebugErrs.push('s2:' + (data?.error || ('http' + res.status)));
         } catch (e2) { mbAiDebugErrs.push('s2:' + (e2 && e2.message || e2)); }
     }
     mbMark('step2');
@@ -3796,28 +4031,45 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     let mbTopUpTries = 0;
     let mbNoProgressStreak = 0;
     const MB_TOPUP_SAFETY_CEILING = 5;
+    // bug fix (root cause of "চাহিদা 10টি, পাওয়া গেছে 5টি" বারবার হওয়া): আগে ১ম round-এ AI
+    // যদি সবগুলো duplicate/একই প্রশ্ন repeat করত (parsed.length === beforeLen), সাথে সাথেই
+    // loop থেমে যেত — বাকি ৪-৫টা ceiling কখনো ব্যবহারই হতো না, ফলে "content কম নেই" এমন
+    // পেইজেও শুধু ১ম round-এর duplicate-এর কারণে অর্ধেক MCQ নিয়েই থেমে যেত। এখন consecutive
+    // no-progress ২ round পর্যন্ত সহ্য করা হয় (already-asked প্রশ্নগুলোর তালিকা prompt-এ
+    // স্পষ্টভাবে দিয়ে "এগুলো বাদে" বলা হয়, যাতে AI সত্যিই ভিন্ন কিছু বানাতে বাধ্য হয়) — তারপরও
+    // যদি একেবারেই progress না হয় তখনই থামানো হয়, অযথা ceiling শেষ না করে।
+    const MB_MAX_NO_PROGRESS_STREAK = 2;
     while (parsed.length < count.min && mbTopUpTries < MB_TOPUP_SAFETY_CEILING) {
         mbTopUpTries++;
         const need = count.min - parsed.length;
         const beforeLen = parsed.length;
+        const askedList = parsed.map(m => (m.question||'').trim()).filter(Boolean).slice(0, 20).join(' | ');
+        const avoidClause = askedList
+            ? `\n\nআগে এই প্রশ্নগুলো ইতিমধ্যে বানানো হয়ে গেছে, এগুলোর হুবহু বা কাছাকাছি (rephrase করা) কোনো প্রশ্ন আবার দেওয়া যাবে না, সম্পূর্ণ নতুন/ভিন্ন প্রশ্ন দিতে হবে: ${askedList}`
+            : '';
+        const makeTopUpSys = (angleHint) => `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ` +
+            `আরও ঠিক ${need}টি নতুন MCQ বানাও (আগে যা বানানো হয়েছে তার থেকে সম্পূর্ণ ভিন্ন প্রশ্ন/কোণ থেকে — একই প্রশ্ন repeat করা যাবে না)। ${angleHint}${basePrompt}${avoidClause}\n` +
+            `প্রশ্ন/অপশন/ব্যাখ্যা অবশ্যই বাংলা ভাষায় ও বাংলা লিপিতে লিখতে হবে। ` +
+            `শুধু ঠিক ${need}টি প্রশ্নের valid JSON array রিটার্ন করো, markdown/preamble ছাড়া। Format:\n${jsonFormat}`;
         try {
-            const topUpSys = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ` +
-                `আরও ঠিক ${need}টি নতুন MCQ বানাও (আগে যা বানানো হয়েছে তার থেকে সম্পূর্ণ ভিন্ন প্রশ্ন/কোণ থেকে — একই প্রশ্ন repeat করা যাবে না)। ${basePrompt}\n` +
-                `প্রশ্ন/অপশন/ব্যাখ্যা অবশ্যই বাংলা ভাষায় ও বাংলা লিপিতে লিখতে হবে। ` +
-                `শুধু ঠিক ${need}টি প্রশ্নের valid JSON array রিটার্ন করো, markdown/preamble ছাড়া। Format:\n${jsonFormat}`;
-            const topUpRaw = await mbCallAiApi('', pageImageData, topUpSys, false, false); // skipGemini=false, skipGroq=false — worker chain: Groq(all keys)→Gemini→OpenRouter, sequentially per call
-            const topUpParsed = mbParseAiJson(topUpRaw);
-            const topUpValid = (topUpParsed || []).filter(mbIsValidMcqBulk);
-            if (topUpValid.length) {
-                const existingQ = new Set(parsed.map(m => (m.question||'').trim()));
+            const [r1, r2] = await Promise.allSettled([
+                mbCallAiApi('', pageImageData, makeTopUpSys(''), false, false),
+                mbCallAiApi('', pageImageData, makeTopUpSys('পেইজের অন্য অংশ/ভিন্ন concept/detail থেকে জোর দিয়ে — '), true, true),
+            ]);
+            const existingQ = new Set(parsed.map(m => (m.question||'').trim()));
+            for (const r of [r1, r2]) {
+                if (r.status !== 'fulfilled' || !r.value) { if (r.reason) mbAiDebugErrs.push('topup' + mbTopUpTries + ':' + (r.reason?.message || r.reason)); continue; }
+                const topUpParsed = mbParseAiJson(r.value);
+                const topUpValid = (topUpParsed || []).filter(mbIsValidMcqBulk);
                 for (const m of topUpValid) {
-                    if (!existingQ.has((m.question||'').trim())) { parsed.push(m); existingQ.add((m.question||'').trim()); }
+                    const key = (m.question||'').trim();
+                    if (key && !existingQ.has(key)) { parsed.push(m); existingQ.add(key); }
                 }
             }
         } catch (topUpErr) { mbAiDebugErrs.push('topup' + mbTopUpTries + ':' + (topUpErr && topUpErr.message || topUpErr)); }
         if (parsed.length === beforeLen) {
             mbNoProgressStreak++;
-            if (mbNoProgressStreak >= 2) break; // পরপর ২ বার no-progress হলেই থামা যুক্তিসঙ্গত
+            if (mbNoProgressStreak >= MB_MAX_NO_PROGRESS_STREAK) break; // পরপর কয়েকবার progress না হলেই থামা, ১ম বারেই না
         } else {
             mbNoProgressStreak = 0;
         }
@@ -3846,7 +4098,9 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     // — exp_box missing হলে unique per-MCQ key ব্যবহার করা হয়, নাহলে সব missing-exp_box
     // MCQ একই cache entry শেয়ার করে ভুল/অন্য প্রশ্নের crop image পেয়ে যায়।
     const cropCache = new Map();
+    const wantImageBulk = mbGetExplanationImagePref();
     for (const m of newMcqs) {
+        if (!wantImageBulk) { delete m.exp_box; delete m.line_box; continue; }
         try {
             const key = m.exp_box ? JSON.stringify(m.exp_box) + JSON.stringify(m.line_box||null) : `NOBBOX_${m.id}`;
             if (!cropCache.has(key)) {
@@ -4145,6 +4399,9 @@ window.mbAiGenerate       = mbAiGenerate;
 window.mbSetGenMode        = mbSetGenMode;
 window.mbUpdateRangeSummary= mbUpdateRangeSummary;
 window.mbGenerateClick     = mbGenerateClick;
+window.mbGenerateClickReal = mbGenerateClickReal;
+window.mbCloseExpImgChoiceModal = mbCloseExpImgChoiceModal;
+window.mbConfirmExpImgChoice    = mbConfirmExpImgChoice;
 window.mbStartBulkGenerate = mbStartBulkGenerate;
 window.mbStopBulkGenerate  = mbStopBulkGenerate;
 window.mbSaveAiMcqs       = mbSaveAiMcqs;
@@ -4224,6 +4481,7 @@ async function mbConfirmSpecialExtract(scope) {
         if (!allExtracted.length) {
             if (progress) progress.style.display = 'none';
             mbToast('নির্বাচিত পেইজে কোনো existing MCQ পাওয়া যায়নি', 'error');
+            mbLogError('mbSpecialCsvExtractRange:empty', null, 'নির্বাচিত পেইজে কোনো existing MCQ পাওয়া যায়নি', { pages: pages.join(',') });
             return;
         }
 
@@ -4232,6 +4490,7 @@ async function mbConfirmSpecialExtract(scope) {
         mbToast('✓ ' + allExtracted.length + 'টি MCQ এক্সট্র্যাক্ট + CSV ডাউনলোড হয়েছে', 'success');
     } catch (ex) {
         mbToast('এক্সট্র্যাক্ট ব্যর্থ: ' + ex.message, 'error');
+        mbLogError('mbSpecialCsvExtractRange', null, ex && ex.message || ex, {});
     } finally {
         if (progress) progress.style.display = 'none';
     }
@@ -4271,7 +4530,7 @@ async function mbSpecialCsvExtractPage(pageNum) {
     const MAX_ATTEMPTS = 2;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
         try {
-            const page = await mbPdfDoc.getPage(pageNum);
+            const page = await (await mbWaitForPdfDoc()).getPage(pageNum);
             const textCont = await page.getTextContent();
             const pageText = textCont.items.map(i => i.str).join(' ').trim();
 
@@ -4360,6 +4619,7 @@ window.mbOpenSpecialSheet      = mbOpenSpecialSheet;
 window.mbCloseSpecialSheet     = mbCloseSpecialSheet;
 window.mbPickSpecialScope      = mbPickSpecialScope;
 window.mbConfirmSpecialExtract = mbConfirmSpecialExtract;
+window.mbToast                 = mbToast;
 
 })(); // end IIFE
 
