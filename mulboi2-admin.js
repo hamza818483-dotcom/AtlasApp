@@ -11,6 +11,12 @@ let mb2IsPremium = false;
 let mb2ChapterId = null;
 let mb2SubjectId = null;
 
+// bug fix: এই ফাইল AI_PROXY_URL/D1_API_KEY কে mulboi-mcq-admin.js এর গ্লোবাল ধরে নিয়েছিল,
+// কিন্তু ওই ফাইলে এগুলো IIFE-এর ভেতরে প্রাইভেট — window-এ কখনো এক্সপোজ হয়নি। ফলে PDF
+// আপলোড করতে গেলে "AI_PROXY_URL is not defined" এ থেমে যেত। এখানে নিজের কপি রাখা হলো।
+const AI_PROXY_URL = 'https://atlas-ai-proxy.hamza818483.workers.dev/';
+const D1_API_KEY   = 'mb_d1_9f2a7c6e1b4d8305';
+
 function mb2Api(path, opts) {
     opts = opts || {};
     opts.headers = Object.assign({

@@ -4442,6 +4442,7 @@ window.mbOpenSpecialSheet      = mbOpenSpecialSheet;
 window.mbCloseSpecialSheet     = mbCloseSpecialSheet;
 window.mbPickSpecialScope      = mbPickSpecialScope;
 window.mbConfirmSpecialExtract = mbConfirmSpecialExtract;
+window.mbToast                 = mbToast;
 
 })(); // end IIFE
 

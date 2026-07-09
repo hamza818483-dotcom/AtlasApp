@@ -10,6 +10,25 @@
 (function () {
 'use strict';
 
+// bug fix: এগুলো mulboi-mcq-admin.js এর IIFE-প্রাইভেট ভ্যারিয়েবল/ফাংশন ধরে নিয়ে ব্যবহার
+// করা হচ্ছিল, কিন্তু সেগুলো window-এ কখনো এক্সপোজ হয়নি — ফলে এডিটর খুললেই
+// "AI_PROXY_URL/esc is not defined" এরর দিতো। এখানে নিজের স্বাধীন কপি রাখা হলো।
+const AI_PROXY_URL = 'https://atlas-ai-proxy.hamza818483.workers.dev/';
+const D1_API_KEY   = 'mb_d1_9f2a7c6e1b4d8305';
+function esc(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function mbToast(msg, type) {
+    if (typeof window.mbToast === 'function' && window.mbToast !== mbToast) { window.mbToast(msg, type); return; }
+    const t = document.getElementById('toast');
+    if (!t) { console.warn('[toast]', msg); return; }
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._ed2Timer);
+    t._ed2Timer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
 const ED = {
     pdfId: null,
     pdfTitle: '',
