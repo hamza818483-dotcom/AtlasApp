@@ -351,18 +351,60 @@ function ed2AiPrompt(count) {
         `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"..."}]`;
 }
 
+// bug fix: /mcq-from-pdf রুট backend এ (atlas-ai-proxy-worker.js) আসলে সংজ্ঞায়িত নেই —
+// রিকোয়েস্ট ফলস-থ্রু হয়ে ডিফল্ট AI proxy handler এ যায়, যেটা body.question/body.image
+// আশা করে (pdf_url/prompt না), ফলে সবসময় "question বা image এর একটি দিতে হবে" (400)
+// রিটার্ন করত — এই কারণেই "MCQ তৈরি করো" বাটনে ক্লিক করলে কিছুই হতো না (silent throw)।
+// ফিক্স: মূলবই-১ এর মতোই — প্রথমে PDF-native পথ চেষ্টা করো (থাকলে ভবিষ্যতে কাজ করবে),
+// ব্যর্থ হলে সরাসরি ওই পৃষ্ঠার canvas ছবি (base64) দিয়ে ডিফল্ট /`` এন্ডপয়েন্টে যাও —
+// এটাই আসল কাজ করা পথ, backend সবসময় এটাই সাপোর্ট করে।
+async function ed2GetPageImageBase64(pageNum) {
+    if (!ED.pdfDoc) throw new Error('PDF এখনো লোড হয়নি');
+    const page = await ED.pdfDoc.getPage(pageNum);
+    const vp = page.getViewport({ scale: 1.6 });
+    const cv = document.createElement('canvas');
+    cv.width = vp.width; cv.height = vp.height;
+    await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+    const dataUrl = cv.toDataURL('image/jpeg', 0.85);
+    return { base64: dataUrl.split(',')[1], mimeType: 'image/jpeg' };
+}
+
 async function ed2CallAi(pageNum, count) {
-    const prompt = `এই PDF-এর পৃষ্ঠা ${pageNum} দেখো। ${ed2AiPrompt(count)}`;
-    const res = await fetch(AI_PROXY_URL.replace(/\/$/, '') + '/mcq-from-pdf', {
+    const prompt = ed2AiPrompt(count);
+
+    // ১ম চেষ্টা: PDF-native (কাজ না-ও করতে পারে, backend route নেই — চুপচাপ ব্যর্থ হয়ে নিচে যাবে)
+    try {
+        const pdfPrompt = `এই PDF-এর পৃষ্ঠা ${pageNum} দেখো। ${prompt}`;
+        const res = await fetch(AI_PROXY_URL.replace(/\/$/, '') + '/mcq-from-pdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pdf_url: ED.pdfUrl, prompt: pdfPrompt })
+        });
+        const data = await res.json().catch(() => null);
+        if (res.ok && data && data.success && data.answer) {
+            const match = data.answer.match(/\[[\s\S]*\]/);
+            if (match) return JSON.parse(match[0]);
+        }
+    } catch (_) {}
+
+    // ২য় (আসল কাজ করা) পথ: canvas থেকে ছবি নিয়ে ডিফল্ট AI proxy এন্ডপয়েন্ট
+    const imageData = await ed2GetPageImageBase64(pageNum);
+    const res2 = await fetch(AI_PROXY_URL.replace(/\/$/, ''), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pdf_url: ED.pdfUrl, prompt })
+        body: JSON.stringify({
+            question: '',
+            image: imageData,
+            systemPrompt: prompt
+        })
     });
-    const data = await res.json().catch(() => null);
-    if (!res.ok || !data || !data.success || !data.answer) throw new Error((data && data.error) || 'AI response ব্যর্থ');
-    const match = data.answer.match(/\[[\s\S]*\]/);
-    if (!match) throw new Error('AI সঠিক JSON দেয়নি');
-    return JSON.parse(match[0]);
+    const data2 = await res2.json().catch(() => null);
+    if (!res2.ok || !data2 || !data2.success || !data2.answer) {
+        throw new Error((data2 && data2.error) || 'AI response ব্যর্থ');
+    }
+    const match2 = data2.answer.match(/\[[\s\S]*\]/);
+    if (!match2) throw new Error('AI সঠিক JSON দেয়নি');
+    return JSON.parse(match2[0]);
 }
 
 async function ed2GenerateClick() {
