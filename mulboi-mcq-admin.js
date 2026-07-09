@@ -3794,6 +3794,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     // না পেলে (no progress) সাথে সাথে loop থামিয়ে দেওয়া হচ্ছে — বাকি ceiling গুলো অপচয় না
     // করে যা পাওয়া গেছে তা নিয়েই এগিয়ে যাওয়া হচ্ছে।
     let mbTopUpTries = 0;
+    let mbNoProgressStreak = 0;
     const MB_TOPUP_SAFETY_CEILING = 5;
     while (parsed.length < count.min && mbTopUpTries < MB_TOPUP_SAFETY_CEILING) {
         mbTopUpTries++;
@@ -3814,7 +3815,12 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
                 }
             }
         } catch (topUpErr) { mbAiDebugErrs.push('topup' + mbTopUpTries + ':' + (topUpErr && topUpErr.message || topUpErr)); }
-        if (parsed.length === beforeLen) break; // no progress এই round-এ — আর সময় নষ্ট না করে থেমে যাওয়া
+        if (parsed.length === beforeLen) {
+            mbNoProgressStreak++;
+            if (mbNoProgressStreak >= 2) break; // পরপর ২ বার no-progress হলেই থামা যুক্তিসঙ্গত
+        } else {
+            mbNoProgressStreak = 0;
+        }
     }
     mbMark('topUp');
     if (parsed.length < count.min) {
