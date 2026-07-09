@@ -17,6 +17,17 @@ let mb2SubjectId = null;
 const AI_PROXY_URL = 'https://atlas-ai-proxy.hamza818483.workers.dev/';
 const D1_API_KEY   = 'mb_d1_9f2a7c6e1b4d8305';
 
+// bug fix: esc/fmtDate ও একই কারণে IIFE-প্রাইভেট ছিল mulboi-mcq-admin.js এ, এখানে নিজের কপি।
+function esc(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function fmtDate(s) {
+    if (!s) return '';
+    try { return new Date(s).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short', year: 'numeric' }); }
+    catch { return s; }
+}
+
 function mb2Api(path, opts) {
     opts = opts || {};
     opts.headers = Object.assign({
