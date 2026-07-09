@@ -223,7 +223,7 @@ function mb2RenderAllPdfs(pdfs) {
                         </div>
                         <div class="pdf-card-actions">
                             <button class="act-btn act-toggle" title="${p.is_premium ? 'Free করো' : 'Premium করো'}" onclick="mb2TogglePremium(${p.id}, ${!p.is_premium})">${p.is_premium ? '⭐' : '🔓'}</button>
-                            <button class="act-btn act-edit" title="Edit" onclick="mb2OpenEditPanel(${p.id}, '${esc(p.title)}', '${esc(p.file_url)}')">📝</button>
+                            <button class="act-btn act-edit" title="Edit" onclick="mb2OpenEditPanel(${p.id}, '${esc(p.title)}', '${esc(p.file_url)}', '${esc(subName)}', '${esc(chName)}')">📝</button>
                             <button class="act-btn act-delete" title="মুছুন" onclick="mb2DeletePdf(${p.id}, '${esc(p.title)}')">🗑️</button>
                         </div>
                     </div>
@@ -252,6 +252,14 @@ async function mb2DeletePdf(id, title) {
     } catch { mbToast('মুছতে ব্যর্থ', 'error'); }
 }
 
+function mb2OpenEditPanel(pdfId, title, fileUrl, subName, chName) {
+    if (typeof mb2OpenMcqPanel === 'function') {
+        mb2OpenMcqPanel(pdfId, title, fileUrl, subName, chName);
+    } else {
+        mbToast('এডিটর লোড হয়নি, পেইজ রিফ্রেশ করুন', 'error');
+    }
+}
+
 window.mb2SelectAccess   = mb2SelectAccess;
 window.mb2DzOver         = mb2DzOver;
 window.mb2DzLeave        = mb2DzLeave;
@@ -262,3 +270,4 @@ window.mb2LoadDatalists  = mb2LoadDatalists;
 window.mb2LoadAllPdfs    = mb2LoadAllPdfs;
 window.mb2TogglePremium  = mb2TogglePremium;
 window.mb2DeletePdf      = mb2DeletePdf;
+window.mb2OpenEditPanel  = mb2OpenEditPanel;
