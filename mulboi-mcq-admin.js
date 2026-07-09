@@ -428,19 +428,9 @@ async function mbSpecialExtractPage(pageNum) {
             let rawJson;
             let geminiAlreadyTried = false; // এই page-এ Gemini PDF-native ইতিমধ্যে চেষ্টা হয়েছে কি না —
                                               // fallback chain-এ আবার Gemini কল করে quota নষ্ট না করার জন্য
-            if (mbPdfUrl) {
-                try {
-                    const pdfPrompt = `এই PDF-এর পেইজ ${pageNum} দেখো এবং নিচের নির্দেশ অনুসরণ করো:\n${basePrompt}`;
-                    const res = await fetch(AI_PROXY_URL.replace(/\/$/, '') + '/mcq-from-pdf', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ pdf_url: mbPdfUrl, prompt: pdfPrompt })
-                    });
-                    geminiAlreadyTried = true; // এই কল Gemini-ই ব্যবহার করে (PDF-native একমাত্র Gemini করতে পারে)
-                    const data = await res.json().catch(() => null);
-                    if (res.ok && data?.success && data.answer) rawJson = data.answer;
-                } catch (_) {}
-            }
+            // bug fix: '/mcq-from-pdf' route worker-e kokhono define e chilo na (dead call,
+            // always fail hoto silently) — mudha ekta network round-trip nosto hoto protibar.
+            // Shorashori image-based path e jawa hocche, jeta actually kaj kore.
             if (!rawJson) {
                 // bug fix: panel খোলার সাথে সাথে mbPdfDoc = null সেট হয় এবং pdf.js এসিঙ্ক্রোনাসভাবে
                 // লোড হতে থাকে (mbOpenMcqPanel দ্রষ্টব্য)। যদি generate button সেই লোড শেষ হওয়ার
@@ -2751,22 +2741,16 @@ async function mbAiGenerate() {
             }
         }
 
-        // Step 2 (fallback): whole-PDF direct-to-Gemini — only used if page-image path failed
-        // (e.g. canvas render issue). Explicit page number still included as a hint.
-        if (!rawJson && mbPdfUrl) {
+        // Step 2 (fallback): image-based retry, Groq skip kore onno provider diye — only
+        // used if page-image path failed. bug fix: '/mcq-from-pdf' route worker-e kokhono
+        // define e chilo na, tai age eta always fail hoto silently.
+        if (!rawJson) {
             try {
-                const pdfPrompt = `এই PDF-এর শুধুমাত্র পেইজ ${mbCurrentPage} দেখো (অন্য কোনো পেইজ থেকে না) এবং নিচের নির্দেশ অনুসরণ করো:\n${basePrompt}\n\n` +
+                const sysPrompt2 = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePrompt}\n` +
                     `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}`;
-                const res = await fetch(AI_PROXY_URL.replace(/\/$/, '') + '/mcq-from-pdf', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pdf_url: mbPdfUrl, prompt: pdfPrompt })
-                });
+                rawJson = await mbCallAiApi('', pageImageData, sysPrompt2, geminiAlreadyTried, true);
                 geminiAlreadyTried = true;
-                const data = await res.json().catch(() => null);
-                if (res.ok && data?.success && data.answer) rawJson = data.answer;
-                else if (!rawJson) mbAiDebugErrs.push('step2: ' + (data?.error || ('http ' + res.status)));
-            } catch (e2) { mbAiDebugErrs.push('step2: ' + (e2 && e2.message || e2)); /* fall through to legacy text approach below */ }
+            } catch (e2) { mbAiDebugErrs.push('step2: ' + (e2 && e2.message || e2)); }
         }
 
         // Step 3 (last resort): text-extraction approach
@@ -3808,20 +3792,20 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     } catch (e1) { mbAiDebugErrs.push('s1:' + (e1 && e1.message || e1)); /* fall through */ }
     mbMark('callA');
 
-    // Step 2 (fallback): whole-PDF direct-to-Gemini
-    if (!rawJson && mbPdfUrl) {
+    // Step 2 (fallback): image-based retry, ekhon Gemini-first path e (skipGroq=true taki
+    // Groq abar call na hoy, kintu Gemini/OpenRouter chain try kore).
+    // bug fix (root cause of "s2:question ba image er ekti dite hobe"): age ekhane
+    // '/mcq-from-pdf' namer ekta route call hoto ja worker-e kokhono define e chilo na —
+    // fole eta default '/proxy' handler-e giye porto, jeta {pdf_url,prompt} body pele
+    // question/image dutoi na thakar karone 400 error dito. Route-i toiri na kore, ekhon
+    // shudhu shei image diyei alada angle/provider-e (Groq skip kore) retry kora hocche,
+    // jeta actually kaj kore.
+    if (!rawJson) {
         try {
-            const pdfPrompt = `এই PDF-এর শুধুমাত্র পেইজ ${pageNum} দেখো (অন্য কোনো পেইজ থেকে না) এবং নিচের নির্দেশ অনুসরণ করো:\n${basePromptA}\n\n` +
+            const sysPrompt2 = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ${basePromptA}\n` +
                 `শুধু JSON array রিটার্ন করো, কোনো markdown বা অতিরিক্ত text ছাড়া। Format:\n${jsonFormat}`;
-            const res = await fetch(AI_PROXY_URL.replace(/\/$/, '') + '/mcq-from-pdf', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pdf_url: mbPdfUrl, prompt: pdfPrompt })
-            });
+            rawJson = await mbCallAiApi('', pageImageData, sysPrompt2, geminiAlreadyTried, true); // skipGroq=true, s1 e Groq/Gemini try hoye thakle skip kore onno provider
             geminiAlreadyTried = true;
-            const data = await res.json().catch(() => null);
-            if (res.ok && data?.success && data.answer) rawJson = data.answer;
-            else mbAiDebugErrs.push('s2:' + (data?.error || ('http' + res.status)));
         } catch (e2) { mbAiDebugErrs.push('s2:' + (e2 && e2.message || e2)); }
     }
     mbMark('step2');
