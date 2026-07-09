@@ -3171,7 +3171,18 @@ function mbParseAiJsonRaw(raw) {
 
     candidate = extractBalanced(cleaned, '{', '}');
     parsed = tryParse(candidate);
-    if (parsed) return [parsed];
+    if (parsed) {
+        // bug fix (root cause of "option_a" jemon bhul field name / MCQ validation fail):
+        // worker-side callGroq() nijer jsonSystemPrompt-e {"questions":[...]} wrapper chapiye
+        // dey, kintu shei wrapper theke .questions unwrap kokhono kokhono fail hoy (jemon
+        // Groq nijei broken/truncated array dile worker-er JSON.parse fail kore, raw answer
+        // e pura {"questions":[...]} object thake). Age eta [parsed] (mane [{questions:[...]}])
+        // banto — ekta "MCQ object" hisebe jar kono question/option field ei nei, tai validation
+        // e always fail hoto. Ekhon .questions/.mcqs/.data array thakle setai unwrap kora hoy.
+        const wrapKey = ['questions', 'mcqs', 'data', 'items'].find(k => Array.isArray(parsed[k]));
+        if (wrapKey) return parsed[wrapKey];
+        return [parsed];
+    }
 
     const rough = cleaned.match(/\[[\s\S]*/);
     if (rough) {
