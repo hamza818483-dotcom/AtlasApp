@@ -3102,11 +3102,16 @@ async function mbAiGenerateSpecial() {
 // ছিল না, ফলে worker-এর ৫-provider fallback chain-এর কোনো ধাপ (rate-limit/slow response)
 // আটকে থাকলে পুরো generate flow-ও অনির্দিষ্টকালের জন্য আটকে থাকতো — এবং mbAiGenerate-এ
 // এরকম ২-৩টা sequential কল থাকায় (page-image → whole-pdf → text fallback) সবগুলো ধীরগতির
-// হলে মোট সময় ১৫-২০ মিনিটে পৌঁছাতো। এখন প্রতিটা কল সর্বোচ্চ ৪৫ সেকেন্ডে fail করবে (timeout),
+// হলে মোট সময় ১৫-২০ মিনিটে পৌঁছাতো। এখন প্রতিটা কল সর্বোচ্চ ৬০ সেকেন্ডে fail করবে (timeout),
 // এবং সাথে সাথে পরের fallback ধাপে চলে যাবে — ফলে ব্যর্থ হলেও দ্রুত জানা যাবে।
+// bug fix (root cause of "s1/s2: টাইমআউট" বারবার আসা): worker-এর ভিতরে Gemini
+// (internal key-rotation, প্রতি key ১২s) + Groq/OpenRouter/Cerebras/Cloudflare race —
+// পুরো chain worst-case ৩৫-৪০ সেকেন্ড পর্যন্ত নিতে পারে, client আগে মাত্র ৪৫s-এই abort
+// করত (margin কম ছিল) — worker আসলে সফল হতে যাচ্ছিল এমন call-ও মাঝপথে কেটে যেত।
+// এখন ৬০s দেওয়া হলো যাতে genuine-slow-কিন্তু-successful response-ও ধরা যায়।
 async function mbCallAiApi(prompt, image, customSystemPrompt, skipGemini, skipGroq) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 45000);
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
     let res;
     try {
         res = await fetch(AI_PROXY_URL, {
@@ -3125,7 +3130,7 @@ async function mbCallAiApi(prompt, image, customSystemPrompt, skipGemini, skipGr
         });
     } catch (fetchErr) {
         if (fetchErr && fetchErr.name === 'AbortError') {
-            throw new Error('AI প্রক্সি টাইমআউট (৪৫ সেকেন্ডে সাড়া দেয়নি)');
+            throw new Error('AI প্রক্সি টাইমআউট (৬০ সেকেন্ডে সাড়া দেয়নি)');
         }
         throw fetchErr;
     } finally {
