@@ -159,10 +159,20 @@ export default {
             { name: "cerebras", fn: () => callCerebras(env, question, systemPrompt, image) },
             { name: "cloudflare", fn: () => callCloudflareAI(env, question, systemPrompt, image) },
         ];
+        const STRONG_NAMES = new Set(["gemini", "groq", "openrouter"]);
+        const STRONG_NAMES = new Set(["gemini", "groq", "openrouter"]);
+        const raceSettledFlag = { done: false };
+        // quality fix: cerebras/cloudflare তুলনামূলক দুর্বল মডেল ব্যবহার করে — সব provider
+        // ঠিক একই মুহূর্তে race করালে মাঝে মাঝে দুর্বল মডেল আগে সাড়া দিয়ে "জিতে" যেতে পারে,
+        // ফলে ভুল/দুর্বল MCQ চলে আসতে পারে। তাই এদের ২.৫s দেরিতে শুরু করানো হচ্ছে —
+        // শক্তিশালী provider (gemini/groq/openrouter) এর মধ্যে উত্তর দিলে raceSettledFlag
+        // সেট হয়ে যায় এবং weak provider এর কল স্কিপ হয়ে যায় (quota-ও বাঁচে)।
         const providers = allProviders
             .filter(p => !(skipGemini && p.name === "gemini"))
             .filter(p => !(skipGroq && p.name === "groq"))
-            .map(p => p.fn);
+            .map(p => STRONG_NAMES.has(p.name)
+                ? p.fn
+                : () => sleep(2500).then(() => (raceSettledFlag.done ? { error: "skipped: race already won" } : p.fn())));
 
         // bug fix (root cause of slow MCQ generation): আগে সব provider সিরিয়ালি (একটার পর
         // একটা) চলত, এবং পুরো চেইন ২ বার (chainRound) — worst case = 5 provider × নিজেদের
@@ -178,6 +188,7 @@ export default {
                 tryProvider().then((r) => {
                     if (!settled && r && r.answer && r.answer.trim().length > 5) {
                         settled = true;
+                        raceSettledFlag.done = true;
                         resolve(r);
                         return;
                     }
@@ -1237,12 +1248,16 @@ async function processPendingMcqJobs(env) {
                 ? `${job.system_prompt}\n\nএখন আরও ঠিক ${need}টি নতুন MCQ বানাও (আগে যা বানানো হয়েছে তার থেকে সম্পূর্ণ ভিন্ন প্রশ্ন — একই প্রশ্ন repeat করা যাবে না)।`
                 : job.system_prompt;
 
+            const cronRaceSettled = { done: false };
+            // quality fix (একই fix client-side handler-এও, উপরে দেখো): cerebras/cloudflare
+            // দুর্বল মডেল ব্যবহার করে বলে race-এ এদের ২.৫s দেরিতে শুরু করানো হচ্ছে, যাতে
+            // gemini/groq/openrouter এর মধ্যে উত্তর দিলে দুর্বল provider কল-ই শুরু না হয়।
             const providers = [
                 () => callGroq(env, '', roundPrompt, image),
                 () => callGemini(env, '', roundPrompt, image),
                 () => callOpenRouter(env, '', roundPrompt, image),
-                () => callCerebras(env, '', roundPrompt, image),
-                () => callCloudflareAI(env, '', roundPrompt, image),
+                () => sleep(2500).then(() => (cronRaceSettled.done ? { error: "skipped" } : callCerebras(env, '', roundPrompt, image))),
+                () => sleep(2500).then(() => (cronRaceSettled.done ? { error: "skipped" } : callCloudflareAI(env, '', roundPrompt, image))),
             ];
             let answer = null, lastErr = 'সব provider ব্যর্থ';
             // bug fix: এখানেও আগে provider সিরিয়ালি চলত (Groq→Gemini→OpenRouter→Cerebras→CF AI,
@@ -1256,6 +1271,7 @@ async function processPendingMcqJobs(env) {
                     p().then((r) => {
                         if (!settled && r && r.answer && r.answer.trim().length > 5) {
                             settled = true;
+                            cronRaceSettled.done = true;
                             answer = r.answer;
                             resolve();
                             return;
