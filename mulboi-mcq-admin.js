@@ -2889,6 +2889,37 @@ async function mbAiGenerate() {
             return;
         }
         parsed = validParsed;
+
+        // fix (root cause of "% box e generate howar somoy real update dekhay na"): age
+        // shortfall thakle count.min-er niche-i validParsed niye shesh hoye jeto, kono
+        // real extra call chalano hoto na — % box e purota shomoy ekbar-i fake ticker
+        // dekhiye shesh-e hothat count dekhato. Ekhon bulk-mode-er moto ekta real
+        // top-up call kora hocche jokhon shortfall thake — eta ekta genuine network call,
+        // tai completion-er por % box-e real (fake na) intermediate count dekhano jay.
+        if (parsed.length < count.min) {
+            mbSetAiProgress(58, parsed.length + '/' + count.min + 'টি MCQ পাওয়া গেছে — বাকিগুলো আনা হচ্ছে...');
+            try {
+                const need = count.min - parsed.length;
+                const askedList = parsed.map(m => (m.question||'').trim()).filter(Boolean).slice(0, 20).join(' | ');
+                const avoidClause = askedList
+                    ? `\n\nআগে এই প্রশ্নগুলো ইতিমধ্যে বানানো হয়ে গেছে, এগুলোর হুবহু বা কাছাকাছি (rephrase করা) কোনো প্রশ্ন আবার দেওয়া যাবে না, সম্পূর্ণ নতুন/ভিন্ন প্রশ্ন দিতে হবে: ${askedList}`
+                    : '';
+                const topUpImg = pageImageData || await mbGetPageImageBase64(mbCurrentPage);
+                if (topUpImg) {
+                    const topUpSys = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ` +
+                        `আরও ঠিক ${need}টি নতুন MCQ বানাও (আগে যা বানানো হয়েছে তার থেকে সম্পূর্ণ ভিন্ন প্রশ্ন/কোণ থেকে — একই প্রশ্ন repeat করা যাবে না)। ${basePrompt}${avoidClause}\n` +
+                        `শুধু ঠিক ${need}টি প্রশ্নের valid JSON array রিটার্ন করো, markdown/preamble ছাড়া। Format:\n${jsonFormat}`;
+                    const topUpRaw = await mbCallAiApi('', topUpImg, topUpSys, true, true); // skipGemini=true — Groq/OpenRouter দিয়ে, দ্রুত + provider diversify
+                    const topUpParsed = mbParseAiJson(topUpRaw);
+                    const topUpValid = (topUpParsed || []).filter(mbIsValidMcq);
+                    if (topUpValid.length) parsed = [...parsed, ...topUpValid];
+                }
+            } catch (topUpErr) {
+                mbLogError('mbAiGenerate:topup', mbCurrentPage, topUpErr && topUpErr.message || topUpErr, { type, need: count.min - parsed.length });
+            }
+            mbSetAiProgress(70, parsed.length + '/' + count.min + 'টি MCQ পাওয়া গেছে...');
+        }
+
         // Count must-follow: চাহিদার চেয়ে বেশি দিলে কেটে দাও, কম দিলে ইউজারকে জানাও (আগে শুধু
         // console.warn হতো, ইউজার কিছুই বুঝতে পারত না কেন সংখ্যা কম এলো)
         if (parsed.length > count.max) parsed = parsed.slice(0, count.max);
