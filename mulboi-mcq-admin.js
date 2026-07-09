@@ -3834,22 +3834,32 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     // করে যা পাওয়া গেছে তা নিয়েই এগিয়ে যাওয়া হচ্ছে।
     let mbTopUpTries = 0;
     const MB_TOPUP_SAFETY_CEILING = 5;
+    // speed+accuracy fix: প্রতি round-এ আগে ১টা মাত্র call হতো (need-সংখ্যক নতুন MCQ চেয়ে) —
+    // যদি সেই ১টা call এ AI duplicate/invalid প্রশ্ন দিত, পুরো round-ই নষ্ট হতো। এখন প্রতি
+    // round-এ ২টা ভিন্ন angle-এর call parallel-এ পাঠানো হয় (একটা normal, একটা different
+    // section/concept থেকে জোর দিয়ে) — parallel বলে সময় বাড়ে না, কিন্তু একটা call fail/duplicate
+    // দিলেও অন্যটা থেকে valid MCQ পাওয়ার সম্ভাবনা বাড়ে (accuracy/completion rate বাড়ে)।
     while (parsed.length < count.min && mbTopUpTries < MB_TOPUP_SAFETY_CEILING) {
         mbTopUpTries++;
         const need = count.min - parsed.length;
         const beforeLen = parsed.length;
+        const makeTopUpSys = (angleHint) => `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ` +
+            `আরও ঠিক ${need}টি নতুন MCQ বানাও (আগে যা বানানো হয়েছে তার থেকে সম্পূর্ণ ভিন্ন প্রশ্ন/কোণ থেকে — একই প্রশ্ন repeat করা যাবে না)। ${angleHint}${basePrompt}\n` +
+            `প্রশ্ন/অপশন/ব্যাখ্যা অবশ্যই বাংলা ভাষায় ও বাংলা লিপিতে লিখতে হবে। ` +
+            `শুধু ঠিক ${need}টি প্রশ্নের valid JSON array রিটার্ন করো, markdown/preamble ছাড়া। Format:\n${jsonFormat}`;
         try {
-            const topUpSys = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ` +
-                `আরও ঠিক ${need}টি নতুন MCQ বানাও (আগে যা বানানো হয়েছে তার থেকে সম্পূর্ণ ভিন্ন প্রশ্ন/কোণ থেকে — একই প্রশ্ন repeat করা যাবে না)। ${basePrompt}\n` +
-                `প্রশ্ন/অপশন/ব্যাখ্যা অবশ্যই বাংলা ভাষায় ও বাংলা লিপিতে লিখতে হবে। ` +
-                `শুধু ঠিক ${need}টি প্রশ্নের valid JSON array রিটার্ন করো, markdown/preamble ছাড়া। Format:\n${jsonFormat}`;
-            const topUpRaw = await mbCallAiApi('', pageImageData, topUpSys, false, false); // skipGemini=false, skipGroq=false — worker chain: Groq(all keys)→Gemini→OpenRouter, sequentially per call
-            const topUpParsed = mbParseAiJson(topUpRaw);
-            const topUpValid = (topUpParsed || []).filter(mbIsValidMcqBulk);
-            if (topUpValid.length) {
-                const existingQ = new Set(parsed.map(m => (m.question||'').trim()));
+            const [r1, r2] = await Promise.allSettled([
+                mbCallAiApi('', pageImageData, makeTopUpSys(''), false, false),
+                mbCallAiApi('', pageImageData, makeTopUpSys('পেইজের অন্য অংশ/ভিন্ন concept/detail থেকে জোর দিয়ে — '), true, true),
+            ]);
+            const existingQ = new Set(parsed.map(m => (m.question||'').trim()));
+            for (const r of [r1, r2]) {
+                if (r.status !== 'fulfilled' || !r.value) { if (r.reason) mbAiDebugErrs.push('topup' + mbTopUpTries + ':' + (r.reason?.message || r.reason)); continue; }
+                const topUpParsed = mbParseAiJson(r.value);
+                const topUpValid = (topUpParsed || []).filter(mbIsValidMcqBulk);
                 for (const m of topUpValid) {
-                    if (!existingQ.has((m.question||'').trim())) { parsed.push(m); existingQ.add((m.question||'').trim()); }
+                    const key = (m.question||'').trim();
+                    if (key && !existingQ.has(key)) { parsed.push(m); existingQ.add(key); }
                 }
             }
         } catch (topUpErr) { mbAiDebugErrs.push('topup' + mbTopUpTries + ':' + (topUpErr && topUpErr.message || topUpErr)); }
