@@ -169,7 +169,7 @@
             if (body) body.classList.toggle('open', kcqAllOpen);
         });
         btnEl.classList.toggle('kcq-toggle-all-active', kcqAllOpen);
-        btnEl.innerHTML = kcqAllOpen ? '🔒 সব বন্ধ করো' : '🔓 সব উত্তর দেখাও';
+        btnEl.innerHTML = kcqAllOpen ? '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /> <path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg> সব বন্ধ করো' : '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /> <path d="M7 11V7a5 5 0 0 1 9.9-1" /></svg> সব উত্তর দেখাও';
     };
 
     function renderKaKhaCard(item, index) {
@@ -221,7 +221,7 @@
             window.__kcqState = { type, subject: null, entries: filtered };
 
             if (!filtered.length) {
-                container.innerHTML = `<div class="section-header"><div class="section-title">📦 ${label}</div></div><p class="kcq-empty">কোনো কন্টেন্ট নেই</p>`;
+                container.innerHTML = `<div class="section-header"><div class="section-title"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#64748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z' /> <path d='M12 22V12' /> <polyline points='3.29 7 12 12 20.71 7' /> <path d='m7.5 4.27 9 5.15' /></svg> ${label}</div></div><p class="kcq-empty">কোনো কন্টেন্ট নেই</p>`;
                 window.switchMode('Category');
                 return;
             }
@@ -231,7 +231,7 @@
 
         } catch (e) {
             console.error('loadKaKhaContent error:', e);
-            container.innerHTML = `<div class="section-header"><div class="section-title">📦 ${label}</div></div><p class="kcq-empty" style="color:var(--error);">লোড করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।</p>`;
+            container.innerHTML = `<div class="section-header"><div class="section-title"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#64748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z' /> <path d='M12 22V12' /> <polyline points='3.29 7 12 12 20.71 7' /> <path d='m7.5 4.27 9 5.15' /></svg> ${label}</div></div><p class="kcq-empty" style="color:var(--error);">লোড করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।</p>`;
             window.switchMode('Category');
         }
     };
@@ -328,7 +328,7 @@
                 ? JSON.parse(entry.parsed_content)
                 : entry.parsed_content;
         } catch (e) {
-            container.innerHTML = `<div class="kcq-empty">⚠️ কনটেন্ট লোড করতে সমস্যা হয়েছে।</div>`;
+            container.innerHTML = `<div class="kcq-empty"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3' /> <path d='M12 9v4' /> <path d='M12 17h.01' /></svg>️ কনটেন্ট লোড করতে সমস্যা হয়েছে।</div>`;
             return;
         }
 

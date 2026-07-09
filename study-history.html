@@ -283,19 +283,15 @@
     <div class="sh-popup-stat-grid">
       <div class="sh-popup-stat">
         <div class="sh-popup-stat-val" id="shPopupStudy" style="color:#10B981">—</div>
-        <div class="sh-popup-stat-lbl"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 7v14" />
-  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg> পড়েছে</div>
+        <div class="sh-popup-stat-lbl"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 7v14' /> <path d='M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z' /></svg> পড়েছে</div>
       </div>
       <div class="sh-popup-stat">
         <div class="sh-popup-stat-val" id="shPopupBreak" style="color:#F59E0B">—</div>
-        <div class="sh-popup-stat-lbl"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 2v2" />
-  <path d="M14 2v2" />
-  <path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1" />
-  <path d="M6 2v2" /></svg> Break</div>
+        <div class="sh-popup-stat-lbl"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#92400E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M10 2v2' /> <path d='M14 2v2' /> <path d='M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1' /> <path d='M6 2v2' /></svg> Break</div>
       </div>
       <div class="sh-popup-stat">
         <div class="sh-popup-stat-val" id="shPopupSleep" style="color:#818CF8">—</div>
-        <div class="sh-popup-stat-lbl"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" /></svg> Sleep</div>
+        <div class="sh-popup-stat-lbl"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401' /></svg> Sleep</div>
       </div>
       <div class="sh-popup-stat">
         <div class="sh-popup-stat-val" id="shPopupRest" style="color:var(--text-secondary)">—</div>
@@ -321,15 +317,7 @@ const SUPABASE_KEY = 'mb_d1_9f2a7c6e1b4d8305';
 let isDarkMode = true, currentUser = null;
 
 function showToast(m,d=2500){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
-function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" /></svg>':'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="4" />
-  <path d="M12 2v2" />
-  <path d="M12 20v2" />
-  <path d="m4.93 4.93 1.41 1.41" />
-  <path d="m17.66 17.66 1.41 1.41" />
-  <path d="M2 12h2" />
-  <path d="M20 12h2" />
-  <path d="m6.34 17.66-1.41 1.41" />
-  <path d="m19.07 4.93-1.41 1.41" /></svg>️';localStorage.setItem('atlas-theme',isDarkMode?'dark':'light');}
+function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'🌙':'☀️';localStorage.setItem('atlas-theme',isDarkMode?'dark':'light');}
 function goTo(u){location.href=u;}
 function goBackGlobal(){
     try {
@@ -428,8 +416,7 @@ function updatePeriodSummary(days){
   document.getElementById('todaySleepBox').textContent = fmtHM(slp)||'0m';
   // Label update
   const lbl = days===1?'আজকে':days===0?'সবসময়':`বিগত ${days} দিন`;
-  document.getElementById('todayStudyBox').nextElementSibling.textContent = `<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 7v14" />
-  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg> ${lbl}`;
+  document.getElementById('todayStudyBox').nextElementSibling.textContent = `📚 ${lbl}`;
 }
 
 /* ═══ CHART TOP BOXES — আজকের live update ═══ */
@@ -494,10 +481,7 @@ function renderChart(){
 function renderSessionList(sessions, daily){
   const list = document.getElementById('shSessionList');
   if(!sessions?.length && !daily?.length){
-    list.innerHTML = `<div class="sh-empty">এখনো কোনো সেশন রেকর্ড নেই।<br><br>Focus Timer শুরু করো! <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
-  <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09" />
-  <path d="M9 12a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z" />
-  <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 .05 5 .05" /></svg></div>`;
+    list.innerHTML = `<div class="sh-empty">এখনো কোনো সেশন রেকর্ড নেই।<br><br>Focus Timer শুরু করো! <svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5' /> <path d='M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09' /> <path d='M9 12a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z' /> <path d='M9 12H4s.55-3.03 2-4c1.62-1.08 5 .05 5 .05' /></svg></div>`;
     return;
   }
 
@@ -570,7 +554,7 @@ function buildSessionCard({dateLabel, dayLabel, dateKey, studySecs, breakSecs, s
   const restFmt   = fmtHM(restSecs);
   const statusDot = isOngoing
     ? '<span style="display:inline-block;width:6px;height:6px;background:#10B981;border-radius:50%;margin-right:4px;vertical-align:middle;animation:livePulse 1.5s infinite"></span>চলছে'
-    : '<span style="color:#10B981;font-size:9px"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 6 9 17l-5-5" /></svg></span> সম্পন্ন';
+    : '<span style="color:#10B981;font-size:9px">✓</span> সম্পন্ন';
   const safeData = encodeURIComponent(JSON.stringify({dateLabel,dayLabel,studySecs,breakSecs,sleepSecs,breaksUsed,sessionCount,restSecs,isOngoing}));
 
   return `<div class="sh-session-card ${isOngoing?'ongoing':''}" onclick="openCardPopup(decodeURIComponent('${safeData}'))">
@@ -618,28 +602,16 @@ function openCardPopup(raw){
   // Feedback generation
   const studyH = studySecs/3600;
   let feedback = '';
-  if(studyH >= 8) feedback = `অসাধারণ! <b>${fmtHM(studySecs)}</b> পড়েছো — এটা একটা অবিশ্বাস্য দিন! <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 14.66v1.626a2 2 0 0 1-.976 1.696A5 5 0 0 0 7 21.978" />
-  <path d="M14 14.66v1.626a2 2 0 0 0 .976 1.696A5 5 0 0 1 17 21.978" />
-  <path d="M18 9h1.5a1 1 0 0 0 0-5H18" />
-  <path d="M4 22h16" />
-  <path d="M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z" />
-  <path d="M6 9H4.5a1 1 0 0 1 0-5H6" /></svg>`;
-  else if(studyH >= 5) feedback = `দারুণ পারফরম্যান্স! <b>${fmtHM(studySecs)}</b> পড়েছো। ধারাবাহিকতা ধরে রাখো। <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4" /></svg>`;
-  else if(studyH >= 3) feedback = `ভালো দিন! <b>${fmtHM(studySecs)}</b> পড়েছো। আরো একটু বাড়ালে আরো ভালো হবে। <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 7v14" />
-  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg>`;
-  else if(studyH >= 1) feedback = `<b>${fmtHM(studySecs)}</b> পড়েছো। ছোট শুরু থেকেই বড় লক্ষ্য — আরো সময় দেওয়ার চেষ্টা করো। <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M14 9.536V7a4 4 0 0 1 4-4h1.5a.5.5 0 0 1 .5.5V5a4 4 0 0 1-4 4 4 4 0 0 0-4 4c0 2 1 3 1 5a5 5 0 0 1-1 3" />
-  <path d="M4 9a5 5 0 0 1 8 4 5 5 0 0 1-8-4" />
-  <path d="M5 21h14" /></svg>`;
-  else feedback = `এই দিন পড়াশোনা কম হয়েছে। আগামীকাল আরো মনোযোগ দিতে পারবে! <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
-  <path d="M9 18h6" />
-  <path d="M10 22h4" /></svg>`;
+  if(studyH >= 8) feedback = `অসাধারণ! <b>${fmtHM(studySecs)}</b> পড়েছো — এটা একটা অবিশ্বাস্য দিন! 🏆`;
+  else if(studyH >= 5) feedback = `দারুণ পারফরম্যান্স! <b>${fmtHM(studySecs)}</b> পড়েছো। ধারাবাহিকতা ধরে রাখো। 💪`;
+  else if(studyH >= 3) feedback = `ভালো দিন! <b>${fmtHM(studySecs)}</b> পড়েছো। আরো একটু বাড়ালে আরো ভালো হবে। 📚`;
+  else if(studyH >= 1) feedback = `<b>${fmtHM(studySecs)}</b> পড়েছো। ছোট শুরু থেকেই বড় লক্ষ্য — আরো সময় দেওয়ার চেষ্টা করো। 🌱`;
+  else feedback = `এই দিন পড়াশোনা কম হয়েছে। আগামীকাল আরো মনোযোগ দিতে পারবে! 💡`;
 
   if(breaksUsed>0) feedback += ` ${breaksUsed}টি বিরতি নিয়েছো।`;
 
   document.getElementById('shPopupDate').textContent = `${dateLabel}, ${dayLabel}`;
-  document.getElementById('shPopupHeadline').textContent = isOngoing ? '⏳ চলছে...' : '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 21v-6" />
-  <path d="M12 21V3" />
-  <path d="M19 21V9" /></svg> দিনের সারসংক্ষেপ';
+  document.getElementById('shPopupHeadline').textContent = isOngoing ? '⏳ চলছে...' : '📊 দিনের সারসংক্ষেপ';
   document.getElementById('shPopupStudy').textContent = fmtHM(studySecs);
   document.getElementById('shPopupBreak').textContent = fmtHM(effectiveBreak);
   document.getElementById('shPopupSleep').textContent = fmtHM(effectiveSleep);
@@ -713,55 +685,41 @@ function buildAdvice(){
 
   // ═══ Condition-based variety advice ═══
   if(totalStudy===0){
-    statusColor='#EF4444'; statusIcon='<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" /></svg>';
+    statusColor='#EF4444'; statusIcon='😴';
     headline='গত ৭ দিনে কোনো পড়াশোনার রেকর্ড নেই';
     tips.push('আজই Focus Timer চালু করে একটা ছোট ২৫ মিনিটের session দিয়ে শুরু করো।');
     tips.push('বড় লক্ষ্য না ভেবে প্রতিদিন মাত্র ৩০ মিনিট দিয়ে অভ্যাস তৈরি করো।');
   } else if(zeroDays>=4){
-    statusColor='#F59E0B'; statusIcon='<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
-  <path d="M12 9v4" />
-  <path d="M12 17h.01" /></svg>️';
+    statusColor='#F59E0B'; statusIcon='⚠️';
     headline='ধারাবাহিকতা অনেক কম — সপ্তাহে মাত্র ' + activeDays + ' দিন পড়েছো';
     tips.push('প্রতিদিন অল্প হলেও পড়ার অভ্যাস গড়ে তোলো — ধারাবাহিকতাই বড় ফলাফলের চাবিকাঠি।');
     tips.push('একটানা বেশি পড়ার চেয়ে প্রতিদিন নিয়মিত ১ ঘণ্টা পড়া বেশি কার্যকর।');
     if(bestDayName) tips.push(`${bestDayName}বার তুমি সবচেয়ে ভালো পড়েছিলে (${fmtHM(bestDay.studySecs)}) — সেই রুটিন বাকি দিনগুলোতেও রাখার চেষ্টা করো।`);
   } else if(trendDown){
-    statusColor='#F59E0B'; statusIcon='<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M16 17h6v-6" />
-  <path d="m22 17-8.5-8.5-5 5L2 7" /></svg>';
+    statusColor='#F59E0B'; statusIcon='📉';
     headline='পড়াশোনার সময় কমে আসছে — মনোযোগ ধরে রাখতে হবে';
     tips.push(`সপ্তাহের শুরুর দিকে গড়ে ${fmtHM(firstHalf)} পড়তে, এখন তা কমে ${fmtHM(lastHalf)} হয়েছে।`);
     tips.push('Break Mode ব্যবহার করে ছোট ছোট বিরতি নিয়ে ক্লান্তি কমাও, যাতে দীর্ঘ সময় মনোযোগ ধরে রাখতে পারো।');
     tips.push('ঘুমের সময় ঠিক রাখো — পর্যাপ্ত ঘুম মনোযোগ ফিরিয়ে আনতে সাহায্য করে।');
   } else if(totalBreaks > activeDays*4){
-    statusColor='#F59E0B'; statusIcon='<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 2v2" />
-  <path d="M14 2v2" />
-  <path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1" />
-  <path d="M6 2v2" /></svg>';
+    statusColor='#F59E0B'; statusIcon='☕';
     headline='অতিরিক্ত বিরতি নিচ্ছো — একটানা পড়ার অভ্যাস দরকার';
     tips.push(`গড়ে দিনে প্রায় ${(totalBreaks/Math.max(activeDays,1)).toFixed(1)}টি বিরতি নিচ্ছো — এটা মনোযোগ ভেঙে দিতে পারে।`);
     tips.push('Pomodoro পদ্ধতি ব্যবহার করো — ২৫ মিনিট একটানা পড়ে তারপর ৫ মিনিট বিরতি নাও।');
     tips.push('বিরতির সময় ফোন থেকে দূরে থেকো, যাতে দ্রুত আবার মনোযোগ ফিরে আসে।');
   } else if(avgStudy >= 14400){ // 4h+ avg
-    statusColor='#10B981'; statusIcon='<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 14.66v1.626a2 2 0 0 1-.976 1.696A5 5 0 0 0 7 21.978" />
-  <path d="M14 14.66v1.626a2 2 0 0 0 .976 1.696A5 5 0 0 1 17 21.978" />
-  <path d="M18 9h1.5a1 1 0 0 0 0-5H18" />
-  <path d="M4 22h16" />
-  <path d="M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z" />
-  <path d="M6 9H4.5a1 1 0 0 1 0-5H6" /></svg>';
+    statusColor='#10B981'; statusIcon='🏆';
     headline='চমৎকার পারফরম্যান্স! গড়ে দৈনিক ' + fmtHM(avgStudy) + ' পড়ছো';
     tips.push('এই ধারাবাহিকতা বজায় রাখো — তুমি দারুণ পথে আছো!');
     if(totalSleepSecs/7 < 18000) tips.push('তবে ঘুমের প্রতি একটু বেশি যত্ন নাও — পর্যাপ্ত বিশ্রাম দীর্ঘমেয়াদে পড়াশোনার মান বাড়ায়।');
     else tips.push('ঘুম ও পড়াশোনার ভারসাম্য ভালো আছে — এভাবেই চালিয়ে যাও।');
   } else if(trendUp){
-    statusColor='#10B981'; statusIcon='<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M16 7h6v6" />
-  <path d="m22 7-8.5 8.5-5-5L2 17" /></svg>';
+    statusColor='#10B981'; statusIcon='📈';
     headline='দারুণ! পড়াশোনার সময় বাড়ছে প্রতিদিন';
     tips.push(`সপ্তাহের শুরুতে গড়ে ${fmtHM(firstHalf)} ছিল, এখন ${fmtHM(lastHalf)} হয়েছে — চমৎকার উন্নতি!`);
     tips.push('এই গতি ধরে রাখলে সামনের সপ্তাহে আরও ভালো ফলাফল আসবে।');
   } else {
-    statusColor='#6366F1'; statusIcon='<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
-  <path d="M9 18h6" />
-  <path d="M10 22h4" /></svg>';
+    statusColor='#6366F1'; statusIcon='💡';
     headline='মোটামুটি ভালো চলছে — আরেকটু ধারাবাহিক হলে আরও ভালো হবে';
     tips.push(`গত ৭ দিনে গড়ে দৈনিক ${fmtHM(avgStudy)} পড়েছো, মোট ${activeDays} দিন সক্রিয় ছিলে।`);
     tips.push('প্রতিদিন একটা নির্দিষ্ট সময়ে পড়তে বসার অভ্যাস করো — এতে মস্তিষ্ক স্বয়ংক্রিয়ভাবে প্রস্তুত হয়ে যাবে।');
@@ -786,15 +744,7 @@ function buildAdvice(){
 
 document.addEventListener('DOMContentLoaded', async () => {
     const saved = localStorage.getItem('atlas-theme');
-    if (saved === 'light') { isDarkMode = false; document.body.classList.add('light-mode'); document.body.classList.remove('dark-mode'); document.getElementById('themeToggle').textContent = '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="4" />
-  <path d="M12 2v2" />
-  <path d="M12 20v2" />
-  <path d="m4.93 4.93 1.41 1.41" />
-  <path d="m17.66 17.66 1.41 1.41" />
-  <path d="M2 12h2" />
-  <path d="M20 12h2" />
-  <path d="m6.34 17.66-1.41 1.41" />
-  <path d="m19.07 4.93-1.41 1.41" /></svg>️'; }
+    if (saved === 'light') { isDarkMode = false; document.body.classList.add('light-mode'); document.body.classList.remove('dark-mode'); document.getElementById('themeToggle').textContent = '☀️'; }
     try{ currentUser = JSON.parse(localStorage.getItem('atlas-session')); }catch(_){ currentUser=null; }
     if(!currentUser){ location.replace('auth.html'); return; }
     await loadAllData();

@@ -456,9 +456,7 @@
 <header class="header">
     <div class="header-left">
         <button class="global-back-btn" onclick="goBackGlobal()" title="ফিরে যান" aria-label="ফিরে যান"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
-        <button class="hamburger" onclick="toggleSidebar()"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 5h16" />
-  <path d="M4 12h16" />
-  <path d="M4 19h16" /></svg></button>
+        <button class="hamburger" onclick="toggleSidebar()"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#64748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 5h16' /> <path d='M4 12h16' /> <path d='M4 19h16' /></svg></button>
         <div class="atlas-brand-box" onclick="goTo('index.html')" style="display:flex;align-items:center;gap:6px;background:#0c191e;border:1px solid var(--border);border-radius:8px;padding:2px 6px;height:52px;box-sizing:border-box;cursor:pointer;">
             <img src="logo-icon.png" alt="ATLAS icon" style="height:100%;width:auto;display:block;image-rendering:-webkit-optimize-contrast;" onerror="this.style.display='none'">
             <img src="logo-text.png" alt="ATLAS APP" style="height:68%;width:auto;display:block;image-rendering:-webkit-optimize-contrast;" onerror="this.style.display='none'">
@@ -475,9 +473,7 @@
 <div class="mode-container active" id="modeList">
     <div class="exam-list-wrap">
         <div class="section-header">
-            <div class="section-title"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34" />
-  <path d="M14 2v5a1 1 0 0 0 1 1h5" />
-  <path d="M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z" /></svg> ফ্রি এক্সাম সেকশন</div>
+            <div class="section-title"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34' /> <path d='M14 2v5a1 1 0 0 0 1 1h5' /> <path d='M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z' /></svg> ফ্রি এক্সাম সেকশন</div>
             <div class="section-subtitle">আপনার প্রস্তুতির জন্য সেরা এক্সাম</div>
         </div>
         <!-- Req #8: 6 boxes: Board, Medical, Varsity, Onushiloni, Model Test, My Mistakes -->
@@ -487,16 +483,11 @@
             <div class="main-cat-card" onclick="showCategory('varsity')"><span class="cat-icon"><span class="si-tile tile-plum" style="width:34px;height:34px;border-radius:9px"><svg viewBox="0 0 24 24" fill="none"><path d="M3.5 9.5L12 4l8.5 5.5M4.5 9.5v9.5h15V9.5M9.5 19v-5h5v5" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.1)"/></svg></span></span><span class="cat-name">ভার্সিটি প্রস্তুতি</span><span class="cat-count" id="cnt-varsity">...</span></div>
             <div class="main-cat-card" onclick="showCategory('onushiloni')"><span class="cat-icon"><span class="si-tile tile-orange" style="width:34px;height:34px;border-radius:9px"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.1)"/><path d="M8 8h8M8 12h8M8 16h5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span></span><span class="cat-name">অনুশীলনী এক্সাম</span><span class="cat-count" id="cnt-onushiloni">...</span></div>
             <!-- Req #9: Model Test box opens modal directly -->
-            <div class="main-cat-card" onclick="openModelTest()"><span class="cat-icon"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 7v14" />
-  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg></span><span class="cat-name">Model Test</span><span class="cat-count">মেডিকেল/ভার্সিটি</span></div>
+            <div class="main-cat-card" onclick="openModelTest()"><span class="cat-icon"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 7v14' /> <path d='M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z' /></svg></span><span class="cat-name">Model Test</span><span class="cat-count">মেডিকেল/ভার্সিটি</span></div>
             <!-- Req #10: My Mistakes box -->
-            <div class="main-cat-card" onclick="openMistakes()"><span class="cat-icon"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
-  <path d="M12 9v4" />
-  <path d="M12 17h.01" /></svg>️</span><span class="cat-name">My Mistakes</span><span class="cat-count">প্র্যাকটিস করুন</span></div>
+            <div class="main-cat-card" onclick="openMistakes()"><span class="cat-icon"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3' /> <path d='M12 9v4' /> <path d='M12 17h.01' /></svg>️</span><span class="cat-name">My Mistakes</span><span class="cat-count">প্র্যাকটিস করুন</span></div>
         </div>
-        <div class="section-header" style="margin-top:10px;"><div class="section-title"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
-  <circle cx="12" cy="12" r="6" />
-  <circle cx="12" cy="12" r="2" /></svg> আনলিমিটেড মক টেস্ট</div></div>
+        <div class="section-header" style="margin-top:10px;"><div class="section-title"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><circle cx='12' cy='12' r='10' /> <circle cx='12' cy='12' r='6' /> <circle cx='12' cy='12' r='2' /></svg> আনলিমিটেড মক টেস্ট</div></div>
     </div>
 </div>
 
@@ -515,8 +506,7 @@
         <div id="preExamContent"></div>
         <!-- Req #11: "প্রশ্ন দেখো" button always shown (if allow_preview) -->
         <div class="pre-exam-actions">
-            <button class="btn-see-questions" id="seeQuestionsBtn" onclick="startPreviewMode()" style="display:none;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
-  <circle cx="12" cy="12" r="3" /></svg>️ প্রশ্ন দেখো</button>
+            <button class="btn-see-questions" id="seeQuestionsBtn" onclick="startPreviewMode()" style="display:none;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#64748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0' /> <circle cx='12' cy='12' r='3' /></svg>️ প্রশ্ন দেখো</button>
             <button class="btn btn-success" id="startExamBtn" onclick="startExamHall()" style="width:100%;flex:2;display:none;">▶️ এক্সাম শুরু করুন</button>
         </div>
     </div>
@@ -533,10 +523,7 @@
         <div id="previewQuestionsArea"></div>
     </div>
     <!-- Req #12: Animated "উত্তর দেখো" floating button -->
-    <button class="reveal-fab" id="revealFab" onclick="toggleRevealAnswers()"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#A78BFA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" />
-  <path d="M20 2v4" />
-  <path d="M22 4h-4" />
-  <circle cx="4" cy="20" r="2" /></svg> উত্তর দেখো</button>
+    <button class="reveal-fab" id="revealFab" onclick="toggleRevealAnswers()"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#A78BFA' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z' /> <path d='M20 2v4' /> <path d='M22 4h-4' /> <circle cx='4' cy='20' r='2' /></svg> উত্তর দেখো</button>
 </div>
 
 <!-- MODE 5: Exam Hall -->
@@ -546,17 +533,13 @@
         <div class="exam-info-bar" id="examInfoBar"></div>
         <div class="timer-sticky" id="timerSticky">
             <span class="timer-text" id="timerText">৬০:০০</span>
-            <span class="progress-text" id="progressText"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M16 7h6v6" />
-  <path d="m22 7-8.5 8.5-5-5L2 17" /></svg> ০%</span>
+            <span class="progress-text" id="progressText"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#22C55E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M16 7h6v6' /> <path d='m22 7-8.5 8.5-5-5L2 17' /></svg> ০%</span>
         </div>
         <!-- Req #15: Progress bar -->
         <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressBarFill" style="width:0%"></div></div>
         <div class="questions-area" id="questionsArea"></div>
-        <button class="submit-fixed" id="submitBtn" onclick="submitExam()"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 3v12" />
-  <path d="m17 8-5-5-5 5" />
-  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /></svg> Submit</button>
-        <button class="nav-fab" id="navFab" onclick="openNavPopup()"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
-  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /></svg></button>
+        <button class="submit-fixed" id="submitBtn" onclick="submitExam()"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 3v12' /> <path d='m17 8-5-5-5 5' /> <path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' /></svg> Submit</button>
+        <button class="nav-fab" id="navFab" onclick="openNavPopup()"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><rect width='8' height='4' x='8' y='2' rx='1' ry='1' /> <path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2' /></svg></button>
     </div>
 </div>
 
@@ -569,12 +552,10 @@
 <!-- Nav Popup -->
 <div class="nav-overlay" id="navOverlay" onclick="closeNavPopup()">
     <div class="nav-popup" onclick="event.stopPropagation()">
-        <div class="nav-popup-title"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
-  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /></svg> প্রশ্ন নেভিগেশন</div>
+        <div class="nav-popup-title"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><rect width='8' height='4' x='8' y='2' rx='1' ry='1' /> <path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2' /></svg> প্রশ্ন নেভিগেশন</div>
         <div class="nav-grid" id="navGrid"></div>
         <div class="nav-stats" id="navStats"></div>
-        <button class="nav-close" onclick="closeNavPopup()"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M18 6 6 18" />
-  <path d="m6 6 12 12" /></svg> বন্ধ</button>
+        <button class="nav-close" onclick="closeNavPopup()"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M18 6 6 18' /> <path d='m6 6 12 12' /></svg> বন্ধ</button>
     </div>
 </div>
 
@@ -582,14 +563,8 @@
 <div class="ai-chat-overlay" id="aiChatOverlay">
     <div class="ai-chat-modal">
         <div class="ai-chat-header">
-            <div class="ai-chat-title"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 8V4H8" />
-  <rect width="16" height="12" x="4" y="8" rx="2" />
-  <path d="M2 14h2" />
-  <path d="M20 14h2" />
-  <path d="M15 13v2" />
-  <path d="M9 13v2" /></svg> ATLAS AI Chat</div>
-            <button class="ai-chat-close" onclick="closeAIChat()"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M18 6 6 18" />
-  <path d="m6 6 12 12" /></svg></button>
+            <div class="ai-chat-title"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 8V4H8' /> <rect width='16' height='12' x='4' y='8' rx='2' /> <path d='M2 14h2' /> <path d='M20 14h2' /> <path d='M15 13v2' /> <path d='M9 13v2' /></svg> ATLAS AI Chat</div>
+            <button class="ai-chat-close" onclick="closeAIChat()"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M18 6 6 18' /> <path d='m6 6 12 12' /></svg></button>
         </div>
         <div class="ai-chat-body" id="aiChatBody">
             <div class="ai-loading"><span></span><span></span><span></span>&nbsp;লোড হচ্ছে...</div>
@@ -609,15 +584,14 @@
             <div class="lb-subtitle" id="lbSubtitle">—</div>
         </div>
         <div class="lb-body" id="lbBody"><div class="lb-loading">⏳ লোড হচ্ছে...</div></div>
-        <button class="lb-close" onclick="closeLeaderboard()"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M18 6 6 18" />
-  <path d="m6 6 12 12" /></svg> বন্ধ করুন</button>
+        <button class="lb-close" onclick="closeLeaderboard()"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M18 6 6 18' /> <path d='m6 6 12 12' /></svg> বন্ধ করুন</button>
     </div>
 </div>
 
 <!-- Report Modal -->
 <div class="modal-overlay" id="reportModal">
     <div class="modal">
-        <div class="modal-title"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528" /></svg> প্রশ্ন রিপোর্ট</div>
+        <div class="modal-title"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528' /></svg> প্রশ্ন রিপোর্ট</div>
         <div class="input-group"><label>ভুলের ধরন</label>
             <select id="reportType">
                 <option value="">— নির্বাচন —</option>
@@ -631,9 +605,7 @@
         <div class="input-group"><label>আপনার মতামত</label><textarea id="reportSuggestion" rows="2" placeholder="সাজেশন..."></textarea></div>
         <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:10px;">
             <button class="btn btn-cancel" onclick="closeReportModal()">বাতিল</button>
-            <button class="btn btn-danger" onclick="submitReport()"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 3v12" />
-  <path d="m17 8-5-5-5 5" />
-  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /></svg> জমা</button>
+            <button class="btn btn-danger" onclick="submitReport()"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 3v12' /> <path d='m17 8-5-5-5 5' /> <path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' /></svg> জমা</button>
         </div>
     </div>
 </div>
@@ -668,13 +640,10 @@
 <script>
 // =============================================================
 // ATLAS APP — exam.html
-// Flutter-ready: State <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
-  <path d="m12 5 7 7-7 7" /></svg> API <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
-  <path d="m12 5 7 7-7 7" /></svg> UI (3 layers)
+// Flutter-ready: State → API → UI (3 layers)
 // =============================================================
 
-// CONFIG (<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
-  <path d="m12 5 7 7-7 7" /></svg> Flutter: constants.dart)
+// CONFIG (→ Flutter: constants.dart)
 const SUPABASE_URL  = 'https://atlas-ai-proxy.hamza818483.workers.dev';
 const SUPABASE_KEY  = 'mb_d1_9f2a7c6e1b4d8305';
 // kakhacq-user-render.js (আলাদা <script src> ফাইল) window.SUPABASE_URL/window.safeFetch
@@ -685,8 +654,7 @@ const AUTH_URL   = 'https://atlasprep.pages.dev/auth';
 // AI calls go through the centralized proxy worker — no provider key lives here.
 const AI_PROXY_URL = 'https://atlas-ai-proxy.hamza818483.workers.dev/';
 
-// STATE (<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
-  <path d="m12 5 7 7-7 7" /></svg> Flutter: ExamState / ChangeNotifier)
+// STATE (→ Flutter: ExamState / ChangeNotifier)
 let isDarkMode = true, isSidebarOpen = false;
 let currentExam = null, examQuestions = [], userAnswers = {}, bookmarkedQuestions = {};
 let examTimer = null, examSeconds = 0, totalSeconds = 0;
@@ -696,8 +664,7 @@ let previewRevealed = false;
 let aiChatQid = null, aiChatHistory = [];
 
 // =============================================================
-// API LAYER (<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
-  <path d="m12 5 7 7-7 7" /></svg> Flutter: supabase_service.dart)
+// API LAYER (→ Flutter: supabase_service.dart)
 // =============================================================
 async function safeFetch(url, opts = {}) {
     opts.headers = Object.assign({ apikey:SUPABASE_KEY, Authorization:'Bearer '+SUPABASE_KEY }, opts.headers||{});
@@ -707,26 +674,21 @@ async function safeFetch(url, opts = {}) {
         const text = await res.text();
         if (!res.ok) {
             let errMsg=''; try{errMsg=JSON.parse(text).message||'';}catch(e){errMsg=text.substring(0,100);}
-            showError('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
-  <path d="M12 9v4" />
-  <path d="M12 17h.01" /></svg>️ ডাটাবেজ সমস্যা','ডাটা লোড করতে সমস্যা হয়েছে.',`${res.status}: ${errMsg}`,()=>safeFetch(url,opts));
+            showError('⚠️ ডাটাবেজ সমস্যা','ডাটা লোড করতে সমস্যা হয়েছে.',`${res.status}: ${errMsg}`,()=>safeFetch(url,opts));
             throw new Error(errMsg||`HTTP ${res.status}`);
         }
         if (!text?.trim()) return [];
         return JSON.parse(text);
     } catch(e) {
         if (e.message?.includes('Failed to fetch')||e.message?.includes('NetworkError'))
-            showError('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
-  <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
-  <path d="M2 12h20" /></svg> নেটওয়ার্ক সমস্যা','ইন্টারনেট সংযোগ চেক করুন.',e.message,()=>safeFetch(url,opts));
+            showError('🌐 নেটওয়ার্ক সমস্যা','ইন্টারনেট সংযোগ চেক করুন.',e.message,()=>safeFetch(url,opts));
         console.error('❌',e.message);
         return [];
     }
 }
 
 // =============================================================
-// SESSION HELPERS (<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
-  <path d="m12 5 7 7-7 7" /></svg> Flutter: auth_service.dart)
+// SESSION HELPERS (→ Flutter: auth_service.dart)
 // =============================================================
 function isLoggedIn() { try{return !!JSON.parse(localStorage.getItem('atlas-session'));}catch(e){return false;} }
 function getSession() { try{return JSON.parse(localStorage.getItem('atlas-session'));}catch(e){return null;} }
@@ -735,19 +697,10 @@ function isSubAdmin() { return getSession()?.role==='sub_admin'; }
 function checkUserHasAccess() { const s=getSession(); return s?.has_paid_access===true||isAdmin()||isSubAdmin(); }
 
 // =============================================================
-// COMMON UI (<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
-  <path d="m12 5 7 7-7 7" /></svg> Flutter: common_widgets.dart)
+// COMMON UI (→ Flutter: common_widgets.dart)
 // =============================================================
 function showToast(m,d=2000){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
-function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="4" />
-  <path d="M12 2v2" />
-  <path d="M12 20v2" />
-  <path d="m4.93 4.93 1.41 1.41" />
-  <path d="m17.66 17.66 1.41 1.41" />
-  <path d="M2 12h2" />
-  <path d="M20 12h2" />
-  <path d="m6.34 17.66-1.41 1.41" />
-  <path d="m19.07 4.93-1.41 1.41" /></svg>️':'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" /></svg>';localStorage.setItem('atlas-theme',isDarkMode?'dark':'light');}
+function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'☀️':'🌙';localStorage.setItem('atlas-theme',isDarkMode?'dark':'light');}
 // Global back button — always goes exactly one step back in real browser history (never further, never to a different page)
 function goBackGlobal() {
     // Note: global-nav.js শেষে load হয়ে এটাকে override করে stack-based navigation দিয়ে।
@@ -777,25 +730,20 @@ function checkGuestAction(){if(!isLoggedIn()){showGuestModal();return false;}ret
 function showGuestModal(){
     document.getElementById('guestModalContent').innerHTML=`
         <div class="guest-message">
-            <div class="icon"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-  <path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></div>
+            <div class="icon">🔐</div>
             <div class="title">সকল ফিচার ব্যবহার করতে</div>
             <div class="subtitle">ওয়েবসাইটে একাউন্ট রেজিস্ট্রেশন</div>
             <div class="subtitle" style="margin-bottom:16px;">করে লগিন করুন, প্রিয় শিক্ষার্থী</div>
-            <div style="font-size:12px;color:var(--accent);margin-bottom:4px;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
-  <circle cx="12" cy="10" r="3" /></svg> Registration Link:</div>
+            <div style="font-size:12px;color:var(--accent);margin-bottom:4px;">📍 Registration Link:</div>
             <div class="guest-link-box">${AUTH_URL}</div>
-            <button class="btn btn-primary" onclick="goTo('${AUTH_URL}')" style="width:100%;margin-bottom:6px;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg> রেজিস্ট্রেশন পেজ</button>
-            <button class="btn btn-outline" onclick="document.getElementById('guestModal').classList.remove('active')" style="width:100%;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M18 6 6 18" />
-  <path d="m6 6 12 12" /></svg> বন্ধ</button>
+            <button class="btn btn-primary" onclick="goTo('${AUTH_URL}')" style="width:100%;margin-bottom:6px;">🔗 রেজিস্ট্রেশন পেজ</button>
+            <button class="btn btn-outline" onclick="document.getElementById('guestModal').classList.remove('active')" style="width:100%;">✕ বন্ধ</button>
         </div>`;
     document.getElementById('guestModal').classList.add('active');
 }
 
 // =============================================================
-// MODE SWITCH (<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
-  <path d="m12 5 7 7-7 7" /></svg> Flutter: Navigator / IndexedStack)
+// MODE SWITCH (→ Flutter: Navigator / IndexedStack)
 // =============================================================
 function switchMode(mode){
     document.querySelectorAll('.mode-container').forEach(m=>m.classList.remove('active'));
@@ -839,7 +787,7 @@ async function loadCategoryCounts(){
 // =============================================================
 function showCategory(cat){
     currentCategory=cat;
-    const titles={board:'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#9B59B6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /></svg> বোর্ড প্রস্তুতি',medical:'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#9B59B6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /></svg> মেডিকেল+ডেন্টাল',varsity:'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#9B59B6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /></svg> ভার্সিটি প্রস্তুতি',onushiloni:'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#9B59B6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /></svg> অনুশীলনী'};
+    const titles={board:'🔵 বোর্ড প্রস্তুতি',medical:'🟢 মেডিকেল+ডেন্টাল',varsity:'🟣 ভার্সিটি প্রস্তুতি',onushiloni:'🟠 অনুশীলনী'};
     let html=`<div class="section-header"><div class="section-title">${titles[cat]||cat}</div></div>`;
     if(cat==='board'){
         html+=`<div class="cat-grid">
@@ -852,14 +800,9 @@ function showCategory(cat){
         </div>`;
     } else if(cat==='medical'){
         html+=`<div class="cat-grid">
-            <div class="cat-card" onclick="showMedicalSub('medical')"><span class="cat-name"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 9a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h4a1 1 0 0 1 1 1v4a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-4a1 1 0 0 1 1-1h4a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-4a1 1 0 0 1-1-1V4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4a1 1 0 0 1-1 1z" /></svg> Medical</span></div>
-            <div class="cat-card" onclick="showMedicalSub('dental')"><span class="cat-name"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M11 2v2" />
-  <path d="M5 2v2" />
-  <path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1" />
-  <path d="M8 15a6 6 0 0 0 12 0v-3" />
-  <circle cx="20" cy="10" r="2" /></svg> Dental</span></div>
-            <div class="cat-card" onclick="showMedicalSub('afmc')"><span class="cat-name"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526" />
-  <circle cx="12" cy="8" r="6" /></svg>️ AFMC</span></div>
+            <div class="cat-card" onclick="showMedicalSub('medical')"><span class="cat-name">🏥 Medical</span></div>
+            <div class="cat-card" onclick="showMedicalSub('dental')"><span class="cat-name">🦷 Dental</span></div>
+            <div class="cat-card" onclick="showMedicalSub('afmc')"><span class="cat-name">🎖️ AFMC</span></div>
         </div>`;
     } else if(cat==='varsity'){
         html+=`<div class="cat-grid">
@@ -881,12 +824,7 @@ function showCategory(cat){
 }
 
 function showMedicalSub(type){
-    const title={medical:'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 9a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h4a1 1 0 0 1 1 1v4a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-4a1 1 0 0 1 1-1h4a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-4a1 1 0 0 1-1-1V4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4a1 1 0 0 1-1 1z" /></svg> Medical',dental:'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M11 2v2" />
-  <path d="M5 2v2" />
-  <path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1" />
-  <path d="M8 15a6 6 0 0 0 12 0v-3" />
-  <circle cx="20" cy="10" r="2" /></svg> Dental',afmc:'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526" />
-  <circle cx="12" cy="8" r="6" /></svg>️ AFMC'}[type];
+    const title={medical:'🏥 Medical',dental:'🦷 Dental',afmc:'🎖️ AFMC'}[type];
     document.getElementById('categoryContent').innerHTML=`
         <div class="section-header"><div class="section-title">${title}</div></div>
         <div class="cat-grid">
@@ -934,8 +872,7 @@ async function loadExamsBySubType(cat,sub){
     }catch(e){}
 }
 
-// ── Exam Subject List <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
-  <path d="m12 5 7 7-7 7" /></svg> Exam List (২-স্তর নেভিগেশন, page-by-page) ──
+// ── Exam Subject List → Exam List (২-স্তর নেভিগেশন, page-by-page) ──
 // আগে এটা সব subject-এর exam একসাথে গ্রুপ-হেডার দিয়ে flat list-এ
 // দেখাত। এখন প্রথমে Subject List (নতুন পেজ) দেখাবে, subject ক্লিক
 // করলে তখন সেই subject-এর exam list (নতুন পেজ, back বাটন সহ) আসবে।
@@ -958,18 +895,16 @@ function renderExamSubjectList(){
         return;
     }
 
-    let html = `<div class="kcq-header-info"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 7v14" />
-  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg> মোট সাবজেক্ট: <b>${subjects.length}</b></div><div class="kcq-box-list">`;
+    let html = `<div class="kcq-header-info">📚 মোট সাবজেক্ট: <b>${subjects.length}</b></div><div class="kcq-box-list">`;
     subjects.forEach(s=>{
         const count = bySubject[s].length;
         html += `<div class="kcq-box" onclick="window.__examOpenSubject('${s.replace(/'/g,"\\'")}')">
             <div class="kcq-box-main">
-                <div class="kcq-box-title"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20" /></svg> ${s}</div>
+                <div class="kcq-box-title">📘 ${s}</div>
                 <div class="kcq-box-sub">${count}টি এক্সাম</div>
             </div>
             <span class="kcq-box-count">${count}</span>
-            <span class="kcq-box-arrow"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
-  <path d="m12 5 7 7-7 7" /></svg></span>
+            <span class="kcq-box-arrow">→</span>
         </div>`;
     });
     html += `</div>`;
@@ -988,29 +923,25 @@ function renderExamListForSubject(subject){
     const showBack = Object.keys(data.reduce((a,e)=>{a[e.subject||'সাধারণ']=1;return a;},{})).length > 1;
 
     let html = showBack ? `<button class="back-btn" onclick="window.__examBackToSubjects()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> সাবজেক্ট তালিকায় ফিরুন</button>` : '';
-    html += `<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20" /></svg> ${subject}</div>`;
+    html += `<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;">📘 ${subject}</div>`;
     list.forEach(e=>{
         const info=e.chapter||e.title||'—';
         const meta=[e.board,e.year,e.writer,e.unit].filter(Boolean).join(' | ');
         if(e.is_locked===true||e.is_locked==='true'){
             html+=`<div class="list-item locked-exam" onclick="showLockedExamBanner('${(e.title||info).replace(/'/g,'')}')">
                 <div>
-                    <div class="list-item-title"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-  <path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg> ${info}</div>
+                    <div class="list-item-title">🔒 ${info}</div>
                     <div class="list-item-sub">${meta?meta+' | ':''}${e.total_marks||0} প্রশ্ন</div>
                 </div>
-                <span class="lock-badge"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-  <path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg> Locked</span>
+                <span class="lock-badge">🔒 Locked</span>
             </div>`;
         } else {
             html+=`<div class="list-item" onclick="loadExamById(${e.id})">
                 <div>
-                    <div class="list-item-title"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 7v14" />
-  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg> ${info}</div>
+                    <div class="list-item-title">📖 ${info}</div>
                     <div class="list-item-sub">${meta?meta+' | ':''}${e.total_marks||0} প্রশ্ন</div>
                 </div>
-                <span class="list-item-arrow"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
-  <path d="m12 5 7 7-7 7" /></svg></span>
+                <span class="list-item-arrow">→</span>
             </div>`;
         }
     });
@@ -1023,18 +954,14 @@ window.__examBackToSubjects = function(){
 };
 
 // =============================================================
-// TOPICWISE EXAM — Subject <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
-  <path d="m12 5 7 7-7 7" /></svg> Chapter <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
-  <path d="m12 5 7 7-7 7" /></svg> Topic dropdown <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
-  <path d="m12 5 7 7-7 7" /></svg> Exam list
+// TOPICWISE EXAM — Subject → Chapter → Topic dropdown → Exam list
 // =============================================================
 window.__twState = { data: [], subject: null, chapter: null };
 
 async function loadTopicwiseSubjects(){
     try{
         const data = await safeFetch(`${SUPABASE_URL}/rest/v1/exams?exam_type=eq.topicwise&select=*&order=sort_order.asc,created_at.desc&limit=500`);
-        if(!data?.length){ document.getElementById('categoryContent').innerHTML='<div style="text-align:center;color:var(--text-secondary);padding:40px 20px;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7" />
-  <rect x="2" y="4" width="20" height="16" rx="2" /></svg> কোনো টপিকওয়াইজ এক্সাম যোগ করা হয়নি<br><span style="font-size:12px;">এডমিন প্যানেল থেকে যোগ করুন</span></div>'; switchMode('Category'); return; }
+        if(!data?.length){ document.getElementById('categoryContent').innerHTML='<div style="text-align:center;color:var(--text-secondary);padding:40px 20px;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7" /> <rect x="2" y="4" width="20" height="16" rx="2" /></svg> কোনো টপিকওয়াইজ এক্সাম যোগ করা হয়নি<br><span style="font-size:12px;">এডমিন প্যানেল থেকে যোগ করুন</span></div>'; switchMode('Category'); return; }
         window.__twState = { data, subject:null, chapter:null };
         renderTwSubjects();
     }catch(e){ document.getElementById('categoryContent').innerHTML='<p style="text-align:center;color:var(--text-secondary);padding:20px;">লোড করতে সমস্যা হয়েছে</p>'; switchMode('Category'); }
@@ -1045,14 +972,12 @@ function renderTwSubjects(){
     const bySubject = {};
     data.forEach(e=>{ const s=e.subject||'সাধারণ'; if(!bySubject[s]) bySubject[s]=[]; bySubject[s].push(e); });
     const subjects = Object.keys(bySubject);
-    let html = `<div class="section-header"><div class="section-title"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#9B59B6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /></svg> Topicwise Exam</div></div>`;
-    html += `<div class="kcq-header-info"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 7v14" />
-  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg> মোট সাবজেক্ট: <b>${subjects.length}</b></div><div class="kcq-box-list">`;
+    let html = `<div class="section-header"><div class="section-title">🟢 Topicwise Exam</div></div>`;
+    html += `<div class="kcq-header-info">📚 মোট সাবজেক্ট: <b>${subjects.length}</b></div><div class="kcq-box-list">`;
     subjects.forEach(s=>{
         html += `<div class="kcq-box" onclick="window.__twOpenSubject('${s.replace(/'/g,"\\'")}')">
-            <div class="kcq-box-main"><div class="kcq-box-title"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20" /></svg> ${s}</div><div class="kcq-box-sub">${bySubject[s].length}টি এক্সাম</div></div>
-            <span class="kcq-box-count">${bySubject[s].length}</span><span class="kcq-box-arrow"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
-  <path d="m12 5 7 7-7 7" /></svg></span>
+            <div class="kcq-box-main"><div class="kcq-box-title">📘 ${s}</div><div class="kcq-box-sub">${bySubject[s].length}টি এক্সাম</div></div>
+            <span class="kcq-box-count">${bySubject[s].length}</span><span class="kcq-box-arrow">→</span>
         </div>`;
     });
     html += `</div>`;
@@ -1073,13 +998,11 @@ function renderTwChapters(){
     list.forEach(e=>{ const c=e.chapter||'সাধারণ'; if(!byChapter[c]) byChapter[c]=[]; byChapter[c].push(e); });
     const chapters = Object.keys(byChapter);
     let html = `<button class="back-btn" onclick="renderTwSubjects()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> সাবজেক্ট তালিকায় ফিরুন</button>`;
-    html += `<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20" /></svg> ${subject}</div><div class="kcq-box-list">`;
+    html += `<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;">📘 ${subject}</div><div class="kcq-box-list">`;
     chapters.forEach(c=>{
         html += `<div class="kcq-box" onclick="window.__twOpenChapter('${c.replace(/'/g,"\\'")}')">
-            <div class="kcq-box-main"><div class="kcq-box-title"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 7v14" />
-  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg> ${c}</div><div class="kcq-box-sub">${byChapter[c].length}টি টপিক/এক্সাম</div></div>
-            <span class="kcq-box-count">${byChapter[c].length}</span><span class="kcq-box-arrow"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
-  <path d="m12 5 7 7-7 7" /></svg></span>
+            <div class="kcq-box-main"><div class="kcq-box-title">📖 ${c}</div><div class="kcq-box-sub">${byChapter[c].length}টি টপিক/এক্সাম</div></div>
+            <span class="kcq-box-count">${byChapter[c].length}</span><span class="kcq-box-arrow">→</span>
         </div>`;
     });
     html += `</div>`;
@@ -1097,9 +1020,7 @@ function renderTwTopicDropdown(){
     const list = data.filter(e => (e.subject||'সাধারণ')===subject && (e.chapter||'সাধারণ')===chapter);
     const topics = [...new Set(list.map(e=>e.topic).filter(Boolean))];
     let html = `<button class="back-btn" onclick="renderTwChapters()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> চ্যাপ্টার তালিকায় ফিরুন</button>`;
-    html += `<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20" /></svg> ${subject} <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
-  <path d="m12 5 7 7-7 7" /></svg> <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 7v14" />
-  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg> ${chapter}</div>`;
+    html += `<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;">📘 ${subject} → 📖 ${chapter}</div>`;
     if(topics.length){
         html += `<div class="input-group" style="margin-bottom:10px;">
             <label>টপিক নির্বাচন করুন</label>
@@ -1131,17 +1052,13 @@ function renderTwExamList(list){
         const info = e.topic ? `${e.title||e.chapter} — ${e.topic}` : (e.title||e.chapter||'—');
         if(e.is_locked===true||e.is_locked==='true'){
             html += `<div class="list-item locked-exam" onclick="showLockedExamBanner('${(e.title||info).replace(/'/g,'')}')">
-                <div><div class="list-item-title"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-  <path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg> ${info}</div><div class="list-item-sub">${e.total_marks||0} প্রশ্ন</div></div>
-                <span class="lock-badge"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-  <path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg> Locked</span>
+                <div><div class="list-item-title">🔒 ${info}</div><div class="list-item-sub">${e.total_marks||0} প্রশ্ন</div></div>
+                <span class="lock-badge">🔒 Locked</span>
             </div>`;
         } else {
             html += `<div class="list-item" onclick="loadExamById(${e.id})">
-                <div><div class="list-item-title"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 7v14" />
-  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg> ${info}</div><div class="list-item-sub">${e.total_marks||0} প্রশ্ন</div></div>
-                <span class="list-item-arrow"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
-  <path d="m12 5 7 7-7 7" /></svg></span>
+                <div><div class="list-item-title">📖 ${info}</div><div class="list-item-sub">${e.total_marks||0} প্রশ্ন</div></div>
+                <span class="list-item-arrow">→</span>
             </div>`;
         }
     });
@@ -1151,11 +1068,10 @@ function renderTwExamList(list){
 function showLockedExamBanner(examTitle){
     document.getElementById('preExamContent').innerHTML=`
         <div class="locked-banner">
-            <div class="locked-banner-icon"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-  <path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></div>
+            <div class="locked-banner-icon">🔒</div>
             <div class="locked-banner-title">${examTitle}</div>
             <div class="locked-banner-sub">এই এক্সামটি পেইড ব্যাচের জন্য লক করা আছে।<br>পেইড ব্যাচে যোগ দিয়ে আনলক করুন!</div>
-            <button class="btn btn-primary" onclick="openWA()" style="margin-top:14px;width:100%;background:linear-gradient(135deg,#f59e0b,#d97706);"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719" /></svg> ব্যাচে যোগ দিন</button>
+            <button class="btn btn-primary" onclick="openWA()" style="margin-top:14px;width:100%;background:linear-gradient(135deg,#f59e0b,#d97706);">💬 ব্যাচে যোগ দিন</button>
         </div>`;
     document.getElementById('startExamBtn').style.display='none';
     document.getElementById('seeQuestionsBtn').style.display='none';
@@ -1168,32 +1084,19 @@ async function loadKaKhaContent(type){
         const data=await safeFetch(`${SUPABASE_URL}/rest/v1/ka_kha_cq?select=*&order=sort_order.asc,created_at.desc&limit=100`);
         const filtered=data.filter(d=>d.cq_type===type||(!d.cq_type&&type==='ka'));
         if(!filtered.length){
-            document.getElementById('categoryContent').innerHTML=`<div class="section-header"><div class="section-title"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z" />
-  <path d="M12 22V12" />
-  <polyline points="3.29 7 12 12 20.71 7" />
-  <path d="m7.5 4.27 9 5.15" /></svg> ${labels[type]}</div></div><p style="text-align:center;color:var(--text-secondary);padding:20px;">কোনো কন্টেন্ট নেই</p>`;
+            document.getElementById('categoryContent').innerHTML=`<div class="section-header"><div class="section-title"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#64748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z' /> <path d='M12 22V12' /> <polyline points='3.29 7 12 12 20.71 7' /> <path d='m7.5 4.27 9 5.15' /></svg> ${labels[type]}</div></div><p style="text-align:center;color:var(--text-secondary);padding:20px;">কোনো কন্টেন্ট নেই</p>`;
             switchMode('Category');return;
         }
         const grouped={};
         filtered.forEach(d=>{const s=d.subject||'সাধারণ';if(!grouped[s])grouped[s]=[];grouped[s].push(d);});
-        let html=`<div class="section-header"><div class="section-title"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z" />
-  <path d="M12 22V12" />
-  <polyline points="3.29 7 12 12 20.71 7" />
-  <path d="m7.5 4.27 9 5.15" /></svg> ${labels[type]}</div></div>`;
+        let html=`<div class="section-header"><div class="section-title">📦 ${labels[type]}</div></div>`;
         Object.keys(grouped).forEach(s=>{
-            html+=`<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20" /></svg> ${s}</div>`;
+            html+=`<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;">📘 ${s}</div>`;
             grouped[s].forEach(d=>{
                 html+=`<div class="list-item" onclick="window.open('${d.link_or_file||'#'}','_blank')">
-                    <div><div class="list-item-title"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 7v14" />
-  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg> ${d.chapter||'সাধারণ'}</div>
-                    <div class="list-item-sub">${[d.year,d.topic].filter(Boolean).join(' | ')} ${d.file_type==='file'?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
-  <path d="M14 2v5a1 1 0 0 0 1 1h5" />
-  <path d="M10 9H8" />
-  <path d="M16 13H8" />
-  <path d="M16 17H8" /></svg> ফাইল':'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg> লিংক'}</div></div>
-                    <span class="list-item-arrow"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
-  <path d="m12 5 7 7-7 7" /></svg></span></div>`;
+                    <div><div class="list-item-title">📖 ${d.chapter||'সাধারণ'}</div>
+                    <div class="list-item-sub">${[d.year,d.topic].filter(Boolean).join(' | ')} ${d.file_type==='file'?'📄 ফাইল':'🔗 লিংক'}</div></div>
+                    <span class="list-item-arrow">→</span></div>`;
             });
         });
         document.getElementById('categoryContent').innerHTML=html;
@@ -1222,9 +1125,7 @@ async function loadExamById(examId){
         } catch(_) {}
 
         const [examData]=await safeFetch(`${SUPABASE_URL}/rest/v1/exams?id=eq.${examId}&select=*`);
-        if(!examData){ if(!usedCache) showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
-  <path d="m15 9-6 6" />
-  <path d="m9 9 6 6" /></svg> এক্সাম পাওয়া যায়নি'); return; }
+        if(!examData){ if(!usedCache) showToast('❌ এক্সাম পাওয়া যায়নি'); return; }
         if((examData.is_locked===true||examData.is_locked==='true')&&!checkUserHasAccess()){showLockedExamBanner(examData.title||examData.chapter);return;}
         currentExam=examData;
         examQuestions=await safeFetch(`${SUPABASE_URL}/rest/v1/questions?exam_id=eq.${examId}&select=*&order=id.asc`);
@@ -1233,22 +1134,17 @@ async function loadExamById(examId){
 
         // fresh/true data cache করে রাখো পরের বার instant-load এর জন্য
         try { localStorage.setItem(cacheKey, JSON.stringify({ examData, examQuestions, ts: Date.now() })); } catch(_) {}
-    }catch(e){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
-  <path d="m15 9-6 6" />
-  <path d="m9 9 6 6" /></svg> লোড করতে সমস্যা');}
+    }catch(e){showToast('❌ লোড করতে সমস্যা');}
 }
 
 function showNoQuestions(){
     document.getElementById('preExamContent').innerHTML=`
         <div class="no-questions">
-            <div class="icon"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
-  <path d="M12 9v4" />
-  <path d="M12 17h.01" /></svg>️</div>
+            <div class="icon">⚠️</div>
             <div class="title">Database এ প্রশ্ন নেই</div>
             <div class="subtitle">প্রিয় শিক্ষার্থী,</div>
             <div class="subtitle">এডমিনকে ইনফর্ম করুন, দ্রুতই প্রশ্ন এড করার চেষ্টা করবো</div>
-            <button class="btn btn-outline" onclick="backToCategory()" style="margin-top:16px;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 20v-7a4 4 0 0 0-4-4H4" />
-  <path d="M9 14 4 9l5-5" /></svg> ফিরে যান</button>
+            <button class="btn btn-outline" onclick="backToCategory()" style="margin-top:16px;">🔙 ফিরে যান</button>
         </div>`;
     document.getElementById('startExamBtn').style.display='none';
     document.getElementById('seeQuestionsBtn').style.display='none';
@@ -1263,16 +1159,11 @@ function showPreExamFromData(exam,questions){
     document.getElementById('seeQuestionsBtn').style.display=allowPreview?'block':'none';
 
     let html=`<div class="exam-hero">
-        <div class="exam-hero-title"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34" />
-  <path d="M14 2v5a1 1 0 0 0 1 1h5" />
-  <path d="M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z" /></svg> ${exam.title||(exam.subject+' - '+exam.chapter)}</div>
+        <div class="exam-hero-title">📝 ${exam.title||(exam.subject+' - '+exam.chapter)}</div>
         <div class="exam-hero-stats">
-            <div class="hero-stat"><div class="hero-stat-val">${questions.length}</div><div class="hero-stat-label"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
-  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /></svg> প্রশ্ন</div></div>
+            <div class="hero-stat"><div class="hero-stat-val">${questions.length}</div><div class="hero-stat-label">📋 প্রশ্ন</div></div>
             <div class="hero-stat"><div class="hero-stat-val">${exam.duration_minutes||Math.ceil(questions.length/1.5)}</div><div class="hero-stat-label">⏱️ মিনিট</div></div>
-            <div class="hero-stat"><div class="hero-stat-val">${exam.total_marks||questions.length}</div><div class="hero-stat-label"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
-  <circle cx="12" cy="12" r="6" />
-  <circle cx="12" cy="12" r="2" /></svg> মার্ক</div></div>
+            <div class="hero-stat"><div class="hero-stat-val">${exam.total_marks||questions.length}</div><div class="hero-stat-label">🎯 মার্ক</div></div>
         </div></div>
         <div class="pre-exam-card">
             <div class="info-row"><span class="info-label">সাবজেক্ট</span><span class="info-value">${exam.subject||'—'}</span></div>
@@ -1286,11 +1177,7 @@ function showPreExamFromData(exam,questions){
             ${exam.pages?`<div class="info-row"><span class="info-label">নির্বাচিত পেইজ</span><span class="info-value">${exam.pages}</span></div>`:''}
         </div>
         ${(exam._pageImages&&exam._pageImages.length)?`<div class="pre-exam-card" style="padding:10px 12px;">
-            <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
-  <path d="M14 2v5a1 1 0 0 0 1 1h5" />
-  <path d="M10 9H8" />
-  <path d="M16 13H8" />
-  <path d="M16 17H8" /></svg> পেইজ প্রিভিউ</div>
+            <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">📄 পেইজ প্রিভিউ</div>
             <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;">
                 ${exam._pageImages.map(img=>`<div style="flex-shrink:0;text-align:center;"><img src="${img.src}" onclick="openPagePreviewLightbox('${img.src.replace(/'/g,"\\'")}',${img.page})" style="height:110px;border-radius:6px;border:1px solid var(--border);display:block;cursor:pointer;"><div style="font-size:9px;color:var(--text2);margin-top:3px;">পেইজ ${img.page}</div></div>`).join('')}
             </div></div>`:''}
@@ -1309,8 +1196,7 @@ function openPagePreviewLightbox(src, page){
         lb.onclick = closePagePreviewLightbox;
         lb.innerHTML = `<img id="pagePreviewLightboxImg" style="max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,0.5);" />
             <div id="pagePreviewLightboxLabel" style="position:absolute;top:16px;left:50%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:600;background:rgba(0,0,0,0.5);padding:4px 12px;border-radius:20px;"></div>
-            <div style="position:absolute;top:16px;right:16px;color:#fff;font-size:24px;cursor:pointer;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M18 6 6 18" />
-  <path d="m6 6 12 12" /></svg></div>`;
+            <div style="position:absolute;top:16px;right:16px;color:#fff;font-size:24px;cursor:pointer;">✕</div>`;
         document.body.appendChild(lb);
     }
     document.getElementById('pagePreviewLightboxImg').src = src;
@@ -1331,10 +1217,7 @@ function startPreviewMode(){
     document.getElementById('previewExamName').textContent=exam.title||(exam.subject+' - '+exam.chapter)||'Preview';
     document.getElementById('previewExamMeta').textContent=`${examQuestions.length} প্রশ্ন | ${exam.duration_minutes||Math.ceil(examQuestions.length/1.5)} মিনিট | ${exam.total_marks||examQuestions.length} মার্ক`;
     const fab=document.getElementById('revealFab');
-    fab.textContent='<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#A78BFA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" />
-  <path d="M20 2v4" />
-  <path d="M22 4h-4" />
-  <circle cx="4" cy="20" r="2" /></svg> উত্তর দেখো';
+    fab.textContent='✨ উত্তর দেখো';
     fab.classList.remove('revealed');
     renderPreviewQuestions(false);
     switchMode('Preview');
@@ -1353,23 +1236,16 @@ function renderPreviewQuestions(showAnswers){
                 html+=`<div class="option-item${cls}" id="preOpt${q.id}_${oi+1}" data-correct="${oi+1===q.answer_index}">
                     <span class="option-radio">${['ক','খ','গ','ঘ','ঙ'][oi]}</span>
                     <span class="option-text">${opt}</span>
-                    ${showAnswers&&oi+1===q.answer_index?'<span style="color:var(--success);margin-left:auto;font-weight:700;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" />
-  <path d="m9 11 3 3L22 4" /></svg></span>':''}
+                    ${showAnswers&&oi+1===q.answer_index?'<span style="color:var(--success);margin-left:auto;font-weight:700;">✅</span>':''}
                 </div>`;
             }
         });
         // Show explanation and AI box when answers revealed
         if(q.explanation){
-            html+=`<div class="explanation-box csv-box preview-exp" id="preExp${q.id}" style="display:${showAnswers?'block':'none'};"><div class="exp-header"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
-  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /></svg> ব্যাখ্যা</div><div class="exp-content">${q.explanation}</div>${(q.explanation_image_key||q.explanation_image)?`<img src="${q.explanation_image_key?('https://atlas-ai-proxy.hamza818483.workers.dev/storage/exp-images/'+q.explanation_image_key):('data:image/jpeg;base64,'+q.explanation_image)}" onclick="openPagePreviewLightbox(this.src,'ব্যাখ্যা')" style="max-width:100%;border-radius:6px;margin-top:6px;display:block;cursor:pointer;">`:''}</div>`;
+            html+=`<div class="explanation-box csv-box preview-exp" id="preExp${q.id}" style="display:${showAnswers?'block':'none'};"><div class="exp-header">📋 ব্যাখ্যা</div><div class="exp-content">${q.explanation}</div>${(q.explanation_image_key||q.explanation_image)?`<img src="${q.explanation_image_key?('https://atlas-ai-proxy.hamza818483.workers.dev/storage/exp-images/'+q.explanation_image_key):('data:image/jpeg;base64,'+q.explanation_image)}" onclick="openPagePreviewLightbox(this.src,'ব্যাখ্যা')" style="max-width:100%;border-radius:6px;margin-top:6px;display:block;cursor:pointer;">`:''}</div>`;
         }
         html+=`<div class="explanation-box ai-box preview-ai-box" id="preAiBox${q.id}" style="display:${showAnswers?'block':'none'};">
-            <div class="exp-header" onclick="toggleAIBox(this,'${q.id}')"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 8V4H8" />
-  <rect width="16" height="12" x="4" y="8" rx="2" />
-  <path d="M2 14h2" />
-  <path d="M20 14h2" />
-  <path d="M15 13v2" />
-  <path d="M9 13v2" /></svg> ATLAS AI ব্যাখ্যা <span class="exp-arrow">▼</span></div>
+            <div class="exp-header" onclick="toggleAIBox(this,'${q.id}')">🤖 ATLAS AI ব্যাখ্যা <span class="exp-arrow">▼</span></div>
             <div class="exp-content" id="aiExp${q.id}"></div>
         </div></div>`;
     });
@@ -1381,15 +1257,11 @@ function toggleRevealAnswers(){
     previewRevealed=!previewRevealed;
     const fab=document.getElementById('revealFab');
     if(previewRevealed){
-        fab.textContent='<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" />
-  <path d="m9 11 3 3L22 4" /></svg> উত্তর দেখানো হচ্ছে — আবার লুকাও';
+        fab.textContent='✅ উত্তর দেখানো হচ্ছে — আবার লুকাও';
         fab.classList.add('revealed');
         renderPreviewQuestions(true);
     } else {
-        fab.textContent='<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#A78BFA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" />
-  <path d="M20 2v4" />
-  <path d="M22 4h-4" />
-  <circle cx="4" cy="20" r="2" /></svg> উত্তর দেখো';
+        fab.textContent='✨ উত্তর দেখো';
         fab.classList.remove('revealed');
         renderPreviewQuestions(false);
     }
@@ -1400,17 +1272,14 @@ function toggleRevealAnswers(){
 // =============================================================
 function startMockTest(){
     isMockTest=true;
-    let html=`<div class="section-header"><div class="section-title"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
-  <circle cx="12" cy="12" r="6" />
-  <circle cx="12" cy="12" r="2" /></svg> প্রশ্ন সংখ্যা ও সময় নির্বাচন</div></div>
+    let html=`<div class="section-header"><div class="section-title">🎯 প্রশ্ন সংখ্যা ও সময় নির্বাচন</div></div>
         <div class="mock-options">`;
     [{count:25,time:17},{count:35,time:24},{count:50,time:34},{count:75,time:50},{count:100,time:67}].forEach(n=>{
         html+=`<button class="mock-option-btn" onclick="selectMockCount(${n.count},${n.time})">${n.count} টি প্রশ্ন<br><small>⏱️ ${n.time} মিনিট</small></button>`;
     });
     html+=`</div>
         <div style="margin-top:14px;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;">
-            <div style="font-size:12px;color:var(--accent);font-weight:700;margin-bottom:8px;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
-  <path d="m15 5 4 4" /></svg>️ কাস্টম সেটিং</div>
+            <div style="font-size:12px;color:var(--accent);font-weight:700;margin-bottom:8px;">✏️ কাস্টম সেটিং</div>
             <div class="mock-custom-row">
                 <input class="mock-custom-input" id="customQCount" type="number" min="5" max="200" placeholder="প্রশ্ন সংখ্যা">
                 <input class="mock-custom-input" id="customMinutes" type="number" min="1" max="300" placeholder="মিনিট (ফাঁকা=auto)">
@@ -1424,9 +1293,7 @@ function startMockTest(){
 
 function startCustomMock(){
     const count=parseInt(document.getElementById('customQCount').value);
-    if(!count||count<1){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
-  <path d="M12 9v4" />
-  <path d="M12 17h.01" /></svg>️ প্রশ্ন সংখ্যা দিন');return;}
+    if(!count||count<1){showToast('⚠️ প্রশ্ন সংখ্যা দিন');return;}
     const mins=parseInt(document.getElementById('customMinutes').value)||Math.ceil(count/1.5);
     selectMockCount(count,mins);
 }
@@ -1438,14 +1305,11 @@ function selectMockCount(count,time){
     currentExam={title:'মক টেস্ট',subject:'মক',chapter:'মক',total_marks:count,duration_minutes:calcTime,id:'mock_'+Date.now(),allow_preview:false,allow_solve_sheet:true};
     document.getElementById('preExamContent').innerHTML=`
         <div class="no-questions">
-            <div class="icon"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
-  <path d="M12 9v4" />
-  <path d="M12 17h.01" /></svg>️</div>
+            <div class="icon">⚠️</div>
             <div class="title">Database এ প্রশ্ন নেই</div>
             <div class="subtitle">প্রিয় শিক্ষার্থী,</div>
             <div class="subtitle">এডমিনকে ইনফর্ম করুন, দ্রুতই প্রশ্ন এড করার চেষ্টা করবো</div>
-            <button class="btn btn-outline" onclick="backToList()" style="margin-top:16px;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 20v-7a4 4 0 0 0-4-4H4" />
-  <path d="M9 14 4 9l5-5" /></svg> ফিরে যান</button>
+            <button class="btn btn-outline" onclick="backToList()" style="margin-top:16px;">🔙 ফিরে যান</button>
         </div>`;
     document.getElementById('startExamBtn').style.display='none';
     document.getElementById('seeQuestionsBtn').style.display='none';
@@ -1458,29 +1322,19 @@ function selectMockCount(count,time){
 function openModelTest(){
     document.getElementById('guestModalContent').innerHTML=`
         <div class="modal-title"><span class="si-tile tile-amber"><svg viewBox="0 0 24 24" fill="none"><path d="M9.5 3.5h5M10.2 3.5v6.3L5.3 18c-.7 1.2.2 2.7 1.6 2.7h10.2c1.4 0 2.3-1.5 1.6-2.7l-4.9-8.2V3.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.5 15.5h9" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></span> Model Test</div>
-        <div style="font-size:11px;color:var(--accent);font-weight:700;margin:8px 0 4px;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 9a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h4a1 1 0 0 1 1 1v4a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-4a1 1 0 0 1 1-1h4a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-4a1 1 0 0 1-1-1V4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4a1 1 0 0 1-1 1z" /></svg> Medical / Dental</div>
-        <button class="btn btn-outline" onclick="closeModal();loadModelExams('medical','subject')" style="width:100%;margin-bottom:5px;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20" /></svg> Subject Final</button>
-        <button class="btn btn-outline" onclick="closeModal();loadModelExams('medical','paper')" style="width:100%;margin-bottom:5px;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20" /></svg> Paper Final</button>
-        <button class="btn btn-primary" onclick="closeModal();loadModelExams('medical','full')" style="width:100%;margin-bottom:5px;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 7v14" />
-  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg> Full Model Test</button>
+        <div style="font-size:11px;color:var(--accent);font-weight:700;margin:8px 0 4px;">🏥 Medical / Dental</div>
+        <button class="btn btn-outline" onclick="closeModal();loadModelExams('medical','subject')" style="width:100%;margin-bottom:5px;">📗 Subject Final</button>
+        <button class="btn btn-outline" onclick="closeModal();loadModelExams('medical','paper')" style="width:100%;margin-bottom:5px;">📘 Paper Final</button>
+        <button class="btn btn-primary" onclick="closeModal();loadModelExams('medical','full')" style="width:100%;margin-bottom:5px;">📖 Full Model Test</button>
         <p style="font-size:10px;color:var(--text-secondary);text-align:center;margin-bottom:8px;">Bio=30, Chem=25, Phy=15, GK=15, Eng=15</p>
-        <div style="font-size:11px;color:var(--accent);font-weight:700;margin:4px 0;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526" />
-  <circle cx="12" cy="8" r="6" /></svg>️ AFMC</div>
-        <button class="btn btn-outline" onclick="closeModal();loadModelExams('afmc','subject')" style="width:100%;margin-bottom:5px;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20" /></svg> AFMC Subject Final</button>
-        <button class="btn btn-outline" onclick="closeModal();loadModelExams('afmc','paper')" style="width:100%;margin-bottom:5px;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20" /></svg> AFMC Paper Final</button>
-        <button class="btn btn-outline" onclick="closeModal();loadModelExams('afmc','full')" style="width:100%;margin-bottom:5px;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 7v14" />
-  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg> AFMC Full Model</button>
-        <div style="font-size:11px;color:var(--accent);font-weight:700;margin:4px 0;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#9B59B6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /></svg> Varsity</div>
-        <button class="btn btn-outline" onclick="closeModal();loadModelExams('varsity','varsitywise')" style="width:100%;margin-bottom:5px;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M14 21v-3a2 2 0 0 0-4 0v3" />
-  <path d="M18 4.933V21" />
-  <path d="m4 6 7.106-3.79a2 2 0 0 1 1.788 0L20 6" />
-  <path d="m6 11-3.52 2.147a1 1 0 0 0-.48.854V19a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a1 1 0 0 0-.48-.853L18 11" />
-  <path d="M6 4.933V21" />
-  <circle cx="12" cy="9" r="2" /></svg> Varsitywise</button>
-        <button class="btn btn-outline" onclick="closeModal();loadModelExams('varsity','chapterwise')" style="width:100%;margin-bottom:8px;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 7v14" />
-  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg> চাপ্টারভিত্তিক</button>
-        <button class="btn btn-outline" onclick="closeModal()" style="width:100%;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M18 6 6 18" />
-  <path d="m6 6 12 12" /></svg> বন্ধ</button>`;
+        <div style="font-size:11px;color:var(--accent);font-weight:700;margin:4px 0;">🎖️ AFMC</div>
+        <button class="btn btn-outline" onclick="closeModal();loadModelExams('afmc','subject')" style="width:100%;margin-bottom:5px;">📗 AFMC Subject Final</button>
+        <button class="btn btn-outline" onclick="closeModal();loadModelExams('afmc','paper')" style="width:100%;margin-bottom:5px;">📘 AFMC Paper Final</button>
+        <button class="btn btn-outline" onclick="closeModal();loadModelExams('afmc','full')" style="width:100%;margin-bottom:5px;">📖 AFMC Full Model</button>
+        <div style="font-size:11px;color:var(--accent);font-weight:700;margin:4px 0;">🟣 Varsity</div>
+        <button class="btn btn-outline" onclick="closeModal();loadModelExams('varsity','varsitywise')" style="width:100%;margin-bottom:5px;">🏫 Varsitywise</button>
+        <button class="btn btn-outline" onclick="closeModal();loadModelExams('varsity','chapterwise')" style="width:100%;margin-bottom:8px;">📚 চাপ্টারভিত্তিক</button>
+        <button class="btn btn-outline" onclick="closeModal()" style="width:100%;">✕ বন্ধ</button>`;
     document.getElementById('guestModal').classList.add('active');
 }
 function closeModal(){document.getElementById('guestModal').classList.remove('active');}
@@ -1491,22 +1345,18 @@ async function loadModelExams(type,subType){
         if(subType) url+=`&sub_type=eq.${subType}`;
         const data=await safeFetch(url);
         if(!data?.length){document.getElementById('categoryContent').innerHTML='<p style="text-align:center;color:var(--text-secondary);padding:20px;">কোনো Model Test নেই</p>';switchMode('Category');return;}
-        const typeLabel={medical:'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 9a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h4a1 1 0 0 1 1 1v4a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-4a1 1 0 0 1 1-1h4a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-4a1 1 0 0 1-1-1V4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4a1 1 0 0 1-1 1z" /></svg> Medical',afmc:'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526" />
-  <circle cx="12" cy="8" r="6" /></svg>️ AFMC',varsity:'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#9B59B6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /></svg> Varsity'}[type]||type;
-        let html=`<div class="section-header"><div class="section-title"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 7v14" />
-  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg> Model Test — ${typeLabel} · ${subType}</div></div>`;
+        const typeLabel={medical:'🏥 Medical',afmc:'🎖️ AFMC',varsity:'🟣 Varsity'}[type]||type;
+        let html=`<div class="section-header"><div class="section-title">📖 Model Test — ${typeLabel} · ${subType}</div></div>`;
         const grouped={};
         data.forEach(d=>{const s=d.subject_name||d.paper_name||'সাধারণ';if(!grouped[s])grouped[s]=[];grouped[s].push(d);});
         Object.keys(grouped).forEach(s=>{
-            html+=`<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20" /></svg> ${s}</div>`;
+            html+=`<div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0;">📘 ${s}</div>`;
             grouped[s].forEach(d=>{
                 const count=d.questions_json?JSON.parse(d.questions_json).length:'?';
                 html+=`<div class="list-item" onclick="startModelExam('${d.id}')">
-                    <div><div class="list-item-title"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 7v14" />
-  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg> ${d.sub_type||d.subject_name||'Model Test'}</div>
+                    <div><div class="list-item-title">📖 ${d.sub_type||d.subject_name||'Model Test'}</div>
                     <div class="list-item-sub">${[d.unit,d.varsity_name].filter(Boolean).join(' | ')} | ${count} প্রশ্ন</div></div>
-                    <span class="list-item-arrow"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
-  <path d="m12 5 7 7-7 7" /></svg></span></div>`;
+                    <span class="list-item-arrow">→</span></div>`;
             });
         });
         document.getElementById('categoryContent').innerHTML=html;
@@ -1518,9 +1368,7 @@ async function startModelExam(modelId){
     try{
         const data=await safeFetch(`${SUPABASE_URL}/rest/v1/model_tests?id=eq.${modelId}&select=*`);
         const m=data?.[0];
-        if(!m){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
-  <path d="m15 9-6 6" />
-  <path d="m9 9 6 6" /></svg> পাওয়া যায়নি');return;}
+        if(!m){showToast('❌ পাওয়া যায়নি');return;}
         if(m.link){window.open(m.link,'_blank');return;}
         if(!m.questions_json){showNoQuestions();return;}
         examQuestions=JSON.parse(m.questions_json).map((q,i)=>({
@@ -1536,9 +1384,7 @@ async function startModelExam(modelId){
 }
 
 function openMistakes(){
-    if(!isLoggedIn()){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
-  <path d="M12 9v4" />
-  <path d="M12 17h.01" /></svg>️ লগইন করুন');return;}
+    if(!isLoggedIn()){showToast('⚠️ লগইন করুন');return;}
     goTo('profile.html');
 }
 
@@ -1561,8 +1407,7 @@ function startExamHall(){
 
     // Req #14: exam info bar (2 lines)
     const examName=currentExam.title||(currentExam.subject+' - '+currentExam.chapter)||'এক্সাম';
-    document.getElementById('examInfoBar').innerHTML=`<strong>${examName}</strong> &nbsp;|&nbsp; <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
-  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /></svg> ${examQuestions.length} প্রশ্ন &nbsp;|&nbsp; ⏱️ ${currentExam.duration_minutes||Math.ceil(examQuestions.length/1.5)} মিনিট &nbsp;|&nbsp; ${currentExam.exam_type||''} ${currentExam.sub_type?'· '+currentExam.sub_type:''}`;
+    document.getElementById('examInfoBar').innerHTML=`<strong>${examName}</strong> &nbsp;|&nbsp; <svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><rect width='8' height='4' x='8' y='2' rx='1' ry='1' /> <path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2' /></svg> ${examQuestions.length} প্রশ্ন &nbsp;|&nbsp; ⏱️ ${currentExam.duration_minutes||Math.ceil(examQuestions.length/1.5)} মিনিট &nbsp;|&nbsp; ${currentExam.exam_type||''} ${currentExam.sub_type?'· '+currentExam.sub_type:''}`;
 
     let qHTML='';
     examQuestions.forEach((q,i)=>{
@@ -1572,8 +1417,8 @@ function startExamHall(){
                 <span class="q-number">প্রশ্ন ${i+1}/${examQuestions.length}</span>
                 <div class="q-actions">
                     <!-- Req #1: ATLAS AI Chat icon per MCQ -->
-                    <button class="icon-btn bookmark${bmClass}" id="bmBtn${q.id}" title="বুকমার্ক" onclick="toggleBookmark('${q.id}')"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z" /></svg></button>
-                    <button class="icon-btn" title="রিপোর্ট" onclick="openReportModal('${q.id}')"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528" /></svg></button>
+                    <button class="icon-btn bookmark${bmClass}" id="bmBtn${q.id}" title="বুকমার্ক" onclick="toggleBookmark('${q.id}')">🔖</button>
+                    <button class="icon-btn" title="রিপোর্ট" onclick="openReportModal('${q.id}')">🚩</button>
                 </div>
             </div>
             <div class="q-text">${q.question_text}</div>`;
@@ -1583,8 +1428,7 @@ function startExamHall(){
                 qHTML+=`<div class="option-item" id="opt${q.id}_${oi+1}" onclick="selectOption('${q.id}',${oi+1},this)" data-qid="${q.id}">
                     <span class="option-radio">${labels[oi]}</span>
                     <span class="option-text">${opt}</span>
-                    <span class="lock-icon" id="lock${q.id}_${oi+1}" style="display:none;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-  <path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></span>
+                    <span class="lock-icon" id="lock${q.id}_${oi+1}" style="display:none;">🔒</span>
                 </div>`;
             }
         });
@@ -1641,8 +1485,7 @@ function updateTimerDisplay(){
 function updateProgress(){
     const total=examQuestions.length,answered=Object.keys(userAnswers).length;
     const pct=total>0?Math.round(answered/total*100):0;
-    document.getElementById('progressText').textContent=`<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M16 7h6v6" />
-  <path d="m22 7-8.5 8.5-5-5L2 17" /></svg> ${pct}%`;
+    document.getElementById('progressText').textContent=`📈 ${pct}%`;
     document.getElementById('progressBarFill').style.width=pct+'%';
 }
 
@@ -1658,8 +1501,7 @@ async function openAIChat(qid){
     const labels=['ক','খ','গ','ঘ','ঙ'];
     let optHTML=opts.map((o,i)=>`${labels[i]}) ${o}`).join('<br>');
     document.getElementById('aiChatBody').innerHTML=`
-        <div class="ai-chat-q"><strong><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
-  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /></svg> MCQ:</strong><br>${q.question_text}<br><br>${optHTML}</div>
+        <div class="ai-chat-q"><strong>📋 MCQ:</strong><br>${q.question_text}<br><br>${optHTML}</div>
         <div class="ai-loading"><span></span><span></span><span></span>&nbsp;AI বিশ্লেষণ করছে...</div>`;
 
     let prompt=`তুমি ATLAS APP-এর বিশেষজ্ঞ শিক্ষক। MCQ-টি বিস্তারিতভাবে বাংলায় ব্যাখ্যা করো:\n\nপ্রশ্ন: ${q.question_text}\n\n`;
@@ -1670,8 +1512,7 @@ async function openAIChat(qid){
     const answer=await callAIForMCQ(prompt);
     aiChatHistory.push({role:'assistant',content:answer});
     document.getElementById('aiChatBody').innerHTML=`
-        <div class="ai-chat-q"><strong><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
-  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /></svg> MCQ:</strong><br>${q.question_text}<br><br>${optHTML}</div>
+        <div class="ai-chat-q"><strong>📋 MCQ:</strong><br>${q.question_text}<br><br>${optHTML}</div>
         <div class="ai-chat-response">${answer}</div>`;
 }
 
@@ -1681,8 +1522,7 @@ async function sendAIChatMessage(){
     input.value='';
     const q=examQuestions.find(q=>q.id===aiChatQid);
     const body=document.getElementById('aiChatBody');
-    body.innerHTML+=`<div class="ai-user-msg"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-  <circle cx="12" cy="7" r="4" /></svg> ${msg}</div>
+    body.innerHTML+=`<div class="ai-user-msg"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#64748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2' /> <circle cx='12' cy='7' r='4' /></svg> ${msg}</div>
         <div class="ai-loading" id="aiTyping"><span></span><span></span><span></span>&nbsp;উত্তর আসছে...</div>`;
     body.scrollTop=body.scrollHeight;
     aiChatHistory.push({role:'user',content:msg});
@@ -1709,7 +1549,7 @@ function openNavPopup(){
         html+=`<button class="${cls}" onclick="goToQuestion(${q.id});closeNavPopup();">${i+1}</button>`;
     });
     document.getElementById('navGrid').innerHTML=html;
-    document.getElementById('navStats').textContent=`<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="18" height="18" x="3" y="3" rx="2" /></svg> উত্তর: ${Object.keys(userAnswers).length} | <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="18" height="18" x="3" y="3" rx="2" /></svg> বাকি: ${examQuestions.length-Object.keys(userAnswers).length}`;
+    document.getElementById('navStats').textContent=`🟦 উত্তর: ${Object.keys(userAnswers).length} | ⬜ বাকি: ${examQuestions.length-Object.keys(userAnswers).length}`;
     document.getElementById('navOverlay').classList.add('active');
 }
 function closeNavPopup(){document.getElementById('navOverlay').classList.remove('active');}
@@ -1729,12 +1569,12 @@ function toggleBookmark(qid){
         if(bookmarkedQuestions[qid]){
             delete bookmarkedQuestions[qid];
             allBtns.forEach(b=>b.classList.remove('active'));
-            showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z" /></svg> রিমুভ');
+            showToast('🔖 রিমুভ');
         } else {
             const q=examQuestions.find(q=>q.id==qid);
             bookmarkedQuestions[qid]={exam_name:currentExam?.title||(currentExam?.subject+' - '+currentExam?.chapter),subject:currentExam?.subject,chapter:currentExam?.chapter,category:currentExam?.exam_type,question_text:q.question_text,option1:q.option1,option2:q.option2,option3:q.option3,option4:q.option4,option5:q.option5,answer_index:q.answer_index,explanation:q.explanation,bookmarked_at:new Date().toISOString()};
             allBtns.forEach(b=>b.classList.add('active'));
-            showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z" /></svg> সেভ');
+            showToast('🔖 সেভ');
         }
         localStorage.setItem('bookmarks_'+sess.phone,JSON.stringify(bookmarkedQuestions));
     }catch(e){}
@@ -1749,18 +1589,13 @@ async function submitReport(){
     if(!checkGuestAction()){closeReportModal();return;}
     const type=document.getElementById('reportType').value;
     const suggestion=document.getElementById('reportSuggestion').value.trim();
-    if(!type){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
-  <path d="M12 9v4" />
-  <path d="M12 17h.01" /></svg>️ ভুলের ধরন নির্বাচন করুন');return;}
+    if(!type){showToast('⚠️ ভুলের ধরন নির্বাচন করুন');return;}
     const sess=getSession();
     const q=examQuestions.find(q=>q.id==reportQid);
     try{
         await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports`,{method:'POST',body:JSON.stringify({question_id:reportQid,exam_id:currentExam?.id,exam_name:currentExam?.title||(currentExam?.subject+' - '+currentExam?.chapter),reporter_phone:sess?.phone||'anonymous',reporter_name:sess?.name||'Unknown',report_type:type,suggested_answer:suggestion,full_mcq:JSON.stringify(q),status:'pending'})});
-        showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" />
-  <path d="m9 11 3 3L22 4" /></svg> রিপোর্ট জমা হয়েছে');closeReportModal();
-    }catch(e){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
-  <path d="m15 9-6 6" />
-  <path d="m9 9 6 6" /></svg> এরর');}
+        showToast('✅ রিপোর্ট জমা হয়েছে');closeReportModal();
+    }catch(e){showToast('❌ এরর');}
 }
 
 // =============================================================
@@ -1888,9 +1723,7 @@ function showResult(correct,wrong,skipped,negMark,finalScore,withGpa,gpaScore,de
 
     const scoreClass = finalScore > 0 ? 'score-positive' : finalScore < 0 ? 'score-negative' : 'score-zero';
     html+=`<div class="result-score-card">
-        <div class="result-exam-name"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34" />
-  <path d="M14 2v5a1 1 0 0 0 1 1h5" />
-  <path d="M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z" /></svg> ${examName}</div>
+        <div class="result-exam-name">📝 ${examName}</div>
         <div class="result-score-line">
             <span class="result-big-score ${scoreClass}">${finalScore.toFixed(2)}</span>
             <span class="result-total">/ ${totalQ}</span>
@@ -1898,11 +1731,8 @@ function showResult(correct,wrong,skipped,negMark,finalScore,withGpa,gpaScore,de
     </div>`;
 
     html+=`<div class="result-grid">
-        <div class="result-stat"><div class="result-stat-val correct-val"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" />
-  <path d="m9 11 3 3L22 4" /></svg> ${correct}</div><div class="result-stat-label">সঠিক</div></div>
-        <div class="result-stat"><div class="result-stat-val wrong-val"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
-  <path d="m15 9-6 6" />
-  <path d="m9 9 6 6" /></svg> ${wrong}</div><div class="result-stat-label">ভুল</div></div>
+        <div class="result-stat"><div class="result-stat-val correct-val">✅ ${correct}</div><div class="result-stat-label">সঠিক</div></div>
+        <div class="result-stat"><div class="result-stat-val wrong-val">❌ ${wrong}</div><div class="result-stat-label">ভুল</div></div>
         <div class="result-stat"><div class="result-stat-val skipped-val">⏭️ ${skipped}</div><div class="result-stat-label">স্কিপ</div></div>
     </div>`;
 
@@ -1912,50 +1742,33 @@ function showResult(correct,wrong,skipped,negMark,finalScore,withGpa,gpaScore,de
 
     if(gpaScore>0){
         html+=`<div class="gpa-row">
-            <div class="gpa-box"><div class="gpa-box-title"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 21v-6" />
-  <path d="M12 21V3" />
-  <path d="M19 21V9" /></svg> Without GPA</div><div class="gpa-box-val">${finalScore.toFixed(2)}</div></div>
-            <div class="gpa-box"><div class="gpa-box-title"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z" />
-  <path d="M22 10v6" />
-  <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" /></svg> With GPA</div><div class="gpa-box-val">${withGpa.toFixed(2)}</div><div class="gpa-box-sub">+${gpaScore.toFixed(2)}</div></div>
+            <div class="gpa-box"><div class="gpa-box-title">📊 Without GPA</div><div class="gpa-box-val">${finalScore.toFixed(2)}</div></div>
+            <div class="gpa-box"><div class="gpa-box-title">🎓 With GPA</div><div class="gpa-box-val">${withGpa.toFixed(2)}</div><div class="gpa-box-sub">+${gpaScore.toFixed(2)}</div></div>
         </div>`;
     }
-    if(isSecondTimer) html+=`<div class="deduction-note"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
-  <path d="M12 9v4" />
-  <path d="M12 17h.01" /></svg>️ সেকেন্ড টাইমার: -${deduction} মার্ক কর্তন</div>`;
+    if(isSecondTimer) html+=`<div class="deduction-note">⚠️ সেকেন্ড টাইমার: -${deduction} মার্ক কর্তন</div>`;
 
     html+=`<div class="result-score-card" style="padding:16px;">
-        <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:#fff;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 21v-6" />
-  <path d="M12 21V3" />
-  <path d="M19 21V9" /></svg> পারফরম্যান্স</div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:#fff;">📊 পারফরম্যান্স</div>
         <div class="chart-wrap"><canvas id="resultChart" width="160" height="160"></canvas></div>
     </div>`;
 
     // Req #2: Solve Sheet PDF + Leaderboard buttons
     html+=`<div class="result-actions">
-        ${allowSolveSheet?`<button class="result-action-btn" onclick="openSolveSheetPDF()"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 7v14" />
-  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg> Solve Sheet PDF</button>`:''}
+        ${allowSolveSheet?`<button class="result-action-btn" onclick="openSolveSheetPDF()">📚 Solve Sheet PDF</button>`:''}
         <button class="result-action-btn leaderboard-btn" onclick="openLeaderboard(${JSON.stringify(safeNumericExamId(currentExam?.id))},'${examName.replace(/'/g,'')}')"><span class="si-tile tile-gold"><svg viewBox="0 0 24 24" fill="none"><path d="M8 21h8M12 17v4M7 4H4v4a5 5 0 005 5h6a5 5 0 005-5V4h-3M7 4h10v4a5 5 0 01-10 0V4z" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.12)"/></svg></span> Leaderboard</button>
     </div>`;
 
     html+=`<div class="practice-actions">
-        <button class="practice-btn btn-practice-again" onclick="retakeExam()"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-  <path d="M21 3v5h-5" />
-  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-  <path d="M8 16H3v5" /></svg> Practice Again</button>
-        <button class="practice-btn btn-mistake-practice" onclick="mistakePractice()"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
-  <path d="m15 9-6 6" />
-  <path d="m9 9 6 6" /></svg> Mistake Practice</button>
+        <button class="practice-btn btn-practice-again" onclick="retakeExam()">🔄 Practice Again</button>
+        <button class="practice-btn btn-mistake-practice" onclick="mistakePractice()">❌ Mistake Practice</button>
     </div>`;
 
     // Req #4: Filter buttons
     html+=`<div class="filter-bar">
         <button class="filter-btn active" onclick="filterResult(event,'all')">সব</button>
-        <button class="filter-btn" onclick="filterResult(event,'correct')"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" />
-  <path d="m9 11 3 3L22 4" /></svg> সঠিক</button>
-        <button class="filter-btn" onclick="filterResult(event,'wrong')"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
-  <path d="m15 9-6 6" />
-  <path d="m9 9 6 6" /></svg> ভুল</button>
+        <button class="filter-btn" onclick="filterResult(event,'correct')">✅ সঠিক</button>
+        <button class="filter-btn" onclick="filterResult(event,'wrong')">❌ ভুল</button>
         <button class="filter-btn" onclick="filterResult(event,'skipped')">⏭️ স্কিপ</button>
     </div>`;
 
@@ -1964,11 +1777,8 @@ function showResult(correct,wrong,skipped,negMark,finalScore,withGpa,gpaScore,de
     examQuestions.forEach((q,i)=>{
         const ua=userAnswers[q.id];
         const status=ua===q.answer_index?'correct':(ua?'wrong':'skipped');
-        const statusHTML=status==='correct'?'<div class="q-status correct"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" />
-  <path d="m9 11 3 3L22 4" /></svg> সঠিক</div>':
-            status==='wrong'?`<div class="q-status wrong"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
-  <path d="m15 9-6 6" />
-  <path d="m9 9 6 6" /></svg> ভুল${ua?' (আপনি: '+['ক','খ','গ','ঘ','ঙ'][ua-1]+')':''}</div>`:
+        const statusHTML=status==='correct'?'<div class="q-status correct">✅ সঠিক</div>':
+            status==='wrong'?`<div class="q-status wrong">❌ ভুল${ua?' (আপনি: '+['ক','খ','গ','ঘ','ঙ'][ua-1]+')':''}</div>`:
             '<div class="q-status" style="color:var(--warning);">⏭️ স্কিপ</div>';
         const bmClassR=bookmarkedQuestions[q.id]?' active':'';
         html+=`<div class="mcq-card solve-item" data-status="${status}">
@@ -1976,15 +1786,10 @@ function showResult(correct,wrong,skipped,negMark,finalScore,withGpa,gpaScore,de
             <div class="q-header" style="margin-top:4px;">
                 <span class="q-number">প্রশ্ন ${i+1}/${examQuestions.length}</span>
                 <div class="q-actions">
-                    <button class="icon-btn bookmark${bmClassR}" id="bmBtn${q.id}" title="বুকমার্ক" onclick="toggleBookmark('${q.id}')"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z" /></svg></button>
+                    <button class="icon-btn bookmark${bmClassR}" id="bmBtn${q.id}" title="বুকমার্ক" onclick="toggleBookmark('${q.id}')">🔖</button>
                     <!-- Req #1: AI Chat in result too -->
-                    <button class="icon-btn ai-chat-btn" title="ATLAS AI" onclick="openAIChat('${q.id}')"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 8V4H8" />
-  <rect width="16" height="12" x="4" y="8" rx="2" />
-  <path d="M2 14h2" />
-  <path d="M20 14h2" />
-  <path d="M15 13v2" />
-  <path d="M9 13v2" /></svg> AI</button>
-                    <button class="icon-btn" title="রিপোর্ট" onclick="openReportModal('${q.id}')"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528" /></svg></button>
+                    <button class="icon-btn ai-chat-btn" title="ATLAS AI" onclick="openAIChat('${q.id}')">🤖 AI</button>
+                    <button class="icon-btn" title="রিপোর্ট" onclick="openReportModal('${q.id}')">🚩</button>
                 </div>
             </div>
             <div class="q-text">${q.question_text}</div>`;
@@ -1996,29 +1801,19 @@ function showResult(correct,wrong,skipped,negMark,finalScore,withGpa,gpaScore,de
                 html+=`<div class="option-item${cls}">
                     <span class="option-radio">${['ক','খ','গ','ঘ','ঙ'][oi]}</span>
                     <span class="option-text">${opt}</span>
-                    ${oi+1===q.answer_index?'<span style="color:var(--success);margin-left:4px;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" />
-  <path d="m9 11 3 3L22 4" /></svg></span>':''}
-                    ${oi+1===ua&&ua!==q.answer_index?'<span style="color:var(--error);margin-left:4px;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
-  <path d="m15 9-6 6" />
-  <path d="m9 9 6 6" /></svg></span>':''}
+                    ${oi+1===q.answer_index?'<span style="color:var(--success);margin-left:4px;">✅</span>':''}
+                    ${oi+1===ua&&ua!==q.answer_index?'<span style="color:var(--error);margin-left:4px;">❌</span>':''}
                 </div>`;
             }
         });
-        if(q.explanation) html+=`<div class="explanation-box csv-box"><div class="exp-header"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
-  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /></svg> ব্যাখ্যা</div><div class="exp-content">${q.explanation}</div>${(q.explanation_image_key||q.explanation_image)?`<img src="${q.explanation_image_key?('https://atlas-ai-proxy.hamza818483.workers.dev/storage/exp-images/'+q.explanation_image_key):('data:image/jpeg;base64,'+q.explanation_image)}" data-fullpage="${(currentExam&&currentExam._pageImageMap&&currentExam._pageImageMap[q.page_number])||''}" onclick="openPagePreviewLightbox(this.dataset.fullpage||this.src,'ব্যাখ্যা')" style="max-width:100%;border-radius:6px;margin-top:6px;display:block;cursor:pointer;">`:''}</div>`;
+        if(q.explanation) html+=`<div class="explanation-box csv-box"><div class="exp-header">📋 ব্যাখ্যা</div><div class="exp-content">${q.explanation}</div>${(q.explanation_image_key||q.explanation_image)?`<img src="${q.explanation_image_key?('https://atlas-ai-proxy.hamza818483.workers.dev/storage/exp-images/'+q.explanation_image_key):('data:image/jpeg;base64,'+q.explanation_image)}" data-fullpage="${(currentExam&&currentExam._pageImageMap&&currentExam._pageImageMap[q.page_number])||''}" onclick="openPagePreviewLightbox(this.dataset.fullpage||this.src,'ব্যাখ্যা')" style="max-width:100%;border-radius:6px;margin-top:6px;display:block;cursor:pointer;">`:''}</div>`;
         html+=`<div class="explanation-box ai-box">
-            <div class="exp-header" onclick="toggleAIBox(this,'${q.id}')"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 8V4H8" />
-  <rect width="16" height="12" x="4" y="8" rx="2" />
-  <path d="M2 14h2" />
-  <path d="M20 14h2" />
-  <path d="M15 13v2" />
-  <path d="M9 13v2" /></svg> ATLAS AI ব্যাখ্যা <span class="exp-arrow">▼</span></div>
+            <div class="exp-header" onclick="toggleAIBox(this,'${q.id}')">🤖 ATLAS AI ব্যাখ্যা <span class="exp-arrow">▼</span></div>
             <div class="exp-content" id="aiExp${q.id}"></div>
         </div></div>`;
     });
     html+=`</div>`;
-    html+=`<button class="btn btn-outline" onclick="backToList()" style="width:100%;margin-top:8px;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
-  <path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg> এক্সাম লিস্টে যান</button>`;
+    html+=`<button class="btn btn-outline" onclick="backToList()" style="width:100%;margin-top:8px;">🏠 এক্সাম লিস্টে যান</button>`;
 
     document.getElementById('resultContent').innerHTML=html;
 
@@ -2062,14 +1857,11 @@ function retakeExam(){
 function mistakePractice(){
     if(!checkGuestAction())return;
     const wrongQs=examQuestions.filter(q=>userAnswers[q.id]&&userAnswers[q.id]!==q.answer_index);
-    if(!wrongQs.length){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" />
-  <path d="m9 11 3 3L22 4" /></svg> কোনো ভুল নেই!');return;}
+    if(!wrongQs.length){showToast('✅ কোনো ভুল নেই!');return;}
     examQuestions=wrongQs;userAnswers={};isExamSubmitted=false;
     currentExam={...currentExam,total_marks:examQuestions.length,duration_minutes:Math.ceil(examQuestions.length/1.5)};
     startExamHall();
-    showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
-  <path d="m15 9-6 6" />
-  <path d="m9 9 6 6" /></svg> '+wrongQs.length+' টি ভুল প্রশ্ন নিয়ে প্র্যাকটিস');
+    showToast('❌ '+wrongQs.length+' টি ভুল প্রশ্ন নিয়ে প্র্যাকটিস');
 }
 
 // =============================================================
@@ -2091,22 +1883,7 @@ async function openLeaderboard(examId,examName){
         let html=`<table class="lb-table"><thead><tr><th>#</th><th>নাম</th><th>কলেজ</th><th>Batch</th><th>মার্ক</th><th>তারিখ</th></tr></thead><tbody>`;
         data.forEach((row,i)=>{
             const isMe=sess&&sess.phone===row.phone;
-            const medal=i===0?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15" />
-  <path d="M11 12 5.12 2.2" />
-  <path d="m13 12 5.88-9.8" />
-  <path d="M8 7h8" />
-  <circle cx="12" cy="17" r="5" />
-  <path d="M12 18v-2h-.5" /></svg>':i===1?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15" />
-  <path d="M11 12 5.12 2.2" />
-  <path d="m13 12 5.88-9.8" />
-  <path d="M8 7h8" />
-  <circle cx="12" cy="17" r="5" />
-  <path d="M12 18v-2h-.5" /></svg>':i===2?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15" />
-  <path d="M11 12 5.12 2.2" />
-  <path d="m13 12 5.88-9.8" />
-  <path d="M8 7h8" />
-  <circle cx="12" cy="17" r="5" />
-  <path d="M12 18v-2h-.5" /></svg>':'';
+            const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
             const date=row.exam_date?new Date(row.exam_date).toLocaleDateString('bn-BD'):'—';
             html+=`<tr class="${isMe?'my-row':''}">
                 <td>${medal} ${i+1}</td>
@@ -2119,9 +1896,7 @@ async function openLeaderboard(examId,examName){
         });
         html+=`</tbody></table>`;
         document.getElementById('lbBody').innerHTML=html;
-    }catch(e){document.getElementById('lbBody').innerHTML='<div class="lb-loading"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
-  <path d="m15 9-6 6" />
-  <path d="m9 9 6 6" /></svg> লোড করতে সমস্যা</div>';}
+    }catch(e){document.getElementById('lbBody').innerHTML='<div class="lb-loading"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> লোড করতে সমস্যা</div>';}
 }
 function closeLeaderboard(){document.getElementById('leaderboardOverlay').classList.remove('active');}
 
@@ -2140,16 +1915,12 @@ async function toggleAIBox(header,qid){
     const labels=['ক','খ','গ','ঘ','ঙ'];
     let prompt=`তুমি শিক্ষক। MCQ বিশ্লেষণ:\nপ্রশ্ন: ${q.question_text}\n\n`;
     opts.forEach((opt,i)=>{prompt+=`${labels[i]}) ${opt}\n`;});
-    prompt+=`\nসঠিক উত্তর: ${labels[q.answer_index-1]}) ${opts[q.answer_index-1]}\n\nপ্রতিটি অপশন: <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" />
-  <path d="m9 11 3 3L22 4" /></svg> কেন সঠিক, <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
-  <path d="m15 9-6 6" />
-  <path d="m9 9 6 6" /></svg> কেন ভুল। বাংলায়। সংক্ষেপে।`;
+    prompt+=`\nসঠিক উত্তর: ${labels[q.answer_index-1]}) ${opts[q.answer_index-1]}\n\nপ্রতিটি অপশন: ✅ কেন সঠিক, ❌ কেন ভুল। বাংলায়। সংক্ষেপে।`;
     content.innerHTML=await callAIForMCQ(prompt);
 }
 
 // =============================================================
-// AI CALL — Multiple Models Fallback (<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
-  <path d="m12 5 7 7-7 7" /></svg> Flutter: ai_service.dart)
+// AI CALL — Multiple Models Fallback (→ Flutter: ai_service.dart)
 // =============================================================
 async function callAIForMCQ(prompt){
     try{
@@ -2165,9 +1936,7 @@ async function callAIForMCQ(prompt){
         const data = await res.json();
         if (data.success && data.answer) return data.answer.replace(/\n/g,'<br>');
     }catch(e){}
-    return '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
-  <path d="m15 9-6 6" />
-  <path d="m9 9 6 6" /></svg> AI ব্যাখ্যা পাওয়া যায়নি। পরে চেষ্টা করুন।';
+    return '❌ AI ব্যাখ্যা পাওয়া যায়নি। পরে চেষ্টা করুন।';
 }
 
 // =============================================================
@@ -2186,8 +1955,7 @@ function openSolveSheetPDF(){
 
     let html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <title><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 7v14" />
-  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg> Solve Sheet — ${examName}</title>
+    <title>📚 Solve Sheet — ${examName}</title>
     <style>
         @page{size:A4;margin:14mm 12mm;}
         *{box-sizing:border-box;margin:0;padding:0;}
@@ -2233,31 +2001,23 @@ function openSolveSheetPDF(){
         html+=`<div class="page">`;
         if(page===0){
             html+=`<div class="pdf-header">
-                <div><h1><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 7v14" />
-  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg> ATLAS APP</h1><p>Solve Sheet — ${examName}</p><p style="margin-top:2px;">${sess?.name||'শিক্ষার্থী'} &nbsp;|&nbsp; ${new Date().toLocaleDateString('bn-BD')}</p></div>
+                <div><h1>📚 ATLAS APP</h1><p>Solve Sheet — ${examName}</p><p style="margin-top:2px;">${sess?.name||'শিক্ষার্থী'} &nbsp;|&nbsp; ${new Date().toLocaleDateString('bn-BD')}</p></div>
                 <div class="pdf-header-right"><div class="score-big">${score}</div><div class="score-label">/ ${examQuestions.length} নম্বর</div></div>
             </div>
             <div class="summary-bar">
-                <div class="summary-item"><div class="summary-val s-correct"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" />
-  <path d="m9 11 3 3L22 4" /></svg> ${correct}</div><div class="summary-lbl">সঠিক</div></div>
-                <div class="summary-item"><div class="summary-val s-wrong"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
-  <path d="m15 9-6 6" />
-  <path d="m9 9 6 6" /></svg> ${wrong}</div><div class="summary-lbl">ভুল</div></div>
+                <div class="summary-item"><div class="summary-val s-correct">✅ ${correct}</div><div class="summary-lbl">সঠিক</div></div>
+                <div class="summary-item"><div class="summary-val s-wrong">❌ ${wrong}</div><div class="summary-lbl">ভুল</div></div>
                 <div class="summary-item"><div class="summary-val s-skip">⏭️ ${skipped}</div><div class="summary-lbl">স্কিপ</div></div>
                 <div class="summary-item"><div class="summary-val s-neg">-${(wrong*0.25).toFixed(2)}</div><div class="summary-lbl">নেগেটিভ</div></div>
             </div>`;
         }
-        html+=`<div class="page-banner"><span><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 7v14" />
-  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg> ${examName}</span><span>পৃষ্ঠা ${page+1}/${totalPages} | প্রশ্ন ${start+1}–${Math.min(start+8,examQuestions.length)}</span></div>
+        html+=`<div class="page-banner"><span>📖 ${examName}</span><span>পৃষ্ঠা ${page+1}/${totalPages} | প্রশ্ন ${start+1}–${Math.min(start+8,examQuestions.length)}</span></div>
             <div class="mcq-grid">`;
         pageQs.forEach((q,idx)=>{
             const qNum=start+idx+1;
             const ua=userAnswers[q.id];
             const status=ua===q.answer_index?'correct':(ua?'wrong':'skip');
-            const badgeText=status==='correct'?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" />
-  <path d="m9 11 3 3L22 4" /></svg> সঠিক':status==='wrong'?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
-  <path d="m15 9-6 6" />
-  <path d="m9 9 6 6" /></svg> ভুল':'⏭️ স্কিপ';
+            const badgeText=status==='correct'?'✅ সঠিক':status==='wrong'?'❌ ভুল':'⏭️ স্কিপ';
             html+=`<div class="mcq-card card-${status}">
                 <span class="mcq-status-badge badge-${status}">${badgeText}</span>
                 <span class="q-num">Q${qNum}</span>
@@ -2265,22 +2025,15 @@ function openSolveSheetPDF(){
             [q.option1,q.option2,q.option3,q.option4,q.option5].forEach((opt,oi)=>{
                 if(opt&&opt!=='—'){
                     const cls=oi+1===q.answer_index?'opt-correct':oi+1===ua&&ua!==q.answer_index?'opt-wrong':'';
-                    html+=`<div class="opt ${cls}"><span class="opt-label">${['ক','খ','গ','ঘ','ঙ'][oi]})</span><span>${opt}</span>${oi+1===q.answer_index?' <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" />
-  <path d="m9 11 3 3L22 4" /></svg>':oi+1===ua&&ua!==q.answer_index?' <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
-  <path d="m15 9-6 6" />
-  <path d="m9 9 6 6" /></svg>':''}</div>`;
+                    html+=`<div class="opt ${cls}"><span class="opt-label">${['ক','খ','গ','ঘ','ঙ'][oi]})</span><span>${opt}</span>${oi+1===q.answer_index?' ✅':oi+1===ua&&ua!==q.answer_index?' ❌':''}</div>`;
                 }
             });
-            if(q.explanation) html+=`<div class="exp-box"><strong><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
-  <path d="M9 18h6" />
-  <path d="M10 22h4" /></svg> ব্যাখ্যা</strong>${q.explanation}${(q.explanation_image_key||q.explanation_image)?`<img src="${q.explanation_image_key?('https://atlas-ai-proxy.hamza818483.workers.dev/storage/exp-images/'+q.explanation_image_key):('data:image/jpeg;base64,'+q.explanation_image)}" data-fullpage="${(currentExam&&currentExam._pageImageMap&&currentExam._pageImageMap[q.page_number])||''}" onclick="openPagePreviewLightbox(this.dataset.fullpage||this.src,'ব্যাখ্যা')" style="max-width:100%;border-radius:6px;margin-top:6px;display:block;cursor:pointer;">`:''}</div>`;
+            if(q.explanation) html+=`<div class="exp-box"><strong>💡 ব্যাখ্যা</strong>${q.explanation}${(q.explanation_image_key||q.explanation_image)?`<img src="${q.explanation_image_key?('https://atlas-ai-proxy.hamza818483.workers.dev/storage/exp-images/'+q.explanation_image_key):('data:image/jpeg;base64,'+q.explanation_image)}" data-fullpage="${(currentExam&&currentExam._pageImageMap&&currentExam._pageImageMap[q.page_number])||''}" onclick="openPagePreviewLightbox(this.dataset.fullpage||this.src,'ব্যাখ্যা')" style="max-width:100%;border-radius:6px;margin-top:6px;display:block;cursor:pointer;">`:''}</div>`;
             html+=`</div>`;
         });
         html+=`</div><div class="pdf-footer">ATLAS APP © 2026 | atlasprep.pages.dev | পৃষ্ঠা ${page+1}/${totalPages}</div></div>`;
     }
-    html+=`<button class="print-btn" onclick="window.print()"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 15V3" />
-  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-  <path d="m7 10 5 5 5-5" /></svg> PDF হিসেবে ডাউনলোড / প্রিন্ট করুন</button></body></html>`;
+    html+=`<button class="print-btn" onclick="window.print()">📥 PDF হিসেবে ডাউনলোড / প্রিন্ট করুন</button></body></html>`;
     w.document.write(html);w.document.close();
 }
 
@@ -2291,14 +2044,11 @@ function showError(title,message,details,retryFn){
     const existing=document.querySelector('.error-popup-overlay');if(existing)existing.remove();
     const overlay=document.createElement('div');overlay.className='error-popup-overlay';
     overlay.innerHTML=`<div class="error-popup" onclick="event.stopPropagation()">
-        <div class="error-popup-icon"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
-  <path d="M12 9v4" />
-  <path d="M12 17h.01" /></svg>️</div>
+        <div class="error-popup-icon">⚠️</div>
         <div class="error-popup-title">${title||'কিছু সমস্যা হয়েছে'}</div>
         <div class="error-popup-message">${message||'পরে আবার চেষ্টা করুন'}</div>
         ${details?`<div class="error-popup-details">${details}</div>`:''}
-        <div style="display:flex;justify-content:center;gap:8px;" id="errorPopupBtnRow"><button class="error-popup-btn" id="errorPopupCloseBtn"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M18 6 6 18" />
-  <path d="m6 6 12 12" /></svg> বন্ধ</button></div>
+        <div style="display:flex;justify-content:center;gap:8px;" id="errorPopupBtnRow"><button class="error-popup-btn" id="errorPopupCloseBtn">✕ বন্ধ</button></div>
     </div>`;
     overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
     document.body.appendChild(overlay);
@@ -2307,30 +2057,22 @@ function showError(title,message,details,retryFn){
     if (retryFn) {
         const retryBtn = document.createElement('button');
         retryBtn.className = 'error-popup-retry';
-        retryBtn.textContent = '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-  <path d="M21 3v5h-5" />
-  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-  <path d="M8 16H3v5" /></svg> আবার চেষ্টা';
+        retryBtn.textContent = '🔄 আবার চেষ্টা';
         retryBtn.addEventListener('click', () => { overlay.remove(); retryFn(); });
         overlay.querySelector('#errorPopupBtnRow').prepend(retryBtn);
     }
 }
-window.addEventListener('error',e=>{showError('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" /></svg> অপ্রত্যাশিত সমস্যা','পৃষ্ঠাটি রিলোড করুন.',e.error?.message,()=>location.reload());});
-window.addEventListener('unhandledrejection',e=>{showError('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
-  <path d="M12 9v4" />
-  <path d="M12 17h.01" /></svg>️ প্রসেসিং সমস্যা','অনুরোধ সম্পূর্ণ করা যায়নি.',e.reason?.message,null);});
+window.addEventListener('error',e=>{showError('💥 অপ্রত্যাশিত সমস্যা','পৃষ্ঠাটি রিলোড করুন.',e.error?.message,()=>location.reload());});
+window.addEventListener('unhandledrejection',e=>{showError('⚠️ প্রসেসিং সমস্যা','অনুরোধ সম্পূর্ণ করা যায়নি.',e.reason?.message,null);});
 
 // =============================================================
 // SAFETY (req #16: auto submit already in timer)
 // =============================================================
 window.addEventListener('beforeunload',e=>{if(!isExamSubmitted&&examSeconds>0&&examSeconds<totalSeconds){e.preventDefault();e.returnValue='';}});
-window.addEventListener('popstate',e=>{if(!isExamSubmitted&&examSeconds>0&&examSeconds<totalSeconds){if(!confirm('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
-  <path d="M12 9v4" />
-  <path d="M12 17h.01" /></svg>️ এক্সাম ছেড়ে যাবেন?'))history.pushState(null,'',location.href);}});
+window.addEventListener('popstate',e=>{if(!isExamSubmitted&&examSeconds>0&&examSeconds<totalSeconds){if(!confirm('⚠️ এক্সাম ছেড়ে যাবেন?'))history.pushState(null,'',location.href);}});
 
 // =============================================================
-// INIT (<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
-  <path d="m12 5 7 7-7 7" /></svg> Flutter: main.dart / GoRouter)
+// INIT (→ Flutter: main.dart / GoRouter)
 // =============================================================
 document.addEventListener('DOMContentLoaded',()=>{
     // Admin check
@@ -2339,11 +2081,10 @@ document.addEventListener('DOMContentLoaded',()=>{
     // Theme restore
     if(localStorage.getItem('atlas-theme')==='light'){
         isDarkMode=false;document.body.classList.replace('dark-mode','light-mode');
-        document.getElementById('themeToggle').textContent='<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" /></svg>';
+        document.getElementById('themeToggle').textContent='🌙';
     }
 
-    // URL params (<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M5 12h14" />
-  <path d="m12 5 7 7-7 7" /></svg> Flutter: GoRouter)
+    // URL params (→ Flutter: GoRouter)
     const urlParams=new URLSearchParams(location.search);
     const practice=urlParams.get('practice');
 const examId=urlParams.get('id');
@@ -2370,19 +2111,14 @@ if(practice==='mock'){
                 pages, _pageImages: practiceImgs, _pageImageMap: pageImageMap
             };
             showPreExamFromData(currentExam,examQuestions);
-        }catch(e){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
-  <path d="m15 9-6 6" />
-  <path d="m9 9 6 6" /></svg> প্রশ্ন লোড করতে সমস্যা');}
-    }else{showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
-  <path d="m15 9-6 6" />
-  <path d="m9 9 6 6" /></svg> কোনো প্রশ্ন পাওয়া যায়নি');}
+        }catch(e){showToast('❌ প্রশ্ন লোড করতে সমস্যা');}
+    }else{showToast('❌ কোনো প্রশ্ন পাওয়া যায়নি');}
     return;
 }
 
     // Req #22: Practice mode — load from sessionStorage (from dashboard/mistakes)
     if(practice==='mistakes'||practice==='history'){
-       isMockTest = true;  // <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m12 19-7-7 7-7" />
-  <path d="M19 12H5" /></svg> এটা দাও
+       isMockTest = true;  // ← এটা দাও
         const qData=sessionStorage.getItem('practiceQuestions');
         const title=sessionStorage.getItem('practiceTitle')||'Practice Exam';
         if(qData){
@@ -2390,12 +2126,8 @@ if(practice==='mock'){
                 examQuestions=JSON.parse(qData);
                 currentExam={title,subject:'Practice',chapter:'Practice',exam_type:'practice',total_marks:examQuestions.length,duration_minutes:Math.ceil(examQuestions.length/1.5),id:'practice_'+Date.now(),allow_preview:false,allow_solve_sheet:true};
                 showPreExamFromData(currentExam,examQuestions);
-            }catch(e){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
-  <path d="m15 9-6 6" />
-  <path d="m9 9 6 6" /></svg> প্রশ্ন লোড করতে সমস্যা');}
-        }else{showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" />
-  <path d="m15 9-6 6" />
-  <path d="m9 9 6 6" /></svg> কোনো প্রশ্ন পাওয়া যায়নি');}
+            }catch(e){showToast('❌ প্রশ্ন লোড করতে সমস্যা');}
+        }else{showToast('❌ কোনো প্রশ্ন পাওয়া যায়নি');}
         return;
     }
 
@@ -2440,8 +2172,7 @@ if (source === 'dashboard') {
             
             localStorage.removeItem('pending_exam_data');
             showPreExamFromData(currentExam, examQuestions);
-            showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 7v14" />
-  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg> ' + examQuestions.length + ' প্রশ্ন লোড হয়েছে');
+            showToast('📚 ' + examQuestions.length + ' প্রশ্ন লোড হয়েছে');
         }
     } catch (e) {
         console.error('Dashboard error:', e);

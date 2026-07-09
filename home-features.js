@@ -47,7 +47,7 @@ function hfCalculateGpa() {
     const hsc = parseFloat(hscEl?.value);
 
     if (isNaN(ssc) || isNaN(hsc) || ssc < 0 || ssc > 5 || hsc < 0 || hsc > 5) {
-        resultBox.innerHTML = `<div style="color:var(--danger,#E53E3E);font-size:13px;text-align:center;padding:8px;">⚠️ সঠিক SSC ও HSC GPA দিন (0.00 - 5.00 এর মধ্যে)</div>`;
+        resultBox.innerHTML = `<div style="color:var(--danger,#E53E3E);font-size:13px;text-align:center;padding:8px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3' /> <path d='M12 9v4' /> <path d='M12 17h.01' /></svg>️ সঠিক SSC ও HSC GPA দিন (0.00 - 5.00 এর মধ্যে)</div>`;
         return;
     }
 
