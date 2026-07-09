@@ -3460,12 +3460,13 @@ function mbUpdateBulkUI(job) {
     // কিন্তু আসলে সেই পেইজটাই এখনো প্রসেস হচ্ছে)। এখন in-page fractional progress
     // (job.subProgress: 0-1) যোগ করে % আর MCQ count স্মুথলি এগোয়, এবং লেবেলে স্পষ্ট করে
     // "প্রসেস হচ্ছে: পেইজ X (মোট Y এর মধ্যে Z সম্পন্ন)" দেখানো হচ্ছে।
-    const sub = Math.max(0, Math.min(1, job.subProgress || 0));
-    const doneFraction = job.completedCount + sub;
-    const pct = job.totalPages ? Math.round((doneFraction / job.totalPages) * 100) : 0;
+    // bug fix: doneFraction আগে fake subProgress যোগ করত (উপরে দেখো) — এখন % সম্পূর্ণভাবে
+    // completedCount/totalPages থেকে আসে, যেটা আসল সম্পন্ন-হওয়া পেইজ সংখ্যার সাথে হুবহু মেলে।
+    const pct = job.totalPages ? Math.round((job.completedCount / job.totalPages) * 100) : 0;
     const pageLabel = job.currentPage > job.to ? job.to : job.currentPage;
+    const generatingSuffix = job.inPageGenerating ? ' — MCQ তৈরি হচ্ছে...' : '';
     document.getElementById('mbBulkLabel').textContent =
-        `⚡ প্রসেস হচ্ছে: পেইজ ${pageLabel} (মোট ${job.totalPages} এর মধ্যে ${job.completedCount} সম্পন্ন)`;
+        `⚡ প্রসেস হচ্ছে: পেইজ ${pageLabel} (মোট ${job.totalPages} এর মধ্যে ${job.completedCount} সম্পন্ন)${generatingSuffix}`;
     document.getElementById('mbBulkBarFill').style.width = pct + '%';
 
     // ETA হিসাব — গড় সময়/পেইজ থেকে বাকি পেইজের আনুমানিক সময়
@@ -3473,7 +3474,7 @@ function mbUpdateBulkUI(job) {
     if (job.completedCount > 0 && job.startedAt) {
         const elapsedSec = (Date.now() - job.startedAt) / 1000;
         const avgPerPage = elapsedSec / job.completedCount;
-        const remainingPages = job.totalPages - doneFraction;
+        const remainingPages = job.totalPages - job.completedCount;
         const etaSec = Math.round(avgPerPage * remainingPages);
         etaStr = etaSec > 60 ? ` · বাকি ~${Math.ceil(etaSec/60)} মিনিট` : etaSec > 0 ? ` · বাকি ~${etaSec}s` : '';
     }
@@ -3487,15 +3488,18 @@ function mbUpdateBulkUI(job) {
     if (activePill) activePill.classList.add('mb-pill-active-bulk');
 }
 
-// পেইজ-ভেতরের (sub-page) progress ticker — mbGenerateForPage চলাকালীন smooth % দেখানোর জন্য
+// bug fix (user-reported: "% ta fake, actual MCQ banano-r sathe match kore na"): আগে এই
+// ticker প্রতি 400ms এ নিজের ইচ্ছামতো +4% করে বাড়িয়ে দিত (job.subProgress), যেটা আসল AI
+// response/MCQ generation progress-এর সাথে কোনো সম্পর্ক ছাড়াই কাল্পনিকভাবে এগোত। এখন এই
+// fake ticker সরিয়ে দেওয়া হলো — % বার এখন শুধু completedCount/totalPages (১০০% আসল, পুরো
+// পেইজ শেষ হলেই বাড়ে) দেখায়; চলমান পেইজে একটা honest "প্রসেস হচ্ছে..." টেক্সট থাকে, কোনো
+// মিথ্যা %-জাম্প ছাড়া।
 let mbBulkSubTicker = null;
 function mbStartBulkSubTicker(job) {
     mbStopBulkSubTicker();
-    job.subProgress = 0.05;
-    mbBulkSubTicker = setInterval(() => {
-        job.subProgress = Math.min(0.92, (job.subProgress || 0) + 0.04);
-        mbUpdateBulkUI(job);
-    }, 400);
+    job.subProgress = 0;
+    job.inPageGenerating = true;
+    mbUpdateBulkUI(job);
 }
 function mbStopBulkSubTicker() {
     if (mbBulkSubTicker) { clearInterval(mbBulkSubTicker); mbBulkSubTicker = null; }
@@ -3522,11 +3526,13 @@ async function mbRunBulkJob(job) {
             const generatedCount = await mbGenerateForPage(p, job.countRaw, job.type);
             mbStopBulkSubTicker();
             job.subProgress = 0;
+            job.inPageGenerating = false;
             job.completedCount++;
             job.totalMcqGenerated = (job.totalMcqGenerated || 0) + (generatedCount || 0);
         } catch (e) {
             mbStopBulkSubTicker();
             job.subProgress = 0;
+            job.inPageGenerating = false;
             console.error('Bulk page ' + p + ' failed:', e);
             lastErrorMsg = 'পেইজ ' + p + ': ' + (e.message || 'ব্যর্থ');
             mbLogError('mbRunBulkJob', p, e && e.message || e, { type: job.type, countRaw: job.countRaw });
