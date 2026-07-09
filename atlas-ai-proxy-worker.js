@@ -564,33 +564,25 @@ async function callGemini(env, question, systemPrompt, image) {
         const healthyKeys = keys.filter(k => !exhaustedKeys.has(k));
         if (!healthyKeys.length) break; // shob key exhausted — ar try kore lav nai
         for (const model of GEMINI_MODELS) {
-            // speed fix: আগে একই model-এ সব key সিরিয়ালি চেষ্টা হতো (key1 fail/slow →
-            // key2 → ...), একাধিক key থাকলে worst-case latency কয়েকগুণ বাড়ত। এখন একই
-            // model-এর সব key parallel-এ race করানো হয় — যেকোনো একটা key কাজ করলেই
-            // দ্রুত উত্তর মেলে, বাকি key-গুলোর জন্য অপেক্ষা করতে হয় না।
-            const keyResult = await new Promise((resolve) => {
-                let remaining = healthyKeys.length;
-                let done = false;
-                for (const key of healthyKeys) {
-                    attemptWithStatus((signal) => callGeminiOnce(key, model, parts, 16384, signal)).then(async (outcome) => {
-                        if (done) return;
-                        if (outcome.__exception) { lastError = `Gemini(${model}) exception: ${outcome.message}`; }
-                        else if (!outcome.ok) {
-                            lastError = `Gemini(${model}) HTTP ${outcome.status}`;
-                            if (outcome.status === 429) exhaustedKeys.add(key); // quota shesh — porer round-e skip
-                        }
-                        else {
-                            const data = await outcome.json().catch(() => null);
-                            const answer = data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
-                            if (answer) { done = true; resolve(answer); return; }
-                            lastError = `Gemini(${model}): empty response`;
-                        }
-                        remaining--;
-                        if (remaining === 0 && !done) resolve(null);
-                    });
+            // sequential key rotation: ekta key try kora hoy, fail/429 hole tobei porer
+            // key try kora hoy (parallel na) -- subrequest count o kom thake, ar user-er
+            // chawa onujayi "shob key ekta ekta kore try, tarpor onno model/provider".
+            for (const key of healthyKeys) {
+                const outcome = await attemptWithStatus((signal) => callGeminiOnce(key, model, parts, 16384, signal));
+                if (outcome.__exception) {
+                    lastError = `Gemini(${model}) exception: ${outcome.message}`;
+                    continue;
                 }
-            });
-            if (keyResult) return { answer: keyResult, provider: `gemini:${model}` };
+                if (!outcome.ok) {
+                    lastError = `Gemini(${model}) HTTP ${outcome.status}`;
+                    if (outcome.status === 429) exhaustedKeys.add(key); // quota shesh — porer round-e skip
+                    continue;
+                }
+                const data = await outcome.json().catch(() => null);
+                const answer = data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
+                if (answer) return { answer, provider: `gemini:${model}` };
+                lastError = `Gemini(${model}): empty response`;
+            }
         }
         // একটা পুরো round (সব model × সব key) ব্যর্থ হলে সংক্ষিপ্ত backoff দিয়ে আবার চেষ্টা
         if (round < MAX_ROTATION_ROUNDS - 1) await sleep(400 * (round + 1));
