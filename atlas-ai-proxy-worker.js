@@ -1245,13 +1245,31 @@ async function processPendingMcqJobs(env) {
                 () => callCloudflareAI(env, '', roundPrompt, image),
             ];
             let answer = null, lastErr = 'সব provider ব্যর্থ';
-            for (const p of providers) {
-                try {
-                    const r = await p();
-                    if (r && r.answer && r.answer.trim().length > 5) { answer = r.answer; break; }
-                    if (r?.error) lastErr = r.error;
-                } catch (e) { lastErr = String(e?.message || e); }
-            }
+            // bug fix: এখানেও আগে provider সিরিয়ালি চলত (Groq→Gemini→OpenRouter→Cerebras→CF AI,
+            // একটার পর একটা) — client-side fix (atlas-ai-proxy-worker.js এর প্রধান হ্যান্ডলারে
+            // আগেই করা হয়েছে) এর মতোই এখানেও সব provider parallel-এ race করানো হলো, যাতে
+            // background cron round দ্রুত শেষ হয় ও পরের round-এর জন্য অপেক্ষা কম লাগে।
+            await new Promise((resolve) => {
+                let remaining = providers.length;
+                let settled = false;
+                for (const p of providers) {
+                    p().then((r) => {
+                        if (!settled && r && r.answer && r.answer.trim().length > 5) {
+                            settled = true;
+                            answer = r.answer;
+                            resolve();
+                            return;
+                        }
+                        if (r?.error) lastErr = r.error;
+                        remaining--;
+                        if (remaining === 0) resolve();
+                    }).catch((e) => {
+                        lastErr = String(e?.message || e);
+                        remaining--;
+                        if (remaining === 0) resolve();
+                    });
+                }
+            });
             if (!answer) throw new Error(lastErr);
 
             const parsedNew = workerParseAiJson(answer) || [];
