@@ -241,14 +241,17 @@ async function mbCheckAndConsumePendingJobs() {
 
             const newMcqs = parsed.map(m => ({ id: uid(), ...m, type: m.type || job.mcq_type }));
             const cropCache = new Map();
+            const wantExpImg = mbGetExplanationImagePref();
             for (const m of newMcqs) {
-                const key = m.exp_box ? JSON.stringify(m.exp_box) + JSON.stringify(m.line_box||null) : `NOBBOX_${m.id}`;
-                if (!cropCache.has(key)) {
-                    const b64 = await mbCropExplanationImage(job.page_number, m.exp_box, m.line_box);
-                    cropCache.set(key, b64 ? await mbUploadExpImage(b64) : null);
+                if (wantExpImg) {
+                    const key = m.exp_box ? JSON.stringify(m.exp_box) + JSON.stringify(m.line_box||null) : `NOBBOX_${m.id}`;
+                    if (!cropCache.has(key)) {
+                        const b64 = await mbCropExplanationImage(job.page_number, m.exp_box, m.line_box);
+                        cropCache.set(key, b64 ? await mbUploadExpImage(b64) : null);
+                    }
+                    const imgKey = cropCache.get(key);
+                    if (imgKey) m.explanation_image_key = imgKey;
                 }
-                const imgKey = cropCache.get(key);
-                if (imgKey) m.explanation_image_key = imgKey;
                 delete m.exp_box; delete m.line_box;
             }
             let currentMcqs = [];
@@ -2916,15 +2919,18 @@ async function mbAiGenerate() {
         // এখন প্রতিটা crop আলাদাভাবে try/catch করা হচ্ছে — crop ব্যর্থ হলেও সেই MCQ explanation
         // image ছাড়াই save হবে, পুরো batch হারাবে না।
         const cropCache = new Map();
+        const wantExpImg1 = mbGetExplanationImagePref();
         for (const m of mbAiData) {
             try {
-                const key = m.exp_box ? JSON.stringify(m.exp_box) + JSON.stringify(m.line_box||null) : `NOBBOX_${m.id}`;
-                if (!cropCache.has(key)) {
-                    const b64 = await mbCropExplanationImage(mbCurrentPage, m.exp_box, m.line_box);
-                    cropCache.set(key, b64 ? await mbUploadExpImage(b64) : null);
+                if (wantExpImg1) {
+                    const key = m.exp_box ? JSON.stringify(m.exp_box) + JSON.stringify(m.line_box||null) : `NOBBOX_${m.id}`;
+                    if (!cropCache.has(key)) {
+                        const b64 = await mbCropExplanationImage(mbCurrentPage, m.exp_box, m.line_box);
+                        cropCache.set(key, b64 ? await mbUploadExpImage(b64) : null);
+                    }
+                    const imgKey = cropCache.get(key);
+                    if (imgKey) m.explanation_image_key = imgKey; // exp_box না থাকলেও fallback (full page) দেওয়া হয় — কখনো miss হবে না
                 }
-                const imgKey = cropCache.get(key);
-                if (imgKey) m.explanation_image_key = imgKey; // exp_box না থাকলেও fallback (full page) দেওয়া হয় — কখনো miss হবে না
             } catch (cropErr) {
                 mbLogError('mbCropExplanationImage', mbCurrentPage, cropErr && cropErr.message || cropErr, { mcqId: m.id });
                 // crop ব্যর্থ হলেও এই MCQ explanation image ছাড়াই সেভ হবে
@@ -3405,9 +3411,30 @@ function mbUpdateRangeSummary() {
     }
 }
 
-// মূল Generate বাটন — single page হলে সরাসরি ওই একটা পেইজেই কাজ করে (bulk job/localStorage
-// touch করে না), range/all হলে persistent bulk-job pipeline ব্যবহার করে (refresh-safe)।
+// feature: Final "MCQ তৈরি করো" ক্লিকে আগে জিজ্ঞেস করা হয় explanation-এ cropped page-image
+// লাগবে কিনা। "Without" বেছে নিলে exp_box/line_box AI-কে চাইতে হয় না (prompt সহজ থাকে,
+// AI মূল question/option/answer-এ বেশি ফোকাস করতে পারে) এবং crop+R2-upload স্টেপ পুরোপুরি
+// স্কিপ হয় (কিছুটা দ্রুতও হয়) — MCQ যথারীতি normal ভাবে generate হয়ে সেই পেইজের "All" ট্যাবে জমা হয়।
+let mbWithExplanationImage = true; // ডিফল্ট — modal-এ ইউজার choice না করলে আগের (backward-compatible) আচরণ
+function mbGetExplanationImagePref() {
+    try {
+        const v = localStorage.getItem('mbWithExplanationImage');
+        return v === null ? true : v === '1';
+    } catch (_) { return true; }
+}
+function mbSetExplanationImagePref(v) {
+    mbWithExplanationImage = !!v;
+    try { localStorage.setItem('mbWithExplanationImage', v ? '1' : '0'); } catch (_) {}
+}
 function mbGenerateClick() {
+    document.getElementById('mbExpImgChoiceModal').classList.add('active');
+}
+function mbCloseExpImgChoiceModal() {
+    document.getElementById('mbExpImgChoiceModal').classList.remove('active');
+}
+function mbConfirmExpImgChoice(withImage) {
+    mbSetExplanationImagePref(withImage);
+    mbCloseExpImgChoiceModal();
     if (mbGenMode === 'single') { mbStartSinglePageJob(); return; }
     mbStartBulkGenerate();
 }
@@ -3889,15 +3916,18 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     // — exp_box missing হলে unique per-MCQ key ব্যবহার করা হয়, নাহলে সব missing-exp_box
     // MCQ একই cache entry শেয়ার করে ভুল/অন্য প্রশ্নের crop image পেয়ে যায়।
     const cropCache = new Map();
+    const wantExpImg2 = mbGetExplanationImagePref();
     for (const m of newMcqs) {
         try {
-            const key = m.exp_box ? JSON.stringify(m.exp_box) + JSON.stringify(m.line_box||null) : `NOBBOX_${m.id}`;
-            if (!cropCache.has(key)) {
-                const b64 = await mbCropExplanationImage(pageNum, m.exp_box, m.line_box);
-                cropCache.set(key, b64 ? await mbUploadExpImage(b64) : null);
+            if (wantExpImg2) {
+                const key = m.exp_box ? JSON.stringify(m.exp_box) + JSON.stringify(m.line_box||null) : `NOBBOX_${m.id}`;
+                if (!cropCache.has(key)) {
+                    const b64 = await mbCropExplanationImage(pageNum, m.exp_box, m.line_box);
+                    cropCache.set(key, b64 ? await mbUploadExpImage(b64) : null);
+                }
+                const imgKey = cropCache.get(key);
+                if (imgKey) m.explanation_image_key = imgKey;
             }
-            const imgKey = cropCache.get(key);
-            if (imgKey) m.explanation_image_key = imgKey;
         } catch (cropErr) {
             mbLogError('mbCropExplanationImage:bulk', pageNum, cropErr && cropErr.message || cropErr, { mcqId: m.id });
         }
@@ -4188,6 +4218,8 @@ window.mbAiGenerate       = mbAiGenerate;
 window.mbSetGenMode        = mbSetGenMode;
 window.mbUpdateRangeSummary= mbUpdateRangeSummary;
 window.mbGenerateClick     = mbGenerateClick;
+window.mbCloseExpImgChoiceModal = mbCloseExpImgChoiceModal;
+window.mbConfirmExpImgChoice    = mbConfirmExpImgChoice;
 window.mbStartBulkGenerate = mbStartBulkGenerate;
 window.mbStopBulkGenerate  = mbStopBulkGenerate;
 window.mbSaveAiMcqs       = mbSaveAiMcqs;
