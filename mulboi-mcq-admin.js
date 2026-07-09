@@ -163,9 +163,18 @@ async function mbD1Api(table, query, opts) {
         'Content-Type': 'application/json'
     }, opts.headers || {});
     let lastErr;
+    // bug fix (root cause of multi-minute hang after MCQ generation, e.g. page 11: topUp
+    // শেষ হয়ে যাওয়ার পরেও ৪+ মিনিট আটকে থাকা): AI provider fetch-এ আগে timeout যোগ করা
+    // হয়েছিল (12s), কিন্তু D1 save/verify-retry এর জন্য central এই ফাংশনে কখনোই timeout
+    // ছিল না — save/GET-verify/retry-POST/GET-verify আবার — এই চেইনের যেকোনো একটা fetch
+    // hang করলে (network stall/D1 proxy slow) পুরো generate flow অনির্দিষ্টকাল আটকে
+    // থাকতো। এখন AI fetch-এর মতোই 12s hard timeout, তাই hang হলেও দ্রুত retry/fail হবে।
     for (let attempt = 0; attempt <= 2; attempt++) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 12000);
         try {
-            const res = await fetch(url, Object.assign({}, opts, { headers }));
+            const res = await fetch(url, Object.assign({}, opts, { headers, signal: controller.signal }));
+            clearTimeout(timer);
             if (!res.ok && table !== 'mcq_error_logs') {
                 // response body clone kore poRa hocche jate caller-er nijer .json()/.text() call
                 // consumed stream niye break na kore
@@ -176,7 +185,8 @@ async function mbD1Api(table, query, opts) {
             }
             return res;
         } catch (e) {
-            lastErr = e;
+            clearTimeout(timer);
+            lastErr = (e && e.name === 'AbortError') ? new Error('D1 fetch timeout (12s এ সাড়া দেয়নি)') : e;
             if (attempt < 2) await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
         }
     }
