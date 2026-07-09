@@ -1729,6 +1729,8 @@ function mbUpdatePageCount() {
    ════════════════════════════════════════════════════ */
 
 function mbSwitchTab(name) {
+    const expModal = document.getElementById('mbExpImgChoiceModal');
+    if (expModal) expModal.classList.remove('active');
     const tabs = { manual: 'Manual', csv: 'Csv', ai: 'Ai', all: 'All' };
     Object.keys(tabs).forEach(t => {
         const btn = document.getElementById('mbTabBtn' + tabs[t]);
@@ -3422,7 +3424,9 @@ function mbUpdateRangeSummary() {
 
 // মূল Generate বাটন — একটা choice modal দেখায়, ইউজার select করলে আসল কাজ শুরু হয়
 function mbGenerateClick() {
-    document.getElementById('mbExpImgChoiceModal').classList.add('active');
+    const m = document.getElementById('mbExpImgChoiceModal');
+    m.classList.add('active');
+    void m.offsetHeight; // force sync reflow/repaint
 }
 function mbCloseExpImgChoiceModal() {
     document.getElementById('mbExpImgChoiceModal').classList.remove('active');
