@@ -3132,9 +3132,58 @@ function mbFixHasantoDeep(obj) {
     return obj;
 }
 
+// bug fix (root cause of validation fail with "option_a"/"option_b" keys): kichu shomoy AI
+// (bishesh kore Groq/Llama) prompt-e option_k/kh/g/gh cheye dile-o nijer moto option_a/option_b/
+// option_c/option_d, ba options[0..3] array, ba answer(1-4 numeric) diye dey. Age eta shudhu
+// bhul field hisebe dhora porto (question/option_k na thakle mbIsValidMcqBulk fail), fole
+// "AI shomporno/sothik MCQ dite parni" error hoto যদিও AI আসলে data thik e diyechilo. Ei
+// function shokol common bhul field name/shape-ke internal option_k/kh/g/gh + correct(k/kh/g/gh)
+// shape-e normalize kore dey, kono MCQ jeno shudhu bhul naming-er jonno baad na pore.
+function mbNormalizeMcqFields(m) {
+    if (!m || typeof m !== 'object') return m;
+    if (m.option_k && m.option_kh && m.option_g && m.option_gh) return m; // already correct shape
+
+    const out = { ...m };
+    // option_a/b/c/d -> option_k/kh/g/gh
+    if (m.option_a !== undefined || m.option_b !== undefined) {
+        out.option_k  = out.option_k  || m.option_a || '';
+        out.option_kh = out.option_kh || m.option_b || '';
+        out.option_g  = out.option_g  || m.option_c || '';
+        out.option_gh = out.option_gh || m.option_d || '';
+    }
+    // option1/2/3/4 -> option_k/kh/g/gh
+    if (m.option1 !== undefined || m.option_1 !== undefined) {
+        out.option_k  = out.option_k  || m.option1 || m.option_1 || '';
+        out.option_kh = out.option_kh || m.option2 || m.option_2 || '';
+        out.option_g  = out.option_g  || m.option3 || m.option_3 || '';
+        out.option_gh = out.option_gh || m.option4 || m.option_4 || '';
+    }
+    // options: [a,b,c,d] array -> option_k/kh/g/gh
+    if (Array.isArray(m.options) && m.options.length >= 4) {
+        out.option_k  = out.option_k  || m.options[0] || '';
+        out.option_kh = out.option_kh || m.options[1] || '';
+        out.option_g  = out.option_g  || m.options[2] || '';
+        out.option_gh = out.option_gh || m.options[3] || '';
+    }
+    // correct/answer normalize: a/b/c/d, 1/2/3/4, answer_index(0-based) -> k/kh/g/gh
+    if (!['k','kh','g','gh'].includes(out.correct)) {
+        const letterMap = { a: 'k', b: 'kh', c: 'g', d: 'gh', A: 'k', B: 'kh', C: 'g', D: 'gh' };
+        const numMap    = { '1': 'k', '2': 'kh', '3': 'g', '4': 'gh' };
+        if (m.correct !== undefined && letterMap[m.correct]) out.correct = letterMap[m.correct];
+        else if (m.correct !== undefined && numMap[String(m.correct)]) out.correct = numMap[String(m.correct)];
+        else if (m.answer !== undefined && numMap[String(m.answer)]) out.correct = numMap[String(m.answer)];
+        else if (m.answer !== undefined && letterMap[m.answer]) out.correct = letterMap[m.answer];
+        else if (typeof m.answer_index === 'number') out.correct = numMap[String(m.answer_index + 1)] || out.correct;
+        else if (typeof m.correct_index === 'number') out.correct = numMap[String(m.correct_index + 1)] || out.correct;
+    }
+    return out;
+}
+
 function mbParseAiJson(raw) {
     const result = mbParseAiJsonRaw(raw);
-    return result ? mbFixHasantoDeep(result) : result;
+    if (!result) return result;
+    const fixed = mbFixHasantoDeep(result);
+    return Array.isArray(fixed) ? fixed.map(mbNormalizeMcqFields) : fixed;
 }
 
 function mbParseAiJsonRaw(raw) {
