@@ -707,10 +707,21 @@ async function callGroq(env, question, systemPrompt, image) {
     if (!keys.length) return { error: "GROQ_API_KEY not set" };
     const models = image ? GROQ_IMAGE_MODELS : GROQ_TEXT_MODELS;
 
+    // bug fix (root cause of "AI সঠিক JSON দেয়নি — raw: ...প্রবন্ধ/prose..."): Groq-এর
+    // vision মডেল (Llama-4 Maverick/Scout) system prompt এ "শুধু JSON array দাও" বললেও
+    // প্রায়ই স্বাভাবিক ভাষায় বর্ণনা/প্রবন্ধ ফেরত দিত, বিশেষত ছবি-ভিত্তিক কলে। Groq officially
+    // response_format:{type:"json_object"} সাপোর্ট করে যেটা মডেলকে valid JSON আউটপুট দিতে
+    // বাধ্য করে (docs: console.groq.com/docs/structured-outputs, vision docs)। এটা object
+    // চায়, array না, তাই prompt-এ বলা হচ্ছে {"questions":[...]} wrapper ব্যবহার করতে, আর
+    // response parse করার সময় "answer" থেকে raw content বের করার আগে সেই wrapper থেকে
+    // ভেতরের array-টা বের করে নেওয়া হচ্ছে (caller-দের কোড অপরিবর্তিত রাখতে, যারা raw answer
+    // string থেকে নিজেরাই [...] regex দিয়ে বের করে)।
+    const jsonSystemPrompt = systemPrompt + `\n\nGURUTTOPURNO: শুধুমাত্র এই ফরম্যাটে একটা valid JSON object দাও, অন্য কোনো preamble/markdown/ব্যাখ্যা ছাড়া: {"questions": [ ...এখানে array... ]}`;
+
     let messages;
     if (image) {
         messages = [
-            { role: "system", content: systemPrompt },
+            { role: "system", content: jsonSystemPrompt },
             {
                 role: "user",
                 content: [
@@ -721,7 +732,7 @@ async function callGroq(env, question, systemPrompt, image) {
         ];
     } else {
         messages = [
-            { role: "system", content: systemPrompt },
+            { role: "system", content: jsonSystemPrompt },
             { role: "user", content: question },
         ];
     }
@@ -739,15 +750,26 @@ async function callGroq(env, question, systemPrompt, image) {
                         method: "POST",
                         headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
                         signal,
-                        body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 8192 }),
+                        body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 8192, response_format: { type: "json_object" } }),
                     })).then(async (outcome) => {
                         if (done) return;
                         if (outcome.__exception) { lastError = `Groq(${model}) exception: ${outcome.message}`; }
                         else if (!outcome.ok) { lastError = `Groq(${model}) HTTP ${outcome.status}`; }
                         else {
                             const data = await outcome.json().catch(() => null);
-                            const answer = data?.choices?.[0]?.message?.content || null;
-                            if (answer) { done = true; resolve(answer); return; }
+                            let answer = data?.choices?.[0]?.message?.content || null;
+                            if (answer) {
+                                // response_format:json_object দিলে Groq একটা object দেয় ({"questions":[...]})
+                                // — caller-রা raw answer string থেকে [...] খুঁজে array বের করে, তাই এখানেই
+                                // wrapper থেকে ভেতরের questions array বের করে answer-কে সেই array-string বানানো হচ্ছে।
+                                try {
+                                    const parsedObj = JSON.parse(answer);
+                                    if (parsedObj && Array.isArray(parsedObj.questions)) {
+                                        answer = JSON.stringify(parsedObj.questions);
+                                    }
+                                } catch (_) { /* JSON object না হলে raw answer-ই থাকুক, caller-এর নিজস্ব parse চেষ্টা করবে */ }
+                                done = true; resolve(answer); return;
+                            }
                             lastError = `Groq(${model}): empty response`;
                         }
                         remaining--;
