@@ -1,5 +1,5 @@
 // ATLAS APP - Service Worker v1
-const CACHE_NAME = 'atlas-app-v16';
+const CACHE_NAME = 'atlas-app-v17';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
