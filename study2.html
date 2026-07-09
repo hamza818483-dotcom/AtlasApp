@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATLAS APP · মূলবই-২ পেইজভিত্তিক প্রস্তুতি</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<!-- Tesseract.js: client-side OCR, কোনো API key/quota লাগে না — শুধু "টেক্সট কপি" ফিচারের জন্য।
+     MCQ generation-এর AI (Gemini/Groq) থেকে সম্পূর্ণ আলাদা ও স্বাধীন। -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
+<style>
+*{box-sizing:border-box}
+.screen{display:none;min-height:calc(100vh - 60px);flex-direction:column}
+.screen.active{display:flex}
+
+.study-hdr{
+  position:sticky;top:60px;z-index:90;
+  background:var(--header-bg);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;padding:12px 14px;min-height:52px;
+}
+.back-btn{
+  width:36px;height:36px;border-radius:50%;
+  background:var(--card-bg);border:1px solid var(--border);color:var(--text);
+  font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.scr-title{font-size:14.5px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Subjects */
+.subj-banner{ background:linear-gradient(135deg,var(--accent),#3D35B0); margin:14px;border-radius:16px;padding:20px 18px;color:#fff; box-shadow:0 8px 28px rgba(108,99,255,.35); position:relative; overflow:hidden; }
+.subj-banner::after{ content:''; position:absolute; top:-50%; right:-15%; width:60%; height:200%; background:radial-gradient(circle, rgba(255,255,255,.14) 0%, transparent 70%); pointer-events:none; }
+.subj-banner-t{font-size:17px;font-weight:900;margin-bottom:4px;position:relative;z-index:1}
+.subj-banner-s{font-size:12px;opacity:.88;position:relative;z-index:1}
+.subj-list{padding:0 14px 24px;display:flex;flex-direction:column;gap:13px}
+	.subj-card{
+	  border-radius:18px;padding:0;display:flex;align-items:center;gap:0;
+	  cursor:pointer;color:#fff;position:relative;overflow:hidden;
+	  transition:transform .22s cubic-bezier(.34,1.56,.64,1),box-shadow .22s ease;
+	  box-shadow:0 10px 26px -6px rgba(0,0,0,.45), 0 2px 8px rgba(0,0,0,.25);
+	}
+	/* মূল ব্যাকগ্রাউন্ড: diagonal multi-stop gradient (g0..g7 এর সাথে combine হয়) + dot-pattern texture, যাতে flat-solid-color box মনে না হয় */
+	.subj-card-bg{
+	  position:absolute;inset:0;
+	  background-image:
+	    radial-gradient(circle at 15% 20%, rgba(255,255,255,.16) 0%, transparent 35%),
+	    radial-gradient(circle, rgba(255,255,255,.5) 1px, transparent 1.5px);
+	  background-size: auto, 16px 16px;
+	  background-position: 0 0, 0 0;
+	  opacity:.9;
+	}
+	.subj-card::before{
+	  content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+	  background:linear-gradient(45deg,transparent 30%,rgba(255,255,255,0.14) 50%,transparent 70%);
+	  animation:cardShimmer 3.5s ease-in-out infinite;pointer-events:none;z-index:2;
+	}
+	@keyframes cardShimmer{0%{transform:translateX(-100%) rotate(45deg)}100%{transform:translateX(100%) rotate(45deg)}}
+	.subj-card:hover{transform:translateY(-3px) scale(1.012);box-shadow:0 16px 34px -6px rgba(0,0,0,.55), 0 2px 10px rgba(0,0,0,.3)}
+	.subj-card:active{transform:scale(.98)}
+	.subj-card-inner{position:relative;z-index:3;display:flex;align-items:center;gap:14px;padding:19px 17px;width:100%}
+	.subj-icon{
+	  font-size:26px;width:54px;height:54px;display:flex;align-items:center;justify-content:center;
+	  background:linear-gradient(155deg, rgba(255,255,255,.32) 0%, rgba(255,255,255,.1) 100%);
+	  backdrop-filter:blur(10px);border-radius:16px;flex-shrink:0;
+	  border:1.5px solid rgba(255,255,255,.35);
+	  box-shadow:0 4px 14px rgba(0,0,0,.25), inset 0 1px 1px rgba(255,255,255,.4), inset 0 -2px 4px rgba(0,0,0,.12);
+	}
+.subj-info{flex:1;min-width:0}
+.subj-name{font-size:16px;font-weight:800;letter-spacing:.1px;text-shadow:0 1px 3px rgba(0,0,0,.2)}
+.subj-desc{font-size:11.5px;opacity:.85;margin-top:3px}
+.subj-arr{font-size:20px;opacity:.75;flex-shrink:0}
+.g0{background:linear-gradient(150deg,#8B85FF 0%,#6C63FF 45%,#3D35B0 100%)}
+.g1{background:linear-gradient(150deg,#2EEFC4 0%,#00D4AA 45%,#00856F 100%)}
+.g2{background:linear-gradient(150deg,#FF8F8F 0%,#FF6B6B 45%,#B03535 100%)}
+.g3{background:linear-gradient(150deg,#FFD166 0%,#FFBE0B 45%,#B08500 100%)}
+.g4{background:linear-gradient(150deg,#6FA6FF 0%,#3A86FF 45%,#1A56CC 100%)}
+.g5{background:linear-gradient(150deg,#FF4D94 0%,#FF006E 45%,#AA0048 100%)}
+.g6{background:linear-gradient(150deg,#A78BFA 0%,#8B5CF6 45%,#5B21B6 100%)}
+.g7{background:linear-gradient(150deg,#F472B6 0%,#EC4899 45%,#9D174D 100%)}
+
+/* Lists (chapters/pdfs) */
+.item-list{padding:10px 14px 24px;display:flex;flex-direction:column;gap:8px}
+	.list-item{
+	  background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:14px 16px;
+	  display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .15s;
+	}
+	.list-item:hover{border-color:var(--accent);transform:translateX(3px)}
+	.list-item:active{transform:scale(.98)}
+.list-num{
+  width:28px;height:28px;border-radius:8px;background:var(--accent-light);color:var(--accent);
+  font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.list-info{flex:1;min-width:0}
+.list-name{font-size:14px;font-weight:600}
+.list-sub{font-size:11px;color:var(--text-secondary);margin-top:2px}
+.list-arr{font-size:16px;color:var(--text-secondary)}
+.premium-lock{font-size:10px;font-weight:800;color:#F59E0B;background:rgba(245,158,11,.12);padding:2px 7px;border-radius:6px;flex-shrink:0}
+
+/* PDF viewer */
+.pdf-toolbar{
+  position:sticky;top:60px;z-index:80;background:var(--header-bg);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;padding:8px 12px;min-height:48px;
+}
+.zoom-wrap{display:flex;align-items:center;gap:4px;margin-left:auto;background:var(--card-bg);border-radius:8px;padding:4px 6px;border:1px solid var(--border)}
+.z-btn{width:28px;height:28px;border-radius:6px;background:transparent;border:none;color:var(--text);font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.z-lbl{font-size:12px;font-weight:700;color:var(--text-secondary);min-width:38px;text-align:center}
+
+/* Page navigator */
+.nav-pg-btn{display:flex;align-items:center;gap:4px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:4px 8px;color:var(--text);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.nav-pg-btn span{font-size:15px}
+.pg-nav-popup{position:fixed;top:115px;right:12px;z-index:500;background:var(--header-bg);border:1px solid var(--border);border-radius:14px;padding:12px;box-shadow:0 8px 32px rgba(0,0,0,.5);max-height:60vh;overflow-y:auto;display:none;width:220px}
+.pg-nav-popup.open{display:block}
+.pg-nav-title{font-size:11px;color:var(--text-secondary);font-weight:700;margin-bottom:8px;text-align:center}
+.pg-nav-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.pg-num-btn{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:7px 4px;font-size:12px;font-weight:700;color:var(--text);cursor:pointer;text-align:center;transition:background .15s}
+.pg-num-btn:active,.pg-num-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+.pages-wrap{padding:10px 8px 100px;display:flex;flex-direction:column;gap:14px}
+.page-card{background:var(--card-bg);border-radius:12px;overflow:hidden;border:1.5px solid var(--border)}
+.page-card.sel{border-color:var(--accent)}
+.page-top-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(0,0,0,.15);border-bottom:1px solid var(--border)}
+.cb-label{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.cb-box{width:20px;height:20px;border-radius:6px;border:2px solid var(--border);background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:11px}
+.cb-txt{font-size:12px;color:var(--text-secondary)}
+.p-badge{font-size:11px;font-weight:700;background:var(--accent-light);color:var(--accent);padding:3px 8px;border-radius:6px}
+.canvas-wrap{position:relative;overflow:auto;background:#111120;display:flex;justify-content:center;min-height:200px;align-items:center}
+.canvas-wrap canvas{display:block;max-width:100%}
+.page-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:var(--text-secondary);font-size:12px}
+.page-text-layer{position:absolute;inset:0;color:transparent;user-select:text;-webkit-user-select:text;cursor:text;line-height:1.6;padding:4%;box-sizing:border-box;overflow:hidden;white-space:pre-wrap;word-break:break-word;font-size:1.1vw}
+.page-text-layer::selection{background:rgba(124,131,255,0.35)}
+.page-text-layer.word-boxes-mode{padding:0}
+.page-text-layer.word-boxes-mode .word-box{position:absolute;color:transparent;white-space:nowrap;overflow:hidden;line-height:1;font-size:inherit}
+.page-text-layer.word-boxes-mode .word-box::selection{background:rgba(124,131,255,0.35)}
+.sp{width:28px;height:28px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--accent);animation:studySpin .8s linear infinite}
+@keyframes studySpin{to{transform:rotate(360deg)}}
+.page-footer{padding:10px 12px;background:rgba(255,255,255,.02);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.exam-btn{background:linear-gradient(135deg,#10B981,#059669);color:#fff;border:none;border-radius:10px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.p-num-lbl{font-size:11px;color:var(--text-secondary)}
+
+.multi-float{position:fixed;right:12px;top:50%;transform:translateY(-50%);z-index:200;display:none}
+.multi-float-btn{
+  background:linear-gradient(135deg,var(--accent),#3D35B0);color:#fff;border:none;border-radius:24px;
+  padding:10px 14px;font-size:12px;font-weight:900;cursor:pointer;font-family:inherit;
+  box-shadow:0 6px 24px rgba(108,99,255,.5);display:flex;align-items:center;gap:6px;white-space:nowrap;
+}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:flex-end;justify-content:center;z-index:300}
+.type-sheet{background:var(--header-bg);border-radius:20px 20px 0 0;padding:20px 16px 32px;width:100%;max-width:480px}
+.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px}
+.sheet-title{font-size:15px;font-weight:700;text-align:center;margin-bottom:16px}
+.type-btns{display:flex;flex-direction:column;gap:10px}
+.type-btn{
+  border-radius:12px;padding:14px 16px;border:1.5px solid var(--border);background:var(--card-bg);
+  color:var(--text);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;text-align:left;
+  display:flex;align-items:center;gap:10px;
+}
+.type-icon{font-size:22px}
+.type-info{flex:1}
+.type-name{font-size:14px;font-weight:700}
+.type-desc{font-size:11px;color:var(--text-secondary);margin-top:2px}
+.perpage-btn{background:var(--card-bg);border:1.5px solid var(--border);border-radius:10px;padding:10px 16px;color:var(--text);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;min-width:56px;text-align:center}
+
+.ctr{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:60px 20px;color:var(--text-secondary);text-align:center;font-size:13px}
+.ctr .sp{margin:0 auto}
+
+/* AI generation overlay */
+.gen-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:400;display:none;align-items:center;justify-content:center;padding:20px}
+.gen-overlay.show{display:flex}
+.gen-box{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:28px 20px;text-align:center;max-width:280px}
+.gen-spin{width:42px;height:42px;border-radius:50%;border:4px solid var(--border);border-top-color:var(--accent);animation:studySpin .8s linear infinite;margin:0 auto 14px}
+.gen-text{font-size:13px;font-weight:700;color:var(--text)}
+.gen-sub{font-size:11px;color:var(--text-secondary);margin-top:4px}
+
+        /* ── Icon tiles (shared with home page) ── */
+        .si-tile{width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 2px 6px rgba(0,0,0,.25)}
+        .si-tile svg{width:16px;height:16px}
+        .tile-indigo{background:linear-gradient(150deg,#7B7FFF 0%,#5A5FE0 45%,#322B96 100%)}
+        .tile-amber{background:linear-gradient(150deg,#FFD166 0%,#F5A524 45%,#A8650A 100%)}
+        .tile-violet{background:linear-gradient(150deg,#A78BFA 0%,#8B5CF6 45%,#4C1D95 100%)}
+        .tile-rose{background:linear-gradient(150deg,#FB7AAE 0%,#F43F8E 45%,#9D174D 100%)}
+        .tile-emerald{background:linear-gradient(150deg,#34D9A0 0%,#10B981 45%,#065F46 100%)}
+        .tile-sky{background:linear-gradient(150deg,#7DD3FC 0%,#38BDF8 45%,#075985 100%)}
+        .tile-orange{background:linear-gradient(150deg,#FDBA74 0%,#FB923C 45%,#9A3412 100%)}
+        .tile-teal{background:linear-gradient(150deg,#5EEAD4 0%,#14B8A6 45%,#115E59 100%)}
+        .tile-red{background:linear-gradient(150deg,#FCA5A5 0%,#F87171 45%,#991B1B 100%)}
+        .tile-gold{background:linear-gradient(150deg,#FDE68A 0%,#FBBF24 45%,#92400E 100%)}
+        .tile-plum{background:linear-gradient(150deg,#D8B4FE 0%,#A855F7 45%,#581C87 100%)}
+        /* nav icon tile */
+        .ni-tile{width:26px;height:26px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:2px;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 2px 5px rgba(0,0,0,.2)}
+        .ni-tile svg{width:14px;height:14px}
+
+        </style>
+</head>
+<body class="dark-mode">
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-header"><div class="sidebar-logo">ATLAS APP</div></div>
+    <div class="sidebar-menu">
+        <button class="sidebar-item" onclick="navigateTo('profile');closeSidebar();"><span class="si-tile tile-sky"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="#fff" stroke-width="1.8"/><path d="M4.5 20c0-3.6 3.4-6.5 7.5-6.5s7.5 2.9 7.5 6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></span> প্রোফাইল</button>
+        <button class="sidebar-item" onclick="goTo('index.html');closeSidebar();"><span class="si-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none"><path d="M3 10L12 3l9 7v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" fill="rgba(255,255,255,0.15)"/><path d="M9 21V12h6v9" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg></span> হোম</button>
+        <button class="sidebar-item" onclick="goTo('study-aid.html');closeSidebar();"><span class="si-tile tile-teal"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3h5a2 2 0 012 2v3a2 2 0 000 4v3a2 2 0 01-2 2h-3a2 2 0 01-4 0H7a2 2 0 01-2-2v-3a2 2 0 000-4V5a2 2 0 012-2h5z" stroke="#fff" stroke-width="1.7" fill="rgba(255,255,255,0.08)"/></svg></span> Study Aid</button>
+        <button class="sidebar-item" onclick="goTo('focus.html');closeSidebar();"><span class="si-tile tile-emerald"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" stroke="#fff" stroke-width="1.8" fill="rgba(255,255,255,0.08)"/><path d="M12 9v4l2.5 2.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 3h4M12 3v2" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></span> Focus Timer</button>
+        <div class="sidebar-divider"></div>
+        <button class="sidebar-item" onclick="toggleTheme()"><span class="si-tile tile-indigo"><svg viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="#fff" stroke-width="1.8" fill="rgba(255,255,255,0.12)"/></svg></span> ডার্ক মোড</button>
+    </div>
+    <div class="sidebar-footer">
+        <button class="sidebar-item logout-btn" onclick="logout()"><span class="si-tile tile-red"><svg viewBox="0 0 24 24" fill="none"><path d="M14 3H6a1 1 0 00-1 1v16a1 1 0 001 1h8" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><path d="M18 7l4 5-4 5M22 12H10" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span> লগআউট</button>
+    </div>
+</aside>
+
+<header class="header">
+    <div class="header-left">
+        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+        <div class="atlas-brand-box" onclick="goTo('index.html')" style="display:flex;align-items:center;gap:6px;background:#0c191e;border:1px solid var(--border);border-radius:8px;padding:2px 6px;height:52px;box-sizing:border-box;cursor:pointer;">
+            <img src="logo-icon.png" alt="ATLAS icon" style="height:100%;width:auto;display:block;image-rendering:-webkit-optimize-contrast;" onerror="this.style.display='none'">
+            <img src="logo-text.png" alt="ATLAS APP" style="height:68%;width:auto;display:block;image-rendering:-webkit-optimize-contrast;" onerror="this.style.display='none'">
+        </div>
+    </div>
+    <div class="header-right">
+        <button class="header-icon" onclick="toggleTheme()" id="themeToggle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.8" fill="rgba(255,255,255,0.1)"/></svg></button>
+        <button class="header-icon" onclick="navigateTo('profile')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 20c0-3.6 3.4-6.5 7.5-6.5s7.5 2.9 7.5 6.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+    </div>
+</header>
+
+<!-- ██ SCREEN 1: SUBJECTS ██ -->
+<div class="screen active" id="s-subj">
+  <div class="study-hdr">
+    <button class="back-btn" onclick="goBackGlobal()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <span class="scr-title">মূলবই-২ পেইজভিত্তিক প্রস্তুতি</span>
+  </div>
+  <div class="subj-banner">
+    <div class="subj-banner-t">📖 বিষয় নির্বাচন করো</div>
+    <div class="subj-banner-s" id="subj-banner-sub">যে বিষয় পড়তে চাও সেটি বেছে নাও</div>
+  </div>
+  <div id="subj-list"><div class="ctr"><div class="sp"></div><div>বিষয় লোড হচ্ছে...</div></div></div>
+</div>
+
+<!-- ██ SCREEN 2: CHAPTERS ██ -->
+<div class="screen" id="s-chap">
+  <div class="study-hdr">
+    <button class="back-btn" onclick="go('s-subj')"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <span class="scr-title" id="chap-title">অধ্যায়সমূহ</span>
+  </div>
+  <div class="subj-banner" id="chap-banner">
+    <div class="subj-banner-t" id="chap-banner-t">📂 অধ্যায় নির্বাচন করো</div>
+    <div class="subj-banner-s" id="chap-banner-s">যে অধ্যায় পড়তে চাও সেটি বেছে নাও</div>
+  </div>
+  <div id="chap-list"><div class="ctr"><div class="sp"></div><div>লোড হচ্ছে...</div></div></div>
+</div>
+
+<!-- ██ SCREEN 3: PDF LIST ██ -->
+<div class="screen" id="s-pdfs">
+  <div class="study-hdr">
+    <button class="back-btn" onclick="go('s-chap')"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <span class="scr-title" id="pdfs-title">PDF সমূহ</span>
+  </div>
+  <div id="pdf-list"><div class="ctr"><div class="sp"></div><div>লোড হচ্ছে...</div></div></div>
+</div>
+
+<!-- ██ SCREEN 4: PDF VIEWER ██ -->
+<div class="screen" id="s-view">
+  <div class="pdf-toolbar">
+    <button class="back-btn" onclick="backFromViewer()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <span class="scr-title" id="view-title">PDF</span>
+    <button class="nav-pg-btn" onclick="togglePgNav()" id="pgNavBtn"><span>☰</span><span id="pgNavLbl">পেইজ</span></button>
+    <div class="zoom-wrap">
+      <button class="z-btn" onclick="zoom(-0.25)">−</button>
+      <span class="z-lbl" id="zoom-lbl">50%</span>
+      <button class="z-btn" onclick="zoom(0.25)">+</button>
+    </div>
+  </div>
+  <div class="pg-nav-popup" id="pgNavPopup">
+    <div class="pg-nav-title">পেইজে যাও</div>
+    <div class="pg-nav-grid" id="pgNavGrid"></div>
+  </div>
+  <div class="pages-wrap" id="pages-wrap"></div>
+  <div class="multi-float" id="multi-float">
+    <button class="multi-float-btn" onclick="openSheet(null)">
+      <span>📝</span><span><span id="sel-cnt">0</span> পেইজ ✓</span>
+    </button>
+  </div>
+</div>
+
+<!-- ██ EXAM TYPE SHEET ██ -->
+<div class="overlay" id="sheet" style="display:none" onclick="closeSheet(event)">
+  <div class="type-sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="sheet-main-title">MCQ ধরন বেছে নাও</div>
+    <div id="sheet-perpage" style="display:none;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:10px">📄 আলাদা পেইজ</div>
+      <div id="sheet-perpage-btns" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px"></div>
+      <div style="width:100%;height:1px;background:var(--border);margin-bottom:16px"></div>
+      <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:10px">📝 সব পেইজ একসাথে</div>
+    </div>
+    <div class="type-btns">
+      <button class="type-btn" onclick="startExam('standard')">
+        <span class="type-icon">📝</span>
+        <div class="type-info"><div class="type-name">Standard MCQ</div><div class="type-desc">সাধারণ বহুনির্বাচনী প্রশ্ন</div></div>→
+      </button>
+      <button class="type-btn" id="typeBtnTF" onclick="startExamGuarded('true_false')">
+        <span class="type-icon">✅</span>
+        <div class="type-info"><div class="type-name">সত্য / মিথ্যা</div><div class="type-desc">True/False ধরনের প্রশ্ন</div></div><span id="tfLockBadge"></span>
+      </button>
+      <button class="type-btn" id="typeBtnHard" onclick="startExamGuarded('hard')">
+        <span class="type-icon">🔥</span>
+        <div class="type-info"><div class="type-name">কঠিন প্রশ্ন</div><div class="type-desc">বিশ্লেষণমূলক কঠিন MCQ</div></div><span id="hardLockBadge"></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- AI Generation Overlay -->
+<div class="gen-overlay" id="genOverlay">
+  <div class="gen-box">
+    <div class="gen-spin"></div>
+    <div class="gen-text" id="genText">MCQ তৈরি হচ্ছে...</div>
+    <div class="gen-sub" id="genSub">এক মুহূর্ত অপেক্ষা করো</div>
+    <div id="genProgressWrap" style="display:none;margin-top:10px;width:100%;">
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.6);margin-bottom:4px;">
+        <span id="genProgressLabel">পেইজ ০/০</span>
+        <span id="genProgressPct">০%</span>
+      </div>
+      <div style="height:5px;background:rgba(255,255,255,0.15);border-radius:3px;overflow:hidden;">
+        <div id="genProgressFill" style="height:100%;background:linear-gradient(90deg,#6C63FF,#a78bfa);width:0%;transition:width .3s;border-radius:3px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// মূলবই-২: Supabase নয়, D1 (via atlas-ai-proxy /d1/ generic REST layer) ব্যবহার করে —
+// study.html (মূলবই-১) এর SUPABASE_URL/rest/v1/ প্যাটার্নের বদলে D1_BASE/d1/ প্যাটার্ন।
+const D1_BASE = 'https://atlas-ai-proxy.hamza818483.workers.dev';
+const D1_KEY  = 'mb_d1_9f2a7c6e1b4d8305';
+const AI_PROXY_URL = 'https://atlas-ai-proxy.hamza818483.workers.dev/';
+
+let isDarkMode = true, isSidebarOpen = false, currentUser = null;
+
+function showToast(m,d=2500){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
+function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'☀️':'🌙';localStorage.setItem('atlas-theme',isDarkMode?'dark':'light');}
+function toggleSidebar(){isSidebarOpen=!isSidebarOpen;document.getElementById('sidebarOverlay').classList.toggle('active',isSidebarOpen);document.getElementById('sidebar').classList.toggle('active',isSidebarOpen);}
+function closeSidebar(){isSidebarOpen=false;document.getElementById('sidebarOverlay').classList.remove('active');document.getElementById('sidebar').classList.remove('active');}
+function goTo(u){location.href=u;}
+function goBackGlobal(){
+  try{
+    const stack=JSON.parse(sessionStorage.getItem('atlas_nav_stack_v1')||'[]');
+    if(stack.length>1){stack.pop();location.href=stack[stack.length-1];return;}
+  }catch(_){}
+  location.href='index.html';
+}
+function navigateTo(p){const r={home:'index.html',profile:'profile.html',class:'class.html',exam:'exam.html'};goTo(r[p]||'index.html');}
+function logout(){localStorage.removeItem('atlas-session');goTo('index.html');}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+async function safeFetch(url, opts = {}) {
+    opts.headers = Object.assign({ apikey: D1_KEY, Authorization: 'Bearer ' + D1_KEY }, opts.headers || {});
+    if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') opts.headers['Content-Type'] = 'application/json';
+    // Don't clobber an explicitly-set Prefer header (e.g. 'resolution=merge-duplicates' for upserts) —
+    // only default it when the caller didn't specify one.
+    if ((opts.method === 'POST' || opts.method === 'PATCH') && !opts.headers['Prefer']) opts.headers['Prefer'] = 'return=representation';
+    try {
+        const res = await fetch(url, opts);
+        const text = await res.text();
+        if (!text?.trim()) return [];
+        const data = JSON.parse(text);
+        if (!res.ok) throw new Error(data.message || 'API Error');
+        return data;
+    } catch (e) { console.error('❌', e.message); return []; }
+}
+
+if (typeof pdfjsLib !== 'undefined') pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+let scale = 0.5, pdfDoc = null, curPdfId = null, curPdfTitle = '', curPdfPremium = false;
+let curChapterId = null, curChapterName = '';
+let selPages = new Set(), sheetTarget = null, sheetSinglePage = null;
+
+function go(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0,0);
+}
+
+/* ── Subjects ── */
+async function loadSubjects() {
+    const c = document.getElementById('subj-list');
+    const CACHE_KEY = 'mb2_subjects_cache';
+    try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) { renderSubjects(JSON.parse(cached)); }
+    } catch (_) {}
+    try {
+        const subjects = await safeFetch(`${D1_BASE}/d1/mb2_subjects?select=*&order=sort_order.asc`);
+        if (!subjects?.length) { if (!c.querySelector('.list-item')) c.innerHTML = '<div class="ctr">কোনো বিষয় পাওয়া যায়নি।</div>'; return; }
+        localStorage.setItem(CACHE_KEY, JSON.stringify(subjects));
+        renderSubjects(subjects);
+    } catch (e) { if (!c.querySelector('.list-item')) c.innerHTML = `<div class="ctr" style="color:var(--error)">লোড হয়নি: ${esc(e.message||'অজানা এরর')}</div>`; }
+}
+
+function renderSubjects(subjects) {
+    const c = document.getElementById('subj-list');
+    document.getElementById('subj-banner-sub').textContent = subjects.length + ' টি বিষয় পাওয়া গেছে';
+    c.innerHTML = '<div class="item-list">' + subjects.map((s,i) => `
+        <div class="list-item" onclick="openSubject(${s.id},'${esc(s.name)}')">
+            <div class="list-num">${i+1}</div>
+            <div class="list-info"><div class="list-name">${esc(s.name)}</div><div class="list-sub">${esc(s.description||'অধ্যায় দেখতে ক্লিক করো')}</div></div>
+            <div class="list-arr">›</div>
+        </div>`).join('') + '</div>';
+}
+
+async function openSubject(id, name) {
+    document.getElementById('chap-title').textContent = name;
+    document.getElementById('chap-banner-t').textContent = '📂 ' + name;
+    document.getElementById('chap-banner-s').textContent = 'যে অধ্যায় পড়তে চাও সেটি বেছে নাও';
+    go('s-chap');
+    const c = document.getElementById('chap-list');
+    const CACHE_KEY = 'mb2_chap_cache_' + id;
+    // Cache থেকে instantly দেখাও
+    try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) { renderChapters(JSON.parse(cached), name); }
+    } catch (_) {}
+    // Background refresh
+    try {
+        const chapters = await safeFetch(`${D1_BASE}/d1/mb2_chapters?subject_id=eq.${id}&select=*&order=sort_order.asc`);
+        if (!chapters?.length) { if (!c.querySelector('.list-item')) c.innerHTML = '<div class="ctr">কোনো অধ্যায় পাওয়া যায়নি</div>'; return; }
+        localStorage.setItem(CACHE_KEY, JSON.stringify(chapters));
+        renderChapters(chapters, name);
+    } catch (e) { if (!c.querySelector('.list-item')) c.innerHTML = '<div class="ctr" style="color:var(--error)">লোড হয়নি।</div>'; }
+}
+
+function renderChapters(chapters, name) {
+    const c = document.getElementById('chap-list');
+    document.getElementById('chap-title').textContent = (name || document.getElementById('chap-title').textContent.split(' (')[0]) + ' (' + chapters.length + ' টি অধ্যায়)';
+    document.getElementById('chap-banner-s').textContent = chapters.length + ' টি অধ্যায় পাওয়া গেছে';
+    c.innerHTML = '<div class="item-list">' + chapters.map((ch,i) => `
+        <div class="list-item" onclick="openChapter(${ch.id},'${esc(ch.name)}')">
+            <div class="list-num">${i+1}</div>
+            <div class="list-info"><div class="list-name">${esc(ch.name)}</div></div>
+            <div class="list-arr">›</div>
+        </div>`).join('') + '</div>';
+}
+
+async function openChapter(id, name) {
+    curChapterId = id; curChapterName = name;
+    document.getElementById('pdfs-title').textContent = name;
+    go('s-pdfs');
+    const c = document.getElementById('pdf-list');
+    const CACHE_KEY = 'mb2_pdfs_cache_' + id;
+    // Cache থেকে instantly দেখাও — loading spinner নেই
+    try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) { renderPdfList(JSON.parse(cached), name, id); }
+        else { c.innerHTML = '<div class="ctr"><div class="sp"></div><div>লোড হচ্ছে...</div></div>'; }
+    } catch (_) { c.innerHTML = '<div class="ctr"><div class="sp"></div><div>লোড হচ্ছে...</div></div>'; }
+    try {
+        // Non-premium PDF হলে file_url-ও একই কলে নিয়ে নিচ্ছি, যাতে openPdf()-এ
+        // দ্বিতীয় network round-trip না লাগে — এটাই "Chapter ক্লিক করলে instant
+        // খুলবে না" সমস্যার মূল কারণ ছিল (২টা sequential fetch + pdf.js init)।
+        // Premium PDF-এর জন্য file_url আগের মতোই বাদ রাখা হচ্ছে (security অক্ষত)।
+        const pdfs = await safeFetch(`${D1_BASE}/d1/mb2_pdfs?chapter_id=eq.${id}&select=id,title,page_count,is_premium,sort_order,file_url&order=sort_order.asc`);
+        if (!pdfs?.length) { if (!c.querySelector('.list-item')) c.innerHTML = '<div class="ctr">কোনো PDF পাওয়া যায়নি</div>'; return; }
+        localStorage.setItem(CACHE_KEY, JSON.stringify(pdfs));
+        renderPdfList(pdfs, name, id);
+    } catch (e) { if (!c.querySelector('.list-item')) c.innerHTML = '<div class="ctr" style="color:var(--error)">লোড হয়নি।</div>'; }
+}
+
+function renderPdfList(pdfs, name, id) {
+    const c = document.getElementById('pdf-list');
+    // Single PDF → instant open
+    if (pdfs.length === 1) {
+        const p0 = pdfs[0];
+        if (p0.is_premium) { openPdf(p0.id, p0.title, true, p0.page_count); }
+        else { openPdfFast(p0.id, p0.title, p0.file_url, p0.page_count); }
+        return;
+    }
+    document.getElementById('pdfs-title').textContent = name + ' (' + pdfs.length + ' টি PDF)';
+    c.innerHTML = '<div class="item-list">' + pdfs.map(p => `
+        <div class="list-item" onclick="openPdf(${p.id},'${esc(p.title)}',${!!p.is_premium},${p.page_count||0})">
+            <div style="font-size:26px">📕</div>
+            <div class="list-info">
+                <div class="list-name">${esc(p.title)}</div>
+                <div class="list-sub">${p.page_count ? p.page_count+' পেইজ' : 'PDF ফাইল'}</div>
+            </div>
+            ${p.is_premium ? '<span class="premium-lock">⭐ Premium</span>' : ''}
+            <div class="list-arr">›</div>
+        </div>`).join('') + '</div>';
+}
+
+/* ── PDF Viewer ── */
+async function openPdf(id, title, isPremium, pageCount) {
+    if (isPremium && !(currentUser?.is_premium)) {
+        showToast('⭐ এটি Premium কন্টেন্ট — আপগ্রেড করো');
+        return;
+    }
+    curPdfId = id; curPdfTitle = title; curPdfPremium = !!isPremium; selPages.clear();
+    scale = 0.5; document.getElementById('zoom-lbl').textContent = '50%';
+    document.getElementById('view-title').textContent = title;
+    go('s-view');
+    updateMultiBtn();
+    const wrap = document.getElementById('pages-wrap');
+    if (pageCount > 0) { wrap.innerHTML = ''; for (let i = 1; i <= pageCount; i++) wrap.appendChild(makePage(i, pageCount)); buildPgNav(pageCount); }
+    else wrap.innerHTML = '<div class="ctr"><div class="sp"></div><div>PDF লোড হচ্ছে...</div></div>';
+    try {
+        const rows = await safeFetch(`${D1_BASE}/d1/mb2_pdfs?id=eq.${id}&select=file_url`);
+        let fileUrl = rows?.[0]?.file_url;
+        if (!fileUrl) throw new Error('URL পাওয়া যায়নি');
+        await renderPdfDoc(fileUrl, wrap, pageCount > 0);
+    } catch (e) { wrap.innerHTML = `<div class="ctr" style="color:var(--error)">PDF লোড হয়নি: ${esc(e.message)}</div>`; }
+}
+
+// non-premium single-PDF chapter এর জন্য fast-path — file_url ইতিমধ্যেই openChapter()
+// থেকে হাতে আছে, তাই এখানে দ্বিতীয় network round-trip এড়িয়ে সরাসরি pdf.js render শুরু হয়।
+async function openPdfFast(id, title, fileUrl, pageCount) {
+    curPdfId = id; curPdfTitle = title; curPdfPremium = false; selPages.clear();
+    scale = 0.5; document.getElementById('zoom-lbl').textContent = '50%';
+    document.getElementById('view-title').textContent = title;
+    go('s-view');
+    updateMultiBtn();
+    const wrap = document.getElementById('pages-wrap');
+    if (pageCount > 0) {
+        wrap.innerHTML = '';
+        for (let i = 1; i <= pageCount; i++) wrap.appendChild(makePage(i, pageCount));
+        buildPgNav(pageCount);
+    } else wrap.innerHTML = '<div class="ctr"><div class="sp"></div><div>PDF লোড হচ্ছে...</div></div>';
+    try {
+        if (!fileUrl) throw new Error('URL পাওয়া যায়নি');
+        await renderPdfDoc(fileUrl, wrap, pageCount > 0);
+    } catch (e) { wrap.innerHTML = `<div class="ctr" style="color:var(--error)">PDF লোড হয়নি: ${esc(e.message)}</div>`; }
+}
+
+// দুই entry point (openPdf / openPdfFast) এর জন্য শেয়ার্ড pdf.js render লজিক — কোড ডুপ্লিকেশন এড়াতে।
+// skeletonsAlreadyShown=true হলে page card গুলো আগেই বসানো আছে (instant feel), শুধু
+// pdf.js resolve হওয়ার পর numPages mismatch থাকলেই rebuild করা হয়।
+async function renderPdfDoc(fileUrl, wrap, skeletonsAlreadyShown) {
+    // Streaming চালু রাখা হয়েছে (disableAutoFetch/disableStream সরানো) —
+    // Supabase Storage CDN HTTP range request সমর্থন করে, তাই pdf.js
+    // পুরো ফাইল ডাউনলোডের অপেক্ষা না করে প্রথম পেইজগুলো progressively
+    // আনতে পারে। এটাই "Chapter ক্লিক করলে instant খুলবে না, loading
+    // থাকে" সমস্যার মূল কারণ ছিল — আগে পুরো PDF একবারে ডাউনলোড হওয়া
+    // পর্যন্ত অপেক্ষা করতে হতো।
+    pdfDoc = await pdfjsLib.getDocument({
+        url: fileUrl,
+        cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+        cMapPacked: true
+    }).promise;
+    const n = pdfDoc.numPages;
+    const existingCards = wrap.querySelectorAll('.page-card').length;
+    if (!skeletonsAlreadyShown || existingCards !== n) {
+        wrap.innerHTML = '';
+        for (let i = 1; i <= n; i++) wrap.appendChild(makePage(i, n));
+    }
+    buildPgNav(n);
+    setupObs();
+}
+
+function makePage(p, tot) {
+    const d = document.createElement('div');
+    d.className = 'page-card'; d.id = 'pc-'+p; d.dataset.page = p;
+    d.innerHTML = `
+        <div class="page-top-bar">
+            <div class="cb-label" onclick="toggleSel(${p})">
+                <div class="cb-box" id="cbv-${p}"></div>
+                <span class="cb-txt">নির্বাচন</span>
+            </div>
+            <span class="p-badge">পেইজ ${p} / ${tot}</span>
+        </div>
+        <div class="canvas-wrap" id="cw-${p}">
+            <div class="page-ph" id="ph-${p}"><div class="sp"></div><div>পেইজ ${p}...</div></div>
+            <canvas id="cv-${p}" style="display:none"></canvas>
+            <div class="page-text-layer" id="tl-${p}"></div>
+        </div>
+        <div class="page-footer">
+            <span class="p-num-lbl">পেইজ ${p}</span>
+            <button class="exam-btn" onclick="openSheet(${p})">📝 এক্সাম দাও</button>
+        </div>`;
+    return d;
+}
+
+// টেক্সট কপি ফিচারের জন্য Tesseract.js দিয়ে client-side (browser-এই, কোনো AI API/quota
+// ছাড়া) OCR চালানো হয়। প্রথমবার একটা পেইজ দেখলে canvas থেকে সরাসরি টেক্সট বের করে
+// book_pdf_pages-এ ক্যাশ করে রাখে (source='tesseract' মার্ক করে) — পরের বার সেই ক্যাশড
+// টেক্সটই ব্যবহার হয়, বারবার re-run করতে হয় না। MCQ generation-এর AI (Gemini/Groq)
+// থেকে এটা সম্পূর্ণ আলাদা ও স্বাধীন পাইপলাইন — এখানে কোনো AI vision call নেই।
+let _tesseractWorker = null;
+async function getTesseractWorker() {
+    if (_tesseractWorker) return _tesseractWorker;
+    if (typeof Tesseract === 'undefined') return null;
+    _tesseractWorker = await Tesseract.createWorker('ben+eng');
+    return _tesseractWorker;
+}
+
+// মূলবই-২ এ book_pdf_pages এর মতো persistent OCR cache টেবিল নেই — শুধু in-memory
+// (localStorage) ক্যাশ, session/device-ভিত্তিক। ফিচার এখনো কাজ করে, শুধু cross-device
+// persist করে না।
+function _mb2OcrCacheKey(pdfId, p) { return `mb2_ocr_${pdfId}_${p}`; }
+
+async function loadPageTextLayer(p) {
+    const tl = document.getElementById('tl-'+p);
+    if (!tl || tl.dataset.loaded) return;
+    tl.dataset.loaded = '1';
+
+    try {
+        const cached = localStorage.getItem(_mb2OcrCacheKey(curPdfId, p));
+        if (cached && cached.trim()) { tl.textContent = cached; return; }
+    } catch (_) {}
+
+    const cv = document.getElementById('cv-'+p);
+    if (!cv || cv.style.display === 'none') { tl.dataset.loaded = ''; return; }
+
+    try {
+        const worker = await getTesseractWorker();
+        if (!worker) { tl.dataset.loaded = ''; return; }
+        const { data } = await worker.recognize(cv);
+        const text = (data?.text || '').trim();
+        if (!text) return;
+        tl.textContent = text;
+        try { localStorage.setItem(_mb2OcrCacheKey(curPdfId, p), text); } catch (_) {}
+    } catch (e) {
+        tl.dataset.loaded = '';
+    }
+}
+
+function setupObs() {
+    const done = new Set();
+    // প্রথম ২টা পেইজ সাথে সাথেই render করো — scroll-এর অপেক্ষা না করে
+    [1, 2].forEach(p => {
+        if (!done.has(p) && document.getElementById('pc-'+p)) {
+            done.add(p); renderPage(p); loadPageTextLayer(p);
+        }
+    });
+    const obs = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+            if (e.isIntersecting) {
+                const p = parseInt(e.target.dataset.page);
+                if (!done.has(p)) { done.add(p); renderPage(p).then(() => loadPageTextLayer(p)); }
+            }
+        });
+    // rootMargin বাড়ানো হয়েছে: পেইজ viewport-এ আসার ৫০০px আগেই render শুরু হবে
+    }, { rootMargin: '500px 0px' });
+    document.querySelectorAll('.page-card').forEach(el => obs.observe(el));
+}
+
+function backFromViewer() {
+    // PDF viewer থেকে ← চাপলে — single-PDF chapter হলে renderPdfList() আবার
+    // auto-open করে viewer-এ ফিরিয়ে আনতো (loop bug), তাই cache থেকে PDF সংখ্যা
+    // চেক করে single হলে সরাসরি subject/chapter screen-এ পাঠানো হচ্ছে।
+    pdfDoc = null;
+    try {
+        const cached = curChapterId ? localStorage.getItem('mb2_pdfs_cache_' + curChapterId) : null;
+        const pdfs = cached ? JSON.parse(cached) : null;
+        if (pdfs && pdfs.length === 1) { go('s-chap'); return; }
+    } catch (_) {}
+    if (curChapterId) { openChapter(curChapterId, curChapterName); }
+    else { go('s-pdfs'); }
+}
+
+async function renderPage(p) {
+    if (!pdfDoc) return;
+    const cv = document.getElementById('cv-'+p), ph = document.getElementById('ph-'+p);
+    if (!cv) return;
+    try {
+        const page = await pdfDoc.getPage(p);
+        const dpr = window.devicePixelRatio || 1;
+        // screen width-এর মধ্যে canvas আটকে রাখো — mobile-এ overflow হবে না
+        const maxPx = (window.innerWidth - 16) * dpr;
+        const rawVp = page.getViewport({ scale: scale * dpr });
+        const fitScale = rawVp.width > maxPx ? (scale * dpr * maxPx / rawVp.width) : scale * dpr;
+        const vp = page.getViewport({ scale: fitScale });
+        cv.width = vp.width; cv.height = vp.height;
+        cv.style.width = (vp.width/dpr)+'px'; cv.style.height = (vp.height/dpr)+'px';
+        await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+        if (ph) ph.style.display = 'none';
+        cv.style.display = 'block';
+    } catch (e) { if (ph) ph.innerHTML = '❌ লোড হয়নি'; }
+}
+
+function jumpToPage(p) {
+    // popup বন্ধ হওয়ার পর scroll করো — layout shift এড়াতে
+    closePgNav();
+    setTimeout(() => {
+        const el = document.getElementById('pc-'+p);
+        if (!el) return;
+        el.scrollIntoView({ behavior: 'auto', block: 'start' });
+        // Settle-loop: মাঝের lazy-render না-হওয়া পেইজগুলো render হয়ে height বদলে দিলে
+        // target পেইজের position সরে যায় — তাই position স্থির না হওয়া পর্যন্ত (max ~2s)
+        // বারবার চেক করে re-snap করা হয়। কোনো fixed delay-নির্ভরতা নেই, তাই device/
+        // network speed যাই হোক, নির্ভুলভাবে সঠিক পেইজেই থামবে।
+        let stableCount = 0, attempts = 0;
+        const check = () => {
+            const target = document.getElementById('pc-' + p);
+            if (!target || attempts++ >= 40) return; // সর্বোচ্চ ~2s (40 × 50ms)
+            const top = target.getBoundingClientRect().top;
+            if (Math.abs(top) > 4) {
+                target.scrollIntoView({ behavior: 'auto', block: 'start' });
+                stableCount = 0;
+            } else if (++stableCount >= 3) {
+                return; // পরপর ৩ বার স্থির অবস্থানে পাওয়া গেছে — নিশ্চিত সঠিক পেইজে আছি
+            }
+            setTimeout(check, 50);
+        };
+        setTimeout(check, 60);
+    }, 120);
+}
+
+function zoom(d) {
+    scale = Math.max(.25, Math.min(3, scale+d));
+    document.getElementById('zoom-lbl').textContent = Math.round(scale*100)+'%';
+    document.querySelectorAll('.page-card').forEach(el => {
+        const p = parseInt(el.dataset.page);
+        const cv = document.getElementById('cv-'+p);
+        if (cv && cv.style.display !== 'none') {
+            const tl = document.getElementById('tl-'+p);
+            if (tl) tl.dataset.loaded = ''; // zoom বদলালে টেক্সট re-load flag রিসেট, যদিও ক্যাশ থাকলে আবার OCR চলবে না
+            renderPage(p).then(() => loadPageTextLayer(p));
+        }
+    });
+}
+
+function buildPgNav(n) {
+    const grid = document.getElementById('pgNavGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    for (let i = 1; i <= n; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'pg-num-btn';
+        btn.textContent = i;
+        btn.onclick = () => { jumpToPage(i); closePgNav(); };
+        grid.appendChild(btn);
+    }
+    document.getElementById('pgNavLbl').textContent = 'পেইজ ১-' + n;
+}
+
+function togglePgNav() {
+    document.getElementById('pgNavPopup').classList.toggle('open');
+}
+
+function closePgNav() {
+    document.getElementById('pgNavPopup').classList.remove('open');
+}
+
+// popup বাইরে click করলে বন্ধ হবে
+document.addEventListener('click', e => {
+    const popup = document.getElementById('pgNavPopup');
+    const btn = document.getElementById('pgNavBtn');
+    if (popup && !popup.contains(e.target) && btn && !btn.contains(e.target)) {
+        popup.classList.remove('open');
+    }
+});
+
+function toggleSel(p) {
+    const cbv = document.getElementById('cbv-'+p);
+    if (selPages.has(p)) {
+        selPages.delete(p);
+        document.getElementById('pc-'+p)?.classList.remove('sel');
+        if (cbv) { cbv.textContent=''; cbv.style.background=''; cbv.style.borderColor=''; }
+    } else {
+        selPages.add(p);
+        document.getElementById('pc-'+p)?.classList.add('sel');
+        if (cbv) { cbv.textContent='✓'; cbv.style.background='var(--accent)'; cbv.style.borderColor='var(--accent)'; cbv.style.color='#fff'; }
+    }
+    updateMultiBtn();
+}
+
+function updateMultiBtn() {
+    const f = document.getElementById('multi-float');
+    const cnt = selPages.size;
+    document.getElementById('sel-cnt').textContent = cnt;
+    f.style.display = cnt > 0 ? 'block' : 'none';
+}
+
+/* ── Exam Type Sheet ── */
+function openSheet(page) {
+    sheetTarget = page; sheetSinglePage = null;
+    const perpageSection = document.getElementById('sheet-perpage');
+    const perpageBtns = document.getElementById('sheet-perpage-btns');
+    const mainTitle = document.getElementById('sheet-main-title');
+
+    if (page !== null) {
+        perpageSection.style.display = 'none';
+        mainTitle.textContent = 'MCQ ধরন বেছে নাও';
+    } else {
+        const sorted = [...selPages].sort((a,b)=>a-b);
+        if (sorted.length > 1) {
+            perpageSection.style.display = 'block';
+            mainTitle.textContent = 'এক্সাম ধরন বেছে নাও';
+            perpageBtns.innerHTML = sorted.map(p => `<button class="perpage-btn" onclick="pickSinglePage(${p})">পেইজ ${p}</button>`).join('');
+        } else {
+            perpageSection.style.display = 'none';
+            mainTitle.textContent = 'MCQ ধরন বেছে নাও';
+        }
+    }
+    // Premium lock badge update
+    const locked = !canUseAdvancedTypes();
+    const tfBadge = document.getElementById('tfLockBadge');
+    const hardBadge = document.getElementById('hardLockBadge');
+    if (tfBadge) tfBadge.textContent = locked ? '🔒' : '→';
+    if (hardBadge) hardBadge.textContent = locked ? '🔒' : '→';
+    document.getElementById('typeBtnTF')?.style.setProperty('opacity', locked ? '0.55' : '1');
+    document.getElementById('typeBtnHard')?.style.setProperty('opacity', locked ? '0.55' : '1');
+
+    document.getElementById('sheet').style.display = 'flex';
+}
+
+function pickSinglePage(p) {
+    sheetSinglePage = p;
+    document.getElementById('sheet-perpage').style.display = 'none';
+    document.getElementById('sheet-main-title').textContent = 'পেইজ ' + p + ' — MCQ ধরন বেছে নাও';
+}
+
+function closeSheet(e) {
+    if (e.target.id === 'sheet') { document.getElementById('sheet').style.display = 'none'; sheetSinglePage = null; }
+}
+
+function isAdmin() { try { return currentUser?.phone==='01754365403' || currentUser?.role==='admin' || currentUser?.role==='sub_admin'; } catch(_) { return false; } }
+function canUseAdvancedTypes() { return isAdmin() || !!(currentUser?.is_premium); }
+
+function startExamGuarded(type) {
+    if ((type === 'true_false' || type === 'hard') && !canUseAdvancedTypes()) {
+        showToast('⭐ এই ধরন শুধু Premium ইউজারদের জন্য — আপগ্রেড করো');
+        return;
+    }
+    startExam(type);
+}
+
+async function startExam(type) {
+    document.getElementById('sheet').style.display = 'none';
+    let pages;
+    if (sheetSinglePage !== null) pages = [sheetSinglePage];
+    else if (sheetTarget !== null) pages = [sheetTarget];
+    else { pages = [...selPages].sort((a,b)=>a-b); if (!pages.length) { showToast('পেইজ নির্বাচন করো'); return; } }
+    sheetSinglePage = null;
+
+    if (!currentUser) { showToast('⚠️ লগইন করো'); goTo('auth.html'); return; }
+
+    // ── ধাপ ১: সব পেইজ একসাথে (parallel) cache-check — admin আগে থেকে বানিয়ে রাখলে
+    // এখানেই পাওয়া যাবে, তাই loading overlay না দেখিয়ে সরাসরি pre-exam এ যাওয়া যায়।
+    try {
+        const results = await Promise.all(pages.map(pg => peekCachedMCQs(pg, type)));
+        if (results.every(r => r && r.length)) {
+            await finishStartExam(results.flat(), pages);
+            return;
+        }
+    } catch (_) { /* cache miss/এরর হলে নিচের normal generate flow-এ চলে যাবে */ }
+
+    // ── ধাপ ২: cache miss — normal generate flow (overlay সহ) ──
+    showGenOverlay(true);
+    const pWrap = document.getElementById('genProgressWrap');
+    const pLabel = document.getElementById('genProgressLabel');
+    const pPct = document.getElementById('genProgressPct');
+    const pFill = document.getElementById('genProgressFill');
+    const genTextEl = document.getElementById('genText');
+    if (pWrap) pWrap.style.display = pages.length > 1 ? 'block' : 'none';
+    try {
+        let allQuestions = [];
+        for (let i = 0; i < pages.length; i++) {
+            const pct = Math.round(((i) / pages.length) * 100);
+            if (pLabel) pLabel.textContent = `পেইজ ${i+1}/${pages.length}`;
+            if (pPct) pPct.textContent = pct + '%';
+            if (pFill) pFill.style.width = pct + '%';
+            const genSub = document.getElementById('genSub');
+            if (genSub) genSub.textContent = `পেইজ ${pages[i]} প্রসেস হচ্ছে...`;
+            const qs = await getOrGenerateMCQs(pages[i], type);
+            const cached = qs._fromCache;
+            if (genTextEl) genTextEl.textContent = cached ? 'সংরক্ষিত MCQ লোড হচ্ছে...' : 'AI দিয়ে MCQ তৈরি হচ্ছে...';
+            allQuestions = allQuestions.concat(qs);
+        }
+        if (pLabel) pLabel.textContent = `পেইজ ${pages.length}/${pages.length}`;
+        if (pPct) pPct.textContent = '100%';
+        if (pFill) pFill.style.width = '100%';
+        if (!allQuestions.length) { showToast('❌ প্রশ্ন তৈরি করা যায়নি। আবার চেষ্টা করো।'); showGenOverlay(false); return; }
+        await finishStartExam(allQuestions, pages);
+        showGenOverlay(false);
+    } catch (e) {
+        showGenOverlay(false);
+        showToast('❌ সমস্যা হয়েছে: ' + (e.message||'আবার চেষ্টা করো'));
+    }
+}
+
+// শুধু cache check করে (কোনো generation/AI call না) — সব পেইজ cache-এ থাকলে
+// instant load এর জন্য ব্যবহার হয়। cache miss হলে null রিটার্ন করে।
+// pageNum → dataURL ক্যাশ (একই সেশনে বারবার canvas render এড়াতে, যা delay-এর মূল কারণ ছিল)
+const _pageImgCache = new Map();
+async function getPageImageDataUrlCached(pageNum) {
+    if (_pageImgCache.has(pageNum)) return _pageImgCache.get(pageNum);
+    const url = await getPageImageDataUrl(pageNum);
+    _pageImgCache.set(pageNum, url);
+    return url;
+}
+
+async function peekCachedMCQs(pageNum, type) {
+    // admin-cache ও normal-type cache একসাথে (parallel) চেক করা হয় — আগে এই দুটো
+    // sequentially চলত (একটা শেষ হলে আরেকটা শুরু), যাতে প্রতি পেইজে ২টা রাউন্ড-ট্রিপ
+    // যোগ হয়ে গিয়ে সিলেক্ট করার পর ২-৪ সেকেন্ড দেরি হতো। parallel করায় সময় প্রায় অর্ধেক।
+    const [adminRes, typeRes] = await Promise.allSettled([
+        safeFetch(`${D1_BASE}/d1/mb2_page_mcqs?pdf_id=eq.${curPdfId}&page_number=eq.${pageNum}&mcq_type=eq.admin&select=questions_json`),
+        safeFetch(`${D1_BASE}/d1/mb2_page_mcqs?pdf_id=eq.${curPdfId}&page_number=eq.${pageNum}&mcq_type=eq.${type}&select=questions_json`)
+    ]);
+    try {
+        const adminCached = adminRes.status === 'fulfilled' ? adminRes.value : null;
+        if (adminCached?.length) {
+            const qs = (JSON.parse(adminCached[0].questions_json) || []).filter(q => q.is_active !== false);
+            if (qs?.length) return tagQuestions(qs, pageNum);
+        }
+    } catch (_) {}
+    try {
+        const cached = typeRes.status === 'fulfilled' ? typeRes.value : null;
+        if (cached?.length) {
+            const qs = (JSON.parse(cached[0].questions_json) || []).filter(q => q.is_active !== false);
+            if (qs?.length) return tagQuestions(qs, pageNum);
+        }
+    } catch (_) {}
+    return null;
+}
+
+// exam শুরুর জন্য session data সেট করে exam.html এ নিয়ে যায় — cached ও freshly-generated
+// দুটো path-ই এই একই ফাংশন শেয়ার করে, যাতে ডুপ্লিকেট কোড না হয়।
+async function finishStartExam(allQuestions, pages) {
+    const shuffled = allQuestions.sort(() => Math.random() - 0.5);
+
+    // pre-exam preview (max ৩ পেইজ)
+    const previewImgs = [];
+    for (const pg of pages.slice(0, 3)) {
+        const src = await getPageImageDataUrlCached(pg);
+        if (src) previewImgs.push({ page: pg, src });
+    }
+
+    // ব্যাখ্যায় full-page zoom দেখানোর জন্য pageNumber → image map — প্রতি প্রশ্নে
+    // আলাদা করে ছবি store না করে, unique পেইজ প্রতি একবার রাখা হয় (quota বাঁচাতে)।
+    const pageImageMap = {};
+    for (const pg of pages) {
+        const src = await getPageImageDataUrlCached(pg);
+        if (src) pageImageMap[pg] = src;
+    }
+
+    // ── quota safeguard ──
+    // sessionStorage-এর সাইজ লিমিটেড (সাধারণত ~5MB)। আগে পুরনো/অব্যবহৃত key জমে
+    // থাকলে বা এই সেশনে অনেক পেইজের বেস৬৪ ছবি + প্রশ্ন মিলিয়ে সহজেই কোটা শেষ
+    // হয়ে যায়। তাই: (১) লেখার আগে পুরনো practice* key গুলো ক্লিয়ার করি, (২) সব
+    // setItem একই try-catch এ রাখি, (৩) ব্যর্থ হলে ক্রমান্বয়ে ভারী অংশ (page image
+    // map → preview images) বাদ দিয়ে অন্তত প্রশ্নগুলো নিয়ে exam চালু রাখার চেষ্টা করি।
+    ['practiceTitle','practiceSource','practiceTime','practicePages','practicePageImages','practiceQuestions','practicePageImageMap'].forEach(k => {
+        try { sessionStorage.removeItem(k); } catch (_) {}
+    });
+
+    // ── back-navigation resume state ──
+    // উপরের বাম কোণের গ্লোবাল "ফিরে যান" বাটন (goBackGlobal, global-nav.js)
+    // stack থেকে সরাসরি 'study.html' এ পাঠায়, যেটা page reload করে এবং
+    // সবসময় subject list দিয়ে শুরু হয় (viewer state মনে রাখে না)। তাই এখানে
+    // ঠিক কোন PDF/পেইজে ছিলাম সেটা আলাদা করে সেভ রাখছি — study.html লোড হওয়ার
+    // সময় এটা থাকলে সরাসরি সেই viewer-এ ফিরিয়ে দেবে, chapter list স্কিপ করে।
+    try {
+        sessionStorage.setItem('mb2_study_resume', JSON.stringify({
+            pdfId: curPdfId, pdfTitle: curPdfTitle, isPremium: curPdfPremium,
+            chapterId: curChapterId, chapterName: curChapterName
+        }));
+    } catch (_) {}
+
+    const baseMeta = () => {
+        sessionStorage.setItem('practiceTitle', curPdfTitle + ' — পেইজ ' + pages.join(','));
+        sessionStorage.setItem('practiceSource', 'study');
+        sessionStorage.setItem('practiceTime', Math.ceil(shuffled.length/1.5));
+        sessionStorage.setItem('practicePages', curPdfTitle + ' — পেইজ ' + pages.join(', '));
+    };
+
+    try {
+        // ১ম চেষ্টা: সবকিছুসহ (preview images + page image map + questions)
+        baseMeta();
+        if (previewImgs.length) sessionStorage.setItem('practicePageImages', JSON.stringify(previewImgs));
+        sessionStorage.setItem('practicePageImageMap', JSON.stringify(pageImageMap));
+        sessionStorage.setItem('practiceQuestions', JSON.stringify(shuffled));
+    } catch (e) {
+        try {
+            // ২য় চেষ্টা: page image map বাদ (ব্যাখ্যার full-page zoom কাজ করবে না, বাকি সব ঠিক থাকবে)
+            sessionStorage.removeItem('practicePageImageMap');
+            baseMeta();
+            if (previewImgs.length) sessionStorage.setItem('practicePageImages', JSON.stringify(previewImgs));
+            sessionStorage.setItem('practiceQuestions', JSON.stringify(shuffled));
+        } catch (e2) {
+            try {
+                // ৩য় চেষ্টা: preview images-ও বাদ, শুধু প্রশ্ন
+                sessionStorage.removeItem('practicePageImages');
+                baseMeta();
+                sessionStorage.setItem('practiceQuestions', JSON.stringify(shuffled));
+            } catch (e3) {
+                showToast('❌ অনেক বেশি পেইজ/প্রশ্ন নির্বাচিত — কম পেইজ দিয়ে আবার চেষ্টা করো');
+                return;
+            }
+        }
+    }
+    goTo('exam.html?practice=mock');
+}
+
+function showGenOverlay(show) { document.getElementById('genOverlay').classList.toggle('show', show); }
+
+/* ── MCQ generation: cache-first, then Gemini → Groq fallback ── */
+async function getOrGenerateMCQs(pageNum, type) {
+    // 1️⃣ + 2️⃣ Admin-saved ও type-specific cache একসাথে (parallel) চেক করা হয় —
+    // আগে sequential ছিল বলে প্রতি পেইজে extra রাউন্ড-ট্রিপ লেগে দেরি হতো।
+    const [adminRes, typeRes] = await Promise.allSettled([
+        safeFetch(`${D1_BASE}/d1/mb2_page_mcqs?pdf_id=eq.${curPdfId}&page_number=eq.${pageNum}&mcq_type=eq.admin&select=questions_json`),
+        safeFetch(`${D1_BASE}/d1/mb2_page_mcqs?pdf_id=eq.${curPdfId}&page_number=eq.${pageNum}&mcq_type=eq.${type}&select=questions_json`)
+    ]);
+    try {
+        const adminCached = adminRes.status === 'fulfilled' ? adminRes.value : null;
+        if (adminCached?.length) {
+            const qs = (JSON.parse(adminCached[0].questions_json) || []).filter(q => q.is_active !== false);
+            if (qs?.length) { const r = tagQuestions(qs, pageNum); r._fromCache = true; return r; }
+        }
+    } catch (_) {}
+    try {
+        const cached = typeRes.status === 'fulfilled' ? typeRes.value : null;
+        if (cached?.length) {
+            const qs = (JSON.parse(cached[0].questions_json) || []).filter(q => q.is_active !== false);
+            if (qs?.length) { const r = tagQuestions(qs, pageNum); r._fromCache = true; return r; }
+        }
+    } catch (_) {}
+
+    // ৩️⃣ মূলবই-২ এ server-side OCR টেবিল নেই — শুধু client-local OCR cache (Tesseract,
+    // এই ডিভাইসে আগে viewer এ দেখা হলে) থাকলে সেটা ব্যবহার করো, নাহলে সরাসরি ছবি-ভিত্তিক।
+    let questions = null;
+    try {
+        const ocrText = localStorage.getItem(_mb2OcrCacheKey(curPdfId, pageNum));
+        if (ocrText && ocrText.trim().length > 30) {
+            questions = await generateMCQsFromText(ocrText, type);
+        }
+    } catch (_) {}
+
+    if (!questions?.length) {
+        const imageData = await getPageImageBase64(pageNum);
+        if (!imageData) throw new Error('পেইজের ছবি তৈরি করা যায়নি');
+        questions = await generateMCQsFromImage(imageData, type);
+    }
+    if (!questions?.length) throw new Error('AI থেকে প্রশ্ন পাওয়া যায়নি');
+
+    try {
+        await safeFetch(`${D1_BASE}/d1/mb2_page_mcqs`, {
+            method: 'POST',
+            headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+            body: JSON.stringify({ pdf_id: curPdfId, page_number: pageNum, mcq_type: type, questions_json: JSON.stringify(questions) })
+        });
+    } catch (_) {}
+
+    return tagQuestions(questions, pageNum);
+}
+
+// পুরো পেইজের ছবি data URL হিসেবে — result page-এ "ব্যাখ্যার ছবিতে ক্লিক করলে
+// যে পেইজ থেকে MCQ-টি বানানো হয়েছে সেই আসল পেইজ" দেখানোর জন্য ব্যবহার হয়।
+async function getPageImageDataUrl(pageNum) {
+    try {
+        const imgData = await getPageImageBase64(pageNum);
+        return imgData?.base64 ? 'data:' + imgData.mimeType + ';base64,' + imgData.base64 : null;
+    } catch (_) { return null; }
+}
+
+function tagQuestions(qs, pageNum) {
+    return qs.map((q,i) => {
+        // Support all MCQ storage formats:
+        // 1) AI format:     options:[], answer_index (0-based)
+        // 2) Manual format: option_k/kh/g/gh, correct (1-based)
+        // 3) CSV format:    option1/2/3/4, answer/correct (1-based)
+
+        let o1='', o2='', o3='', o4='', o5=null;
+        if (Array.isArray(q.options) && q.options.length) {
+            o1=q.options[0]||''; o2=q.options[1]||'';
+            o3=q.options[2]||''; o4=q.options[3]||'';
+            o5=q.options[4]||null;
+        } else if (q.option_k !== undefined) {
+            // Manual admin format
+            o1=q.option_k||''; o2=q.option_kh||'';
+            o3=q.option_g||'';  o4=q.option_gh||'';
+        } else {
+            // CSV / flat format
+            o1=q.option1||q.optionA||''; o2=q.option2||q.optionB||'';
+            o3=q.option3||q.optionC||''; o4=q.option4||q.optionD||'';
+            o5=q.option5||null;
+        }
+
+        // Normalise answer to 1-based integer
+        let ans = 1;
+        if (Array.isArray(q.options) && q.answer_index != null && q.answer_index !== '') {
+            // AI format stores 0-based answer_index
+            ans = parseInt(q.answer_index) + 1;
+        } else if (q.correct != null && q.correct !== '') {
+            // Manual & CSV store 1-based correct
+            ans = parseInt(q.correct) || 1;
+        } else if (q.answer != null && q.answer !== '') {
+            ans = parseInt(q.answer) || 1;
+        } else if (q.answer_index != null && q.answer_index !== '') {
+            ans = parseInt(q.answer_index) || 1;
+        }
+
+        return {
+            id: `p${pageNum}_${i}_${Date.now()}`,
+            page_number: pageNum,
+            question_text: q.question_text || q.question || q.questions || '',
+            option1: o1, option2: o2, option3: o3, option4: o4, option5: o5,
+            answer_index: ans,
+            explanation: q.explanation || '',
+            explanation_image: q.explanation_image || null,
+            explanation_image_key: q.explanation_image_key || null,
+            image_url: q.image_url || null
+        };
+    });
+}
+
+async function getPageImageBase64(p) {
+    const cv = document.getElementById('cv-'+p);
+    if (cv && cv.style.display !== 'none' && cv.width) {
+        return { base64: cv.toDataURL('image/jpeg', 0.85).split(',')[1], mimeType: 'image/jpeg' };
+    }
+    // Render at a safe scale if not already on-screen
+    try {
+        const page = await pdfDoc.getPage(p);
+        const vp = page.getViewport({ scale: 1.5 });
+        const tmp = document.createElement('canvas');
+        tmp.width = vp.width; tmp.height = vp.height;
+        await page.render({ canvasContext: tmp.getContext('2d'), viewport: vp }).promise;
+        return { base64: tmp.toDataURL('image/jpeg', 0.85).split(',')[1], mimeType: 'image/jpeg' };
+    } catch (e) { return null; }
+}
+
+/* ── AI fallback chain is now handled entirely by the atlas-ai-proxy worker — see generateMCQsFromImage() below ── */
+
+// Admin panel এ সংরক্ষিত prompt cache — page load এ একবার fetch হয়
+let userPromptCache = {};
+async function loadAdminPrompts() {
+    try {
+        const rows = await safeFetch(`${D1_BASE}/d1/book_ai_prompts?pdf_id=eq.0&select=mcq_type,prompt`);
+        userPromptCache = {};
+        (rows||[]).forEach(r => { userPromptCache[r.mcq_type] = r.prompt; });
+    } catch(_) {}
+}
+
+// admin panel-এর মতোই — এই rules কখনো override হয় না, সব generation-এ যুক্ত হয়
+const MCQ_PERMANENT_RULES = (
+    `\n\nবাধ্যতামূলক নিয়ম (এগুলো সবসময় মেনে চলতে হবে, কোনো ব্যতিক্রম নয়):\n` +
+    `১. গাণিতিক বা রাসায়নিক রাশি/সূত্র লেখার সময় সঠিকভাবে সাব-স্ক্রিপ্ট ও সুপার-স্ক্রিপ্ট ব্যবহার করো — ` +
+    `যেমন x² (x^2 না), H₂O (H2O না), CO₂, x₁+x₂, a^n, এই ধরনের ইউনিকোড সাব/সুপারস্ক্রিপ্ট ক্যারেক্টার ব্যবহার করবে, ` +
+    `সাধারণ সংখ্যা/অক্ষর দিয়ে লিখবে না।\n` +
+    `২. প্রশ্ন বা ব্যাখ্যায় কখনো সোর্স-রেফারেন্স করে কথা বলবে না — অর্থাৎ "উল্লেখিত চিত্রে", "বক্সে", "ছকে", ` +
+    `"উদ্দীপকে", "সারণিতে", "টপিকে", "পৃষ্ঠা নং এ দেখা যাচ্ছে", "বলা আছে", "উল্লেখ করা আছে", "লক্ষ করা যায়", ` +
+    `"বর্ণনা আছে" — এই ধরনের কোনো বাক্যাংশ ব্যবহার করবে না। প্রশ্ন ও ব্যাখ্যা সবসময় স্বয়ংসম্পূর্ণ ও সরাসরি বিষয়বস্তু ` +
+    `নিয়ে লিখতে হবে, কোনো উৎস/অবস্থান নির্দেশ করা যাবে না।\n` +
+    `৩. প্রতিটি প্রশ্ন মানসম্পন্ন (quality-maintained) হতে হবে — অস্পষ্ট, অসম্পূর্ণ, বা প্লেসহোল্ডার-ধরনের প্রশ্ন বানানো যাবে না।\n` +
+    `৪. ১০-২০টি প্রশ্নের রেঞ্জের মধ্যেই থাকতে হবে — এর কম বা বেশি দেওয়া যাবে না।`
+);
+
+function mcqPrompt(type) {
+    const jsonFormat = `{"questions":[{"question":"...","options":["...","...","...","..."],"answer_index":0,"explanation":"..."}]}`;
+
+    // Admin panel এ সেভ করা prompt থাকলে সেটাই ব্যবহার হবে — user side ও admin side একই prompt follow করবে।
+    // প্রতি পেইজে 10-20টা প্রশ্ন তৈরি হবে, quality বজায় রেখে।
+    const adminPrompt = userPromptCache[type];
+    if (adminPrompt) {
+        return `তুমি একজন অভিজ্ঞ HSC শিক্ষক। নিচের বইয়ের পেইজের ছবি দেখে ১০-২০টি মানসম্পন্ন MCQ তৈরি করো।\n\n${adminPrompt}\n\n` +
+            `প্রশ্ন, অপশন, ব্যাখ্যা — সব অবশ্যই এই পেইজের ভাষায় লিখবে। শুধুমাত্র এই পেইজের কন্টেন্ট থেকে প্রশ্ন বানাবে।` +
+            MCQ_PERMANENT_RULES +
+            `\n\nশুধুমাত্র নিচের JSON ফরম্যাটে উত্তর দিবে, অন্য কোনো লেখা/markdown/backtick ছাড়া:\n${jsonFormat}`;
+    }
+
+    // Fallback — admin কোনো prompt সেট না করলে এই default ব্যবহার হবে
+    const typeInstructions = {
+        standard: 'সাধারণ মানের ১০-২০টি বহুনির্বাচনী (৪টি অপশন) প্রশ্ন তৈরি করো।',
+        true_false: '১০-২০টি সত্য/মিথ্যা ধরনের প্রশ্ন তৈরি করো (অপশন: "সত্য", "মিথ্যা" — ২টি অপশন)।',
+        hard: 'বিশ্লেষণমূলক ও কঠিন মানের ১০-২০টি বহুনির্বাচনী (৪টি অপশন) প্রশ্ন তৈরি করো — সরাসরি তথ্য নয়, প্রয়োগ/বিশ্লেষণ ভিত্তিক।'
+    };
+    return `তুমি একজন অভিজ্ঞ HSC শিক্ষক। নিচের বইয়ের পেইজের ছবি দেখে বাংলায় MCQ তৈরি করো।
+
+নিয়ম:
+১. প্রশ্ন, অপশন, ব্যাখ্যা — সব অবশ্যই এই পেইজের ভাষায় (যদি পেইজ বাংলায় হয় তাহলে বাংলায়, ইংরেজিতে হলে ইংরেজিতে) লিখবে।
+২. ${typeInstructions[type] || typeInstructions.standard}
+৩. প্রতিটি প্রশ্নের সাথে সংক্ষিপ্ত ব্যাখ্যা দিবে।
+৪. শুধুমাত্র এই পেইজের কন্টেন্ট থেকে প্রশ্ন বানাবে, বাইরের তথ্য না। প্লেসহোল্ডার/নমুনা প্রশ্ন বানাবে না।${MCQ_PERMANENT_RULES}
+
+শুধুমাত্র নিচের JSON ফরম্যাটে উত্তর দিবে, অন্য কোনো লেখা/markdown/backtick ছাড়া:
+${jsonFormat}`;
+}
+
+// All AI MCQ generation now goes through the centralized proxy worker, which
+// keeps every provider key (Gemini, OpenRouter, Groq, Cerebras, Cloudflare AI)
+// as a server-side secret and runs its own fallback chain internally — this
+// file no longer needs to know which provider actually answered.
+// OCR করা text দিয়ে MCQ generate — image-vision এর চেয়ে দ্রুত ও নির্ভুল (যেহেতু text already নির্ভুলভাবে এক্সট্র্যাক্ট করা)
+async function generateMCQsFromText(text, type) {
+    try {
+        const res = await fetch(AI_PROXY_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                question: text.slice(0, 6000),
+                systemPrompt: mcqPrompt(type)
+            })
+        });
+        if (!res.ok) return [];
+        const data = await res.json();
+        if (!data.success || !data.answer) return [];
+        return parseQuestionsJSON(data.answer);
+    } catch (e) {
+        return [];
+    }
+}
+
+async function generateMCQsFromImage(imageData, type) {
+    try {
+        const res = await fetch(AI_PROXY_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                question: '',
+                image: { base64: imageData.base64, mimeType: imageData.mimeType },
+                systemPrompt: mcqPrompt(type)
+            })
+        });
+        if (!res.ok) return [];
+        const data = await res.json();
+        if (!data.success || !data.answer) return [];
+        return parseQuestionsJSON(data.answer);
+    } catch (e) {
+        return [];
+    }
+}
+
+// Quality filtering — mirrors parseMcqJson() from AtlasPro's workers/utils.js:
+// rejects empty/placeholder/sample questions and anything with fewer than
+// 2 filled options, so a flaky AI response can't slip a garbage MCQ into the exam.
+function parseQuestionsJSON(raw) {
+    try {
+        let clean = raw.trim().replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/```\s*$/,'');
+        const parsed = JSON.parse(clean);
+        const list = parsed.questions || [];
+        return list.filter(q => {
+            if (!q || typeof q !== 'object') return false;
+            const qText = (q.question || '').trim();
+            if (!qText || qText.length < 5) return false;
+            if (/^(MCQ|প্রশ্ন)\s*\d+/i.test(qText) && qText.length < 30) return false;
+            if (/প্রশ্নটি যোগ করুন|add.*question|your question here|sample question/i.test(qText)) return false;
+            const opts = (q.options || []).map(o => (o || '').trim());
+            const filledOpts = opts.filter(o => o.length > 0);
+            if (filledOpts.length < 2) return false;
+            return true;
+        });
+    } catch (e) { return []; }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('atlas-theme');
+    if (saved === 'light') { isDarkMode = false; document.body.classList.add('light-mode'); document.body.classList.remove('dark-mode'); document.getElementById('themeToggle').textContent = '🌙'; }
+
+    try { currentUser = JSON.parse(localStorage.getItem('atlas-session')); } catch(_) { currentUser = null; }
+    if (!currentUser) { location.replace('auth.html'); return; }
+
+    loadAdminPrompts();
+
+    // ── exam.html থেকে "ফিরে যান" চাপার পর এখানে ফিরে এলে — সেভ করা viewer
+    // state থাকলে সরাসরি সেই PDF-এর সেই viewer-এ ফিরিয়ে দাও, সবসময় subject
+    // list দিয়ে শুরু করার বদলে। state একবার ব্যবহার হলেই মুছে ফেলা হয়, যাতে
+    // পরবর্তী স্বাভাবিক ভিজিটে (home/sidebar দিয়ে সরাসরি) এটা প্রভাব না ফেলে।
+    let resumed = false;
+    try {
+        const resume = JSON.parse(sessionStorage.getItem('mb2_study_resume') || 'null');
+        sessionStorage.removeItem('mb2_study_resume');
+        if (resume && resume.pdfId) {
+            curChapterId = resume.chapterId; curChapterName = resume.chapterName;
+            let pageCount = 0, fileUrl = null;
+            try {
+                const cachedPdfs = resume.chapterId ? JSON.parse(localStorage.getItem('mb2_pdfs_cache_' + resume.chapterId) || '[]') : [];
+                const match = cachedPdfs.find(p => p.id === resume.pdfId);
+                if (match) { pageCount = match.page_count || 0; fileUrl = match.file_url || null; }
+            } catch (_) {}
+            loadSubjects(); // sidebar/subject cache warm রাখার জন্য পেছনে চালু থাকুক, viewer উপরে দেখাবে
+            if (!resume.isPremium && fileUrl) {
+                openPdfFast(resume.pdfId, resume.pdfTitle, fileUrl, pageCount);
+            } else {
+                openPdf(resume.pdfId, resume.pdfTitle, resume.isPremium, pageCount);
+            }
+            resumed = true;
+        }
+    } catch (_) {}
+
+    if (!resumed) loadSubjects();
+});
+</script>
+
+<!-- ══════════════ গ্লোবাল নেভিগেশন + UI কন্ট্রোল (নতুন, আলাদা ফাইল) ══════════════ -->
+<script src="global-nav.js"></script>
+<script src="atlas-ui.js"></script>
+</body>
+</html>
