@@ -2795,8 +2795,31 @@ async function mbAiGenerate() {
                 if (retryImg) {
                     const retryRaw = await mbCallAiApi('', retryImg, strictSys, false, true); // skipGroq=true — retry-তে ডুপ্লিকেট Groq call এড়াতে
                     parsed = mbParseAiJson(retryRaw);
+                    if (!parsed || !parsed.length) rawJson = retryRaw || rawJson;
                 }
             } catch (_) { /* retry ব্যর্থ হলে নিচের error handling চলবে */ }
+        }
+
+        // bug fix (user-reported "AI JSON দেয়নি" popup আসছিল যেখানে mbGenerateForPage-এ আসত
+        // না): এই flow-এ আগে শুধু ১টা retry ছিল, তারপরেই hard error — কিন্তু কখনো কখনো AI
+        // JSON bracket ছাড়া prose/markdown answer দেয়, যেটা reformat করলেই ঠিক হয়ে যায়, বা
+        // অন্তত regex দিয়ে prose থেকে Q/A বের করা যায়। mbGenerateForPage-এর মতোই এখানেও একই
+        // last-resort ধাপগুলো যোগ করা হলো, যাতে সহজেই recoverable case-এ popup না আসে।
+        if ((!parsed || !parsed.length) && rawJson) {
+            const hasBracket = /[\[{]/.test(rawJson);
+            if (!hasBracket) {
+                try {
+                    const reformatSys = `নিচে একটা HSC শিক্ষামূলক কনটেন্ট (প্রশ্নোত্তর/টেক্সট আকারে) দেওয়া আছে। এটা থেকে ${basePrompt}\n` +
+                        `শুধু valid JSON array রিটার্ন করো। কোনো markdown code fence, preamble, বা extra text দিও না। Format:\n${jsonFormat}`;
+                    const reformatPrompt = `কনটেন্ট:\n${rawJson.slice(0, 4000)}`;
+                    const reformatRaw = await mbCallAiApi(reformatPrompt, null, reformatSys, false, false);
+                    parsed = mbParseAiJson(reformatRaw);
+                } catch (_) {}
+            }
+            if (!parsed || !parsed.length) {
+                const extracted = mbExtractMcqFromProse(rawJson);
+                if (extracted && extracted.length) parsed = extracted;
+            }
         }
 
         if (!parsed || !parsed.length) {
