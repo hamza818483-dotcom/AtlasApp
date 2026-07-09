@@ -784,7 +784,6 @@
     <div class="tab-grid">
         <button class="tab-btn active" onclick="switchSection('class',this)">📚 Class</button>
         <button class="tab-btn" onclick="switchSection('mulboi',this)">📖 মূলবই</button>
-        <button class="tab-btn" onclick="switchSection('mulboi2',this)">📗 মূলবই-২</button>
         <button class="tab-btn" onclick="switchSection('exam',this)">📝 Exam</button>
         <button class="tab-btn" onclick="switchSection('kakha',this)">📦 ক,খ,CQ</button>
         <button class="tab-btn" onclick="switchSection('timer',this)">⏰ Timer</button>
@@ -1066,53 +1065,7 @@
     </div><!-- end secMulboi -->
 
     <!-- ══════════════ TAB: মূলবই-২ ══════════════ -->
-    <div class="admin-section" id="secMulboi2">
-
-        <!-- Quick Add: Subject + Chapter + PDF (+ Premium/Free) একসাথে -->
-        <div class="section-card card-purple">
-            <div class="card-body">
-                <div class="card-title">⚡ Quick PDF Add (Subject+Chapter+PDF+Premium একসাথে)</div>
-                <div class="input-row">
-                    <div class="input-group"><label>বিষয়</label><input type="text" class="form-input" id="mb2Subject" list="mb2SubjectList" placeholder="বিষয়ের নাম"></div>
-                    <div class="input-group"><label>অধ্যায়</label><input type="text" class="form-input" id="mb2Chapter" list="mb2ChapterList" placeholder="অধ্যায়ের নাম"></div>
-                </div>
-                <datalist id="mb2SubjectList"></datalist>
-                <datalist id="mb2ChapterList"></datalist>
-                <div class="form-group" style="margin-top:10px">
-                    <label class="form-label">PDF শিরোনাম</label>
-                    <input class="form-input" id="mb2PdfTitle" placeholder="PDF এর নাম লিখুন">
-                </div>
-                <div class="form-group" style="margin-top:10px">
-                    <label class="form-label">Access</label>
-                    <div class="type-selector-alt">
-                        <button type="button" class="type-opt-alt selected" id="mb2AccFree" onclick="mb2SelectAccess(false)">🔓 Free</button>
-                        <button type="button" class="type-opt-alt" id="mb2AccPremium" onclick="mb2SelectAccess(true)">⭐ Premium</button>
-                    </div>
-                </div>
-                <div class="drop-zone" id="mb2DropZone"
-                    ondragover="mb2DzOver(event)" ondragleave="mb2DzLeave()" ondrop="mb2DzDrop(event)">
-                    <input type="file" id="mb2PdfFileInput" accept=".pdf" onchange="mb2OnFileSelect(event)">
-                    <div class="drop-zone-icon">📄</div>
-                    <div class="drop-zone-text">PDF ফাইল এখানে টানুন বা ক্লিক করুন</div>
-                </div>
-                <div class="file-chosen" id="mb2FileChosen"></div>
-                <div class="progress-wrap" id="mb2ProgressWrap" style="display:none">
-                    <div class="progress-label" id="mb2ProgressLabel">আপলোড হচ্ছে...</div>
-                    <div class="progress-bar-bg"><div class="progress-bar-fill" id="mb2ProgressFill"></div></div>
-                </div>
-                <button class="btn btn-primary btn-full" id="mb2UploadBtn" onclick="mb2UploadPdf()" style="margin-top:10px">আপলোড করো</button>
-            </div>
-        </div>
-
-        <!-- PDF List -->
-        <div class="section-card card-purple">
-            <div class="card-body">
-                <div class="card-title">📚 সব PDF (মূলবই-২)</div>
-                <div id="mb2AllPdfsList"><div class="skeleton skel-row"></div></div>
-            </div>
-        </div>
-
-    </div><!-- end secMulboi2 -->
+    
 
 
     <!-- ══════════════ TAB 2: EXAM ══════════════ -->
@@ -2081,8 +2034,7 @@ function switchSection(sec, el) {
         serial:    () => {},
         studytracker: () => { stLoadDashCounts(); },
         quickpractice: loadQpSubjects,
-        englishmaster: loadEmCategories,
-        mulboi2: () => { if (typeof mb2LoadDatalists === 'function') mb2LoadDatalists(); if (typeof mb2LoadAllPdfs === 'function') mb2LoadAllPdfs(); }
+        englishmaster: loadEmCategories
     };
     if (loaders[sec]) loaders[sec]();
 }
@@ -4179,7 +4131,5 @@ document.addEventListener('DOMContentLoaded', () => {
 .ed2-bulk-fill { height:100%; width:0%; background:linear-gradient(90deg,#6C63FF,#a78bfa); transition:width .3s; }
 </style>
 
-<script src="mulboi2-admin.js?v=20260709c"></script>
-<script src="mulboi2-editor.js?v=20260709b"></script>
 </body>
     </html>

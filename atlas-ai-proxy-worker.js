@@ -316,51 +316,9 @@ function jsonResponse(obj, status = 200) {
 }
 
 
-/* ───────── মূলবই-২ (mb2_*) tables — independent copy of the book_* schema,
-   auto-created lazily (same pattern as ensureMcqJobTable) the first time any
-   mb2_ table is touched, so no manual migration step is needed. ───────── */
-const MB2_TABLES = new Set(["mb2_subjects", "mb2_chapters", "mb2_pdfs", "mb2_page_mcqs"]);
-let mb2TablesEnsured = false;
-async function ensureMb2Tables(db) {
-    if (mb2TablesEnsured) return;
-    await db.batch([
-        db.prepare(`CREATE TABLE IF NOT EXISTS mb2_subjects (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            icon TEXT NOT NULL DEFAULT '📚',
-            description TEXT NOT NULL DEFAULT '',
-            sort_order INTEGER NOT NULL DEFAULT 0,
-            created_at TEXT NOT NULL DEFAULT (datetime('now'))
-        )`),
-        db.prepare(`CREATE TABLE IF NOT EXISTS mb2_chapters (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            subject_id INTEGER NOT NULL,
-            name TEXT NOT NULL,
-            sort_order INTEGER NOT NULL DEFAULT 0,
-            created_at TEXT NOT NULL DEFAULT (datetime('now'))
-        )`),
-        db.prepare(`CREATE TABLE IF NOT EXISTS mb2_pdfs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            chapter_id INTEGER NOT NULL,
-            title TEXT NOT NULL,
-            file_url TEXT NOT NULL,
-            page_count INTEGER NOT NULL DEFAULT 0,
-            is_premium INTEGER NOT NULL DEFAULT 0,
-            sort_order INTEGER NOT NULL DEFAULT 0,
-            created_at TEXT NOT NULL DEFAULT (datetime('now'))
-        )`),
-        db.prepare(`CREATE TABLE IF NOT EXISTS mb2_page_mcqs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            pdf_id INTEGER NOT NULL,
-            page_number INTEGER NOT NULL,
-            mcq_type TEXT NOT NULL DEFAULT 'admin',
-            questions_json TEXT NOT NULL,
-            created_at TEXT NOT NULL DEFAULT (datetime('now')),
-            UNIQUE(pdf_id, page_number, mcq_type)
-        )`),
-    ]);
-    mb2TablesEnsured = true;
-}
+
+
+
 
 /* ───────── D1 REST layer for book_page_mcqs (replaces Supabase PostgREST) ─────────
    Parses the same query-string shape the frontend (mulboi-mcq-admin.js) sends:
@@ -379,7 +337,7 @@ async function handleD1Table(table, request, env, url) {
     const db = env.MULBOI_DB;
     if (!db) return jsonResponse({ error: "D1 binding MULBOI_DB missing" }, 500);
 
-    if (MB2_TABLES.has(table)) await ensureMb2Tables(db);
+
 
     // Verify table exists (guards against typos / SQL injection via table name)
     const tblCheck = await db.prepare(
@@ -458,8 +416,6 @@ async function handleD1Table(table, request, env, url) {
         users: { parentCol: "user_phone", childCol: "phone" },
         book_chapters: { parentCol: "chapter_id", childCol: "id" },
         book_subjects: { parentCol: "subject_id", childCol: "id" },
-        mb2_chapters: { parentCol: "chapter_id", childCol: "id" },
-        mb2_subjects: { parentCol: "subject_id", childCol: "id" },
     };
 
     async function attachEmbeds(rows, embeds) {
