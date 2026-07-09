@@ -3109,10 +3109,37 @@ function mbExtractMcqFromProse(text) {
     return out.length ? out : null;
 }
 
+// bug fix (root cause of "স্ট্যান্ডার ্ ড", "ব্যালেন ্ স" ইত্যাদি ভাঙা যুক্তাক্ষর): কিছু AI
+// মডেল (Groq/Llama) বাংলা যুক্তাক্ষর তৈরির সময় হসন্ত (্) চিহ্নের আগে/পরে ভুল করে স্পেস
+// ঢুকিয়ে দেয় (conjunct rendering bug, JSON syntax ঠিকই থাকে তাই আগে এটা ধরা পড়ত না,
+// শুধু option/question টেক্সট নষ্ট দেখাত)। এই ফাংশন parse হওয়া প্রতিটা string field-এ
+// হসন্তের চারপাশের অবৈধ স্পেস সরিয়ে সঠিক যুক্তাক্ষর পুনর্গঠন করে।
+function mbFixHasantoSpacing(s) {
+    if (typeof s !== 'string' || !s) return s;
+    return s
+        .replace(/\s+্\s+/g, '্')   // " ্ " -> "্"
+        .replace(/\s+্/g, '্')      // " ্"  -> "্"
+        .replace(/্\s+/g, '্');     // "্ "  -> "্"
+}
+function mbFixHasantoDeep(obj) {
+    if (typeof obj === 'string') return mbFixHasantoSpacing(obj);
+    if (Array.isArray(obj)) return obj.map(mbFixHasantoDeep);
+    if (obj && typeof obj === 'object') {
+        const out = {};
+        for (const k in obj) out[k] = mbFixHasantoDeep(obj[k]);
+        return out;
+    }
+    return obj;
+}
+
 function mbParseAiJson(raw) {
+    const result = mbParseAiJsonRaw(raw);
+    return result ? mbFixHasantoDeep(result) : result;
+}
+
+function mbParseAiJsonRaw(raw) {
     if (!raw) return null;
 
-    // code-fence থাকলে (```json ... ``` বা ``` ... ```) সেটা প্রথমে সরিয়ে দাও
     let cleaned = raw.split('```').length > 1
         ? raw.split('```').filter((_, i) => i % 2 === 1).join('\n') || raw
         : raw;
@@ -3146,7 +3173,6 @@ function mbParseAiJson(raw) {
     parsed = tryParse(candidate);
     if (parsed) return [parsed];
 
-    // truncated/broken JSON — শেষের incomplete element কেটে বাকিটা parse করার চেষ্টা
     const rough = cleaned.match(/\[[\s\S]*/);
     if (rough) {
         let s = rough[0];
