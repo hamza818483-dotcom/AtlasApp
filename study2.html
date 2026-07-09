@@ -460,10 +460,14 @@ async function openChapter(id, name) {
     go('s-pdfs');
     const c = document.getElementById('pdf-list');
     const CACHE_KEY = 'mb2_pdfs_cache_' + id;
-    // Cache থেকে instantly দেখাও — loading spinner নেই
+    // Cache থেকে instantly দেখাও — loading spinner নেই।
+    // bug fix: renderPdfList() single-PDF চ্যাপ্টার হলে auto-open করে (openPdf/openPdfFast) —
+    // স্টেল ক্যাশে যদি একটামাত্র (এখন হয়তো delete হওয়া) PDF থাকে, fresh fetch আসার আগেই
+    // সেটা auto-open হয়ে যেত। তাই স্টেল ক্যাশ pass এ শুধু list দেখাও (renderPdfListOnly),
+    // auto-open শুধুমাত্র fresh/আসল ডাটা এলেই হবে।
     try {
         const cached = localStorage.getItem(CACHE_KEY);
-        if (cached) { renderPdfList(JSON.parse(cached), name, id); }
+        if (cached) { renderPdfListOnly(JSON.parse(cached), name, id); }
         else { c.innerHTML = '<div class="ctr"><div class="sp"></div><div>লোড হচ্ছে...</div></div>'; }
     } catch (_) { c.innerHTML = '<div class="ctr"><div class="sp"></div><div>লোড হচ্ছে...</div></div>'; }
     try {
@@ -480,6 +484,24 @@ async function openChapter(id, name) {
         localStorage.setItem(CACHE_KEY, JSON.stringify(pdfs));
         renderPdfList(pdfs, name, id);
     } catch (e) { if (!c.querySelector('.list-item')) c.innerHTML = '<div class="ctr" style="color:var(--error)">লোড হয়নি।</div>'; }
+}
+
+// স্টেল ক্যাশ instant-render pass এর জন্য — auto-open করে না, শুধু list দেখায়।
+// single-PDF chapter হলেও এখানে auto-open হবে না (সেটা শুধু fresh fetch এ renderPdfList()-এ হয়)।
+function renderPdfListOnly(pdfs, name, id) {
+    const c = document.getElementById('pdf-list');
+    document.getElementById('pdfs-title').textContent = name + (pdfs.length ? ' (' + pdfs.length + ' টি PDF)' : '');
+    if (!pdfs.length) { c.innerHTML = '<div class="ctr"><div class="sp"></div><div>লোড হচ্ছে...</div></div>'; return; }
+    c.innerHTML = '<div class="item-list">' + pdfs.map(p => `
+        <div class="list-item" onclick="openPdf(${p.id},'${esc(p.title)}',${!!p.is_premium},${p.page_count||0})">
+            <div style="font-size:26px">📕</div>
+            <div class="list-info">
+                <div class="list-name">${esc(p.title)}</div>
+                <div class="list-sub">${p.page_count ? p.page_count+' পেইজ' : 'PDF ফাইল'}</div>
+            </div>
+            ${p.is_premium ? '<span class="premium-lock">⭐ Premium</span>' : ''}
+            <div class="list-arr">›</div>
+        </div>`).join('') + '</div>';
 }
 
 function renderPdfList(pdfs, name, id) {
