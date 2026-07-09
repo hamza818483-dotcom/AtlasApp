@@ -579,7 +579,16 @@ async function callGemini(env, question, systemPrompt, image, budget) {
     // kore shomoy nosto na kore, shudhu "healthy" (ekhono kaj korte pare emon) key-gulor
     // upor e round chole.
     const exhaustedKeys = new Set();
+    // bug fix (root cause of persistent "Too many subrequests" even after sequential fix):
+    // MAX_ROTATION_ROUNDS is 1, so exhaustedKeys above never actually helps (no 2nd round
+    // to skip in) — every single Gemini key still got tried once even when the account was
+    // clearly fully quota-exhausted (429 on every key, every time, per mcq_error_logs).
+    // That alone can eat a large chunk of the shared subrequest budget before Groq/
+    // OpenRouter even get a turn. If 2 keys in a row come back 429, treat the whole
+    // provider as exhausted for this invocation and stop immediately.
+    let consecutive429 = 0;
 
+    outerGemini:
     for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
         const healthyKeys = keys.filter(k => !exhaustedKeys.has(k));
         if (!healthyKeys.length) break; // shob key exhausted — ar try kore lav nai
@@ -596,7 +605,13 @@ async function callGemini(env, question, systemPrompt, image, budget) {
                 }
                 if (!outcome.ok) {
                     lastError = `Gemini(${model}) HTTP ${outcome.status}`;
-                    if (outcome.status === 429) exhaustedKeys.add(key); // quota shesh — porer round-e skip
+                    if (outcome.status === 429) {
+                        exhaustedKeys.add(key); // quota shesh — porer round-e skip
+                        consecutive429++;
+                        if (consecutive429 >= 2) { lastError = `Gemini: quota exhausted (429 on ${consecutive429} keys), abandoning provider to save budget`; break outerGemini; }
+                    } else {
+                        consecutive429 = 0;
+                    }
                     continue;
                 }
                 const data = await outcome.json().catch(() => null);
@@ -781,17 +796,15 @@ async function callGroq(env, question, systemPrompt, image, expectMcqArray, budg
     }
 
     let lastError = "Groq: no keys/models worked";
-    // bug fix (code-level guarantee, prompt-follow-e nirvor na kore): Groq vision model
-    // (llama-4-maverick/scout) strict json_schema support kore na (khali openai/gpt-oss e
-    // available), tai image call e response_format:json_object e-i thakte hocche, jetate
-    // field name/shape guarantee thake na. Age eta shudhu prompt-e "option_k/kh/g/gh dao"
-    // bolar upor nirvor korto, AI majhe majhe option_a/b/c/d ba onno shape dito, ferot data
-    // client porjonto pouchay giye validation fail hoto ("AI shomporno/sothik MCQ dite parni").
-    // Ekhon worker nijei response paoyar por, jodi text-model (gpt-oss) hoy, strict json_schema
-    // pathano hoy (100% guarantee); jodi vision model hoy (schema unsupported), worker nijei
-    // shei model-er answer-ke local-e validate kore -- proper option_k/kh/g/gh na thakle shei
-    // key/model try na kore porer key/model e move kore (server-side retry), client-ke
-    // shudhu already-valid-shape data pathay.
+    // bug fix (root cause of persistent "Too many subrequests" even after sequential fix):
+    // when Groq's whole account is out of quota, EVERY key returns 429 — trying all
+    // remaining keys × both image models one-by-one still burns most of the shared
+    // subrequest budget on a provider that's already proven dead, leaving nothing for
+    // OpenRouter/Cerebras/CF-AI further down the chain. If 2 keys in a row come back 429,
+    // treat the whole provider as exhausted for this invocation and stop immediately
+    // instead of exhausting every remaining key/model combination.
+    let consecutive429 = 0;
+    outerGroq:
     for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
         for (const model of models) {
             const isTextModel = GROQ_TEXT_MODELS.includes(model);
@@ -842,6 +855,12 @@ async function callGroq(env, question, systemPrompt, image, expectMcqArray, budg
                         }
                     }
                     lastError = `Groq(${model}) HTTP ${outcome.status}`;
+                    if (outcome.status === 429) {
+                        consecutive429++;
+                        if (consecutive429 >= 2) { lastError = `Groq: quota exhausted (429 on ${consecutive429} keys), abandoning provider to save budget`; break outerGroq; }
+                    } else {
+                        consecutive429 = 0;
+                    }
                     continue;
                 }
                 const data = await outcome.json().catch(() => null);
