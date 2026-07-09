@@ -582,7 +582,7 @@ function getGeminiKeys(env) {
 }
 
 // নতুন মডেল আসলে/পুরনো deprecate হলে শুধু এই array আপডেট করলেই rotation এ যুক্ত হয়ে যাবে।
-const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+const GEMINI_MODELS = ["gemini-2.5-flash"];
 
 async function callGeminiOnce(key, model, parts, maxOutputTokens, signal) {
     const res = await fetch(
