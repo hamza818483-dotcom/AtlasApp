@@ -549,21 +549,30 @@ async function callGemini(env, question, systemPrompt, image) {
 
     for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
         for (const model of GEMINI_MODELS) {
-            for (const key of keys) {
-                const outcome = await attemptWithStatus((signal) => callGeminiOnce(key, model, parts, 16384, signal));
-
-                if (outcome.__exception) { lastError = `Gemini(${model}) exception: ${outcome.message}`; continue; }
-
-                if (!outcome.ok) {
-                    lastError = `Gemini(${model}) HTTP ${outcome.status}`;
-                    // রেট-লিমিট/সার্ভার এরর হলে এই key/model স্কিপ করে পরেরটায় যাও — থামবে না
-                    continue;
+            // speed fix: আগে একই model-এ সব key সিরিয়ালি চেষ্টা হতো (key1 fail/slow →
+            // key2 → ...), একাধিক key থাকলে worst-case latency কয়েকগুণ বাড়ত। এখন একই
+            // model-এর সব key parallel-এ race করানো হয় — যেকোনো একটা key কাজ করলেই
+            // দ্রুত উত্তর মেলে, বাকি key-গুলোর জন্য অপেক্ষা করতে হয় না।
+            const keyResult = await new Promise((resolve) => {
+                let remaining = keys.length;
+                let done = false;
+                for (const key of keys) {
+                    attemptWithStatus((signal) => callGeminiOnce(key, model, parts, 16384, signal)).then(async (outcome) => {
+                        if (done) return;
+                        if (outcome.__exception) { lastError = `Gemini(${model}) exception: ${outcome.message}`; }
+                        else if (!outcome.ok) { lastError = `Gemini(${model}) HTTP ${outcome.status}`; }
+                        else {
+                            const data = await outcome.json().catch(() => null);
+                            const answer = data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
+                            if (answer) { done = true; resolve(answer); return; }
+                            lastError = `Gemini(${model}): empty response`;
+                        }
+                        remaining--;
+                        if (remaining === 0 && !done) resolve(null);
+                    });
                 }
-                const data = await outcome.json().catch(() => null);
-                const answer = data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
-                if (answer) return { answer, provider: `gemini:${model}` };
-                lastError = `Gemini(${model}): empty response`;
-            }
+            });
+            if (keyResult) return { answer: keyResult, provider: `gemini:${model}` };
         }
         // একটা পুরো round (সব model × সব key) ব্যর্থ হলে সংক্ষিপ্ত backoff দিয়ে আবার চেষ্টা
         if (round < MAX_ROTATION_ROUNDS - 1) await sleep(400 * (round + 1));
@@ -662,20 +671,33 @@ async function callGroq(env, question, systemPrompt, image) {
     let lastError = "Groq: no keys/models worked";
     for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
         for (const model of models) {
-            for (const key of keys) {
-                const outcome = await attemptWithStatus((signal) => fetch("https://api.groq.com/openai/v1/chat/completions", {
-                    method: "POST",
-                    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-                    signal,
-                    body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 8192 }),
-                }));
-                if (outcome.__exception) { lastError = `Groq(${model}) exception: ${outcome.message}`; continue; }
-                if (!outcome.ok) { lastError = `Groq(${model}) HTTP ${outcome.status}`; continue; }
-                const data = await outcome.json().catch(() => null);
-                const answer = data?.choices?.[0]?.message?.content || null;
-                if (answer) return { answer, provider: `groq:${model}` };
-                lastError = `Groq(${model}): empty response`;
-            }
+            // speed fix: same-model multi-key এখন serial না, parallel race — একটা key কাজ
+            // করলেই দ্রুত ফলাফল, অন্য key শেষ হওয়া পর্যন্ত অপেক্ষা লাগে না।
+            const keyResult = await new Promise((resolve) => {
+                let remaining = keys.length;
+                let done = false;
+                for (const key of keys) {
+                    attemptWithStatus((signal) => fetch("https://api.groq.com/openai/v1/chat/completions", {
+                        method: "POST",
+                        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+                        signal,
+                        body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 8192 }),
+                    })).then(async (outcome) => {
+                        if (done) return;
+                        if (outcome.__exception) { lastError = `Groq(${model}) exception: ${outcome.message}`; }
+                        else if (!outcome.ok) { lastError = `Groq(${model}) HTTP ${outcome.status}`; }
+                        else {
+                            const data = await outcome.json().catch(() => null);
+                            const answer = data?.choices?.[0]?.message?.content || null;
+                            if (answer) { done = true; resolve(answer); return; }
+                            lastError = `Groq(${model}): empty response`;
+                        }
+                        remaining--;
+                        if (remaining === 0 && !done) resolve(null);
+                    });
+                }
+            });
+            if (keyResult) return { answer: keyResult, provider: `groq:${model}` };
         }
         if (round < MAX_ROTATION_ROUNDS - 1) await sleep(400 * (round + 1));
     }
