@@ -149,58 +149,67 @@ export default {
             return jsonResponse({ success: false, error: "question বা image এর একটি দিতে হবে" }, 400);
         }
 
-        // bug fix: Groq আগে চেষ্টা হতো (দ্রুত হলেও ছোট/দুর্বল মডেল, strict প্রশ্ন-সংখ্যা
-        // নির্দেশনা প্রায়ই মানত না — যেমন ৮টি চাইলে বারবার ৪টি দিত)। Gemini 2.5 Flash
-        // instruction-following এ অনেক বেশি নির্ভরযোগ্য, তাই এখন Gemini আগে, Groq fallback।
-        const allProviders = [
+        // Groq primary: ইউজার অনুরোধ অনুযায়ী Groq সবসময় প্রথমে, একা চেষ্টা করা হয় (parallel race
+        // এ না রেখে) — ফলাফল ঠিকঠাক (instruction অনুযায়ী, ৫টা চাইলে ৫টাই) পেলে সেটাই ব্যবহার হয়,
+        // দ্রুতও (ছোট মডেল)। Groq ব্যর্থ/খালি/timeout হলে তবেই বাকি provider-দের race শুরু হয়
+        // (Gemini → OpenRouter → Cerebras/Cloudflare), আগের মতোই।
+        const fallbackProviders = [
             { name: "gemini", fn: () => callGemini(env, question, systemPrompt, image) },
-            { name: "groq", fn: () => callGroq(env, question, systemPrompt, image) },
             { name: "openrouter", fn: () => callOpenRouter(env, question, systemPrompt, image) },
             { name: "cerebras", fn: () => callCerebras(env, question, systemPrompt, image) },
             { name: "cloudflare", fn: () => callCloudflareAI(env, question, systemPrompt, image) },
         ];
-        const STRONG_NAMES = new Set(["gemini", "groq", "openrouter"]);
+        const STRONG_NAMES = new Set(["gemini", "openrouter"]);
         const raceSettledFlag = { done: false };
-        // quality fix: cerebras/cloudflare তুলনামূলক দুর্বল মডেল ব্যবহার করে — সব provider
-        // ঠিক একই মুহূর্তে race করালে মাঝে মাঝে দুর্বল মডেল আগে সাড়া দিয়ে "জিতে" যেতে পারে,
-        // ফলে ভুল/দুর্বল MCQ চলে আসতে পারে। তাই এদের ২.৫s দেরিতে শুরু করানো হচ্ছে —
-        // শক্তিশালী provider (gemini/groq/openrouter) এর মধ্যে উত্তর দিলে raceSettledFlag
-        // সেট হয়ে যায় এবং weak provider এর কল স্কিপ হয়ে যায় (quota-ও বাঁচে)।
-        const providers = allProviders
-            .filter(p => !(skipGemini && p.name === "gemini"))
-            .filter(p => !(skipGroq && p.name === "groq"))
-            .map(p => STRONG_NAMES.has(p.name)
+
+        const errors = [];
+
+        async function raceRemaining(list) {
+            if (!list.length) return null;
+            const providers = list.map(p => STRONG_NAMES.has(p.name)
                 ? p.fn
                 : () => sleep(2500).then(() => (raceSettledFlag.done ? { error: "skipped: race already won" } : p.fn())));
+            return await new Promise((resolve) => {
+                let remaining = providers.length;
+                let settled = false;
+                for (const tryProvider of providers) {
+                    tryProvider().then((r) => {
+                        if (!settled && r && r.answer && r.answer.trim().length > 5) {
+                            settled = true;
+                            raceSettledFlag.done = true;
+                            resolve(r);
+                            return;
+                        }
+                        if (r?.error) errors.push(r.error);
+                        remaining--;
+                        if (remaining === 0 && !settled) resolve(null);
+                    }).catch((e) => {
+                        errors.push(String(e.message || e));
+                        remaining--;
+                        if (remaining === 0 && !settled) resolve(null);
+                    });
+                }
+            });
+        }
 
-        // bug fix (root cause of slow MCQ generation): আগে সব provider সিরিয়ালি (একটার পর
-        // একটা) চলত, এবং পুরো চেইন ২ বার (chainRound) — worst case = 5 provider × নিজেদের
-        // key/model rotation × 12s timeout × 2 round, যা মিনিটের পর মিনিট লাগতে পারত।
-        // এখন সব provider একসাথে (parallel) ছোঁড়া হয় এবং যেটা প্রথমে ভালো answer দেয় সেটাই
-        // ব্যবহার হয় (race) — মোট সময় এখন ধীরতম provider-এর সমান না হয়ে দ্রুততম successful
-        // provider-এর সমান।
-        const errors = [];
-        const result = await new Promise((resolve) => {
-            let remaining = providers.length;
-            let settled = false;
-            for (const tryProvider of providers) {
-                tryProvider().then((r) => {
-                    if (!settled && r && r.answer && r.answer.trim().length > 5) {
-                        settled = true;
-                        raceSettledFlag.done = true;
-                        resolve(r);
-                        return;
-                    }
-                    if (r?.error) errors.push(r.error);
-                    remaining--;
-                    if (remaining === 0 && !settled) resolve(null);
-                }).catch((e) => {
-                    errors.push(String(e.message || e));
-                    remaining--;
-                    if (remaining === 0 && !settled) resolve(null);
-                });
+        let result = null;
+        if (!skipGroq) {
+            try {
+                const groqResult = await callGroq(env, question, systemPrompt, image);
+                if (groqResult && groqResult.answer && groqResult.answer.trim().length > 5) {
+                    result = groqResult;
+                } else if (groqResult?.error) {
+                    errors.push(groqResult.error);
+                }
+            } catch (e) {
+                errors.push(String(e.message || e));
             }
-        });
+        }
+
+        if (!result) {
+            let remaining = fallbackProviders.filter(p => !(skipGemini && p.name === "gemini"));
+            result = await raceRemaining(remaining);
+        }
 
         if (result) {
             return jsonResponse({ success: true, answer: result.answer, provider: result.provider });
