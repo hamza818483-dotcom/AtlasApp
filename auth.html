@@ -90,7 +90,7 @@ const SUPABASE_URL = 'https://atlas-ai-proxy.hamza818483.workers.dev';
 const SUPABASE_KEY = 'mb_d1_9f2a7c6e1b4d8305';
 let isDarkMode=true,currentTab='login';
 
-function showToast(m,d=2000){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
+function showToast(m,d=2000){const t=document.getElementById('toast');t.innerHTML = m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
 function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'☀️':'🌙';}
 
 async function safeFetch(url,opts={}){
@@ -123,7 +123,7 @@ async function handleLogin(){
         const user=data[0];
         if(user.password_hash!==pass){showToast('❌ ভুল পাসওয়ার্ড');btn.disabled=false;btn.textContent='লগইন করুন';return;}
         localStorage.setItem('atlas-session',JSON.stringify({phone:user.phone,name:user.name,batch:user.batch,college:user.college,father_name:user.father_name,mother_name:user.mother_name,ssc_gpa:user.ssc_gpa,hsc_gpa:user.hsc_gpa,timer_type:user.timer_type,role:user.role,photo_url:user.photo_url,premium:user.is_premium}));
-        showToast('✅ লগইন সফল!');
+        showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> লগইন সফল!');
         const returnUrl = sessionStorage.getItem('atlas_return_url') || 'index.html';
         sessionStorage.removeItem('atlas_return_url');
         setTimeout(()=>location.href=returnUrl,800);
@@ -143,7 +143,7 @@ async function handleRegister(){
         if(exist?.length){showToast('❌ ফোন আগেই রেজিস্টার্ড');btn.disabled=false;btn.textContent='রেজিস্টার করুন';return;}
         await safeFetch(`${SUPABASE_URL}/rest/v1/users`,{method:'POST',body:JSON.stringify({phone,name,batch,college,father_name:father||null,mother_name:mother||null,ssc_gpa:parseFloat(ssc),hsc_gpa:parseFloat(hsc),timer_type:timer,password_hash:pass})});
         localStorage.setItem('atlas-session',JSON.stringify({phone,name,batch,college,father_name:father,mother_name:mother,ssc_gpa:ssc,hsc_gpa:hsc,timer_type:timer}));
-        showToast('✅ রেজিস্ট্রেশন সফল!');
+        showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> রেজিস্ট্রেশন সফল!');
         const returnUrl2 = sessionStorage.getItem('atlas_return_url') || 'index.html';
         sessionStorage.removeItem('atlas_return_url');
         setTimeout(()=>location.href=returnUrl2,800);
@@ -158,8 +158,8 @@ async function handleForget(){
         const exist=await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}&select=phone`);
         if(!exist?.length){showToast('❌ রেজিস্টার্ড নয়');btn.disabled=false;btn.textContent='আপডেট করুন';return;}
         await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}`,{method:'PATCH',body:JSON.stringify({password_hash:pass})});
-        showToast('✅ পাসওয়ার্ড আপডেট!');setTimeout(()=>switchTab('login'),600);
-    }catch(e){showToast('❌ এরর');}
+        showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> পাসওয়ার্ড আপডেট!');setTimeout(()=>switchTab('login'),600);
+    }catch(e){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> এরর');}
     btn.disabled=false;btn.textContent='আপডেট করুন';
 }
 
@@ -195,7 +195,7 @@ window.addEventListener('error',function(e){showError('💥 সমস্যা',
 window.addEventListener('unhandledrejection',function(e){showError('⚠️ প্রসেসিং সমস্যা','অনুরোধ সম্পূর্ণ করা যায়নি',e.reason?.message,null);});
 
 document.addEventListener('keydown',e=>{if(e.key==='Enter'){if(currentTab==='login')handleLogin();else if(currentTab==='register')handleRegister();else if(currentTab==='forget')handleForget();}});
-document.addEventListener('DOMContentLoaded',()=>{const sess=localStorage.getItem('atlas-session');if(sess){try{JSON.parse(sess);showToast('👋 ইতিমধ্যে লগইন');const ru=sessionStorage.getItem('atlas_return_url')||'index.html';sessionStorage.removeItem('atlas_return_url');setTimeout(()=>location.href=ru,600);}catch(e){}}});
+document.addEventListener('DOMContentLoaded',()=>{const sess=localStorage.getItem('atlas-session');if(sess){try{JSON.parse(sess);showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2" /> <path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2" /> <path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8" /> <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" /></svg> ইতিমধ্যে লগইন');const ru=sessionStorage.getItem('atlas_return_url')||'index.html';sessionStorage.removeItem('atlas_return_url');setTimeout(()=>location.href=ru,600);}catch(e){}}});
 </script>
 </body>
 </html>

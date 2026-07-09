@@ -699,7 +699,7 @@ function checkUserHasAccess() { const s=getSession(); return s?.has_paid_access=
 // =============================================================
 // COMMON UI (→ Flutter: common_widgets.dart)
 // =============================================================
-function showToast(m,d=2000){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
+function showToast(m,d=2000){const t=document.getElementById('toast');t.innerHTML = m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
 function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'☀️':'🌙';localStorage.setItem('atlas-theme',isDarkMode?'dark':'light');}
 // Global back button — always goes exactly one step back in real browser history (never further, never to a different page)
 function goBackGlobal() {
@@ -1125,7 +1125,7 @@ async function loadExamById(examId){
         } catch(_) {}
 
         const [examData]=await safeFetch(`${SUPABASE_URL}/rest/v1/exams?id=eq.${examId}&select=*`);
-        if(!examData){ if(!usedCache) showToast('❌ এক্সাম পাওয়া যায়নি'); return; }
+        if(!examData){ if(!usedCache) showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> এক্সাম পাওয়া যায়নি'); return; }
         if((examData.is_locked===true||examData.is_locked==='true')&&!checkUserHasAccess()){showLockedExamBanner(examData.title||examData.chapter);return;}
         currentExam=examData;
         examQuestions=await safeFetch(`${SUPABASE_URL}/rest/v1/questions?exam_id=eq.${examId}&select=*&order=id.asc`);
@@ -1134,7 +1134,7 @@ async function loadExamById(examId){
 
         // fresh/true data cache করে রাখো পরের বার instant-load এর জন্য
         try { localStorage.setItem(cacheKey, JSON.stringify({ examData, examQuestions, ts: Date.now() })); } catch(_) {}
-    }catch(e){showToast('❌ লোড করতে সমস্যা');}
+    }catch(e){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> লোড করতে সমস্যা');}
 }
 
 function showNoQuestions(){
@@ -1293,7 +1293,7 @@ function startMockTest(){
 
 function startCustomMock(){
     const count=parseInt(document.getElementById('customQCount').value);
-    if(!count||count<1){showToast('⚠️ প্রশ্ন সংখ্যা দিন');return;}
+    if(!count||count<1){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ প্রশ্ন সংখ্যা দিন');return;}
     const mins=parseInt(document.getElementById('customMinutes').value)||Math.ceil(count/1.5);
     selectMockCount(count,mins);
 }
@@ -1368,7 +1368,7 @@ async function startModelExam(modelId){
     try{
         const data=await safeFetch(`${SUPABASE_URL}/rest/v1/model_tests?id=eq.${modelId}&select=*`);
         const m=data?.[0];
-        if(!m){showToast('❌ পাওয়া যায়নি');return;}
+        if(!m){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> পাওয়া যায়নি');return;}
         if(m.link){window.open(m.link,'_blank');return;}
         if(!m.questions_json){showNoQuestions();return;}
         examQuestions=JSON.parse(m.questions_json).map((q,i)=>({
@@ -1384,7 +1384,7 @@ async function startModelExam(modelId){
 }
 
 function openMistakes(){
-    if(!isLoggedIn()){showToast('⚠️ লগইন করুন');return;}
+    if(!isLoggedIn()){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ লগইন করুন');return;}
     goTo('profile.html');
 }
 
@@ -1569,12 +1569,12 @@ function toggleBookmark(qid){
         if(bookmarkedQuestions[qid]){
             delete bookmarkedQuestions[qid];
             allBtns.forEach(b=>b.classList.remove('active'));
-            showToast('🔖 রিমুভ');
+            showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z" /></svg> রিমুভ');
         } else {
             const q=examQuestions.find(q=>q.id==qid);
             bookmarkedQuestions[qid]={exam_name:currentExam?.title||(currentExam?.subject+' - '+currentExam?.chapter),subject:currentExam?.subject,chapter:currentExam?.chapter,category:currentExam?.exam_type,question_text:q.question_text,option1:q.option1,option2:q.option2,option3:q.option3,option4:q.option4,option5:q.option5,answer_index:q.answer_index,explanation:q.explanation,bookmarked_at:new Date().toISOString()};
             allBtns.forEach(b=>b.classList.add('active'));
-            showToast('🔖 সেভ');
+            showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z" /></svg> সেভ');
         }
         localStorage.setItem('bookmarks_'+sess.phone,JSON.stringify(bookmarkedQuestions));
     }catch(e){}
@@ -1589,13 +1589,13 @@ async function submitReport(){
     if(!checkGuestAction()){closeReportModal();return;}
     const type=document.getElementById('reportType').value;
     const suggestion=document.getElementById('reportSuggestion').value.trim();
-    if(!type){showToast('⚠️ ভুলের ধরন নির্বাচন করুন');return;}
+    if(!type){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ ভুলের ধরন নির্বাচন করুন');return;}
     const sess=getSession();
     const q=examQuestions.find(q=>q.id==reportQid);
     try{
         await safeFetch(`${SUPABASE_URL}/rest/v1/question_reports`,{method:'POST',body:JSON.stringify({question_id:reportQid,exam_id:currentExam?.id,exam_name:currentExam?.title||(currentExam?.subject+' - '+currentExam?.chapter),reporter_phone:sess?.phone||'anonymous',reporter_name:sess?.name||'Unknown',report_type:type,suggested_answer:suggestion,full_mcq:JSON.stringify(q),status:'pending'})});
-        showToast('✅ রিপোর্ট জমা হয়েছে');closeReportModal();
-    }catch(e){showToast('❌ এরর');}
+        showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> রিপোর্ট জমা হয়েছে');closeReportModal();
+    }catch(e){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> এরর');}
 }
 
 // =============================================================
@@ -1857,11 +1857,11 @@ function retakeExam(){
 function mistakePractice(){
     if(!checkGuestAction())return;
     const wrongQs=examQuestions.filter(q=>userAnswers[q.id]&&userAnswers[q.id]!==q.answer_index);
-    if(!wrongQs.length){showToast('✅ কোনো ভুল নেই!');return;}
+    if(!wrongQs.length){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> কোনো ভুল নেই!');return;}
     examQuestions=wrongQs;userAnswers={};isExamSubmitted=false;
     currentExam={...currentExam,total_marks:examQuestions.length,duration_minutes:Math.ceil(examQuestions.length/1.5)};
     startExamHall();
-    showToast('❌ '+wrongQs.length+' টি ভুল প্রশ্ন নিয়ে প্র্যাকটিস');
+    showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> '+wrongQs.length+' টি ভুল প্রশ্ন নিয়ে প্র্যাকটিস');
 }
 
 // =============================================================
@@ -2111,8 +2111,8 @@ if(practice==='mock'){
                 pages, _pageImages: practiceImgs, _pageImageMap: pageImageMap
             };
             showPreExamFromData(currentExam,examQuestions);
-        }catch(e){showToast('❌ প্রশ্ন লোড করতে সমস্যা');}
-    }else{showToast('❌ কোনো প্রশ্ন পাওয়া যায়নি');}
+        }catch(e){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> প্রশ্ন লোড করতে সমস্যা');}
+    }else{showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> কোনো প্রশ্ন পাওয়া যায়নি');}
     return;
 }
 
@@ -2126,8 +2126,8 @@ if(practice==='mock'){
                 examQuestions=JSON.parse(qData);
                 currentExam={title,subject:'Practice',chapter:'Practice',exam_type:'practice',total_marks:examQuestions.length,duration_minutes:Math.ceil(examQuestions.length/1.5),id:'practice_'+Date.now(),allow_preview:false,allow_solve_sheet:true};
                 showPreExamFromData(currentExam,examQuestions);
-            }catch(e){showToast('❌ প্রশ্ন লোড করতে সমস্যা');}
-        }else{showToast('❌ কোনো প্রশ্ন পাওয়া যায়নি');}
+            }catch(e){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> প্রশ্ন লোড করতে সমস্যা');}
+        }else{showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> কোনো প্রশ্ন পাওয়া যায়নি');}
         return;
     }
 
@@ -2172,7 +2172,7 @@ if (source === 'dashboard') {
             
             localStorage.removeItem('pending_exam_data');
             showPreExamFromData(currentExam, examQuestions);
-            showToast('📚 ' + examQuestions.length + ' প্রশ্ন লোড হয়েছে');
+            showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 7v14" /> <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></svg> ' + examQuestions.length + ' প্রশ্ন লোড হয়েছে');
         }
     } catch (e) {
         console.error('Dashboard error:', e);

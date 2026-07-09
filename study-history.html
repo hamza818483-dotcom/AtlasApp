@@ -316,7 +316,7 @@ const SUPABASE_URL = 'https://atlas-ai-proxy.hamza818483.workers.dev';
 const SUPABASE_KEY = 'mb_d1_9f2a7c6e1b4d8305';
 let isDarkMode = true, currentUser = null;
 
-function showToast(m,d=2500){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
+function showToast(m,d=2500){const t=document.getElementById('toast');t.innerHTML = m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
 function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'🌙':'☀️';localStorage.setItem('atlas-theme',isDarkMode?'dark':'light');}
 function goTo(u){location.href=u;}
 function goBackGlobal(){

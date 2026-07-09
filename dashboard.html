@@ -1530,14 +1530,14 @@ window.addEventListener('popstate', (e) => {
 ====================================================== */
 function showToast(msg, duration = 2500) {
     const t = document.getElementById('toast');
-    t.textContent = msg; t.classList.add('show');
+    t.innerHTML = msg; t.classList.add('show');
     clearTimeout(t._t);
     t._t = setTimeout(() => t.classList.remove('show'), duration);
 }
 function toggleTheme() {
     isDarkMode = !isDarkMode;
     document.body.classList.toggle('light-mode', !isDarkMode);
-    document.getElementById('themeBtn').textContent = isDarkMode ? '🌙' : '☀️';
+    document.getElementById('themeBtn').innerHTML = isDarkMode ? '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" /></svg>' : '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="4" /> <path d="M12 2v2" /> <path d="M12 20v2" /> <path d="m4.93 4.93 1.41 1.41" /> <path d="m17.66 17.66 1.41 1.41" /> <path d="M2 12h2" /> <path d="M20 12h2" /> <path d="m6.34 17.66-1.41 1.41" /> <path d="m19.07 4.93-1.41 1.41" /></svg>️';
     localStorage.setItem('atlas-theme', isDarkMode ? 'dark' : 'light');
 }
 // Global back button — always goes exactly one step back in real browser history (never further, never to a different page)
@@ -1797,20 +1797,20 @@ function retakeFromResult(examId) {
     if (examId && examId !== '0' && examId !== 0) {
         retakeExam(examId);
     } else {
-        showToast('⚠️ এই এক্সাম আবার দেওয়ার অপশন নেই');
+        showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ এই এক্সাম আবার দেওয়ার অপশন নেই');
     }
 }
 
 // Mistake practice from result
 function mistakePracticeFromResult(examId) {
-    showToast('⚠️ মিস্টেক প্র্যাকটিস শীঘ্রই আসছে');
+    showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ মিস্টেক প্র্যাকটিস শীঘ্রই আসছে');
 }
 
 // Generate Solve Sheet PDF
 function generateSolveSheetPDF(resultData) {
     // This will use the existing openSolveSheetPDF logic
     // You can implement based on your exam.html's PDF generation
-    showToast('📄 PDF জেনারেট হচ্ছে...');
+    showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /> <path d="M14 2v5a1 1 0 0 0 1 1h5" /> <path d="M10 9H8" /> <path d="M16 13H8" /> <path d="M16 17H8" /></svg> PDF জেনারেট হচ্ছে...');
 }
 
 /* ======================================================
@@ -1855,7 +1855,7 @@ function uploadAvatar(input) {
         img.src = e.target.result; img.style.display = 'block';
         document.getElementById('profileAvatarFallback').style.display = 'none';
         localStorage.setItem('avatar_' + currentUser.phone, e.target.result);
-        showToast('✅ ছবি আপলোড সফল');
+        showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> ছবি আপলোড সফল');
     };
     reader.readAsDataURL(file);
 }
@@ -1903,12 +1903,12 @@ async function updateProfile() {
         timer_type: document.getElementById('editTimerType').value
     };
     const pass = document.getElementById('editPass').value.trim();
-    if (pass && pass.length < 6) { showToast('❌ পাসওয়ার্ড ৬+ ক্যারেক্টার হতে হবে'); return; }
+    if (pass && pass.length < 6) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> পাসওয়ার্ড ৬+ ক্যারেক্টার হতে হবে'); return; }
     if (pass.length >= 6) data.password_hash = pass;
     await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${currentUser.phone}`, { method:'PATCH', body: JSON.stringify(data) });
     Object.assign(currentUser, data);
     localStorage.setItem('atlas-session', JSON.stringify(currentUser));
-    loadProfile(); showToast('✅ প্রোফাইল আপডেট হয়েছে'); showTab('main');
+    loadProfile(); showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> প্রোফাইল আপডেট হয়েছে'); showTab('main');
 }
 
 /* ======================================================
@@ -2056,11 +2056,11 @@ function updateMistakesSummaryBar() {
 
 function bulkPracticeMistakes() {
     const checkboxes = document.querySelectorAll('.mistake-exam-checkbox:checked');
-    if (checkboxes.length === 0) { showToast('❌ কোনো এক্সাম সিলেক্ট করা হয়নি',2000); return; }
+    if (checkboxes.length === 0) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> কোনো এক্সাম সিলেক্ট করা হয়নি',2000); return; }
     const selectedExamIds = Array.from(checkboxes).map(cb => cb.value);
     const allMistakes = getMistakesData();
     const filtered = allMistakes.filter(m => selectedExamIds.includes(String(m.exam_id || (m.question && m.question.exam_id))));
-    if (filtered.length === 0) { showToast('❌ সিলেক্টেড এক্সামে কোনো ভুল নেই',2000); return; }
+    if (filtered.length === 0) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> সিলেক্টেড এক্সামে কোনো ভুল নেই',2000); return; }
     const formatted = filtered.map(m => {
         const q = m.question || m;
         return {
@@ -2383,7 +2383,7 @@ function mdStartPractice(mode) {
 function openSingleQDetail(qId) {
     const mistakes = getMistakesData();
     const m = mistakes.find(m => String(m.question_id || (m.question||m).id) === String(qId));
-    if (!m) { showToast('❌ পাওয়া যায়নি'); return; }
+    if (!m) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> পাওয়া যায়নি'); return; }
     mistakesCurrentGroup = { examName: m.exam_name || 'প্রশ্ন', items: [m] };
     mdCurrentFilter = 'all';
     document.getElementById('mdTitle').textContent = m.exam_name || 'প্রশ্ন বিস্তারিত';
@@ -2401,7 +2401,7 @@ function startGroupPractice(examName, mode) {
     let filtered = mode === 'wrong'
         ? items.filter(m => getMistakeStatus(m) === 'wrong')
         : items.filter(m => ['wrong','skipped'].includes(getMistakeStatus(m)));
-    if (!filtered.length) { showToast('⚠️ কোনো প্রশ্ন নেই!'); return; }
+    if (!filtered.length) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ কোনো প্রশ্ন নেই!'); return; }
     const questions = filtered.map(m => {
         const q = m.question || m;
         return { id: q.id || m.question_id || Math.random(), question_text: q.question_text || q.question || 'প্রশ্ন', option1:q.option1||'', option2:q.option2||'', option3:q.option3||'', option4:q.option4||'', option5:q.option5||null, answer_index:q.answer_index||q.correct_option||1, explanation:q.explanation||'', image_url:q.image_url||null };
@@ -2415,7 +2415,7 @@ function startGroupPractice(examName, mode) {
 function startSinglePractice(qId, mode) {
     const mistakes = getMistakesData();
     const m = mistakes.find(m => String(m.question_id||(m.question||m).id) === String(qId));
-    if (!m) { showToast('❌ পাওয়া যায়নি'); return; }
+    if (!m) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> পাওয়া যায়নি'); return; }
     startGroupPractice(m.exam_name || (m.question||m).exam_name || 'অন্যান্য', mode);
 }
 
@@ -2425,7 +2425,7 @@ function removeMistakeById(qId) {
     mistakes = mistakes.filter(m => String(m.question_id||(m.question||m).id) !== String(qId));
     localStorage.setItem('mistakes_' + currentUser.phone, JSON.stringify(mistakes));
     mistakesAllData = mistakes;
-    showToast('🗑️ রিমুভ হয়েছে');
+    showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>️ রিমুভ হয়েছে');
     loadMistakesFullscreen();
 }
 
@@ -2434,7 +2434,7 @@ function clearAllMistakes() {
         localStorage.removeItem('mistakes_' + currentUser.phone);
         mistakesAllData = [];
         loadMistakesFullscreen();
-        showToast('🗑️ সব মুছে ফেলা হয়েছে');
+        showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>️ সব মুছে ফেলা হয়েছে');
     });
 }
 
@@ -2445,7 +2445,7 @@ function bookmarkFromMd(qId) {
     const bms = JSON.parse(localStorage.getItem('bookmarks_' + currentUser.phone) || '{}');
     bms[qId] = { question: m.question||m, exam_name: m.exam_name||'', bookmarked_at: new Date().toISOString() };
     localStorage.setItem('bookmarks_' + currentUser.phone, JSON.stringify(bms));
-    showToast('🔖 বুকমার্ক হয়েছে');
+    showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z" /></svg> বুকমার্ক হয়েছে');
 }
 
 /* ======================================================
@@ -2475,7 +2475,7 @@ async function loadAiExplain(btn, qId, questionText) {
 }
 
 async function reportQuestion(qId) {
-    if (!qId) { showToast('❌ প্রশ্ন ID পাওয়া যায়নি'); return; }
+    if (!qId) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> প্রশ্ন ID পাওয়া যায়নি'); return; }
     const type = prompt('রিপোর্টের কারণ:\n1. সঠিক উত্তর ভুল\n2. প্রশ্ন ভুল\n3. ব্যাখ্যা ভুল\nনম্বর লিখুন:');
     if (!type) return;
     const suggestion = prompt('আপনার সাজেশন (ঐচ্ছিক):') || '';
@@ -2483,7 +2483,7 @@ async function reportQuestion(qId) {
         method:'POST',
         body:JSON.stringify({ question_id:qId, reporter_phone:currentUser.phone, report_type:type==='1'?'wrong_answer':type==='2'?'wrong_question':'wrong_explanation', suggested_answer:suggestion, status:'pending' })
     });
-    showToast('✅ রিপোর্ট পাঠানো হয়েছে');
+    showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> রিপোর্ট পাঠানো হয়েছে');
 }
 
 /* ======================================================
@@ -2500,7 +2500,7 @@ function saveTodoData(todos) {
 
 function addTodoItem() {
     const name = document.getElementById('todoTaskName').value.trim();
-    if (!name) { showToast('⚠️ টাস্কের নাম লিখুন'); return; }
+    if (!name) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ টাস্কের নাম লিখুন'); return; }
     const cat = document.getElementById('todoCategory').value.trim() || 'সাধারণ';
     const targetType = document.getElementById('todoTargetType').value;
     const hours = parseInt(document.getElementById('todoHours').value) || 0;
@@ -2517,7 +2517,7 @@ function addTodoItem() {
     document.getElementById('todoTaskName').value = '';
     document.getElementById('todoHours').value = '';
     document.getElementById('todoMins').value = '';
-    showToast('✅ টার্গেট সেট হয়েছে');
+    showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> টার্গেট সেট হয়েছে');
     renderTodoList();
     startTodoCountdowns();
     scheduleTodoNotifications();
@@ -2530,7 +2530,7 @@ function toggleTodoDone(id) {
 }
 function deleteTodoItem(id) {
     saveTodoData(getTodoData().filter(t => t.id !== id));
-    renderTodoList(); showToast('🗑️ টাস্ক মুছে ফেলা হয়েছে');
+    renderTodoList(); showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>️ টাস্ক মুছে ফেলা হয়েছে');
 }
 
 function renderTodoList() {
@@ -2671,7 +2671,7 @@ function pomoStart() {
     // Check if task is set
     const task = document.getElementById('pomoTaskInput')?.value?.trim();
     if (!task) {
-        showToast('❌ প্রথমে টাস্ক সেট করুন', 2000);
+        showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> প্রথমে টাস্ক সেট করুন', 2000);
         return;
     }
     
@@ -2682,7 +2682,7 @@ function pomoStart() {
         const total = h * 3600 + m * 60;
         if (total > 0) { pomoTimeLeft = total; pomoTotalTime = total; }
         else if (pomoTotalTime > 0) { pomoTimeLeft = pomoTotalTime; }
-        else { showToast('⚠️ টাইম সেট করুন'); return; }
+        else { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ টাইম সেট করুন'); return; }
     }
     pomoCurrentTask = task;
     pomoRunning = true;
@@ -2742,7 +2742,7 @@ function stopPomodoro() {
 }
 
 function pomoSetPreset(mins, btn) {
-    if (pomoRunning) { showToast('⚠️ আগে পজ করুন'); return; }
+    if (pomoRunning) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ আগে পজ করুন'); return; }
     pomoTimeLeft = mins * 60;
     pomoTotalTime = mins * 60;
     if (document.getElementById('pomoMins')) document.getElementById('pomoMins').value = mins;
@@ -2765,18 +2765,18 @@ function pomoSetPreset(mins, btn) {
 }
 
 function pomoApplySetup() {
-    if (pomoRunning) { showToast('⚠️ আগে পজ বা রিসেট করুন'); return; }
+    if (pomoRunning) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ আগে পজ বা রিসেট করুন'); return; }
     const h = parseInt(document.getElementById('pomoHours')?.value) || 0;
     const m = parseInt(document.getElementById('pomoMins')?.value) || 0;
     const task = document.getElementById('pomoTaskInput')?.value?.trim() || '';
     const total = h * 3600 + m * 60;
-    if (total <= 0) { showToast('⚠️ সময় সেট করুন'); return; }
+    if (total <= 0) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ সময় সেট করুন'); return; }
     pomoTimeLeft = total;
     pomoTotalTime = total;
     if (task) pomoCurrentTask = task;
     document.querySelectorAll('.pomo-preset').forEach(b => b.classList.remove('active-preset'));
     updatePomoDisplay();
-    showToast('✅ Pomodoro শুরু হচ্ছে...');
+    showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> Pomodoro শুরু হচ্ছে...');
     
     // IMPROVEMENT: Auto-start immediately
     setTimeout(() => {
@@ -2822,8 +2822,8 @@ function completePomoSession(success) {
     if (!pomoStats.dailyStats) pomoStats.dailyStats = {};
     if (!pomoStats.dailyStats[today]) pomoStats.dailyStats[today] = { total: 0, completed: 0 };
     pomoStats.dailyStats[today].total++;
-    if (success) { pomoStats.dailyStats[today].completed++; pomoStats.streak = (pomoStats.streak || 0) + 1; showToast('✅ সফল! স্ট্রিক: ' + pomoStats.streak, 3000); }
-    else { pomoStats.streak = 0; showToast('❌ সম্পূর্ণ হয়নি', 2000); }
+    if (success) { pomoStats.dailyStats[today].completed++; pomoStats.streak = (pomoStats.streak || 0) + 1; showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> সফল! স্ট্রিক: ' + pomoStats.streak, 3000); }
+    else { pomoStats.streak = 0; showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> সম্পূর্ণ হয়নি', 2000); }
     localStorage.setItem('pomo_stats_' + currentUser?.phone, JSON.stringify(pomoStats));
     renderPomoHistory();
     renderPomoSuccessGraph();
@@ -2950,7 +2950,7 @@ async function viewQuestions(examId) {
     showToast('⏳ প্রশ্ন লোড হচ্ছে...');
     let questions = [];
     try { questions = await safeFetch(`${SUPABASE_URL}/rest/v1/questions?exam_id=eq.${examId}&select=*&order=id.asc`); } catch(e){}
-    if (!questions.length) { showToast('❌ প্রশ্ন পাওয়া যায়নি'); return; }
+    if (!questions.length) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> প্রশ্ন পাওয়া যায়নি'); return; }
     const modal = document.getElementById('detailModal');
     const content = document.getElementById('detailModalContent');
     const optBn = ['ক','খ','গ','ঘ','ঙ'];
@@ -2974,7 +2974,7 @@ async function viewQuestions(examId) {
 async function deleteHistory(resultId) {
     showConfirm('ডিলিট করুন','এই এক্সাম ইতিহাস মুছে ফেলবেন?','🗑️ ডিলিট', async () => {
         await safeFetch(`${SUPABASE_URL}/rest/v1/exam_results?id=eq.${resultId}`, { method:'DELETE' });
-        showToast('🗑️ ডিলিট সম্পন্ন'); loadHistory();
+        showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>️ ডিলিট সম্পন্ন'); loadHistory();
     });
 }
 
@@ -2996,7 +2996,7 @@ function updateBulkPracticeBtn() {
 async function startBulkPractice() {
     const checkboxes = document.querySelectorAll('.history-checkbox:checked');
     if (checkboxes.length === 0) {
-        showToast('❌ কোনো এক্সাম সিলেক্ট করুন');
+        showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> কোনো এক্সাম সিলেক্ট করুন');
         return;
     }
     
@@ -3014,7 +3014,7 @@ async function startBulkPractice() {
         }
         
         if (allQuestions.length === 0) {
-            showToast('❌ কোনো প্রশ্ন পাওয়া যায়নি');
+            showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> কোনো প্রশ্ন পাওয়া যায়নি');
             return;
         }
         
@@ -3039,7 +3039,7 @@ async function startBulkPractice() {
         updateBulkPracticeBtn();
         
     } catch (e) {
-        showToast('❌ প্রশ্ন লোড করতে সমস্যা হয়েছে');
+        showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> প্রশ্ন লোড করতে সমস্যা হয়েছে');
         console.error(e);
     }
 }
@@ -3238,7 +3238,7 @@ function removeBookmark(qid) {
     const bookmarks = saved ? JSON.parse(saved) : {};
     delete bookmarks[qid];
     localStorage.setItem('bookmarks_' + currentUser.phone, JSON.stringify(bookmarks));
-    loadBookmarks(); showToast('🔖 বুকমার্ক রিমুভ হয়েছে');
+    loadBookmarks(); showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z" /></svg> বুকমার্ক রিমুভ হয়েছে');
 }
 
 /* ======================================================
@@ -3415,7 +3415,7 @@ function retryFromResult() { closeResultOverlay(); if(practiceRetryFn) practiceR
 function startMistakePractice(mode) {
     const mistakes = getMistakesData().filter(m=>{const q=m.question||m;return q&&(q.question_text||q.question||q.option1);});
     let filtered = mode==='wrong' ? mistakes.filter(m=>getMistakeStatus(m)==='wrong') : mistakes.filter(m=>['wrong','skipped'].includes(getMistakeStatus(m)));
-    if (!filtered.length) { showToast('⚠️ কোনো প্রশ্ন নেই!'); return; }
+    if (!filtered.length) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ কোনো প্রশ্ন নেই!'); return; }
     const questions=filtered.map(m=>{const q=m.question||m;return{id:q.id||m.question_id||Math.random(),question_text:q.question_text||q.question||'প্রশ্ন',option1:q.option1||'',option2:q.option2||'',option3:q.option3||'',option4:q.option4||'',option5:q.option5||null,answer_index:q.answer_index||q.correct_option||1,explanation:q.explanation||'',image_url:q.image_url||null};});
     startPracticeExam(questions, mode==='wrong'?'⚡ Practice-01 (শুধু ভুল)':'📚 Practice-02 (ভুল+স্কিপ)', ()=>startMistakePractice(mode));
 }
@@ -3425,12 +3425,12 @@ async function retakeExam(examId) {
     try {
         const [examData]=await safeFetch(`${SUPABASE_URL}/rest/v1/exams?id=eq.${examId}&select=*`);
         const questions=await safeFetch(`${SUPABASE_URL}/rest/v1/questions?exam_id=eq.${examId}&select=*&order=id.asc`);
-        if (!questions?.length) { showToast('❌ প্রশ্ন পাওয়া যায়নি'); return; }
+        if (!questions?.length) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> প্রশ্ন পাওয়া যায়নি'); return; }
         const formatted=questions.map(q=>({id:q.id,question_text:q.question_text||q.question||'',option1:q.option1||'',option2:q.option2||'',option3:q.option3||'',option4:q.option4||'',option5:q.option5||null,answer_index:q.answer_index||1,explanation:q.explanation||'',image_url:q.image_url||null}));
         const title='🔄 '+(examData?.title||(examData?.subject+' - '+examData?.chapter)||'এক্সাম');
         document.getElementById('detailModal').classList.remove('active');
         startPracticeExam(formatted, title, ()=>retakeExam(examId));
-    } catch(e) { showToast('❌ লোড করতে সমস্যা'); }
+    } catch(e) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> লোড করতে সমস্যা'); }
 }
 
 /* ======================================================
@@ -3747,7 +3747,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Clean up
                 localStorage.removeItem('exam_result_' + examResult);
                 window.history.replaceState({}, document.title, window.location.pathname);
-                showToast(`🎉 Score: ${resultData.correct}/${resultData.total} (${resultData.percentage}%)`, 3000);
+                showToast(`<svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F472B6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M5.8 11.3 2 22l10.7-3.79' /> <path d='M4 3h.01' /> <path d='M22 8h.01' /> <path d='M15 2h.01' /> <path d='M22 20h.01' /> <path d='m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10' /> <path d='m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11c-.11.7-.72 1.22-1.43 1.22H17' /> <path d='m11 2 .33.82c.34.86-.2 1.82-1.11 1.98C9.52 4.9 9 5.52 9 6.23V7' /> <path d='M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z' /></svg> Score: ${resultData.correct}/${resultData.total} (${resultData.percentage}%)`, 3000);
             }
         } catch (e) {
             console.error('Error processing exam result:', e);
@@ -3759,7 +3759,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (savedTheme === 'light') { 
         isDarkMode = false; 
         document.body.classList.add('light-mode'); 
-        document.getElementById('themeBtn').textContent = '☀️'; 
+        document.getElementById('themeBtn').innerHTML = '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="4" /> <path d="M12 2v2" /> <path d="M12 20v2" /> <path d="m4.93 4.93 1.41 1.41" /> <path d="m17.66 17.66 1.41 1.41" /> <path d="M2 12h2" /> <path d="M20 12h2" /> <path d="m6.34 17.66-1.41 1.41" /> <path d="m19.07 4.93-1.41 1.41" /></svg>️'; 
     }
 
     // Restore pomodoro sessions

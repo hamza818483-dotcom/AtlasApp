@@ -1459,7 +1459,7 @@ let detailModalAnswers = {};    // answers for current result
 ══════════════════════════════════════════════ */
 function showToast(msg, dur = 2000) {
     const t = document.getElementById('toast');
-    t.textContent = msg; t.classList.add('show');
+    t.innerHTML = msg; t.classList.add('show');
     clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), dur);
 }
 

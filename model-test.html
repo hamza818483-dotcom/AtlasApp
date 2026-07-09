@@ -112,7 +112,7 @@ const SUB_TYPE_LABEL={
     full:'Full Test',varsitywise:'Varsity-wise',chapter:'চ্যাপ্টারভিত্তিক',
 };
 
-function showToast(m,d=2000){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
+function showToast(m,d=2000){const t=document.getElementById('toast');t.innerHTML = m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),d);}
 function toggleTheme(){isDarkMode=!isDarkMode;document.body.classList.toggle('dark-mode',isDarkMode);document.body.classList.toggle('light-mode',!isDarkMode);document.getElementById('themeToggle').textContent=isDarkMode?'☀️':'🌙';}
 function goBackGlobal(){
     try {
@@ -232,7 +232,7 @@ async function startModelTest(){
     if(!selectedExam)return;
     let questions=[];
     try{questions=JSON.parse(selectedExam.questions_json||'[]');}catch(e){}
-    if(!questions.length){showToast('⚠️ প্রশ্ন পাওয়া যায়নি');return;}
+    if(!questions.length){showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ প্রশ্ন পাওয়া যায়নি');return;}
     questions.sort(()=>Math.random()-0.5);
     const selected=questions.slice(0,selectedCount).map((q,i)=>({
         id:q.id?String(q.id):`mt_${i}_${Date.now()}`,question_text:q.question_text||q.questions||'',
