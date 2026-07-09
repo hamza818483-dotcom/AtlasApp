@@ -241,7 +241,9 @@ async function mbCheckAndConsumePendingJobs() {
 
             const newMcqs = parsed.map(m => ({ id: uid(), ...m, type: m.type || job.mcq_type }));
             const cropCache = new Map();
+            const wantImage = mbGetExplanationImagePref();
             for (const m of newMcqs) {
+                if (!wantImage) { delete m.exp_box; delete m.line_box; continue; }
                 const key = m.exp_box ? JSON.stringify(m.exp_box) + JSON.stringify(m.line_box||null) : `NOBBOX_${m.id}`;
                 if (!cropCache.has(key)) {
                     const b64 = await mbCropExplanationImage(job.page_number, m.exp_box, m.line_box);
@@ -2704,7 +2706,7 @@ async function mbAiGenerate() {
             `${typeLabel[type]||type} ধরনের ${count.label} MCQ তৈরি করো। ` +
             `Content যে ভাষায় আছে সেই ভাষায় রাখো। ` +
             `প্রতিটিতে চারটি বিকল্প (option_k, option_kh, option_g, option_gh) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে।`
-        )) + mbPermanentRules(count) + MB_EXP_BOX_RULE;        let rawJson;
+        )) + mbPermanentRules(count) + (mbGetExplanationImagePref() ? MB_EXP_BOX_RULE : '');        let rawJson;
         let geminiAlreadyTried = false;
         const mbAiDebugErrs = [];
 
@@ -2916,7 +2918,9 @@ async function mbAiGenerate() {
         // এখন প্রতিটা crop আলাদাভাবে try/catch করা হচ্ছে — crop ব্যর্থ হলেও সেই MCQ explanation
         // image ছাড়াই save হবে, পুরো batch হারাবে না।
         const cropCache = new Map();
+        const wantImageSingle = mbGetExplanationImagePref();
         for (const m of mbAiData) {
+            if (!wantImageSingle) { delete m.exp_box; delete m.line_box; continue; }
             try {
                 const key = m.exp_box ? JSON.stringify(m.exp_box) + JSON.stringify(m.line_box||null) : `NOBBOX_${m.id}`;
                 if (!cropCache.has(key)) {
@@ -3349,6 +3353,17 @@ const MB_BULK_KEY = 'mbBulkJob';
 let mbBulkRunning = false;
 let mbGenMode = 'single'; // 'single' | 'all' | 'range' — মূল Generate বাটনের আচরণ নির্ধারণ করে
 
+// Explanation Image পছন্দ — With/Without modal থেকে সেট হয়, background-job resume-এর জন্য localStorage-এ persist থাকে
+function mbGetExplanationImagePref() {
+    try {
+        const v = localStorage.getItem('mbWithExplanationImage');
+        return v === null ? true : v === '1'; // ডিফল্ট true — backward-compatible
+    } catch (_) { return true; }
+}
+function mbSetExplanationImagePref(withImage) {
+    try { localStorage.setItem('mbWithExplanationImage', withImage ? '1' : '0'); } catch (_) {}
+}
+
 // Apply-to-All / Page-Range টগল — ক্লিক করলে সেই মোড চালু হয়, আবার ক্লিক করলে single page এ ফিরে আসে
 function mbSetGenMode(mode) {
     if (!mbPdfDoc) { mbToast('আগে একটি PDF খুলুন', 'error'); return; }
@@ -3405,9 +3420,22 @@ function mbUpdateRangeSummary() {
     }
 }
 
-// মূল Generate বাটন — single page হলে সরাসরি ওই একটা পেইজেই কাজ করে (bulk job/localStorage
-// touch করে না), range/all হলে persistent bulk-job pipeline ব্যবহার করে (refresh-safe)।
+// মূল Generate বাটন — একটা choice modal দেখায়, ইউজার select করলে আসল কাজ শুরু হয়
 function mbGenerateClick() {
+    document.getElementById('mbExpImgChoiceModal').classList.add('active');
+}
+function mbCloseExpImgChoiceModal() {
+    document.getElementById('mbExpImgChoiceModal').classList.remove('active');
+}
+function mbConfirmExpImgChoice(withImage) {
+    mbSetExplanationImagePref(withImage);
+    mbCloseExpImgChoiceModal();
+    mbGenerateClickReal();
+}
+
+// আসল generate কাজ — single page হলে সরাসরি ওই একটা পেইজেই কাজ করে (bulk job/localStorage
+// touch করে না), range/all হলে persistent bulk-job pipeline ব্যবহার করে (refresh-safe)।
+function mbGenerateClickReal() {
     if (mbGenMode === 'single') { mbStartSinglePageJob(); return; }
     mbStartBulkGenerate();
 }
@@ -3633,7 +3661,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
         `${typeLabel[type]||type} ধরনের ${count.label} MCQ তৈরি করো। ` +
         `Content যে ভাষায় আছে সেই ভাষায় রাখো। ` +
         `প্রতিটিতে চারটি বিকল্প (option_k, option_kh, option_g, option_gh) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে।`
-    )) + mbPermanentRules(count) + MB_EXP_BOX_RULE;
+    )) + mbPermanentRules(count) + (mbGetExplanationImagePref() ? MB_EXP_BOX_RULE : '');
 
     // feature (2-call split per image): একটা ভারী single call-এর বদলে টার্গেট সংখ্যাটা দুই কলে
     // ভাগ করে চাওয়া হয় — প্রতি কলে output ছোট থাকায় AI-এর token-limit এ কাটা পড়ার সম্ভাবনা কমে
@@ -3648,7 +3676,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
         `${typeLabel[type]||type} ধরনের ${mbCountAOverride.label} MCQ তৈরি করো। ` +
         `Content যে ভাষায় আছে সেই ভাষায় রাখো। ` +
         `প্রতিটিতে চারটি বিকল্প (option_k, option_kh, option_g, option_gh) এবং সঠিক উত্তর (k/kh/g/gh) থাকবে।`
-    )) + mbPermanentRules(mbCountAOverride) + MB_EXP_BOX_RULE;
+    )) + mbPermanentRules(mbCountAOverride) + (mbGetExplanationImagePref() ? MB_EXP_BOX_RULE : '');
     let rawJson;
     let geminiAlreadyTried = false;
     const mbAiDebugErrs = [];
@@ -3889,7 +3917,9 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     // — exp_box missing হলে unique per-MCQ key ব্যবহার করা হয়, নাহলে সব missing-exp_box
     // MCQ একই cache entry শেয়ার করে ভুল/অন্য প্রশ্নের crop image পেয়ে যায়।
     const cropCache = new Map();
+    const wantImageBulk = mbGetExplanationImagePref();
     for (const m of newMcqs) {
+        if (!wantImageBulk) { delete m.exp_box; delete m.line_box; continue; }
         try {
             const key = m.exp_box ? JSON.stringify(m.exp_box) + JSON.stringify(m.line_box||null) : `NOBBOX_${m.id}`;
             if (!cropCache.has(key)) {
@@ -4188,6 +4218,9 @@ window.mbAiGenerate       = mbAiGenerate;
 window.mbSetGenMode        = mbSetGenMode;
 window.mbUpdateRangeSummary= mbUpdateRangeSummary;
 window.mbGenerateClick     = mbGenerateClick;
+window.mbGenerateClickReal = mbGenerateClickReal;
+window.mbCloseExpImgChoiceModal = mbCloseExpImgChoiceModal;
+window.mbConfirmExpImgChoice    = mbConfirmExpImgChoice;
 window.mbStartBulkGenerate = mbStartBulkGenerate;
 window.mbStopBulkGenerate  = mbStopBulkGenerate;
 window.mbSaveAiMcqs       = mbSaveAiMcqs;
