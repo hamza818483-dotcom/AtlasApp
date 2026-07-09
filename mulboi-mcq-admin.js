@@ -3356,11 +3356,17 @@ let mbBulkRunning = false;
 let mbGenMode = 'single'; // 'single' | 'all' | 'range' — মূল Generate বাটনের আচরণ নির্ধারণ করে
 
 // Explanation Image পছন্দ — With/Without modal থেকে সেট হয়, background-job resume-এর জন্য localStorage-এ persist থাকে
+// (temporarily disabled): explanation-এর শেষে cropped topic-image ফিচার বন্ধ রাখা হয়েছে,
+// শুধু normal pagewise MCQ (text-only explanation) জেনারেট হবে। কোড অক্ষত রাখা হয়েছে —
+// পরে চালু করতে চাইলে নিচের "return false" লাইনটা মুছে আগের logic ফিরিয়ে দিলেই হবে।
 function mbGetExplanationImagePref() {
+    return false;
+    /* --- আগের logic (disabled, কোড রাখা হলো ভবিষ্যতে চালু করার জন্য) ---
     try {
         const v = localStorage.getItem('mbWithExplanationImage');
         return v === null ? true : v === '1'; // ডিফল্ট true — backward-compatible
     } catch (_) { return true; }
+    --- */
 }
 function mbSetExplanationImagePref(withImage) {
     try { localStorage.setItem('mbWithExplanationImage', withImage ? '1' : '0'); } catch (_) {}
@@ -3422,11 +3428,17 @@ function mbUpdateRangeSummary() {
     }
 }
 
-// মূল Generate বাটন — একটা choice modal দেখায়, ইউজার select করলে আসল কাজ শুরু হয়
+// মূল Generate বাটন — explanation-image ফিচার আপাতত বন্ধ থাকায় (mbGetExplanationImagePref
+// সবসময় false রিটার্ন করে) With/Without choice modal দেখানোর কোনো মানে নেই, তাই সরাসরি
+// generate শুরু হয়ে যায়। modal-এর কোড/মার্কআপ অক্ষত আছে, ভবিষ্যতে ফিচার ফিরিয়ে আনলে
+// নিচের লাইনটা আগের মতো modal দেখানো logic দিয়ে replace করে দিলেই হবে।
 function mbGenerateClick() {
+    mbGenerateClickReal();
+    /* --- আগের logic (disabled) ---
     const m = document.getElementById('mbExpImgChoiceModal');
     m.classList.add('active');
     void m.offsetHeight; // force sync reflow/repaint
+    --- */
 }
 function mbCloseExpImgChoiceModal() {
     document.getElementById('mbExpImgChoiceModal').classList.remove('active');
