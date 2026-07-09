@@ -291,6 +291,25 @@ let mbqPdfFile    = null; // Quick-Add ফর্মের জন্য আলা
 let mbqSubjectsCache = []; // Quick-Add datalist cache: [{id,name,icon}]
 let mbqChaptersCache = []; // Quick-Add datalist cache: [{id,name,subject_id}]
 let mbPdfDoc      = null;
+
+// bug fix (root cause of "Cannot read properties of null (reading 'getPage')"): panel
+// khular shathe shathe mbPdfDoc = null set hoy ar pdf.js asynchronously load hote thake
+// (mbOpenMcqPanel dekho). Generate button shei load shesh howar age click hole (ba network
+// slow thakle) mbPdfDoc tokhono null thake ar direct .getPage() call crash kore. Ei reusable
+// helper max 8 sec wait/poll kore, tarpor o null thakle explicit Bangla error dey — shob
+// jaygay (mbGenerateForPage, mbStartSinglePageJob, etc.) alada alada wait-loop copy-paste na
+// kore ekhane ekbar-i fix kora holo.
+async function mbWaitForPdfDoc() {
+    if (!mbPdfDoc) {
+        let waited = 0;
+        while (!mbPdfDoc && waited < 8000) {
+            await new Promise(r => setTimeout(r, 200));
+            waited += 200;
+        }
+    }
+    if (!mbPdfDoc) throw new Error('PDF এখনো লোড হয়নি — একটু অপেক্ষা করে আবার চেষ্টা করুন');
+    return mbPdfDoc;
+}
 let mbPdfUrl       = null;  // current PDF's public URL, used to send the full PDF to Gemini for reliable MCQ generation
 let mbCurrentPage = 1;
 let mbAllPageData = [];
@@ -432,21 +451,7 @@ async function mbSpecialExtractPage(pageNum) {
             // always fail hoto silently) — mudha ekta network round-trip nosto hoto protibar.
             // Shorashori image-based path e jawa hocche, jeta actually kaj kore.
             if (!rawJson) {
-                // bug fix: panel খোলার সাথে সাথে mbPdfDoc = null সেট হয় এবং pdf.js এসিঙ্ক্রোনাসভাবে
-                // লোড হতে থাকে (mbOpenMcqPanel দ্রষ্টব্য)। যদি generate button সেই লোড শেষ হওয়ার
-                // আগেই ক্লিক হয় (বা network slow থাকায় লোড দেরি হয়), mbPdfDoc তখনো null থাকে এবং
-                // mbPdfDoc.getPage() করলে "Cannot read properties of null (reading 'getPage')"
-                // এরর দেয়। তাই এখানে সর্বোচ্চ ৮ সেকেন্ড অপেক্ষা করা হচ্ছে (poll), তারপরও null থাকলে
-                // স্পষ্ট বাংলা এরর মেসেজ দেওয়া হচ্ছে যাতে ইউজার বুঝতে পারে PDF লোড হয়নি।
-                if (!mbPdfDoc) {
-                    let waited = 0;
-                    while (!mbPdfDoc && waited < 8000) {
-                        await new Promise(r => setTimeout(r, 200));
-                        waited += 200;
-                    }
-                }
-                if (!mbPdfDoc) throw new Error('PDF এখনো লোড হয়নি — একটু অপেক্ষা করে আবার চেষ্টা করুন');
-                const page = await mbPdfDoc.getPage(pageNum);
+                const page = await (await mbWaitForPdfDoc()).getPage(pageNum);
                 const textCont = await page.getTextContent();
                 const pageText = textCont.items.map(i => i.str).join(' ').trim();
                 if (pageText && pageText.length >= 30) {
@@ -1326,7 +1331,7 @@ async function mbRenderPdfPage(pageNum) {
     if (loadingEl) loadingEl.classList.add('show');
 
     try {
-        const page    = await mbPdfDoc.getPage(pageNum);
+        const page    = await (await mbWaitForPdfDoc()).getPage(pageNum);
         const canvas  = document.getElementById('mbPreviewCanvas');
         if (!canvas) return;
         const vp      = page.getViewport({ scale: 1.5 });
@@ -2375,7 +2380,7 @@ function mbRowHasInk(imgData, width, rowY, threshold) {
 async function mbCropExplanationImage(pageNum, box, lineBox) {
     if (!mbPdfDoc) return null;
     try {
-        const page  = await mbPdfDoc.getPage(pageNum);
+        const page  = await (await mbWaitForPdfDoc()).getPage(pageNum);
         // bug fix (root cause of "generate fail on pages after heavy usage"): scale=2.5 +
         // quality=0.85 এ প্রতিটা explanation image বেশ বড় (কয়েকশ KB) হতো, আর একই পেইজে
         // বারবার generate করলে questions_json row টা ক্রমশ MB-স্কেলে বেড়ে যেত (page 15-এ
@@ -2612,7 +2617,7 @@ async function mbGetPageImageBase64(pageNum) {
         // canvas reuse বাদ দেওয়া হলো — mbPreviewCanvas অন্য পেইজের রেন্ডার হয়ে থাকতে পারে
         // (user pageNum পাঠানোর আগেই সরে গেলে), যা ভুল পেইজের ছবি AI-কে পাঠিয়ে ভুল/broken
         // JSON তৈরির একটা কারণ ছিল। এখন সবসময় নির্দিষ্ট pageNum fresh render করা হয়।
-        const page = await mbPdfDoc.getPage(pageNum);
+        const page = await (await mbWaitForPdfDoc()).getPage(pageNum);
         const vp = page.getViewport({ scale: 1.5 });
         const tmp = document.createElement('canvas');
         tmp.width = vp.width; tmp.height = vp.height;
@@ -2755,7 +2760,7 @@ async function mbAiGenerate() {
 
         // Step 3 (last resort): text-extraction approach
         if (!rawJson) {
-            const page     = await mbPdfDoc.getPage(mbCurrentPage);
+            const page     = await (await mbWaitForPdfDoc()).getPage(mbCurrentPage);
             const textCont = await page.getTextContent();
             const pageText = textCont.items.map(i => i.str).join(' ').trim();
 
@@ -3766,7 +3771,7 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     let rawJson;
     let geminiAlreadyTried = false;
     const mbAiDebugErrs = [];
-    const page = await mbPdfDoc.getPage(pageNum);
+    const page = await (await mbWaitForPdfDoc()).getPage(pageNum);
     const vp = page.getViewport({ scale: 1.5 });
     const tmp = document.createElement('canvas');
     tmp.width = vp.width; tmp.height = vp.height;
@@ -4448,7 +4453,7 @@ async function mbSpecialCsvExtractPage(pageNum) {
     const MAX_ATTEMPTS = 2;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
         try {
-            const page = await mbPdfDoc.getPage(pageNum);
+            const page = await (await mbWaitForPdfDoc()).getPage(pageNum);
             const textCont = await page.getTextContent();
             const pageText = textCont.items.map(i => i.str).join(' ').trim();
 
