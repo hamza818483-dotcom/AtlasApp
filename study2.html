@@ -392,7 +392,15 @@ async function loadSubjects() {
     } catch (_) {}
     try {
         const subjects = await safeFetch(`${D1_BASE}/d1/mb2_subjects?select=*&order=sort_order.asc`);
-        if (!subjects?.length) { if (!c.querySelector('.list-item')) c.innerHTML = '<div class="ctr">কোনো বিষয় পাওয়া যায়নি।</div>'; return; }
+        if (!subjects?.length) {
+            // bug fix: আগে খালি রেজাল্ট এলে stale cache থেকে render হওয়া পুরনো আইটেম
+            // থেকে গিয়ে delete করার পরও পুরনো subject/chapter/PDF দেখাত — কারণ এখানে
+            // check হতো ".list-item আছে কিনা" (stale render থেকেই আছে), fresh data
+            // খালি হলেও early-return করত আর stale localStorage cache-ও কখনো মুছত না।
+            localStorage.removeItem(CACHE_KEY);
+            c.innerHTML = '<div class="ctr">কোনো বিষয় পাওয়া যায়নি।</div>';
+            return;
+        }
         localStorage.setItem(CACHE_KEY, JSON.stringify(subjects));
         renderSubjects(subjects);
     } catch (e) { if (!c.querySelector('.list-item')) c.innerHTML = `<div class="ctr" style="color:var(--error)">লোড হয়নি: ${esc(e.message||'অজানা এরর')}</div>`; }
@@ -424,7 +432,11 @@ async function openSubject(id, name) {
     // Background refresh
     try {
         const chapters = await safeFetch(`${D1_BASE}/d1/mb2_chapters?subject_id=eq.${id}&select=*&order=sort_order.asc`);
-        if (!chapters?.length) { if (!c.querySelector('.list-item')) c.innerHTML = '<div class="ctr">কোনো অধ্যায় পাওয়া যায়নি</div>'; return; }
+        if (!chapters?.length) {
+            localStorage.removeItem(CACHE_KEY);
+            c.innerHTML = '<div class="ctr">কোনো অধ্যায় পাওয়া যায়নি</div>';
+            return;
+        }
         localStorage.setItem(CACHE_KEY, JSON.stringify(chapters));
         renderChapters(chapters, name);
     } catch (e) { if (!c.querySelector('.list-item')) c.innerHTML = '<div class="ctr" style="color:var(--error)">লোড হয়নি।</div>'; }
@@ -460,7 +472,11 @@ async function openChapter(id, name) {
         // খুলবে না" সমস্যার মূল কারণ ছিল (২টা sequential fetch + pdf.js init)।
         // Premium PDF-এর জন্য file_url আগের মতোই বাদ রাখা হচ্ছে (security অক্ষত)।
         const pdfs = await safeFetch(`${D1_BASE}/d1/mb2_pdfs?chapter_id=eq.${id}&select=id,title,page_count,is_premium,sort_order,file_url&order=sort_order.asc`);
-        if (!pdfs?.length) { if (!c.querySelector('.list-item')) c.innerHTML = '<div class="ctr">কোনো PDF পাওয়া যায়নি</div>'; return; }
+        if (!pdfs?.length) {
+            localStorage.removeItem(CACHE_KEY);
+            c.innerHTML = '<div class="ctr">কোনো PDF পাওয়া যায়নি</div>';
+            return;
+        }
         localStorage.setItem(CACHE_KEY, JSON.stringify(pdfs));
         renderPdfList(pdfs, name, id);
     } catch (e) { if (!c.querySelector('.list-item')) c.innerHTML = '<div class="ctr" style="color:var(--error)">লোড হয়নি।</div>'; }
