@@ -602,10 +602,10 @@ function openCardPopup(raw){
   // Feedback generation
   const studyH = studySecs/3600;
   let feedback = '';
-  if(studyH >= 8) feedback = `অসাধারণ! <b>${fmtHM(studySecs)}</b> পড়েছো — এটা একটা অবিশ্বাস্য দিন! 🏆`;
-  else if(studyH >= 5) feedback = `দারুণ পারফরম্যান্স! <b>${fmtHM(studySecs)}</b> পড়েছো। ধারাবাহিকতা ধরে রাখো। 💪`;
-  else if(studyH >= 3) feedback = `ভালো দিন! <b>${fmtHM(studySecs)}</b> পড়েছো। আরো একটু বাড়ালে আরো ভালো হবে। 📚`;
-  else if(studyH >= 1) feedback = `<b>${fmtHM(studySecs)}</b> পড়েছো। ছোট শুরু থেকেই বড় লক্ষ্য — আরো সময় দেওয়ার চেষ্টা করো। 🌱`;
+  if(studyH >= 8) feedback = `অসাধারণ! <b>${fmtHM(studySecs)}</b> পড়েছো — এটা একটা অবিশ্বাস্য দিন! <svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#FFB800' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M10 14.66v1.626a2 2 0 0 1-.976 1.696A5 5 0 0 0 7 21.978' /> <path d='M14 14.66v1.626a2 2 0 0 0 .976 1.696A5 5 0 0 1 17 21.978' /> <path d='M18 9h1.5a1 1 0 0 0 0-5H18' /> <path d='M4 22h16' /> <path d='M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z' /> <path d='M6 9H4.5a1 1 0 0 1 0-5H6' /></svg>`;
+  else if(studyH >= 5) feedback = `দারুণ পারফরম্যান্স! <b>${fmtHM(studySecs)}</b> পড়েছো। ধারাবাহিকতা ধরে রাখো। <svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F97316' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4' /></svg>`;
+  else if(studyH >= 3) feedback = `ভালো দিন! <b>${fmtHM(studySecs)}</b> পড়েছো। আরো একটু বাড়ালে আরো ভালো হবে। <svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 7v14' /> <path d='M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z' /></svg>`;
+  else if(studyH >= 1) feedback = `<b>${fmtHM(studySecs)}</b> পড়েছো। ছোট শুরু থেকেই বড় লক্ষ্য — আরো সময় দেওয়ার চেষ্টা করো। <svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#22C55E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M14 9.536V7a4 4 0 0 1 4-4h1.5a.5.5 0 0 1 .5.5V5a4 4 0 0 1-4 4 4 4 0 0 0-4 4c0 2 1 3 1 5a5 5 0 0 1-1 3' /> <path d='M4 9a5 5 0 0 1 8 4 5 5 0 0 1-8-4' /> <path d='M5 21h14' /></svg>`;
   else feedback = `এই দিন পড়াশোনা কম হয়েছে। আগামীকাল আরো মনোযোগ দিতে পারবে! 💡`;
 
   if(breaksUsed>0) feedback += ` ${breaksUsed}টি বিরতি নিয়েছো।`;

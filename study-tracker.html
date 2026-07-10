@@ -617,7 +617,7 @@ function renderSubjectCards(subjs){
     totalChaps+=s.chapters.length;
     const full=pct===100;
     return `<div class="subj-card${full?' sel':''}" onclick="openChapters('${sylMode}','${s.id}')">
-      ${full?'<span class="subj-badge badge-done">✓ সম্পন্ন</span>':''}
+      ${full?'<span class="subj-badge badge-done"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 6 9 17l-5-5" /></svg> সম্পন্ন</span>':''}
       <div class="subj-name">${s.name}</div>
       <div class="subj-pct-row">
         <span class="subj-pct">${pct}%</span>

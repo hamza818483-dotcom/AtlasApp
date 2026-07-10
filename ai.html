@@ -709,15 +709,15 @@ function getSystemPrompt(question) {
 
 এটি একটি MCQ প্রশ্ন। এভাবে উত্তর দিবে:
 
-✅ সঠিক উত্তর: [অপশন] — [সম্পূর্ণ উত্তর]
+<svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#22C55E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M21.801 10A10 10 0 1 1 17 3.335' /> <path d='m9 11 3 3L22 4' /></svg> সঠিক উত্তর: [অপশন] — [সম্পূর্ণ উত্তর]
 
 [সংক্ষিপ্ত ব্যাখ্যা — ২-৩ বাক্য]
 
 ভুল অপশনগুলো:
-❌ [অপশন] — [কেন ভুল]
-❌ [অপশন] — [কেন ভুল]
+<svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><circle cx='12' cy='12' r='10' /> <path d='m15 9-6 6' /> <path d='m9 9 6 6' /></svg> [অপশন] — [কেন ভুল]
+<svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><circle cx='12' cy='12' r='10' /> <path d='m15 9-6 6' /> <path d='m9 9 6 6' /></svg> [অপশন] — [কেন ভুল]
 
-💡 মনে রাখার টিপস: [যদি থাকে]`;
+<svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#FBBF24' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5' /> <path d='M9 18h6' /> <path d='M10 22h4' /></svg> মনে রাখার টিপস: [যদি থাকে]`;
     }
 
     const subjectMap = {
@@ -1117,7 +1117,7 @@ async function sendMessage() {
     autoResizeTextarea(input);
 
     // Add user message to UI
-    addUserMessage(text || (imageData ? '📸 ছবি পাঠালাম' : '📄 ফাইল পাঠালাম'), imageData);
+    addUserMessage(text || (imageData ? '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z" /> <circle cx="12" cy="13" r="3" /></svg> ছবি পাঠালাম' : '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /> <path d="M14 2v5a1 1 0 0 0 1 1h5" /> <path d="M10 9H8" /> <path d="M16 13H8" /> <path d="M16 17H8" /></svg> ফাইল পাঠালাম'), imageData);
 
     // AI response
     isAIBusy = true;
@@ -1127,7 +1127,7 @@ async function sendMessage() {
 
   const result = await askAI(question, imageData);
 
-// ✅ Greeting for first AI reply
+// <svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#22C55E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M21.801 10A10 10 0 1 1 17 3.335' /> <path d='m9 11 3 3L22 4' /></svg> Greeting for first AI reply
 let finalAnswer = result.answer;
 const session = localStorage.getItem('atlas-session');
 if (session) {
@@ -1136,7 +1136,7 @@ if (session) {
         const userName = user.name || 'শিক্ষার্থী';
         const aiReplies = chatHistory.filter(m => m.type === 'ai');
         if (aiReplies.length === 0) {
-            finalAnswer = `Welcome to ATLAS Ai🙌, প্রিয় ${userName}! 😊\n\n${finalAnswer}`;
+            finalAnswer = `Welcome to ATLAS Ai<svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F472B6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M5.8 11.3 2 22l10.7-3.79' /> <path d='M4 3h.01' /> <path d='M22 8h.01' /> <path d='M15 2h.01' /> <path d='M22 20h.01' /> <path d='m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10' /> <path d='m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11c-.11.7-.72 1.22-1.43 1.22H17' /> <path d='m11 2 .33.82c.34.86-.2 1.82-1.11 1.98C9.52 4.9 9 5.52 9 6.23V7' /> <path d='M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z' /></svg>, প্রিয় ${userName}! <svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#FFD166' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><circle cx='12' cy='12' r='10' /> <path d='M8 14s1.5 2 4 2 4-2 4-2' /> <line x1='9' x2='9.01' y1='9' y2='9' /> <line x1='15' x2='15.01' y1='9' y2='9' /></svg>\n\n${finalAnswer}`;
         }
     } catch(e) {}
 }
@@ -1190,18 +1190,18 @@ function loadChat() {
                 wrapper.innerHTML = '<div class="msg-label">তুমি</div>' +
                     '<div class="msg-row">' +
                     '<div class="msg-bubble">' + ((m.text || m.image || '').replace(/\n/g,'<br>')) + '</div>' +
-                    '<div class="msg-avatar-sm user-av">👤</div>' +
+                    '<div class="msg-avatar-sm user-av"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /> <circle cx="12" cy="7" r="4" /></svg></div>' +
                     '</div>' +
                     '<div class="msg-meta"><span class="msg-time">' + (m.time || '') + '</span></div>';
             } else {
                 wrapper.innerHTML = '<div class="msg-label">ATLAS AI</div>' +
                     '<div class="msg-row">' +
-                    '<div class="msg-avatar-sm ai-av">🤖</div>' +
+                    '<div class="msg-avatar-sm ai-av"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 8V4H8" /> <rect width="16" height="12" x="4" y="8" rx="2" /> <path d="M2 14h2" /> <path d="M20 14h2" /> <path d="M15 13v2" /> <path d="M9 13v2" /></svg></div>' +
                     '<div class="msg-bubble">' +
                     '<div class="ai-answer">' + formatAIText(m.text || '') + '</div>' +
                     '<div class="msg-meta">' +
                     '<span class="msg-time">' + (m.time || '') + '</span>' +
-                    '<button class="copy-btn" onclick="copyAnswer(this)">📋 কপি</button>' +
+                    '<button class="copy-btn" onclick="copyAnswer(this)"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><rect width="8" height="4" x="8" y="2" rx="1" ry="1" /> <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /></svg> কপি</button>' +
                     '</div></div></div>';
             }
             if (anchor) area.insertBefore(wrapper, anchor);
@@ -1318,10 +1318,10 @@ function showError(title, message, details, retryFn) {
 }
 
 window.addEventListener('error', (e) => {
-    showError('💥 সমস্যা', 'পৃষ্ঠাটি রিলোড করুন', e.error?.message, () => location.reload());
+    showError('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" /></svg> সমস্যা', 'পৃষ্ঠাটি রিলোড করুন', e.error?.message, () => location.reload());
 });
 window.addEventListener('unhandledrejection', (e) => {
-    showError('⚠️ প্রসেসিং সমস্যা', 'অনুরোধ সম্পূর্ণ করা যায়নি', e.reason?.message, null);
+    showError('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ প্রসেসিং সমস্যা', 'অনুরোধ সম্পূর্ণ করা যায়নি', e.reason?.message, null);
 });
 </script>
 

@@ -151,7 +151,7 @@ function renderTypeStep(){
         </div>`;
     }).join('');
     render(`
-        <div class="section-header"><div class="section-title">🧪 মডেল টেস্ট</div></div>
+        <div class="section-header"><div class="section-title"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M14.5 2v17.5c0 1.4-1.1 2.5-2.5 2.5c-1.4 0-2.5-1.1-2.5-2.5V2' /> <path d='M8.5 2h7' /> <path d='M14.5 16h-5' /></svg> মডেল টেস্ট</div></div>
         <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">ক্যাটাগরি বেছে নিন</div>
         <div class="type-grid">${cards}</div>
     `);
@@ -203,7 +203,7 @@ function renderExamDetail(id){
                 <div style="font-size:36px;margin-bottom:10px;">${info.icon}</div>
                 <div style="font-size:18px;font-weight:900;color:var(--text);font-family:'Noto Sans Bengali',sans-serif;">${escHtml(title)}</div>
                 ${sub?`<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${escHtml(sub)}</div>`:''}
-                <button class="btn-start" onclick="window.open('${t.link}','_blank')" style="margin-top:16px;">🔗 টেস্ট খুলুন</button>
+                <button class="btn-start" onclick="window.open('${t.link}','_blank')" style="margin-top:16px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71' /> <path d='M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71' /></svg> টেস্ট খুলুন</button>
             </div>`);
         return;
     }
@@ -217,7 +217,7 @@ function renderExamDetail(id){
             ${sub?`<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${escHtml(sub)}</div>`:''}
             <div style="font-size:13px;color:var(--accent);font-weight:700;margin-top:10px;">${qCount}টি প্রশ্ন আছে</div>
         </div>
-        <div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">❓ কতটি প্রশ্ন দিতে চান?</div>
+        <div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><circle cx='12' cy='12' r='10' /> <path d='M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3' /> <path d='M12 17h.01' /></svg> কতটি প্রশ্ন দিতে চান?</div>
         <div class="chip-row" id="cntChips">
             ${[25,50,75,100].filter(n=>n<=qCount).map(n=>`<span class="chip${n==selectedCount?' active':''}" onclick="setCnt(${n},this)">${n}</span>`).join('')}
             ${qCount>0?`<span class="chip${qCount==selectedCount?' active':''}" onclick="setCnt(${qCount},this)">সব (${qCount})</span>`:''}
