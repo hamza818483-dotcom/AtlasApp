@@ -431,11 +431,22 @@
         .btn {
             padding: 10px 18px; border-radius: var(--radius-sm);
             font-weight: 600; cursor: pointer; border: none;
-            font-size: 13px; transition: all .2s; font-family: inherit;
+            font-size: 13px; transition: transform .1s ease, background .15s ease, opacity .15s ease; font-family: inherit;
             display: inline-flex; align-items: center; gap: 5px;
+            touch-action: manipulation; /* mobile-e 300ms tap-delay off kore — click instant feel hoy */
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
         }
+        /* bug fix (root cause of "button smooth/instant lage na"): age shudhu :hover chilo,
+           jeta mobile touch-e prai kokhonoi fire hoy na — tai click korar por kono instant visual
+           feedback chilo na, action-er result asha porjonto button "dead" mone hoto. Ekhon :active
+           e ekta hlka scale-down + opacity dip hoy IMMEDIATELY on press (কোনো JS/network wait
+           chara), tai touch/click howar mocche taratari feedback pawa jay. */
+        .btn:active { transform: scale(0.96); opacity: 0.85; transition: transform .05s ease, opacity .05s ease; }
+        .btn:disabled, .btn[disabled] { cursor: not-allowed; opacity: 0.55; transform: none; }
         .btn-primary  { background: var(--accent); color: #fff; width: 100%; justify-content: center; }
         .btn-primary:hover  { background: var(--accent-hover); transform: translateY(-1px); }
+        .btn-primary:active { background: var(--accent-hover); transform: scale(0.96); }
         .btn-sm       { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
         .btn-danger   { background: var(--red); color: #fff; }
         .btn-success  { background: var(--green); color: #fff; }
