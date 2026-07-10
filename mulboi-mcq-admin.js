@@ -1074,7 +1074,7 @@ async function mbLoadAllPdfs(isRetry) {
             return mbLoadAllPdfs(true);
         }
         listEl.innerHTML = '<div class="empty-state">লোড ব্যর্থ — নেটওয়ার্ক সংযোগ চেক করুন ' +
-            '<button type="button" onclick="mbLoadAllPdfs()" style="margin-left:8px;padding:4px 12px;border-radius:6px;border:1px solid var(--accent);background:rgba(108,99,255,0.1);color:#9C8BFF;cursor:pointer;font-size:12px">🔄 আবার চেষ্টা করুন</button></div>';
+            '<button type="button" onclick="mbLoadAllPdfs()" style="margin-left:8px;padding:4px 12px;border-radius:6px;border:1px solid var(--accent);background:rgba(108,99,255,0.1);color:#9C8BFF;cursor:pointer;font-size:12px"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /> <path d="M21 3v5h-5" /> <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /> <path d="M8 16H3v5" /></svg> আবার চেষ্টা করুন</button></div>';
         return;
     }
     try {
@@ -2126,7 +2126,7 @@ function mbRenderPageMcqList() {
                         background:${m.correct===k?'rgba(16,185,129,0.1)':'var(--hover)'};
                         border:1px solid ${m.correct===k?'rgba(16,185,129,0.4)':'transparent'};
                         color:${m.correct===k?'var(--green)':'var(--text2)'}">
-                        <strong>${labelMap[k]}</strong>. ${esc(m['option_'+k]||'')}${m.correct===k?' ✓':''}
+                        <strong>${labelMap[k]}</strong>. ${esc(m['option_'+k]||'')}${m.correct===k?' <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 6 9 17l-5-5" /></svg>':''}
                     </div>`).join('')}
             </div>
             ${m.explanation ? `<div style="font-size:10px;color:var(--text3);margin-top:4px;padding:4px 8px;background:rgba(108,99,255,0.05);border-radius:4px"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#FBBF24' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5' /> <path d='M9 18h6' /> <path d='M10 22h4' /></svg> ${esc(m.explanation)}</div>` : ''}
@@ -3478,8 +3478,8 @@ async function mbLoadCsvArchive() {
                     <div style="font-size:9.5px;color:var(--text3)">পেইজ ${r.page_number ?? '—'} · ${typeLabel[r.mcq_type]||r.mcq_type||''} · ${r.question_count}টি প্রশ্ন · ${dateStr}</div>
                 </div>
                 <div style="display:flex;gap:4px;flex-shrink:0">
-                    <button class="btn btn-sm btn-outline" style="font-size:10px;padding:4px 8px" onclick="mbDownloadCsvArchive(${r.id}, '${esc(r.file_name)}')">⬇</button>
-                    <button class="btn btn-sm btn-outline" style="font-size:10px;padding:4px 8px;color:#ef4444" onclick="mbDeleteCsvArchive(${r.id})">🗑</button>
+                    <button class="btn btn-sm btn-outline" style="font-size:10px;padding:4px 8px" onclick="mbDownloadCsvArchive(${r.id}, '${esc(r.file_name)}')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#64748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 5v14' /> <path d='m19 12-7 7-7-7' /></svg></button>
+                    <button class="btn btn-sm btn-outline" style="font-size:10px;padding:4px 8px;color:#ef4444" onclick="mbDeleteCsvArchive(${r.id})"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M10 11v6' /> <path d='M14 11v6' /> <path d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6' /> <path d='M3 6h18' /> <path d='M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2' /></svg></button>
                 </div>
             </div>`;
         }).join('');
