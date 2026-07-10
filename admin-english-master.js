@@ -74,7 +74,7 @@ async function emRefreshMcqList(category) {
     wrap.innerHTML = data.map(m => `
         <div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border);font-size:11.5px">
             <div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${emEscHtml(m.question)}</div>
-            <button class="btn btn-sm" onclick="emDelMcq(${m.id},'${category}')" style="padding:2px 6px;font-size:9.5px;color:var(--error);border-color:var(--error)">🗑</button>
+            <button class="btn btn-sm" onclick="emDelMcq(${m.id},'${category}')" style="padding:2px 6px;font-size:9.5px;color:var(--error);border-color:var(--error)"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M10 11v6' /> <path d='M14 11v6' /> <path d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6' /> <path d='M3 6h18' /> <path d='M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2' /></svg></button>
         </div>
     `).join('');
 }

@@ -18,7 +18,7 @@ ${options}
 
 সঠিক উত্তর: ${correctAnswer}
 
-প্রতিটি অপশন ব্যাখ্যা করো। ✅ কেন সঠিক, ❌ কেন ভুল। বাংলায়। সংক্ষেপে।`,
+প্রতিটি অপশন ব্যাখ্যা করো। <svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#22C55E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M21.801 10A10 10 0 1 1 17 3.335' /> <path d='m9 11 3 3L22 4' /></svg> কেন সঠিক, <svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><circle cx='12' cy='12' r='10' /> <path d='m15 9-6 6' /> <path d='m9 9 6 6' /></svg> কেন ভুল। বাংলায়। সংক্ষেপে।`,
 
     // Subject Prompts
     subjects: {

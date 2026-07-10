@@ -91,10 +91,10 @@ function renderSubjList(data){
             <div style="display:flex;align-items:center;gap:6px;padding:8px 4px;cursor:pointer" onclick="stToggleSubj(${s.id})">
                 <span style="font-size:11px;color:var(--accent);transition:transform .2s;display:inline-block;transform:rotate(${isOpen?90:0}deg)">▶</span>
                 <div style="flex:1">
-                    <div style="font-weight:600;font-size:13px">📘 ${escHtmlSt(s.name)}</div>
+                    <div style="font-weight:600;font-size:13px"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20' /></svg> ${escHtmlSt(s.name)}</div>
                 </div>
-                <button class="btn btn-sm" onclick="stEditSubjPrompt(${s.id},'${escAttr(s.name)}');event.stopPropagation()" style="padding:3px 8px;font-size:10px">✏️</button>
-                <button class="btn btn-sm" onclick="stDelSubject(${s.id});event.stopPropagation()" style="padding:3px 8px;font-size:10px;color:var(--error);border-color:var(--error)">🗑</button>
+                <button class="btn btn-sm" onclick="stEditSubjPrompt(${s.id},'${escAttr(s.name)}');event.stopPropagation()" style="padding:3px 8px;font-size:10px"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z' /> <path d='m15 5 4 4' /></svg>️</button>
+                <button class="btn btn-sm" onclick="stDelSubject(${s.id});event.stopPropagation()" style="padding:3px 8px;font-size:10px;color:var(--error);border-color:var(--error)"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M10 11v6' /> <path d='M14 11v6' /> <path d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6' /> <path d='M3 6h18' /> <path d='M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2' /></svg></button>
             </div>
             <div id="stChapDrop_${s.id}" style="display:${isOpen?'block':'none'};padding:6px 4px 12px 22px;background:var(--bg)">
                 ${isOpen ? '<div style="color:var(--text2);font-size:12px">লোড হচ্ছে...</div>' : ''}
@@ -179,9 +179,9 @@ function renderChapDrop(subjId, data){
             <div style="display:flex;align-items:center;gap:5px;padding:6px 2px;cursor:pointer" onclick="stToggleChap(${subjId},${ch.id})">
                 <span style="font-size:10px;color:var(--accent);transition:transform .2s;display:inline-block;transform:rotate(${isOpen?90:0}deg)">▶</span>
                 <span style="font-size:11px;color:var(--text2);min-width:16px">${i+1}.</span>
-                <span style="flex:1;font-size:12.5px">📂 ${escHtmlSt(ch.name)}</span>
-                <button class="btn btn-sm" onclick="stEditChapPrompt(${ch.id},'${escAttr(ch.name)}',${subjId});event.stopPropagation()" style="padding:2px 7px;font-size:10px">✏️</button>
-                <button class="btn btn-sm" onclick="stDelChapter(${ch.id},${subjId});event.stopPropagation()" style="padding:2px 7px;font-size:10px;color:var(--error);border-color:var(--error)">🗑</button>
+                <span style="flex:1;font-size:12.5px"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2' /></svg> ${escHtmlSt(ch.name)}</span>
+                <button class="btn btn-sm" onclick="stEditChapPrompt(${ch.id},'${escAttr(ch.name)}',${subjId});event.stopPropagation()" style="padding:2px 7px;font-size:10px"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z' /> <path d='m15 5 4 4' /></svg>️</button>
+                <button class="btn btn-sm" onclick="stDelChapter(${ch.id},${subjId});event.stopPropagation()" style="padding:2px 7px;font-size:10px;color:var(--error);border-color:var(--error)"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M10 11v6' /> <path d='M14 11v6' /> <path d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6' /> <path d='M3 6h18' /> <path d='M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2' /></svg></button>
             </div>
             <div id="stTopicDrop_${ch.id}" style="display:${isOpen?'block':'none'};padding:6px 4px 10px 20px;background:var(--card-bg)">
                 ${isOpen ? '<div style="color:var(--text2);font-size:11px">লোড হচ্ছে...</div>' : ''}
@@ -258,7 +258,7 @@ function renderTopicDrop(chapId, subjId, data){
     const applyAllHtml = data.length ? `
         <button class="btn btn-sm" onclick="stApplyTopicsToAllChapters(${chapId},${subjId})"
             style="width:100%;margin-bottom:8px;font-size:10.5px;padding:6px;background:rgba(124,131,255,.1);border-color:var(--accent);color:var(--accent);font-weight:700">
-            📋 এই ${data.length}টি টপিক একই বিষয়ের বাকি সব অধ্যায়ে Apply করুন
+            <svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><rect width='8' height='4' x='8' y='2' rx='1' ry='1' /> <path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2' /></svg> এই ${data.length}টি টপিক একই বিষয়ের বাকি সব অধ্যায়ে Apply করুন
         </button>` : '';
 
     if (!data.length) {
@@ -276,8 +276,8 @@ function renderTopicDrop(chapId, subjId, data){
             <input type="number" value="${t.weight||1}" min="1" max="20" title="Weight"
                 style="width:36px;padding:2px 3px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-size:10px;text-align:center"
                 onchange="stUpdateWeight(${t.id},this.value,${chapId},${subjId})">
-            <button class="btn btn-sm" onclick="stEditTopicPrompt(${t.id},'${escAttr(t.name)}',${t.weight||1},${chapId},${subjId})" style="padding:2px 6px;font-size:9.5px">✏️</button>
-            <button class="btn btn-sm" onclick="stDelTopic(${t.id},${chapId},${subjId})" style="padding:2px 6px;font-size:9.5px;color:var(--error);border-color:var(--error)">🗑</button>
+            <button class="btn btn-sm" onclick="stEditTopicPrompt(${t.id},'${escAttr(t.name)}',${t.weight||1},${chapId},${subjId})" style="padding:2px 6px;font-size:9.5px"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z' /> <path d='m15 5 4 4' /></svg>️</button>
+            <button class="btn btn-sm" onclick="stDelTopic(${t.id},${chapId},${subjId})" style="padding:2px 6px;font-size:9.5px;color:var(--error);border-color:var(--error)"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M10 11v6' /> <path d='M14 11v6' /> <path d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6' /> <path d='M3 6h18' /> <path d='M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2' /></svg></button>
         </div>`;
     }).join('');
 

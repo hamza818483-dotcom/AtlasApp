@@ -1037,7 +1037,7 @@ function mbRenderChapterPdfs(pdfs) {
     listEl.innerHTML = pdfs.map(p => `
         <div class="pdf-card" id="mbpdf-${p.id}">
             <div class="pdf-card-top">
-                <div class="pdf-card-icon">📕</div>
+                <div class="pdf-card-icon"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20' /></svg></div>
                 <div class="pdf-card-info">
                     <div class="pdf-card-title">${esc(p.title)}</div>
                     <div class="pdf-card-meta">${p.file_size ? fmtSize(p.file_size) + ' · ' : ''}${p.page_count ? p.page_count + ' পৃষ্ঠা · ' : ''}${fmtDate(p.created_at)}</div>
@@ -1111,13 +1111,13 @@ function mbRenderAllPdfs(pdfs) {
         html += `<div class="section-header" style="margin-top:8px;"><div class="section-title">${esc(g.icon)} ${esc(subName)} (${subTotal})</div></div>`;
         Object.keys(g.chapters).forEach(chName => {
             const items = g.chapters[chName];
-            html += `<div style="font-size:11px;font-weight:600;color:var(--text2);margin:6px 0 4px 4px;">📖 ${esc(chName)} (${items.length})</div>`;
+            html += `<div style="font-size:11px;font-weight:600;color:var(--text2);margin:6px 0 4px 4px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 7v14' /> <path d='M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z' /></svg> ${esc(chName)} (${items.length})</div>`;
             items.forEach(p => {
                 try {
                     html += `
                     <div class="pdf-card">
                         <div class="pdf-card-top">
-                            <div class="pdf-card-icon">📕</div>
+                            <div class="pdf-card-icon"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20' /></svg></div>
                             <div class="pdf-card-info">
                                 <div class="pdf-card-title">${esc(p.title)}</div>
                                 <div class="pdf-card-meta">${p.file_size ? fmtSize(p.file_size) + ' · ' : ''}${p.page_count ? p.page_count + ' পৃষ্ঠা · ' : ''}${fmtDate(p.created_at)}</div>
@@ -2129,7 +2129,7 @@ function mbRenderPageMcqList() {
                         <strong>${labelMap[k]}</strong>. ${esc(m['option_'+k]||'')}${m.correct===k?' ✓':''}
                     </div>`).join('')}
             </div>
-            ${m.explanation ? `<div style="font-size:10px;color:var(--text3);margin-top:4px;padding:4px 8px;background:rgba(108,99,255,0.05);border-radius:4px">💡 ${esc(m.explanation)}</div>` : ''}
+            ${m.explanation ? `<div style="font-size:10px;color:var(--text3);margin-top:4px;padding:4px 8px;background:rgba(108,99,255,0.05);border-radius:4px"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#FBBF24' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5' /> <path d='M9 18h6' /> <path d='M10 22h4' /></svg> ${esc(m.explanation)}</div>` : ''}
             ${(m.explanation_image_key || m.explanation_image) ? `<img src="${m.explanation_image_key ? mbExpImageUrl(m.explanation_image_key) : ('data:image/jpeg;base64,' + m.explanation_image)}" style="max-width:100%;border-radius:6px;margin-top:6px;border:1px solid rgba(108,99,255,0.15)" />` : ''}
             <div style="margin-top:6px;display:flex;gap:6px">
                 <span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(108,99,255,0.1);color:#9C8BFF;text-transform:uppercase">${typeLabel[m.type]||m.type||'standard'}</span>
@@ -2144,7 +2144,7 @@ function mbBuildInlineEditForm(m, idx) {
     const labelMap = { k: 'ক', kh: 'খ', g: 'গ', gh: 'ঘ' };
     return `
     <div id="mbInlineForm-${m.id}" style="background:var(--card);border:1.5px solid var(--accent);border-radius:var(--radius);padding:14px;margin-bottom:10px">
-        <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:8px">✏️ ${idx + 1}. প্রশ্ন সম্পাদনা</div>
+        <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:8px"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z' /> <path d='m15 5 4 4' /></svg>️ ${idx + 1}. প্রশ্ন সম্পাদনা</div>
         <textarea class="form-input" id="mbInlineQ-${m.id}" rows="2" style="margin-bottom:8px;width:100%">${esc(m.question||'')}</textarea>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
             ${['k','kh','g','gh'].map(k => `
@@ -2158,7 +2158,7 @@ function mbBuildInlineEditForm(m, idx) {
         <input type="hidden" id="mbInlineType-${m.id}" value="${esc(m.type||'standard')}">
         <div style="display:flex;gap:8px">
             <button class="btn btn-outline" style="flex:1" onclick="mbCancelInlineEdit()">বাতিল</button>
-            <button class="btn btn-primary" style="flex:1" onclick="mbSaveInlineEdit('${m.id}')">✓ সংরক্ষণ করো</button>
+            <button class="btn btn-primary" style="flex:1" onclick="mbSaveInlineEdit('${m.id}')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#22C55E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M20 6 9 17l-5-5' /></svg> সংরক্ষণ করো</button>
         </div>
     </div>`;
 }
@@ -3035,7 +3035,7 @@ async function mbAiGenerate() {
                             <div style="font-size:11px;padding:3px 7px;border-radius:3px;
                                 color:${m.correct===k?'var(--green)':'var(--text2)'};
                                 background:${m.correct===k?'rgba(16,185,129,0.08)':'var(--hover)'}"
-                            >${lMap[k]}. ${esc(m['option_'+k]||'')}${m.correct===k?' ✓':''}</div>`).join('')}
+                            >${lMap[k]}. ${esc(m['option_'+k]||'')}${m.correct===k?' <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 6 9 17l-5-5" /></svg>':''}</div>`).join('')}
                     </div>
                     ${(m.explanation_image_key || m.explanation_image) ? `<img src="${m.explanation_image_key ? mbExpImageUrl(m.explanation_image_key) : ('data:image/jpeg;base64,' + m.explanation_image)}" style="max-width:100%;border-radius:6px;margin-top:6px;border:1px solid rgba(108,99,255,0.15)" />` : ''}
                 </div>`).join('');
@@ -3095,7 +3095,7 @@ async function mbAiGenerateSpecial() {
                             <div style="font-size:11px;padding:3px 7px;border-radius:3px;
                                 color:${m.correct===k?'var(--green)':'var(--text2)'};
                                 background:${m.correct===k?'rgba(16,185,129,0.08)':'var(--hover)'}"
-                            >${lMap[k]}. ${esc(m['option_'+k]||'')}${m.correct===k?' ✓':''}</div>`).join('')}
+                            >${lMap[k]}. ${esc(m['option_'+k]||'')}${m.correct===k?' <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 6 9 17l-5-5" /></svg>':''}</div>`).join('')}
                     </div>
                 </div>`).join('');
         }
@@ -3568,14 +3568,14 @@ function mbSetGenMode(mode) {
 
     if (mbGenMode === 'all') {
         genBtn.textContent = mbAiTypeKey === 'special'
-            ? `⚡ সকল ${mbPdfDoc.numPages} পেইজের existing MCQ এক্সট্র্যাক্ট করো`
-            : `🤖 সকল ${mbPdfDoc.numPages} পেইজ থেকে প্রশ্ন বানান`;
+            ? `<svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#FBBF24' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z' /></svg> সকল ${mbPdfDoc.numPages} পেইজের existing MCQ এক্সট্র্যাক্ট করো`
+            : `<svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 8V4H8' /> <rect width='16' height='12' x='4' y='8' rx='2' /> <path d='M2 14h2' /> <path d='M20 14h2' /> <path d='M15 13v2' /> <path d='M9 13v2' /></svg> সকল ${mbPdfDoc.numPages} পেইজ থেকে প্রশ্ন বানান`;
     } else if (mbGenMode === 'range') {
         mbUpdateRangeSummary(); // label টাও আপডেট করে দেয়
     } else {
         genBtn.textContent = mbAiTypeKey === 'special'
-            ? '⚡ এই পেইজের existing MCQ এক্সট্র্যাক্ট করো'
-            : '🤖 এই পেইজ থেকে MCQ তৈরি করো';
+            ? '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" /></svg> এই পেইজের existing MCQ এক্সট্র্যাক্ট করো'
+            : '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M12 8V4H8" /> <rect width="16" height="12" x="4" y="8" rx="2" /> <path d="M2 14h2" /> <path d="M20 14h2" /> <path d="M15 13v2" /> <path d="M9 13v2" /></svg> এই পেইজ থেকে MCQ তৈরি করো';
     }
 }
 
@@ -3597,8 +3597,8 @@ function mbUpdateRangeSummary() {
     summaryEl.textContent = `${from} থেকে ${to} পেইজ পর্যন্ত — মোট ${count}টি পেইজে প্রশ্ন তৈরি হবে (PDF-এ মোট ${totalPages} পেইজ)`;
     if (mbGenMode === 'range') {
         genBtn.textContent = mbAiTypeKey === 'special'
-            ? `⚡ ${count}টি পেইজের existing MCQ এক্সট্র্যাক্ট করো`
-            : `🤖 ${count}টি পেইজ থেকে প্রশ্ন বানান`;
+            ? `<svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#FBBF24' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z' /></svg> ${count}টি পেইজের existing MCQ এক্সট্র্যাক্ট করো`
+            : `<svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 8V4H8' /> <rect width='16' height='12' x='4' y='8' rx='2' /> <path d='M2 14h2' /> <path d='M20 14h2' /> <path d='M15 13v2' /> <path d='M9 13v2' /></svg> ${count}টি পেইজ থেকে প্রশ্ন বানান`;
     }
 }
 
@@ -3718,7 +3718,7 @@ function mbUpdateBulkUI(job) {
     const pageLabel = job.currentPage > job.to ? job.to : job.currentPage;
     const generatingSuffix = job.inPageGenerating ? ' — MCQ তৈরি হচ্ছে...' : '';
     document.getElementById('mbBulkLabel').textContent =
-        `⚡ প্রসেস হচ্ছে: পেইজ ${pageLabel} (মোট ${job.totalPages} এর মধ্যে ${job.completedCount} সম্পন্ন)${generatingSuffix}`;
+        `<svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#FBBF24' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z' /></svg> প্রসেস হচ্ছে: পেইজ ${pageLabel} (মোট ${job.totalPages} এর মধ্যে ${job.completedCount} সম্পন্ন)${generatingSuffix}`;
     document.getElementById('mbBulkBarFill').style.width = pct + '%';
 
     // ETA হিসাব — গড় সময়/পেইজ থেকে বাকি পেইজের আনুমানিক সময়

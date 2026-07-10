@@ -145,7 +145,7 @@
         return `
             <div class="kcq-accordion">
                 <button type="button" class="kcq-acc-btn" data-kcq-acc onclick="window.__kcqToggleAccordion(this)">
-                    💡 সল্যুশন
+                    <svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#FBBF24' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5' /> <path d='M9 18h6' /> <path d='M10 22h4' /></svg> সল্যুশন
                     <span class="kcq-chevron">▼</span>
                 </button>
                 <div class="kcq-acc-body" id="${idAttr}">
@@ -250,8 +250,8 @@
         const subjects = Object.keys(bySubject);
 
         let html = `
-            <div class="section-header"><div class="section-title">📦 ${label}</div></div>
-            <div class="kcq-header-info">📚 মোট সাবজেক্ট: <b>${subjects.length}</b></div>
+            <div class="section-header"><div class="section-title"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#64748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z' /> <path d='M12 22V12' /> <polyline points='3.29 7 12 12 20.71 7' /> <path d='m7.5 4.27 9 5.15' /></svg> ${label}</div></div>
+            <div class="kcq-header-info"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 7v14' /> <path d='M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z' /></svg> মোট সাবজেক্ট: <b>${subjects.length}</b></div>
             <div class="kcq-box-list">`;
 
         subjects.forEach(s => {
@@ -259,11 +259,11 @@
             html += `
                 <div class="kcq-box" onclick="window.__kcqOpenSubject('${escapeJs(s)}')">
                     <div class="kcq-box-main">
-                        <div class="kcq-box-title">📘 ${escapeHtml(s)}</div>
+                        <div class="kcq-box-title"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20' /></svg> ${escapeHtml(s)}</div>
                         <div class="kcq-box-sub">${chapterCount}টি চ্যাপ্টার</div>
                     </div>
                     <span class="kcq-box-count">${chapterCount}</span>
-                    <span class="kcq-box-arrow">→</span>
+                    <span class="kcq-box-arrow"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#64748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M5 12h14' /> <path d='m12 5 7 7-7 7' /></svg></span>
                 </div>`;
         });
 
@@ -287,9 +287,9 @@
         const chapters = entries.filter(d => (d.subject || 'সাধারণ') === subject);
 
         let html = `
-            <div class="section-header"><div class="section-title">📘 ${escapeHtml(subject)}</div></div>
+            <div class="section-header"><div class="section-title"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20' /></svg> ${escapeHtml(subject)}</div></div>
             <button class="back-btn" onclick="window.__kcqBackToSubjects()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> সাবজেক্ট তালিকায় ফিরুন</button>
-            <div class="kcq-header-info">📖 মোট চ্যাপ্টার: <b>${chapters.length}</b></div>
+            <div class="kcq-header-info"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 7v14' /> <path d='M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z' /></svg> মোট চ্যাপ্টার: <b>${chapters.length}</b></div>
             <div class="kcq-box-list">`;
 
         chapters.forEach(d => {
@@ -301,10 +301,10 @@
             html += `
                 <div class="kcq-box ${isFile ? 'kcq-box-file' : ''}" onclick="${clickAction}">
                     <div class="kcq-box-main">
-                        <div class="kcq-box-title">📖 ${escapeHtml(d.chapter || 'সাধারণ')} ${isFile ? '<span class="kcq-file-badge">📄 ফাইল</span>' : ''}</div>
+                        <div class="kcq-box-title"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 7v14' /> <path d='M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z' /></svg> ${escapeHtml(d.chapter || 'সাধারণ')} ${isFile ? '<span class="kcq-file-badge"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /> <path d="M14 2v5a1 1 0 0 0 1 1h5" /> <path d="M10 9H8" /> <path d="M16 13H8" /> <path d="M16 17H8" /></svg> ফাইল</span>' : ''}</div>
                         ${meta ? `<div class="kcq-box-sub">${escapeHtml(meta)}</div>` : ''}
                     </div>
-                    <span class="kcq-box-arrow">${isFile ? '✨' : '🔗'}</span>
+                    <span class="kcq-box-arrow">${isFile ? '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#A78BFA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" /> <path d="M20 2v4" /> <path d="M22 4h-4" /> <circle cx="4" cy="20" r="2" /></svg>' : '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /> <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>'}</span>
                 </div>`;
         });
 
