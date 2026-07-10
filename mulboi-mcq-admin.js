@@ -3723,16 +3723,20 @@ function mbUpdateBulkUI(job) {
 
     // ETA হিসাব — গড় সময়/পেইজ থেকে বাকি পেইজের আনুমানিক সময়
     let etaStr = '';
-    if (job.completedCount > 0 && job.startedAt) {
-        const elapsedSec = (Date.now() - job.startedAt) / 1000;
-        const avgPerPage = elapsedSec / job.completedCount;
-        const remainingPages = job.totalPages - job.completedCount;
-        const etaSec = Math.round(avgPerPage * remainingPages);
-        etaStr = etaSec > 60 ? ` · বাকি ~${Math.ceil(etaSec/60)} মিনিট` : etaSec > 0 ? ` · বাকি ~${etaSec}s` : '';
+    let elapsedStr = '';
+    if (job.startedAt) {
+        const elapsedSec = Math.floor((Date.now() - job.startedAt) / 1000);
+        elapsedStr = ` · সময় লেগেছে ${elapsedSec >= 60 ? `${Math.floor(elapsedSec/60)}মি ${elapsedSec%60}s` : `${elapsedSec}s`}`;
+        if (job.completedCount > 0) {
+            const avgPerPage = (elapsedSec) / job.completedCount;
+            const remainingPages = job.totalPages - job.completedCount;
+            const etaSec = Math.round(avgPerPage * remainingPages);
+            etaStr = etaSec > 60 ? ` · বাকি ~${Math.ceil(etaSec/60)} মিনিট` : etaSec > 0 ? ` · বাকি ~${etaSec}s` : '';
+        }
     }
     const totalMcq = job.totalMcqGenerated || 0;
     document.getElementById('mbBulkStatusLine').textContent =
-        `${pct}% সম্পন্ন · মোট ${totalMcq}টি MCQ তৈরি হয়েছে${etaStr}`;
+        `${pct}% সম্পন্ন · মোট ${totalMcq}টি MCQ তৈরি হয়েছে${elapsedStr}${etaStr}`;
 
     // চলমান bulk job-এর বর্তমান পেইজ অনুযায়ী page-pill dynamically highlight করো
     document.querySelectorAll('[id^="mbPill-"]').forEach(el => el.classList.remove('mb-pill-active-bulk'));
@@ -3752,6 +3756,10 @@ function mbStartBulkSubTicker(job) {
     job.subProgress = 0;
     job.inPageGenerating = true;
     mbUpdateBulkUI(job);
+    // elapsed-time ke live tick korano — age shudhu page-completion event e UI update hoto,
+    // tai ekta page-e onek shomoy (100-200s+) lagle status line "সময় লেগেছে" onek khon static
+    // thakto. Ekhon protyek second-e UI refresh hoy, tai elapsed time live cholte thake.
+    mbBulkSubTicker = setInterval(() => mbUpdateBulkUI(job), 1000);
 }
 function mbStopBulkSubTicker() {
     if (mbBulkSubTicker) { clearInterval(mbBulkSubTicker); mbBulkSubTicker = null; }
