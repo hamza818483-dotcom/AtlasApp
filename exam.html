@@ -1417,8 +1417,8 @@ function startExamHall(){
                 <span class="q-number">প্রশ্ন ${i+1}/${examQuestions.length}</span>
                 <div class="q-actions">
                     <!-- Req #1: ATLAS AI Chat icon per MCQ -->
-                    <button class="icon-btn bookmark${bmClass}" id="bmBtn${q.id}" title="বুকমার্ক" onclick="toggleBookmark('${q.id}')">🔖</button>
-                    <button class="icon-btn" title="রিপোর্ট" onclick="openReportModal('${q.id}')">🚩</button>
+                    <button class="icon-btn bookmark${bmClass}" id="bmBtn${q.id}" title="বুকমার্ক" onclick="toggleBookmark('${q.id}')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z' /></svg></button>
+                    <button class="icon-btn" title="রিপোর্ট" onclick="openReportModal('${q.id}')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528' /></svg></button>
                 </div>
             </div>
             <div class="q-text">${q.question_text}</div>`;
@@ -1786,10 +1786,10 @@ function showResult(correct,wrong,skipped,negMark,finalScore,withGpa,gpaScore,de
             <div class="q-header" style="margin-top:4px;">
                 <span class="q-number">প্রশ্ন ${i+1}/${examQuestions.length}</span>
                 <div class="q-actions">
-                    <button class="icon-btn bookmark${bmClassR}" id="bmBtn${q.id}" title="বুকমার্ক" onclick="toggleBookmark('${q.id}')">🔖</button>
+                    <button class="icon-btn bookmark${bmClassR}" id="bmBtn${q.id}" title="বুকমার্ক" onclick="toggleBookmark('${q.id}')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z' /></svg></button>
                     <!-- Req #1: AI Chat in result too -->
-                    <button class="icon-btn ai-chat-btn" title="ATLAS AI" onclick="openAIChat('${q.id}')">🤖 AI</button>
-                    <button class="icon-btn" title="রিপোর্ট" onclick="openReportModal('${q.id}')">🚩</button>
+                    <button class="icon-btn ai-chat-btn" title="ATLAS AI" onclick="openAIChat('${q.id}')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 8V4H8' /> <rect width='16' height='12' x='4' y='8' rx='2' /> <path d='M2 14h2' /> <path d='M20 14h2' /> <path d='M15 13v2' /> <path d='M9 13v2' /></svg> AI</button>
+                    <button class="icon-btn" title="রিপোর্ট" onclick="openReportModal('${q.id}')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528' /></svg></button>
                 </div>
             </div>
             <div class="q-text">${q.question_text}</div>`;

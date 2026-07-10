@@ -1578,7 +1578,7 @@ function openTG() { window.open('https://t.me/rafi_somc', '_blank'); }
 
 // FIX #4: Logout instant — no delay
 function confirmLogout() {
-    showConfirm('লগআউট', 'আপনি কি সত্যিই লগআউট করতে চান?', '🚪 লগআউট', () => {
+    showConfirm('লগআউট', 'আপনি কি সত্যিই লগআউট করতে চান?', '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m16 17 5-5-5-5" /> <path d="M21 12H9" /> <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /></svg> লগআউট', () => {
         // Instant visual feedback — screen fade before navigate
         document.body.style.transition = 'opacity 0.15s ease';
         document.body.style.opacity = '0';
@@ -1617,7 +1617,7 @@ function formatSeconds(s) {
 function showConfirm(title, msg, okLabel, cb) {
     document.getElementById('confirmTitle').textContent = title;
     document.getElementById('confirmMsg').textContent = msg;
-    document.getElementById('confirmOkBtn').innerHTML = okLabel || '✅ হ্যাঁ';
+    document.getElementById('confirmOkBtn').innerHTML = okLabel || '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> হ্যাঁ';
     confirmCallback = cb;
     document.getElementById('confirmDialog').classList.add('active');
 }
@@ -2430,7 +2430,7 @@ function removeMistakeById(qId) {
 }
 
 function clearAllMistakes() {
-    showConfirm('সব মুছুন', 'সব ভুল প্রশ্ন মুছে ফেলবেন?', '🗑️ সব মুছুন', () => {
+    showConfirm('সব মুছুন', 'সব ভুল প্রশ্ন মুছে ফেলবেন?', '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>️ সব মুছুন', () => {
         localStorage.removeItem('mistakes_' + currentUser.phone);
         mistakesAllData = [];
         loadMistakesFullscreen();
@@ -2972,7 +2972,7 @@ async function viewQuestions(examId) {
 }
 
 async function deleteHistory(resultId) {
-    showConfirm('ডিলিট করুন','এই এক্সাম ইতিহাস মুছে ফেলবেন?','🗑️ ডিলিট', async () => {
+    showConfirm('ডিলিট করুন','এই এক্সাম ইতিহাস মুছে ফেলবেন?','<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>️ ডিলিট', async () => {
         await safeFetch(`${SUPABASE_URL}/rest/v1/exam_results?id=eq.${resultId}`, { method:'DELETE' });
         showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>️ ডিলিট সম্পন্ন'); loadHistory();
     });
@@ -3271,7 +3271,7 @@ async function markNotifRead(id) {
     try { await safeFetch(`${SUPABASE_URL}/rest/v1/notifications?id=eq.${id}`, { method:'PATCH', body:JSON.stringify({is_read:true}) }); loadNotifications(); } catch(e){}
 }
 async function deleteNotif(id) {
-    showConfirm('ডিলিট','নোটিফিকেশন মুছে ফেলবেন?','🗑️ ডিলিট', async () => {
+    showConfirm('ডিলিট','নোটিফিকেশন মুছে ফেলবেন?','<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>️ ডিলিট', async () => {
         await safeFetch(`${SUPABASE_URL}/rest/v1/notifications?id=eq.${id}`, { method:'DELETE' }); loadNotifications();
     });
 }
