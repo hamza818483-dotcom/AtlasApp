@@ -3706,14 +3706,9 @@ function mbUpdateBulkUI(job) {
     if (!box) return;
     if (!job || job.done || job.stopped) { box.style.display = 'none'; return; }
     box.style.display = 'block';
-    // bug fix: আগে completedCount শুধু পুরো পেইজ শেষ হলে +1 হতো — একটা পেইজের মধ্যে
-    // AI generate চলাকালীন % বার একদম স্থির থাকত (0% আটকে থেকে হঠাৎ jump করত), আর label-এ
-    // "পেইজ 8/8 (0/1)" এর মতো confusing সংখ্যা দেখাত (currentPage কে to-এর সমান দেখাত শেষ পেইজে,
-    // কিন্তু আসলে সেই পেইজটাই এখনো প্রসেস হচ্ছে)। এখন in-page fractional progress
-    // (job.subProgress: 0-1) যোগ করে % আর MCQ count স্মুথলি এগোয়, এবং লেবেলে স্পষ্ট করে
-    // "প্রসেস হচ্ছে: পেইজ X (মোট Y এর মধ্যে Z সম্পন্ন)" দেখানো হচ্ছে।
-    // bug fix: doneFraction আগে fake subProgress যোগ করত (উপরে দেখো) — এখন % সম্পূর্ণভাবে
-    // completedCount/totalPages থেকে আসে, যেটা আসল সম্পন্ন-হওয়া পেইজ সংখ্যার সাথে হুবহু মেলে।
+    // % সম্পূর্ণভাবে completedCount/totalPages থেকে আসে — এটাই আসল সম্পন্ন-হওয়া পেইজ সংখ্যা,
+    // কোনো fake/estimated increment নেই। চলমান পেইজে শুধু লেবেলে "MCQ তৈরি হচ্ছে..." টেক্সট
+    // দেখানো হয় (নিচে), % বার নিজে ততক্ষণ স্থির থাকে যতক্ষণ না পেইজ আসলেই সম্পন্ন হয়।
     const pct = job.totalPages ? Math.round((job.completedCount / job.totalPages) * 100) : 0;
     const pageLabel = job.currentPage > job.to ? job.to : job.currentPage;
     const generatingSuffix = job.inPageGenerating ? ' — MCQ তৈরি হচ্ছে...' : '';
