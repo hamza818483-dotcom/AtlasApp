@@ -3857,9 +3857,17 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     // feature (2-call split per image): একটা ভারী single call-এর বদলে টার্গেট সংখ্যাটা দুই কলে
     // ভাগ করে চাওয়া হয় — প্রতি কলে output ছোট থাকায় AI-এর token-limit এ কাটা পড়ার সম্ভাবনা কমে
     // (accuracy বাড়ে), সেইসাথে ২য় কলে Gemini স্কিপ করে সরাসরি Groq/OpenRouter ব্যবহার হয় (দ্রুত)।
+    // bug fix (root cause of ছোট count-এও অযথা সময় লাগা): আগে count=5 চাইলেও 3+2 এ ভাগ হয়ে ২টা
+    // full AI round-trip লাগত, যদিও ৫টা MCQ token-limit এ কখনোই কাটা পড়ে না (truncation risk শুধু
+    // বড় count-এ বাস্তব)। এখন split শুধু তখনই হয় যখন target সত্যিই বড় (>6) — ছোট count একটাই কলে
+    // পুরোটা চাওয়া হয়, যেটা দ্রুতও (১টা round-trip কম) এবং বেশি consistent-ও (একই call-এর মধ্যে
+    // AI-এর পুরো পেইজ সম্পর্কে একটাই ধারাবাহিক বোঝাপড়া থাকে, দুই আলাদা কলে দুই রকম interpretation
+    // আসার সম্ভাবনা থাকে না)।
+    const MB_SPLIT_THRESHOLD = 6;
     const mbTargetTotal = count.min;
-    const mbCallACount  = Math.max(1, Math.ceil(mbTargetTotal / 2));
-    const mbCallBCount  = Math.max(1, mbTargetTotal - mbCallACount);
+    const mbShouldSplit  = mbTargetTotal > MB_SPLIT_THRESHOLD;
+    const mbCallACount  = mbShouldSplit ? Math.max(1, Math.ceil(mbTargetTotal / 2)) : mbTargetTotal;
+    const mbCallBCount  = mbShouldSplit ? Math.max(1, mbTargetTotal - mbCallACount) : 0;
     const mbCountAOverride = count.auto
         ? { min: mbCallACount, max: 999, label: 'পেইজ থেকে সর্বোচ্চ সম্ভব মানসম্পন্ন', auto: true }
         : { min: mbCallACount, max: mbCallACount, label: `${mbCallACount}টি` };
@@ -4027,20 +4035,25 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
     if (!validParsed.length) throw new Error('AI সম্পূর্ণ/সঠিক MCQ দিতে পারেনি sample:' + JSON.stringify((parsed||[])[0]||{}).slice(0,150));
     parsed = validParsed;
 
-    // feature (2-call split per image, exactly 2 calls total): Call A (উপরে, Gemini দিয়ে) অর্ধেক
-    // MCQ বানিয়েছে। এখন Call B — বাকি অর্ধেক নতুন/ভিন্ন MCQ চাওয়া হচ্ছে, skipGemini:true দিয়ে যাতে
-    // worker সরাসরি Groq/OpenRouter ব্যবহার করে (দ্রুত + provider diversify)। মোট ঠিক ২টা কল —
-    // আগের মতো ৬-রাউন্ড পর্যন্ত loop করা হচ্ছে না, যাতে সময় predictable থাকে।
-    try {
-        const strictSys4 = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ` +
-            `আরও ${mbCallBCount}টি নতুন MCQ বানাও (আগে যা বানানো হয়েছে তার থেকে ভিন্ন প্রশ্ন/কোণ থেকে)। ${basePrompt}\n` +
-            `প্রশ্ন/অপশন/ব্যাখ্যা অবশ্যই বাংলা ভাষায় ও বাংলা লিপিতে (বাংলা হরফ ব্যবহার করে) লিখতে হবে, দেবনাগরী/হিন্দি বা ইংরেজি হরফ নয়। ` +
-            `শুধু ঠিক ${mbCallBCount}টি প্রশ্নের valid JSON array রিটার্ন করো, markdown/preamble ছাড়া। Format:\n${jsonFormat}`;
-        const retryRaw4 = await mbCallAiApi('', pageImageData, strictSys4, true, false); // skipGemini=true — Groq/OpenRouter দিয়ে
-        const parsed4 = mbParseAiJson(retryRaw4);
-        const valid4 = (parsed4 || []).filter(mbIsValidMcqBulk);
-        if (valid4.length) parsed = [...parsed, ...valid4];
-    } catch (callBErr) { mbLogError('mbGenerateForPage:callB', pageNum, callBErr && callBErr.message || callBErr, { type, need: mbCallBCount }); }
+    // feature (2-call split per image): Call A (উপরে) অর্ধেক MCQ বানিয়েছে। বাকি অর্ধেক
+    // Call B দিয়ে আনা হয় — কিন্তু ONLY IF সেটা আসলেই দরকার।
+    // bug fix (root cause of প্রতি পেইজে অযথা সময় বেশি লাগা): আগে Call B সবসময় unconditionally
+    // চলত, এমনকি Call A নিজেই count.min পূরণ করে দিলেও (auto mode-এ বা AI বেশি MCQ দিলে) — একটা
+    // সম্পূর্ণ বাড়তি AI round-trip (১২-৬০ সেকেন্ড) অপচয় হতো প্রতি পেইজেই। এখন Call A-এর পরই
+    // target মিলে গেছে কিনা চেক করা হয়, মিলে গেলে Call B সম্পূর্ণ স্কিপ — সরাসরি topUp loop-এ যাওয়া
+    // হয় (যেটা এমনিতেও দরকার না থাকলে ০ বার চলবে)।
+    if (mbShouldSplit && parsed.length < count.min) {
+        try {
+            const strictSys4 = `তুমি একজন অভিজ্ঞ HSC শিক্ষক। এই বইয়ের পেইজের ছবি দেখে (শুধুমাত্র এই ছবিতে যা আছে তা থেকে) ` +
+                `আরও ${mbCallBCount}টি নতুন MCQ বানাও (আগে যা বানানো হয়েছে তার থেকে ভিন্ন প্রশ্ন/কোণ থেকে)। ${basePrompt}\n` +
+                `প্রশ্ন/অপশন/ব্যাখ্যা অবশ্যই বাংলা ভাষায় ও বাংলা লিপিতে (বাংলা হরফ ব্যবহার করে) লিখতে হবে, দেবনাগরী/হিন্দি বা ইংরেজি হরফ নয়। ` +
+                `শুধু ঠিক ${mbCallBCount}টি প্রশ্নের valid JSON array রিটার্ন করো, markdown/preamble ছাড়া। Format:\n${jsonFormat}`;
+            const retryRaw4 = await mbCallAiApi('', pageImageData, strictSys4, true, false); // skipGemini=true — Groq/OpenRouter দিয়ে
+            const parsed4 = mbParseAiJson(retryRaw4);
+            const valid4 = (parsed4 || []).filter(mbIsValidMcqBulk);
+            if (valid4.length) parsed = [...parsed, ...valid4];
+        } catch (callBErr) { mbLogError('mbGenerateForPage:callB', pageNum, callBErr && callBErr.message || callBErr, { type, need: mbCallBCount }); }
+    }
     mbMark('callB');
 
     // Count must-follow (STRICT): user যত MCQ চেয়েছে ততটাই বানাতে হবে — ঘাটতি থাকলে যতক্ষণ না
