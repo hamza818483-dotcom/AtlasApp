@@ -342,10 +342,10 @@
         kcqAllOpen = false;
 
         container.innerHTML = `
-            <div class="section-header"><div class="section-title">📖 ${escapeHtml(entry.chapter || 'সাধারণ')}</div></div>
+            <div class="section-header"><div class="section-title"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 7v14' /> <path d='M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z' /></svg> ${escapeHtml(entry.chapter || 'সাধারণ')}</div></div>
             <button class="back-btn" onclick="window.__kcqBackToChapters()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> চ্যাপ্টার তালিকায় ফিরুন</button>
             <div class="kcq-toggle-all-wrap">
-                <button class="kcq-toggle-all-btn" onclick="window.__kcqToggleAllAccordions(this)">🔓 সব উত্তর দেখাও</button>
+                <button class="kcq-toggle-all-btn" onclick="window.__kcqToggleAllAccordions(this)"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#22C55E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><rect width='18' height='11' x='3' y='11' rx='2' ry='2' /> <path d='M7 11V7a5 5 0 0 1 9.9-1' /></svg> সব উত্তর দেখাও</button>
             </div>
             <div class="kcq-wrap">${cardsHtml || '<div class="kcq-empty">কোনো প্রশ্ন নেই</div>'}</div>
         `;

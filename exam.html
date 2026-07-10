@@ -730,14 +730,14 @@ function checkGuestAction(){if(!isLoggedIn()){showGuestModal();return false;}ret
 function showGuestModal(){
     document.getElementById('guestModalContent').innerHTML=`
         <div class="guest-message">
-            <div class="icon">🔐</div>
+            <div class="icon"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#64748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><rect width='18' height='11' x='3' y='11' rx='2' ry='2' /> <path d='M7 11V7a5 5 0 0 1 10 0v4' /></svg></div>
             <div class="title">সকল ফিচার ব্যবহার করতে</div>
             <div class="subtitle">ওয়েবসাইটে একাউন্ট রেজিস্ট্রেশন</div>
             <div class="subtitle" style="margin-bottom:16px;">করে লগিন করুন, প্রিয় শিক্ষার্থী</div>
-            <div style="font-size:12px;color:var(--accent);margin-bottom:4px;">📍 Registration Link:</div>
+            <div style="font-size:12px;color:var(--accent);margin-bottom:4px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0' /> <circle cx='12' cy='10' r='3' /></svg> Registration Link:</div>
             <div class="guest-link-box">${AUTH_URL}</div>
-            <button class="btn btn-primary" onclick="goTo('${AUTH_URL}')" style="width:100%;margin-bottom:6px;">🔗 রেজিস্ট্রেশন পেজ</button>
-            <button class="btn btn-outline" onclick="document.getElementById('guestModal').classList.remove('active')" style="width:100%;">✕ বন্ধ</button>
+            <button class="btn btn-primary" onclick="goTo('${AUTH_URL}')" style="width:100%;margin-bottom:6px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71' /> <path d='M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71' /></svg> রেজিস্ট্রেশন পেজ</button>
+            <button class="btn btn-outline" onclick="document.getElementById('guestModal').classList.remove('active')" style="width:100%;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M18 6 6 18' /> <path d='m6 6 12 12' /></svg> বন্ধ</button>
         </div>`;
     document.getElementById('guestModal').classList.add('active');
 }
@@ -1068,10 +1068,10 @@ function renderTwExamList(list){
 function showLockedExamBanner(examTitle){
     document.getElementById('preExamContent').innerHTML=`
         <div class="locked-banner">
-            <div class="locked-banner-icon">🔒</div>
+            <div class="locked-banner-icon"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#64748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><rect width='18' height='11' x='3' y='11' rx='2' ry='2' /> <path d='M7 11V7a5 5 0 0 1 10 0v4' /></svg></div>
             <div class="locked-banner-title">${examTitle}</div>
             <div class="locked-banner-sub">এই এক্সামটি পেইড ব্যাচের জন্য লক করা আছে।<br>পেইড ব্যাচে যোগ দিয়ে আনলক করুন!</div>
-            <button class="btn btn-primary" onclick="openWA()" style="margin-top:14px;width:100%;background:linear-gradient(135deg,#f59e0b,#d97706);">💬 ব্যাচে যোগ দিন</button>
+            <button class="btn btn-primary" onclick="openWA()" style="margin-top:14px;width:100%;background:linear-gradient(135deg,#f59e0b,#d97706);"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719' /></svg> ব্যাচে যোগ দিন</button>
         </div>`;
     document.getElementById('startExamBtn').style.display='none';
     document.getElementById('seeQuestionsBtn').style.display='none';
@@ -1140,11 +1140,11 @@ async function loadExamById(examId){
 function showNoQuestions(){
     document.getElementById('preExamContent').innerHTML=`
         <div class="no-questions">
-            <div class="icon">⚠️</div>
+            <div class="icon"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3' /> <path d='M12 9v4' /> <path d='M12 17h.01' /></svg>️</div>
             <div class="title">Database এ প্রশ্ন নেই</div>
             <div class="subtitle">প্রিয় শিক্ষার্থী,</div>
             <div class="subtitle">এডমিনকে ইনফর্ম করুন, দ্রুতই প্রশ্ন এড করার চেষ্টা করবো</div>
-            <button class="btn btn-outline" onclick="backToCategory()" style="margin-top:16px;">🔙 ফিরে যান</button>
+            <button class="btn btn-outline" onclick="backToCategory()" style="margin-top:16px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#64748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M20 20v-7a4 4 0 0 0-4-4H4' /> <path d='M9 14 4 9l5-5' /></svg> ফিরে যান</button>
         </div>`;
     document.getElementById('startExamBtn').style.display='none';
     document.getElementById('seeQuestionsBtn').style.display='none';
@@ -1196,7 +1196,7 @@ function openPagePreviewLightbox(src, page){
         lb.onclick = closePagePreviewLightbox;
         lb.innerHTML = `<img id="pagePreviewLightboxImg" style="max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,0.5);" />
             <div id="pagePreviewLightboxLabel" style="position:absolute;top:16px;left:50%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:600;background:rgba(0,0,0,0.5);padding:4px 12px;border-radius:20px;"></div>
-            <div style="position:absolute;top:16px;right:16px;color:#fff;font-size:24px;cursor:pointer;">✕</div>`;
+            <div style="position:absolute;top:16px;right:16px;color:#fff;font-size:24px;cursor:pointer;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M18 6 6 18' /> <path d='m6 6 12 12' /></svg></div>`;
         document.body.appendChild(lb);
     }
     document.getElementById('pagePreviewLightboxImg').src = src;
@@ -1305,11 +1305,11 @@ function selectMockCount(count,time){
     currentExam={title:'মক টেস্ট',subject:'মক',chapter:'মক',total_marks:count,duration_minutes:calcTime,id:'mock_'+Date.now(),allow_preview:false,allow_solve_sheet:true};
     document.getElementById('preExamContent').innerHTML=`
         <div class="no-questions">
-            <div class="icon">⚠️</div>
+            <div class="icon"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3' /> <path d='M12 9v4' /> <path d='M12 17h.01' /></svg>️</div>
             <div class="title">Database এ প্রশ্ন নেই</div>
             <div class="subtitle">প্রিয় শিক্ষার্থী,</div>
             <div class="subtitle">এডমিনকে ইনফর্ম করুন, দ্রুতই প্রশ্ন এড করার চেষ্টা করবো</div>
-            <button class="btn btn-outline" onclick="backToList()" style="margin-top:16px;">🔙 ফিরে যান</button>
+            <button class="btn btn-outline" onclick="backToList()" style="margin-top:16px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#64748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M20 20v-7a4 4 0 0 0-4-4H4' /> <path d='M9 14 4 9l5-5' /></svg> ফিরে যান</button>
         </div>`;
     document.getElementById('startExamBtn').style.display='none';
     document.getElementById('seeQuestionsBtn').style.display='none';
@@ -1322,19 +1322,19 @@ function selectMockCount(count,time){
 function openModelTest(){
     document.getElementById('guestModalContent').innerHTML=`
         <div class="modal-title"><span class="si-tile tile-amber"><svg viewBox="0 0 24 24" fill="none"><path d="M9.5 3.5h5M10.2 3.5v6.3L5.3 18c-.7 1.2.2 2.7 1.6 2.7h10.2c1.4 0 2.3-1.5 1.6-2.7l-4.9-8.2V3.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.5 15.5h9" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></span> Model Test</div>
-        <div style="font-size:11px;color:var(--accent);font-weight:700;margin:8px 0 4px;">🏥 Medical / Dental</div>
-        <button class="btn btn-outline" onclick="closeModal();loadModelExams('medical','subject')" style="width:100%;margin-bottom:5px;">📗 Subject Final</button>
-        <button class="btn btn-outline" onclick="closeModal();loadModelExams('medical','paper')" style="width:100%;margin-bottom:5px;">📘 Paper Final</button>
-        <button class="btn btn-primary" onclick="closeModal();loadModelExams('medical','full')" style="width:100%;margin-bottom:5px;">📖 Full Model Test</button>
+        <div style="font-size:11px;color:var(--accent);font-weight:700;margin:8px 0 4px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 9a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h4a1 1 0 0 1 1 1v4a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-4a1 1 0 0 1 1-1h4a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-4a1 1 0 0 1-1-1V4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4a1 1 0 0 1-1 1z' /></svg> Medical / Dental</div>
+        <button class="btn btn-outline" onclick="closeModal();loadModelExams('medical','subject')" style="width:100%;margin-bottom:5px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20' /></svg> Subject Final</button>
+        <button class="btn btn-outline" onclick="closeModal();loadModelExams('medical','paper')" style="width:100%;margin-bottom:5px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20' /></svg> Paper Final</button>
+        <button class="btn btn-primary" onclick="closeModal();loadModelExams('medical','full')" style="width:100%;margin-bottom:5px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 7v14' /> <path d='M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z' /></svg> Full Model Test</button>
         <p style="font-size:10px;color:var(--text-secondary);text-align:center;margin-bottom:8px;">Bio=30, Chem=25, Phy=15, GK=15, Eng=15</p>
-        <div style="font-size:11px;color:var(--accent);font-weight:700;margin:4px 0;">🎖️ AFMC</div>
-        <button class="btn btn-outline" onclick="closeModal();loadModelExams('afmc','subject')" style="width:100%;margin-bottom:5px;">📗 AFMC Subject Final</button>
-        <button class="btn btn-outline" onclick="closeModal();loadModelExams('afmc','paper')" style="width:100%;margin-bottom:5px;">📘 AFMC Paper Final</button>
-        <button class="btn btn-outline" onclick="closeModal();loadModelExams('afmc','full')" style="width:100%;margin-bottom:5px;">📖 AFMC Full Model</button>
-        <div style="font-size:11px;color:var(--accent);font-weight:700;margin:4px 0;">🟣 Varsity</div>
-        <button class="btn btn-outline" onclick="closeModal();loadModelExams('varsity','varsitywise')" style="width:100%;margin-bottom:5px;">🏫 Varsitywise</button>
-        <button class="btn btn-outline" onclick="closeModal();loadModelExams('varsity','chapterwise')" style="width:100%;margin-bottom:8px;">📚 চাপ্টারভিত্তিক</button>
-        <button class="btn btn-outline" onclick="closeModal()" style="width:100%;">✕ বন্ধ</button>`;
+        <div style="font-size:11px;color:var(--accent);font-weight:700;margin:4px 0;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#FFB800' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526' /> <circle cx='12' cy='8' r='6' /></svg>️ AFMC</div>
+        <button class="btn btn-outline" onclick="closeModal();loadModelExams('afmc','subject')" style="width:100%;margin-bottom:5px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20' /></svg> AFMC Subject Final</button>
+        <button class="btn btn-outline" onclick="closeModal();loadModelExams('afmc','paper')" style="width:100%;margin-bottom:5px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20' /></svg> AFMC Paper Final</button>
+        <button class="btn btn-outline" onclick="closeModal();loadModelExams('afmc','full')" style="width:100%;margin-bottom:5px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 7v14' /> <path d='M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z' /></svg> AFMC Full Model</button>
+        <div style="font-size:11px;color:var(--accent);font-weight:700;margin:4px 0;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#9B59B6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><circle cx='12' cy='12' r='10' /></svg> Varsity</div>
+        <button class="btn btn-outline" onclick="closeModal();loadModelExams('varsity','varsitywise')" style="width:100%;margin-bottom:5px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M14 21v-3a2 2 0 0 0-4 0v3' /> <path d='M18 4.933V21' /> <path d='m4 6 7.106-3.79a2 2 0 0 1 1.788 0L20 6' /> <path d='m6 11-3.52 2.147a1 1 0 0 0-.48.854V19a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a1 1 0 0 0-.48-.853L18 11' /> <path d='M6 4.933V21' /> <circle cx='12' cy='9' r='2' /></svg> Varsitywise</button>
+        <button class="btn btn-outline" onclick="closeModal();loadModelExams('varsity','chapterwise')" style="width:100%;margin-bottom:8px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 7v14' /> <path d='M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z' /></svg> চাপ্টারভিত্তিক</button>
+        <button class="btn btn-outline" onclick="closeModal()" style="width:100%;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M18 6 6 18' /> <path d='m6 6 12 12' /></svg> বন্ধ</button>`;
     document.getElementById('guestModal').classList.add('active');
 }
 function closeModal(){document.getElementById('guestModal').classList.remove('active');}
@@ -1501,7 +1501,7 @@ async function openAIChat(qid){
     const labels=['ক','খ','গ','ঘ','ঙ'];
     let optHTML=opts.map((o,i)=>`${labels[i]}) ${o}`).join('<br>');
     document.getElementById('aiChatBody').innerHTML=`
-        <div class="ai-chat-q"><strong>📋 MCQ:</strong><br>${q.question_text}<br><br>${optHTML}</div>
+        <div class="ai-chat-q"><strong><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><rect width='8' height='4' x='8' y='2' rx='1' ry='1' /> <path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2' /></svg> MCQ:</strong><br>${q.question_text}<br><br>${optHTML}</div>
         <div class="ai-loading"><span></span><span></span><span></span>&nbsp;AI বিশ্লেষণ করছে...</div>`;
 
     let prompt=`তুমি ATLAS APP-এর বিশেষজ্ঞ শিক্ষক। MCQ-টি বিস্তারিতভাবে বাংলায় ব্যাখ্যা করো:\n\nপ্রশ্ন: ${q.question_text}\n\n`;
@@ -1512,7 +1512,7 @@ async function openAIChat(qid){
     const answer=await callAIForMCQ(prompt);
     aiChatHistory.push({role:'assistant',content:answer});
     document.getElementById('aiChatBody').innerHTML=`
-        <div class="ai-chat-q"><strong>📋 MCQ:</strong><br>${q.question_text}<br><br>${optHTML}</div>
+        <div class="ai-chat-q"><strong><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><rect width='8' height='4' x='8' y='2' rx='1' ry='1' /> <path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2' /></svg> MCQ:</strong><br>${q.question_text}<br><br>${optHTML}</div>
         <div class="ai-chat-response">${answer}</div>`;
 }
 
@@ -2044,11 +2044,11 @@ function showError(title,message,details,retryFn){
     const existing=document.querySelector('.error-popup-overlay');if(existing)existing.remove();
     const overlay=document.createElement('div');overlay.className='error-popup-overlay';
     overlay.innerHTML=`<div class="error-popup" onclick="event.stopPropagation()">
-        <div class="error-popup-icon">⚠️</div>
+        <div class="error-popup-icon"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3' /> <path d='M12 9v4' /> <path d='M12 17h.01' /></svg>️</div>
         <div class="error-popup-title">${title||'কিছু সমস্যা হয়েছে'}</div>
         <div class="error-popup-message">${message||'পরে আবার চেষ্টা করুন'}</div>
         ${details?`<div class="error-popup-details">${details}</div>`:''}
-        <div style="display:flex;justify-content:center;gap:8px;" id="errorPopupBtnRow"><button class="error-popup-btn" id="errorPopupCloseBtn">✕ বন্ধ</button></div>
+        <div style="display:flex;justify-content:center;gap:8px;" id="errorPopupBtnRow"><button class="error-popup-btn" id="errorPopupCloseBtn"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M18 6 6 18' /> <path d='m6 6 12 12' /></svg> বন্ধ</button></div>
     </div>`;
     overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
     document.body.appendChild(overlay);

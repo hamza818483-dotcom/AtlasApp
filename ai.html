@@ -882,7 +882,7 @@ function addUserMessage(text, imageObj) {
         <div class="msg-label">তুমি</div>
         <div class="msg-row">
             <div class="msg-bubble${imageObj ? ' has-image' : ''}">${bubbleContent}</div>
-            <div class="msg-avatar-sm user-av">👤</div>
+            <div class="msg-avatar-sm user-av"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#64748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2' /> <circle cx='12' cy='7' r='4' /></svg></div>
         </div>
         <div class="msg-meta"><span class="msg-time">${getTime()}</span></div>
     `;
@@ -925,9 +925,9 @@ function showEditMenu(wrapper) {
     const menu = document.createElement('div');
     menu.className = 'msg-edit-menu';
     menu.innerHTML = `
-        <button onclick="resendUserMessage(this)">🔄 রিসেন্ড</button>
-        <button onclick="copyUserMessage(this)">📋 কপি</button>
-        <button onclick="editUserMessage(this)">✏️ এডিট</button>
+        <button onclick="resendUserMessage(this)"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8' /> <path d='M21 3v5h-5' /> <path d='M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16' /> <path d='M8 16H3v5' /></svg> রিসেন্ড</button>
+        <button onclick="copyUserMessage(this)"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><rect width='8' height='4' x='8' y='2' rx='1' ry='1' /> <path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2' /></svg> কপি</button>
+        <button onclick="editUserMessage(this)"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z' /> <path d='m15 5 4 4' /></svg>️ এডিট</button>
     `;
     wrapper.style.position = 'relative';
     wrapper.appendChild(menu);
@@ -1061,7 +1061,7 @@ function showTyping() {
     div.innerHTML = `
         <div class="msg-label">ATLAS AI</div>
         <div class="typing-wrapper">
-            <div class="msg-avatar-sm ai-av">🤖</div>
+            <div class="msg-avatar-sm ai-av"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 8V4H8' /> <rect width='16' height='12' x='4' y='8' rx='2' /> <path d='M2 14h2' /> <path d='M20 14h2' /> <path d='M15 13v2' /> <path d='M9 13v2' /></svg></div>
             <div class="typing-bubble"><span></span><span></span><span></span></div>
         </div>
     `;
@@ -1217,9 +1217,9 @@ function clearChat() {
     const area = document.getElementById('chatArea');
     area.innerHTML = `
         <div class="chat-empty" id="chatEmpty">
-            <div class="empty-icon">🤖</div>
+            <div class="empty-icon"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 8V4H8' /> <rect width='16' height='12' x='4' y='8' rx='2' /> <path d='M2 14h2' /> <path d='M20 14h2' /> <path d='M15 13v2' /> <path d='M9 13v2' /></svg></div>
             <div class="empty-title">চ্যাট ক্লিয়ার হয়েছে!</div>
-            <div class="empty-sub">নতুন প্রশ্ন করো — আমি সবসময় প্রস্তুত 😊</div>
+            <div class="empty-sub">নতুন প্রশ্ন করো — আমি সবসময় প্রস্তুত <svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#FFD166' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><circle cx='12' cy='12' r='10' /> <path d='M8 14s1.5 2 4 2 4-2 4-2' /> <line x1='9' x2='9.01' y1='9' y2='9' /> <line x1='15' x2='15.01' y1='9' y2='9' /></svg></div>
         </div>
     `;
     document.getElementById('suggestBar').style.display = 'flex';
@@ -1295,12 +1295,12 @@ function showError(title, message, details, retryFn) {
     overlay.className = 'error-popup-overlay';
     overlay.innerHTML = `
         <div class="error-popup" onclick="event.stopPropagation()">
-            <div class="error-popup-icon">⚠️</div>
+            <div class="error-popup-icon"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3' /> <path d='M12 9v4' /> <path d='M12 17h.01' /></svg>️</div>
             <div class="error-popup-title">${title || 'কিছু সমস্যা হয়েছে'}</div>
             <div class="error-popup-message">${message || 'পরে আবার চেষ্টা করুন'}</div>
             ${details ? `<div class="error-popup-details">${details}</div>` : ''}
             <div style="display:flex;justify-content:center;gap:8px;" id="errorPopupBtnRow">
-                <button class="error-popup-btn" id="errorPopupCloseBtn">✕ বন্ধ</button>
+                <button class="error-popup-btn" id="errorPopupCloseBtn"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M18 6 6 18' /> <path d='m6 6 12 12' /></svg> বন্ধ</button>
             </div>
         </div>
     `;

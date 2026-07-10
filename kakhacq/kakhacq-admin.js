@@ -30,12 +30,12 @@
         wrapper.style.cssText = 'margin-top:10px;padding:14px;border:2px dashed var(--accent,#0E7A56);border-radius:12px;background:rgba(14,122,86,0.06);';
         wrapper.innerHTML = `
             <label style="font-size:13px;font-weight:600;display:block;margin-bottom:8px;">
-                📤 অথবা mhtml/html ফাইল আপলোড করুন (অটো-পার্স হবে)
+                <svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 3v12' /> <path d='m17 8-5-5-5 5' /> <path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' /></svg> অথবা mhtml/html ফাইল আপলোড করুন (অটো-পার্স হবে)
             </label>
             <input type="file" id="kaFileInput" accept=".mhtml,.html,.htm" style="width:100%;font-size:13px;">
             <div id="kaFileUploadStatus" style="margin-top:8px;font-size:12px;color:var(--text2,#888);"></div>
             <button type="button" id="kaFileUploadBtn" class="btn btn-primary btn-sm" style="margin-top:8px;width:100%;" disabled>
-                ⚡ পার্স করে সেইভ করুন
+                <svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#FBBF24' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z' /></svg> পার্স করে সেইভ করুন
             </button>
         `;
         linkGroup.closest('.input-group').insertAdjacentElement('afterend', wrapper);
@@ -70,7 +70,7 @@
         const type = document.getElementById('kaType').value; // 'ka' | 'kha' | 'cq'
 
         if (!subject || !chapter) {
-            window.showToast('⚠️ সাবজেক্ট ও চ্যাপ্টার আগে পূরণ করুন');
+            window.showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ সাবজেক্ট ও চ্যাপ্টার আগে পূরণ করুন');
             return;
         }
 
@@ -91,7 +91,7 @@
             const saved = await saveToSupabase(parsed, { subject, chapter, year, topic, type });
 
             status.textContent = `✅ সম্পন্ন! ${parsed.items.length}টি প্রশ্ন যোগ হয়েছে।`;
-            window.showToast(`✅ ${parsed.items.length}টি প্রশ্ন সফলভাবে যোগ হয়েছে`);
+            window.showToast(`<svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#22C55E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M21.801 10A10 10 0 1 1 17 3.335' /> <path d='m9 11 3 3L22 4' /></svg> ${parsed.items.length}টি প্রশ্ন সফলভাবে যোগ হয়েছে`);
 
             // ইনপুট রিসেট
             selectedFile = null;
@@ -107,7 +107,7 @@
         } catch (err) {
             console.error('KaKhaCQ upload error:', err);
             status.textContent = '❌ এরর: ' + err.message;
-            window.showToast('❌ ফাইল প্রসেস ব্যর্থ: ' + err.message, 5000);
+            window.showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> ফাইল প্রসেস ব্যর্থ: ' + err.message, 5000);
             await notifyAdminOnError(err, selectedFile?.name, type);
         } finally {
             btn.disabled = false;

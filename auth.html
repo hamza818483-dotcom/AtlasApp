@@ -170,12 +170,12 @@ function showError(title, message, details, retryFn) {
     overlay.className = 'error-popup-overlay';
     overlay.innerHTML = `
         <div class="error-popup" onclick="event.stopPropagation()">
-            <div class="error-popup-icon">⚠️</div>
+            <div class="error-popup-icon"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3' /> <path d='M12 9v4' /> <path d='M12 17h.01' /></svg>️</div>
             <div class="error-popup-title">${title || 'কিছু সমস্যা হয়েছে'}</div>
             <div class="error-popup-message">${message || 'পরে আবার চেষ্টা করুন'}</div>
             ${details ? `<div class="error-popup-details">${details}</div>` : ''}
             <div style="display:flex;justify-content:center;gap:8px;" id="errorPopupBtnRow">
-                <button class="error-popup-btn" id="errorPopupCloseBtn">✕ বন্ধ</button>
+                <button class="error-popup-btn" id="errorPopupCloseBtn"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M18 6 6 18' /> <path d='m6 6 12 12' /></svg> বন্ধ</button>
             </div>
         </div>
     `;

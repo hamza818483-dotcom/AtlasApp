@@ -22,7 +22,7 @@ const HF_GPA_MOTIVATIONAL_LINES = [
 function openGpaCalculatorModal() {
     const mc = document.getElementById('modalContent');
     mc.innerHTML = `
-        <div class="modal-title">🎯 MBBS GPA Calculator</div>
+        <div class="modal-title"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><circle cx='12' cy='12' r='10' /> <circle cx='12' cy='12' r='6' /> <circle cx='12' cy='12' r='2' /></svg> MBBS GPA Calculator</div>
         <div style="margin-bottom:10px;">
             <label style="display:block;font-size:11px;font-weight:600;color:var(--text-secondary,#888);margin-bottom:4px;">SSC GPA (সর্বোচ্চ ৫.০০)</label>
             <input type="number" id="hfGpaSSC" min="0" max="5" step="0.01" placeholder="যেমন: 4.89" style="width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:6px;background:var(--bg,transparent);color:var(--text);font-size:13px;box-sizing:border-box;">
@@ -31,10 +31,10 @@ function openGpaCalculatorModal() {
             <label style="display:block;font-size:11px;font-weight:600;color:var(--text-secondary,#888);margin-bottom:4px;">HSC GPA (সর্বোচ্চ ৫.০০)</label>
             <input type="number" id="hfGpaHSC" min="0" max="5" step="0.01" placeholder="যেমন: 5.00" style="width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:6px;background:var(--bg,transparent);color:var(--text);font-size:13px;box-sizing:border-box;">
         </div>
-        <button class="btn btn-primary" onclick="hfCalculateGpa()" style="width:100%;margin-top:6px;">📊 Calculate করুন</button>
+        <button class="btn btn-primary" onclick="hfCalculateGpa()" style="width:100%;margin-top:6px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M5 21v-6' /> <path d='M12 21V3' /> <path d='M19 21V9' /></svg> Calculate করুন</button>
         <div id="hfGpaResultBox" style="margin-top:14px;"></div>
         <div class="modal-close">
-            <button class="btn btn-outline" onclick="closeModal()" style="width:100%;">✕ বন্ধ</button>
+            <button class="btn btn-outline" onclick="closeModal()" style="width:100%;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M18 6 6 18' /> <path d='m6 6 12 12' /></svg> বন্ধ</button>
         </div>`;
     document.getElementById('mainModal').classList.add('active');
 }
@@ -61,13 +61,13 @@ function hfCalculateGpa() {
 
     resultBox.innerHTML = `
         <div style="background:var(--card-bg,rgba(99,102,241,0.06));border:1px solid var(--border);border-radius:10px;padding:14px;font-size:13px;line-height:1.7;color:var(--text);">
-            <div style="font-weight:700;text-align:center;margin-bottom:6px;">🎯 MBBS GPA Score Result</div>
+            <div style="font-weight:700;text-align:center;margin-bottom:6px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><circle cx='12' cy='12' r='10' /> <circle cx='12' cy='12' r='6' /> <circle cx='12' cy='12' r='2' /></svg> MBBS GPA Score Result</div>
             <div style="border-top:1px dashed var(--border);margin:6px 0;"></div>
-            <div>📘 SSC GPA: ${ssc.toFixed(2)} × 8 = ${sscScore.toFixed(2)}</div>
-            <div>📗 HSC GPA: ${hsc.toFixed(2)} × 12 = ${hscScore.toFixed(2)}</div>
+            <div><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20' /></svg> SSC GPA: ${ssc.toFixed(2)} × 8 = ${sscScore.toFixed(2)}</div>
+            <div><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20' /></svg> HSC GPA: ${hsc.toFixed(2)} × 12 = ${hscScore.toFixed(2)}</div>
             <div style="border-top:1px dashed var(--border);margin:6px 0;"></div>
-            <div>🚀 MBBS ভর্তি পরীক্ষায় আপনার GPA Score: <b>(${totalClamped.toFixed(2)}/100)</b></div>
-            <div>✅ কাটা যাবে: <b>(${deducted.toFixed(2)})</b></div>
+            <div><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5' /> <path d='M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09' /> <path d='M9 12a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z' /> <path d='M9 12H4s.55-3.03 2-4c1.62-1.08 5 .05 5 .05' /></svg> MBBS ভর্তি পরীক্ষায় আপনার GPA Score: <b>(${totalClamped.toFixed(2)}/100)</b></div>
+            <div><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#22C55E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M21.801 10A10 10 0 1 1 17 3.335' /> <path d='m9 11 3 3L22 4' /></svg> কাটা যাবে: <b>(${deducted.toFixed(2)})</b></div>
             <div style="border-top:1px dashed var(--border);margin:10px 0 6px;"></div>
             <div style="text-align:center;font-size:12px;color:var(--accent,#6366F1);font-weight:600;">${line}</div>
         </div>`;

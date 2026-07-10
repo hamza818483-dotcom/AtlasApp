@@ -115,23 +115,23 @@ async function stToggleSubj(id){
 
 async function stAddSubject() {
     const name = document.getElementById('stSubjName').value.trim();
-    if (!name) { showToast('⚠️ বিষয়ের নাম দিন'); return; }
+    if (!name) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ বিষয়ের নাম দিন'); return; }
     try {
         const existing = await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects?mode=eq.${stMode}&order=sort_order.desc&select=sort_order&limit=1`) || [];
         const sort = existing.length ? existing[0].sort_order + 1 : 1;
         // short_name কলাম DB-তে এখনো আছে — UI-তে আলাদা ফিল্ড না রেখে name-কেই fallback হিসেবে পাঠানো হচ্ছে, যাতে কলাম খালি না থাকে।
         await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects`, {method:'POST', body:JSON.stringify({name, short_name:name, mode:stMode, sort_order:sort})});
         document.getElementById('stSubjName').value = '';
-        showToast('✅ বিষয় যোগ হয়েছে');
+        showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> বিষয় যোগ হয়েছে');
         stLoadSubjects();
         stLoadDashCounts();
-    } catch(e) { showToast('❌ Error: ' + e.message); }
+    } catch(e) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> Error: ' + e.message); }
 }
 async function stEditSubjPrompt(id, name) {
     const newName = prompt('বিষয়ের নতুন নাম:', name);
     if (!newName || newName === name) return;
     await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects?id=eq.${id}`, {method:'PATCH', body:JSON.stringify({name:newName.trim(), short_name:newName.trim()})});
-    showToast('✅ আপডেট হয়েছে'); stLoadSubjects();
+    showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> আপডেট হয়েছে'); stLoadSubjects();
 }
 async function stDelSubject(id) {
     if (!confirm('এই বিষয় এবং সব অধ্যায়+টপিক মুছে যাবে। নিশ্চিত?')) return;
@@ -139,7 +139,7 @@ async function stDelSubject(id) {
     for (const ch of chaps) await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics?chapter_id=eq.${ch.id}`, {method:'DELETE'});
     await safeFetch(`${SUPABASE_URL}/rest/v1/st_chapters?subject_id=eq.${id}`, {method:'DELETE'});
     await safeFetch(`${SUPABASE_URL}/rest/v1/st_subjects?id=eq.${id}`, {method:'DELETE'});
-    showToast('🗑 বিষয় মুছে গেছে');
+    showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg> বিষয় মুছে গেছে');
     if (stExpandedSubj === id) { stExpandedSubj = null; stExpandedChap = null; }
     stLoadSubjects(); stLoadDashCounts();
 }
@@ -202,26 +202,26 @@ async function stToggleChap(subjId, chapId){
 async function stAddChapter(subjId) {
     const input = document.getElementById('stChapName_'+subjId);
     const name = input.value.trim();
-    if (!name) { showToast('⚠️ অধ্যায়ের নাম দিন'); return; }
+    if (!name) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ অধ্যায়ের নাম দিন'); return; }
     try {
         const existing = await safeFetch(`${SUPABASE_URL}/rest/v1/st_chapters?subject_id=eq.${subjId}&order=sort_order.desc&select=sort_order&limit=1`) || [];
         const sort = existing.length ? existing[0].sort_order + 1 : 1;
         await safeFetch(`${SUPABASE_URL}/rest/v1/st_chapters`, {method:'POST', body:JSON.stringify({name, subject_id:subjId, sort_order:sort})});
-        showToast('✅ অধ্যায় যোগ হয়েছে');
+        showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> অধ্যায় যোগ হয়েছে');
         stLoadChapters(subjId);
-    } catch(e) { showToast('❌ Error: ' + e.message); }
+    } catch(e) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> Error: ' + e.message); }
 }
 async function stEditChapPrompt(id, name, subjId) {
     const newName = prompt('অধ্যায়ের নতুন নাম:', name);
     if (!newName || newName === name) return;
     await safeFetch(`${SUPABASE_URL}/rest/v1/st_chapters?id=eq.${id}`, {method:'PATCH', body:JSON.stringify({name:newName.trim()})});
-    showToast('✅ আপডেট হয়েছে'); stLoadChapters(subjId);
+    showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> আপডেট হয়েছে'); stLoadChapters(subjId);
 }
 async function stDelChapter(id, subjId) {
     if (!confirm('অধ্যায় ও সব টপিক মুছে যাবে?')) return;
     await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics?chapter_id=eq.${id}`, {method:'DELETE'});
     await safeFetch(`${SUPABASE_URL}/rest/v1/st_chapters?id=eq.${id}`, {method:'DELETE'});
-    showToast('🗑 অধ্যায় মুছে গেছে');
+    showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg> অধ্যায় মুছে গেছে');
     if (stExpandedChap === id) stExpandedChap = null;
     stLoadChapters(subjId);
 }
@@ -289,29 +289,29 @@ async function stAddTopic(chapId, subjId) {
     const weightInput = document.getElementById('stTopicWeight_'+chapId);
     const name = nameInput.value.trim();
     const weight = parseInt(weightInput.value)||1;
-    if (!name) { showToast('⚠️ টপিকের নাম দিন'); return; }
+    if (!name) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ টপিকের নাম দিন'); return; }
     try {
         const existing = await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics?chapter_id=eq.${chapId}&order=sort_order.desc&select=sort_order&limit=1`) || [];
         const sort = existing.length ? existing[0].sort_order + 1 : 1;
         await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics`, {method:'POST', body:JSON.stringify({name, chapter_id:chapId, weight, sort_order:sort})});
-        showToast('✅ টপিক যোগ হয়েছে');
+        showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> টপিক যোগ হয়েছে');
         stLoadTopics(chapId, subjId);
-    } catch(e) { showToast('❌ Error: ' + e.message); }
+    } catch(e) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> Error: ' + e.message); }
 }
 async function stEditTopicPrompt(id, name, weight, chapId, subjId) {
     const newName = prompt('টপিকের নতুন নাম:', name);
     if (!newName) return;
     const newW = parseInt(prompt('Weight (১ = সমান):', weight))||1;
     await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics?id=eq.${id}`, {method:'PATCH', body:JSON.stringify({name:newName.trim(), weight:newW})});
-    showToast('✅ আপডেট হয়েছে'); stLoadTopics(chapId, subjId);
+    showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> আপডেট হয়েছে'); stLoadTopics(chapId, subjId);
 }
 async function stUpdateWeight(id, val, chapId, subjId) {
     await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics?id=eq.${id}`, {method:'PATCH', body:JSON.stringify({weight:parseInt(val)||1})});
-    showToast('✅ Weight আপডেট'); stLoadTopics(chapId, subjId);
+    showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> Weight আপডেট'); stLoadTopics(chapId, subjId);
 }
 async function stDelTopic(id, chapId, subjId) {
     await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics?id=eq.${id}`, {method:'DELETE'});
-    showToast('🗑 টপিক মুছে গেছে'); stLoadTopics(chapId, subjId);
+    showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg> টপিক মুছে গেছে'); stLoadTopics(chapId, subjId);
 }
 
 // একই subject-এর সব chapter-এ এই chapter-এর topic গুলো কপি করে দেয়।
@@ -320,11 +320,11 @@ async function stApplyTopicsToAllChapters(sourceChapId, subjId) {
     if (!confirm('এই অধ্যায়ের সব টপিক কি একই বিষয়ের বাকি সব অধ্যায়ে যোগ করতে চান?')) return;
     try {
         const sourceTopics = await safeFetch(`${SUPABASE_URL}/rest/v1/st_topics?chapter_id=eq.${sourceChapId}&select=name,weight`) || [];
-        if (!sourceTopics.length) { showToast('⚠️ এই অধ্যায়ে কোনো টপিক নেই'); return; }
+        if (!sourceTopics.length) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ এই অধ্যায়ে কোনো টপিক নেই'); return; }
 
         const allChapters = await safeFetch(`${SUPABASE_URL}/rest/v1/st_chapters?subject_id=eq.${subjId}&select=id`) || [];
         const targetChapters = allChapters.filter(c => c.id !== sourceChapId);
-        if (!targetChapters.length) { showToast('⚠️ এই বিষয়ে আর কোনো অধ্যায় নেই'); return; }
+        if (!targetChapters.length) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ এই বিষয়ে আর কোনো অধ্যায় নেই'); return; }
 
         let addedCount = 0;
         for (const ch of targetChapters) {
@@ -342,9 +342,9 @@ async function stApplyTopicsToAllChapters(sourceChapId, subjId) {
                 nextSort++; addedCount++;
             }
         }
-        showToast(`✅ ${targetChapters.length}টি অধ্যায়ে ${addedCount}টি টপিক যোগ হয়েছে`);
+        showToast(`<svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#22C55E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M21.801 10A10 10 0 1 1 17 3.335' /> <path d='m9 11 3 3L22 4' /></svg> ${targetChapters.length}টি অধ্যায়ে ${addedCount}টি টপিক যোগ হয়েছে`);
         stLoadTopics(sourceChapId, subjId);
-    } catch(e) { showToast('❌ Error: ' + e.message); }
+    } catch(e) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> Error: ' + e.message); }
 }
 
 // ══════════════════════════════════════

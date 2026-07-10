@@ -20,7 +20,7 @@ function emHandleFormCSV(input) {
     reader.onload = e => {
         let text = e.target.result.replace(/\t/g, ',');
         const lines = parseCSV(text);
-        if (lines.length < 2) { showToast('⚠️ CSV-এ ডাটা নেই'); return; }
+        if (lines.length < 2) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ CSV-এ ডাটা নেই'); return; }
         const cleanHeader = lines[0].map(h => h.replace(/^\uFEFF/, '').trim().toLowerCase());
         const idx = (names) => { for (const n of names) { const i = cleanHeader.indexOf(n); if (i >= 0) return i; } return -1; };
         const qIdx = idx(['question', 'questions']);
@@ -41,22 +41,22 @@ function emHandleFormCSV(input) {
             });
         }
         emFormCSVData = data;
-        showToast(`✅ ${data.length} প্রশ্ন লোড হয়েছে`);
+        showToast(`<svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#22C55E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M21.801 10A10 10 0 1 1 17 3.335' /> <path d='m9 11 3 3L22 4' /></svg> ${data.length} প্রশ্ন লোড হয়েছে`);
     };
     reader.readAsText(file);
 }
 
 async function emSaveAll() {
     const category = document.getElementById('emFormCategory').value;
-    if (!emFormCSVData?.length) { showToast('⚠️ CSV আপলোড করুন'); return; }
+    if (!emFormCSVData?.length) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ CSV আপলোড করুন'); return; }
     const rows = emFormCSVData.map(d => ({ category, ...d }));
     try {
         showToast('⏳ সেইভ হচ্ছে...');
         await safeFetch(`${SUPABASE_URL}/rest/v1/em_mcqs`, { method: 'POST', body: JSON.stringify(rows) });
-        showToast(`✅ ${rows.length}টি MCQ সেইভ হয়েছে`, 4000);
+        showToast(`<svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#22C55E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M21.801 10A10 10 0 1 1 17 3.335' /> <path d='m9 11 3 3L22 4' /></svg> ${rows.length}টি MCQ সেইভ হয়েছে`, 4000);
         emClearForm();
         emRefreshMcqList(category);
-    } catch (e) { showToast('❌ এরর: ' + e.message, 5000); }
+    } catch (e) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> এরর: ' + e.message, 5000); }
 }
 
 function emClearForm() {
@@ -82,6 +82,6 @@ async function emRefreshMcqList(category) {
 async function emDelMcq(id, category) {
     if (!confirm('এই MCQ মুছে ফেলবেন?')) return;
     await safeFetch(`${SUPABASE_URL}/rest/v1/em_mcqs?id=eq.${id}`, { method: 'DELETE' });
-    showToast('🗑 মুছে গেছে');
+    showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg> মুছে গেছে');
     emRefreshMcqList(category);
 }

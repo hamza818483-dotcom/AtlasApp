@@ -19,7 +19,7 @@ function qpHandleFormCSV(input) {
     reader.onload = e => {
         let text = e.target.result.replace(/\t/g, ',');
         const lines = parseCSV(text);
-        if (lines.length < 2) { showToast('⚠️ CSV-এ ডাটা নেই'); return; }
+        if (lines.length < 2) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ CSV-এ ডাটা নেই'); return; }
         const cleanHeader = lines[0].map(h => h.replace(/^\uFEFF/, '').trim().toLowerCase());
         const idx = (names) => { for (const n of names) { const i = cleanHeader.indexOf(n); if (i >= 0) return i; } return -1; };
         const qIdx = idx(['question', 'questions']);
@@ -40,7 +40,7 @@ function qpHandleFormCSV(input) {
             });
         }
         qpFormCSVData = data;
-        showToast(`✅ ${data.length} প্রশ্ন লোড হয়েছে`);
+        showToast(`<svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#22C55E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M21.801 10A10 10 0 1 1 17 3.335' /> <path d='m9 11 3 3L22 4' /></svg> ${data.length} প্রশ্ন লোড হয়েছে`);
     };
     reader.readAsText(file);
 }
@@ -49,8 +49,8 @@ async function qpSaveAll() {
     const subjName = document.getElementById('qpFormSubject').value.trim();
     const chapName = document.getElementById('qpFormChapter').value.trim();
     const editChapId = document.getElementById('qpEditChapId').value;
-    if (!subjName || !chapName) { showToast('⚠️ বিষয় ও অধ্যায়ের নাম দিন'); return; }
-    if (!editChapId && !qpFormCSVData?.length) { showToast('⚠️ CSV আপলোড করুন'); return; }
+    if (!subjName || !chapName) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ বিষয় ও অধ্যায়ের নাম দিন'); return; }
+    if (!editChapId && !qpFormCSVData?.length) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ CSV আপলোড করুন'); return; }
     try {
         let chapId = editChapId;
         if (!chapId) {
@@ -74,20 +74,20 @@ async function qpSaveAll() {
         } else {
             await safeFetch(`${SUPABASE_URL}/rest/v1/qp_chapters?id=eq.${chapId}`, { method: 'PATCH', body: JSON.stringify({ name: chapName }) });
         }
-        if (!chapId) { showToast('❌ Chapter ID পাওয়া যায়নি'); return; }
+        if (!chapId) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> Chapter ID পাওয়া যায়নি'); return; }
         if (qpFormCSVData?.length) {
             const chapRow = (await safeFetch(`${SUPABASE_URL}/rest/v1/qp_chapters?id=eq.${chapId}&select=subject_id`) || [])[0];
             const subjId = chapRow?.subject_id;
             const rows = qpFormCSVData.map(d => ({ subject_id: subjId, chapter_id: chapId, ...d }));
             showToast('⏳ সেইভ হচ্ছে...');
             await safeFetch(`${SUPABASE_URL}/rest/v1/qp_mcqs`, { method: 'POST', body: JSON.stringify(rows) });
-            showToast(`✅ ${rows.length}টি MCQ সেইভ হয়েছে`, 4000);
+            showToast(`<svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#22C55E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M21.801 10A10 10 0 1 1 17 3.335' /> <path d='m9 11 3 3L22 4' /></svg> ${rows.length}টি MCQ সেইভ হয়েছে`, 4000);
         } else {
-            showToast('✅ আপডেট হয়েছে', 3000);
+            showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> আপডেট হয়েছে', 3000);
         }
         qpClearForm();
         loadQpSubjects();
-    } catch (e) { showToast('❌ এরর: ' + e.message, 5000); }
+    } catch (e) { showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> এরর: ' + e.message, 5000); }
 }
 
 function qpClearForm() {
@@ -142,7 +142,7 @@ async function qpEditSubjPrompt(id, name) {
     const newName = prompt('বিষয়ের নতুন নাম:', name);
     if (!newName || newName === name) return;
     await safeFetch(`${SUPABASE_URL}/rest/v1/qp_subjects?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify({ name: newName.trim() }) });
-    showToast('✅ আপডেট হয়েছে');
+    showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> আপডেট হয়েছে');
     loadQpSubjects();
 }
 
@@ -151,7 +151,7 @@ async function qpDelSubject(id) {
     await safeFetch(`${SUPABASE_URL}/rest/v1/qp_mcqs?subject_id=eq.${id}`, { method: 'DELETE' });
     await safeFetch(`${SUPABASE_URL}/rest/v1/qp_chapters?subject_id=eq.${id}`, { method: 'DELETE' });
     await safeFetch(`${SUPABASE_URL}/rest/v1/qp_subjects?id=eq.${id}`, { method: 'DELETE' });
-    showToast('🗑 বিষয় মুছে গেছে');
+    showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg> বিষয় মুছে গেছে');
     if (qpExpandedSubj === id) qpExpandedSubj = null;
     loadQpSubjects();
 }
@@ -205,7 +205,7 @@ async function qpDelChapter(id) {
     if (!confirm('এই অধ্যায় এবং এর সব MCQ মুছে যাবে। নিশ্চিত?')) return;
     await safeFetch(`${SUPABASE_URL}/rest/v1/qp_mcqs?chapter_id=eq.${id}`, { method: 'DELETE' });
     await safeFetch(`${SUPABASE_URL}/rest/v1/qp_chapters?id=eq.${id}`, { method: 'DELETE' });
-    showToast('🗑 অধ্যায় মুছে গেছে');
+    showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg> অধ্যায় মুছে গেছে');
     if (qpExpandedChap === id) qpExpandedChap = null;
     if (qpExpandedSubj) qpLoadChapters(qpExpandedSubj);
 }
@@ -226,7 +226,7 @@ async function qpRefreshMcqList(chapId) {
 async function qpDelMcq(id, chapId) {
     if (!confirm('এই MCQ মুছে ফেলবেন?')) return;
     await safeFetch(`${SUPABASE_URL}/rest/v1/qp_mcqs?id=eq.${id}`, { method: 'DELETE' });
-    showToast('🗑 মুছে গেছে');
+    showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg> মুছে গেছে');
     qpRefreshMcqList(chapId);
     if (qpExpandedSubj) qpLoadChapters(qpExpandedSubj);
 }
