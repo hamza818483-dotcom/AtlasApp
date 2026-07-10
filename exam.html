@@ -1272,7 +1272,7 @@ function toggleRevealAnswers(){
 // =============================================================
 function startMockTest(){
     isMockTest=true;
-    let html=`<div class="section-header"><div class="section-title">🎯 প্রশ্ন সংখ্যা ও সময় নির্বাচন</div></div>
+    let html=`<div class="section-header"><div class="section-title"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><circle cx='12' cy='12' r='10' /> <circle cx='12' cy='12' r='6' /> <circle cx='12' cy='12' r='2' /></svg> প্রশ্ন সংখ্যা ও সময় নির্বাচন</div></div>
         <div class="mock-options">`;
     [{count:25,time:17},{count:35,time:24},{count:50,time:34},{count:75,time:50},{count:100,time:67}].forEach(n=>{
         html+=`<button class="mock-option-btn" onclick="selectMockCount(${n.count},${n.time})">${n.count} টি প্রশ্ন<br><small>⏱️ ${n.time} মিনিট</small></button>`;
@@ -2011,7 +2011,7 @@ function openSolveSheetPDF(){
                 <div class="summary-item"><div class="summary-val s-neg">-${(wrong*0.25).toFixed(2)}</div><div class="summary-lbl">নেগেটিভ</div></div>
             </div>`;
         }
-        html+=`<div class="page-banner"><span>📖 ${examName}</span><span>পৃষ্ঠা ${page+1}/${totalPages} | প্রশ্ন ${start+1}–${Math.min(start+8,examQuestions.length)}</span></div>
+        html+=`<div class="page-banner"><span><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 7v14' /> <path d='M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z' /></svg> ${examName}</span><span>পৃষ্ঠা ${page+1}/${totalPages} | প্রশ্ন ${start+1}–${Math.min(start+8,examQuestions.length)}</span></div>
             <div class="mcq-grid">`;
         pageQs.forEach((q,idx)=>{
             const qNum=start+idx+1;
