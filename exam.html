@@ -787,7 +787,7 @@ async function loadCategoryCounts(){
 // =============================================================
 function showCategory(cat){
     currentCategory=cat;
-    const titles={board:'🔵 বোর্ড প্রস্তুতি',medical:'🟢 মেডিকেল+ডেন্টাল',varsity:'🟣 ভার্সিটি প্রস্তুতি',onushiloni:'🟠 অনুশীলনী'};
+    const titles={board:'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="#9B59B6" stroke="#9B59B6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /></svg> বোর্ড প্রস্তুতি',medical:'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="#9B59B6" stroke="#9B59B6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /></svg> মেডিকেল+ডেন্টাল',varsity:'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="#9B59B6" stroke="#9B59B6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /></svg> ভার্সিটি প্রস্তুতি',onushiloni:'🟠 অনুশীলনী'};
     let html=`<div class="section-header"><div class="section-title">${titles[cat]||cat}</div></div>`;
     if(cat==='board'){
         html+=`<div class="cat-grid">
@@ -824,7 +824,7 @@ function showCategory(cat){
 }
 
 function showMedicalSub(type){
-    const title={medical:'🏥 Medical',dental:'🦷 Dental',afmc:'🎖️ AFMC'}[type];
+    const title={medical:'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 9a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h4a1 1 0 0 1 1 1v4a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-4a1 1 0 0 1 1-1h4a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-4a1 1 0 0 1-1-1V4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4a1 1 0 0 1-1 1z" /></svg> Medical',dental:'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M11 2v2" /> <path d="M5 2v2" /> <path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1" /> <path d="M8 15a6 6 0 0 0 12 0v-3" /> <circle cx="20" cy="10" r="2" /></svg> Dental',afmc:'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526" /> <circle cx="12" cy="8" r="6" /></svg>️ AFMC'}[type];
     document.getElementById('categoryContent').innerHTML=`
         <div class="section-header"><div class="section-title">${title}</div></div>
         <div class="cat-grid">
@@ -1345,7 +1345,7 @@ async function loadModelExams(type,subType){
         if(subType) url+=`&sub_type=eq.${subType}`;
         const data=await safeFetch(url);
         if(!data?.length){document.getElementById('categoryContent').innerHTML='<p style="text-align:center;color:var(--text-secondary);padding:20px;">কোনো Model Test নেই</p>';switchMode('Category');return;}
-        const typeLabel={medical:'🏥 Medical',afmc:'🎖️ AFMC',varsity:'🟣 Varsity'}[type]||type;
+        const typeLabel={medical:'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M4 9a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h4a1 1 0 0 1 1 1v4a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-4a1 1 0 0 1 1-1h4a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-4a1 1 0 0 1-1-1V4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4a1 1 0 0 1-1 1z" /></svg> Medical',afmc:'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526" /> <circle cx="12" cy="8" r="6" /></svg>️ AFMC',varsity:'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="#9B59B6" stroke="#9B59B6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /></svg> Varsity'}[type]||type;
         let html=`<div class="section-header"><div class="section-title"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 7v14' /> <path d='M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z' /></svg> Model Test — ${typeLabel} · ${subType}</div></div>`;
         const grouped={};
         data.forEach(d=>{const s=d.subject_name||d.paper_name||'সাধারণ';if(!grouped[s])grouped[s]=[];grouped[s].push(d);});
@@ -1777,7 +1777,7 @@ function showResult(correct,wrong,skipped,negMark,finalScore,withGpa,gpaScore,de
     examQuestions.forEach((q,i)=>{
         const ua=userAnswers[q.id];
         const status=ua===q.answer_index?'correct':(ua?'wrong':'skipped');
-        const statusHTML=status==='correct'?'<div class="q-status correct">✅ সঠিক</div>':
+        const statusHTML=status==='correct'?'<div class="q-status correct"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> সঠিক</div>':
             status==='wrong'?`<div class="q-status wrong"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><circle cx='12' cy='12' r='10' /> <path d='m15 9-6 6' /> <path d='m9 9 6 6' /></svg> ভুল${ua?' (আপনি: '+['ক','খ','গ','ঘ','ঙ'][ua-1]+')':''}</div>`:
             '<div class="q-status" style="color:var(--warning);">⏭️ স্কিপ</div>';
         const bmClassR=bookmarkedQuestions[q.id]?' active':'';
@@ -1883,7 +1883,7 @@ async function openLeaderboard(examId,examName){
         let html=`<table class="lb-table"><thead><tr><th>#</th><th>নাম</th><th>কলেজ</th><th>Batch</th><th>মার্ক</th><th>তারিখ</th></tr></thead><tbody>`;
         data.forEach((row,i)=>{
             const isMe=sess&&sess.phone===row.phone;
-            const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+            const medal=i===0?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15" /> <path d="M11 12 5.12 2.2" /> <path d="m13 12 5.88-9.8" /> <path d="M8 7h8" /> <circle cx="12" cy="17" r="5" /> <path d="M12 18v-2h-.5" /></svg>':i===1?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15" /> <path d="M11 12 5.12 2.2" /> <path d="m13 12 5.88-9.8" /> <path d="M8 7h8" /> <circle cx="12" cy="17" r="5" /> <path d="M12 18v-2h-.5" /></svg>':i===2?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15" /> <path d="M11 12 5.12 2.2" /> <path d="m13 12 5.88-9.8" /> <path d="M8 7h8" /> <circle cx="12" cy="17" r="5" /> <path d="M12 18v-2h-.5" /></svg>':'';
             const date=row.exam_date?new Date(row.exam_date).toLocaleDateString('bn-BD'):'—';
             html+=`<tr class="${isMe?'my-row':''}">
                 <td>${medal} ${i+1}</td>
@@ -2017,7 +2017,7 @@ function openSolveSheetPDF(){
             const qNum=start+idx+1;
             const ua=userAnswers[q.id];
             const status=ua===q.answer_index?'correct':(ua?'wrong':'skip');
-            const badgeText=status==='correct'?'✅ সঠিক':status==='wrong'?'❌ ভুল':'⏭️ স্কিপ';
+            const badgeText=status==='correct'?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> সঠিক':status==='wrong'?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> ভুল':'⏭️ স্কিপ';
             html+=`<div class="mcq-card card-${status}">
                 <span class="mcq-status-badge badge-${status}">${badgeText}</span>
                 <span class="q-num">Q${qNum}</span>
