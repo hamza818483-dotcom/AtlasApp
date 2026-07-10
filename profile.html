@@ -1630,7 +1630,7 @@ function formatSeconds(s) {
 function showConfirm(title, msg, okLabel, cb) {
     document.getElementById('confirmTitle').textContent = title;
     document.getElementById('confirmMsg').textContent = msg;
-    document.getElementById('confirmOkBtn').textContent = okLabel || '✅ হ্যাঁ';
+    document.getElementById('confirmOkBtn').innerHTML = okLabel || '✅ হ্যাঁ';
     confirmCallback = cb;
     document.getElementById('confirmDialog').classList.add('active');
 }

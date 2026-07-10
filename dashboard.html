@@ -1617,7 +1617,7 @@ function formatSeconds(s) {
 function showConfirm(title, msg, okLabel, cb) {
     document.getElementById('confirmTitle').textContent = title;
     document.getElementById('confirmMsg').textContent = msg;
-    document.getElementById('confirmOkBtn').textContent = okLabel || '✅ হ্যাঁ';
+    document.getElementById('confirmOkBtn').innerHTML = okLabel || '✅ হ্যাঁ';
     confirmCallback = cb;
     document.getElementById('confirmDialog').classList.add('active');
 }
@@ -1661,15 +1661,15 @@ function showExamResultFullPage(resultData) {
     
     // Score Card
     html += `<div class="result-score-card">
-        <div class="result-exam-name">📝 ${examName}</div>
+        <div class="result-exam-name"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34' /> <path d='M14 2v5a1 1 0 0 0 1 1h5' /> <path d='M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z' /></svg> ${examName}</div>
         <div class="result-big-score">${finalScore.toFixed(2)}</div>
         <div class="result-total">/ ${totalQ}</div>
     </div>`;
     
     // Stats Grid
     html += `<div class="result-grid">
-        <div class="result-stat"><div class="result-stat-val correct-val">✅ ${correct}</div><div class="result-stat-label">সঠিক</div></div>
-        <div class="result-stat"><div class="result-stat-val wrong-val">❌ ${wrong}</div><div class="result-stat-label">ভুল</div></div>
+        <div class="result-stat"><div class="result-stat-val correct-val"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#22C55E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M21.801 10A10 10 0 1 1 17 3.335' /> <path d='m9 11 3 3L22 4' /></svg> ${correct}</div><div class="result-stat-label">সঠিক</div></div>
+        <div class="result-stat"><div class="result-stat-val wrong-val"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><circle cx='12' cy='12' r='10' /> <path d='m15 9-6 6' /> <path d='m9 9 6 6' /></svg> ${wrong}</div><div class="result-stat-label">ভুল</div></div>
         <div class="result-stat"><div class="result-stat-val skipped-val">⏭️ ${skipped}</div><div class="result-stat-label">স্কিপ</div></div>
     </div>`;
     
@@ -1681,34 +1681,34 @@ function showExamResultFullPage(resultData) {
     // GPA Row
     if (gpaScore > 0) {
         html += `<div class="gpa-row">
-            <div class="gpa-box"><div class="gpa-box-title">📊 Without GPA</div><div class="gpa-box-val">${finalScore.toFixed(2)}</div></div>
-            <div class="gpa-box"><div class="gpa-box-title">🎓 With GPA</div><div class="gpa-box-val">${withGpa.toFixed(2)}</div><div class="gpa-box-sub">+${gpaScore.toFixed(2)}</div></div>
+            <div class="gpa-box"><div class="gpa-box-title"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M5 21v-6' /> <path d='M12 21V3' /> <path d='M19 21V9' /></svg> Without GPA</div><div class="gpa-box-val">${finalScore.toFixed(2)}</div></div>
+            <div class="gpa-box"><div class="gpa-box-title"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z' /> <path d='M22 10v6' /> <path d='M6 12.5V16a6 3 0 0 0 12 0v-3.5' /></svg> With GPA</div><div class="gpa-box-val">${withGpa.toFixed(2)}</div><div class="gpa-box-sub">+${gpaScore.toFixed(2)}</div></div>
         </div>`;
     }
-    if (isSecondTimer) html += `<div class="deduction-note">⚠️ সেকেন্ড টাইমার: -${deduction} মার্ক কর্তন</div>`;
+    if (isSecondTimer) html += `<div class="deduction-note"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3' /> <path d='M12 9v4' /> <path d='M12 17h.01' /></svg>️ সেকেন্ড টাইমার: -${deduction} মার্ক কর্তন</div>`;
     
     // Pie Chart
     html += `<div class="result-score-card" style="padding:16px;">
-        <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:#fff;">📊 পারফরম্যান্স</div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:#fff;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M5 21v-6' /> <path d='M12 21V3' /> <path d='M19 21V9' /></svg> পারফরম্যান্স</div>
         <div class="chart-wrap"><canvas id="resultChart" width="160" height="160"></canvas></div>
     </div>`;
     
     // Action Buttons
     html += `<div class="result-actions">
-        ${allowSolveSheet ? `<button class="result-action-btn" onclick="generateSolveSheetPDF(resultData)">📚 Solve Sheet PDF</button>` : ''}
+        ${allowSolveSheet ? `<button class="result-action-btn" onclick="generateSolveSheetPDF(resultData)"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 7v14' /> <path d='M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z' /></svg> Solve Sheet PDF</button>` : ''}
         <button class="result-action-btn leaderboard-btn" onclick="openLeaderboard('${resultData.examId || 0}','${examName.replace(/'/g, '')}')"><span class="si-tile tile-gold"><svg viewBox="0 0 24 24" fill="none"><path d="M8 21h8M12 17v4M7 4H4v4a5 5 0 005 5h6a5 5 0 005-5V4h-3M7 4h10v4a5 5 0 01-10 0V4z" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.12)"/></svg></span> Leaderboard</button>
     </div>`;
     
     html += `<div class="practice-actions">
-        <button class="practice-btn btn-practice-again" onclick="retakeFromResult('${resultData.examId}')">🔄 Practice Again</button>
-        <button class="practice-btn btn-mistake-practice" onclick="mistakePracticeFromResult('${resultData.examId}')">❌ Mistake Practice</button>
+        <button class="practice-btn btn-practice-again" onclick="retakeFromResult('${resultData.examId}')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8' /> <path d='M21 3v5h-5' /> <path d='M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16' /> <path d='M8 16H3v5' /></svg> Practice Again</button>
+        <button class="practice-btn btn-mistake-practice" onclick="mistakePracticeFromResult('${resultData.examId}')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><circle cx='12' cy='12' r='10' /> <path d='m15 9-6 6' /> <path d='m9 9 6 6' /></svg> Mistake Practice</button>
     </div>`;
     
     // Filter Buttons
     html += `<div class="filter-bar">
         <button class="filter-btn active" onclick="filterResultGrid(event,'all')">সব</button>
-        <button class="filter-btn" onclick="filterResultGrid(event,'correct')">✅ সঠিক</button>
-        <button class="filter-btn" onclick="filterResultGrid(event,'wrong')">❌ ভুল</button>
+        <button class="filter-btn" onclick="filterResultGrid(event,'correct')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#22C55E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M21.801 10A10 10 0 1 1 17 3.335' /> <path d='m9 11 3 3L22 4' /></svg> সঠিক</button>
+        <button class="filter-btn" onclick="filterResultGrid(event,'wrong')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><circle cx='12' cy='12' r='10' /> <path d='m15 9-6 6' /> <path d='m9 9 6 6' /></svg> ভুল</button>
         <button class="filter-btn" onclick="filterResultGrid(event,'skipped')">⏭️ স্কিপ</button>
     </div>`;
     
@@ -1723,7 +1723,7 @@ function showExamResultFullPage(resultData) {
             const status = isCorrect ? 'correct' : (userAnswer ? 'wrong' : 'skipped');
             
             html += `<div class="mcq-card solve-item" data-status="${status}">
-                <div class="q-status ${status}">${status === 'correct' ? '✅ সঠিক' : (status === 'wrong' ? '❌ ভুল' : '⏭️ স্কিপ')}</div>
+                <div class="q-status ${status}">${status === 'correct' ? '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> সঠিক' : (status === 'wrong' ? '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> ভুল' : '⏭️ স্কিপ')}</div>
                 <div class="q-header"><span class="q-number">প্রশ্ন ${i+1}/${resultData.questions.length}</span></div>
                 <div class="q-text">${q.question_text || q.question || ''}</div>`;
             
@@ -1737,20 +1737,20 @@ function showExamResultFullPage(resultData) {
                     html += `<div class="option-item${cls}">
                         <span class="option-radio">${['ক','খ','গ','ঘ','ঙ'][idx]}</span>
                         <span class="option-text">${optText}</span>
-                        ${options[idx] === correctAnswer ? '<span style="color:var(--success);margin-left:4px;">✅</span>' : ''}
-                        ${options[idx] === userAnswer && userAnswer !== correctAnswer ? '<span style="color:var(--error);margin-left:4px;">❌</span>' : ''}
+                        ${options[idx] === correctAnswer ? '<span style="color:var(--success);margin-left:4px;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg></span>' : ''}
+                        ${options[idx] === userAnswer && userAnswer !== correctAnswer ? '<span style="color:var(--error);margin-left:4px;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg></span>' : ''}
                     </div>`;
                 }
             });
             
             if (q.explanation) {
-                html += `<div class="explanation-box csv-box"><div class="exp-header">📋 ব্যাখ্যা</div><div class="exp-content">${q.explanation}</div>${(q.explanation_image_key||q.explanation_image)?`<img src="${q.explanation_image_key?('https://atlas-ai-proxy.hamza818483.workers.dev/storage/exp-images/'+q.explanation_image_key):('data:image/jpeg;base64,'+q.explanation_image)}" onclick="openPagePreviewLightbox(this.src,'ব্যাখ্যা')" style="max-width:100%;border-radius:6px;margin-top:6px;display:block;cursor:pointer;">`:''}</div>`;
+                html += `<div class="explanation-box csv-box"><div class="exp-header"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><rect width='8' height='4' x='8' y='2' rx='1' ry='1' /> <path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2' /></svg> ব্যাখ্যা</div><div class="exp-content">${q.explanation}</div>${(q.explanation_image_key||q.explanation_image)?`<img src="${q.explanation_image_key?('https://atlas-ai-proxy.hamza818483.workers.dev/storage/exp-images/'+q.explanation_image_key):('data:image/jpeg;base64,'+q.explanation_image)}" onclick="openPagePreviewLightbox(this.src,'ব্যাখ্যা')" style="max-width:100%;border-radius:6px;margin-top:6px;display:block;cursor:pointer;">`:''}</div>`;
             }
             html += `</div>`;
         });
     }
     html += `</div>`;
-    html += `<button class="btn btn-outline" onclick="backToList()" style="width:100%;margin-top:8px;">🏠 এক্সাম লিস্টে যান</button>`;
+    html += `<button class="btn btn-outline" onclick="backToList()" style="width:100%;margin-top:8px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8' /> <path d='M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z' /></svg> এক্সাম লিস্টে যান</button>`;
     
     document.getElementById('resultContent').innerHTML = html;
     ensurePagePreviewLightbox();
@@ -1870,7 +1870,7 @@ function loadProfile() {
     const timerClass = currentUser.timer_type === 'first' ? 'timer-first' : 'timer-second';
     document.getElementById('profileBadges').innerHTML =
         `<span class="profile-badge">${currentUser.batch||'—'} ব্যাচ</span>
-         <span class="profile-badge ${timerClass}">🔄 ${timerType}</span>`;
+         <span class="profile-badge ${timerClass}"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8' /> <path d='M21 3v5h-5' /> <path d='M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16' /> <path d='M8 16H3v5' /></svg> ${timerType}</span>`;
     document.getElementById('profileMeta').innerHTML =
         `📱 <span>${currentUser.phone||'—'}</span> | 🏫 ${currentUser.college||'—'}<br>
          SSC: <span>${currentUser.ssc_gpa||'—'}</span> | HSC: <span>${currentUser.hsc_gpa||'—'}</span>`;
@@ -1990,8 +1990,8 @@ function loadMistakesFullscreen() {
             <div class="mcat-box">
                 <div class="mcat-name">${escHtml(cat)}</div>
                 <div class="mcat-stats">
-                    <span class="mcat-stat-chip" style="background:rgba(88,166,255,0.15);color:var(--blue);">📝 ${catSummary[cat].exams.size}</span>
-                    <span class="mcat-stat-chip" style="background:rgba(248,81,73,0.15);color:var(--red);">❌ ${catSummary[cat].wrong}</span>
+                    <span class="mcat-stat-chip" style="background:rgba(88,166,255,0.15);color:var(--blue);"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34' /> <path d='M14 2v5a1 1 0 0 0 1 1h5' /> <path d='M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z' /></svg> ${catSummary[cat].exams.size}</span>
+                    <span class="mcat-stat-chip" style="background:rgba(248,81,73,0.15);color:var(--red);"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><circle cx='12' cy='12' r='10' /> <path d='m15 9-6 6' /> <path d='m9 9 6 6' /></svg> ${catSummary[cat].wrong}</span>
                     <span class="mcat-stat-chip" style="background:rgba(210,153,34,0.15);color:var(--yellow);">⏭️ ${catSummary[cat].skip}</span>
                 </div>
             </div>`).join('');
@@ -2104,7 +2104,7 @@ function showMistakesBySubject(type) {
     const body = document.getElementById('mistakesBody');
     body.innerHTML = Object.keys(subjects).map(sub => `
         <div class="subject-box" onclick="showSubjectExams('${escHtml(sub)}', '${type}')" style="background:var(--hover);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;cursor:pointer;transition:0.2s;">
-            <div style="font-size:16px;font-weight:700;margin-bottom:6px;">📘 ${escHtml(sub)}</div>
+            <div style="font-size:16px;font-weight:700;margin-bottom:6px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20' /></svg> ${escHtml(sub)}</div>
             <div style="font-size:13px;color:var(--text2);">${subjects[sub].length}টি প্রশ্ন</div>
         </div>
     `).join('');
@@ -2132,9 +2132,9 @@ function showSubjectExams(subject, type) {
         Object.keys(examGroups).map(exam => {
             const items = examGroups[exam];
             return `<div class="exam-group-card" style="background:var(--hover);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;">
-                <div style="font-size:14px;font-weight:700;margin-bottom:8px;">📝 ${escHtml(exam)} (${items.length}টি)</div>
+                <div style="font-size:14px;font-weight:700;margin-bottom:8px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34' /> <path d='M14 2v5a1 1 0 0 0 1 1h5' /> <path d='M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z' /></svg> ${escHtml(exam)} (${items.length}টি)</div>
                 <div style="display:flex;gap:6px;">
-                    <button onclick="practiceSubjectExam('${escHtml(exam)}', '${escHtml(subject)}', '${type}')" style="flex:1;background:var(--accent);color:#fff;border:none;padding:8px;border-radius:8px;cursor:pointer;">📝 Practice</button>
+                    <button onclick="practiceSubjectExam('${escHtml(exam)}', '${escHtml(subject)}', '${type}')" style="flex:1;background:var(--accent);color:#fff;border:none;padding:8px;border-radius:8px;cursor:pointer;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34' /> <path d='M14 2v5a1 1 0 0 0 1 1h5' /> <path d='M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z' /></svg> Practice</button>
                 </div>
             </div>`;
         }).join('');
@@ -2213,9 +2213,9 @@ function renderMistakesGroups() {
     });
 
     let html = `<div style="display:flex;gap:6px;margin-bottom:12px;">
-        <button onclick="showMistakesBySubject('wrong')" style="flex:1;background:var(--red);color:#fff;border:none;padding:10px;border-radius:10px;font-weight:600;cursor:pointer;">❌ সকল ভুল</button>
+        <button onclick="showMistakesBySubject('wrong')" style="flex:1;background:var(--red);color:#fff;border:none;padding:10px;border-radius:10px;font-weight:600;cursor:pointer;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><circle cx='12' cy='12' r='10' /> <path d='m15 9-6 6' /> <path d='m9 9 6 6' /></svg> সকল ভুল</button>
         <button onclick="showMistakesBySubject('skipped')" style="flex:1;background:var(--yellow);color:#000;border:none;padding:10px;border-radius:10px;font-weight:600;cursor:pointer;">⏭️ সকল স্কিপ</button>
-        <button onclick="showMistakesBySubject('all')" style="flex:1;background:var(--accent);color:#fff;border:none;padding:10px;border-radius:10px;font-weight:600;cursor:pointer;">📚 সব ভুল+স্কিপ</button>
+        <button onclick="showMistakesBySubject('all')" style="flex:1;background:var(--accent);color:#fff;border:none;padding:10px;border-radius:10px;font-weight:600;cursor:pointer;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 7v14' /> <path d='M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z' /></svg> সব ভুল+স্কিপ</button>
     </div>`;
 
     // FIX #7: category/exam type name-wise list with big font name + info chips
@@ -2234,28 +2234,28 @@ function renderMistakesGroups() {
                     <input type="checkbox" class="mistake-exam-checkbox" value="${items[0]?.exam_id || examName}" onchange="updateMistakesSummaryBar()" style="cursor:pointer;width:16px;height:16px;">
                 </label>
                 <div class="exam-group-info">
-                    <div class="exam-group-name">📝 ${escHtml(examName)}</div>
+                    <div class="exam-group-name"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34' /> <path d='M14 2v5a1 1 0 0 0 1 1h5' /> <path d='M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z' /></svg> ${escHtml(examName)}</div>
                     <div class="exam-group-meta">
-                        ${cat?`<span class="meta-chip">🏷️ ${escHtml(cat)}</span>`:''}
-                        ${subjects.map(s=>`<span class="meta-chip">📘 ${escHtml(s)}</span>`).join('')}
-                        ${wrongCount?`<span class="exam-group-badge badge-wrong">❌ ${wrongCount} ভুল</span>`:''}
+                        ${cat?`<span class="meta-chip"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z' /> <circle cx='7.5' cy='7.5' r='.5' fill='currentColor' /></svg>️ ${escHtml(cat)}</span>`:''}
+                        ${subjects.map(s=>`<span class="meta-chip"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20' /></svg> ${escHtml(s)}</span>`).join('')}
+                        ${wrongCount?`<span class="exam-group-badge badge-wrong"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><circle cx='12' cy='12' r='10' /> <path d='m15 9-6 6' /> <path d='m9 9 6 6' /></svg> ${wrongCount} ভুল</span>`:''}
                         ${skipCount?`<span class="exam-group-badge badge-skip">⏭️ ${skipCount} স্কিপ</span>`:''}
-                        <span class="exam-group-badge badge-total">📋 ${items.length}টি</span>
+                        <span class="exam-group-badge badge-total"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><rect width='8' height='4' x='8' y='2' rx='1' ry='1' /> <path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2' /></svg> ${items.length}টি</span>
                     </div>
                 </div>
                 <span class="exam-group-chevron" id="chev_${gId}">▼</span>
             </div>
             <div class="exam-group-actions">
                 <button class="exam-action-btn btn-detail" onclick="openMdScreen('${safeExamName}');event.stopPropagation();">
-                    <span class="btn-main-label">📋 বিস্তারিত</span>
+                    <span class="btn-main-label"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><rect width='8' height='4' x='8' y='2' rx='1' ry='1' /> <path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2' /></svg> বিস্তারিত</span>
                     <span class="btn-sub-label">প্রশ্ন+উত্তর+ব্যাখ্যা</span>
                 </button>
                 <button class="exam-action-btn btn-p1" onclick="startGroupPractice('${safeExamName}','wrong');event.stopPropagation();">
-                    <span class="btn-main-label">⚡ Practice-01</span>
+                    <span class="btn-main-label"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#FBBF24' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z' /></svg> Practice-01</span>
                     <span class="btn-sub-label">শুধু ভুল প্রশ্ন</span>
                 </button>
                 <button class="exam-action-btn btn-p2" onclick="startGroupPractice('${safeExamName}','all');event.stopPropagation();">
-                    <span class="btn-main-label">📚 Practice-02</span>
+                    <span class="btn-main-label"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 7v14' /> <path d='M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z' /></svg> Practice-02</span>
                     <span class="btn-sub-label">ভুল+স্কিপ</span>
                 </button>
             </div>
@@ -2280,16 +2280,16 @@ function buildGroupPreviews(items) {
         return `<div class="mistake-q-preview">
             <div class="mq-content">
                 <div class="mq-chips">
-                    <span class="q-status ${status}" style="margin-bottom:0;">${status==='wrong'?'❌ ভুল':'⏭️ স্কিপ'}</span>
-                    ${sub?`<span class="meta-chip">📘 ${escHtml(sub)}</span>`:''}
-                    ${date?`<span class="meta-chip">📅 ${date}</span>`:''}
+                    <span class="q-status ${status}" style="margin-bottom:0;">${status==='wrong'?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> ভুল':'⏭️ স্কিপ'}</span>
+                    ${sub?`<span class="meta-chip"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20' /></svg> ${escHtml(sub)}</span>`:''}
+                    ${date?`<span class="meta-chip"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M8 2v4' /> <path d='M16 2v4' /> <rect width='18' height='18' x='3' y='4' rx='2' /> <path d='M3 10h18' /></svg> ${date}</span>`:''}
                 </div>
                 <div class="mq-text-preview">${escHtml(preview)}</div>
                 <div class="mq-btns">
-                    <button class="mq-sm-btn mq-btn-detail" onclick="openSingleQDetail('${qId}')">📋 বিস্তারিত</button>
-                    <button class="mq-sm-btn mq-btn-p1" onclick="startSinglePractice('${qId}','wrong')">⚡ P-01</button>
-                    <button class="mq-sm-btn mq-btn-p2" onclick="startSinglePractice('${qId}','all')">📚 P-02</button>
-                    <button class="mq-sm-btn mq-btn-del" onclick="removeMistakeById('${qId}')">🗑️</button>
+                    <button class="mq-sm-btn mq-btn-detail" onclick="openSingleQDetail('${qId}')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><rect width='8' height='4' x='8' y='2' rx='1' ry='1' /> <path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2' /></svg> বিস্তারিত</button>
+                    <button class="mq-sm-btn mq-btn-p1" onclick="startSinglePractice('${qId}','wrong')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#FBBF24' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z' /></svg> P-01</button>
+                    <button class="mq-sm-btn mq-btn-p2" onclick="startSinglePractice('${qId}','all')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 7v14' /> <path d='M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z' /></svg> P-02</button>
+                    <button class="mq-sm-btn mq-btn-del" onclick="removeMistakeById('${qId}')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M10 11v6' /> <path d='M14 11v6' /> <path d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6' /> <path d='M3 6h18' /> <path d='M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2' /></svg>️</button>
                 </div>
             </div>
         </div>`;
@@ -2352,24 +2352,24 @@ function renderMdBody(filter) {
             const isCorrect = (i+1) === parseInt(correctAns);
             const isUserWrong = String(userAns) === String(i+1) && !isCorrect;
             return `<li class="option-item ${isCorrect?'correct':isUserWrong?'wrong':''}">
-                <span class="option-key">${optBn[i]}</span>${escHtml(opt)}${isCorrect?' ✅':''}${isUserWrong?' ❌':''}
+                <span class="option-key">${optBn[i]}</span>${escHtml(opt)}${isCorrect?' <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg>':''}${isUserWrong?' <svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg>':''}
             </li>`;
         }).join('');
         const qId = String(m.question_id || q.id || idx);
         return `<div class="question-card">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-                <span class="q-status ${status}">${status==='wrong'?'❌ ভুল':status==='skipped'?'⏭️ স্কিপ':'✅ সঠিক'}</span>
+                <span class="q-status ${status}">${status==='wrong'?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg> ভুল':status==='skipped'?'⏭️ স্কিপ':'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> সঠিক'}</span>
                 <div style="display:flex;gap:4px;">
-                    <button class="report-btn" onclick="reportQuestion('${qId}')">🚩</button>
-                    <button class="report-btn" onclick="bookmarkFromMd('${qId}')">🔖</button>
-                    <button class="report-btn" onclick="removeMistakeById('${qId}');renderMdBody(mdCurrentFilter);">🗑️</button>
+                    <button class="report-btn" onclick="reportQuestion('${qId}')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528' /></svg></button>
+                    <button class="report-btn" onclick="bookmarkFromMd('${qId}')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z' /></svg></button>
+                    <button class="report-btn" onclick="removeMistakeById('${qId}');renderMdBody(mdCurrentFilter);"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M10 11v6' /> <path d='M14 11v6' /> <path d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6' /> <path d='M3 6h18' /> <path d='M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2' /></svg>️</button>
                 </div>
             </div>
             ${q.image_url?`<img class="question-img" src="${escHtml(q.image_url)}" loading="lazy">`:''}
             <div class="question-text">${escHtml(qText)}</div>
             <ul class="options-list">${optsHtml}</ul>
-            ${q.explanation?`<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>`:''}
-            <button class="ai-explain-btn" onclick="loadAiExplain(this,'${qId}','${escHtml(qText.replace(/'/g,"\\'").slice(0,120))}')">🤖 ATLAS AI ব্যাখ্যা দেখুন</button>
+            ${q.explanation?`<div class="explanation-box"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#FBBF24' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5' /> <path d='M9 18h6' /> <path d='M10 22h4' /></svg> ${escHtml(q.explanation)}</div>`:''}
+            <button class="ai-explain-btn" onclick="loadAiExplain(this,'${qId}','${escHtml(qText.replace(/'/g,"\\'").slice(0,120))}')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 8V4H8' /> <rect width='16' height='12' x='4' y='8' rx='2' /> <path d='M2 14h2' /> <path d='M20 14h2' /> <path d='M15 13v2' /> <path d='M9 13v2' /></svg> ATLAS AI ব্যাখ্যা দেখুন</button>
             <div class="ai-explain-result" style="display:none;"></div>
         </div>`;
     }).join('');
@@ -2547,7 +2547,7 @@ function renderTodoList() {
         const items = groups[cat];
         const doneCount = items.filter(t => t.done).length;
         html += `<div class="todo-category-block">
-            <div class="todo-cat-header"><span>📁 ${escHtml(cat)}</span><span style="font-size:10px;color:var(--text2);">${doneCount}/${items.length} সম্পন্ন</span></div>
+            <div class="todo-cat-header"><span><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z' /></svg> ${escHtml(cat)}</span><span style="font-size:10px;color:var(--text2);">${doneCount}/${items.length} সম্পন্ন</span></div>
             ${items.map(t => buildTodoItemHtml(t)).join('')}
         </div>`;
     });
@@ -2564,22 +2564,22 @@ function buildTodoItemHtml(t) {
         timerHtml = `<div class="todo-timer-chip ${isExpired?'expired':'running'}">${isExpired?'⏰ সময় শেষ!':'⏱️ বাকি আছে'}</div>
             <div class="todo-live-countdown" id="todo_timer_${t.id}">${formatSeconds(secsLeft)}</div>`;
     } else if (t.done) {
-        timerHtml = `<div class="todo-timer-chip pending">✅ সম্পন্ন</div>`;
+        timerHtml = `<div class="todo-timer-chip pending"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#22C55E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M21.801 10A10 10 0 1 1 17 3.335' /> <path d='m9 11 3 3L22 4' /></svg> সম্পন্ন</div>`;
     } else {
         timerHtml = `<div class="todo-timer-chip pending">⏳ কোনো সময়সীমা নেই</div>`;
     }
     const typeLabels = { daily:'📅 Daily', weekly:'📆 Weekly', monthly:'📅 Monthly', custom:'🎯 Custom' };
     return `<div class="todo-item ${t.done?'done':''}">
-        <div class="todo-check ${t.done?'checked':''}" onclick="toggleTodoDone(${t.id})">${t.done?'<span style="color:#fff;font-size:12px;">✓</span>':''}</div>
+        <div class="todo-check ${t.done?'checked':''}" onclick="toggleTodoDone(${t.id})">${t.done?'<span style="color:#fff;font-size:12px;"><svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20 6 9 17l-5-5" /></svg></span>':''}</div>
         <div class="todo-item-content">
             <div class="todo-item-title ${t.done?'strikethrough':''}">${escHtml(t.name)}</div>
             <div class="todo-item-meta">
                 <span>${typeLabels[t.targetType]||t.targetType}</span>
-                ${t.deadlineAt?`<span>🎯 ${toBanglaDate(t.deadlineAt)}</span>`:''}
+                ${t.deadlineAt?`<span><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><circle cx='12' cy='12' r='10' /> <circle cx='12' cy='12' r='6' /> <circle cx='12' cy='12' r='2' /></svg> ${toBanglaDate(t.deadlineAt)}</span>`:''}
             </div>
             ${timerHtml}
         </div>
-        <button class="todo-del-btn" onclick="deleteTodoItem(${t.id})">🗑️</button>
+        <button class="todo-del-btn" onclick="deleteTodoItem(${t.id})"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M10 11v6' /> <path d='M14 11v6' /> <path d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6' /> <path d='M3 6h18' /> <path d='M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2' /></svg>️</button>
     </div>`;
 }
 
@@ -2793,12 +2793,12 @@ function renderPomoHistory() {
     }
     el.innerHTML = pomoSessions.slice(0,10).map((s, i) => `
         <div class="pomo-history-item" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-            <span style="flex:1;">${s.success ? '✅' : s.success === false ? '❌' : '⏱️'} ${escHtml(s.task)||'টাস্ক'}</span>
+            <span style="flex:1;">${s.success ? '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg>' : s.success === false ? '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg>' : '⏱️'} ${escHtml(s.task)||'টাস্ক'}</span>
             <div style="text-align:right;">
                 <div style="font-size:10px;color:var(--accent);">${formatSeconds(s.duration)}</div>
                 <div style="font-size:9px;color:var(--text2);">${toBanglaDate(s.completedAt)}</div>
             </div>
-            <button onclick="deletePomoSession(${i})" style="background:var(--red);color:#fff;border:none;padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;">🗑️</button>
+            <button onclick="deletePomoSession(${i})" style="background:var(--red);color:#fff;border:none;padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M10 11v6' /> <path d='M14 11v6' /> <path d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6' /> <path d='M3 6h18' /> <path d='M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2' /></svg>️</button>
         </div>`).join('');
 }
 
@@ -2926,22 +2926,22 @@ function buildHistoryCard(r) {
         <!-- FIX 7: Checkbox for bulk practice -->
         <input type="checkbox" class="history-checkbox" data-exam-id="${r.exam_id}" style="position:absolute;top:12px;left:12px;width:18px;height:18px;cursor:pointer;" onchange="updateBulkPracticeBtn()">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;padding-left:32px;">
-            <div class="card-item-title" style="flex:1;margin-bottom:0;font-size:13px;">📝 ${escHtml(examName)}</div>
+            <div class="card-item-title" style="flex:1;margin-bottom:0;font-size:13px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34' /> <path d='M14 2v5a1 1 0 0 0 1 1h5' /> <path d='M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z' /></svg> ${escHtml(examName)}</div>
             <span class="score-badge ${badge}" style="margin-left:6px;white-space:nowrap;">${score.toFixed(1)}/${total}</span>
         </div>
         <div style="margin-bottom:5px;padding-left:32px;">
-            ${r.subject?`<span class="meta-chip">📘 ${escHtml(r.subject)}${r.chapter?' › '+escHtml(r.chapter):''}${r.category?' › '+escHtml(r.category):''}</span>`:''}
+            ${r.subject?`<span class="meta-chip"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20' /></svg> ${escHtml(r.subject)}${r.chapter?' › '+escHtml(r.chapter):''}${r.category?' › '+escHtml(r.category):''}</span>`:''}
         </div>
-        <div class="card-item-row" style="padding-left:32px;"><span>✅ সঠিক</span><span style="color:var(--green);font-weight:700;">${r.correct||0}</span></div>
-        <div class="card-item-row" style="padding-left:32px;"><span>❌ ভুল</span><span style="color:var(--red);font-weight:700;">${r.wrong||0}</span></div>
+        <div class="card-item-row" style="padding-left:32px;"><span><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#22C55E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M21.801 10A10 10 0 1 1 17 3.335' /> <path d='m9 11 3 3L22 4' /></svg> সঠিক</span><span style="color:var(--green);font-weight:700;">${r.correct||0}</span></div>
+        <div class="card-item-row" style="padding-left:32px;"><span><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><circle cx='12' cy='12' r='10' /> <path d='m15 9-6 6' /> <path d='m9 9 6 6' /></svg> ভুল</span><span style="color:var(--red);font-weight:700;">${r.wrong||0}</span></div>
         <div class="card-item-row" style="border-bottom:none;padding-left:32px;"><span>⏭️ স্কিপ</span><span style="color:var(--yellow);font-weight:700;">${r.skipped||0}</span></div>
-        <div class="card-item-sub" style="margin-top:4px;padding-left:32px;">📅 ${toBanglaDate(r.submitted_at)}</div>
+        <div class="card-item-sub" style="margin-top:4px;padding-left:32px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M8 2v4' /> <path d='M16 2v4' /> <rect width='18' height='18' x='3' y='4' rx='2' /> <path d='M3 10h18' /></svg> ${toBanglaDate(r.submitted_at)}</div>
         <div class="btn-row" style="padding-left:32px;">
             <!-- FIX #5: all 3 buttons work instantly -->
-            <button class="btn btn-outline" onclick="viewDetails('${r.id}','${r.exam_id}')">📋 বিস্তারিত</button>
-            <button class="btn btn-primary" onclick="retakeExam('${r.exam_id}')">🔄 আবার দাও</button>
-            <button class="btn btn-outline" onclick="viewQuestions('${r.exam_id}')">📝 প্রশ্ন দেখো</button>
-            <button class="btn btn-danger" onclick="deleteHistory('${r.id}')">🗑️</button>
+            <button class="btn btn-outline" onclick="viewDetails('${r.id}','${r.exam_id}')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><rect width='8' height='4' x='8' y='2' rx='1' ry='1' /> <path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2' /></svg> বিস্তারিত</button>
+            <button class="btn btn-primary" onclick="retakeExam('${r.exam_id}')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8' /> <path d='M21 3v5h-5' /> <path d='M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16' /> <path d='M8 16H3v5' /></svg> আবার দাও</button>
+            <button class="btn btn-outline" onclick="viewQuestions('${r.exam_id}')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34' /> <path d='M14 2v5a1 1 0 0 0 1 1h5' /> <path d='M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z' /></svg> প্রশ্ন দেখো</button>
+            <button class="btn btn-danger" onclick="deleteHistory('${r.id}')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M10 11v6' /> <path d='M14 11v6' /> <path d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6' /> <path d='M3 6h18' /> <path d='M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2' /></svg>️</button>
         </div>
     </div>`;
 }
@@ -2964,10 +2964,10 @@ async function viewQuestions(examId) {
             return `<div class="question-card"><div class="question-text">${i+1}. ${escHtml(q.question_text||q.question||'')}</div>
                 ${q.image_url?`<img class="question-img" src="${escHtml(q.image_url)}" loading="lazy">`:''}
                 <ul class="options-list">${optsHtml}</ul>
-                ${q.explanation?`<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>`:''}
+                ${q.explanation?`<div class="explanation-box"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#FBBF24' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5' /> <path d='M9 18h6' /> <path d='M10 22h4' /></svg> ${escHtml(q.explanation)}</div>`:''}
             </div>`;
         }).join('')}
-        <div class="modal-close-strip"><button class="btn btn-outline" onclick="document.getElementById('detailModal').classList.remove('active')" style="width:100%;">✕ বন্ধ</button></div>`;
+        <div class="modal-close-strip"><button class="btn btn-outline" onclick="document.getElementById('detailModal').classList.remove('active')" style="width:100%;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M18 6 6 18' /> <path d='m6 6 12 12' /></svg> বন্ধ</button></div>`;
     modal.classList.add('active');
 }
 
@@ -3073,15 +3073,15 @@ function renderDetailModal(result, questions, answers, examName, score, total) {
     let html = `<div class="modal-title">📋 ${escHtml(examName)}</div>
         <div style="text-align:center;margin-bottom:10px;"><span class="score-badge ${badge}" style="font-size:14px;padding:4px 14px;">${score.toFixed(1)} / ${total} (${pct}%)</span></div>
         <div style="display:flex;justify-content:space-around;padding:8px;background:var(--hover);border-radius:8px;margin-bottom:10px;">
-            <div style="text-align:center;"><div style="color:var(--green);font-size:16px;font-weight:800;">✅ ${result.correct||0}</div><div style="font-size:9px;color:var(--text2);">সঠিক</div></div>
-            <div style="text-align:center;"><div style="color:var(--red);font-size:16px;font-weight:800;">❌ ${result.wrong||0}</div><div style="font-size:9px;color:var(--text2);">ভুল</div></div>
+            <div style="text-align:center;"><div style="color:var(--green);font-size:16px;font-weight:800;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#22C55E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M21.801 10A10 10 0 1 1 17 3.335' /> <path d='m9 11 3 3L22 4' /></svg> ${result.correct||0}</div><div style="font-size:9px;color:var(--text2);">সঠিক</div></div>
+            <div style="text-align:center;"><div style="color:var(--red);font-size:16px;font-weight:800;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><circle cx='12' cy='12' r='10' /> <path d='m15 9-6 6' /> <path d='m9 9 6 6' /></svg> ${result.wrong||0}</div><div style="font-size:9px;color:var(--text2);">ভুল</div></div>
             <div style="text-align:center;"><div style="color:var(--yellow);font-size:16px;font-weight:800;">⏭️ ${result.skipped||0}</div><div style="font-size:9px;color:var(--text2);">স্কিপ</div></div>
         </div>`;
     if (questions.length > 0) {
         html += `<div class="q-filter-tabs" id="detailFilterTabs">
-            <button class="q-filter-tab active" onclick="setQFilter('all',this)">📋 সব (${questions.length})</button>
-            <button class="q-filter-tab" onclick="setQFilter('correct',this)">✅ সঠিক</button>
-            <button class="q-filter-tab" onclick="setQFilter('wrong',this)">❌ ভুল</button>
+            <button class="q-filter-tab active" onclick="setQFilter('all',this)"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><rect width='8' height='4' x='8' y='2' rx='1' ry='1' /> <path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2' /></svg> সব (${questions.length})</button>
+            <button class="q-filter-tab" onclick="setQFilter('correct',this)"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#22C55E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M21.801 10A10 10 0 1 1 17 3.335' /> <path d='m9 11 3 3L22 4' /></svg> সঠিক</button>
+            <button class="q-filter-tab" onclick="setQFilter('wrong',this)"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><circle cx='12' cy='12' r='10' /> <path d='m15 9-6 6' /> <path d='m9 9 6 6' /></svg> ভুল</button>
             <button class="q-filter-tab" onclick="setQFilter('skipped',this)">⏭️ স্কিপ</button>
         </div>
         <div id="questionsList">${buildQuestionsHtml(questions, answers, 'all')}</div>`;
@@ -3089,8 +3089,8 @@ function renderDetailModal(result, questions, answers, examName, score, total) {
         html += `<p style="text-align:center;color:var(--text2);padding:10px;">প্রশ্ন পাওয়া যাচ্ছে না</p>`;
     }
     html += `<div class="modal-close-strip"><div class="btn-row">
-        <button class="btn btn-primary" onclick="retakeExam('${result.exam_id}')" style="flex:1;">🔄 আবার দাও</button>
-        <button class="btn btn-outline" onclick="document.getElementById('detailModal').classList.remove('active')" style="flex:1;">✕ বন্ধ</button>
+        <button class="btn btn-primary" onclick="retakeExam('${result.exam_id}')" style="flex:1;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8' /> <path d='M21 3v5h-5' /> <path d='M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16' /> <path d='M8 16H3v5' /></svg> আবার দাও</button>
+        <button class="btn btn-outline" onclick="document.getElementById('detailModal').classList.remove('active')" style="flex:1;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M18 6 6 18' /> <path d='m6 6 12 12' /></svg> বন্ধ</button>
     </div></div>`;
     content.innerHTML = html;
     content._questions = questions; content._answers = answers; content._result = result;
@@ -3118,26 +3118,26 @@ function buildQuestionsHtml(questions, answers, filter) {
         return { q, userAns, status, correctIdx, idx };
     });
     if (filter!=='all') items = items.filter(i=>i.status===filter);
-    if (!items.length) return `<div class="empty-state" style="padding:20px;"><span class="empty-state-icon">${filter==='correct'?'✅':filter==='wrong'?'❌':'⏭️'}</span><div class="empty-state-text">কোনো প্রশ্ন নেই</div></div>`;
+    if (!items.length) return `<div class="empty-state" style="padding:20px;"><span class="empty-state-icon">${filter==='correct'?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg>':filter==='wrong'?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg>':'⏭️'}</span><div class="empty-state-text">কোনো প্রশ্ন নেই</div></div>`;
     return items.map(({ q, userAns, status, correctIdx }) => {
         const statusLabel = status==='correct'?'✅ সঠিক':status==='wrong'?'❌ ভুল':'⏭️ স্কিপ';
         const opts = [q.option1,q.option2,q.option3,q.option4,q.option5].filter(o=>o&&o!=='—');
         const optsHtml = opts.map((opt,i) => {
             const isCorrect=(i+1)===parseInt(correctIdx);
             const isUserWrong=String(userAns)===String(i+1)&&!isCorrect;
-            return `<li class="option-item ${isCorrect?'correct':isUserWrong?'wrong':''}"><span class="option-key">${optBn[i]}</span>${escHtml(opt)} ${isCorrect?'✅':''} ${isUserWrong?'❌':''}</li>`;
+            return `<li class="option-item ${isCorrect?'correct':isUserWrong?'wrong':''}"><span class="option-key">${optBn[i]}</span>${escHtml(opt)} ${isCorrect?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg>':''} ${isUserWrong?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg>':''}</li>`;
         }).join('');
         const qId = q.id||'';
         return `<div class="question-card">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
                 <span class="q-status ${status}">${statusLabel}</span>
-                <button class="report-btn" onclick="reportQuestion('${qId}')">🚩 রিপোর্ট</button>
+                <button class="report-btn" onclick="reportQuestion('${qId}')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528' /></svg> রিপোর্ট</button>
             </div>
             ${q.image_url?`<img class="question-img" src="${escHtml(q.image_url)}" loading="lazy">`:''}
             <div class="question-text">${escHtml(q.question_text||q.question||'')}</div>
             <ul class="options-list">${optsHtml}</ul>
-            ${q.explanation?`<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>`:''}
-            <button class="ai-explain-btn" onclick="loadAiExplain(this,'${qId}','${escHtml((q.question_text||q.question||'').replace(/'/g,"\\'").slice(0,120))}')">🤖 ATLAS AI ব্যাখ্যা দেখুন</button>
+            ${q.explanation?`<div class="explanation-box"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#FBBF24' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5' /> <path d='M9 18h6' /> <path d='M10 22h4' /></svg> ${escHtml(q.explanation)}</div>`:''}
+            <button class="ai-explain-btn" onclick="loadAiExplain(this,'${qId}','${escHtml((q.question_text||q.question||'').replace(/'/g,"\\'").slice(0,120))}')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 8V4H8' /> <rect width='16' height='12' x='4' y='8' rx='2' /> <path d='M2 14h2' /> <path d='M20 14h2' /> <path d='M15 13v2' /> <path d='M9 13v2' /></svg> ATLAS AI ব্যাখ্যা দেখুন</button>
             <div class="ai-explain-result" style="display:none;"></div>
         </div>`;
     }).join('');
@@ -3188,10 +3188,10 @@ function filterClassHistory() {
     if (!filtered.length) { list.innerHTML = `<div class="empty-state"><span class="empty-state-icon"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5' /> <rect x='2' y='6' width='14' height='12' rx='2' /></svg></span><div class="empty-state-text">কোনো ক্লাস নেই</div></div>`; return; }
     list.innerHTML = filtered.map(h => `
         <div class="card-item">
-            <div class="card-item-title">📘 ${escHtml(h.subject||'—')}</div>
-            <div class="card-item-row"><span>📖 চ্যাপ্টার</span><span>${escHtml(h.chapter||'—')}</span></div>
-            <div class="card-item-row"><span>🎥 পার্ট</span><span>${escHtml(h.part||'—')}</span></div>
-            <div class="card-item-sub">📅 ${toBanglaDate(h.time)}</div>
+            <div class="card-item-title"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20' /></svg> ${escHtml(h.subject||'—')}</div>
+            <div class="card-item-row"><span><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 7v14' /> <path d='M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z' /></svg> চ্যাপ্টার</span><span>${escHtml(h.chapter||'—')}</span></div>
+            <div class="card-item-row"><span><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5' /> <rect x='2' y='6' width='14' height='12' rx='2' /></svg> পার্ট</span><span>${escHtml(h.part||'—')}</span></div>
+            <div class="card-item-sub"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M8 2v4' /> <path d='M16 2v4' /> <rect width='18' height='18' x='3' y='4' rx='2' /> <path d='M3 10h18' /></svg> ${toBanglaDate(h.time)}</div>
             <div class="btn-row"><button class="btn btn-primary" onclick="rewatchClass('${encodeURIComponent(h.subject||'')}','${encodeURIComponent(h.chapter||'')}','${encodeURIComponent(h.part||'')}')">▶️ Rewatch</button></div>
         </div>`).join('');
 }
@@ -3217,19 +3217,19 @@ function loadBookmarks() {
         const opts = [q.option1,q.option2,q.option3,q.option4,q.option5].filter(Boolean);
         const optsHtml = opts.map((opt,i) => {
             const isCorrect=(i+1)===parseInt(q.answer_index||q.correct_option);
-            return `<li class="option-item ${isCorrect?'correct':''}"><span class="option-key">${optBn[i]}</span>${escHtml(opt)} ${isCorrect?'✅':''}</li>`;
+            return `<li class="option-item ${isCorrect?'correct':''}"><span class="option-key">${optBn[i]}</span>${escHtml(opt)} ${isCorrect?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg>':''}</li>`;
         }).join('');
         const qText = escHtml(q.question_text||q.question||`প্রশ্ন #${qid}`);
         return `<div class="card-item bookmark-card">
-            <div style="margin-bottom:6px;">${bm.exam_name?`<span class="meta-chip">📝 ${escHtml(bm.exam_name)}</span>`:''} ${q.subject?`<span class="meta-chip">📘 ${escHtml(q.subject)}</span>`:''}</div>
+            <div style="margin-bottom:6px;">${bm.exam_name?`<span class="meta-chip"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34' /> <path d='M14 2v5a1 1 0 0 0 1 1h5' /> <path d='M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z' /></svg> ${escHtml(bm.exam_name)}</span>`:''} ${q.subject?`<span class="meta-chip"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20' /></svg> ${escHtml(q.subject)}</span>`:''}</div>
             ${q.image_url?`<img class="question-img" src="${escHtml(q.image_url)}" loading="lazy">`:''}
             <div class="question-text">${qText}</div>
             ${optsHtml?`<ul class="options-list">${optsHtml}</ul>`:''}
-            ${q.explanation?`<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>`:''}
-            <button class="ai-explain-btn" onclick="loadAiExplain(this,'${qid}','${qText.replace(/'/g,"\\'").replace(/"/g,'\\"').slice(0,120)}')">🤖 ATLAS AI ব্যাখ্যা দেখুন</button>
+            ${q.explanation?`<div class="explanation-box"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#FBBF24' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5' /> <path d='M9 18h6' /> <path d='M10 22h4' /></svg> ${escHtml(q.explanation)}</div>`:''}
+            <button class="ai-explain-btn" onclick="loadAiExplain(this,'${qid}','${qText.replace(/'/g,"\\'").replace(/"/g,'\\"').slice(0,120)}')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 8V4H8' /> <rect width='16' height='12' x='4' y='8' rx='2' /> <path d='M2 14h2' /> <path d='M20 14h2' /> <path d='M15 13v2' /> <path d='M9 13v2' /></svg> ATLAS AI ব্যাখ্যা দেখুন</button>
             <div class="ai-explain-result" style="display:none;"></div>
-            <div class="card-item-sub" style="margin-top:6px;">📅 ${toBanglaDate(bm.bookmarked_at)}</div>
-            <div class="btn-row"><button class="btn btn-danger" onclick="removeBookmark('${qid}')">🗑️ রিমুভ</button></div>
+            <div class="card-item-sub" style="margin-top:6px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M8 2v4' /> <path d='M16 2v4' /> <rect width='18' height='18' x='3' y='4' rx='2' /> <path d='M3 10h18' /></svg> ${toBanglaDate(bm.bookmarked_at)}</div>
+            <div class="btn-row"><button class="btn btn-danger" onclick="removeBookmark('${qid}')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M10 11v6' /> <path d='M14 11v6' /> <path d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6' /> <path d='M3 6h18' /> <path d='M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2' /></svg>️ রিমুভ</button></div>
         </div>`;
     }).join('');
 }
@@ -3258,11 +3258,11 @@ async function loadNotifications() {
             return `<div class="card-item notif-card ${n.is_read?'notification-read':''}" onclick="markNotifRead('${n.id}')">
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;">
                     <div style="display:flex;align-items:center;">${!n.is_read?'<span class="notification-dot"></span>':''}<div class="card-item-title" style="font-size:13px;color:var(--accent);">${escHtml(n.title||'নোটিফিকেশন')}</div></div>
-                    <button class="btn btn-danger" onclick="event.stopPropagation();deleteNotif('${n.id}')" style="padding:3px 7px;font-size:10px;">🗑️</button>
+                    <button class="btn btn-danger" onclick="event.stopPropagation();deleteNotif('${n.id}')" style="padding:3px 7px;font-size:10px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M10 11v6' /> <path d='M14 11v6' /> <path d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6' /> <path d='M3 6h18' /> <path d='M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2' /></svg>️</button>
                 </div>
                 <div class="card-item-sub" style="margin-top:3px;">${escHtml(n.message||'')}</div>
-                ${n.admin_response?`<div class="admin-response">👑 ${escHtml(n.admin_response)}</div>`:''}
-                <div style="font-size:10px;color:var(--text2);margin-top:6px;">📅 ${toBanglaDate(n.created_at)}</div>
+                ${n.admin_response?`<div class="admin-response"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#FFB800' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z' /> <path d='M5 21h14' /></svg> ${escHtml(n.admin_response)}</div>`:''}
+                <div style="font-size:10px;color:var(--text2);margin-top:6px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M8 2v4' /> <path d='M16 2v4' /> <rect width='18' height='18' x='3' y='4' rx='2' /> <path d='M3 10h18' /></svg> ${toBanglaDate(n.created_at)}</div>
             </div>`;
         }).join('');
     } catch(e) { list.innerHTML = `<div class="empty-state"><span class="empty-state-icon"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3' /> <path d='M12 9v4' /> <path d='M12 17h.01' /></svg>️</span><div class="empty-state-text">লোড করতে সমস্যা</div></div>`; }
@@ -3373,12 +3373,12 @@ function showResultScreen(score,total,correct,wrong,skipped,pct,title,reviewData
     document.getElementById('resPct').textContent=pct+'%';
     resultOverlayAllData=reviewData;
     let summaryHtml=`<div class="card-item" style="padding:14px;margin-bottom:10px;">
-        <div class="card-item-row"><span>📋 মোট প্রশ্ন</span><span style="font-weight:700;">${total}</span></div>
-        <div class="card-item-row"><span>✅ সঠিক</span><span style="color:var(--green);font-weight:700;">+${correct}</span></div>
-        <div class="card-item-row"><span>❌ ভুল (ক্ষতি ${negMark.toFixed(2)})</span><span style="color:var(--red);">-${negMark.toFixed(2)}</span></div>
+        <div class="card-item-row"><span><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><rect width='8' height='4' x='8' y='2' rx='1' ry='1' /> <path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2' /></svg> মোট প্রশ্ন</span><span style="font-weight:700;">${total}</span></div>
+        <div class="card-item-row"><span><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#22C55E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M21.801 10A10 10 0 1 1 17 3.335' /> <path d='m9 11 3 3L22 4' /></svg> সঠিক</span><span style="color:var(--green);font-weight:700;">+${correct}</span></div>
+        <div class="card-item-row"><span><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><circle cx='12' cy='12' r='10' /> <path d='m15 9-6 6' /> <path d='m9 9 6 6' /></svg> ভুল (ক্ষতি ${negMark.toFixed(2)})</span><span style="color:var(--red);">-${negMark.toFixed(2)}</span></div>
         ${isSecondTimer?`<div class="card-item-row"><span>⏱️ সেকেন্ড টাইমার</span><span style="color:var(--red);">-${timerDeduction.toFixed(2)}</span></div>`:''}
-        <div class="card-item-row" style="border-top:1px solid var(--border);padding-top:6px;"><span>📊 Without GPA</span><span style="font-weight:800;color:var(--accent);">${score.toFixed(2)}</span></div>
-        <div class="card-item-row" style="border-bottom:none;"><span>🎓 With GPA (+${gpaScore.toFixed(2)})</span><span style="font-weight:800;color:var(--accent);">${withGpa.toFixed(2)}</span></div>
+        <div class="card-item-row" style="border-top:1px solid var(--border);padding-top:6px;"><span><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M5 21v-6' /> <path d='M12 21V3' /> <path d='M19 21V9' /></svg> Without GPA</span><span style="font-weight:800;color:var(--accent);">${score.toFixed(2)}</span></div>
+        <div class="card-item-row" style="border-bottom:none;"><span><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z' /> <path d='M22 10v6' /> <path d='M6 12.5V16a6 3 0 0 0 12 0v-3.5' /></svg> With GPA (+${gpaScore.toFixed(2)})</span><span style="font-weight:800;color:var(--accent);">${withGpa.toFixed(2)}</span></div>
     </div>`;
     document.getElementById('resultReviewList').innerHTML=summaryHtml+buildResultReviewHtml(reviewData,'all');
     document.querySelectorAll('#resultFilterTabs .q-filter-tab').forEach(b=>b.classList.remove('active'));
@@ -3390,14 +3390,14 @@ function buildResultReviewHtml(reviewData, filter) {
     const optBn=['ক','খ','গ','ঘ','ঙ'];
     let items=reviewData;
     if(filter!=='all') items=items.filter(i=>i.status===filter);
-    if(!items.length) return `<div class="empty-state" style="padding:20px;"><span class="empty-state-icon">${filter==='correct'?'✅':filter==='wrong'?'❌':'⏭️'}</span><div class="empty-state-text">কোনো প্রশ্ন নেই</div></div>`;
+    if(!items.length) return `<div class="empty-state" style="padding:20px;"><span class="empty-state-icon">${filter==='correct'?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg>':filter==='wrong'?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg>':'⏭️'}</span><div class="empty-state-text">কোনো প্রশ্ন নেই</div></div>`;
     return items.map(({q,userAns,status,correctAns})=>{
         const opts=[q.option1,q.option2,q.option3,q.option4,q.option5].filter(o=>o&&o!=='—');
-        const optsHtml=opts.map((opt,i)=>{const isC=(i+1)===parseInt(correctAns);const isUW=String(userAns)===String(i+1)&&!isC;return `<li class="option-item ${isC?'correct':isUW?'wrong':''}"><span class="option-key">${optBn[i]}</span>${escHtml(opt)} ${isC?'✅':''} ${isUW?'❌':''}</li>`;}).join('');
+        const optsHtml=opts.map((opt,i)=>{const isC=(i+1)===parseInt(correctAns);const isUW=String(userAns)===String(i+1)&&!isC;return `<li class="option-item ${isC?'correct':isUW?'wrong':''}"><span class="option-key">${optBn[i]}</span>${escHtml(opt)} ${isC?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg>':''} ${isUW?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg>':''}</li>`;}).join('');
         return `<div class="question-card"><span class="q-status ${status}">${status==='correct'?'✅ সঠিক':status==='wrong'?'❌ ভুল':'⏭️ স্কিপ'}</span>
             <div class="question-text" style="font-size:12px;">${escHtml(q.question_text||q.question||'')}</div>
             <ul class="options-list">${optsHtml}</ul>
-            ${q.explanation?`<div class="explanation-box">💡 ${escHtml(q.explanation)}</div>`:''}
+            ${q.explanation?`<div class="explanation-box"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#FBBF24' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5' /> <path d='M9 18h6' /> <path d='M10 22h4' /></svg> ${escHtml(q.explanation)}</div>`:''}
         </div>`;
     }).join('');
 }
@@ -3559,14 +3559,14 @@ async function loadLeaderboard(type) {
 
             html += `<div class="lb-exam-card">
                 <div class="lb-exam-info">
-                    <div class="lb-exam-name">📝 ${escHtml(examName)}</div>
+                    <div class="lb-exam-name"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34' /> <path d='M14 2v5a1 1 0 0 0 1 1h5' /> <path d='M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z' /></svg> ${escHtml(examName)}</div>
                     <div class="lb-exam-chips">
-                        ${subject?`<span class="lb-exam-chip">📘 ${escHtml(subject)}</span>`:''}
-                        ${chapter?`<span class="lb-exam-chip">📖 ${escHtml(chapter)}</span>`:''}
-                        ${category?`<span class="lb-exam-chip">🏷️ ${escHtml(category)}</span>`:''}
-                        ${examDate?`<span class="lb-exam-chip">📅 ${examDate}</span>`:''}
+                        ${subject?`<span class="lb-exam-chip"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20' /></svg> ${escHtml(subject)}</span>`:''}
+                        ${chapter?`<span class="lb-exam-chip"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#6366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 7v14' /> <path d='M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z' /></svg> ${escHtml(chapter)}</span>`:''}
+                        ${category?`<span class="lb-exam-chip"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z' /> <circle cx='7.5' cy='7.5' r='.5' fill='currentColor' /></svg>️ ${escHtml(category)}</span>`:''}
+                        ${examDate?`<span class="lb-exam-chip"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M8 2v4' /> <path d='M16 2v4' /> <rect width='18' height='18' x='3' y='4' rx='2' /> <path d='M3 10h18' /></svg> ${examDate}</span>`:''}
                     </div>
-                    <button class="lb-see-btn" onclick="toggleLbDetail('${panelId}','${examId}',this)">🏆 Leaderboard দেখো</button>
+                    <button class="lb-see-btn" onclick="toggleLbDetail('${panelId}','${examId}',this)"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#FFB800' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M10 14.66v1.626a2 2 0 0 1-.976 1.696A5 5 0 0 0 7 21.978' /> <path d='M14 14.66v1.626a2 2 0 0 0 .976 1.696A5 5 0 0 1 17 21.978' /> <path d='M18 9h1.5a1 1 0 0 0 0-5H18' /> <path d='M4 22h16' /> <path d='M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z' /> <path d='M6 9H4.5a1 1 0 0 1 0-5H6' /></svg> Leaderboard দেখো</button>
                 </div>
                 <div class="lb-detail-panel" id="${panelId}">
                     <div style="text-align:center;color:var(--text2);font-size:12px;padding:10px;">লোড হচ্ছে...</div>
