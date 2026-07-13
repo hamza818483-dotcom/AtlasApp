@@ -1942,9 +1942,18 @@ async function callAIForMCQ(prompt){
 // =============================================================
 // SOLVE SHEET PDF — Premium Book Style (req #2)
 // =============================================================
+function _loadHtml2PdfLib(cb){
+    if(window.html2pdf){cb();return;}
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+    s.onload=cb;
+    s.onerror=function(){showToast('❌ PDF লাইব্রেরি লোড ব্যর্থ');};
+    document.head.appendChild(s);
+}
 function openSolveSheetPDF(){
     if(!checkGuestAction())return;
-    const w=window.open('','SolveSheet','width=900,height=700');
+    const btn=document.querySelector('.result-action-btn[onclick=\"openSolveSheetPDF()\"]');
+    if(btn){btn.disabled=true;btn.dataset.origHtml=btn.innerHTML;btn.innerHTML='⏳ PDF তৈরি হচ্ছে...';}
     const examName=currentExam?.title||(currentExam?.subject+' - '+currentExam?.chapter)||'Exam';
     const sess=getSession();
     const correct=examQuestions.filter(q=>userAnswers[q.id]===q.answer_index).length;
@@ -2033,8 +2042,33 @@ function openSolveSheetPDF(){
         });
         html+=`</div><div class="pdf-footer">ATLAS APP © 2026 | atlasprep.pages.dev | পৃষ্ঠা ${page+1}/${totalPages}</div></div>`;
     }
-    html+=`<button class="print-btn" onclick="window.print()"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 15V3' /> <path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' /> <path d='m7 10 5 5 5-5' /></svg> PDF হিসেবে ডাউনলোড / প্রিন্ট করুন</button></body></html>`;
-    w.document.write(html);w.document.close();
+    html+=`</body></html>`;
+
+    _loadHtml2PdfLib(function(){
+        const iframe=document.createElement('iframe');
+        iframe.style.position='fixed';iframe.style.left='-9999px';iframe.style.top='0';
+        iframe.style.width='794px';iframe.style.height='1123px';iframe.style.border='0';
+        document.body.appendChild(iframe);
+        iframe.onload=function(){
+            const target=iframe.contentDocument.body;
+            const opt={
+                margin:0,
+                filename:'ATLAS_Solve_'+(currentExam?.id||Date.now())+'.pdf',
+                image:{type:'jpeg',quality:0.98},
+                html2canvas:{scale:2,useCORS:true},
+                jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+            };
+            window.html2pdf().set(opt).from(target).save().then(function(){
+                document.body.removeChild(iframe);
+                if(btn){btn.disabled=false;btn.innerHTML=btn.dataset.origHtml;}
+            }).catch(function(e){
+                document.body.removeChild(iframe);
+                showToast('❌ PDF তৈরি ব্যর্থ: '+(e&&e.message?e.message:'Unknown error'));
+                if(btn){btn.disabled=false;btn.innerHTML=btn.dataset.origHtml;}
+            });
+        };
+        iframe.srcdoc=html;
+    });
 }
 
 // =============================================================
