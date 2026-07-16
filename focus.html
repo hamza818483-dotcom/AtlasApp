@@ -2036,6 +2036,7 @@ async function renderLive(){
         sleep_seconds:r.sleep_seconds||0,
         breaks_used:r.breaks_used||0,
         phone:r.user_phone,
+        updated_at:r.updated_at||null,
         _isSelf: isSelf,
         _fetchedAt: now,
         _baseSeconds: r.study_seconds||0
@@ -2043,13 +2044,17 @@ async function renderLive(){
     });
     // Dedupe: keep only the most recently-updated row per phone — guards against
     // old crashed/ghost sessions that never got marked 'ended'.
-    const seenPhones=new Set();
-    const dedupedStudents=[];
-    for(const s of rawRows){
-      if(seenPhones.has(s.phone)) continue;
-      seenPhones.add(s.phone);
-      dedupedStudents.push(s);
-    }
+    // পূর্বে query শুধু study_seconds.desc দিয়ে sort হতো, তাই dedup যেই row প্রথমে
+    // পেত সেটাই রেখে দিতো — এটা সবসময় সবচেয়ে সাম্প্রতিক session হতো না। কোনো পুরনো/ghost
+    // session-এর study_seconds বেশি হলে সেটাই থেকে যেত, ফলে নিজের আসল "Live" status
+    // মাঝে মাঝে হারিয়ে যেত (updated_at অনুযায়ী সবচেয়ে নতুন row বেছে নেওয়া হচ্ছে না ছিল)।
+    // এখন explicitly updated_at দিয়ে সবচেয়ে recent row বেছে নেওয়া হয় প্রতি phone-এর জন্য।
+    const seenPhones=new Map();
+    rawRows.forEach(s=>{
+      const existing=seenPhones.get(s.phone);
+      if(!existing || new Date(s.updated_at||0) > new Date(existing.updated_at||0)) seenPhones.set(s.phone, s);
+    });
+    const dedupedStudents=Array.from(seenPhones.values());
 
     // Merge: existing local seconds যদি DB এর চেয়ে বেশি হয়, keep করো
     dedupedStudents.forEach(s=>{
