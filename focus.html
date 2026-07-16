@@ -1308,7 +1308,17 @@ async function startSession(){
     body:JSON.stringify({
       user_phone:currentUser.phone,
       status:'study',
-      study_seconds: accumulatedStudySecs  // আগের session-এর total থেকে শুরু
+      study_seconds: accumulatedStudySecs,  // আগের session-এর total থেকে শুরু
+      // bug fix (root cause of "Break/Sleep mood-এ কোনো ডেটা নেই" + today/weekly leaderboard
+      // silently ফাঁকা থাকা): started_at কখনো পাঠানো হতো না, আর D1-এর focus_sessions টেবিলে
+      // এই column-এর কোনো DEFAULT value নেই (PRAGMA table_info অনুযায়ী dflt_value: null) —
+      // তাই প্রতিটা নতুন session সবসময় started_at=NULL নিয়ে তৈরি হতো। এই ফাইলের চারটা জায়গায়
+      // (আজকের live stats, break/sleep ranking, weekly/multi-day ranking, ইত্যাদি) সবগুলো
+      // query started_at=gte.X ফিল্টার ব্যবহার করে — NULL কখনো কোনো gte. comparison-এ মেলে না,
+      // তাই সব query 0 rows পেত, যদিও study_seconds/break_seconds/sleep_seconds ডেটাবেসে সত্যিই
+      // জমা হচ্ছিল (created_at column-এ দেখা যায়)। এখন session তৈরির সময় started_at explicit
+      // ভাবে সেট করা হচ্ছে, তাই ভবিষ্যতের সব session সঠিকভাবে দেখা যাবে।
+      started_at: new Date().toISOString()
     })
   });
   sessionId = rows?.[0]?.id || null;
