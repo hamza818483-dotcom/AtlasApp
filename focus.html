@@ -2705,14 +2705,17 @@ function buildRankCard(s,rank,showStatus,hideMeta){
 
   const timeVal = (s.total_seconds!==undefined && s.total_seconds!==null) ? s.total_seconds : (s.study_seconds||0);
 
-  // Leaderboard card-এ compact meta: কতবার break, কত সময় break+sleep মিলিয়ে
-  // (Total study + বাকি সময় = Break+Sleep, এভাবেই গণনা)
+  // Leaderboard card-এ compact meta: কতবার break, বিরতি ও ঘুম আলাদা আলাদা সময়
   let metaLine='';
   if(!hideMeta && (s.break_seconds!==undefined || s.sleep_seconds!==undefined)){
-    const bsSecs=(s.break_seconds||0)+(s.sleep_seconds||0);
+    const brSecs=s.break_seconds||0, slSecs=s.sleep_seconds||0;
     const breaksCount=s.breaks_used||0;
-    if(bsSecs>0 || breaksCount>0){
-      metaLine=`<div class="r-meta-line">${breaksCount>0?`<svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#92400E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M10 2v2' /> <path d='M14 2v2' /> <path d='M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1' /> <path d='M6 2v2' /></svg>×${breaksCount}`:''}${bsSecs>0?` · বিরতি+ঘুম ${fmtCompact(bsSecs)}`:''}</div>`;
+    if(brSecs>0 || slSecs>0 || breaksCount>0){
+      const parts=[];
+      if(breaksCount>0) parts.push(`<svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#92400E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M10 2v2' /> <path d='M14 2v2' /> <path d='M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1' /> <path d='M6 2v2' /></svg>×${breaksCount}`);
+      if(brSecs>0) parts.push(`বিরতি ${fmtCompact(brSecs)}`);
+      if(slSecs>0) parts.push(`ঘুম ${fmtCompact(slSecs)}`);
+      metaLine=`<div class="r-meta-line">${parts.join(' · ')}</div>`;
     }
   }
 
