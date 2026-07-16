@@ -2705,24 +2705,7 @@ function buildRankCard(s,rank,showStatus,hideMeta){
 
   const timeVal = (s.total_seconds!==undefined && s.total_seconds!==null) ? s.total_seconds : (s.study_seconds||0);
 
-  // Leaderboard card-এ compact meta: ব্যক্তির বর্তমান mood অনুযায়ী শুধু সেই সংশ্লিষ্ট তথ্য দেখাও
-  let metaLine='';
-  if(!hideMeta){
-    const brSecs=s.break_seconds||0, slSecs=s.sleep_seconds||0;
-    const breaksCount=s.breaks_used||0;
-    const breakIcon=`<svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#92400E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M10 2v2' /> <path d='M14 2v2' /> <path d='M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1' /> <path d='M6 2v2' /></svg>`;
-    const parts=[];
-    if(s.status==='break'){
-      if(breaksCount>0) parts.push(`${breakIcon}×${breaksCount}`);
-      if(brSecs>0) parts.push(`বিরতি ${fmtCompact(brSecs)}`);
-    } else if(s.status==='sleep'){
-      if(slSecs>0) parts.push(`ঘুম ${fmtCompact(slSecs)}`);
-    } else {
-      // study/paused/অন্য অবস্থায় — শুধু কতবার বিরতি নিয়েছে সেটা দেখাও, সময় নয়
-      if(breaksCount>0) parts.push(`${breakIcon}×${breaksCount}`);
-    }
-    if(parts.length) metaLine=`<div class="r-meta-line">${parts.join(' · ')}</div>`;
-  }
+  const metaLine='';
 
   const safeData=JSON.stringify({name:s.name||'',batch:s.batch||'',college:s.college||'',secs:timeVal,breaks:s.breaks_used||0,phone:s.phone||'',photo:s.photo_url||''}).replace(/'/g,"&#39;");
   const isSelfCard = s._isSelf || (currentUser && s.phone===currentUser.phone);
