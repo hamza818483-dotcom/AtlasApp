@@ -3941,41 +3941,42 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     loadProfile();
 
-    // Parallel data load
-    const [examResults, notifs] = await Promise.all([
-        safeFetch(`${SUPABASE_URL}/rest/v1/exam_results?phone=eq.${currentUser.phone}&select=*&order=submitted_at.desc&limit=100`),
-        safeFetch(`${SUPABASE_URL}/rest/v1/notifications?phone=eq.${currentUser.phone}&select=id,is_read&limit=30`)
-    ]);
-
-    examResultsCache = examResults || [];
-    document.getElementById('countExams').textContent = toBanglaNum(examResultsCache.length) + ' এক্সাম';
-    document.getElementById('statExams').textContent = toBanglaNum(examResultsCache.length);
-    buildExamGraph(examResultsCache);
-    buildProfileStats(examResultsCache);
-    loadClassHistory();
-    loadBookmarks();
-
-    const unread = (notifs || []).filter(n => !n.is_read).length;
-    document.getElementById('countNotifs').textContent = toBanglaNum(unread) + ' নতুন';
-    if (unread > 0) {
-        const badge = document.getElementById('unreadBadge');
-        badge.style.display = 'flex';
-        badge.textContent = unread > 9 ? '9+' : unread;
-    }
-
-    // Hash routing
+    // Hash routing — instant screen show, network data পরে background এ লোড হবে
     const hash = (location.hash || '').replace('#', '');
     if (hash === 'mistakesScreen' || hash === 'mistakes') { openScreen('mistakesScreen'); loadMistakesFullscreen(); }
     else if (hash === 'todoScreen') { openScreen('todoScreen'); renderTodoList(); startTodoCountdowns(); }
     else if (hash === 'pomoScreen') { openScreen('pomoScreen'); updatePomoDisplay(); renderPomoHistory(); renderPomoSuccessGraph(); }
     else if (hash && ['history', 'classhistory', 'bookmarks', 'notifications', 'edit', 'weaklist', 'leaderboard'].includes(hash)) showTab(hash);
     else showTab('main');
-    
-    // Initialize success graph on main tab
-    renderPomoSuccessGraph();
 
-    // Pomodoro state restore
+    // Initialize success graph on main tab (local data, instant)
+    renderPomoSuccessGraph();
+    // Pomodoro state restore (local data, instant)
     loadPomoState();
+    loadClassHistory();
+    loadBookmarks();
+
+    // Network-dependent data — background এ লোড হয়, page render block করে না
+    (async () => {
+        const [examResults, notifs] = await Promise.all([
+            safeFetch(`${SUPABASE_URL}/rest/v1/exam_results?phone=eq.${currentUser.phone}&select=*&order=submitted_at.desc&limit=100`),
+            safeFetch(`${SUPABASE_URL}/rest/v1/notifications?phone=eq.${currentUser.phone}&select=id,is_read&limit=30`)
+        ]);
+
+        examResultsCache = examResults || [];
+        document.getElementById('countExams').textContent = toBanglaNum(examResultsCache.length) + ' এক্সাম';
+        document.getElementById('statExams').textContent = toBanglaNum(examResultsCache.length);
+        buildExamGraph(examResultsCache);
+        buildProfileStats(examResultsCache);
+
+        const unread = (notifs || []).filter(n => !n.is_read).length;
+        document.getElementById('countNotifs').textContent = toBanglaNum(unread) + ' নতুন';
+        if (unread > 0) {
+            const badge = document.getElementById('unreadBadge');
+            badge.style.display = 'flex';
+            badge.textContent = unread > 9 ? '9+' : unread;
+        }
+    })();
 
     // Notification permission
     if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
