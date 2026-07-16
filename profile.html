@@ -1974,6 +1974,10 @@ function showTab(tab) {
         history.pushState({ tab: 'main' }, '', location.pathname + '#main'); return;
     }
     if (profileMain) profileMain.style.display = 'none';
+    const _eg=document.getElementById('examGraphCard'), _cg=document.getElementById('classGraphCard'), _pg=document.getElementById('pomoSuccessGraphCard');
+    if (_eg) _eg.style.display='none';
+    if (_cg) _cg.style.display='none';
+    if (_pg) _pg.style.display='none';
     const map = {
         history:'tabHistoryContent', classhistory:'tabClasshistoryContent',
         bookmarks:'tabBookmarksContent', notifications:'tabNotificationsContent',
@@ -3731,11 +3735,6 @@ function buildExamGraph(results) {
         const d=new Date(r.submitted_at),label=(d.getMonth()+1)+'/'+d.getDate();
         return `<div class="bar-wrap"><div style="flex:1;display:flex;align-items:flex-end;width:100%;"><div class="bar ${cls}" style="height:${h}%" data-score="${pct.toFixed(0)}%"></div></div><div class="bar-label">${label}</div></div>`;
     }).join('');
-    const _egrid = document.getElementById('mainGrid');
-    const _etab = document.getElementById('tabContent');
-    if (_egrid && _etab && _etab.parentNode) {
-        _etab.parentNode.insertBefore(card, _etab);
-    }
     card.style.display='block';
 }
 
@@ -3766,13 +3765,6 @@ function buildClassGraph(history) {
         <path d="${areaD}" fill="url(#lineGrad)"/>
         <path d="${pathD}" fill="none" stroke="#58A6FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         ${points.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="3" fill="#58A6FF"/><text x="${p.x}" y="${H-1}" text-anchor="middle" font-size="6" fill="#8B949E">${dateKeys[i].split('/')[1]||''}</text>`).join('')}`;
-    const _cgExam = document.getElementById('examGraphCard');
-    const _cgTab = document.getElementById('tabContent');
-    if (_cgExam && _cgExam.parentNode) {
-        _cgExam.parentNode.insertBefore(card, _cgExam.nextSibling);
-    } else if (_cgTab && _cgTab.parentNode) {
-        _cgTab.parentNode.insertBefore(card, _cgTab);
-    }
     card.style.display='block';
 }
 
