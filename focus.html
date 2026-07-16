@@ -1951,6 +1951,8 @@ function updateLsrCardHighlight(){
   updateMoodInlineList();
 }
 
+let _lastMoodInlineKey='';
+
 // lsr-card এর ঠিক নিচে — নিজের mood break/sleep হলে সেই mood-এ থাকা
 // সবার একটা ছোট তালিকা দেখায় (overlay না খুলেই)। Study mood এ বা কেউ
 // break/sleep এ না থাকলে box হাইড থাকে।
@@ -1962,6 +1964,10 @@ function updateMoodInlineList(){
   const list=(allStudents||[]).filter(s=>s.status===mood);
   box.style.display='flex';
   box.className='mood-inline-list';
+
+  const key=list.map(s=>s.phone||s.name).sort().join(',');
+  if(key===_lastMoodInlineKey) return;
+  _lastMoodInlineKey=key;
 
   if(!list.length){
     box.innerHTML=`<span class="mil-empty">${mood==='break'?'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M10 2v2" /> <path d="M14 2v2" /> <path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1" /> <path d="M6 2v2" /></svg> এখন তুমি একাই বিরতিতে':'<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" /></svg> এখন তুমি একাই ঘুমে'}</span>`;
@@ -2083,9 +2089,8 @@ async function renderLive(){
     // Live students section — পুরো DOM rebuild প্রতি সেকেন্ডে না করে ৫ সেকেন্ডে একবার করা হয়
     // (bumpSelfMoodCard/tick() ইতিমধ্যে প্রতি সেকেন্ডে নিজের card-এর টেক্সট smooth-ভাবে আপডেট করে,
     // তাই এখানে প্রতি সেকেন্ডে rebuild করলে flicker হতো)
-    renderBatchFilter(allStudents);
     _renderLiveTick++;
-    if(_renderLiveTick%5===0) renderLiveStudents(allStudents);
+    if(_renderLiveTick%5===0){ renderBatchFilter(allStudents); renderLiveStudents(allStudents); }
     updateLsrCardHighlight();
 
   } catch(e){ console.error('❌ renderLive error:', e); }
