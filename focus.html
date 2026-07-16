@@ -1446,14 +1446,18 @@ function tick(){
   if(mood!=='study' && bsRunning) bumpSelfMoodCard();
 }
 
-// Break/Sleep ranking list-এ (bsMoodRankList/studyMoodRankList, যেটাই খোলা থাকুক) নিজের
-// card-এর সময় প্রতি সেকেন্ডে সরাসরি DOM-এ আপডেট করে — পুরো list নতুন করে fetch/rebuild না
-// করেই, যাতে persistent live update হয় কিন্তু flicker/race না হয়। Rank-order rebuild
-// (নতুন কেউ overtake করলে) এখনও normal ৫-সেকেন্ড network refresh দিয়েই হবে।
+// Break/Sleep mood overlay (bsMoodRankList) খোলা থাকলে নিজের card-এর সময় প্রতি সেকেন্ডে
+// সরাসরি DOM-এ আপডেট করে। আগে ভুলবশত studyMoodRankList (Study panel)-এও একই
+// break/sleep সেকেন্ড লিখে দিত, ফলে Study এর real counter আর Break/Sleep এর counter
+// পালাক্রমে (alternate) দেখা যেত — এখন শুধু currentOverlayMood অনুযায়ী সঠিক panel-ই আপডেট হবে।
 function bumpSelfMoodCard(){
   if(!currentUser) return;
   const secs = mood==='break' ? (accumulatedBreakSecs+breakSecs) : (accumulatedSleepSecs+sleepSecs);
-  ['bsMoodRankList','studyMoodRankList'].forEach(id=>{
+  const overlayOpen = document.getElementById('moodOverlay')?.classList.contains('show');
+  const targets=[];
+  if(overlayOpen && currentOverlayMood===mood) targets.push('bsMoodRankList');
+  if(activeStudyPeriod===1) targets.push('studyMoodRankList'); // এই panel সবসময় বর্তমান mood-ই দেখায় (mood switch এ reload হয়)
+  targets.forEach(id=>{
     const el=document.getElementById(id);
     if(!el) return;
     if(el.textContent.includes('ডেটা নেই') || el.textContent.includes('লোড হচ্ছে') || el.textContent.includes('লোড হয়নি')){
