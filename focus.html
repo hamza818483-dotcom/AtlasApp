@@ -2392,7 +2392,13 @@ let _lbReqSeq = 0; // race-condition guard — Ultimate Leaderboard
 async function loadLeaderboard(days){
   const rankList=document.getElementById('rankList');
   const mySeq = ++_lbReqSeq;
-  rankList.innerHTML='<div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:11px">লোড হচ্ছে...</div>';
+  // ৩০ সেকেন্ড পরপর background auto-refresh এর সময় list-এ আগে থেকেই ডেটা থাকলে
+  // "লোড হচ্ছে..." দেখিয়ে পুরনো কার্ডগুলো মুছে ফেলা হতো না — এটাই flicker/flash এর কারণ।
+  // শুধু প্রথমবার (list খালি থাকলে) লোডিং টেক্সট দেখানো হবে।
+  const hasExistingData = rankList.querySelector('.r-card');
+  if(!hasExistingData){
+    rankList.innerHTML='<div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:11px">লোড হচ্ছে...</div>';
+  }
   try {
     // ধাপ ১: সব active/recent user-দের first_session_at আনো (Ultimate Leaderboard
     // ক্যালেন্ডার দিনের বদলে প্রত্যেকের নিজের প্রথম session শুরু থেকে N×24h হিসাব করে)
@@ -2477,14 +2483,22 @@ async function loadLeaderboard(days){
   }
 }
 
+let _lastLbKey='';
 function renderLeaderboard(list){
   const graphEl=document.getElementById('lbTop3Graph');
   const rankList=document.getElementById('rankList');
   if(!list.length){
     if(graphEl) graphEl.style.display='none';
     rankList.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:11px">এখনো কোনো ডেটা নেই</div>';
+    _lastLbKey='';
     return;
   }
+  // ৩০ সেকেন্ড auto-refresh এ যদি rank/সময় কোনো user-এরই না বদলায়, তাহলে পুরো
+  // DOM rebuild (innerHTML swap) না করে skip করা হয় — এতে card animation/pulse
+  // restart হয়ে flicker করে না, শুধু আসলেই পরিবর্তন হলে rebuild হবে।
+  const key=list.map(s=>`${s.phone}:${s.total_seconds}`).join('|');
+  if(key===_lastLbKey) return;
+  _lastLbKey=key;
   // Winner graph — top 3 podium bars
   if(graphEl && list.length>=1){
     const top=list.slice(0,3);
