@@ -1292,6 +1292,7 @@ async function startSession(){
 
   injectSelfToLive();
 
+  if(ticker) clearInterval(ticker);
   ticker = setInterval(tick, 1000);
 
   // Close out any old session(s) for this user still marked live (e.g. crashed
@@ -2836,6 +2837,7 @@ function restoreSession(){
     setHeaderGlow(false);
   }
   updateLsrCardHighlight();
+  if(ticker) clearInterval(ticker);
   ticker=setInterval(tick,1000);
   renderLive(); startPolling();
   return true;
