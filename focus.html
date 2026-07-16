@@ -1708,6 +1708,26 @@ function updateMoodButtons(){
 }
 
 /* ═══ PAUSE / RESUME ═══ */
+// Pause/Resume এ status pill (Live/Pause ট্যাগ) instant পরিবর্তনের জন্য —
+// renderLiveStudents() _accurateTodayLoaded=true হয়ে গেলে no-op হয়ে যায়,
+// তাই সেটার উপর নির্ভর না করে সরাসরি DOM-এ নিজের card-এর status pill বসিয়ে দেওয়া হয়।
+function patchSelfStatusPill(){
+  if(!currentUser) return;
+  const status=(mood==='study'&&paused)?'paused':mood;
+  const isPaused=status==='paused';
+  const sc=status==='break'?'r-status-break':status==='sleep'?'r-status-sleep':'r-status-study';
+  const sl=status==='break'?'বিরতি':status==='sleep'?'ঘুম':'Live';
+  const html=isPaused
+    ?`<span class="r-status r-status-paused"><span class="r-status-dot" style="background:#EF4444"></span>Pause</span>`
+    :`<span class="r-status ${sc}"><span class="r-status-dot"></span>${sl}</span>`;
+  document.querySelectorAll(`.r-card[data-phone="${CSS.escape(currentUser.phone||'')}"]`).forEach(card=>{
+    let pill=card.querySelector('.r-status');
+    if(pill) pill.outerHTML=html;
+    card.classList.toggle('is-paused', isPaused);
+    card.classList.toggle('is-live', !isPaused);
+  });
+}
+
 function pauseTimer(){
   paused=true;
   pauseStartTime=Date.now();
@@ -1715,7 +1735,7 @@ function pauseTimer(){
   document.getElementById('ctrlResume').style.display='flex';
   saveState();
   // pause হলে status 'paused' করো — list-এ dim/red দেখাবে
-  updateSelfInList(); renderLiveStudents(allStudents); // instant local update
+  updateSelfInList(); renderLiveStudents(allStudents); patchSelfStatusPill(); // instant local update
   if(sessionId){
     safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${sessionId}`,{
       method:'PATCH',
@@ -1733,7 +1753,7 @@ function resumeTimer(){
   document.getElementById('ctrlResume').style.display='none';
   saveState();
   // resume হলে আবার study/break/sleep status — instant list update
-  updateSelfInList(); renderLiveStudents(allStudents);
+  updateSelfInList(); renderLiveStudents(allStudents); patchSelfStatusPill();
   if(sessionId){
     safeFetch(`${SUPABASE_URL}/rest/v1/focus_sessions?id=eq.${sessionId}`,{
       method:'PATCH',
