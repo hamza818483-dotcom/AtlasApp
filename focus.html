@@ -2811,8 +2811,10 @@ document.addEventListener('DOMContentLoaded',async ()=>{
   const restored=restoreSession();
   await renderLive(); // restored হোক বা না হোক — allStudents সবসময় fresh populate করো
   startIdlePolling();
-  // renderLive() শেষ হওয়ার পরে call — allStudents তখন fresh, তাই accurate merge হবে
-  loadMoodRanking('study',1,document.querySelector('.live-today-section .mood-period-row .mood-period-btn'));
+  // renderLive() শেষ হওয়ার পরে call — allStudents তখন তখন fresh, তাই accurate merge হবে
+  // restoreSession() থেকে যে mood ফিরে এসেছে (study/break/sleep) সেটাই ব্যবহার করো,
+  // নাহলে reload এ break/sleep mode এ থাকলেও leaderboard এ study time দেখাতো।
+  loadMoodRanking(mood,1,document.querySelector('.live-today-section .mood-period-row .mood-period-btn'));
 });
 
 
