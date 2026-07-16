@@ -1598,3 +1598,9 @@ body {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.6; }
 }
+
+/* Global instant tap-feedback for all clickable elements (mobile responsiveness) */
+button:active, .mtype-tab:active, .mfilter-select:active, [onclick]:active {
+    transform: scale(0.96);
+    transition: transform 0.08s ease;
+}

@@ -285,6 +285,7 @@ body {
 .fab-tg { background: #0088CC; }
 .fab-wa:hover { background: #1DB850; transform: scale(1.1); box-shadow: 0 6px 18px rgba(37, 211, 102, 0.5); }
 .fab-tg:hover { background: #0077B5; transform: scale(1.1); box-shadow: 0 6px 18px rgba(0, 136, 204, 0.5); }
+.fab:active { transform: scale(0.9); transition: transform 0.08s ease; }
 
 /* ============================================
    FEATURE 11: TOAST
@@ -322,6 +323,7 @@ body {
    FEATURE 14: BUTTONS (All Variants)
    ============================================ */
 .btn { display: inline-block; padding: 10px 20px; border-radius: var(--radius-sm); border: none; font-family: 'Noto Sans Bengali', 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; text-align: center; line-height: 1.4; }
+.btn:active { transform: scale(0.96); transition: transform 0.08s ease; }
 .btn-primary { background: var(--accent); color: #fff; width: 100%; }
 .btn-primary:hover { background: var(--accent-hover); box-shadow: var(--shadow); transform: translateY(-1px); }
 .btn-success { background: var(--success); color: #fff; width: 100%; }
@@ -331,6 +333,7 @@ body {
 .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); }
 .btn-outline:hover { border-color: var(--accent); color: var(--text); }
 .btn-cancel { background: var(--btn-bg); color: var(--text-secondary); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; border: 1px solid var(--border); font-family: 'Noto Sans Bengali', 'Inter', sans-serif; }
+.btn-cancel:active { transform: scale(0.96); transition: transform 0.08s ease; }
 .btn-sm { padding: 6px 12px; font-size: 11px; }
 .btn-copy { background: var(--success); color: #fff; font-size: 11px; }
 
@@ -373,6 +376,7 @@ body {
    ============================================ */
 .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
 .chip { padding: 7px 14px; border-radius: var(--radius-full); border: 1.5px solid var(--border); background: var(--option-bg); color: var(--text-secondary); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; font-family: 'Noto Sans Bengali', 'Inter', sans-serif; }
+.chip:active { transform: scale(0.94); transition: transform 0.08s ease; }
 .chip.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
 .chip:hover { border-color: var(--accent); color: var(--accent); }
 
@@ -535,3 +539,9 @@ body {
 }
 
 .emoji-icon{width:1em;height:1em;flex-shrink:0}
+
+/* Global instant tap-feedback fallback for buttons/clickable elements without explicit :active (mobile responsiveness) */
+button:not(.fab):not(.btn):not(.chip):not(.btn-cancel):active, [onclick]:not(.fab):not(.btn):not(.chip):not(.btn-cancel):active {
+    transform: scale(0.96);
+    transition: transform 0.08s ease;
+}
