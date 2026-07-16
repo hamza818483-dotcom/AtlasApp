@@ -1454,12 +1454,15 @@ function tick(){
 // পালাক্রমে (alternate) দেখা যেত — এখন শুধু currentOverlayMood অনুযায়ী সঠিক panel-ই আপডেট হবে।
 function bumpSelfMoodCard(){
   if(!currentUser) return;
-  const secs = mood==='break' ? (accumulatedBreakSecs+breakSecs) : (accumulatedSleepSecs+sleepSecs);
+  const secs = mood==='study' ? (accumulatedStudySecs+studySecs)
+    : mood==='break' ? (accumulatedBreakSecs+breakSecs)
+    : (accumulatedSleepSecs+sleepSecs);
   const overlayOpen = document.getElementById('moodOverlay')?.classList.contains('show');
   const targets=[];
   if(overlayOpen && currentOverlayMood===mood) targets.push('bsMoodRankList');
-  // studyMoodRankList আসলে সব mood-এর জন্যই একই visible list (title/content mood
-  // অনুযায়ী বদলায়) — তাই self card-ও সব mood-এই এখানে আপডেট হবে।
+  // studyMoodRankList সব mood-এর জন্যই একই visible list (content mood অনুযায়ী বদলায়) —
+  // কিন্তু শুধুমাত্র activeStudyPeriod===1 (আজকে) দেখানো অবস্থাতেই patch করা উচিত,
+  // AND সেই period লোড হয়েছে বর্তমান mood-এর জন্যই (নাহলে stale/ভুল mood-এর panel patch হতো)।
   if(activeStudyPeriod===1) targets.push('studyMoodRankList');
   targets.forEach(id=>{
     const el=document.getElementById(id);
