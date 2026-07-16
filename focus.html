@@ -2279,6 +2279,9 @@ async function loadMoodRanking(moodType, days, btn, targetOverlay){
       if(!targetOverlay && days===1) _accurateTodayLoaded=true;
     } else {
       if(!targetOverlay) renderLiveStudents(allStudents);
+      else if(days===1) updateMoodOverlayList(moodType); // overlay-র "আজকে" view সবসময় live self+peer data দিয়ে বানাতে হবে,
+      // network snapshot (stale/delayed self time) দিয়ে overwrite করা যাবে না — নাহলে
+      // overlay খোলার পর কিছুক্ষণ পরে নিজের সময় হঠাৎ পুরনো সংখ্যায় লাফ দিত।
       else renderMoodRankList(el, list);
     }
   }catch(e){
