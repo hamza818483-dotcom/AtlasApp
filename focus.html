@@ -1922,13 +1922,26 @@ function startLiveSecTicker(){
         s.study_seconds = (s._baseSeconds||0) + Math.floor((nowMs - s._fetchedAt) / 1000);
       }
     });
-    // Update only .r-time elements in DOM without full re-render
+    // Update only .r-time elements in DOM without full re-render.
+    // পূর্বে এখানে সবসময় s.study_seconds লেখা হতো, যার ফলে Break/Sleep list-এর
+    // card-গুলোতেও study time বসে যেত এবং bumpSelfMoodCard()-এর সঠিক break/sleep
+    // সময়ের সাথে প্রতি সেকেন্ডে flicker (আসা-যাওয়া) করতো। এখন card যেই list-এ আছে
+    // সেই list অনুযায়ী সঠিক field (study/break/sleep) ব্যবহার হবে।
     document.querySelectorAll('.r-card[data-phone]').forEach(card=>{
       const phone=card.dataset.phone;
       const s=allStudents.find(x=>x.phone===phone);
       if(!s) return;
+      const parentListId=card.closest('[id="bsMoodRankList"],[id="studyMoodRankList"]')?.id;
+      let val;
+      if(parentListId==='bsMoodRankList'){
+        val = currentOverlayMood==='break' ? (s.break_seconds||0) : (s.sleep_seconds||0);
+      } else if(parentListId==='studyMoodRankList'){
+        val = mood==='break' ? (s.break_seconds||0) : mood==='sleep' ? (s.sleep_seconds||0) : (s.study_seconds||0);
+      } else {
+        val = s.study_seconds||0; // other lists (leaderboard etc.) — always study time
+      }
       const timeEl=card.querySelector('.r-time');
-      if(timeEl) timeEl.textContent=fmtCompact(s.study_seconds||0);
+      if(timeEl) timeEl.textContent=fmtCompact(val);
     });
   },1000);
 }
