@@ -1456,17 +1456,20 @@ function bumpSelfMoodCard(){
   const overlayOpen = document.getElementById('moodOverlay')?.classList.contains('show');
   const targets=[];
   if(overlayOpen && currentOverlayMood===mood) targets.push('bsMoodRankList');
-  if(activeStudyPeriod===1) targets.push('studyMoodRankList'); // এই panel সবসময় বর্তমান mood-ই দেখায় (mood switch এ reload হয়)
+  // studyMoodRankList শুধু তখনই আপডেট হবে যখন mood নিজেই 'study' — নাহলে Break/Sleep এর
+  // সময় Study Mode এর real counter-এর card-এ লিখে ফেলত (আসল বাগ: counter আসা-যাওয়া করত)
+  if(activeStudyPeriod===1 && mood==='study') targets.push('studyMoodRankList');
   targets.forEach(id=>{
     const el=document.getElementById(id);
     if(!el) return;
     if(el.textContent.includes('ডেটা নেই') || el.textContent.includes('লোড হচ্ছে') || el.textContent.includes('লোড হয়নি')){
       // এখনো data নেই/loading/error দেখাচ্ছে — নিজের সময় ১ সেকেন্ডের বেশি হলে সাথে সাথেই
       // একটা fresh load ট্রিগার করো (শুধু stuck অবস্থা ভাঙতে)
-      if(secs>=1){
-        const row=document.querySelector('#moodOverlay .mood-period-row .mood-period-btn.active')
-          || document.querySelector('.live-today-section .mood-period-row .mood-period-btn.active');
-        loadMoodRanking(mood,1,row,id==='bsMoodRankList');
+      // id==='studyMoodRankList' হলে কখনোই mood (break/sleep) দিয়ে reload করা যাবে না —
+      // এতেই Study panel-এ ভুলবশত Break/Sleep data ঢুকে counter আসা-যাওয়া করত (মূল বাগ)
+      if(secs>=1 && id==='bsMoodRankList'){
+        const row=document.querySelector('#moodOverlay .mood-period-row .mood-period-btn.active');
+        loadMoodRanking(mood,1,row,true);
       }
       return;
     }
