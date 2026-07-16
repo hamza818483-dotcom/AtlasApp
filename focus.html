@@ -2249,17 +2249,21 @@ async function loadMoodRanking(moodType, days, btn, targetOverlay){
       (dailyRows||[]).forEach(r=>{
         const p=r.user_phone; if(!p) return;
         const u=Array.isArray(r.users)?r.users[0]:(r.users||{});
-        grouped[p]={phone:p,name:u.name||null,batch:u.batch||null,college:u.college||null,premium:u.is_premium||false,photo_url:u.photo_url||null,total_seconds:r.total_seconds||0};
+        grouped[p]={phone:p,name:u.name||null,batch:u.batch||null,college:u.college||null,premium:u.is_premium||false,photo_url:u.photo_url||null,total_seconds:r.total_seconds||0,status:'ended'};
       });
       allStudents.forEach(s=>{
         if(!s.phone) return;
         const liveSecs = s._isSelf ? studySecs : (s.study_seconds||0);
         if(!liveSecs) return;
-        if(!grouped[s.phone]) grouped[s.phone]={phone:s.phone,name:s.name,batch:s.batch,college:s.college,premium:s.premium,photo_url:s.photo_url,total_seconds:0};
+        if(!grouped[s.phone]) grouped[s.phone]={phone:s.phone,name:s.name,batch:s.batch,college:s.college,premium:s.premium,photo_url:s.photo_url,total_seconds:0,status:s.status};
         grouped[s.phone].total_seconds += liveSecs;
+        // allStudents-এর বর্তমান live status (study/paused/break/sleep) বসিয়ে দাও,
+        // যাতে "আজকে" list-এও Live/Paused ট্যাগ ঠিকমতো দেখা যায় (আগে status field-ই
+        // পাঠানো হতো না, তাই buildRankCard কখনো ট্যাগ বসাতে পারতো না)।
+        grouped[s.phone].status = s.status;
       });
       const list=Object.values(grouped).filter(g=>g.total_seconds>0).sort((a,b)=>b.total_seconds-a.total_seconds);
-      renderMoodRankList(el, list);
+      renderMoodRankList(el, list, true);
       _accurateTodayLoaded=true; // এখন থেকে renderLive()-এর quick data আর overwrite করবে না
       return;
     }
@@ -2289,6 +2293,9 @@ async function loadMoodRanking(moodType, days, btn, targetOverlay){
       grouped[p].study_seconds = Math.max(grouped[p].study_seconds, accumulatedStudySecs+studySecs);
       grouped[p].break_seconds = Math.max(grouped[p].break_seconds, accumulatedBreakSecs+breakSecs);
       grouped[p].sleep_seconds = Math.max(grouped[p].sleep_seconds, accumulatedSleepSecs+sleepSecs);
+      // "আজকে" (days===1) view-এ নিজের বর্তমান mood/paused status বসিয়ে দাও যাতে
+      // Live/Paused ট্যাগ দেখা যায়; multi-day aggregate-এ status অর্থহীন তাই বসানো হয় না।
+      if(days===1) grouped[p].status=(mood==='study'&&paused)?'paused':mood;
     }
 
     const sortKey = moodType==='study'?'study_seconds':moodType==='break'?'break_seconds':'sleep_seconds';
@@ -2301,7 +2308,7 @@ async function loadMoodRanking(moodType, days, btn, targetOverlay){
     // renderLiveStudents()-কেই real-time per-second update চালাতে দিতে হবে (lock করা যাবে না),
     // নাহলে Break/Sleep card চিরকাল পুরনো/study data দেখাতো।
     if(moodType==='study'){
-      renderMoodRankList(el, list);
+      renderMoodRankList(el, list, days===1);
       if(!targetOverlay && days===1) _accurateTodayLoaded=true;
     } else {
       if(!targetOverlay) renderLiveStudents(allStudents);
@@ -2316,12 +2323,12 @@ async function loadMoodRanking(moodType, days, btn, targetOverlay){
   }
 }
 
-function renderMoodRankList(el, list){
+function renderMoodRankList(el, list, showStatus){
   if(!list.length){
     el.innerHTML='<div style="text-align:center;padding:10px;color:var(--text-secondary);font-size:11px">কোনো ডেটা নেই</div>';
     return;
   }
-  el.innerHTML=list.map((s,i)=>buildRankCard(s,i+1,false)).join('');
+  el.innerHTML=list.map((s,i)=>buildRankCard(s,i+1,!!showStatus)).join('');
 }
 
 async function loadInlineLb(days, btn){
