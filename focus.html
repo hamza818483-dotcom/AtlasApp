@@ -1446,23 +1446,29 @@ function tick(){
   if(mood!=='study' && bsRunning) bumpSelfMoodCard();
 }
 
-// Break/Sleep ranking list-এ (যদি খোলা থাকে) নিজের সময় সরাসরি DOM-এ আপডেট করে —
-// পুরো list আবার fetch না করেই, প্রতি সেকেন্ডে flicker/race ছাড়া দেখানোর জন্য।
+// Break/Sleep ranking list-এ (bsMoodRankList/studyMoodRankList, যেটাই খোলা থাকুক) নিজের
+// card-এর সময় প্রতি সেকেন্ডে সরাসরি DOM-এ আপডেট করে — পুরো list নতুন করে fetch/rebuild না
+// করেই, যাতে persistent live update হয় কিন্তু flicker/race না হয়। Rank-order rebuild
+// (নতুন কেউ overtake করলে) এখনও normal ৫-সেকেন্ড network refresh দিয়েই হবে।
 function bumpSelfMoodCard(){
   if(!currentUser) return;
+  const secs = mood==='break' ? (accumulatedBreakSecs+breakSecs) : (accumulatedSleepSecs+sleepSecs);
   ['bsMoodRankList','studyMoodRankList'].forEach(id=>{
     const el=document.getElementById(id);
     if(!el) return;
-    if(el.children.length===1 && el.textContent.includes('ডেটা নেই')){
-      // এখনো কোনো data নেই দেখাচ্ছে — এখন নিজের সময় ১ সেকেন্ডের বেশি হলে সাথে সাথেই
-      // একটা fresh load ট্রিগার করো (শুধু প্রথমবার, স্প্যাম এড়াতে)
-      const secs = mood==='break' ? (accumulatedBreakSecs+breakSecs) : (accumulatedSleepSecs+sleepSecs);
+    if(el.textContent.includes('ডেটা নেই') || el.textContent.includes('লোড হচ্ছে') || el.textContent.includes('লোড হয়নি')){
+      // এখনো data নেই/loading/error দেখাচ্ছে — নিজের সময় ১ সেকেন্ডের বেশি হলে সাথে সাথেই
+      // একটা fresh load ট্রিগার করো (শুধু stuck অবস্থা ভাঙতে)
       if(secs>=1){
         const row=document.querySelector('#moodOverlay .mood-period-row .mood-period-btn.active')
           || document.querySelector('.live-today-section .mood-period-row .mood-period-btn.active');
         loadMoodRanking(mood,1,row,id==='bsMoodRankList');
       }
+      return;
     }
+    // List already loaded আছে — নিজের card খুঁজে বের করে শুধু সময়ের টেক্সট আপডেট করো
+    const card=el.querySelector(`.r-card[data-phone="${CSS.escape(currentUser.phone||'')}"] .r-time`);
+    if(card) card.textContent=fmtCompact(secs);
   });
 }
 
