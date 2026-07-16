@@ -1117,11 +1117,11 @@
 
     <!-- Period filter — single row, compact -->
     <div class="mood-period-row mood-period-row-compact" style="margin:10px 14px 0">
-      <button class="mood-period-btn active" id="bsPeriodBtn1" onclick="loadMoodRanking(currentOverlayMood,1,this)">আজকে</button>
-      <button class="mood-period-btn" onclick="loadMoodRanking(currentOverlayMood,3,this)">৩ দিন</button>
-      <button class="mood-period-btn" onclick="loadMoodRanking(currentOverlayMood,7,this)">৭ দিন</button>
-      <button class="mood-period-btn" onclick="loadMoodRanking(currentOverlayMood,15,this)">১৫ দিন</button>
-      <button class="mood-period-btn" onclick="loadMoodRanking(currentOverlayMood,30,this)">৩০ দিন</button>
+      <button class="mood-period-btn active" id="bsPeriodBtn1" onclick="loadMoodRanking(currentOverlayMood,1,this,true)">আজকে</button>
+      <button class="mood-period-btn" onclick="loadMoodRanking(currentOverlayMood,3,this,true)">৩ দিন</button>
+      <button class="mood-period-btn" onclick="loadMoodRanking(currentOverlayMood,7,this,true)">৭ দিন</button>
+      <button class="mood-period-btn" onclick="loadMoodRanking(currentOverlayMood,15,this,true)">১৫ দিন</button>
+      <button class="mood-period-btn" onclick="loadMoodRanking(currentOverlayMood,30,this,true)">৩০ দিন</button>
     </div>
     <!-- একটাই real list -->
     <div class="rank-list" id="bsMoodRankList" style="padding:0 14px 16px"></div>
@@ -1571,7 +1571,7 @@ function applyMoodSwitch(newMood){
   // আপডেট করতে থাকে আর সময় উঠানামা (flicker) করে।
   const activeBtn=document.querySelector('.live-today-section .mood-period-row .mood-period-btn.active')
     || document.querySelector('.live-today-section .mood-period-row .mood-period-btn');
-  loadMoodRanking('study',1,activeBtn);
+  loadMoodRanking(newMood,1,activeBtn);
   const names={study:'📚 Study',break:'☕ বিরতি',sleep:'😴 ঘুম'};
   showToast(`${names[newMood]} শুরু হলো`);
 }
@@ -1593,7 +1593,7 @@ function openMoodOverlay(m){
   updateMoodOverlayList(m);
   // Period ranking — আজকে দিয়ে শুরু
   document.querySelectorAll('#moodOverlay .mood-period-row .mood-period-btn').forEach((b,i)=>b.classList.toggle('active', i===0));
-  loadMoodRanking(m, 1, document.getElementById('bsPeriodBtn1'));
+  loadMoodRanking(m, 1, document.getElementById('bsPeriodBtn1'), true);
   // start overlay timer ticker
   if(moodOverlayTicker) clearInterval(moodOverlayTicker);
   moodOverlayTicker=setInterval(()=>{
@@ -2137,13 +2137,13 @@ let currentOverlayMood = 'break';
 
 let _moodRankReqSeq = 0; // race-condition guard — পুরনো request-এর দেরি করা response যেন নতুন data overwrite না করে
 
-async function loadMoodRanking(moodType, days, btn){
+async function loadMoodRanking(moodType, days, btn, targetOverlay){
   if(moodType==='study'){
     activeStudyPeriod = days;
     if(days!==1) _accurateTodayLoaded=false; // অন্য period-এ গেলে flag রিসেট — পরে "আজকে"-তে ফিরলে আবার accurate load হবে
   }
-  const listElId = moodType==='study' ? 'studyMoodRankList' : 'bsMoodRankList';
-  const rowSelector = moodType==='study' ? '.live-today-section .mood-period-row' : '#moodOverlay .mood-period-row';
+  const listElId = targetOverlay ? 'bsMoodRankList' : 'studyMoodRankList';
+  const rowSelector = targetOverlay ? '#moodOverlay .mood-period-row' : '.live-today-section .mood-period-row';
   document.querySelectorAll(rowSelector+' .mood-period-btn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
 
