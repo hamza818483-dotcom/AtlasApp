@@ -2263,8 +2263,17 @@ async function loadMoodRanking(moodType, days, btn, targetOverlay){
       .map(g=>({...g, total_seconds:g[sortKey]}))
       .filter(g=>g.total_seconds>0)
       .sort((a,b)=>b.total_seconds-a.total_seconds);
-    renderMoodRankList(el, list);
-    if(!targetOverlay && days===1) _accurateTodayLoaded=true; // break/sleep "আজকে"-তেও quick renderer থামাও
+    // Break/Sleep mode-এ এই network snapshot শুধু initial paint এর জন্য — DB sync delay-র
+    // কারণে এখানে stale/কম সময় ও ভুল status tag (study/paused) দেখাতে পারে। তাই এরপর
+    // renderLiveStudents()-কেই real-time per-second update চালাতে দিতে হবে (lock করা যাবে না),
+    // নাহলে Break/Sleep card চিরকাল পুরনো/study data দেখাতো।
+    if(moodType==='study'){
+      renderMoodRankList(el, list);
+      if(!targetOverlay && days===1) _accurateTodayLoaded=true;
+    } else {
+      if(!targetOverlay) renderLiveStudents(allStudents);
+      else renderMoodRankList(el, list);
+    }
   }catch(e){
     if(mySeq !== _moodRankReqSeq) return; // race-guard — পুরনো request এর error ও ignore
     el.innerHTML='<div style="text-align:center;padding:10px;color:#EF4444;font-size:11px">লোড হয়নি</div>';
