@@ -1688,7 +1688,7 @@ function updateMoodOverlayList(m){
         '<div class="r-time">'+String(mn).padStart(2,'0')+':'+String(sc).padStart(2,'0')+'</div>'+
       '</div></div>';
   }
-  const peerCards=peers.map((s,i)=>buildRankCard(s,i+(selfInMood?2:1),true)).join('');
+  const peerCards=peers.map((s,i)=>buildRankCard({...s, total_seconds:(m==='break'?(s.break_seconds||0):(s.sleep_seconds||0))},i+(selfInMood?2:1),true,true)).join('');
   const content=selfCard+peerCards;
   document.getElementById('bsMoodRankList').innerHTML=content||
     '<div style="text-align:center;padding:24px;color:var(--text-secondary);font-size:12px">এই মুহূর্তে কেউ নেই</div>';
@@ -2565,7 +2565,7 @@ function renderLiveStudents(students){
   list.innerHTML=ranked.map((s,i)=>buildRankCard(s,i+1,true)).join('');
 }
 
-function buildRankCard(s,rank,showStatus){
+function buildRankCard(s,rank,showStatus,hideMeta){
   const isPaused=s.status==='paused';
   const isResting=s.status==='resting';
   const isLive=s.status&&s.status!=='ended'&&s.status!=='resting'&&!isPaused;
@@ -2599,7 +2599,7 @@ function buildRankCard(s,rank,showStatus){
   // Leaderboard card-এ compact meta: কতবার break, কত সময় break+sleep মিলিয়ে
   // (Total study + বাকি সময় = Break+Sleep, এভাবেই গণনা)
   let metaLine='';
-  if(s.break_seconds!==undefined || s.sleep_seconds!==undefined){
+  if(!hideMeta && (s.break_seconds!==undefined || s.sleep_seconds!==undefined)){
     const bsSecs=(s.break_seconds||0)+(s.sleep_seconds||0);
     const breaksCount=s.breaks_used||0;
     if(bsSecs>0 || breaksCount>0){
