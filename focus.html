@@ -1438,6 +1438,16 @@ function tick(){
   syncSession();
   // পুরো list re-render (rank recompute + DOM rebuild) ৫ সেকেন্ডে একবার — flicker এড়াতে
   if(total%5===0){ renderLiveStudents(allStudents); saveState(); }
+  // Break/Sleep mood-এ ঢোকার সাথে সাথেই loadMoodRanking() call হয়, কিন্তু তখন breakSecs/sleepSecs
+  // এখনো 0 থাকে (তখনও tick হয়নি) — তাই "আজকে" ranking list total_seconds>0 ফিল্টারে বাদ পড়ে
+  // "কোনো ডেটা নেই" দেখাত এবং permanent stuck থাকত, কারণ পরে আর কখনো refresh হতো না।
+  // এখন প্রতি ৫ সেকেন্ডে (mood চালু থাকা অবস্থায়) "আজকে" ranking আবার লোড হবে যাতে
+  // নিজের ব্রেক/স্লিপ সময় list-এ দেখা যায়।
+  if(total%5===0 && mood!=='study' && activeStudyPeriod===1){
+    const row=document.querySelector('#moodOverlay .mood-period-row .mood-period-btn.active')
+      || document.querySelector('.live-today-section .mood-period-row .mood-period-btn.active');
+    loadMoodRanking(mood,1,row,document.getElementById('moodOverlay')?.classList.contains('show'));
+  }
 }
 
 /* রাত ১২টা থেকে সকাল ৮টার মধ্যে Study Mood pause অবস্থায় ১.৫ ঘন্টা (৫৪০০ সেকেন্ড)
