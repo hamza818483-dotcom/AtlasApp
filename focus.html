@@ -2598,7 +2598,7 @@ function buildRankCard(s,rank,showStatus,hideMeta){
     ?`<img src="${escHtml(s.photo_url)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
     :avatarSvg;
 
-  const timeVal=s.total_seconds||s.study_seconds||0;
+  const timeVal = (s.total_seconds!==undefined && s.total_seconds!==null) ? s.total_seconds : (s.study_seconds||0);
 
   // Leaderboard card-এ compact meta: কতবার break, কত সময় break+sleep মিলিয়ে
   // (Total study + বাকি সময় = Break+Sleep, এভাবেই গণনা)
