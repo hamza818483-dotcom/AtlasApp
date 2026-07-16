@@ -1620,7 +1620,27 @@ function applyMoodSwitch(newMood){
   }
 
   updateMoodButtons(); renderTimer(); updateLsrCardHighlight(); saveState(); syncSession();
-  updateSelfInList(); renderLiveStudents(allStudents);
+  updateSelfInList();
+  // Instant local update — DB fetch এর জন্য অপেক্ষা না করেই নিজের নতুন status list-এ দেখাও
+  if(currentUser){
+    const selfIdx=allStudents.findIndex(s=>s.phone===currentUser.phone);
+    const selfData={
+      name:currentUser.name||'তুমি',batch:currentUser.batch||null,
+      college:currentUser.college||null,premium:currentUser.premium||false,
+      photo_url:currentUser.photo_url||null,
+      status:(newMood==='study' && paused)?'paused':newMood,
+      study_seconds:accumulatedStudySecs+studySecs,
+      break_seconds:accumulatedBreakSecs+breakSecs,
+      sleep_seconds:accumulatedSleepSecs+sleepSecs,breaks_used:breaksUsed,
+      phone:currentUser.phone,_isSelf:true
+    };
+    if(selfIdx===-1) allStudents.unshift(selfData);
+    else allStudents[selfIdx]=selfData;
+  }
+  document.getElementById('lsrStudy').textContent=allStudents.filter(s=>s.status==='study').length;
+  document.getElementById('lsrBreak').textContent=allStudents.filter(s=>s.status==='break').length;
+  document.getElementById('lsrSleep').textContent=allStudents.filter(s=>s.status==='sleep').length;
+  renderBatchFilter(allStudents); renderLiveStudents(allStudents);
   // Leaderboard "আজকে" list (studyMoodRankList) নতুন mood অনুযায়ী সঠিক aggregated
   // data দিয়ে reload হবে (study_seconds/break_seconds/sleep_seconds আলাদাভাবেই
   // sort/filter হয় loadMoodRanking এর ভেতরে, mix হয় না)।
