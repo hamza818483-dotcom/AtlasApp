@@ -2221,6 +2221,7 @@ async function loadMoodRanking(moodType, days, btn, targetOverlay){
       .filter(g=>g.total_seconds>0)
       .sort((a,b)=>b.total_seconds-a.total_seconds);
     renderMoodRankList(el, list);
+    if(!targetOverlay && days===1) _accurateTodayLoaded=true; // break/sleep "আজকে"-তেও quick renderer থামাও
   }catch(e){
     if(mySeq !== _moodRankReqSeq) return; // race-guard — পুরনো request এর error ও ignore
     el.innerHTML='<div style="text-align:center;padding:10px;color:#EF4444;font-size:11px">লোড হয়নি</div>';
