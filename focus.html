@@ -1144,10 +1144,6 @@
     <button class="period-btn" onclick="switchLbPeriod(30,this)">বিগত ৩০ দিন</button>
   </div>
   <div class="lb-full-body">
-    <div style="font-size:10.5px;font-weight:900;color:#10B981;margin-bottom:6px;display:flex;align-items:center;gap:4px">
-      <span style="width:6px;height:6px;border-radius:50%;background:#10B981;animation:livePulse 1.5s ease-in-out infinite"></span>আজকে
-    </div>
-    <div class="rank-list" id="lbTodayRow" style="margin-bottom:14px"></div>
     <div style="font-size:10.5px;font-weight:900;color:var(--text-secondary);margin-bottom:6px">নির্বাচিত সময়কাল</div>
     <div id="lbTop3Graph" style="display:none;margin-bottom:10px"></div>
     <div class="rank-list" id="rankList"></div>
@@ -2521,13 +2517,35 @@ function renderLeaderboard(list){
   const key=list.map(s=>`${s.phone}:${s.total_seconds}`).join('|');
   if(key===_lastLbKey) return;
   _lastLbKey=key;
-  // Winner graph — top 3 podium bars (removed per request; শুধু serial list দেখানো হবে)
-  if(graphEl){ graphEl.style.display='none'; graphEl.innerHTML=''; }
+  // Winner graph — top 3 podium bars
+  if(graphEl && list.length>=1){
+    const top=list.slice(0,3);
+    const maxS=Math.max(1,...top.map(s=>s.total_seconds));
+    const colors=['#F59E0B','#9CA3AF','#B45309'];
+    const crowns=['👑','🥈','🥉'];
+    const rankNames=['১ম','২য়','৩য়'];
+    const bars=top.map((s,i)=>{
+      const pct=Math.round((s.total_seconds/maxS)*72);
+      return `<div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:3px">
+        <div style="font-size:14px">${crowns[i]}</div>
+        <div style="width:100%;display:flex;justify-content:center">
+          <div style="width:32px;height:${Math.max(10,pct)}px;border-radius:4px 4px 0 0;background:${colors[i]};box-shadow:0 0 8px ${colors[i]}55"></div>
+        </div>
+        <div style="font-size:10px;font-weight:900;color:${colors[i]}">${rankNames[i]}</div>
+        <div style="font-size:10px;font-weight:800;color:var(--text);max-width:70px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(s.name)}</div>
+        <div style="font-size:9px;color:var(--text-secondary)">${fmtCompact(s.total_seconds)}</div>
+      </div>`;
+    }).join('');
+    graphEl.style.display='block';
+    graphEl.innerHTML=`
+      <div style="background:linear-gradient(135deg,rgba(245,158,11,.06),rgba(99,102,241,.06));border:1px solid rgba(245,158,11,.2);border-radius:12px;padding:12px 8px 8px;margin-bottom:8px">
+        <div style="font-size:10px;font-weight:800;color:#F59E0B;text-align:center;margin-bottom:10px;letter-spacing:.5px"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#FFB800' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M10 14.66v1.626a2 2 0 0 1-.976 1.696A5 5 0 0 0 7 21.978' /> <path d='M14 14.66v1.626a2 2 0 0 0 .976 1.696A5 5 0 0 1 17 21.978' /> <path d='M18 9h1.5a1 1 0 0 0 0-5H18' /> <path d='M4 22h16' /> <path d='M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z' /> <path d='M6 9H4.5a1 1 0 0 1 0-5H6' /></svg> TOP PERFORMERS</div>
+        <div style="display:flex;gap:6px;align-items:flex-end;justify-content:center">${bars}</div>
+      </div>`;
+  }
 
   // Full rank list — glass cards
   rankList.innerHTML=list.map((s,i)=>buildRankCard(s,i+1,false)).join('');
-  // আজকের (ক্যালেন্ডার দিন 12AM-11:59PM) ranking row — সবার উপরে আলাদা section
-  loadTodayLbRow();
   startLbLiveRefresh();
 }
 
