@@ -1973,10 +1973,18 @@ async function renderLive(){
     // Merge: existing local seconds যদি DB এর চেয়ে বেশি হয়, keep করো
     dedupedStudents.forEach(s=>{
       const existing = allStudents.find(x=>x.phone===s.phone);
-      if(existing && !s._isSelf && existing.study_seconds > s.study_seconds){
-        s.study_seconds = existing.study_seconds;
-        s._baseSeconds = existing.study_seconds;
-        s._fetchedAt = Date.now();
+      if(existing && !s._isSelf){
+        if(existing.study_seconds > s.study_seconds){
+          s.study_seconds = existing.study_seconds;
+          s._baseSeconds = existing.study_seconds;
+          s._fetchedAt = Date.now();
+        }
+        if(existing.break_seconds > s.break_seconds){
+          s.break_seconds = existing.break_seconds;
+        }
+        if(existing.sleep_seconds > s.sleep_seconds){
+          s.sleep_seconds = existing.sleep_seconds;
+        }
       }
     });
     allStudents=dedupedStudents;
