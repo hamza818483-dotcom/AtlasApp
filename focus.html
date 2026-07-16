@@ -1436,8 +1436,12 @@ function tick(){
   // তোমার আসল সময়ের চেয়ে নির্দিষ্টভাবে ৫ সেকেন্ড কম দেখাতো (DB-র মান stale থাকতো)
   updateSelfInList();
   syncSession();
-  // পুরো list re-render (rank recompute + DOM rebuild) ৫ সেকেন্ডে একবার — flicker এড়াতে
-  if(total%5===0){ renderLiveStudents(allStudents); saveState(); }
+  // পুরো list re-render (rank recompute + DOM rebuild) ৫ সেকেন্ডে একবার — flicker এড়াতে।
+  // Break/Sleep mode-এ এই full rebuild আর করা হবে না — bumpSelfMoodCard() ইতিমধ্যে
+  // প্রতি সেকেন্ডে শুধু নিজের card-এর টেক্সট আপডেট করে, তাই বাড়তি rebuild flicker করছিল।
+  if(mood==='study' && total%5===0){ renderLiveStudents(allStudents); saveState(); }
+  else if(mood!=='study' && total%15===0){ renderLiveStudents(allStudents); saveState(); }
+  else if(mood!=='study' && total%5===0){ saveState(); }
   // Break/Sleep mood-এ ঢোকার সাথে সাথেই loadMoodRanking() network call হতো, কিন্তু তখন
   // breakSecs/sleepSecs এখনো 0 থাকে — এতে "কোনো ডেটা নেই" দেখাত। বারবার network call করলে
   // race-guard (_moodRankReqSeq) নিজের আগের সফল request-ই বাতিল করে দিত, ফলে loading দেখিয়ে
