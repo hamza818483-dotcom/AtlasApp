@@ -1640,8 +1640,7 @@ function applyMoodSwitch(newMood){
   document.getElementById('lsrStudy').textContent=allStudents.filter(s=>s.status==='study').length;
   document.getElementById('lsrBreak').textContent=allStudents.filter(s=>s.status==='break').length;
   document.getElementById('lsrSleep').textContent=allStudents.filter(s=>s.status==='sleep').length;
-  renderBatchFilter(allStudents); renderLiveStudents(allStudents);
-  // Leaderboard "আজকে" list (studyMoodRankList) নতুন mood অনুযায়ী সঠিক aggregated
+  renderBatchFilter(allStudents); renderLiveStudents(allStudents, true);
   // data দিয়ে reload হবে (study_seconds/break_seconds/sleep_seconds আলাদাভাবেই
   // sort/filter হয় loadMoodRanking এর ভেতরে, mix হয় না)।
   const activeBtn=document.querySelector('.live-today-section .mood-period-row .mood-period-btn.active')
@@ -2630,9 +2629,9 @@ function renderBatchFilter(students){
 
 function filterBatch(b){ selectedBatch=b; renderBatchFilter(allStudents); renderLiveStudents(allStudents); }
 
-function renderLiveStudents(students){
+function renderLiveStudents(students, forceRender){
   if(activeStudyPeriod!==1) return; // অন্য period (৩/৭/১৫/৩০ দিন) সিলেক্টেড থাকলে live-update সেটা overwrite করবে না
-  if(_accurateTodayLoaded) return; // loadMoodRanking('study',1) থেকে সঠিক data একবার এলে, এই quick/approximate data আর overwrite করবে না
+  if(_accurateTodayLoaded && !forceRender) return; // loadMoodRanking('study',1) থেকে সঠিক data একবার এলে, এই quick/approximate data আর overwrite করবে না (mood switch এ forceRender দিয়ে bypass করা হয় instant update এর জন্য)
   const titleEl=document.getElementById('liveTitleText');
 
   // Mood-based filtering
