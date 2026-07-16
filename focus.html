@@ -1566,6 +1566,12 @@ function applyMoodSwitch(newMood){
 
   updateMoodButtons(); renderTimer(); updateLsrCardHighlight(); saveState(); syncSession();
   updateSelfInList(); renderLiveStudents(allStudents);
+  // Leaderboard "আজকে" list-টা নতুন mood অনুযায়ী accurate data দিয়ে আবার লোড করো,
+  // নাহলে stale approximate renderer আর পুরনো accurate data দুইটা একসাথে DOM
+  // আপডেট করতে থাকে আর সময় উঠানামা (flicker) করে।
+  const activeBtn=document.querySelector('.live-today-section .mood-period-row .mood-period-btn.active')
+    || document.querySelector('.live-today-section .mood-period-row .mood-period-btn');
+  loadMoodRanking('study',1,activeBtn);
   const names={study:'📚 Study',break:'☕ বিরতি',sleep:'😴 ঘুম'};
   showToast(`${names[newMood]} শুরু হলো`);
 }
