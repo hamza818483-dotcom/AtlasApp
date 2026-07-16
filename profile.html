@@ -1050,9 +1050,7 @@
             <div id="leaderboardList"></div>
         </div>
     </div>
-    <!-- Result content container -->
-<div id="resultContent" style="display:none;"></div>
-<!-- MODE 4: Preview -->
+    <!-- MODE 4: Preview -->
 <div class="mode-container" id="modePreview">
     <div class="preview-wrap">
         <button class="back-btn" onclick="backToPreExam()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg> ফিরে যান</button>
@@ -1130,7 +1128,7 @@
         </div>
     </div>
     <!-- Summary Bar -->
-    <div id="mistakesSummaryBar" style="display:none;background:var(--hover);border:1px solid var(--border);border-radius:10px;padding:10px;margin:0 12px 12px;"></div>
+    <div id="mistakesBulkBar" style="display:none;background:var(--hover);border:1px solid var(--border);border-radius:10px;padding:10px;margin:0 12px 12px;"></div>
     <div class="fs-body" id="mistakesBody"></div>
 </div>
 
@@ -2094,7 +2092,7 @@ function toggleSelectAllMistakesExams() {
 
 function updateMistakesSummaryBar() {
     const checkboxes = document.querySelectorAll('.mistake-exam-checkbox:checked');
-    const bar = document.getElementById('mistakesSummaryBar');
+    const bar = document.getElementById('mistakesBulkBar');
     if (!bar) return;
     if (checkboxes.length === 0) { bar.style.display = 'none'; return; }
     bar.style.display = 'flex';
