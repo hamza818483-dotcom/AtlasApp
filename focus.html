@@ -2548,6 +2548,10 @@ function renderLiveStudents(students){
     if(mood==='sleep') return {...s, total_seconds:s.sleep_seconds||0};
     return s;
   });
+  // mood অনুযায়ী সঠিক panel টার্গেট করতে হবে — নাহলে Break/Sleep mode-এ এই function
+  // ভুলবশত studyMoodRankList (Real/Study counter) ওভাররাইট করে ফেলত, যার ফলে
+  // Study Mood-এর real counter আর Break/Sleep counter পালাক্রমে দেখা যেত (আসল বাগ)।
+  if(mood!=='study') return;
   const list=document.getElementById('studyMoodRankList');
   if(!list) return;
   if(!ranked.length){
