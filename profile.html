@@ -3674,10 +3674,7 @@ async function loadLeaderboard(type) {
                         ${category?`<span class="lb-exam-chip"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z' /> <circle cx='7.5' cy='7.5' r='.5' fill='currentColor' /></svg>️ ${escHtml(category)}</span>`:''}
                         ${examDate?`<span class="lb-exam-chip"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M8 2v4' /> <path d='M16 2v4' /> <rect width='18' height='18' x='3' y='4' rx='2' /> <path d='M3 10h18' /></svg> ${examDate}</span>`:''}
                     </div>
-                    <button class="lb-see-btn" onclick="toggleLbDetail('${panelId}','${examId}',this)"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#FFB800' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M10 14.66v1.626a2 2 0 0 1-.976 1.696A5 5 0 0 0 7 21.978' /> <path d='M14 14.66v1.626a2 2 0 0 0 .976 1.696A5 5 0 0 1 17 21.978' /> <path d='M18 9h1.5a1 1 0 0 0 0-5H18' /> <path d='M4 22h16' /> <path d='M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z' /> <path d='M6 9H4.5a1 1 0 0 1 0-5H6' /></svg> Leaderboard দেখো</button>
-                </div>
-                <div class="lb-detail-panel" id="${panelId}">
-                    <div style="text-align:center;color:var(--text2);font-size:12px;padding:10px;">লোড হচ্ছে...</div>
+                    <button class="lb-see-btn" onclick="openLbModal('${examId}','${examName.replace(/'/g, '')}')"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#FFB800' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M10 14.66v1.626a2 2 0 0 1-.976 1.696A5 5 0 0 0 7 21.978' /> <path d='M14 14.66v1.626a2 2 0 0 0 .976 1.696A5 5 0 0 1 17 21.978' /> <path d='M18 9h1.5a1 1 0 0 0 0-5H18' /> <path d='M4 22h16' /> <path d='M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z' /> <path d='M6 9H4.5a1 1 0 0 1 0-5H6' /></svg> Leaderboard দেখো</button>
                 </div>
             </div>`;
         }
@@ -3687,21 +3684,21 @@ async function loadLeaderboard(type) {
     }
 }
 
-async function toggleLbDetail(panelId, examId, btn) {
-    const panel = document.getElementById(panelId);
-    if (!panel) return;
-    const isOpen = panel.classList.contains('open');
-    if (isOpen) { panel.classList.remove('open'); btn.textContent='🏆 Leaderboard দেখো'; return; }
-    panel.classList.add('open');
-    btn.textContent = '▲ বন্ধ করুন';
-    panel.innerHTML = '<div style="text-align:center;color:var(--text2);font-size:12px;padding:10px;">লোড হচ্ছে...</div>';
-    // FIX #8: Auto-fetch real-time leaderboard for this exam, no edit
-    const data = await safeFetch(`${SUPABASE_URL}/rest/v1/exam_results?exam_id=eq.${examId}&select=phone,final_score,total_questions,submitted_at&order=final_score.desc&limit=20`);
-    // Get user names
+async function openLbModal(examId, examName) {
+    const modal = document.getElementById('detailModal');
+    const box = document.getElementById('detailModalContent');
+    box.innerHTML = `<div class="modal-title"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#FFB800' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M8 21h8M12 17v4M7 4H4v4a5 5 0 005 5h6a5 5 0 005-5V4h-3M7 4h10v4a5 5 0 01-10 0V4z' /></svg> ${escHtml(examName)}</div>
+        <div id="lbModalBody" style="max-height:70vh;overflow-y:auto;">
+            <div style="text-align:center;color:var(--text2);font-size:12px;padding:10px;">লোড হচ্ছে...</div>
+        </div>`;
+    modal.classList.add('active');
+    const body = document.getElementById('lbModalBody');
+    // FIX #8: real-time leaderboard, ranked serially, no edit
+    const data = await safeFetch(`${SUPABASE_URL}/rest/v1/exam_results?exam_id=eq.${examId}&select=phone,final_score,total_questions,submitted_at&order=final_score.desc&limit=50`);
     const rankEmoji=['<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15" /> <path d="M11 12 5.12 2.2" /> <path d="m13 12 5.88-9.8" /> <path d="M8 7h8" /> <circle cx="12" cy="17" r="5" /> <path d="M12 18v-2h-.5" /></svg>','<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15" /> <path d="M11 12 5.12 2.2" /> <path d="m13 12 5.88-9.8" /> <path d="M8 7h8" /> <circle cx="12" cy="17" r="5" /> <path d="M12 18v-2h-.5" /></svg>','<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15" /> <path d="M11 12 5.12 2.2" /> <path d="m13 12 5.88-9.8" /> <path d="M8 7h8" /> <circle cx="12" cy="17" r="5" /> <path d="M12 18v-2h-.5" /></svg>'];
     const rankClass=['gold','silver','bronze'];
-    if (!data?.length) { panel.innerHTML='<div style="text-align:center;padding:10px;color:var(--text2);">কোনো ডাটা নেই</div>'; return; }
-    panel.innerHTML = `<div style="font-size:10px;color:var(--text2);text-align:right;margin-bottom:8px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8' /> <path d='M21 3v5h-5' /> <path d='M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16' /> <path d='M8 16H3v5' /></svg> রিয়েল-টাইম | এডিট করা যাবে না</div>
+    if (!data?.length) { body.innerHTML='<div style="text-align:center;padding:10px;color:var(--text2);">কোনো ডাটা নেই</div>'; return; }
+    body.innerHTML = `<div style="font-size:10px;color:var(--text2);text-align:right;margin-bottom:8px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8' /> <path d='M21 3v5h-5' /> <path d='M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16' /> <path d='M8 16H3v5' /></svg> রিয়েল-টাইম | এডিট করা যাবে না</div>
         ${data.map((r,i)=>{
             const pct=Math.round((parseFloat(r.final_score)||0)/(r.total_questions||50)*100);
             const isCurrent = r.phone===currentUser?.phone;
