@@ -2516,6 +2516,30 @@ function renderLeaderboard(list){
   rankList.innerHTML=list.map((s,i)=>buildRankCard(s,i+1,false)).join('');
   // আজকের (ক্যালেন্ডার দিন 12AM-11:59PM) ranking row — সবার উপরে আলাদা section
   loadTodayLbRow();
+  startLbLiveRefresh();
+}
+
+// Ultimate Leaderboard-কে "real-time" মনে হওয়ার জন্য দুইটা mechanism:
+// ১) প্রতি সেকেন্ডে শুধু নিজের card-এর সময় টেক্সট patch হয় (DOM rebuild ছাড়াই) —
+//    flicker-free smooth ticking।
+// ২) প্রতি ৩০ সেকেন্ডে পুরো ranking আসল DB data দিয়ে fresh reload হয় (rank order,
+//    অন্যদের সময়, নতুন কেউ যোগ হওয়া ইত্যাদি ঠিক রাখতে) — কিন্তু innerHTML পুরো swap
+//    না করে শুধু flicker এড়াতে চেষ্টা করা হয়।
+let lbLiveTicker=null, lbRefreshTicker=null;
+function startLbLiveRefresh(){
+  stopLbLiveRefresh();
+  lbLiveTicker=setInterval(()=>{
+    if(!currentUser) return;
+    const secs=accumulatedStudySecs+studySecs;
+    document.querySelectorAll(`#rankList .r-card[data-phone="${CSS.escape(currentUser.phone||'')}"] .r-time, #lbFullScreen .r-card[data-phone="${CSS.escape(currentUser.phone||'')}"] .r-time`).forEach(el=>{
+      el.textContent=fmtCompact(secs);
+    });
+  },1000);
+  lbRefreshTicker=setInterval(()=>{ loadLeaderboard(currentPeriod); },30000);
+}
+function stopLbLiveRefresh(){
+  if(lbLiveTicker){ clearInterval(lbLiveTicker); lbLiveTicker=null; }
+  if(lbRefreshTicker){ clearInterval(lbRefreshTicker); lbRefreshTicker=null; }
 }
 
 async function loadTodayLbRow(){
