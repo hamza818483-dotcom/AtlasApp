@@ -1618,12 +1618,16 @@ function applyMoodSwitch(newMood){
 
   updateMoodButtons(); renderTimer(); updateLsrCardHighlight(); saveState(); syncSession();
   updateSelfInList(); renderLiveStudents(allStudents);
-  // Leaderboard "আজকে" list-টা নতুন mood অনুযায়ী accurate data দিয়ে আবার লোড করো,
-  // নাহলে stale approximate renderer আর পুরনো accurate data দুইটা একসাথে DOM
-  // আপডেট করতে থাকে আর সময় উঠানামা (flicker) করে।
-  const activeBtn=document.querySelector('.live-today-section .mood-period-row .mood-period-btn.active')
-    || document.querySelector('.live-today-section .mood-period-row .mood-period-btn');
-  loadMoodRanking(newMood,1,activeBtn);
+  // Leaderboard "আজকে" list (studyMoodRankList) শুধুমাত্র Study Mood-এর জন্য।
+  // আগে newMood break/sleep হলেও এই list ঐ mood-এর data দিয়ে reload হতো —
+  // এতে Study real counter-এর সাথে Break/Sleep counter-এর সংযোগ (mix-up) হতো।
+  // এখন শুধু Study Mood-এ গেলেই এই panel reload হবে; Break/Sleep panel আলাদাভাবে
+  // openMoodOverlay() এর মাধ্যমেই load হয়, এখানে ছোঁয়া হবে না।
+  if(newMood==='study'){
+    const activeBtn=document.querySelector('.live-today-section .mood-period-row .mood-period-btn.active')
+      || document.querySelector('.live-today-section .mood-period-row .mood-period-btn');
+    loadMoodRanking('study',1,activeBtn);
+  }
   const names={study:'📚 Study',break:'☕ বিরতি',sleep:'😴 ঘুম'};
   showToast(`${names[newMood]} শুরু হলো`);
 }
@@ -2878,10 +2882,12 @@ document.addEventListener('DOMContentLoaded',async ()=>{
   const restored=restoreSession();
   await renderLive(); // restored হোক বা না হোক — allStudents সবসময় fresh populate করো
   startIdlePolling();
-  // renderLive() শেষ হওয়ার পরে call — allStudents তখন তখন fresh, তাই accurate merge হবে
-  // restoreSession() থেকে যে mood ফিরে এসেছে (study/break/sleep) সেটাই ব্যবহার করো,
-  // নাহলে reload এ break/sleep mode এ থাকলেও leaderboard এ study time দেখাতো।
-  loadMoodRanking(mood,1,document.querySelector('.live-today-section .mood-period-row .mood-period-btn'));
+  // renderLive() শেষ হওয়ার পরে call — allStudents তখন fresh, তাই accurate merge হবে।
+  // studyMoodRankList (Real/Study counter panel) সবসময় শুধু 'study' data দিয়েই লোড হবে —
+  // reload এর সময় mood break/sleep থাকলেও এই panel তাতে touch হবে না (panel আলাদা থাকবে)।
+  if(mood==='study'){
+    loadMoodRanking('study',1,document.querySelector('.live-today-section .mood-period-row .mood-period-btn'));
+  }
 });
 
 
