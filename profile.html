@@ -1591,12 +1591,8 @@ function openTG() { window.open('https://t.me/rafi_somc', '_blank'); }
 // FIX #4: Logout instant — no delay
 function confirmLogout() {
     showConfirm('লগআউট', 'আপনি কি সত্যিই লগআউট করতে চান?', '<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m16 17 5-5-5-5" /> <path d="M21 12H9" /> <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /></svg> লগআউট', () => {
-        document.body.style.transition = 'opacity 0.15s ease';
-        document.body.style.opacity = '0';
-        setTimeout(() => {
-            localStorage.removeItem('atlas-session');
-            location.replace('auth.html');
-        }, 150);
+        localStorage.removeItem('atlas-session');
+        location.replace('auth.html');
     });
 }
 function toBanglaNum(n) {
@@ -1636,6 +1632,12 @@ function closeConfirm() {
     confirmCallback = null;
     document.getElementById('confirmDialog').classList.remove('active');
 }
+document.getElementById('confirmOkBtn').addEventListener('click', () => {
+    const cb = confirmCallback;
+    document.getElementById('confirmDialog').classList.remove('active');
+    confirmCallback = null;
+    if (cb) cb();
+});
 function showExamResultFullPage(resultData) {
    console.log("🎯 showExamResultFullPage CALLED!", resultData);  // ← এই লাইন যোগ করুন
     // ... বাকি কোড
