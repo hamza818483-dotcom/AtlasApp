@@ -1459,9 +1459,9 @@ function bumpSelfMoodCard(){
   const overlayOpen = document.getElementById('moodOverlay')?.classList.contains('show');
   const targets=[];
   if(overlayOpen && currentOverlayMood===mood) targets.push('bsMoodRankList');
-  // studyMoodRankList শুধু তখনই আপডেট হবে যখন mood নিজেই 'study' — নাহলে Break/Sleep এর
-  // সময় Study Mode এর real counter-এর card-এ লিখে ফেলত (আসল বাগ: counter আসা-যাওয়া করত)
-  if(activeStudyPeriod===1 && mood==='study') targets.push('studyMoodRankList');
+  // studyMoodRankList আসলে সব mood-এর জন্যই একই visible list (title/content mood
+  // অনুযায়ী বদলায়) — তাই self card-ও সব mood-এই এখানে আপডেট হবে।
+  if(activeStudyPeriod===1) targets.push('studyMoodRankList');
   targets.forEach(id=>{
     const el=document.getElementById(id);
     if(!el) return;
@@ -1618,16 +1618,12 @@ function applyMoodSwitch(newMood){
 
   updateMoodButtons(); renderTimer(); updateLsrCardHighlight(); saveState(); syncSession();
   updateSelfInList(); renderLiveStudents(allStudents);
-  // Leaderboard "আজকে" list (studyMoodRankList) শুধুমাত্র Study Mood-এর জন্য।
-  // আগে newMood break/sleep হলেও এই list ঐ mood-এর data দিয়ে reload হতো —
-  // এতে Study real counter-এর সাথে Break/Sleep counter-এর সংযোগ (mix-up) হতো।
-  // এখন শুধু Study Mood-এ গেলেই এই panel reload হবে; Break/Sleep panel আলাদাভাবে
-  // openMoodOverlay() এর মাধ্যমেই load হয়, এখানে ছোঁয়া হবে না।
-  if(newMood==='study'){
-    const activeBtn=document.querySelector('.live-today-section .mood-period-row .mood-period-btn.active')
-      || document.querySelector('.live-today-section .mood-period-row .mood-period-btn');
-    loadMoodRanking('study',1,activeBtn);
-  }
+  // Leaderboard "আজকে" list (studyMoodRankList) নতুন mood অনুযায়ী সঠিক aggregated
+  // data দিয়ে reload হবে (study_seconds/break_seconds/sleep_seconds আলাদাভাবেই
+  // sort/filter হয় loadMoodRanking এর ভেতরে, mix হয় না)।
+  const activeBtn=document.querySelector('.live-today-section .mood-period-row .mood-period-btn.active')
+    || document.querySelector('.live-today-section .mood-period-row .mood-period-btn');
+  loadMoodRanking(newMood,1,activeBtn);
   const names={study:'📚 Study',break:'☕ বিরতি',sleep:'😴 ঘুম'};
   showToast(`${names[newMood]} শুরু হলো`);
 }
@@ -2552,10 +2548,10 @@ function renderLiveStudents(students){
     if(mood==='sleep') return {...s, total_seconds:s.sleep_seconds||0};
     return s;
   });
-  // mood অনুযায়ী সঠিক panel টার্গেট করতে হবে — নাহলে Break/Sleep mode-এ এই function
-  // ভুলবশত studyMoodRankList (Real/Study counter) ওভাররাইট করে ফেলত, যার ফলে
-  // Study Mood-এর real counter আর Break/Sleep counter পালাক্রমে দেখা যেত (আসল বাগ)।
-  if(mood!=='study') return;
+  // এই একই list element (studyMoodRankList) সব mood-এই ব্যবহার হয় — কিন্তু content
+  // সবসময় বর্তমান mood অনুযায়ী ঠিকমতো filter হতে হবে (উপরে pool/ranked এ করা হয়েছে)।
+  // Break/Sleep mood-এ ranked-এর total_seconds ইতিমধ্যে break_seconds/sleep_seconds
+  // দিয়ে overwrite করা হয়েছে, তাই এখানে আর কখনো study_seconds দেখাবে না।
   const list=document.getElementById('studyMoodRankList');
   if(!list) return;
   if(!ranked.length){
@@ -2883,11 +2879,9 @@ document.addEventListener('DOMContentLoaded',async ()=>{
   await renderLive(); // restored হোক বা না হোক — allStudents সবসময় fresh populate করো
   startIdlePolling();
   // renderLive() শেষ হওয়ার পরে call — allStudents তখন fresh, তাই accurate merge হবে।
-  // studyMoodRankList (Real/Study counter panel) সবসময় শুধু 'study' data দিয়েই লোড হবে —
-  // reload এর সময় mood break/sleep থাকলেও এই panel তাতে touch হবে না (panel আলাদা থাকবে)।
-  if(mood==='study'){
-    loadMoodRanking('study',1,document.querySelector('.live-today-section .mood-period-row .mood-period-btn'));
-  }
+  // restoreSession() থেকে যে mood ফিরে এসেছে (study/break/sleep) সেটার সঠিক data দিয়েই
+  // studyMoodRankList (একই list, mood অনুযায়ী content বদলায়) reload হবে।
+  loadMoodRanking(mood,1,document.querySelector('.live-today-section .mood-period-row .mood-period-btn'));
 });
 
 
