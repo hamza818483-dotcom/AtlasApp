@@ -2272,7 +2272,10 @@ async function loadMoodRanking(moodType, days, btn, targetOverlay){
   const el=document.getElementById(listElId);
   if(!el) return;
   const mySeq = ++_moodRankReqSeq; // এই request-এর নিজস্ব sequence number
-  el.innerHTML='<div style="text-align:center;padding:10px;color:var(--text-secondary);font-size:11px">লোড হচ্ছে...</div>';
+  // শুধু প্রথমবার (list খালি থাকলে) "লোড হচ্ছে..." দেখাও — নাহলে mood switch/refresh এ flash হয়
+  if(!el.children.length || el.querySelector('[style*="কেউ নেই"], [style*="ডেটা নেই"]')){
+    el.innerHTML='<div style="text-align:center;padding:10px;color:var(--text-secondary);font-size:11px">লোড হচ্ছে...</div>';
+  }
 
   const since=new Date(Date.now()-days*86400000).toISOString();
 
