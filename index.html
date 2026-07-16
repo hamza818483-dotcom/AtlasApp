@@ -2756,6 +2756,7 @@ document.addEventListener('click', e => {
     }
 });
 
+let _cachedNotifHtml = null, _cachedNotifEmpty = null;
 async function loadNotifDropdown() {
     const sess = getSession();
     const body = document.getElementById('notifDropdownBody');
@@ -2764,17 +2765,28 @@ async function loadNotifDropdown() {
         return;
     }
 
-    body.innerHTML = `<div class="notif-dropdown-empty">লোড হচ্ছে...</div>`;
+    // Instant: আগের ক্যাশড ডেটা থাকলে সাথে সাথে দেখাও, "লোড হচ্ছে" flash এড়িয়ে
+    if (_cachedNotifHtml !== null) {
+        body.innerHTML = _cachedNotifHtml;
+    } else if (_cachedNotifEmpty !== null) {
+        body.innerHTML = _cachedNotifEmpty;
+    } else {
+        body.innerHTML = `<div class="notif-dropdown-empty">লোড হচ্ছে...</div>`;
+    }
+
     const data = await safeFetch(
         `${SUPABASE_URL}/rest/v1/notifications?phone=eq.${sess.phone}&select=*&order=created_at.desc&limit=10`
     ) || [];
 
     if (!data.length) {
-        body.innerHTML = `<div class="notif-dropdown-empty">কোনো নোটিফিকেশন নেই</div>`;
+        _cachedNotifHtml = null;
+        _cachedNotifEmpty = `<div class="notif-dropdown-empty">কোনো নোটিফিকেশন নেই</div>`;
+        body.innerHTML = _cachedNotifEmpty;
         return;
     }
 
-    body.innerHTML = data.map(n => `
+    _cachedNotifEmpty = null;
+    _cachedNotifHtml = data.map(n => `
         <div class="notif-dropdown-item ${n.is_read?'':'unread'}" onclick="markNotifRead('${n.id}')">
             <div class="notif-dropdown-item-title">
                 ${!n.is_read?'<span class="notif-dropdown-item-dot"></span>':''}
@@ -2783,6 +2795,7 @@ async function loadNotifDropdown() {
             <div class="notif-dropdown-item-msg">${escHtml((n.message||'').substring(0,60))}${(n.message||'').length>60?'...':''}</div>
         </div>
     `).join('');
+    body.innerHTML = _cachedNotifHtml;
 }
 
 async function markNotifRead(id) {
@@ -2889,6 +2902,24 @@ document.addEventListener('DOMContentLoaded', () => {
     loadMentors();
     checkAdmin();
     loadNotifBadge();
+    // Notification dropdown ক্যাশ আগে থেকেই লোড করে রাখা — বেল আইকনে ক্লিক করলে instant দেখানোর জন্য
+    (async () => {
+        const sess = getSession();
+        if (!sess) return;
+        const data = await safeFetch(
+            `${SUPABASE_URL}/rest/v1/notifications?phone=eq.${sess.phone}&select=*&order=created_at.desc&limit=10`
+        ) || [];
+        if (!data.length) { _cachedNotifEmpty = `<div class="notif-dropdown-empty">কোনো নোটিফিকেশন নেই</div>`; return; }
+        _cachedNotifHtml = data.map(n => `
+            <div class="notif-dropdown-item ${n.is_read?'':'unread'}" onclick="markNotifRead('${n.id}')">
+                <div class="notif-dropdown-item-title">
+                    ${!n.is_read?'<span class="notif-dropdown-item-dot"></span>':''}
+                    ${escHtml(n.title||'নোটিফিকেশন')}
+                </div>
+                <div class="notif-dropdown-item-msg">${escHtml((n.message||'').substring(0,60))}${(n.message||'').length>60?'...':''}</div>
+            </div>
+        `).join('');
+    })();
 });
 
 </script>
