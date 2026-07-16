@@ -1440,7 +1440,6 @@ function tick(){
   // Break/Sleep mode-এ এই full rebuild আর করা হবে না — bumpSelfMoodCard() ইতিমধ্যে
   // প্রতি সেকেন্ডে শুধু নিজের card-এর টেক্সট আপডেট করে, তাই বাড়তি rebuild flicker করছিল।
   if(mood==='study' && total%5===0){ renderLiveStudents(allStudents); saveState(); }
-  else if(mood!=='study' && total%15===0){ renderLiveStudents(allStudents); saveState(); }
   else if(mood!=='study' && total%5===0){ saveState(); }
   // Break/Sleep mood-এ ঢোকার সাথে সাথেই loadMoodRanking() network call হতো, কিন্তু তখন
   // breakSecs/sleepSecs এখনো 0 থাকে — এতে "কোনো ডেটা নেই" দেখাত। বারবার network call করলে
@@ -1897,6 +1896,7 @@ function updateTicker(students){
 
 /* ═══ LIVE POLLING ═══ */
 let idlePollInterval=null;
+let _renderLiveTick=0; // renderLive()-এর full DOM rebuild প্রতি ৫ সেকেন্ডে সীমিত রাখতে ব্যবহৃত
 let liveSecTicker=null;
 
 function startLiveSecTicker(){
@@ -2081,9 +2081,12 @@ async function renderLive(){
     document.getElementById('lsrBreak').textContent=allStudents.filter(s=>s.status==='break').length;
     document.getElementById('lsrSleep').textContent=allStudents.filter(s=>s.status==='sleep').length;
 
-    // Live students section
+    // Live students section — পুরো DOM rebuild প্রতি সেকেন্ডে না করে ৫ সেকেন্ডে একবার করা হয়
+    // (bumpSelfMoodCard/tick() ইতিমধ্যে প্রতি সেকেন্ডে নিজের card-এর টেক্সট smooth-ভাবে আপডেট করে,
+    // তাই এখানে প্রতি সেকেন্ডে rebuild করলে flicker হতো)
     renderBatchFilter(allStudents);
-    renderLiveStudents(allStudents);
+    _renderLiveTick++;
+    if(_renderLiveTick%5===0) renderLiveStudents(allStudents);
     updateLsrCardHighlight();
 
   } catch(e){ console.error('❌ renderLive error:', e); }
