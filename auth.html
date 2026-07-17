@@ -154,6 +154,7 @@
 </div>
 
 <script>
+if(new URLSearchParams(location.search).get('kicked')==='1'){window.__atlasKicked=true;}
 const SUPABASE_URL = 'https://atlas-ai-proxy.hamza818483.workers.dev';
 const SUPABASE_KEY = 'mb_d1_9f2a7c6e1b4d8305';
 let isDarkMode=true,currentTab='login';
@@ -190,7 +191,9 @@ async function handleLogin(){
         if(!data?.length){showToast('❌ রেজিস্টার্ড নয়');btn.disabled=false;btn.textContent='লগইন করুন';return;}
         const user=data[0];
         if(user.password_hash!==pass){showToast('❌ ভুল পাসওয়ার্ড');btn.disabled=false;btn.textContent='লগইন করুন';return;}
-        localStorage.setItem('atlas-session',JSON.stringify({phone:user.phone,name:user.name,batch:user.batch,college:user.college,father_name:user.father_name,mother_name:user.mother_name,ssc_gpa:user.ssc_gpa,hsc_gpa:user.hsc_gpa,timer_type:user.timer_type,role:user.role,photo_url:user.photo_url,premium:user.is_premium}));
+        const sessionToken=(crypto.randomUUID?crypto.randomUUID():(Date.now()+'-'+Math.random().toString(36).slice(2)));
+        await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}`,{method:'PATCH',body:JSON.stringify({active_session:sessionToken})});
+        localStorage.setItem('atlas-session',JSON.stringify({phone:user.phone,name:user.name,batch:user.batch,college:user.college,father_name:user.father_name,mother_name:user.mother_name,ssc_gpa:user.ssc_gpa,hsc_gpa:user.hsc_gpa,timer_type:user.timer_type,role:user.role,photo_url:user.photo_url,premium:user.is_premium,session_token:sessionToken}));
         showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> লগইন সফল!');
         const returnUrl = sessionStorage.getItem('atlas_return_url') || 'index.html';
         sessionStorage.removeItem('atlas_return_url');
@@ -213,7 +216,9 @@ async function handleRegister(){
         if(exist?.length){showToast('❌ ফোন আগেই রেজিস্টার্ড');btn.disabled=false;btn.textContent='রেজিস্টার করুন';return;}
         const created=await safeFetch(`${SUPABASE_URL}/rest/v1/users`,{method:'POST',body:JSON.stringify({phone,name,batch,college,father_name:father||null,mother_name:mother||null,ssc_gpa:parseFloat(ssc),hsc_gpa:parseFloat(hsc),timer_type:timer,email,password_hash:pass})});
         if(!created?.length){showToast('❌ রেজিস্ট্রেশন ব্যর্থ, আবার চেষ্টা করুন');btn.disabled=false;btn.textContent='রেজিস্টার করুন';return;}
-        localStorage.setItem('atlas-session',JSON.stringify({phone,name,batch,college,father_name:father,mother_name:mother,ssc_gpa:ssc,hsc_gpa:hsc,timer_type:timer,email}));
+        const sessionToken2=(crypto.randomUUID?crypto.randomUUID():(Date.now()+'-'+Math.random().toString(36).slice(2)));
+        await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}`,{method:'PATCH',body:JSON.stringify({active_session:sessionToken2})});
+        localStorage.setItem('atlas-session',JSON.stringify({phone,name,batch,college,father_name:father,mother_name:mother,ssc_gpa:ssc,hsc_gpa:hsc,timer_type:timer,email,session_token:sessionToken2}));
         showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> রেজিস্ট্রেশন সফল!');
         const returnUrl2 = sessionStorage.getItem('atlas_return_url') || 'index.html';
         sessionStorage.removeItem('atlas_return_url');
@@ -280,7 +285,7 @@ window.addEventListener('error',function(e){showError('<svg class="emoji-icon" v
 window.addEventListener('unhandledrejection',function(e){showError('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>️ প্রসেসিং সমস্যা','অনুরোধ সম্পূর্ণ করা যায়নি',e.reason?.message,null);});
 
 document.addEventListener('keydown',e=>{if(e.key==='Enter'){if(currentTab==='login')handleLogin();else if(currentTab==='register')handleRegister();else if(currentTab==='forget')handleForget();}});
-document.addEventListener('DOMContentLoaded',()=>{const sess=localStorage.getItem('atlas-session');if(sess){try{JSON.parse(sess);showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2" /> <path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2" /> <path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8" /> <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" /></svg> ইতিমধ্যে লগইন');const ru=sessionStorage.getItem('atlas_return_url')||'index.html';sessionStorage.removeItem('atlas_return_url');setTimeout(()=>location.href=ru,600);}catch(e){}}});
+document.addEventListener('DOMContentLoaded',()=>{if(window.__atlasKicked){showToast('⚠️ অন্য ডিভাইস থেকে লগইন করায় এখানে লগআউট হয়ে গেছে');return;}const sess=localStorage.getItem('atlas-session');if(sess){try{JSON.parse(sess);showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2" /> <path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2" /> <path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8" /> <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" /></svg> ইতিমধ্যে লগইন');const ru=sessionStorage.getItem('atlas_return_url')||'index.html';sessionStorage.removeItem('atlas_return_url');setTimeout(()=>location.href=ru,600);}catch(e){}}});
 </script>
 </body>
 </html>

@@ -303,6 +303,36 @@
         window.addEventListener('beforeunload', () => { if (bgTimer) clearInterval(bgTimer); });
     }
 
+    // ---------- ৬. এক ডিভাইস/ব্রাউজারেই লগইন — নতুন ডিভাইসে লগইন হলে পুরনোটা auto logout ----------
+    const SESSION_CHECK_URL = 'https://atlas-ai-proxy.hamza818483.workers.dev';
+    const SESSION_CHECK_KEY = 'mb_d1_9f2a7c6e1b4d8305';
+
+    function setupSingleDeviceGuard() {
+        if (currentPage() === 'auth.html') return; // auth পেজ নিজেই session বসায়, চেক দরকার নেই
+
+        async function checkSession() {
+            let session;
+            try { session = JSON.parse(localStorage.getItem('atlas-session') || 'null'); } catch (_) { return; }
+            if (!session || !session.phone || !session.session_token) return; // পুরনো session (token ছাড়া) থাকলে স্কিপ, force করা হবে না
+
+            try {
+                const res = await fetch(`${SESSION_CHECK_URL}/rest/v1/users?phone=eq.${session.phone}&select=active_session`, {
+                    headers: { apikey: SESSION_CHECK_KEY, Authorization: 'Bearer ' + SESSION_CHECK_KEY }
+                });
+                const rows = await res.json();
+                const serverToken = rows?.[0]?.active_session;
+                if (serverToken && serverToken !== session.session_token) {
+                    localStorage.removeItem('atlas-session');
+                    try { sessionStorage.setItem('atlas_return_url', location.pathname.split('/').pop() + location.search); } catch (_) {}
+                    location.href = 'auth.html?kicked=1';
+                }
+            } catch (_) { /* নেটওয়ার্ক এরর হলে চুপচাপ স্কিপ — পরের চেকে আবার চেষ্টা হবে */ }
+        }
+
+        checkSession();
+        setInterval(checkSession, 20000); // প্রতি ২০ সেকেন্ডে চেক
+    }
+
     // ---------- ইনিশিয়ালাইজ ----------
     function init() {
         injectVisibilityStyle();
@@ -313,6 +343,7 @@
         setupPagePersistence();
         setupReturnUrl();
         setupBackgroundStudyTracking();
+        setupSingleDeviceGuard();
     }
 
     if (document.readyState === 'loading') {
