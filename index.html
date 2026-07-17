@@ -1552,8 +1552,9 @@ function openSocial(p) {
    AUTH  (Flutter: AuthService)
 ══════════════════════════════════════════════ */
 function logout() {
+    if (!confirm('আপনি কি সত্যিই লগআউট করতে চান?')) return;
     localStorage.removeItem('atlas-session');
-    goTo('index.html');
+    location.replace('auth.html');
 }
 function getSession() {
     try { return JSON.parse(localStorage.getItem('atlas-session')); }
