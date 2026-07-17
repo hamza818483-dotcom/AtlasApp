@@ -509,8 +509,11 @@ async function loadSyllabus(mode,forceRefresh=false){
     CACHE[mode] = subjects; // network সফল হলেই একবারে swap — মাঝপথে খালি হয় না
     return subjects;
   }catch(e){
-    // Fallback to local data if Supabase tables not set up yet — পুরনো cache (থাকলে) অক্ষত থাকে
-    return CACHE[mode].length ? CACHE[mode] : (FALLBACK[mode]||[]);
+    // আগে এখানে Supabase error হলে হার্ডকোডেড demo syllabus (FALLBACK) দেখানো হতো,
+    // যেটা Admin Panel-এ কিছু add না করা সত্ত্বেও ভুতুড়েভাবে content দেখানোর কারণ
+    // ছিল। এখন শুধু আগের সফল fetch এর cache (থাকলে) দেখানো হবে, নাহলে খালি —
+    // hardcoded ডেমো ডেটা আর কখনো দেখানো হবে না।
+    return CACHE[mode].length ? CACHE[mode] : [];
   }
 }
 
@@ -1020,9 +1023,11 @@ const FALLBACK={
   ]
 };
 
-// Initialize: load fallback into cache
-CACHE.hsc=FALLBACK.hsc;
-CACHE.medical=FALLBACK.medical;
+// FALLBACK আগে সরাসরি CACHE-এ লোড হতো পেজ লোডের সময়ই — তাই Admin Panel থেকে
+// কিছু add না করা সত্ত্বেও এই hardcoded ডেমো syllabus (Physics, Chemistry, Bangla...)
+// দেখাত। এখন CACHE খালি থাকবে; Supabase-এ যা আছে শুধু সেটাই দেখাবে। loadSyllabus()
+// এর catch ব্লকে (network/table না থাকলে) এখনও FALLBACK ব্যবহার হয়, কিন্তু ডিফল্ট
+// হিসেবে না।
 
 // ═══════════════════
 // LEADERBOARD
