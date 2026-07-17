@@ -48,7 +48,7 @@ function sleep(ms) { return new Promise(res => setTimeout(res, ms)); }
 // অনির্দিষ্টকাল ধরে ঝুলে থাকতে পারত, এবং rotation chain-এর প্রতিটা key×model কম্বিনেশন এভাবে
 // আটকে গেলে পুরো chain মিনিটের পর মিনিট আটকে যেত। এখন প্রতিটা attempt-এ 12s hard timeout —
 // timeout হলে সেটাকেও exception হিসেবে ধরে পরের key/model-এ দ্রুত এগিয়ে যায়।
-const PROVIDER_TIMEOUT_MS = 12000;
+const PROVIDER_TIMEOUT_MS = 8000;
 
 // bug fix (root cause of "Too many subrequests by single Worker invocation"): CF Workers
 // (free/bundled) hard-cap each invocation at 50 subrequests. Every fetch() to Gemini/Groq/

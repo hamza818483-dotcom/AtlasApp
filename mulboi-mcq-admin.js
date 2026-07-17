@@ -2809,7 +2809,7 @@ async function mbAiGenerate() {
                 // সফল হতে পারে।
                 const isNetworkErr = e1 && /Failed to fetch|NetworkError|network/i.test(e1.message || '');
                 if (isNetworkErr) {
-                    await new Promise(r => setTimeout(r, 1500));
+                    await new Promise(r => setTimeout(r, 800));
                     try {
                         rawJson = await mbCallAiApi('', pageImageData, sysPrompt, false);
                         geminiAlreadyTried = true;
