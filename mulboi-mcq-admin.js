@@ -4111,13 +4111,15 @@ async function mbGenerateForPage(pageNum, countRaw, type) {
             `প্রশ্ন/অপশন/ব্যাখ্যা অবশ্যই বাংলা ভাষায় ও বাংলা লিপিতে লিখতে হবে। ` +
             `শুধু ঠিক ${need}টি প্রশ্নের valid JSON array রিটার্ন করো, markdown/preamble ছাড়া। Format:\n${jsonFormat}`;
         try {
-            // bug fix (root cause of "10 চাইলে 5-এ থেমে যাওয়া"): 2-parallel topUp call একসাথে
-            // Cloudflare Worker-এর subrequest limit ("Too many subrequests by single Worker
-            // invocation") হিট করছিল — প্রতিটা call নিজেই ৫-provider fallback chain, দুইটা
-            // parallel call মানে একসাথে অনেক বেশি subrequest, ফলে OpenRouter/Cloudflare-AI
-            // exception দিয়ে ফেল করছিল প্রতিবার। এখন sequential single call — সামান্য ধীর
-            // কিন্তু limit-এ hit করবে না, তাই actual valid MCQ পাওয়ার সম্ভাবনা বাড়বে।
-            const r1 = await mbCallAiApi('', pageImageData, makeTopUpSys(''), false, false);
+            // bug fix (root cause of "notun/image theke generate slow" — এই AI segment-এ সবচেয়ে
+            // বেশি সময় নষ্ট হতো এখানে): topUp call আগে skipGemini=false পাঠাত, মানে প্রতিটা topUp
+            // round (worst-case ৭ বার পর্যন্ত) আবার নতুন করে পুরো Gemini key/model rotation দিয়ে
+            // শুরু হতো — যদিও এই একই পেইজে callA/callB-তে Gemini ইতিমধ্যে চেষ্টা হয়ে গেছে এবং হয়
+            // কাজ করেনি নয়তো token limit-এ আটকে গেছে। প্রতিটা topUp round-এ এই redundant Gemini
+            // চেষ্টা ১২-৪৮ সেকেন্ড অতিরিক্ত সময় নিত, ৭ round মিলিয়ে কয়েক মিনিট পর্যন্ত অপচয় হতে
+            // পারত। এখন skipGemini=true — topUp সরাসরি Groq/OpenRouter দিয়ে শুরু করে, প্রতি
+            // round উল্লেখযোগ্যভাবে দ্রুত হয়।
+            const r1 = await mbCallAiApi('', pageImageData, makeTopUpSys(''), true, false);
             const existingQ = new Set(parsed.map(m => (m.question||'').trim()));
             const topUpParsed = mbParseAiJson(r1);
             const topUpValid = (topUpParsed || []).filter(mbIsValidMcqBulk);
