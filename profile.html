@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
+    <script src="page-transition.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>ATLAS APP · প্রোফাইল</title>
@@ -1584,7 +1585,7 @@ function closeSidebar() {
     document.getElementById('sidebarOverlay').classList.remove('active');
     document.getElementById('sidebar').classList.remove('active');
 }
-function goTo(u) { location.href = u; }
+function goTo(u) { document.body.classList.add('pt-leaving'); setTimeout(function(){ location.href = u; }, 90); }
 function openWA() { window.open('https://wa.me/8801999681290', '_blank'); }
 function openTG() { window.open('https://t.me/rafi_somc', '_blank'); }
 
