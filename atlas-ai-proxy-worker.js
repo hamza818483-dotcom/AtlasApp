@@ -81,6 +81,50 @@ async function attemptWithStatus(fn, budget) {
     }
 }
 
+/* ── SessionHub Durable Object: one instance per phone number, keeps that
+   user's live WebSocket connections (one per open tab/device) so a new
+   login can INSTANTLY kick every other open device — no polling delay. ── */
+export class SessionHub {
+    constructor(state, env) {
+        this.state = state;
+        this.sockets = new Map(); // ws -> token
+    }
+
+    async fetch(request) {
+        const url = new URL(request.url);
+
+        // Internal call from the worker itself: broadcast a kick to every
+        // socket whose token != newToken, then let them disconnect.
+        if (url.pathname === "/notify") {
+            const { newToken } = await request.json();
+            for (const [ws, tok] of this.sockets.entries()) {
+                if (tok !== newToken) {
+                    try {
+                        ws.send(JSON.stringify({ type: "kicked" }));
+                        ws.close(1000, "kicked");
+                    } catch (_) {}
+                    this.sockets.delete(ws);
+                }
+            }
+            return new Response("ok");
+        }
+
+        // Client WebSocket upgrade — register this device's socket + token.
+        if (request.headers.get("Upgrade") === "websocket") {
+            const token = url.searchParams.get("token") || "";
+            const pair = new WebSocketPair();
+            const [client, server] = Object.values(pair);
+            server.accept();
+            this.sockets.set(server, token);
+            server.addEventListener("close", () => this.sockets.delete(server));
+            server.addEventListener("error", () => this.sockets.delete(server));
+            return new Response(null, { status: 101, webSocket: client });
+        }
+
+        return new Response("SessionHub", { status: 200 });
+    }
+}
+
 export default {
     async fetch(request, env, ctx) {
         if (request.method === "OPTIONS") {
@@ -94,6 +138,27 @@ export default {
         //    Free-plan Disk IO throttling). Mimics the PostgREST query-string
         //    shape the frontend already sends so mulboi-mcq-admin.js only
         //    needs its base URL changed, not its query logic. ──
+        // ── Instant multi-device kick: WebSocket connect + notify ──
+        // GET (Upgrade: websocket) /session/ws?phone=X&token=Y  — client opens this on every page
+        // POST /session/notify {phone, token}                    — called right after login/register;
+        //      broadcasts "kicked" to every other open device for this phone, instantly.
+        if (path === "/session/ws" && request.headers.get("Upgrade") === "websocket") {
+            const phone = url.searchParams.get("phone");
+            if (!phone || !env.SESSION_HUB) return new Response("phone required", { status: 400 });
+            const id = env.SESSION_HUB.idFromName(phone);
+            return env.SESSION_HUB.get(id).fetch(request);
+        }
+        if (path === "/session/notify") {
+            if (request.method !== "POST") return jsonResponse({ error: "POST only" }, 405);
+            const { phone, token } = await request.json();
+            if (!phone || !token || !env.SESSION_HUB) return jsonResponse({ error: "phone+token required" }, 400);
+            const id = env.SESSION_HUB.idFromName(phone);
+            await env.SESSION_HUB.get(id).fetch(new Request("https://internal/notify", {
+                method: "POST", body: JSON.stringify({ newToken: token })
+            }));
+            return jsonResponse({ success: true });
+        }
+
         const d1Match = path.match(/^\/d1\/([a-z_][a-z0-9_]*)$/) || path.match(/^\/rest\/v1\/([a-z_][a-z0-9_]*)$/);
         if (d1Match) {
             return handleD1Table(d1Match[1], request, env, url, ctx);

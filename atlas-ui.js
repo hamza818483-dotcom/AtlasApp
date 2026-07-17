@@ -310,6 +310,33 @@
     function setupSingleDeviceGuard() {
         if (currentPage() === 'auth.html') return; // auth পেজ নিজেই session বসায়, চেক দরকার নেই
 
+        function doKick() {
+            localStorage.removeItem('atlas-session');
+            try { sessionStorage.setItem('atlas_return_url', location.pathname.split('/').pop() + location.search); } catch (_) {}
+            location.href = 'auth.html?kicked=1';
+        }
+
+        // ---------- Instant kick via WebSocket ----------
+        function connectWs(session) {
+            try {
+                const wsUrl = SESSION_CHECK_URL.replace('https://', 'wss://').replace('http://', 'ws://')
+                    + '/session/ws?phone=' + encodeURIComponent(session.phone) + '&token=' + encodeURIComponent(session.session_token);
+                const ws = new WebSocket(wsUrl);
+                ws.onmessage = (ev) => {
+                    try { if (JSON.parse(ev.data).type === 'kicked') doKick(); } catch (_) {}
+                };
+                ws.onclose = () => { setTimeout(() => { const s = readSession(); if (s) connectWs(s); }, 3000); }; // reconnect (network blip, not necessarily a kick)
+            } catch (_) {}
+        }
+
+        function readSession() {
+            try { return JSON.parse(localStorage.getItem('atlas-session') || 'null'); } catch (_) { return null; }
+        }
+
+        const initialSession = readSession();
+        if (initialSession && initialSession.phone && initialSession.session_token) connectWs(initialSession);
+
+        // ---------- 20s poll fallback (catches the rare case the socket silently dies) ----------
         async function checkSession() {
             let session;
             try { session = JSON.parse(localStorage.getItem('atlas-session') || 'null'); } catch (_) { return; }
@@ -322,9 +349,7 @@
                 const rows = await res.json();
                 const serverToken = rows?.[0]?.active_session;
                 if (serverToken && serverToken !== session.session_token) {
-                    localStorage.removeItem('atlas-session');
-                    try { sessionStorage.setItem('atlas_return_url', location.pathname.split('/').pop() + location.search); } catch (_) {}
-                    location.href = 'auth.html?kicked=1';
+                    doKick();
                 }
             } catch (_) { /* নেটওয়ার্ক এরর হলে চুপচাপ স্কিপ — পরের চেকে আবার চেষ্টা হবে */ }
         }

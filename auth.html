@@ -193,6 +193,7 @@ async function handleLogin(){
         if(user.password_hash!==pass){showToast('❌ ভুল পাসওয়ার্ড');btn.disabled=false;btn.textContent='লগইন করুন';return;}
         const sessionToken=(crypto.randomUUID?crypto.randomUUID():(Date.now()+'-'+Math.random().toString(36).slice(2)));
         await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}`,{method:'PATCH',body:JSON.stringify({active_session:sessionToken})});
+        fetch(`${SUPABASE_URL}/session/notify`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,token:sessionToken})}).catch(()=>{});
         localStorage.setItem('atlas-session',JSON.stringify({phone:user.phone,name:user.name,batch:user.batch,college:user.college,father_name:user.father_name,mother_name:user.mother_name,ssc_gpa:user.ssc_gpa,hsc_gpa:user.hsc_gpa,timer_type:user.timer_type,role:user.role,photo_url:user.photo_url,premium:user.is_premium,session_token:sessionToken}));
         showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> লগইন সফল!');
         const returnUrl = sessionStorage.getItem('atlas_return_url') || 'index.html';
@@ -218,6 +219,7 @@ async function handleRegister(){
         if(!created?.length){showToast('❌ রেজিস্ট্রেশন ব্যর্থ, আবার চেষ্টা করুন');btn.disabled=false;btn.textContent='রেজিস্টার করুন';return;}
         const sessionToken2=(crypto.randomUUID?crypto.randomUUID():(Date.now()+'-'+Math.random().toString(36).slice(2)));
         await safeFetch(`${SUPABASE_URL}/rest/v1/users?phone=eq.${phone}`,{method:'PATCH',body:JSON.stringify({active_session:sessionToken2})});
+        fetch(`${SUPABASE_URL}/session/notify`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,token:sessionToken2})}).catch(()=>{});
         localStorage.setItem('atlas-session',JSON.stringify({phone,name,batch,college,father_name:father,mother_name:mother,ssc_gpa:ssc,hsc_gpa:hsc,timer_type:timer,email,session_token:sessionToken2}));
         showToast('<svg class="emoji-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-0.125em"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></svg> রেজিস্ট্রেশন সফল!');
         const returnUrl2 = sessionStorage.getItem('atlas_return_url') || 'index.html';
