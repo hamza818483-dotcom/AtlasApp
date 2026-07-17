@@ -502,13 +502,21 @@ function mbShuffleSpecialOptions(m) {
 async function mbSpecialExtractPage(pageNum) {
     const jsonFormat = `[{"question":"...","option_k":"...","option_kh":"...","option_g":"...","option_gh":"...","correct":"k","explanation":"...","exp_box":{"x":0,"y":0,"w":0,"h":0},"line_box":{"y":0,"h":0},"type":"special"}]`;
     const basePrompt = mbSpecialExtractPrompt();
-    const MAX_ATTEMPTS = 3;
+    // bug fix (root cause of "AI ধীরে কাজ করছে" on Mulboi PDF edit / special-extract):
+    // MAX_ATTEMPTS ছিল ৩, আর প্রতিটা attempt-এ geminiAlreadyTried নতুন করে false থেকে শুরু
+    // হতো — মানে retry attempt-গুলোও প্রতিবার Gemini দিয়ে আবার শুরু করত, যদিও আগের attempt-ই
+    // ব্যর্থ হয়ে বলে দিয়েছে সেই provider chain এই পেইজে কাজ করছে না। ফলে worst-case একটা পেইজে
+    // ৩টা পূর্ণ sequential provider chain (Gemini→Groq→OpenRouter→Cerebras, প্রতিটা attempt-এ
+    // প্রায় ১২-৪৮ সেকেন্ড লাগতে পারে) চলত — যা আসলে বেশিরভাগই একই ব্যর্থতার পুনরাবৃত্তি ছিল,
+    // নতুন কিছু try হতো না। এখন MAX_ATTEMPTS ২-এ নামানো হলো (worst-case latency ~এক-তৃতীয়াংশ
+    // কমে), এবং geminiAlreadyTried loop-এর বাইরে persist করে — ২য় attempt Gemini আবার call
+    // করে সময় নষ্ট করবে না, সরাসরি Groq/OpenRouter থেকে শুরু করবে।
+    const MAX_ATTEMPTS = 2;
+    let geminiAlreadyTried = false; // এই page-এ Gemini একবার চেষ্টা হয়ে গেলে retry-তে আর করা হবে না
 
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
         try {
             let rawJson;
-            let geminiAlreadyTried = false; // এই page-এ Gemini PDF-native ইতিমধ্যে চেষ্টা হয়েছে কি না —
-                                              // fallback chain-এ আবার Gemini কল করে quota নষ্ট না করার জন্য
             // bug fix: '/mcq-from-pdf' route worker-e kokhono define e chilo na (dead call,
             // always fail hoto silently) — mudha ekta network round-trip nosto hoto protibar.
             // Shorashori image-based path e jawa hocche, jeta actually kaj kore.
@@ -526,6 +534,7 @@ async function mbSpecialExtractPage(pageNum) {
                     const imageData = { base64: tmp.toDataURL('image/jpeg', 0.85).split(',')[1], mimeType: 'image/jpeg' };
                     rawJson = await mbCallAiApi('', imageData, `তুমি একজন নিখুঁত ডেটা-এক্সট্র্যাকশন এক্সপার্ট। ${basePrompt}`, geminiAlreadyTried);
                 }
+                geminiAlreadyTried = true;
             }
             const parsed = mbParseAiJson(rawJson);
             if (parsed && parsed.length) return parsed; // পাওয়া গেছে — নিশ্চিত
