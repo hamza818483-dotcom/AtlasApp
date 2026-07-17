@@ -96,7 +96,7 @@ export default {
         //    needs its base URL changed, not its query logic. ──
         const d1Match = path.match(/^\/d1\/([a-z_][a-z0-9_]*)$/) || path.match(/^\/rest\/v1\/([a-z_][a-z0-9_]*)$/);
         if (d1Match) {
-            return handleD1Table(d1Match[1], request, env, url);
+            return handleD1Table(d1Match[1], request, env, url, ctx);
         }
 
         // ── R2 PDF storage (replaces Supabase Storage) ──
@@ -339,7 +339,42 @@ function jsonResponse(obj, status = 200) {
      PATCH  ?id=eq.X                                    (body: partial row)
      DELETE ?id=eq.X
    Auth: requires header 'apikey' matching env.D1_API_KEY (same header name/spirit as Supabase). */
-async function handleD1Table(table, request, env, url) {
+async function handleD1Table(table, request, env, url, ctx) {
+    // ── Light-data backup: D1 stays primary/source-of-truth for everything.
+    //    Heavy data (MCQs, PDFs, images) lives only in D1+R2 — no backup needed there.
+    //    Light tables listed here also get async-mirrored to the real Supabase
+    //    project (Atlasmediprep) as a backup copy. Never blocks/slows the D1
+    //    response — fire-and-forget via ctx.waitUntil, failures are swallowed.
+    const BACKUP_TABLES = new Set(["users"]);
+    function backupToSupabase(method, rows) {
+        if (!BACKUP_TABLES.has(table)) return;
+        if (!env.SUPABASE_URL || !env.SUPABASE_KEY) return; // secrets not configured — skip silently
+        if (!rows || !rows.length) return;
+        const job = (async () => {
+            for (const row of rows) {
+                try {
+                    if (method === "DELETE") {
+                        await fetch(`${env.SUPABASE_URL}/rest/v1/${table}?phone=eq.${row.phone}`, {
+                            method: "DELETE",
+                            headers: { apikey: env.SUPABASE_KEY, Authorization: `Bearer ${env.SUPABASE_KEY}` }
+                        });
+                    } else {
+                        await fetch(`${env.SUPABASE_URL}/rest/v1/${table}?on_conflict=phone`, {
+                            method: "POST",
+                            headers: {
+                                apikey: env.SUPABASE_KEY, Authorization: `Bearer ${env.SUPABASE_KEY}`,
+                                "Content-Type": "application/json",
+                                "Prefer": "resolution=merge-duplicates,return=minimal"
+                            },
+                            body: JSON.stringify(row)
+                        });
+                    }
+                } catch (_) { /* backup best-effort — D1 write already succeeded, never fail the user's request over this */ }
+            }
+        })();
+        if (ctx && ctx.waitUntil) ctx.waitUntil(job);
+    }
+
     if (!/^[a-z_][a-z0-9_]*$/.test(table)) return jsonResponse({ error: "Invalid table name" }, 400);
 
     const apiKey = request.headers.get("apikey") || request.headers.get("Authorization")?.replace("Bearer ", "");
@@ -512,6 +547,7 @@ async function handleD1Table(table, request, env, url) {
                 }
                 insertedRows.push(row);
             }
+            backupToSupabase("POST", insertedRows);
             return jsonResponse(insertedRows, 201);
         }
 
@@ -525,13 +561,16 @@ async function handleD1Table(table, request, env, url) {
             const setArgs = setCols.map(c => body[c]);
             await db.prepare(`UPDATE ${table} SET ${setSql} WHERE ${where.join(" AND ")}`).bind(...setArgs, ...args).run();
             const rows = await db.prepare(`SELECT * FROM ${table} WHERE ${where.join(" AND ")}`).bind(...args).all();
+            backupToSupabase("PATCH", rows.results || []);
             return jsonResponse(rows.results || []);
         }
 
         if (request.method === "DELETE") {
             const { where, args } = parseEqFilters();
             if (!where.length) return jsonResponse({ error: "filter required for DELETE" }, 400);
+            const toDelete = await db.prepare(`SELECT * FROM ${table} WHERE ${where.join(" AND ")}`).bind(...args).all();
             await db.prepare(`DELETE FROM ${table} WHERE ${where.join(" AND ")}`).bind(...args).run();
+            backupToSupabase("DELETE", toDelete.results || []);
             return jsonResponse([], 200);
         }
 
