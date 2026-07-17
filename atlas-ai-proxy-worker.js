@@ -233,15 +233,15 @@ export default {
             return jsonResponse({ success: false, error: "question বা image এর একটি দিতে হবে" }, 400);
         }
 
-        // Gemini primary: user-request onujayi Gemini shobshomoy prothome, eka cheshta kora
-        // hoy (parallel race e na rekhe) — Gemini-er nijer multi-key rotation (callGemini()
-        // er bhitore) already shob "healthy" (rate-limit/quota-e ache emon na) key-er majhe
-        // parallel race kore, ekta kaj korlei fol pawa jay. Gemini shob key/model-e byartho
-        // hole tokhoni Groq + baki provider-der race shuru hoy (Groq -> OpenRouter -> Cerebras/
-        // Cloudflare), age Groq primary chilo eta ekhon reverse kora holo.
+        // Groq primary: QuizBot-এর /img command-এ যেভাবে কাজ করে (Groq প্রথমে — fast,
+        // rate-limit কম খায়), website-এও একই order মিরর করা হলো। আগে Gemini প্রথমে
+        // চেষ্টা হতো — Gemini rate-limited/ধীর হলে পুরো chain-ই স্লো হয়ে যেত, কারণ Gemini-র
+        // নিজস্ব multi-key rotation সিকোয়েনশিয়াল (প্রতি key আলাদা করে try হয়, প্রতিটাতে
+        // পুরো টাইমআউট পর্যন্ত সময় লাগতে পারে)। Groq ব্যর্থ হলেই বাকি chain (Gemini ->
+        // OpenRouter -> Cerebras -> Cloudflare) চলবে।
         const budget = makeSubrequestBudget();
         const fallbackProviders = [
-            { name: "groq", fn: () => callGroq(env, question, systemPrompt, image, /option_k/.test(systemPrompt), budget) },
+            { name: "gemini", fn: () => callGemini(env, question, systemPrompt, image, budget) },
             { name: "openrouter", fn: () => callOpenRouter(env, question, systemPrompt, image, budget) },
             { name: "cerebras", fn: () => callCerebras(env, question, systemPrompt, image, budget) },
             { name: "cloudflare", fn: () => callCloudflareAI(env, question, systemPrompt, image, budget) },
@@ -272,13 +272,13 @@ export default {
         }
 
         let result = null;
-        if (!skipGemini) {
+        if (!skipGroq) {
             try {
-                const geminiResult = await callGemini(env, question, systemPrompt, image, budget);
-                if (geminiResult && geminiResult.answer && geminiResult.answer.trim().length > 5) {
-                    result = geminiResult;
-                } else if (geminiResult?.error) {
-                    errors.push(geminiResult.error);
+                const groqResult = await callGroq(env, question, systemPrompt, image, /option_k/.test(systemPrompt), budget);
+                if (groqResult && groqResult.answer && groqResult.answer.trim().length > 5) {
+                    result = groqResult;
+                } else if (groqResult?.error) {
+                    errors.push(groqResult.error);
                 }
             } catch (e) {
                 errors.push(String(e.message || e));
@@ -286,7 +286,7 @@ export default {
         }
 
         if (!result) {
-            let remaining = fallbackProviders.filter(p => !(skipGroq && p.name === "groq"));
+            let remaining = fallbackProviders.filter(p => !(skipGemini && p.name === "gemini"));
             result = await raceRemaining(remaining);
         }
 
