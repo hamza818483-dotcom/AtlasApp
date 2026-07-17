@@ -766,8 +766,9 @@ function switchMode(mode){
         document.getElementById('timerSticky').style.display='none';
         document.getElementById('submitBtn').style.display='none';
         document.getElementById('navFab').style.display='none';
-        document.querySelector('.floating-buttons').style.display = isPreview?'none':'flex';
-        document.querySelector('.bottom-nav').style.display = isPreview?'none':'flex';
+        const isResult = mode==='Result';
+        document.querySelector('.floating-buttons').style.display = (isPreview||isResult)?'none':'flex';
+        document.querySelector('.bottom-nav').style.display = (isPreview||isResult)?'none':'flex';
     }
     window.scrollTo(0,0);
 }
@@ -1612,6 +1613,7 @@ function submitExam(isAutoSubmit=false){
     isExamSubmitted=true;stopTimer();
     document.getElementById('submitBtn').style.display='none';
     document.getElementById('navFab').style.display='none';
+    document.querySelector('.floating-buttons').style.display='none';
     switchMode('Result');
 
     let correct=0,wrong=0,skipped=0;
