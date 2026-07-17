@@ -671,7 +671,11 @@ async function safeFetch(url, opts = {}) {
     opts.headers = Object.assign({ apikey:SUPABASE_KEY, Authorization:'Bearer '+SUPABASE_KEY }, opts.headers||{});
     if (!opts.headers['Content-Type'] && opts.method !== 'DELETE') opts.headers['Content-Type'] = 'application/json';
     try {
-        const res = await fetch(url, opts);
+        const _ctrl = new AbortController();
+        const _timeoutId = setTimeout(() => _ctrl.abort(), 8000);
+        opts.signal = opts.signal || _ctrl.signal;
+        let res;
+        try { res = await fetch(url, opts); } finally { clearTimeout(_timeoutId); }
         const text = await res.text();
         if (!res.ok) {
             let errMsg=''; try{errMsg=JSON.parse(text).message||'';}catch(e){errMsg=text.substring(0,100);}

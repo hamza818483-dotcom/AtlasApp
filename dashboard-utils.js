@@ -111,27 +111,36 @@ ${subject ? `বিষয়: ${subject}` : ''}
 
 সংক্ষিপ্ত এবং স্পষ্ট ব্যাখ্যা দাও। কেন সঠিক উত্তরটি সঠিক এবং অন্যটি ভুল তা ব্যাখ্যা করো।`;
 
-        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${window.GROQ_API_KEY}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: 'mixtral-8x7b-32768',
-                messages: [
-                    { role: 'system', content: 'তুমি একজন দক্ষ শিক্ষক যিনি বাংলায় সহজভাবে ব্যাখ্যা করেন।' },
-                    { role: 'user', content: prompt }
-                ],
-                temperature: 0.7,
-                max_tokens: 500
-            })
-        });
+        const _ctrl = new AbortController();
+        const _timeoutId = setTimeout(() => _ctrl.abort(), 15000);
+        let response;
+        try {
+            response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${window.GROQ_API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                signal: _ctrl.signal,
+                body: JSON.stringify({
+                    model: 'mixtral-8x7b-32768',
+                    messages: [
+                        { role: 'system', content: 'তুমি একজন দক্ষ শিক্ষক যিনি বাংলায় সহজভাবে ব্যাখ্যা করেন।' },
+                        { role: 'user', content: prompt }
+                    ],
+                    temperature: 0.7,
+                    max_tokens: 500
+                })
+            });
+        } finally {
+            clearTimeout(_timeoutId);
+        }
 
         const data = await response.json();
         return data.choices[0]?.message?.content || 'ব্যাখ্যা পাওয়া যায়নি।';
     } catch (error) {
         console.error('Groq API Error:', error);
+        if (error.name === 'AbortError') return 'নেটওয়ার্ক ধীর — ব্যাখ্যা লোড টাইমআউট হয়েছে। আবার চেষ্টা করুন।';
         return 'ব্যাখ্যা লোড করতে সমস্যা হয়েছে। পরে আবার চেষ্টা করুন।';
     }
 }
@@ -154,24 +163,33 @@ async function askGroqAI(query, context = '') {
         
         messages.push({ role: 'user', content: query });
 
-        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${window.GROQ_API_KEY}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: 'mixtral-8x7b-32768',
-                messages: messages,
-                temperature: 0.8,
-                max_tokens: 800
-            })
-        });
+        const _ctrl2 = new AbortController();
+        const _timeoutId2 = setTimeout(() => _ctrl2.abort(), 15000);
+        let response;
+        try {
+            response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${window.GROQ_API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                signal: _ctrl2.signal,
+                body: JSON.stringify({
+                    model: 'mixtral-8x7b-32768',
+                    messages: messages,
+                    temperature: 0.8,
+                    max_tokens: 800
+                })
+            });
+        } finally {
+            clearTimeout(_timeoutId2);
+        }
 
         const data = await response.json();
         return data.choices[0]?.message?.content || 'উত্তর পাওয়া যায়নি।';
     } catch (error) {
         console.error('Groq API Error:', error);
+        if (error.name === 'AbortError') return 'নেটওয়ার্ক ধীর — উত্তর টাইমআউট হয়েছে। আবার চেষ্টা করুন।';
         return 'সার্ভার সমস্যা। পরে আবার চেষ্টা করুন।';
     }
 }
@@ -190,6 +208,7 @@ async function askGroqAI(query, context = '') {
  */
 async function reportQuestion(questionId, examId, reason, phone) {
     try {
+        const _c1 = new AbortController(); const _t1 = setTimeout(()=>_c1.abort(),8000);
         const response = await fetch(`${window.SUPABASE_URL}/rest/v1/question_reports`, {
             method: 'POST',
             headers: {
@@ -198,6 +217,7 @@ async function reportQuestion(questionId, examId, reason, phone) {
                 'Content-Type': 'application/json',
                 'Prefer': 'return=minimal'
             },
+            signal: _c1.signal,
             body: JSON.stringify({
                 question_id: questionId,
                 exam_id: examId,
@@ -206,7 +226,7 @@ async function reportQuestion(questionId, examId, reason, phone) {
                 reported_at: new Date().toISOString()
             })
         });
-
+        clearTimeout(_t1);
         return response.ok;
     } catch (error) {
         console.error('Report Error:', error);
@@ -221,6 +241,7 @@ async function reportQuestion(questionId, examId, reason, phone) {
  */
 async function addBookmark(bookmark) {
     try {
+        const _c2 = new AbortController(); const _t2 = setTimeout(()=>_c2.abort(),8000);
         const response = await fetch(`${window.SUPABASE_URL}/rest/v1/bookmarks`, {
             method: 'POST',
             headers: {
@@ -229,9 +250,10 @@ async function addBookmark(bookmark) {
                 'Content-Type': 'application/json',
                 'Prefer': 'return=minimal'
             },
+            signal: _c2.signal,
             body: JSON.stringify(bookmark)
         });
-
+        clearTimeout(_t2);
         return response.ok;
     } catch (error) {
         console.error('Bookmark Error:', error);
@@ -246,14 +268,16 @@ async function addBookmark(bookmark) {
  */
 async function removeBookmark(bookmarkId) {
     try {
+        const _c3 = new AbortController(); const _t3 = setTimeout(()=>_c3.abort(),8000);
         const response = await fetch(`${window.SUPABASE_URL}/rest/v1/bookmarks?id=eq.${bookmarkId}`, {
             method: 'DELETE',
             headers: {
                 'apikey': window.SUPABASE_KEY,
                 'Authorization': `Bearer ${window.SUPABASE_KEY}`
-            }
+            },
+            signal: _c3.signal
         });
-
+        clearTimeout(_t3);
         return response.ok;
     } catch (error) {
         console.error('Remove Bookmark Error:', error);

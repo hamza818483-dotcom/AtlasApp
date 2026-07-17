@@ -20,15 +20,28 @@ const API = {
             }
         };
         if (body) opts.body = JSON.stringify(body);
-        
+
+        const _ctrl = new AbortController();
+        const _timeoutId = setTimeout(() => _ctrl.abort(), 8000);
+        opts.signal = _ctrl.signal;
+
         try {
-            const res = await fetch(url, opts);
+            let res;
+            try {
+                res = await fetch(url, opts);
+            } finally {
+                clearTimeout(_timeoutId);
+            }
             const text = await res.text();
             if (!text?.trim()) return [];
             const data = JSON.parse(text);
             if (!res.ok) throw new Error(data.message || 'API Error');
             return data;
         } catch(e) {
+            if (e.name === 'AbortError') {
+                console.error('API Error: request timed out (8s)');
+                throw new Error('নেটওয়ার্ক ধীর — অনুরোধ টাইমআউট হয়েছে, আবার চেষ্টা করুন');
+            }
             console.error('API Error:', e.message);
             throw e;
         }

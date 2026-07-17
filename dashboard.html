@@ -1834,7 +1834,11 @@ async function safeFetch(url, opts = {}) {
     if (!opts.headers['Content-Type'] && opts.method !== 'DELETE')
         opts.headers['Content-Type'] = 'application/json';
     try {
-        const res = await fetch(url, opts);
+        const _ctrl = new AbortController();
+        const _timeoutId = setTimeout(() => _ctrl.abort(), 8000);
+        opts.signal = opts.signal || _ctrl.signal;
+        let res;
+        try { res = await fetch(url, opts); } finally { clearTimeout(_timeoutId); }
         const text = await res.text();
         if (!text?.trim()) return [];
         const data = JSON.parse(text);

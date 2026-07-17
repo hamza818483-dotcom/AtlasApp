@@ -1187,7 +1187,11 @@ async function safeFetch(url, opts={}) {
   if(opts.method==='POST'||opts.method==='PATCH') opts.headers['Prefer']='return=representation';
   if(!opts.cache) opts.cache='no-store'; // live data — never let the browser serve a stale cached response
   try {
-    const res = await fetch(url, opts);
+    const _ctrl = new AbortController();
+    const _timeoutId = setTimeout(() => _ctrl.abort(), 8000);
+    opts.signal = opts.signal || _ctrl.signal;
+    let res;
+    try { res = await fetch(url, opts); } finally { clearTimeout(_timeoutId); }
     const text = await res.text();
     if(!text?.trim()) return [];
     const data = JSON.parse(text);
