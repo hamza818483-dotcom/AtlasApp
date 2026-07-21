@@ -900,20 +900,27 @@ async function callGroq(env, question, systemPrompt, image, expectMcqArray, budg
     }
 
     let lastError = "Groq: no keys/models worked";
-    // bug fix (root cause of persistent "Too many subrequests" even after sequential fix):
-    // when Groq's whole account is out of quota, EVERY key returns 429 — trying all
-    // remaining keys × both image models one-by-one still burns most of the shared
-    // subrequest budget on a provider that's already proven dead, leaving nothing for
-    // OpenRouter/Cerebras/CF-AI further down the chain. If 2 keys in a row come back 429,
-    // treat the whole provider as exhausted for this invocation and stop immediately
-    // instead of exhausting every remaining key/model combination.
+    // bug fix (root cause of "koekta boro MCQ-te fail hocche, choto-gulote hocche na"):
+    // Groq-er org-level TPM (tokens-per-minute) limit 8000 — eta INPUT + max_tokens
+    // (output cap) mile calculate hoy, shudhu output na. Ager fixed max_tokens:4096
+    // choto MCQ-te thik chilo, kintu boro question/option/system-prompt hole
+    // input tokens beshi hoye giye abaro 8000 cross hoye jachchilo -> shei MCQ-gulote-i
+    // 429 (misleadingly "quota exhausted" mone hoy, ashole ekta single request-i
+    // beshi boro). Fix: prompt-er approximate token count (4 char ~= 1 token, Bangla
+    // shometo rough estimate) hishab kore max_tokens emonbhabe kome deoya hoy jate
+    // input+output shob shomoy 8000-er onek niche (safety margin soho) thake.
+    const estimatedInputTokens = Math.ceil(
+        (jsonSystemPrompt.length + (typeof question === "string" ? question.length : 200)) / 3.2
+    );
+    const TPM_SAFE_LIMIT = 7000; // 8000 hard limit theke margin rekhe
+    const dynamicMaxTokens = Math.max(1024, Math.min(4096, TPM_SAFE_LIMIT - estimatedInputTokens));
     let consecutive429 = 0;
     outerGroq:
     for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
         for (const model of models) {
             const isTextModel = GROQ_TEXT_MODELS.includes(model);
             const requestBody = {
-                model, messages, temperature: 0.7, max_tokens: 4096,
+                model, messages, temperature: 0.7, max_tokens: dynamicMaxTokens,
                 response_format: (isTextModel && expectMcqArray)
                     ? { type: "json_schema", json_schema: GROQ_MCQ_JSON_SCHEMA }
                     : { type: "json_object" },
