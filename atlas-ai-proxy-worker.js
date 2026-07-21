@@ -298,6 +298,7 @@ export default {
             success: false,
             error: "সব AI provider ব্যর্থ হয়েছে। আবার চেষ্টা করো।",
             details: errors,
+            _debugGroqKeys: globalThis.__groqDebugKeyInfo || null,
         }, 502);
     },
 
@@ -867,6 +868,12 @@ function mbGroqLooksLikeValidMcqArray(answer) {
 async function callGroq(env, question, systemPrompt, image, expectMcqArray, budget) {
     const keys = getGroqKeys(env);
     if (!keys.length) return { error: "GROQ_API_KEY not set" };
+    // TEMP DEBUG (root-cause diagnosis for persistent Groq 401s despite a manually-verified
+    // valid key): surface how many keys the worker actually sees and a short non-secret
+    // fingerprint of each, so we can confirm whether the deployed GROQ_KEYS value matches
+    // what was set in the dashboard, or whether stale/duplicate/whitespace-corrupted keys
+    // are present. Safe to remove once the mismatch is found.
+    globalThis.__groqDebugKeyInfo = keys.map(k => ({ len: k.length, head: k.slice(0, 10), tail: k.slice(-4) }));
     const models = image ? GROQ_IMAGE_MODELS : GROQ_TEXT_MODELS;
 
     // bug fix (root cause of "AI সঠিক JSON দেয়নি — raw: ...প্রবন্ধ/prose..."): Groq-এর
