@@ -61,8 +61,23 @@ const PROVIDER_TIMEOUT_MS = 8000;
 // no wasted attempts) several fetches before hitting the real platform ceiling.
 const MAX_SUBREQUESTS_PER_INVOCATION = 45; // real CF limit is 50; stop a bit early for safety margin
 function makeSubrequestBudget() {
-    return { count: 0, exhausted() { return this.count >= MAX_SUBREQUESTS_PER_INVOCATION; }, use() { this.count++; } };
+    return {
+        count: 0,
+        reservedForOthers: 0,
+        exhausted() { return this.count >= (MAX_SUBREQUESTS_PER_INVOCATION - this.reservedForOthers); },
+        use() { this.count++; },
+        // bug fix (root cause of "Groq exhausting the shared budget before Gemini gets a
+        // turn"): Groq can have many keys × models (e.g. 10 keys × 3 models = up to 30
+        // fetches) and used to be able to burn nearly the entire 45-request shared budget
+        // before the chain ever reached Gemini/OpenRouter/Cerebras. reserve()/release() let
+        // a caller temporarily shrink the usable budget for itself, guaranteeing a floor of
+        // requests stays available for whatever runs next.
+        reserve(n) { this.reservedForOthers += n; },
+        release(n) { this.reservedForOthers = Math.max(0, this.reservedForOthers - n); },
+    };
 }
+// Minimum subrequests guaranteed to remain for Gemini/OpenRouter/Cerebras/CF-AI after Groq runs.
+const MIN_BUDGET_RESERVED_FOR_FALLBACKS = 12;
 
 /* ════════════════════════════════════════════════════════════
    KEY HEALTH / COOLDOWN TRACKING (D1-backed)
@@ -347,13 +362,16 @@ async function handleFetch(request, env, ctx) {
         let result = null;
         if (!skipGroq) {
             try {
+                budget.reserve(MIN_BUDGET_RESERVED_FOR_FALLBACKS); // guarantee Gemini/OpenRouter/Cerebras/CF-AI get a real turn
                 const groqResult = await callGroq(env, question, systemPrompt, image, /option_k/.test(systemPrompt), budget);
+                budget.release(MIN_BUDGET_RESERVED_FOR_FALLBACKS);
                 if (groqResult && groqResult.answer && groqResult.answer.trim().length > 5) {
                     result = groqResult;
                 } else if (groqResult?.error) {
                     errors.push(groqResult.error);
                 }
             } catch (e) {
+                budget.release(MIN_BUDGET_RESERVED_FOR_FALLBACKS);
                 errors.push(String(e.message || e));
             }
         }
