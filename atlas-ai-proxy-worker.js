@@ -650,7 +650,7 @@ function getGeminiKeys(env) {
     const keys = [];
     if (env.GEMINI_KEYS) keys.push(...env.GEMINI_KEYS.split(",").map(k => k.trim()).filter(Boolean));
     if (env.GEMINI_API_KEY) keys.push(env.GEMINI_API_KEY.trim());
-    return [...new Set(keys)];
+    return sortByHealth([...new Set(keys)], "gemini");
 }
 
 // নতুন মডেল আসলে/পুরনো deprecate হলে শুধু এই array আপডেট করলেই rotation এ যুক্ত হয়ে যাবে।
@@ -709,7 +709,15 @@ async function callGemini(env, question, systemPrompt, image, budget) {
                 }
                 if (!outcome.ok) {
                     lastError = `Gemini(${model}) HTTP ${outcome.status}`;
-                    if (outcome.status === 429) {
+                    if (outcome.status === 401) {
+                        markKeyBad("gemini", key);
+                        consecutive429 = 0;
+                        exhaustedKeys.add(key);
+                    } else if (outcome.status === 429) {
+                        let bodyText = "";
+                        try { bodyText = await outcome.clone().text(); } catch (_) {}
+                        const isRateOnly = !/quota|exceeded/i.test(bodyText) && /per minute|rate/i.test(bodyText);
+                        if (!isRateOnly) markKeyBad("gemini", key);
                         exhaustedKeys.add(key); // quota shesh — porer round-e skip
                         consecutive429++;
                         if (consecutive429 >= keys.length) { lastError = `Gemini: quota exhausted (429 on ${consecutive429} keys), abandoning provider to save budget`; break outerGemini; }
@@ -789,10 +797,41 @@ function getGroqKeys(env) {
     const keys = [];
     if (env.GROQ_KEYS) keys.push(...env.GROQ_KEYS.split(",").map(k => k.trim()).filter(Boolean));
     if (env.GROQ_API_KEY) keys.push(env.GROQ_API_KEY.trim());
-    return [...new Set(keys)];
+    return sortByHealth([...new Set(keys)], "groq");
 }
 const GROQ_TEXT_MODELS  = ["openai/gpt-oss-120b", "llama-3.3-70b-versatile"];
 const GROQ_IMAGE_MODELS = ["meta-llama/llama-4-maverick-17b-128e-instruct", "meta-llama/llama-4-scout-17b-16e-instruct"];
+
+// ── Lightweight in-memory key-health tracking (no D1, no extra subrequests) ──
+// Age D1-backed cooldown try kora hoyechilo (commit 523517a) kintu revert hoyeche
+// (extra subrequest/latency overhead-er risk chilo). Eta simpler: shudhu current
+// worker instance-er RAM-e (globalThis) recently-401/429-howa key-gulor "cooldown
+// until" timestamp রাখা হয় — kono D1 write/read na, tai kono notun subrequest
+// khoroch hoy na. Ekই worker instance porer 2-3 minute-e onek request serve kore,
+// tai ei short-lived memory-i "always healthy key age try koro" চাহিদা পূরণ করে —
+// ekbar ekta key bad/rate-limited dhora porle, porborti kicu minute shei instance-e
+// asha shob request shei key skip kore shuru-teই onno (healthy) key try korbe.
+const KEY_COOLDOWN_MS = 90 * 1000; // 90 sec — TPM window (60s) theke ektu beshi safety margin soho
+function getKeyHealthStore() {
+    if (!globalThis.__mbKeyHealth) globalThis.__mbKeyHealth = new Map(); // "provider:key" -> cooldownUntilTs
+    return globalThis.__mbKeyHealth;
+}
+function markKeyBad(provider, key) {
+    getKeyHealthStore().set(`${provider}:${key}`, Date.now() + KEY_COOLDOWN_MS);
+}
+function isKeyCoolingDown(provider, key) {
+    const until = getKeyHealthStore().get(`${provider}:${key}`);
+    return typeof until === "number" && Date.now() < until;
+}
+/** Healthy (not-recently-failed) keys first, cooling-down keys pushed to the end
+ *  instead of dropped entirely — so if EVERY key is cooling down (e.g. right after
+ *  a genuine account-wide outage) we still try all of them rather than giving up
+ *  with zero attempts. */
+function sortByHealth(keys, provider) {
+    const healthy = keys.filter(k => !isKeyCoolingDown(provider, k));
+    const cooling = keys.filter(k => isKeyCoolingDown(provider, k));
+    return [...healthy, ...cooling];
+}
 
 // code-level guarantee (prompt-follow-e nirvor na kore): text-model (openai/gpt-oss) call-e
 // pathanor jonno strict JSON schema -- Groq-er constrained decoding token-level e guarantee
@@ -977,7 +1016,24 @@ async function callGroq(env, question, systemPrompt, image, expectMcqArray, budg
                         }
                     }
                     lastError = `Groq(${model}) HTTP ${outcome.status}`;
-                    if (outcome.status === 429) {
+                    if (outcome.status === 401) {
+                        // 401 = key nijei invalid/expired — eta shudhu ei key-r problem,
+                        // sathe sathe cooldown-e pathaie deoya hoy jate porer request-e
+                        // ei worker-instance ei bad key r age try na kore.
+                        markKeyBad("groq", key);
+                        consecutive429 = 0;
+                    } else if (outcome.status === 429) {
+                        // 429 duiরকম hote pare: (a) TPM/per-request-too-large (ei nirdishto
+                        // call-tui boro chilo — key nijeই thik ache, aro chotto request-e
+                        // thik kaj korbe) (b) sotti-i key/account quota-exhausted. Response
+                        // body-te "tokens per minute"/"TPM" thakle eta (a) — key-ke bad mark
+                        // kora hobe na (mithye-i onno shob request-eo skip hoye jabe), shudhu
+                        // ei attempt fail dhore porer key try kora hoy. Onno karone 429 hole
+                        // (b) dhore niye key-ke cooldown-e pathano hoy.
+                        let bodyText = "";
+                        try { bodyText = await outcome.clone().text(); } catch (_) {}
+                        const isTpmOnly = /tokens per minute|TPM/i.test(bodyText);
+                        if (!isTpmOnly) markKeyBad("groq", key);
                         consecutive429++;
                         if (consecutive429 >= keys.length) { lastError = `Groq: quota exhausted (429 on ${consecutive429} keys), abandoning provider to save budget`; break outerGroq; }
                     } else {
