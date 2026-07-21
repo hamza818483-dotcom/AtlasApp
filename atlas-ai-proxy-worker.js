@@ -37,7 +37,7 @@ const CORS_HEADERS = {
    rate-limit এ পুরো request fail না হয়ে যায়।
    ════════════════════════════════════════════════════════════ */
 const MAX_ROTATION_ROUNDS = 1; // পুরো key/model লিস্ট কতবার আবার চেষ্টা করবে (timeout যোগ হওয়ায় ১ round-ই যথেষ্ট, ২য় round শুধু worst-case সময় দ্বিগুণ করত)
-const RETRYABLE_STATUS = new Set([401, 429, 500, 502, 503, 504]);
+const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
 
 function sleep(ms) { return new Promise(res => setTimeout(res, ms)); }
 
@@ -61,82 +61,7 @@ const PROVIDER_TIMEOUT_MS = 8000;
 // no wasted attempts) several fetches before hitting the real platform ceiling.
 const MAX_SUBREQUESTS_PER_INVOCATION = 45; // real CF limit is 50; stop a bit early for safety margin
 function makeSubrequestBudget() {
-    return {
-        count: 0,
-        reservedForOthers: 0,
-        exhausted() { return this.count >= (MAX_SUBREQUESTS_PER_INVOCATION - this.reservedForOthers); },
-        use() { this.count++; },
-        // bug fix (root cause of "Groq exhausting the shared budget before Gemini gets a
-        // turn"): Groq can have many keys × models (e.g. 10 keys × 3 models = up to 30
-        // fetches) and used to be able to burn nearly the entire 45-request shared budget
-        // before the chain ever reached Gemini/OpenRouter/Cerebras. reserve()/release() let
-        // a caller temporarily shrink the usable budget for itself, guaranteeing a floor of
-        // requests stays available for whatever runs next.
-        reserve(n) { this.reservedForOthers += n; },
-        release(n) { this.reservedForOthers = Math.max(0, this.reservedForOthers - n); },
-    };
-}
-// Minimum subrequests guaranteed to remain for Gemini/OpenRouter/Cerebras/CF-AI after Groq runs.
-const MIN_BUDGET_RESERVED_FOR_FALLBACKS = 12;
-
-/* ════════════════════════════════════════════════════════════
-   KEY HEALTH / COOLDOWN TRACKING (D1-backed)
-   Provider এর একাধিক key rotate করার সময় আগে যে key গুলো recently
-   429 (rate-limited) দিয়েছে, সেগুলোকে list এর শেষে ঠেলে দেওয়া হয় —
-   বাদ দেওয়া হয় না (key ঠিক হয়ে গেলে আবার কাজ করবে), শুধু healthy/
-   untried key গুলো আগে try হয় যাতে প্রতি request-এ বারবার একই মৃত
-   key দিয়ে সময়/subrequest budget নষ্ট না হয়। Cooldown window ছোট
-   (2 minutes) — rate limit সাধারণত এর মধ্যেই রিসেট হয়।
-   ════════════════════════════════════════════════════════════ */
-const KEY_COOLDOWN_MS = 2 * 60 * 1000;
-async function ensureKeyHealthTable(db) {
-    try {
-        await db.prepare(`CREATE TABLE IF NOT EXISTS ai_key_cooldown (key_hash TEXT PRIMARY KEY, until_ts INTEGER)`).run();
-    } catch (_) { /* table already exists or D1 unavailable — safe to ignore, falls back to no reordering */ }
-}
-function hashKeyForCooldown(key) {
-    // key নিজে DB তে রাখা হচ্ছে না, শুধু একটা short non-reversible fingerprint —
-    // পুরো secret কখনো row হিসেবে persist হয় না
-    let h = 0;
-    for (let i = 0; i < key.length; i++) { h = ((h << 5) - h + key.charCodeAt(i)) | 0; }
-    return String(h);
-}
-async function getCooledDownKeySet(env, providerName) {
-    const db = env.MULBOI_DB;
-    if (!db) return new Set();
-    try {
-        await ensureKeyHealthTable(db);
-        const now = Date.now();
-        const { results } = await db.prepare(`SELECT key_hash FROM ai_key_cooldown WHERE key_hash LIKE ? AND until_ts > ?`)
-            .bind(`${providerName}:%`, now).all();
-        return new Set((results || []).map(r => r.key_hash));
-    } catch (_) { return new Set(); } // D1 hiccup → just skip reordering this round
-}
-async function markKeyCooldown(env, providerName, key) {
-    const db = env.MULBOI_DB;
-    if (!db) return;
-    try {
-        await ensureKeyHealthTable(db);
-        const hash = `${providerName}:${hashKeyForCooldown(key)}`;
-        await db.prepare(`INSERT INTO ai_key_cooldown (key_hash, until_ts) VALUES (?, ?)
-                           ON CONFLICT(key_hash) DO UPDATE SET until_ts = excluded.until_ts`)
-            .bind(hash, Date.now() + KEY_COOLDOWN_MS).run();
-    } catch (_) { /* best-effort — a failed write just means no reordering next call */ }
-}
-// healthy (untried/recovered) keys আগে, recently-429 keys পরে — কোনো key বাদ যায় না
-function reorderKeysByHealth(keys, cooledDownHashes, providerName) {
-    if (!cooledDownHashes.size) return keys;
-    const healthy = [], cooling = [];
-    for (const k of keys) {
-        const hash = `${providerName}:${hashKeyForCooldown(k)}`;
-        (cooledDownHashes.has(hash) ? cooling : healthy).push(k);
-    }
-    return [...healthy, ...cooling];
-}
-// fire-and-forget cooldown write — chain-er speed/response এর উপর নির্ভর করে না,
-// D1 write slow/fail হলেও current request-কে block করে না
-function ctxSafeCooldown(env, providerName, key) {
-    markKeyCooldown(env, providerName, key).catch(() => {});
+    return { count: 0, exhausted() { return this.count >= MAX_SUBREQUESTS_PER_INVOCATION; }, use() { this.count++; } };
 }
 
 async function attemptWithStatus(fn, budget) {
@@ -202,19 +127,6 @@ export class SessionHub {
 
 export default {
     async fetch(request, env, ctx) {
-        try {
-            return await handleFetch(request, env, ctx);
-        } catch (e) {
-            return jsonResponse({ success: false, error: String(e && e.message || e) }, 500);
-        }
-    },
-
-    async scheduled(event, env, ctx) {
-        ctx.waitUntil(processPendingMcqJobs(env));
-    },
-};
-
-async function handleFetch(request, env, ctx) {
         if (request.method === "OPTIONS") {
             return new Response(null, { headers: CORS_HEADERS });
         }
@@ -362,16 +274,13 @@ async function handleFetch(request, env, ctx) {
         let result = null;
         if (!skipGroq) {
             try {
-                budget.reserve(MIN_BUDGET_RESERVED_FOR_FALLBACKS); // guarantee Gemini/OpenRouter/Cerebras/CF-AI get a real turn
                 const groqResult = await callGroq(env, question, systemPrompt, image, /option_k/.test(systemPrompt), budget);
-                budget.release(MIN_BUDGET_RESERVED_FOR_FALLBACKS);
                 if (groqResult && groqResult.answer && groqResult.answer.trim().length > 5) {
                     result = groqResult;
                 } else if (groqResult?.error) {
                     errors.push(groqResult.error);
                 }
             } catch (e) {
-                budget.release(MIN_BUDGET_RESERVED_FOR_FALLBACKS);
                 errors.push(String(e.message || e));
             }
         }
@@ -389,9 +298,13 @@ async function handleFetch(request, env, ctx) {
             success: false,
             error: "সব AI provider ব্যর্থ হয়েছে। আবার চেষ্টা করো।",
             details: errors,
-            debug: { providerCount: fallbackProviders.length + 1, skipGroq, skipGemini },
         }, 502);
-}
+    },
+
+    async scheduled(event, env, ctx) {
+        ctx.waitUntil(processPendingMcqJobs(env));
+    },
+};
 
 /* ───────── R2 PDF storage handler (replaces Supabase Storage) ───────── */
 async function handlePdfStorage(fileName, request, env) {
@@ -757,12 +670,8 @@ async function callGeminiOnce(key, model, parts, maxOutputTokens, signal) {
 }
 
 async function callGemini(env, question, systemPrompt, image, budget) {
-    let keys = getGeminiKeys(env);
+    const keys = getGeminiKeys(env);
     if (!keys.length) return { error: "GEMINI_API_KEY not set" };
-    // healthy-first ordering: recently-429 keys ধাক্কা দিয়ে list-এর শেষে, যাতে fresh/
-    // recovered key গুলো আগে try হয় — mote drop hoy na, sudhu priority kome
-    const cooledDown = await getCooledDownKeySet(env, "gemini");
-    keys = reorderKeysByHealth(keys, cooledDown, "gemini");
 
     const parts = [];
     if (image) parts.push({ inline_data: { mime_type: image.mimeType, data: image.base64 } });
@@ -802,12 +711,8 @@ async function callGemini(env, question, systemPrompt, image, budget) {
                     lastError = `Gemini(${model}) HTTP ${outcome.status}`;
                     if (outcome.status === 429) {
                         exhaustedKeys.add(key); // quota shesh — porer round-e skip
-                        ctxSafeCooldown(env, "gemini", key); // next-request-e ei key age try hobe na (recovered hole abar hobe)
                         consecutive429++;
-                        // fix: same as Groq — don't abandon the whole provider after just
-                        // 2 keys hit 429 when 10+ keys are configured; only give up once
-                        // every rotated key has actually been exhausted.
-                        if (consecutive429 >= keys.length) { lastError = `Gemini: quota exhausted (429 on ${consecutive429} keys), abandoning provider to save budget`; break outerGemini; }
+                        if (consecutive429 >= 2) { lastError = `Gemini: quota exhausted (429 on ${consecutive429} keys), abandoning provider to save budget`; break outerGemini; }
                     } else {
                         consecutive429 = 0;
                     }
@@ -832,7 +737,7 @@ function getOpenRouterKeys(env) {
     if (env.OPENROUTER_API_KEY) keys.push(env.OPENROUTER_API_KEY.trim());
     return [...new Set(keys)];
 }
-const OPENROUTER_MODELS = ["qwen/qwen2.5-vl-72b-instruct:free", "google/gemma-4-31b-it:free"];
+const OPENROUTER_MODELS = ["qwen/qwen2.5-vl-72b-instruct:free", "meta-llama/llama-3.2-11b-vision-instruct:free"];
 
 async function callOpenRouter(env, question, systemPrompt, image, budget) {
     const keys = getOpenRouterKeys(env);
@@ -886,7 +791,7 @@ function getGroqKeys(env) {
     if (env.GROQ_API_KEY) keys.push(env.GROQ_API_KEY.trim());
     return [...new Set(keys)];
 }
-const GROQ_TEXT_MODELS  = ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.6-27b"]; // llama-3.3-70b-versatile deprecated by Groq June 17, 2026
+const GROQ_TEXT_MODELS  = ["openai/gpt-oss-120b", "llama-3.3-70b-versatile"];
 const GROQ_IMAGE_MODELS = ["meta-llama/llama-4-maverick-17b-128e-instruct", "meta-llama/llama-4-scout-17b-16e-instruct"];
 
 // code-level guarantee (prompt-follow-e nirvor na kore): text-model (openai/gpt-oss) call-e
@@ -960,10 +865,8 @@ function mbGroqLooksLikeValidMcqArray(answer) {
 }
 
 async function callGroq(env, question, systemPrompt, image, expectMcqArray, budget) {
-    let keys = getGroqKeys(env);
+    const keys = getGroqKeys(env);
     if (!keys.length) return { error: "GROQ_API_KEY not set" };
-    const cooledDown = await getCooledDownKeySet(env, "groq");
-    keys = reorderKeysByHealth(keys, cooledDown, "groq");
     const models = image ? GROQ_IMAGE_MODELS : GROQ_TEXT_MODELS;
 
     // bug fix (root cause of "AI সঠিক JSON দেয়নি — raw: ...প্রবন্ধ/prose..."): Groq-এর
@@ -1057,13 +960,8 @@ async function callGroq(env, question, systemPrompt, image, expectMcqArray, budg
                     }
                     lastError = `Groq(${model}) HTTP ${outcome.status}`;
                     if (outcome.status === 429) {
-                        ctxSafeCooldown(env, "groq", key); // next-request-e ei key age try hobe na
                         consecutive429++;
-                        // fix: with 10+ rotated keys, 2 consecutive 429s does NOT mean the
-                        // whole provider/account is exhausted — individual keys can be
-                        // rate-limited independently. Only abandon once we've actually
-                        // exhausted ALL available keys with 429s, not just the first 2.
-                        if (consecutive429 >= keys.length) { lastError = `Groq: quota exhausted (429 on ${consecutive429} keys), abandoning provider to save budget`; break outerGroq; }
+                        if (consecutive429 >= 2) { lastError = `Groq: quota exhausted (429 on ${consecutive429} keys), abandoning provider to save budget`; break outerGroq; }
                     } else {
                         consecutive429 = 0;
                     }
@@ -1099,7 +997,7 @@ function getCerebrasKeys(env) {
     if (env.CEREBRAS_API_KEY) keys.push(env.CEREBRAS_API_KEY.trim());
     return [...new Set(keys)];
 }
-const CEREBRAS_MODELS = ["gpt-oss-120b", "zai-glm-4.7"]; // llama-3.3-70b not on current public free tier
+const CEREBRAS_MODELS = ["gpt-oss-120b", "llama-3.3-70b"];
 
 async function callCerebras(env, question, systemPrompt, image, budget) {
     if (image) return { error: "Cerebras: vision not supported, skipped" };
