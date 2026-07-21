@@ -21,6 +21,73 @@
                                         worker, no separate key needed)
    ════════════════════════════════════════════════════════════ */
 
+/* ════════════════════════════════════════════════════════════
+   INCIDENT LOG (2026-07-22): "AI provider shob fail, success:false"
+   ────────────────────────────────────────────────────────────
+   SYMPTOM: curl test-e always {"success":false}, details-e দেখাচ্ছিল:
+     - Groq: "quota exhausted (429 on 12 keys)" — 12-টা key add করার পরও সবগুলো 429
+     - Gemini: "subrequest budget exhausted"
+     - OpenRouter: "subrequest budget exhausted"
+     - Cloudflare AI: daily 10k neuron free quota শেষ
+
+   ROOT CAUSE #1 (আসল কারণ, sob-চেয়ে গুরুত্বপূর্ণ):
+   Groq organization-level TPM (Tokens-Per-Minute) limit ছিল মাত্র 8000। ekta
+   single request-e (system prompt + question + max_tokens output-cap) mile
+   token count 8000 cross korle Groq shei EKTA request-ke 429 dey — eta
+   "account/key quota exhausted" na, eta "ei ekta request onek boro". Kintu
+   worker eta dekhe bhabtechilo shob key-i rate-limited, tai 12-ta key × 2
+   model = 24 attempt cheshta korchilo — protita-i same TPM limit hit hocchilo
+   (TPM organization-wide, key-count e kaj hoy na), tai shob-i fail dekhachilo,
+   ebong shei 24 attempt-e subrequest budget (45/invocation) shesh hoye Gemini/
+   OpenRouter porjonto pouchate parchilo na.
+   PROOF: direct Groq API-e chotto request success dilo, kintu exact
+   `max_tokens:8192` diye call korle Groq literally e error dilo:
+   "Requested 8298, Limit 8000" — confirm holo eta token-size issue, key/quota na.
+   FIX: max_tokens ekhon FIXED na, DYNAMIC — proshner/prompt-er approximate
+   input-token count hishab kore output cap emonbhabe kome deoya hoy jate
+   input+output shob shomoy 8000-er onek niche (7000 safe-limit) thake. Dekho
+   `estimatedInputTokens` / `TPM_SAFE_LIMIT` / `dynamicMaxTokens` niche callGroq()-e।
+
+   ROOT CAUSE #2 (quality/prompt-following issue): shob Groq call-e (MCQ-
+   generation HOK ba LMS/AtlasApp-er free-text "explanation"/"AI chat" HOK)
+   ekta jsonSystemPrompt wrapper juk kore response_format:json_object/json_schema
+   FORCE kora hocchilo। Kintu LMS-er explanation/chat call ashole free-form
+   Bangla text (✅/❌/💡 format) chay, JSON na — fole (ক) model JSON-e content
+   squeeze korte giye instruction thik moto follow korte parto na, (খ) wrapper
+   text extra input token khoroch korto, TPM limit-e aro taratari hit hoto।
+   FIX: `expectMcqArray` true hole-i (real MCQ-array generation call, jemon
+   admin panel-er question generator) JSON force kora hoy; LMS/AtlasApp-er
+   explanation/AI-chat call (expectMcqArray=false) ekhon original systemPrompt-i
+   (kono wrapper chara) pay — prompt thik moto follow hoy, extra token-o bache,
+   output room-o beshi (6144 vs MCQ-generation-er 4096)।
+
+   ROOT CAUSE #3 (reliability/consistency — "always healthy key use koro"):
+   Age kono key-health memory chilo na — ekta key genuinely bad/expired (401)
+   hole proti-request-e abaro shei bad key first-e try hoto (shomoy+subrequest
+   nosto), r Retry-porjonto pouchate deri hoto। (D1-backed cooldown ekbar try
+   kora hoyechilo — commit 523517a — kintu extra-latency/complexity risk-er
+   jonno revert kora hoy — d301a15.)
+   FIX: Lightweight IN-MEMORY (globalThis, no D1, no extra subrequest) key-
+   health map — genuine 401 (invalid key) ba genuine quota-429 (TPM-only na)
+   hole shei key 90 sec-er jonno "cooling down" mark hoy। sortByHealth() shob
+   key fetch-er age healthy-key-gulo age, cooling-down key-gulo pore shajay —
+   tai porborti request-gulo (shei worker instance-e) bad key skip kore shuru-
+   teই healthy key try kore। TPM-only 429 (real key-fault na) key-ke wrongly
+   bad mark kore na — response body-te "tokens per minute"/"TPM" thakle seta
+   ei-ekta-request-e-boro hisebe dhora hoy, key blacklist hoy na।
+
+   IMPORTANT FOR FUTURE: jodi abar "shob provider fail" dekha jay:
+     1. Age dekho details[]-e Groq/Gemini error message-e "tokens per minute"/
+        "TPM"/"Requested X, Limit Y" ache kina — thakle eta token-size issue,
+        notun key add korার dorkar nai, max_tokens/prompt shorten koro.
+     2. "subrequest budget exhausted" dekhle bujhte hobe age-er kono provider
+        (shadharonoto Groq) onek beshi retry/key try kore budget kheye phelche —
+        shei provider-er consecutive429/cooldown logic dekho.
+     3. Notun key add korar age SHOMOY direct curl kore (Groq/Gemini API-e
+        সরাসরি, worker bypass kore) test koro key ta ashole valid kina — worker-
+        er 429 mane always "key kharap" na।
+   ════════════════════════════════════════════════════════════ */
+
 const CORS_HEADERS = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
