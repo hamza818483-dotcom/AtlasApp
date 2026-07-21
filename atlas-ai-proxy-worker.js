@@ -37,7 +37,7 @@ const CORS_HEADERS = {
    rate-limit এ পুরো request fail না হয়ে যায়।
    ════════════════════════════════════════════════════════════ */
 const MAX_ROTATION_ROUNDS = 1; // পুরো key/model লিস্ট কতবার আবার চেষ্টা করবে (timeout যোগ হওয়ায় ১ round-ই যথেষ্ট, ২য় round শুধু worst-case সময় দ্বিগুণ করত)
-const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
+const RETRYABLE_STATUS = new Set([401, 429, 500, 502, 503, 504]);
 
 function sleep(ms) { return new Promise(res => setTimeout(res, ms)); }
 
