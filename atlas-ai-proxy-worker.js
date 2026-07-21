@@ -64,6 +64,66 @@ function makeSubrequestBudget() {
     return { count: 0, exhausted() { return this.count >= MAX_SUBREQUESTS_PER_INVOCATION; }, use() { this.count++; } };
 }
 
+/* ════════════════════════════════════════════════════════════
+   KEY HEALTH / COOLDOWN TRACKING (D1-backed)
+   Provider এর একাধিক key rotate করার সময় আগে যে key গুলো recently
+   429 (rate-limited) দিয়েছে, সেগুলোকে list এর শেষে ঠেলে দেওয়া হয় —
+   বাদ দেওয়া হয় না (key ঠিক হয়ে গেলে আবার কাজ করবে), শুধু healthy/
+   untried key গুলো আগে try হয় যাতে প্রতি request-এ বারবার একই মৃত
+   key দিয়ে সময়/subrequest budget নষ্ট না হয়। Cooldown window ছোট
+   (2 minutes) — rate limit সাধারণত এর মধ্যেই রিসেট হয়।
+   ════════════════════════════════════════════════════════════ */
+const KEY_COOLDOWN_MS = 2 * 60 * 1000;
+async function ensureKeyHealthTable(db) {
+    try {
+        await db.prepare(`CREATE TABLE IF NOT EXISTS ai_key_cooldown (key_hash TEXT PRIMARY KEY, until_ts INTEGER)`).run();
+    } catch (_) { /* table already exists or D1 unavailable — safe to ignore, falls back to no reordering */ }
+}
+function hashKeyForCooldown(key) {
+    // key নিজে DB তে রাখা হচ্ছে না, শুধু একটা short non-reversible fingerprint —
+    // পুরো secret কখনো row হিসেবে persist হয় না
+    let h = 0;
+    for (let i = 0; i < key.length; i++) { h = ((h << 5) - h + key.charCodeAt(i)) | 0; }
+    return String(h);
+}
+async function getCooledDownKeySet(env, providerName) {
+    const db = env.MULBOI_DB;
+    if (!db) return new Set();
+    try {
+        await ensureKeyHealthTable(db);
+        const now = Date.now();
+        const { results } = await db.prepare(`SELECT key_hash FROM ai_key_cooldown WHERE key_hash LIKE ? AND until_ts > ?`)
+            .bind(`${providerName}:%`, now).all();
+        return new Set((results || []).map(r => r.key_hash));
+    } catch (_) { return new Set(); } // D1 hiccup → just skip reordering this round
+}
+async function markKeyCooldown(env, providerName, key) {
+    const db = env.MULBOI_DB;
+    if (!db) return;
+    try {
+        await ensureKeyHealthTable(db);
+        const hash = `${providerName}:${hashKeyForCooldown(key)}`;
+        await db.prepare(`INSERT INTO ai_key_cooldown (key_hash, until_ts) VALUES (?, ?)
+                           ON CONFLICT(key_hash) DO UPDATE SET until_ts = excluded.until_ts`)
+            .bind(hash, Date.now() + KEY_COOLDOWN_MS).run();
+    } catch (_) { /* best-effort — a failed write just means no reordering next call */ }
+}
+// healthy (untried/recovered) keys আগে, recently-429 keys পরে — কোনো key বাদ যায় না
+function reorderKeysByHealth(keys, cooledDownHashes, providerName) {
+    if (!cooledDownHashes.size) return keys;
+    const healthy = [], cooling = [];
+    for (const k of keys) {
+        const hash = `${providerName}:${hashKeyForCooldown(k)}`;
+        (cooledDownHashes.has(hash) ? cooling : healthy).push(k);
+    }
+    return [...healthy, ...cooling];
+}
+// fire-and-forget cooldown write — chain-er speed/response এর উপর নির্ভর করে না,
+// D1 write slow/fail হলেও current request-কে block করে না
+function ctxSafeCooldown(env, providerName, key) {
+    markKeyCooldown(env, providerName, key).catch(() => {});
+}
+
 async function attemptWithStatus(fn, budget) {
     if (budget && budget.exhausted()) {
         return { __exception: true, __budgetExhausted: true, message: `subrequest budget exhausted (${MAX_SUBREQUESTS_PER_INVOCATION}/invocation) — stopped before hitting CF's hard limit` };
@@ -671,8 +731,12 @@ async function callGeminiOnce(key, model, parts, maxOutputTokens, signal) {
 }
 
 async function callGemini(env, question, systemPrompt, image, budget) {
-    const keys = getGeminiKeys(env);
+    let keys = getGeminiKeys(env);
     if (!keys.length) return { error: "GEMINI_API_KEY not set" };
+    // healthy-first ordering: recently-429 keys ধাক্কা দিয়ে list-এর শেষে, যাতে fresh/
+    // recovered key গুলো আগে try হয় — mote drop hoy na, sudhu priority kome
+    const cooledDown = await getCooledDownKeySet(env, "gemini");
+    keys = reorderKeysByHealth(keys, cooledDown, "gemini");
 
     const parts = [];
     if (image) parts.push({ inline_data: { mime_type: image.mimeType, data: image.base64 } });
@@ -712,6 +776,7 @@ async function callGemini(env, question, systemPrompt, image, budget) {
                     lastError = `Gemini(${model}) HTTP ${outcome.status}`;
                     if (outcome.status === 429) {
                         exhaustedKeys.add(key); // quota shesh — porer round-e skip
+                        ctxSafeCooldown(env, "gemini", key); // next-request-e ei key age try hobe na (recovered hole abar hobe)
                         consecutive429++;
                         // fix: same as Groq — don't abandon the whole provider after just
                         // 2 keys hit 429 when 10+ keys are configured; only give up once
@@ -869,8 +934,10 @@ function mbGroqLooksLikeValidMcqArray(answer) {
 }
 
 async function callGroq(env, question, systemPrompt, image, expectMcqArray, budget) {
-    const keys = getGroqKeys(env);
+    let keys = getGroqKeys(env);
     if (!keys.length) return { error: "GROQ_API_KEY not set" };
+    const cooledDown = await getCooledDownKeySet(env, "groq");
+    keys = reorderKeysByHealth(keys, cooledDown, "groq");
     const models = image ? GROQ_IMAGE_MODELS : GROQ_TEXT_MODELS;
 
     // bug fix (root cause of "AI সঠিক JSON দেয়নি — raw: ...প্রবন্ধ/prose..."): Groq-এর
@@ -964,6 +1031,7 @@ async function callGroq(env, question, systemPrompt, image, expectMcqArray, budg
                     }
                     lastError = `Groq(${model}) HTTP ${outcome.status}`;
                     if (outcome.status === 429) {
+                        ctxSafeCooldown(env, "groq", key); // next-request-e ei key age try hobe na
                         consecutive429++;
                         // fix: with 10+ rotated keys, 2 consecutive 429s does NOT mean the
                         // whole provider/account is exhausted — individual keys can be
