@@ -913,7 +913,7 @@ async function callGroq(env, question, systemPrompt, image, expectMcqArray, budg
         for (const model of models) {
             const isTextModel = GROQ_TEXT_MODELS.includes(model);
             const requestBody = {
-                model, messages, temperature: 0.7, max_tokens: 8192,
+                model, messages, temperature: 0.7, max_tokens: 4096,
                 response_format: (isTextModel && expectMcqArray)
                     ? { type: "json_schema", json_schema: GROQ_MCQ_JSON_SCHEMA }
                     : { type: "json_object" },
