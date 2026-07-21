@@ -2039,7 +2039,7 @@ function openSolveSheetPDF(){
         });
         html+=`</div><div class="pdf-footer">ATLAS APP © 2026 | atlasprep.pages.dev | পৃষ্ঠা ${page+1}/${totalPages}</div></div>`;
     }
-    html+=`<script>window.onload=function(){setTimeout(function(){},300);};</script>
+    html+=`<script>window.onload=function(){setTimeout(function(){},300);};<\/script>
     <button class="print-btn" onclick="window.print()"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M12 15V3' /> <path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' /> <path d='m7 10 5 5 5-5' /></svg> PDF হিসেবে ডাউনলোড / প্রিন্ট করুন</button></body></html>`;
 
     const blob=new Blob([html],{type:'text/html'});
