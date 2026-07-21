@@ -1510,10 +1510,10 @@ async function openAIChat(qid){
         <div class="ai-chat-q"><strong><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><rect width='8' height='4' x='8' y='2' rx='1' ry='1' /> <path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2' /></svg> MCQ:</strong><br>${q.question_text}<br><br>${optHTML}</div>
         <div class="ai-loading"><span></span><span></span><span></span>&nbsp;AI বিশ্লেষণ করছে...</div>`;
 
-    let prompt=`তুমি ATLAS APP-এর বিশেষজ্ঞ শিক্ষক। MCQ-টি বিস্তারিতভাবে বাংলায় ব্যাখ্যা করো:\n\nপ্রশ্ন: ${q.question_text}\n\n`;
+    let prompt=`নিচের সম্পূর্ণ MCQ-টি (প্রশ্ন ও সবগুলো অপশন একসাথে) ভালোভাবে পড়ে পুরো প্রশ্নটির প্রেক্ষাপট বুঝে বিস্তারিতভাবে বাংলায় ব্যাখ্যা করো:\n\nপ্রশ্ন: ${q.question_text}\n\n`;
     opts.forEach((opt,i)=>{prompt+=`${labels[i]}) ${opt}\n`;});
     prompt+=`\nসঠিক উত্তর: ${labels[q.answer_index-1]}) ${opts[q.answer_index-1]}\n\n`;
-    prompt+=`সংক্ষেপে (মোট ১৫০-২০০ শব্দের মধ্যে) বাংলায় ব্যাখ্যা করো:\n১. কেন ${labels[q.answer_index-1]} সঠিক\n২. বাকি অপশনগুলো কেন ভুল (১ লাইনে প্রতিটি)\n৩. মনে রাখার একটি ছোট টিপস\n\nসহজ, পরিষ্কার ভাষায়, অপ্রয়োজনীয় বিস্তার এড়িয়ে।`;
+    prompt+=`উপরে দেওয়া প্রশ্ন ও অপশনের প্রেক্ষাপট মাথায় রেখে, পাঠ্যবই-ভিত্তিক জ্ঞান দিয়ে বিস্তারিত ব্যাখ্যা করো:\n১. কেন ${labels[q.answer_index-1]} সঠিক — প্রাসঙ্গিক ধারণা/সূত্র/কারণ সহ বিস্তারিতভাবে\n২. বাকি অপশনগুলো কেন ভুল (প্রতিটির জন্য স্পষ্ট ব্যাখ্যা)\n৩. মনে রাখার একটি ছোট টিপস`;
 
     const answer=await callAIForMCQ(prompt);
     aiChatHistory.push({role:'assistant',content:answer});
@@ -1533,7 +1533,7 @@ async function sendAIChatMessage(){
     body.scrollTop=body.scrollHeight;
     aiChatHistory.push({role:'user',content:msg});
     const opts=[q?.option1,q?.option2,q?.option3,q?.option4,q?.option5].filter(o=>o&&o!=='—');
-    const context=`MCQ: ${q?.question_text||''}\nঅপশনস: ${opts.join(', ')}\n\nফলো-আপ প্রশ্ন: ${msg}`;
+    const context=`নিচের সম্পূর্ণ MCQ-টি মাথায় রেখে ফলো-আপ প্রশ্নের বিস্তারিত উত্তর দাও:\n\nপ্রশ্ন: ${q?.question_text||''}\nঅপশনস: ${opts.join(', ')}\n\nফলো-আপ প্রশ্ন: ${msg}\n\n(উপরের প্রশ্ন/অপশনের প্রেক্ষাপট মাথায় রেখে পাঠ্যবই-ভিত্তিক জ্ঞান দিয়ে বিস্তারিতভাবে উত্তর দাও)`;
     const answer=await callAIForMCQ(context);
     document.getElementById('aiTyping')?.remove();
     body.innerHTML+=`<div class="ai-chat-response" style="margin-top:6px;">${answer}</div>`;
@@ -1920,9 +1920,9 @@ async function toggleAIBox(header,qid){
     content.innerHTML='<div class="ai-loading"><span></span><span></span><span></span>&nbsp;AI ব্যাখ্যা আনা হচ্ছে...</div>';
     const opts=[q.option1,q.option2,q.option3,q.option4,q.option5].filter(o=>o&&o!=='—');
     const labels=['ক','খ','গ','ঘ','ঙ'];
-    let prompt=`তুমি শিক্ষক। MCQ বিশ্লেষণ:\nপ্রশ্ন: ${q.question_text}\n\n`;
+    let prompt=`নিচের সম্পূর্ণ MCQ-টি ভালোভাবে পড়ে বিস্তারিতভাবে বাংলায় বিশ্লেষণ করো:\nপ্রশ্ন: ${q.question_text}\n\n`;
     opts.forEach((opt,i)=>{prompt+=`${labels[i]}) ${opt}\n`;});
-    prompt+=`\nসঠিক উত্তর: ${labels[q.answer_index-1]}) ${opts[q.answer_index-1]}\n\nপ্রতিটি অপশন: ✅ কেন সঠিক, ❌ কেন ভুল। বাংলায়। সংক্ষেপে।`;
+    prompt+=`\nসঠিক উত্তর: ${labels[q.answer_index-1]}) ${opts[q.answer_index-1]}\n\nপ্রতিটি অপশন বিস্তারিতভাবে ব্যাখ্যা করো: ✅ কেন সঠিক (প্রাসঙ্গিক ধারণা/সূত্র সহ), ❌ কেন ভুল (প্রতিটির জন্য স্পষ্ট কারণ)। বাংলায়।`;
     content.innerHTML=await callAIForMCQ(prompt);
 }
 
