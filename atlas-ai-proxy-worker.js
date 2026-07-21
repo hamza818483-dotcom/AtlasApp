@@ -41,62 +41,6 @@ const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
 
 function sleep(ms) { return new Promise(res => setTimeout(res, ms)); }
 
-/* ════════════════════════════════════════════════════════════
-   KEY HEALTH / COOLDOWN TRACKING (D1-backed)
-   bug fix (root cause of "worked 4/5 times, failed 1/5 with 401"):
-   one bad/invalid key mixed into GROQ_KEYS or GEMINI_KEYS would
-   sporadically get tried and fail, and if enough consecutive keys
-   in that particular request happened to be bad the whole provider
-   gave up. Recently-401/429'd keys are now pushed to the BACK of the
-   rotation (never dropped — a key that starts working again is still
-   used) so healthy keys get first crack on every request.
-   ════════════════════════════════════════════════════════════ */
-const KEY_COOLDOWN_MS = 2 * 60 * 1000;
-async function ensureKeyHealthTable(db) {
-    try {
-        await db.prepare(`CREATE TABLE IF NOT EXISTS ai_key_cooldown (key_hash TEXT PRIMARY KEY, until_ts INTEGER)`).run();
-    } catch (_) { /* table already exists or D1 unavailable — safe to ignore, falls back to no reordering */ }
-}
-function hashKeyForCooldown(key) {
-    let h = 0;
-    for (let i = 0; i < key.length; i++) { h = ((h << 5) - h + key.charCodeAt(i)) | 0; }
-    return String(h);
-}
-async function getCooledDownKeySet(env, providerName) {
-    const db = env.MULBOI_DB;
-    if (!db) return new Set();
-    try {
-        await ensureKeyHealthTable(db);
-        const now = Date.now();
-        const { results } = await db.prepare(`SELECT key_hash FROM ai_key_cooldown WHERE key_hash LIKE ? AND until_ts > ?`)
-            .bind(`${providerName}:%`, now).all();
-        return new Set((results || []).map(r => r.key_hash));
-    } catch (_) { return new Set(); }
-}
-async function markKeyCooldown(env, providerName, key) {
-    const db = env.MULBOI_DB;
-    if (!db) return;
-    try {
-        await ensureKeyHealthTable(db);
-        const hash = `${providerName}:${hashKeyForCooldown(key)}`;
-        await db.prepare(`INSERT INTO ai_key_cooldown (key_hash, until_ts) VALUES (?, ?)
-                           ON CONFLICT(key_hash) DO UPDATE SET until_ts = excluded.until_ts`)
-            .bind(hash, Date.now() + KEY_COOLDOWN_MS).run();
-    } catch (_) { /* best-effort */ }
-}
-function reorderKeysByHealth(keys, cooledDownHashes, providerName) {
-    if (!cooledDownHashes.size) return keys;
-    const healthy = [], cooling = [];
-    for (const k of keys) {
-        const hash = `${providerName}:${hashKeyForCooldown(k)}`;
-        (cooledDownHashes.has(hash) ? cooling : healthy).push(k);
-    }
-    return [...healthy, ...cooling];
-}
-function ctxSafeCooldown(env, providerName, key) {
-    markKeyCooldown(env, providerName, key).catch(() => {});
-}
-
 // একটা single fetch-attempt কে wrap করে — নির্দিষ্ট HTTP status এ retryable বলে চিহ্নিত করে,
 // network exception ধরেও সেটাকে retryable error হিসেবে ফেরত দেয় (throw করে caller থামায় না)।
 // bug fix (root cause of "10 min+" generation times): আগে কোনো fetch-এ timeout ছিল না —
@@ -726,10 +670,8 @@ async function callGeminiOnce(key, model, parts, maxOutputTokens, signal) {
 }
 
 async function callGemini(env, question, systemPrompt, image, budget) {
-    let keys = getGeminiKeys(env);
+    const keys = getGeminiKeys(env);
     if (!keys.length) return { error: "GEMINI_API_KEY not set" };
-    const cooledDown = await getCooledDownKeySet(env, "gemini");
-    keys = reorderKeysByHealth(keys, cooledDown, "gemini");
 
     const parts = [];
     if (image) parts.push({ inline_data: { mime_type: image.mimeType, data: image.base64 } });
@@ -769,11 +711,9 @@ async function callGemini(env, question, systemPrompt, image, budget) {
                     lastError = `Gemini(${model}) HTTP ${outcome.status}`;
                     if (outcome.status === 429) {
                         exhaustedKeys.add(key); // quota shesh — porer round-e skip
-                        ctxSafeCooldown(env, "gemini", key);
                         consecutive429++;
                         if (consecutive429 >= keys.length) { lastError = `Gemini: quota exhausted (429 on ${consecutive429} keys), abandoning provider to save budget`; break outerGemini; }
                     } else {
-                        if (outcome.status === 401) ctxSafeCooldown(env, "gemini", key);
                         consecutive429 = 0;
                     }
                     continue;
@@ -925,10 +865,8 @@ function mbGroqLooksLikeValidMcqArray(answer) {
 }
 
 async function callGroq(env, question, systemPrompt, image, expectMcqArray, budget) {
-    let keys = getGroqKeys(env);
+    const keys = getGroqKeys(env);
     if (!keys.length) return { error: "GROQ_API_KEY not set" };
-    const cooledDown = await getCooledDownKeySet(env, "groq");
-    keys = reorderKeysByHealth(keys, cooledDown, "groq");
     const models = image ? GROQ_IMAGE_MODELS : GROQ_TEXT_MODELS;
 
     // bug fix (root cause of "AI সঠিক JSON দেয়নি — raw: ...প্রবন্ধ/prose..."): Groq-এর
@@ -1022,11 +960,9 @@ async function callGroq(env, question, systemPrompt, image, expectMcqArray, budg
                     }
                     lastError = `Groq(${model}) HTTP ${outcome.status}`;
                     if (outcome.status === 429) {
-                        ctxSafeCooldown(env, "groq", key); // next request-e ei key age try hobe na (recovered hole abar hobe)
                         consecutive429++;
                         if (consecutive429 >= keys.length) { lastError = `Groq: quota exhausted (429 on ${consecutive429} keys), abandoning provider to save budget`; break outerGroq; }
                     } else {
-                        if (outcome.status === 401) ctxSafeCooldown(env, "groq", key); // bug fix: bad/invalid key -> deprioritize instead of hitting it again next call
                         consecutive429 = 0;
                     }
                     continue;
