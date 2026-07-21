@@ -713,7 +713,10 @@ async function callGemini(env, question, systemPrompt, image, budget) {
                     if (outcome.status === 429) {
                         exhaustedKeys.add(key); // quota shesh — porer round-e skip
                         consecutive429++;
-                        if (consecutive429 >= 2) { lastError = `Gemini: quota exhausted (429 on ${consecutive429} keys), abandoning provider to save budget`; break outerGemini; }
+                        // fix: same as Groq — don't abandon the whole provider after just
+                        // 2 keys hit 429 when 10+ keys are configured; only give up once
+                        // every rotated key has actually been exhausted.
+                        if (consecutive429 >= keys.length) { lastError = `Gemini: quota exhausted (429 on ${consecutive429} keys), abandoning provider to save budget`; break outerGemini; }
                     } else {
                         consecutive429 = 0;
                     }
@@ -962,7 +965,11 @@ async function callGroq(env, question, systemPrompt, image, expectMcqArray, budg
                     lastError = `Groq(${model}) HTTP ${outcome.status}`;
                     if (outcome.status === 429) {
                         consecutive429++;
-                        if (consecutive429 >= 2) { lastError = `Groq: quota exhausted (429 on ${consecutive429} keys), abandoning provider to save budget`; break outerGroq; }
+                        // fix: with 10+ rotated keys, 2 consecutive 429s does NOT mean the
+                        // whole provider/account is exhausted — individual keys can be
+                        // rate-limited independently. Only abandon once we've actually
+                        // exhausted ALL available keys with 429s, not just the first 2.
+                        if (consecutive429 >= keys.length) { lastError = `Groq: quota exhausted (429 on ${consecutive429} keys), abandoning provider to save budget`; break outerGroq; }
                     } else {
                         consecutive429 = 0;
                     }
