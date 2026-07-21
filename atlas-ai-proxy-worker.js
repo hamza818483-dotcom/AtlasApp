@@ -187,6 +187,19 @@ export class SessionHub {
 
 export default {
     async fetch(request, env, ctx) {
+        try {
+            return await handleFetch(request, env, ctx);
+        } catch (e) {
+            return jsonResponse({ success: false, error: String(e && e.message || e) }, 500);
+        }
+    },
+
+    async scheduled(event, env, ctx) {
+        ctx.waitUntil(processPendingMcqJobs(env));
+    },
+};
+
+async function handleFetch(request, env, ctx) {
         if (request.method === "OPTIONS") {
             return new Response(null, { headers: CORS_HEADERS });
         }
@@ -360,12 +373,7 @@ export default {
             details: errors,
             debug: { providerCount: fallbackProviders.length + 1, skipGroq, skipGemini },
         }, 502);
-    },
-
-    async scheduled(event, env, ctx) {
-        ctx.waitUntil(processPendingMcqJobs(env));
-    },
-};
+}
 
 /* ───────── R2 PDF storage handler (replaces Supabase Storage) ───────── */
 async function handlePdfStorage(fileName, request, env) {
@@ -860,7 +868,7 @@ function getGroqKeys(env) {
     if (env.GROQ_API_KEY) keys.push(env.GROQ_API_KEY.trim());
     return [...new Set(keys)];
 }
-const GROQ_TEXT_MODELS  = ["openai/gpt-oss-120b", "llama-3.3-70b-versatile"];
+const GROQ_TEXT_MODELS  = ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.6-27b"]; // llama-3.3-70b-versatile deprecated by Groq June 17, 2026
 const GROQ_IMAGE_MODELS = ["meta-llama/llama-4-maverick-17b-128e-instruct", "meta-llama/llama-4-scout-17b-16e-instruct"];
 
 // code-level guarantee (prompt-follow-e nirvor na kore): text-model (openai/gpt-oss) call-e
@@ -1073,7 +1081,7 @@ function getCerebrasKeys(env) {
     if (env.CEREBRAS_API_KEY) keys.push(env.CEREBRAS_API_KEY.trim());
     return [...new Set(keys)];
 }
-const CEREBRAS_MODELS = ["gpt-oss-120b", "llama-3.3-70b"];
+const CEREBRAS_MODELS = ["gpt-oss-120b", "zai-glm-4.7"]; // llama-3.3-70b not on current public free tier
 
 async function callCerebras(env, question, systemPrompt, image, budget) {
     if (image) return { error: "Cerebras: vision not supported, skipped" };
