@@ -1496,6 +1496,43 @@ function updateProgress(){
 }
 
 // =============================================================
+// AI EXPLANATION CACHE (D1-backed, mirrors LMS Supabase cache pattern)
+// Generate once per question → save to questions.ai_explanation →
+// every future viewer gets an instant DB read instead of re-generating.
+// =============================================================
+async function readCachedExplanation(qid){
+    try{
+        const rows=await safeFetch(`${SUPABASE_URL}/rest/v1/questions?id=eq.${qid}&select=ai_explanation`);
+        return rows?.[0]?.ai_explanation||null;
+    }catch(e){return null;}
+}
+async function saveCachedExplanation(qid,text){
+    try{
+        await safeFetch(`${SUPABASE_URL}/rest/v1/questions?id=eq.${qid}`,{method:'PATCH',body:JSON.stringify({ai_explanation:text})});
+    }catch(e){/* best-effort — don't block UI on cache write */}
+}
+/** Silently pre-generate + cache explanations for questions missing one, so by
+ *  the time a user clicks "AI ব্যাখ্যা" it's very likely already cached. */
+function prewarmExplanations(qs){
+    if(!Array.isArray(qs)||!qs.length)return;
+    const targets=qs.filter(q=>q&&q.id&&!q.ai_explanation);
+    targets.forEach((q,i)=>{
+        setTimeout(async ()=>{
+            const cached=await readCachedExplanation(q.id);
+            if(cached){q.ai_explanation=cached;return;}
+            const opts=[q.option1,q.option2,q.option3,q.option4,q.option5].filter(o=>o&&o!=='—');
+            const labels=['ক','খ','গ','ঘ','ঙ'];
+            let prompt=`নিচের সম্পূর্ণ MCQ-টি ভালোভাবে পড়ে বিস্তারিতভাবে বাংলায় বিশ্লেষণ করো:\nপ্রশ্ন: ${q.question_text}\n\n`;
+            opts.forEach((opt,i)=>{prompt+=`${labels[i]}) ${opt}\n`;});
+            prompt+=`\nসঠিক উত্তর: ${labels[q.answer_index-1]}) ${opts[q.answer_index-1]}\n\nপ্রতিটি অপশন বিস্তারিতভাবে ব্যাখ্যা করো: ✅ কেন সঠিক (প্রাসঙ্গিক ধারণা/সূত্র সহ), ❌ কেন ভুল (প্রতিটির জন্য স্পষ্ট কারণ)। বাংলায়।`;
+            const answer=await callAIForMCQ(prompt);
+            q.ai_explanation=answer;
+            saveCachedExplanation(q.id,answer);
+        },i*400);
+    });
+}
+
+// =============================================================
 // AI CHAT (req #1: per-MCQ ChatGPT-like)
 // =============================================================
 async function openAIChat(qid){
@@ -1510,12 +1547,17 @@ async function openAIChat(qid){
         <div class="ai-chat-q"><strong><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><rect width='8' height='4' x='8' y='2' rx='1' ry='1' /> <path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2' /></svg> MCQ:</strong><br>${q.question_text}<br><br>${optHTML}</div>
         <div class="ai-loading"><span></span><span></span><span></span>&nbsp;AI বিশ্লেষণ করছে...</div>`;
 
-    let prompt=`নিচের সম্পূর্ণ MCQ-টি (প্রশ্ন ও সবগুলো অপশন একসাথে) ভালোভাবে পড়ে পুরো প্রশ্নটির প্রেক্ষাপট বুঝে বিস্তারিতভাবে বাংলায় ব্যাখ্যা করো:\n\nপ্রশ্ন: ${q.question_text}\n\n`;
-    opts.forEach((opt,i)=>{prompt+=`${labels[i]}) ${opt}\n`;});
-    prompt+=`\nসঠিক উত্তর: ${labels[q.answer_index-1]}) ${opts[q.answer_index-1]}\n\n`;
-    prompt+=`উপরে দেওয়া প্রশ্ন ও অপশনের প্রেক্ষাপট মাথায় রেখে, পাঠ্যবই-ভিত্তিক জ্ঞান দিয়ে বিস্তারিত ব্যাখ্যা করো:\n১. কেন ${labels[q.answer_index-1]} সঠিক — প্রাসঙ্গিক ধারণা/সূত্র/কারণ সহ বিস্তারিতভাবে\n২. বাকি অপশনগুলো কেন ভুল (প্রতিটির জন্য স্পষ্ট ব্যাখ্যা)\n৩. মনে রাখার একটি ছোট টিপস`;
-
-    const answer=await callAIForMCQ(prompt);
+    // Cache-first: instant read if this question's explanation is already cached.
+    let answer=q.ai_explanation||await readCachedExplanation(qid);
+    if(!answer){
+        let prompt=`নিচের সম্পূর্ণ MCQ-টি (প্রশ্ন ও সবগুলো অপশন একসাথে) ভালোভাবে পড়ে পুরো প্রশ্নটির প্রেক্ষাপট বুঝে বিস্তারিতভাবে বাংলায় ব্যাখ্যা করো:\n\nপ্রশ্ন: ${q.question_text}\n\n`;
+        opts.forEach((opt,i)=>{prompt+=`${labels[i]}) ${opt}\n`;});
+        prompt+=`\nসঠিক উত্তর: ${labels[q.answer_index-1]}) ${opts[q.answer_index-1]}\n\n`;
+        prompt+=`উপরে দেওয়া প্রশ্ন ও অপশনের প্রেক্ষাপট মাথায় রেখে, পাঠ্যবই-ভিত্তিক জ্ঞান দিয়ে বিস্তারিত ব্যাখ্যা করো:\n১. কেন ${labels[q.answer_index-1]} সঠিক — প্রাসঙ্গিক ধারণা/সূত্র/কারণ সহ বিস্তারিতভাবে\n২. বাকি অপশনগুলো কেন ভুল (প্রতিটির জন্য স্পষ্ট ব্যাখ্যা)\n৩. মনে রাখার একটি ছোট টিপস`;
+        answer=await callAIForMCQ(prompt);
+        saveCachedExplanation(qid,answer);
+    }
+    q.ai_explanation=answer;
     aiChatHistory.push({role:'assistant',content:answer});
     document.getElementById('aiChatBody').innerHTML=`
         <div class="ai-chat-q"><strong><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><rect width='8' height='4' x='8' y='2' rx='1' ry='1' /> <path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2' /></svg> MCQ:</strong><br>${q.question_text}<br><br>${optHTML}</div>
@@ -1823,6 +1865,7 @@ function showResult(correct,wrong,skipped,negMark,finalScore,withGpa,gpaScore,de
     html+=`<button class="btn btn-outline" onclick="backToList()" style="width:100%;margin-top:8px;"><svg class='emoji-icon' viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='display:inline;vertical-align:-0.125em'><path d='M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8' /> <path d='M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z' /></svg> এক্সাম লিস্টে যান</button>`;
 
     document.getElementById('resultContent').innerHTML=html;
+    prewarmExplanations(examQuestions);
 
     setTimeout(()=>{
         const canvas=document.getElementById('resultChart');if(!canvas)return;
@@ -1918,12 +1961,19 @@ async function toggleAIBox(header,qid){
     content.classList.add('show');arrow.classList.add('open');
     if(content.innerHTML.trim()&&!content.innerHTML.includes('লোড হচ্ছে'))return; // already loaded
     content.innerHTML='<div class="ai-loading"><span></span><span></span><span></span>&nbsp;AI ব্যাখ্যা আনা হচ্ছে...</div>';
-    const opts=[q.option1,q.option2,q.option3,q.option4,q.option5].filter(o=>o&&o!=='—');
-    const labels=['ক','খ','গ','ঘ','ঙ'];
-    let prompt=`নিচের সম্পূর্ণ MCQ-টি ভালোভাবে পড়ে বিস্তারিতভাবে বাংলায় বিশ্লেষণ করো:\nপ্রশ্ন: ${q.question_text}\n\n`;
-    opts.forEach((opt,i)=>{prompt+=`${labels[i]}) ${opt}\n`;});
-    prompt+=`\nসঠিক উত্তর: ${labels[q.answer_index-1]}) ${opts[q.answer_index-1]}\n\nপ্রতিটি অপশন বিস্তারিতভাবে ব্যাখ্যা করো: ✅ কেন সঠিক (প্রাসঙ্গিক ধারণা/সূত্র সহ), ❌ কেন ভুল (প্রতিটির জন্য স্পষ্ট কারণ)। বাংলায়।`;
-    content.innerHTML=await callAIForMCQ(prompt);
+    // Cache-first: instant read if this question's explanation is already cached.
+    let answer=q.ai_explanation||await readCachedExplanation(qid);
+    if(!answer){
+        const opts=[q.option1,q.option2,q.option3,q.option4,q.option5].filter(o=>o&&o!=='—');
+        const labels=['ক','খ','গ','ঘ','ঙ'];
+        let prompt=`নিচের সম্পূর্ণ MCQ-টি ভালোভাবে পড়ে বিস্তারিতভাবে বাংলায় বিশ্লেষণ করো:\nপ্রশ্ন: ${q.question_text}\n\n`;
+        opts.forEach((opt,i)=>{prompt+=`${labels[i]}) ${opt}\n`;});
+        prompt+=`\nসঠিক উত্তর: ${labels[q.answer_index-1]}) ${opts[q.answer_index-1]}\n\nপ্রতিটি অপশন বিস্তারিতভাবে ব্যাখ্যা করো: ✅ কেন সঠিক (প্রাসঙ্গিক ধারণা/সূত্র সহ), ❌ কেন ভুল (প্রতিটির জন্য স্পষ্ট কারণ)। বাংলায়।`;
+        answer=await callAIForMCQ(prompt);
+        saveCachedExplanation(qid,answer);
+    }
+    q.ai_explanation=answer;
+    content.innerHTML=answer;
 }
 
 // =============================================================
