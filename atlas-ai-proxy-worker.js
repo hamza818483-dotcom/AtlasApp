@@ -869,16 +869,20 @@ async function callGroq(env, question, systemPrompt, image, expectMcqArray, budg
     if (!keys.length) return { error: "GROQ_API_KEY not set" };
     const models = image ? GROQ_IMAGE_MODELS : GROQ_TEXT_MODELS;
 
-    // bug fix (root cause of "AI সঠিক JSON দেয়নি — raw: ...প্রবন্ধ/prose..."): Groq-এর
-    // vision মডেল (Llama-4 Maverick/Scout) system prompt এ "শুধু JSON array দাও" বললেও
-    // প্রায়ই স্বাভাবিক ভাষায় বর্ণনা/প্রবন্ধ ফেরত দিত, বিশেষত ছবি-ভিত্তিক কলে। Groq officially
-    // response_format:{type:"json_object"} সাপোর্ট করে যেটা মডেলকে valid JSON আউটপুট দিতে
-    // বাধ্য করে (docs: console.groq.com/docs/structured-outputs, vision docs)। এটা object
-    // চায়, array না, তাই prompt-এ বলা হচ্ছে {"questions":[...]} wrapper ব্যবহার করতে, আর
-    // response parse করার সময় "answer" থেকে raw content বের করার আগে সেই wrapper থেকে
-    // ভেতরের array-টা বের করে নেওয়া হচ্ছে (caller-দের কোড অপরিবর্তিত রাখতে, যারা raw answer
-    // string থেকে নিজেরাই [...] regex দিয়ে বের করে)।
-    const jsonSystemPrompt = systemPrompt + `\n\nGURUTTOPURNO: শুধুমাত্র এই ফরম্যাটে একটা valid JSON object দাও, অন্য কোনো preamble/markdown/ব্যাখ্যা ছাড়া: {"questions": [ ...এখানে array... ]}`;
+    // bug fix ("response prompt thik moto mante parche na, r extra token nosto hocche"):
+    // age shob Groq call-e (MCQ-generation HOK ba plain free-text explanation/chat HOK)
+    // jothashomoy jsonSystemPrompt wrapper add hoye JSON output force kora hocchilo —
+    // kintu LMS/AtlasApp-er "explanation"/"AI chat" call gulo (expectMcqArray=false)
+    // ashole free-form Bangla text chay, JSON na। Fol: (1) model JSON-e content
+    // squeeze korte giye instruction (✅/❌/💡 format) thik moto follow korte parto na,
+    // (2) wrapper text-tuku extra input token khoroch korto, TPM 8000 limit-e aro
+    // taratari hit hoto। Ekhon shudhu expectMcqArray=true hole-i (real MCQ-array
+    // generation call) JSON force kora hoy; onno shob free-text call-e original
+    // systemPrompt-i (kono wrapper chara) pathano hoy — prompt thik moto follow hoy
+    // ar kichu token-o bache.
+    const jsonSystemPrompt = expectMcqArray
+        ? systemPrompt + `\n\nGURUTTOPURNO: শুধুমাত্র এই ফরম্যাটে একটা valid JSON object দাও, অন্য কোনো preamble/markdown/ব্যাখ্যা ছাড়া: {"questions": [ ...এখানে array... ]}`
+        : systemPrompt;
 
     let messages;
     if (image) {
@@ -908,12 +912,17 @@ async function callGroq(env, question, systemPrompt, image, expectMcqArray, budg
     // 429 (misleadingly "quota exhausted" mone hoy, ashole ekta single request-i
     // beshi boro). Fix: prompt-er approximate token count (4 char ~= 1 token, Bangla
     // shometo rough estimate) hishab kore max_tokens emonbhabe kome deoya hoy jate
-    // input+output shob shomoy 8000-er onek niche (safety margin soho) thake.
+    // input+output shob shomoy 8000-er onek niche (safety margin soho) thake. Free-text
+    // (non-MCQ) call-e ekhon max_tokens 6144 porjonto ba rakha hoy (age 4096 chilo)
+    // jate poth-boi-vitti bissarito ✅/❌/💡 explanation kokhono modhye-pothe kete na jay —
+    // input token beshi hole eituku proportionally kome ashe, tai TPM 8000 kokhono
+    // cross hobe na, kintu choto/moderate prompt-e full-length bissarito uttor pabe।
     const estimatedInputTokens = Math.ceil(
         (jsonSystemPrompt.length + (typeof question === "string" ? question.length : 200)) / 3.2
     );
     const TPM_SAFE_LIMIT = 7000; // 8000 hard limit theke margin rekhe
-    const dynamicMaxTokens = Math.max(1024, Math.min(4096, TPM_SAFE_LIMIT - estimatedInputTokens));
+    const outputCap = expectMcqArray ? 4096 : 6144; // free-text explanation-e beshi output-room chai
+    const dynamicMaxTokens = Math.max(1024, Math.min(outputCap, TPM_SAFE_LIMIT - estimatedInputTokens));
     let consecutive429 = 0;
     outerGroq:
     for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
@@ -921,9 +930,11 @@ async function callGroq(env, question, systemPrompt, image, expectMcqArray, budg
             const isTextModel = GROQ_TEXT_MODELS.includes(model);
             const requestBody = {
                 model, messages, temperature: 0.7, max_tokens: dynamicMaxTokens,
-                response_format: (isTextModel && expectMcqArray)
-                    ? { type: "json_schema", json_schema: GROQ_MCQ_JSON_SCHEMA }
-                    : { type: "json_object" },
+                ...(isTextModel && expectMcqArray
+                    ? { response_format: { type: "json_schema", json_schema: GROQ_MCQ_JSON_SCHEMA } }
+                    : !isTextModel && expectMcqArray
+                    ? { response_format: { type: "json_object" } }
+                    : {}), // free-text call: kono response_format na, model-ke natural bangla text likhte deoya hoy
             };
             // bug fix (root cause of "Too many subrequests by single Worker invocation"):
             // this used to fan out ALL keys for a model in parallel (Promise-based race) —
