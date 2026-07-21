@@ -298,6 +298,7 @@ export default {
             success: false,
             error: "সব AI provider ব্যর্থ হয়েছে। আবার চেষ্টা করো।",
             details: errors,
+            debug: { providerCount: fallbackProviders.length + 1, skipGroq, skipGemini },
         }, 502);
     },
 
