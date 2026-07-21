@@ -712,7 +712,7 @@ async function callGemini(env, question, systemPrompt, image, budget) {
                     if (outcome.status === 429) {
                         exhaustedKeys.add(key); // quota shesh — porer round-e skip
                         consecutive429++;
-                        if (consecutive429 >= 2) { lastError = `Gemini: quota exhausted (429 on ${consecutive429} keys), abandoning provider to save budget`; break outerGemini; }
+                        if (consecutive429 >= keys.length) { lastError = `Gemini: quota exhausted (429 on ${consecutive429} keys), abandoning provider to save budget`; break outerGemini; }
                     } else {
                         consecutive429 = 0;
                     }
@@ -961,7 +961,7 @@ async function callGroq(env, question, systemPrompt, image, expectMcqArray, budg
                     lastError = `Groq(${model}) HTTP ${outcome.status}`;
                     if (outcome.status === 429) {
                         consecutive429++;
-                        if (consecutive429 >= 2) { lastError = `Groq: quota exhausted (429 on ${consecutive429} keys), abandoning provider to save budget`; break outerGroq; }
+                        if (consecutive429 >= keys.length) { lastError = `Groq: quota exhausted (429 on ${consecutive429} keys), abandoning provider to save budget`; break outerGroq; }
                     } else {
                         consecutive429 = 0;
                     }
