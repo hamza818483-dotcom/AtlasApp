@@ -867,7 +867,10 @@ function getGroqKeys(env) {
     return sortByHealth([...new Set(keys)], "groq");
 }
 const GROQ_TEXT_MODELS  = ["openai/gpt-oss-120b", "llama-3.3-70b-versatile"];
-const GROQ_IMAGE_MODELS = ["meta-llama/llama-4-maverick-17b-128e-instruct", "meta-llama/llama-4-scout-17b-16e-instruct"];
+// meta-llama/llama-4-maverick-17b-128e-instruct (deprecated Feb 20, 2026) and
+// meta-llama/llama-4-scout-17b-16e-instruct (deprecated Jun 17, 2026) retired.
+// qwen/qwen3.6-27b is Groq's current free vision-capable model (preview tier).
+const GROQ_IMAGE_MODELS = ["qwen/qwen3.6-27b"];
 
 // ── Lightweight in-memory key-health tracking (no D1, no extra subrequests) ──
 // Age D1-backed cooldown try kora hoyechilo (commit 523517a) kintu revert hoyeche
@@ -1447,7 +1450,7 @@ async function callGroqOcr(env, image) {
         method: "POST",
         headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-            model: "meta-llama/llama-4-maverick-17b-128e-instruct",
+            model: "qwen/qwen3.6-27b",
             messages: [
                 { role: "system", content: OCR_SYSTEM_PROMPT },
                 { role: "user", content: [
