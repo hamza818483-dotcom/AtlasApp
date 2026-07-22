@@ -750,6 +750,7 @@ async function callGemini(env, question, systemPrompt, image, budget) {
     // kore shomoy nosto na kore, shudhu "healthy" (ekhono kaj korte pare emon) key-gulor
     // upor e round chole.
     const exhaustedKeys = new Set();
+    const shuffledGeminiKeys = shuffleKeys(keys);
     // bug fix (root cause of persistent "Too many subrequests" even after sequential fix):
     // MAX_ROTATION_ROUNDS is 1, so exhaustedKeys above never actually helps (no 2nd round
     // to skip in) — every single Gemini key still got tried once even when the account was
@@ -761,7 +762,7 @@ async function callGemini(env, question, systemPrompt, image, budget) {
 
     outerGemini:
     for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
-        const healthyKeys = keys.filter(k => !exhaustedKeys.has(k));
+        const healthyKeys = shuffledGeminiKeys.filter(k => !exhaustedKeys.has(k));
         if (!healthyKeys.length) break; // shob key exhausted — ar try kore lav nai
         for (const model of GEMINI_MODELS) {
             // sequential key rotation: ekta key try kora hoy, fail/429 hole tobei porer
@@ -829,9 +830,10 @@ async function callOpenRouter(env, question, systemPrompt, image, budget) {
     }
 
     let lastError = "OpenRouter: no keys/models worked";
+    const shuffledOpenRouterKeys = shuffleKeys(keys);
     for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
         for (const model of OPENROUTER_MODELS) {
-            for (const key of keys) {
+            for (const key of shuffledOpenRouterKeys) {
                 const outcome = await attemptWithStatus((signal) => fetch("https://openrouter.ai/api/v1/chat/completions", {
                     method: "POST",
                     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -857,6 +859,21 @@ async function callOpenRouter(env, question, systemPrompt, image, budget) {
         if (round < MAX_ROTATION_ROUNDS - 1) await sleep(400 * (round + 1));
     }
     return { error: lastError };
+}
+
+// Load-balancing fix: without this, every concurrent request iterates keys
+// in the same fixed order (keys[0] first), so under simultaneous load all
+// users hammer the same single key until it alone hits its per-day limit
+// (e.g. Groq's 1000 req/day), instead of spreading load across every
+// available key. Shuffling per-call distributes concurrent traffic roughly
+// evenly across all keys from the very first request.
+function shuffleKeys(keys) {
+    const arr = [...keys];
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
 }
 
 /* ───────── 3. Groq — multi-key rotation, per-modality model fallback list ───────── */
@@ -1033,6 +1050,7 @@ async function callGroq(env, question, systemPrompt, image, expectMcqArray, budg
     const outputCap = expectMcqArray ? 4096 : 6144; // free-text explanation-e beshi output-room chai
     const dynamicMaxTokens = Math.max(1024, Math.min(outputCap, TPM_SAFE_LIMIT - estimatedInputTokens));
     let consecutive429 = 0;
+    const shuffledGroqKeys = shuffleKeys(keys);
     outerGroq:
     for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
         for (const model of models) {
@@ -1055,7 +1073,7 @@ async function callGroq(env, question, systemPrompt, image, expectMcqArray, budg
             // budget check — one key at a time, first success wins, stop immediately if the
             // shared budget runs out.
             let keyResult = null;
-            for (const key of keys) {
+            for (const key of shuffledGroqKeys) {
                 const outcome = await attemptWithStatus((signal) => fetch("https://api.groq.com/openai/v1/chat/completions", {
                     method: "POST",
                     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -1149,9 +1167,10 @@ async function callCerebras(env, question, systemPrompt, image, budget) {
     if (!keys.length) return { error: "CEREBRAS_API_KEY not set" };
 
     let lastError = "Cerebras: no keys/models worked";
+    const shuffledCerebrasKeys = shuffleKeys(keys);
     for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
         for (const model of CEREBRAS_MODELS) {
-            for (const key of keys) {
+            for (const key of shuffledCerebrasKeys) {
                 const outcome = await attemptWithStatus((signal) => fetch("https://api.cerebras.ai/v1/chat/completions", {
                     method: "POST",
                     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -1774,7 +1793,7 @@ async function handleMcqFromPdf(body, env) {
     if (!pdf_url) return jsonResponse({ success: false, error: "pdf_url প্রয়োজন" }, 400);
     if (!prompt) return jsonResponse({ success: false, error: "prompt প্রয়োজন" }, 400);
 
-    const keys = getGeminiKeys(env);
+    const keys = shuffleKeys(getGeminiKeys(env));
 
     let pdfBase64 = null;
     let fetchErr = null;
