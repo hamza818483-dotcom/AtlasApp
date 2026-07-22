@@ -1052,6 +1052,17 @@ async function callGroq(env, question, systemPrompt, image, expectMcqArray, budg
         (jsonSystemPrompt.length + (typeof question === "string" ? question.length : 200)) / 3.2
     );
     const TPM_SAFE_LIMIT = 7000; // 8000 hard limit theke margin rekhe
+    // bug fix (root cause of "always busy" reports): if the input alone is
+    // already too large for Groq's TPM window, EVERY key will fail with 429 —
+    // this is a per-request size problem, not a key-health problem, so no
+    // amount of key rotation can rescue it. Detect this up-front and skip
+    // Groq immediately (falling through to Gemini/OpenRouter, which have much
+    // larger context windows) instead of burning the subrequest budget and
+    // several seconds trying every key on a request that's guaranteed to fail.
+    const MIN_USABLE_OUTPUT_TOKENS = 512;
+    if (estimatedInputTokens > TPM_SAFE_LIMIT - MIN_USABLE_OUTPUT_TOKENS) {
+        return { error: `Groq: skipped, input too large for TPM limit (~${estimatedInputTokens} tokens)` };
+    }
     const outputCap = expectMcqArray ? 4096 : 6144; // free-text explanation-e beshi output-room chai
     const dynamicMaxTokens = Math.max(1024, Math.min(outputCap, TPM_SAFE_LIMIT - estimatedInputTokens));
     let consecutive429 = 0;
