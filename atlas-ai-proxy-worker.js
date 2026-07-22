@@ -750,7 +750,7 @@ async function callGemini(env, question, systemPrompt, image, budget) {
     // kore shomoy nosto na kore, shudhu "healthy" (ekhono kaj korte pare emon) key-gulor
     // upor e round chole.
     const exhaustedKeys = new Set();
-    const shuffledGeminiKeys = shuffleKeys(keys);
+    const shuffledGeminiKeys = keys; // already health-sorted + shuffled by getGeminiKeys()
     // bug fix (root cause of persistent "Too many subrequests" even after sequential fix):
     // MAX_ROTATION_ROUNDS is 1, so exhaustedKeys above never actually helps (no 2nd round
     // to skip in) — every single Gemini key still got tried once even when the account was
@@ -811,7 +811,7 @@ function getOpenRouterKeys(env) {
     const keys = [];
     if (env.OPENROUTER_KEYS) keys.push(...env.OPENROUTER_KEYS.split(",").map(k => k.trim()).filter(Boolean));
     if (env.OPENROUTER_API_KEY) keys.push(env.OPENROUTER_API_KEY.trim());
-    return [...new Set(keys)];
+    return sortByHealth([...new Set(keys)], "openrouter");
 }
 const OPENROUTER_MODELS = ["qwen/qwen2.5-vl-72b-instruct:free", "meta-llama/llama-3.2-11b-vision-instruct:free"];
 
@@ -830,7 +830,7 @@ async function callOpenRouter(env, question, systemPrompt, image, budget) {
     }
 
     let lastError = "OpenRouter: no keys/models worked";
-    const shuffledOpenRouterKeys = shuffleKeys(keys);
+    const shuffledOpenRouterKeys = keys; // already health-sorted + shuffled by getOpenRouterKeys()
     for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
         for (const model of OPENROUTER_MODELS) {
             for (const key of shuffledOpenRouterKeys) {
@@ -849,7 +849,11 @@ async function callOpenRouter(env, question, systemPrompt, image, budget) {
                     }),
                 }), budget);
                 if (outcome.__exception) { lastError = `OpenRouter(${model}) exception: ${outcome.message}`; if (outcome.__budgetExhausted) return { error: lastError }; continue; }
-                if (!outcome.ok) { lastError = `OpenRouter(${model}) HTTP ${outcome.status}`; continue; }
+                if (!outcome.ok) {
+                    lastError = `OpenRouter(${model}) HTTP ${outcome.status}`;
+                    if (outcome.status === 429 || outcome.status === 401) markKeyBad("openrouter", key);
+                    continue;
+                }
                 const data = await outcome.json().catch(() => null);
                 const answer = data?.choices?.[0]?.message?.content || null;
                 if (answer) return { answer, provider: `openrouter:${model}` };
@@ -861,20 +865,11 @@ async function callOpenRouter(env, question, systemPrompt, image, budget) {
     return { error: lastError };
 }
 
-// Load-balancing fix: without this, every concurrent request iterates keys
-// in the same fixed order (keys[0] first), so under simultaneous load all
-// users hammer the same single key until it alone hits its per-day limit
-// (e.g. Groq's 1000 req/day), instead of spreading load across every
-// available key. Shuffling per-call distributes concurrent traffic roughly
-// evenly across all keys from the very first request.
-function shuffleKeys(keys) {
-    const arr = [...keys];
-    for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-}
+// Load-balancing note: key shuffling now lives inside sortByHealth() (below),
+// which shuffles the healthy-key group on every call while still keeping
+// cooling-down keys pushed to the end. This means every getXKeys(env) call
+// already returns a load-balanced, health-aware order — no separate shuffle
+// step needed at each call site.
 
 /* ───────── 3. Groq — multi-key rotation, per-modality model fallback list ───────── */
 function getGroqKeys(env) {
@@ -917,6 +912,16 @@ function isKeyCoolingDown(provider, key) {
 function sortByHealth(keys, provider) {
     const healthy = keys.filter(k => !isKeyCoolingDown(provider, k));
     const cooling = keys.filter(k => isKeyCoolingDown(provider, k));
+    // load-balancing fix: shuffle WITHIN the healthy group so concurrent
+    // requests spread across all healthy keys instead of every request
+    // starting from the same healthy[0] (which would let one key alone
+    // absorb all concurrent traffic and hit its RPD/RPM limit fast).
+    // Cooling-down keys still stay pushed to the end, unshuffled among
+    // themselves — health priority always wins over load distribution.
+    for (let i = healthy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [healthy[i], healthy[j]] = [healthy[j], healthy[i]];
+    }
     return [...healthy, ...cooling];
 }
 
@@ -1050,7 +1055,7 @@ async function callGroq(env, question, systemPrompt, image, expectMcqArray, budg
     const outputCap = expectMcqArray ? 4096 : 6144; // free-text explanation-e beshi output-room chai
     const dynamicMaxTokens = Math.max(1024, Math.min(outputCap, TPM_SAFE_LIMIT - estimatedInputTokens));
     let consecutive429 = 0;
-    const shuffledGroqKeys = shuffleKeys(keys);
+    const shuffledGroqKeys = keys; // already health-sorted + shuffled by getGroqKeys()
     outerGroq:
     for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
         for (const model of models) {
@@ -1157,7 +1162,7 @@ function getCerebrasKeys(env) {
     const keys = [];
     if (env.CEREBRAS_KEYS) keys.push(...env.CEREBRAS_KEYS.split(",").map(k => k.trim()).filter(Boolean));
     if (env.CEREBRAS_API_KEY) keys.push(env.CEREBRAS_API_KEY.trim());
-    return [...new Set(keys)];
+    return sortByHealth([...new Set(keys)], "cerebras");
 }
 const CEREBRAS_MODELS = ["gpt-oss-120b", "llama-3.3-70b"];
 
@@ -1167,7 +1172,7 @@ async function callCerebras(env, question, systemPrompt, image, budget) {
     if (!keys.length) return { error: "CEREBRAS_API_KEY not set" };
 
     let lastError = "Cerebras: no keys/models worked";
-    const shuffledCerebrasKeys = shuffleKeys(keys);
+    const shuffledCerebrasKeys = keys; // already health-sorted + shuffled by getCerebrasKeys()
     for (let round = 0; round < MAX_ROTATION_ROUNDS; round++) {
         for (const model of CEREBRAS_MODELS) {
             for (const key of shuffledCerebrasKeys) {
@@ -1186,7 +1191,11 @@ async function callCerebras(env, question, systemPrompt, image, budget) {
                     }),
                 }), budget);
                 if (outcome.__exception) { lastError = `Cerebras(${model}) exception: ${outcome.message}`; if (outcome.__budgetExhausted) return { error: lastError }; continue; }
-                if (!outcome.ok) { lastError = `Cerebras(${model}) HTTP ${outcome.status}`; continue; }
+                if (!outcome.ok) {
+                    lastError = `Cerebras(${model}) HTTP ${outcome.status}`;
+                    if (outcome.status === 429 || outcome.status === 401) markKeyBad("cerebras", key);
+                    continue;
+                }
                 const data = await outcome.json().catch(() => null);
                 const answer = data?.choices?.[0]?.message?.content || null;
                 if (answer) return { answer, provider: `cerebras:${model}` };
@@ -1793,7 +1802,7 @@ async function handleMcqFromPdf(body, env) {
     if (!pdf_url) return jsonResponse({ success: false, error: "pdf_url প্রয়োজন" }, 400);
     if (!prompt) return jsonResponse({ success: false, error: "prompt প্রয়োজন" }, 400);
 
-    const keys = shuffleKeys(getGeminiKeys(env));
+    const keys = getGeminiKeys(env); // already health-sorted + shuffled internally
 
     let pdfBase64 = null;
     let fetchErr = null;
