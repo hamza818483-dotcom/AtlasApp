@@ -1090,7 +1090,125 @@
         .tile-red{background:linear-gradient(150deg,#FCA5A5 0%,#F87171 45%,#991B1B 100%)}
         .tile-gold{background:linear-gradient(150deg,#FDE68A 0%,#FBBF24 45%,#92400E 100%)}
         .tile-plum{background:linear-gradient(150deg,#D8B4FE 0%,#A855F7 45%,#581C87 100%)}
-        </style>
+        
+        /* ===== Premium Courses Arc Banner ===== */
+        .arc-banner {
+            position: relative;
+            margin: 14px 12px 18px;
+            border-radius: 22px;
+            overflow: hidden;
+            padding: 18px 10px 22px;
+            min-height: 190px;
+            background: radial-gradient(circle at 50% -10%, rgba(108,99,255,.35), transparent 60%), #0c0f1a;
+            border: 1px solid rgba(255,255,255,.08);
+            display: none;
+        }
+        .arc-banner.has-items { display: block; }
+        .arc-banner-logo {
+            position: absolute;
+            inset: 0;
+            background-image: var(--arc-logo-url, none);
+            background-repeat: no-repeat;
+            background-position: center 30%;
+            background-size: 55%;
+            filter: blur(7px);
+            opacity: .28;
+            transform: scale(1.15);
+            pointer-events: none;
+        }
+        .arc-banner-head {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            margin-bottom: 6px;
+        }
+        .arc-banner-title {
+            font-size: 13.5px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: .2px;
+        }
+        .arc-banner-sub {
+            font-size: 10px;
+            color: rgba(255,255,255,.55);
+            margin-top: 1px;
+        }
+        .arc-track {
+            position: relative;
+            z-index: 2;
+            height: 148px;
+            margin-top: 6px;
+        }
+        .arc-path-svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .arc-item {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(.001);
+            opacity: 0;
+            animation: arcItemPop .55s cubic-bezier(.34,1.56,.64,1) forwards;
+        }
+        .arc-item.arc-item-main { width: 96px; height: 96px; z-index: 5; }
+        @keyframes arcItemPop {
+            0% { transform: translate(-50%, -50%) scale(.001); opacity: 0; }
+            60% { opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        .arc-item-ring {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            padding: 2.5px;
+            background: linear-gradient(135deg, #FFD65C, #FF7A45, #6C63FF);
+            box-shadow: 0 4px 14px rgba(0,0,0,.45);
+        }
+        .arc-item-main .arc-item-ring {
+            padding: 3.5px;
+            animation: arcMainGlow 2.4s ease-in-out infinite;
+        }
+        @keyframes arcMainGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255,214,92,.55), 0 6px 18px rgba(0,0,0,.5); }
+            50% { box-shadow: 0 0 0 8px rgba(255,214,92,0), 0 6px 18px rgba(0,0,0,.5); }
+        }
+        .arc-item-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            display: block;
+            background: #1a1f30;
+            cursor: pointer;
+        }
+        .arc-item-label {
+            position: absolute;
+            left: 50%;
+            top: 100%;
+            transform: translateX(-50%);
+            margin-top: 4px;
+            font-size: 8.5px;
+            color: rgba(255,255,255,.65);
+            white-space: nowrap;
+            max-width: 68px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: center;
+        }
+        .arc-item-main .arc-item-label {
+            font-size: 10px;
+            color: #fff;
+            font-weight: 700;
+            max-width: 110px;
+        }
+
+    </style>
 </head>
 <body class="dark-mode">
 
@@ -1245,6 +1363,17 @@
      MAIN CONTENT
 ════════════════════════════════════════════ -->
 <main class="main-container">
+
+
+    <!-- Premium Courses Arc Banner (public, all active courses) -->
+    <div class="arc-banner" id="arcCoursesBanner">
+        <div class="arc-banner-logo" id="arcBannerLogo"></div>
+        <div class="arc-banner-head">
+            <div class="arc-banner-title">আমাদের কোর্সসমূহ</div>
+            <div class="arc-banner-sub">যেকোনো কোর্সে ট্যাপ করে বিস্তারিত দেখো</div>
+        </div>
+        <div class="arc-track" id="arcCoursesTrack"></div>
+    </div>
 
     <!-- Slideshow container (header-এর ঠিক নিচে, auto-slide R-to-L every 2s) -->
     <!-- (Flutter: AutoSlideCarousel widget) -->
@@ -1604,6 +1733,56 @@ async function safeFetch(url, opts = {}) {
 /* ══════════════════════════════════════════════
    TIMERS  (Flutter: CountdownTimerService)
 ══════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   PREMIUM COURSES ARC BANNER  (public, all active courses)
+══════════════════════════════════════════════ */
+async function loadArcCoursesBanner() {
+    try {
+        const data = await safeFetch(`${SUPABASE_URL}/rest/v1/courses?select=id,name,image_url&is_active=eq.true&is_public=eq.true&is_hidden=eq.false&image_url=not.is.null&order=priority.asc,created_at.desc&limit=7`);
+        const banner = document.getElementById('arcCoursesBanner');
+        const track = document.getElementById('arcCoursesTrack');
+        if (!Array.isArray(data) || !data.length) { banner.classList.remove('has-items'); return; }
+
+        document.getElementById('arcBannerLogo').style.backgroundImage = "url('logo-icon.png')";
+
+        const w = track.clientWidth || 320;
+        const h = 148;
+        const cx = w / 2;
+        const cy = h + 34;
+        const r = h - 6;
+
+        const others = data.filter((_, i) => i !== Math.floor((data.length - 1) / 2));
+        const mainIdx = Math.floor((data.length - 1) / 2);
+        const mainCourse = data[mainIdx];
+        const sideCourses = data.filter((_, i) => i !== mainIdx);
+
+        let svg = `<svg class="arc-path-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><path d="M 4 ${h - 2} A ${r} ${r} 0 0 1 ${w - 4} ${h - 2}" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="2.5" stroke-linecap="round"/></svg>`;
+
+        let itemsHtml = '';
+        const n = sideCourses.length;
+        sideCourses.forEach((c, i) => {
+            const t = n > 1 ? i / (n - 1) : 0.5;
+            const angle = Math.PI - t * Math.PI;
+            const x = cx - r * Math.cos(angle);
+            const y = cy - r * Math.sin(angle);
+            const delay = (i * 0.12).toFixed(2);
+            itemsHtml += `<div class="arc-item" style="left:${x}px;top:${y - 34}px;animation-delay:${delay}s" onclick="location.href='https://atlascourses.com/courses/${c.id}'">
+                <div class="arc-item-ring"><img class="arc-item-img" src="${escHtml(c.image_url)}" alt="${escHtml(c.name || '')}" loading="lazy"></div>
+                <div class="arc-item-label">${escHtml(c.name || '')}</div>
+            </div>`;
+        });
+
+        const mainX = cx, mainY = cy - r - 6;
+        itemsHtml += `<div class="arc-item arc-item-main" style="left:${mainX}px;top:${mainY}px;animation-delay:${(n * 0.12 + 0.1).toFixed(2)}s" onclick="location.href='https://atlascourses.com/courses/${mainCourse.id}'">
+            <div class="arc-item-ring"><img class="arc-item-img" src="${escHtml(mainCourse.image_url)}" alt="${escHtml(mainCourse.name || '')}" loading="lazy"></div>
+            <div class="arc-item-label">${escHtml(mainCourse.name || '')}</div>
+        </div>`;
+
+        track.innerHTML = svg + itemsHtml;
+        banner.classList.add('has-items');
+    } catch (e) { console.error('Arc banner:', e.message); }
+}
+
 async function loadTimers() {
     try {
         // is_active=eq.true OR is_active=is.null (পুরনো এন্ট্রি যেগুলোতে এই কলামটাই নেই, সেগুলো ডিফল্টভাবে সক্রিয় ধরা হয়)
@@ -2900,6 +3079,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Load all sections  (Flutter: Future.wait([...]))
     loadTimers();
+    loadArcCoursesBanner();
+    let __arcResizeT;
+    window.addEventListener('resize', () => { clearTimeout(__arcResizeT); __arcResizeT = setTimeout(loadArcCoursesBanner, 250); });
     loadSlideshow();
     loadReviewSection();
     loadSpecialCards();
